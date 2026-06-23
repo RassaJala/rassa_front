@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Rassa",
+    "slug": "rassa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#16a34a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rassa.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#16a34a"
+      },
+      "package": "com.rassa.app"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
