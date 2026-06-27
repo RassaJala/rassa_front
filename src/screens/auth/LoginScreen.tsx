@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,70 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
 } from "react-native";
 import { useAuth } from "../../store/AuthContext";
+
+const GREEN = "#16a34a";
+const GREEN_DARK = "#15803d";
+const GREEN_LIGHT = "#dcfce7";
+const GREEN_BG = "#f0fdf4";
+const GREEN_PANEL = "#16a34a";
+
+function AnimatedInput({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  rightElement,
+}: any) {
+  const [focused, setFocused] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  const handleFocus = () => {
+    setFocused(true);
+    Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
+  };
+  const handleBlur = () => {
+    setFocused(false);
+    Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+  };
+
+  const borderColor = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#d1fae5", GREEN],
+  });
+
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
+      <Animated.View style={[styles.inputWrapper, { borderColor }]}>
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor="#b0bec5"
+          autoCapitalize={autoCapitalize ?? "none"}
+          keyboardType={keyboardType}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {rightElement}
+      </Animated.View>
+    </View>
+  );
+}
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,73 +100,76 @@ export default function LoginScreen({ navigation }: any) {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Left panel – branding */}
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* ── Left panel – branding ── */}
           <View style={styles.brandPanel}>
             <View style={styles.logoCircle}>
               <Text style={styles.logoText}>🌿</Text>
             </View>
             <Text style={styles.brandTitle}>Rassa</Text>
-            <Text style={styles.brandSubtitle}>
-              Tu mercado agrícola de confianza
-            </Text>
+            <Text style={styles.brandSubtitle}>Tu mercado agrícola de confianza</Text>
             <View style={styles.featureList}>
               {[
-                "🛒  Compra directa a agricultores",
-                "🌾  Productos frescos y naturales",
-                "🚚  Entrega rápida a tu puerta",
-                "✅  Calidad garantizada",
+                { icon: "🛒", text: "Compra directa a agricultores" },
+                { icon: "🌾", text: "Productos frescos y naturales" },
+                { icon: "🚚", text: "Entrega rápida a tu puerta" },
+                { icon: "✅", text: "Calidad garantizada" },
               ].map((f, i) => (
-                <Text key={i} style={styles.featureItem}>
-                  {f}
-                </Text>
+                <View key={i} style={styles.featureItem}>
+                  <Text style={styles.featureIcon}>{f.icon}</Text>
+                  <Text style={styles.featureText}>{f.text}</Text>
+                </View>
               ))}
             </View>
           </View>
 
-          {/* Right panel – form */}
+          {/* ── Right panel – form ── */}
           <View style={styles.formPanel}>
             <View style={styles.card}>
+              {/* Header */}
               <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-              <Text style={styles.cardSubtitle}>
-                Bienvenido de nuevo 👋
-              </Text>
+              <Text style={styles.cardSubtitle}>Bienvenido de nuevo 👋</Text>
 
-              {error ? (
+              {/* Error box */}
+              {!!error && (
                 <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>⚠️ {error}</Text>
+                  <Text style={styles.errorText}>⚠️  {error}</Text>
                 </View>
-              ) : null}
+              )}
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Correo Electrónico</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="tu@correo.com"
-                  placeholderTextColor="#aaa"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+              {/* Email */}
+              <AnimatedInput
+                label="Correo Electrónico"
+                placeholder="tu@correo.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+              />
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Contraseña</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor="#aaa"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-              </View>
+              {/* Password with toggle */}
+              <AnimatedInput
+                label="Contraseña"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                rightElement={
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((v) => !v)}
+                    style={styles.eyeBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.eyeIcon}>{showPassword ? "🙈" : "👁️"}</Text>
+                  </TouchableOpacity>
+                }
+              />
 
+              {/* Submit button */}
               <TouchableOpacity
                 style={[styles.btn, loading && styles.btnDisabled]}
                 onPress={handleLogin}
                 disabled={loading}
+                activeOpacity={0.85}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
@@ -118,11 +178,10 @@ export default function LoginScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
 
+              {/* Register link */}
               <View style={styles.registerRow}>
                 <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate("Register")}
-                >
+                <TouchableOpacity onPress={() => navigation.navigate("Register")}>
                   <Text style={styles.registerLink}>Regístrate aquí</Text>
                 </TouchableOpacity>
               </View>
@@ -134,10 +193,6 @@ export default function LoginScreen({ navigation }: any) {
   );
 }
 
-const GREEN = "#16a34a";
-const GREEN_DARK = "#15803d";
-const GREEN_BG = "#f0fdf4";
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: GREEN_BG },
   flex: { flex: 1 },
@@ -145,122 +200,149 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexDirection: "row",
     flexWrap: "wrap",
-    minHeight: "100%",
+    minHeight: "100%" as any,
   },
-  // Brand panel
+
+  /* ── Brand panel ── */
   brandPanel: {
     flex: 1,
     minWidth: 300,
-    backgroundColor: GREEN,
+    backgroundColor: GREEN_PANEL,
     padding: 48,
     justifyContent: "center",
     alignItems: "center",
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: "rgba(255,255,255,0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 18,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  logoText: { fontSize: 40 },
+  logoText: { fontSize: 42 },
   brandTitle: {
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: "800",
     color: "#fff",
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   brandSubtitle: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginBottom: 40,
+    color: "rgba(255,255,255,0.82)",
+    marginBottom: 44,
     textAlign: "center",
   },
-  featureList: { alignSelf: "stretch" },
+  featureList: { alignSelf: "stretch", gap: 14 },
   featureItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  featureIcon: { fontSize: 18, width: 28 },
+  featureText: {
     color: "rgba(255,255,255,0.9)",
     fontSize: 15,
-    marginBottom: 12,
-    paddingLeft: 8,
   },
-  // Form panel
+
+  /* ── Form panel ── */
   formPanel: {
     flex: 1,
     minWidth: 300,
     justifyContent: "center",
     alignItems: "center",
     padding: 32,
+    backgroundColor: GREEN_BG,
   },
   card: {
     width: "100%",
     maxWidth: 440,
     backgroundColor: "#fff",
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 36,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowRadius: 24,
+    elevation: 10,
   },
   cardTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#1a1a1a",
+    color: "#111827",
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   cardSubtitle: {
     fontSize: 15,
-    color: "#666",
+    color: "#6b7280",
     marginBottom: 24,
   },
+
+  /* ── Error ── */
   errorBox: {
     backgroundColor: "#fef2f2",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#fca5a5",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
-  fieldGroup: { marginBottom: 16 },
+  errorText: { color: "#dc2626", fontSize: 13.5, textAlign: "center" },
+
+  /* ── Field ── */
+  fieldGroup: { marginBottom: 18 },
   label: {
     fontSize: 13,
     fontWeight: "600",
     color: "#374151",
-    marginBottom: 6,
+    marginBottom: 7,
+  },
+  labelFocused: { color: GREEN },
+  inputWrapper: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fffe",
+    paddingHorizontal: 14,
   },
   input: {
-    borderWidth: 1.5,
-    borderColor: "#d1fae5",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flex: 1,
+    paddingVertical: 13,
     fontSize: 15,
-    color: "#1a1a1a",
-    backgroundColor: "#f9fffe",
+    color: "#111827",
     outlineStyle: "none",
   } as any,
+  eyeBtn: { paddingLeft: 8 },
+  eyeIcon: { fontSize: 18 },
+
+  /* ── Button ── */
   btn: {
     backgroundColor: GREEN,
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 6,
     shadowColor: GREEN,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  btnDisabled: { backgroundColor: "#86efac" },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  btnDisabled: { backgroundColor: "#86efac", shadowOpacity: 0 },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
+
+  /* ── Register link ── */
   registerRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 22,
   },
-  registerText: { color: "#666", fontSize: 14 },
+  registerText: { color: "#6b7280", fontSize: 14 },
   registerLink: { color: GREEN_DARK, fontSize: 14, fontWeight: "700" },
 });
