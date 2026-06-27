@@ -15,6 +15,9 @@ import ProductDetailScreen from "../screens/buyer/ProductDetailScreen";
 import MyProductsScreen from "../screens/farmer/MyProductsScreen";
 import AddProductScreen from "../screens/farmer/AddProductScreen";
 
+// Seller screens
+import SellerDashboardScreen from "../screens/seller/SellerDashboardScreen";
+
 // Admin screens
 import AdminPanelScreen from "../screens/admin/AdminPanelScreen";
 
@@ -36,8 +39,8 @@ function AuthStack() {
 function BuyerTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: "🛒 Tienda" }} />
+      <Tab.Screen name="ProductDetail" component={ProductDetailScreen} options={{ tabBarLabel: "🔍 Detalle" }} />
     </Tab.Navigator>
   );
 }
@@ -45,8 +48,8 @@ function BuyerTabs() {
 function FarmerTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="MyProducts" component={MyProductsScreen} />
-      <Tab.Screen name="AddProduct" component={AddProductScreen} />
+      <Tab.Screen name="MyProducts" component={MyProductsScreen} options={{ tabBarLabel: "🌾 Mis Productos" }} />
+      <Tab.Screen name="AddProduct" component={AddProductScreen} options={{ tabBarLabel: "➕ Agregar" }} />
     </Tab.Navigator>
   );
 }
@@ -66,6 +69,12 @@ export default function AppNavigator() {
   switch (user?.role) {
     case "farmer":
       return <FarmerTabs />;
+    case "seller":
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
+        </Stack.Navigator>
+      );
     case "admin":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
