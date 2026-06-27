@@ -3,6 +3,15 @@
 
 import { User } from "./index";
 
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  remember: boolean;
+  access: string;
+  refresh: string;
+  user: User;
+}
+
 /** User with active status (returned by admin endpoints) */
 export interface AdminUser extends User {
   is_active: boolean;
