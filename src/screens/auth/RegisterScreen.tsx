@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import { useAuth } from "../../store/AuthContext";
 
+// Admin role is NOT offered in public registration
 const ROLES = [
   { value: "buyer", label: "Cliente", emoji: "🛒", desc: "Compra productos frescos" },
   { value: "farmer", label: "Agricultor", emoji: "🌾", desc: "Vende tus cosechas" },
   { value: "seller", label: "Vendedor", emoji: "🏪", desc: "Gestiona tu tienda" },
-  { value: "admin", label: "Admin", emoji: "⚙️", desc: "Administra la plataforma" },
 ];
 
 export default function RegisterScreen({ navigation }: any) {
@@ -32,6 +32,8 @@ export default function RegisterScreen({ navigation }: any) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const update = (field: string, val: string) =>
     setForm((f) => ({ ...f, [field]: val }));
@@ -49,6 +51,10 @@ export default function RegisterScreen({ navigation }: any) {
     }
     if (form.password !== form.confirmPassword) {
       setError("Las contraseñas no coinciden.");
+      return;
+    }
+    if (form.password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
     setLoading(true);
@@ -79,15 +85,15 @@ export default function RegisterScreen({ navigation }: any) {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Left brand panel */}
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* ── Left brand panel ── */}
           <View style={styles.brandPanel}>
             <View style={styles.logoCircle}>
               <Text style={styles.logoText}>🌿</Text>
             </View>
             <Text style={styles.brandTitle}>Rassa</Text>
             <Text style={styles.brandSubtitle}>Únete a nuestra comunidad agrícola</Text>
-            <View style={styles.roles}>
+            <View style={styles.rolesList}>
               {ROLES.map((r) => (
                 <View key={r.value} style={styles.roleInfo}>
                   <Text style={styles.roleEmoji}>{r.emoji}</Text>
@@ -98,19 +104,23 @@ export default function RegisterScreen({ navigation }: any) {
                 </View>
               ))}
             </View>
+            <View style={styles.divider} />
+            <Text style={styles.brandNote}>
+              🔒  Tus datos están protegidos con cifrado de extremo a extremo.
+            </Text>
           </View>
 
-          {/* Form panel */}
+          {/* ── Form panel ── */}
           <View style={styles.formPanel}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Crear Cuenta</Text>
               <Text style={styles.cardSubtitle}>Regístrate y empieza hoy 🚀</Text>
 
-              {error ? (
+              {!!error && (
                 <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>⚠️ {error}</Text>
+                  <Text style={styles.errorText}>⚠️  {error}</Text>
                 </View>
-              ) : null}
+              )}
 
               {/* Role selector */}
               <Text style={styles.label}>Tipo de usuario</Text>
@@ -123,6 +133,7 @@ export default function RegisterScreen({ navigation }: any) {
                       form.role === r.value && styles.roleCardActive,
                     ]}
                     onPress={() => update("role", r.value)}
+                    activeOpacity={0.8}
                   >
                     <Text style={styles.roleCardEmoji}>{r.emoji}</Text>
                     <Text
@@ -144,18 +155,17 @@ export default function RegisterScreen({ navigation }: any) {
                   <TextInput
                     style={styles.input}
                     placeholder="Juan"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor="#b0bec5"
                     value={form.first_name}
                     onChangeText={(v) => update("first_name", v)}
                   />
                 </View>
-                <View style={styles.spacer} />
                 <View style={[styles.fieldGroup, styles.flex]}>
                   <Text style={styles.label}>Apellido</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="Pérez"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor="#b0bec5"
                     value={form.last_name}
                     onChangeText={(v) => update("last_name", v)}
                   />
@@ -167,7 +177,7 @@ export default function RegisterScreen({ navigation }: any) {
                 <TextInput
                   style={styles.input}
                   placeholder="tu@correo.com"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor="#b0bec5"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={form.email}
@@ -180,36 +190,52 @@ export default function RegisterScreen({ navigation }: any) {
                 <TextInput
                   style={styles.input}
                   placeholder="+52 123 456 7890"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor="#b0bec5"
                   keyboardType="phone-pad"
                   value={form.phone_number}
                   onChangeText={(v) => update("phone_number", v)}
                 />
               </View>
 
+              {/* Password row */}
               <View style={styles.row}>
                 <View style={[styles.fieldGroup, styles.flex]}>
                   <Text style={styles.label}>Contraseña</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor="#aaa"
-                    secureTextEntry
-                    value={form.password}
-                    onChangeText={(v) => update("password", v)}
-                  />
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={[styles.input, styles.inputFlex]}
+                      placeholder="••••••••"
+                      placeholderTextColor="#b0bec5"
+                      secureTextEntry={!showPassword}
+                      value={form.password}
+                      onChangeText={(v) => update("password", v)}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword((v) => !v)}
+                      style={styles.eyeBtn}
+                    >
+                      <Text>{showPassword ? "🙈" : "👁️"}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={styles.spacer} />
                 <View style={[styles.fieldGroup, styles.flex]}>
-                  <Text style={styles.label}>Confirmar Contraseña</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor="#aaa"
-                    secureTextEntry
-                    value={form.confirmPassword}
-                    onChangeText={(v) => update("confirmPassword", v)}
-                  />
+                  <Text style={styles.label}>Confirmar</Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={[styles.input, styles.inputFlex]}
+                      placeholder="••••••••"
+                      placeholderTextColor="#b0bec5"
+                      secureTextEntry={!showConfirm}
+                      value={form.confirmPassword}
+                      onChangeText={(v) => update("confirmPassword", v)}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowConfirm((v) => !v)}
+                      style={styles.eyeBtn}
+                    >
+                      <Text>{showConfirm ? "🙈" : "👁️"}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
 
@@ -217,6 +243,7 @@ export default function RegisterScreen({ navigation }: any) {
                 style={[styles.btn, loading && styles.btnDisabled]}
                 onPress={handleRegister}
                 disabled={loading}
+                activeOpacity={0.85}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
@@ -261,58 +288,84 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "rgba(255,255,255,0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  logoText: { fontSize: 36 },
-  brandTitle: { fontSize: 38, fontWeight: "800", color: "#fff", marginBottom: 6 },
+  logoText: { fontSize: 38 },
+  brandTitle: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: "#fff",
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
   brandSubtitle: {
     fontSize: 15,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.82)",
     marginBottom: 32,
     textAlign: "center",
   },
-  roles: { alignSelf: "stretch" },
-  roleInfo: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 12 },
-  roleEmoji: { fontSize: 28 },
+  rolesList: { alignSelf: "stretch", gap: 14, marginBottom: 24 },
+  roleInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
+  roleEmoji: { fontSize: 26, width: 36 },
   roleName: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  roleDesc: { color: "rgba(255,255,255,0.7)", fontSize: 13 },
+  roleDesc: { color: "rgba(255,255,255,0.72)", fontSize: 13 },
+  divider: {
+    alignSelf: "stretch",
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginBottom: 16,
+  },
+  brandNote: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 12,
+    textAlign: "center",
+  },
   formPanel: {
     flex: 1,
     minWidth: 320,
     justifyContent: "center",
     alignItems: "center",
     padding: 32,
+    backgroundColor: GREEN_BG,
   },
   card: {
     width: "100%",
     maxWidth: 520,
     backgroundColor: "#fff",
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 36,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowRadius: 24,
+    elevation: 10,
   },
-  cardTitle: { fontSize: 26, fontWeight: "800", color: "#1a1a1a", marginBottom: 4 },
-  cardSubtitle: { fontSize: 14, color: "#666", marginBottom: 20 },
+  cardTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 4,
+    letterSpacing: -0.3,
+  },
+  cardSubtitle: { fontSize: 14, color: "#6b7280", marginBottom: 20 },
   errorBox: {
     backgroundColor: "#fef2f2",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#fca5a5",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
   errorText: { color: "#dc2626", fontSize: 13, textAlign: "center" },
-  roleGrid: { flexDirection: "row", gap: 8, marginBottom: 20, flexWrap: "wrap" },
+  roleGrid: { flexDirection: "row", gap: 8, marginBottom: 20 },
   roleCard: {
     flex: 1,
     minWidth: 80,
@@ -325,23 +378,38 @@ const styles = StyleSheet.create({
   },
   roleCardActive: { borderColor: GREEN, backgroundColor: "#dcfce7" },
   roleCardEmoji: { fontSize: 22, marginBottom: 4 },
-  roleCardLabel: { fontSize: 12, fontWeight: "600", color: "#666" },
+  roleCardLabel: { fontSize: 12, fontWeight: "600", color: "#6b7280" },
   roleCardLabelActive: { color: GREEN_DARK },
   row: { flexDirection: "row", gap: 12 },
-  spacer: { width: 12 },
   fieldGroup: { marginBottom: 14 },
-  label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 5 },
+  label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 },
   input: {
     borderWidth: 1.5,
     borderColor: "#d1fae5",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 12,
     fontSize: 14,
-    color: "#1a1a1a",
+    color: "#111827",
     backgroundColor: "#f9fffe",
     outlineStyle: "none",
   } as any,
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#d1fae5",
+    borderRadius: 12,
+    backgroundColor: "#f9fffe",
+    paddingHorizontal: 14,
+  },
+  inputFlex: {
+    flex: 1,
+    borderWidth: 0,
+    paddingHorizontal: 0,
+    backgroundColor: "transparent",
+  },
+  eyeBtn: { paddingLeft: 8 },
   btn: {
     backgroundColor: GREEN,
     borderRadius: 12,
@@ -350,12 +418,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     shadowColor: GREEN,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  btnDisabled: { backgroundColor: "#86efac" },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  btnDisabled: { backgroundColor: "#86efac", shadowOpacity: 0 },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
   loginRow: { flexDirection: "row", justifyContent: "center", marginTop: 18 },
-  loginText: { color: "#666", fontSize: 14 },
+  loginText: { color: "#6b7280", fontSize: 14 },
   loginLink: { color: GREEN_DARK, fontSize: 14, fontWeight: "700" },
 });
