@@ -23,6 +23,7 @@ import AdminPanelScreen from "../screens/admin/AdminPanelScreen";
 
 // Common
 import SplashScreen from "../screens/common/SplashScreen";
+import ProfileScreen from "../screens/common/ProfileScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -65,24 +66,36 @@ export default function AppNavigator() {
     return <AuthStack />;
   }
 
-  // Authenticated: route by role
+  // Authenticated: route by role, all stacks include ProfileScreen
   switch (user?.role) {
     case "farmer":
-      return <FarmerTabs />;
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="FarmerTabs" component={FarmerTabs} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+        </Stack.Navigator>
+      );
     case "seller":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       );
     case "admin":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       );
     case "buyer":
     default:
-      return <BuyerTabs />;
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="BuyerHome" component={BuyerTabs} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+        </Stack.Navigator>
+      );
   }
 }
