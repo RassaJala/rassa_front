@@ -37,10 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, isLoading: false }));
         return;
       }
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
       const { data } = await api.get<User>("/auth/me/");
       setState({ user: data, token, isLoading: false, isAuthenticated: true });
     } catch {
       await AsyncStorage.multiRemove(["access_token", "refresh_token"]);
+      api.defaults.headers.common.Authorization = undefined;
       setState({ user: null, token: null, isLoading: false, isAuthenticated: false });
     }
   }
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await api.post("/token/", { email, password });
     await AsyncStorage.setItem("access_token", data.access);
     await AsyncStorage.setItem("refresh_token", data.refresh);
-    // fetch user profile
+    api.defaults.headers.common.Authorization = `Bearer ${data.access}`;
     const { data: user } = await api.get<User>("/auth/me/");
     setState({ user, token: data.access, isLoading: false, isAuthenticated: true });
   }
