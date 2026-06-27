@@ -84,10 +84,12 @@ export default function LoginScreen({ navigation }: any) {
     setLoading(true);
     setError("");
     try {
-      await login(email, password);
+      await login(email, password, true);
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || "Credenciales incorrectas. Intenta de nuevo."
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        "Credenciales incorrectas. Intenta de nuevo."
       );
     } finally {
       setLoading(false);
