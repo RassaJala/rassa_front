@@ -19,6 +19,11 @@
       },
       "package": "com.rassa.app"
     },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "platforms": ["ios", "android", "web"],
     "plugins": []
   }
 }
