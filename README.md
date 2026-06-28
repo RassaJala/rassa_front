@@ -4,7 +4,7 @@ App mobile para e-commerce donde agricultores venden sus productos directamente.
 
 ## Stack
 
-- **Expo SDK 52** (React Native)
+- **Expo SDK 54** (React Native)
 - **React Navigation** (navegación)
 - **TanStack Query** (server state)
 - **Axios** (HTTP client)
@@ -15,7 +15,7 @@ App mobile para e-commerce donde agricultores venden sus productos directamente.
 
 - Node.js 18 o superior
 - Expo Go (instalada en tu celular)
-- (Opcional) `expo-cli` o `npx expo`
+- [Bun](https://bun.sh) (package manager)
 
 ## Instalación
 
@@ -25,19 +25,20 @@ git clone <repo-url>
 cd Rassa
 
 # 2. Instalar dependencias
-npm install
-# o
-yarn install
+bun install
 ```
 
 ## Ejecutar
 
 ```bash
 # Iniciar servidor de desarrollo
-npx expo start
+bun run start
+
+# Web
+bun run web
 ```
 
-Esto abre Expo Developer Tools. Escaneá el QR con **Expo Go** en tu celular para ver la app al instante.
+Escaneá el QR con **Expo Go** en tu celular para ver la app al instante.
 
 > Si querés correr en un emulador Android, apretá `a` en la terminal. Para iOS simulador, `i` (solo Mac).
 
@@ -59,32 +60,37 @@ EXPO_PUBLIC_API_URL=http://192.168.x.x:8000/api
 
 ```
 Rassa/
-├── App.tsx                    # Entry point
+├── index.js                     # Entry point (registerRootComponent)
+├── App.tsx                      # Root component
 ├── src/
-│   ├── navigation/           # Navegación por rol
+│   ├── navigation/              # Navegación por rol
 │   ├── screens/
-│   │   ├── auth/             # Login / Register
-│   │   ├── buyer/            # Pantallas de comprador
-│   │   ├── farmer/           # Pantallas de agricultor
-│   │   ├── admin/            # Panel admin
-│   │   └── common/           # Splash, etc.
-│   ├── components/ui/        # Componentes reutilizables
-│   ├── services/api.ts       # Axios instance con JWT
-│   ├── store/AuthContext.tsx  # Estado de autenticación
-│   ├── hooks/                # Custom hooks
-│   ├── types/                # Tipos compartidos
-│   └── constants/            # Colores, temas
+│   │   ├── auth/                # Login / Register
+│   │   ├── buyer/               # Pantallas de comprador
+│   │   ├── farmer/              # Pantallas de agricultor
+│   │   ├── admin/               # Panel admin
+│   │   └── common/              # Splash, etc.
+│   ├── components/ui/           # Componentes reutilizables
+│   ├── services/api.ts          # Axios instance con JWT
+│   ├── store/AuthContext.tsx    # Estado de autenticación
+│   ├── hooks/                   # Custom hooks
+│   ├── types/                   # Tipos compartidos
+│   └── constants/               # Colores, temas
+├── babel.config.js              # Babel (NativeWind)
+├── metro.config.js              # Metro bundler (NativeWind)
+├── tailwind.config.js           # Tailwind CSS
+├── tsconfig.json                # TypeScript
+├── bunfig.toml                  # Bun config
 ├── package.json
-├── app.json
-└── tsconfig.json
+└── app.json
 ```
 
 ## Comandos útiles
 
 ```bash
 # TypeScript check
-npx tsc --noEmit
+bun run typecheck
 
 # Limpiar caché de Expo
-npx expo start -c
+bunx expo start -c
 ```
