@@ -19,8 +19,6 @@
       },
       "package": "com.rassa.app"
     },
-    "plugins": [
-      "expo-router"
-    ]
+    "plugins": []
   }
 }
