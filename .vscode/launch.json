@@ -1,0 +1,32 @@
+{
+  /* --------------------------------------------------------
+     Perfiles de depuración Expo (Android, iOS, Web).
+     Requiere extensión React Native Tools para type "reactnative".
+     -------------------------------------------------------- */
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Expo: Android",
+      "type": "reactnative",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "platform": "android"
+    },
+    {
+      "name": "Expo: iOS",
+      "type": "reactnative",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "platform": "ios"
+    },
+    {
+      "name": "Expo: Web",
+      "type": "chrome",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "url": "http://localhost:8081",
+      "webRoot": "${workspaceFolder}"
+    }
+  ],
+  "compounds": []
+}

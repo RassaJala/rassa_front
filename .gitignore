@@ -1,32 +1,47 @@
-# Dependencies
-node_modules/
+# Exclusiones de Git: node_modules, .expo, .env, builds iOS/Android.
 
-# Expo
+# Dependencias y Caché de Bun/NPM
+node_modules/
+.npm
+.eslintcache
+.knipcache
+
+# Expo y compilaciones web
 .expo/
 dist/
 web-build/
+*.tsbuildinfo
 
-# Native builds
+# Compilaciones nativas e iOS/Android (generadas por expo prebuild)
+ios/
+android/
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
 *.orig.*
+*.apk
+*.aab
+*.ipa
 
-# Environment
+# Variables de entorno y secretos
 .env
 .env.local
+.env.*.local
+*.pem
 
-# IDE
-.vscode/
+# Editor de Código (VSCode y otros)
+# Mantenemos las configuraciones compartidas de VSCode pero ignoramos logs locales o estados del workspace.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.vscode/settings.local.json
 .idea/
 *.swp
 *.swo
 
-# OS
+# Sistema Operativo
 .DS_Store
 Thumbs.db
-
-# TypeScript
-*.tsbuildinfo

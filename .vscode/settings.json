@@ -1,0 +1,91 @@
+{
+  /* --------------------------------------------------------
+     Formateo y linting automáticos al guardar.
+     Pueden ajustarse preferencias personales (tema, fuente).
+     -------------------------------------------------------- */
+
+  // ---- Formateo automático ----
+
+  // Formatea el archivo completo al guardar.
+  "editor.formatOnSave": true,
+
+  // Ejecuta acciones de corrección (ESLint, organize imports) al guardar.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "source.removeUnusedImports": "explicit"
+  },
+
+  // ---- ESLint ----
+
+  // Activa la validación de ESLint en tiempo real.
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+
+  // Corrige errores automáticamente al guardar (complementa codeActionsOnSave).
+  "eslint.format.enable": false,
+
+  // ---- Prettier ----
+
+  // Establece Prettier como formateador por defecto para todos los lenguajes soportados.
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // ---- Editor general ----
+
+  // Tamaño de tabulación consistente con .editorconfig.
+  "editor.tabSize": 2,
+
+  // Usar espacios en lugar de tabulaciones.
+  "editor.insertSpaces": true,
+
+  // Mostrar guías de sangría para facilitar la lectura de bloques anidados.
+  "editor.guides.bracketPairs": "active",
+
+  // Eliminar espacios en blanco final al guardar.
+  "files.trimTrailingWhitespace": true,
+
+  // Añadir newline final al guardar.
+  "files.insertFinalNewline": true,
+
+  // ---- Archivos ignorados ----
+
+  // Excluir de la búsqueda del explorador de archivos.
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.expo": true,
+    "**/dist": true,
+    "**/web-build": true
+  },
+
+  // Excluir de la búsqueda global (Ctrl+Shift+F).
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.expo": true,
+    "**/dist": true,
+    "**/bun.lock": true
+  }
+}

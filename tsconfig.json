@@ -1,20 +1,51 @@
 {
+  /* --------------------------------------------------------
+     Compilador TypeScript. Extiende expo/tsconfig.base.
+     No modificar extends ni rutas de Metro.
+     Puede ajustarse paths al añadir subcarpetas en src/.
+     -------------------------------------------------------- */
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    // Seguridad y comprobaciones estrictas
     "strict": true,
-    "target": "ESnext",
-    "module": "ESnext",
-    "jsx": "react-native",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
+    // Array[i] retorna T | undefined — fuerza verificar existencia antes de usar.
+    "noUncheckedIndexedAccess": true,
+    // Opcionales no aceptan undefined explícito — solo omitidos.
+    "exactOptionalPropertyTypes": true,
+    // Métodos heredados deben declarar override explícito.
+    "noImplicitOverride": true,
+    // Funciones con tipo de retorno deben retornar en todos los caminos.
+    "noImplicitReturns": true,
+    // Variables y parámetros no utilizados son error.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    // Switch sin break/return/throw es error.
+    "noFallthroughCasesInSwitch": true,
+    // Desactivado: NativeWind usa notación de punto con diccionarios de estilos dinámicos.
+    "noPropertyAccessFromIndexSignature": false,
+    // Resolución de módulos
     "skipLibCheck": true,
+    // Permite importar CommonJS con sintaxis ESM.
+    "esModuleInterop": true,
+    // Requerido por Metro/Expo para imports históricos de React Native.
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    // Evita fallos de compilación en CI/CD por diferencias de casing entre SO.
+    "forceConsistentCasingInFileNames": true,
+    // Alias — @/* y ~/* apuntan a src/
     "paths": {
       "@/*": ["./src/*"],
       "~/*": ["./src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"],
-  "exclude": ["node_modules"],
-  "extends": "expo/tsconfig.base"
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "config/eslint.config.ts",
+    "config/commitlint.config.ts",
+    "config/lint-staged.config.ts",
+    "config/prettier.config.mjs"
+  ]
 }
