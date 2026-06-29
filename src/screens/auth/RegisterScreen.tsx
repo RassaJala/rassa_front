@@ -51,6 +51,11 @@ export default function RegisterScreen({ navigation }: any) {
     confirmPassword: "",
     role: "buyer",
   });
+  const ROLE_LABEL_MAP: Record<string, string> = {
+    buyer: "Cliente",
+    farmer: "Agricultor",
+    seller: "Vendedor",
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -86,9 +91,9 @@ export default function RegisterScreen({ navigation }: any) {
         last_name: form.last_name,
         email: form.email,
         phone_number: form.phone_number,
-        role: form.role as any,
+        role: ROLE_LABEL_MAP[form.role] || form.role,
         password: form.password,
-      });
+      } as any);
     } catch (err: any) {
       setError(
         err.response?.data?.email?.[0] ||

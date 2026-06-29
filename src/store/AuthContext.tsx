@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useMemo,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../services/api";
 import { User } from "../types";
@@ -19,7 +26,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [state, setState] = useState<AuthState>({
     user: null,
     token: null,
@@ -44,21 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       await AsyncStorage.multiRemove(["access_token", "refresh_token"]);
       api.defaults.headers.common.Authorization = undefined;
-      setState({ user: null, token: null, isLoading: false, isAuthenticated: false });
+      setState({
+        user: null,
+        token: null,
+        isLoading: false,
+        isAuthenticated: false,
+      });
     }
   }
 
   async function login(email: string, password: string, remember = true) {
-    let response;
-
-    try {
-      response = await api.post<LoginResponse>("/auth/login-api/", { email, password, remember });
-    } catch (error: any) {
-      if (error.response?.status !== 404) {
-        throw error;
-      }
-      response = await api.post<LoginResponse>("/token/", { email, password, remember });
-    }
+    const response = await api.post<LoginResponse>("/auth/login/", {
+      email,
+      password,
+      remember,
+    });
 
     const data = response.data;
     if (!data?.success) {
@@ -70,7 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem("refresh_token", data.refresh);
     await AsyncStorage.setItem("remember_me", remember ? "1" : "0");
     api.defaults.headers.common.Authorization = `Bearer ${data.access}`;
-    setState({ user, token: data.access, isLoading: false, isAuthenticated: true });
+    setState({
+      user,
+      token: data.access,
+      isLoading: false,
+      isAuthenticated: true,
+    });
   }
 
   async function register(fields: Partial<User> & { password: string }) {
@@ -81,14 +93,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     await AsyncStorage.multiRemove(["access_token", "refresh_token"]);
-    setState({ user: null, token: null, isLoading: false, isAuthenticated: false });
+    setState({
+      user: null,
+      token: null,
+      isLoading: false,
+      isAuthenticated: false,
+    });
   }
 
-  return (
-    <AuthContext.Provider value={{ ...state, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value: AuthContextType = useMemo(
+    () => ({
+      ...state,
+      login,
+      register,
+      logout,
+    }),
+    [state],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

@@ -11,8 +11,8 @@ import {
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { useAuth } from "../../store/AuthContext";
-import { authService } from "../../services/authService";
+import { useAuth } from "~/store/AuthContext";
+import { authService } from "~/services/authService";
 
 const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
@@ -38,9 +38,34 @@ export default function ProfileScreen({ navigation }: any) {
     email: user?.email ?? "",
     phone_number: user?.phone_number ?? "",
   });
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const data = await authService.getProfile();
+        setProfileForm({
+          first_name: data.first_name ?? "",
+          last_name: data.last_name ?? "",
+          email: data.email ?? "",
+          phone_number: data.phone_number ?? "",
+        });
+        setProfileLoaded(true);
+      } catch (err: any) {
+        setProfileError(
+          err.response?.data?.detail || "No se pudo cargar el perfil.",
+        );
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
 
   // ── Password form state ──
   const [pwForm, setPwForm] = useState({
@@ -62,7 +87,11 @@ export default function ProfileScreen({ navigation }: any) {
 
   // ── Save profile ──
   const handleSaveProfile = async () => {
-    if (!profileForm.first_name || !profileForm.last_name || !profileForm.email) {
+    if (
+      !profileForm.first_name ||
+      !profileForm.last_name ||
+      !profileForm.email
+    ) {
       setProfileError("Nombre, apellido y correo son obligatorios.");
       return;
     }
@@ -80,7 +109,7 @@ export default function ProfileScreen({ navigation }: any) {
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (err: any) {
       setProfileError(
-        err.response?.data?.detail || "Error al actualizar el perfil."
+        err.response?.data?.detail || "Error al actualizar el perfil.",
       );
     } finally {
       setProfileLoading(false);
@@ -89,7 +118,11 @@ export default function ProfileScreen({ navigation }: any) {
 
   // ── Change password ──
   const handleChangePassword = async () => {
-    if (!pwForm.old_password || !pwForm.new_password || !pwForm.confirm_password) {
+    if (
+      !pwForm.old_password ||
+      !pwForm.new_password ||
+      !pwForm.confirm_password
+    ) {
       setPwError("Completa todos los campos de contraseña.");
       return;
     }
@@ -108,16 +141,28 @@ export default function ProfileScreen({ navigation }: any) {
       await authService.changePassword({
         old_password: pwForm.old_password,
         new_password: pwForm.new_password,
+        confirm_new_password: pwForm.confirm_password,
       });
       setPwSuccess(true);
       setPwForm({ old_password: "", new_password: "", confirm_password: "" });
       setTimeout(() => setPwSuccess(false), 3000);
     } catch (err: any) {
-      setPwError(
-        err.response?.data?.old_password?.[0] ||
-          err.response?.data?.detail ||
-          "Error al cambiar la contraseña."
-      );
+      const errorData = err.response?.data;
+      const serverMessage =
+        Array.isArray(errorData) && errorData.length > 0
+          ? errorData[0]?.message
+          : errorData?.message || errorData?.detail;
+
+      if (serverMessage === "Contraseña actual incorrecta.") {
+        Alert.alert("Error", "Contraseña actual incorrecta.");
+        setPwError("Contraseña actual incorrecta.");
+      } else {
+        setPwError(
+          serverMessage ||
+            err.response?.data?.old_password?.[0] ||
+            "Error al cambiar la contraseña.",
+        );
+      }
     } finally {
       setPwLoading(false);
     }
@@ -126,7 +171,7 @@ export default function ProfileScreen({ navigation }: any) {
   // ── Logout confirm ──
   const handleLogout = () => {
     if (Platform.OS === "web") {
-      if (window.confirm("¿Seguro que quieres cerrar sesión?")) logout();
+      if (globalThis.confirm("¿Seguro que quieres cerrar sesión?")) logout();
     } else {
       Alert.alert("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", [
         { text: "Cancelar", style: "cancel" },
@@ -139,29 +184,40 @@ export default function ProfileScreen({ navigation }: any) {
     <View style={styles.root}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {user?.first_name?.[0]}{user?.last_name?.[0]}
+            {user?.first_name?.[0]}
+            {user?.last_name?.[0]}
           </Text>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* ── User badge ── */}
         <View style={styles.profileHero}>
           <View style={styles.heroAvatar}>
             <Text style={styles.heroAvatarText}>
-              {user?.first_name?.[0]}{user?.last_name?.[0]}
+              {user?.first_name?.[0]}
+              {user?.last_name?.[0]}
             </Text>
           </View>
           <Text style={styles.heroName}>
-            {user?.first_name} {user?.last_name}
+            {profileForm.first_name || user?.first_name}{" "}
+            {profileForm.last_name || user?.last_name}
           </Text>
-          <Text style={styles.heroEmail}>{user?.email}</Text>
+          <Text style={styles.heroEmail}>
+            {profileForm.email || user?.email}
+          </Text>
           <View style={styles.roleBadge}>
             <Text style={styles.roleBadgeText}>
               {ROLE_LABELS[user?.role ?? "buyer"]}
@@ -171,17 +227,30 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* ── Edit profile card ── */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📝  Datos Personales</Text>
+          <Text style={styles.cardTitle}>📝 Datos Personales</Text>
 
           {!!profileError && (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️  {profileError}</Text>
+              <Text style={styles.errorText}>⚠️ {profileError}</Text>
             </View>
           )}
-          {profileSuccess && (
-            <View style={styles.successBox}>
-              <Text style={styles.successText}>✅  Perfil actualizado correctamente.</Text>
+          {profileLoading && !profileLoaded ? (
+            <View style={styles.loadingBox}>
+              <ActivityIndicator color={GREEN_DARK} />
+              <Text style={styles.loadingText}>
+                Cargando datos del perfil...
+              </Text>
             </View>
+          ) : (
+            <>
+              {profileSuccess && (
+                <View style={styles.successBox}>
+                  <Text style={styles.successText}>
+                    ✅ Perfil actualizado correctamente.
+                  </Text>
+                </View>
+              )}
+            </>
           )}
 
           <View style={[styles.row, isMobile && styles.rowMobile]}>
@@ -248,16 +317,18 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* ── Change password card ── */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🔒  Cambiar Contraseña</Text>
+          <Text style={styles.cardTitle}>🔒 Cambiar Contraseña</Text>
 
           {!!pwError && (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️  {pwError}</Text>
+              <Text style={styles.errorText}>⚠️ {pwError}</Text>
             </View>
           )}
           {pwSuccess && (
             <View style={styles.successBox}>
-              <Text style={styles.successText}>✅  Contraseña cambiada correctamente.</Text>
+              <Text style={styles.successText}>
+                ✅ Contraseña cambiada correctamente.
+              </Text>
             </View>
           )}
 
@@ -273,7 +344,10 @@ export default function ProfileScreen({ navigation }: any) {
                 placeholderTextColor="#b0bec5"
                 secureTextEntry={!showOld}
               />
-              <TouchableOpacity onPress={() => setShowOld((v) => !v)} style={styles.eyeBtn}>
+              <TouchableOpacity
+                onPress={() => setShowOld((v) => !v)}
+                style={styles.eyeBtn}
+              >
                 <Text>{showOld ? "🙈" : "👁️"}</Text>
               </TouchableOpacity>
             </View>
@@ -291,7 +365,10 @@ export default function ProfileScreen({ navigation }: any) {
                   placeholderTextColor="#b0bec5"
                   secureTextEntry={!showNew}
                 />
-                <TouchableOpacity onPress={() => setShowNew((v) => !v)} style={styles.eyeBtn}>
+                <TouchableOpacity
+                  onPress={() => setShowNew((v) => !v)}
+                  style={styles.eyeBtn}
+                >
                   <Text>{showNew ? "🙈" : "👁️"}</Text>
                 </TouchableOpacity>
               </View>
@@ -307,7 +384,10 @@ export default function ProfileScreen({ navigation }: any) {
                   placeholderTextColor="#b0bec5"
                   secureTextEntry={!showConfirm}
                 />
-                <TouchableOpacity onPress={() => setShowConfirm((v) => !v)} style={styles.eyeBtn}>
+                <TouchableOpacity
+                  onPress={() => setShowConfirm((v) => !v)}
+                  style={styles.eyeBtn}
+                >
                   <Text>{showConfirm ? "🙈" : "👁️"}</Text>
                 </TouchableOpacity>
               </View>
@@ -315,7 +395,11 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
 
           <TouchableOpacity
-            style={[styles.btn, styles.btnSecondary, pwLoading && styles.btnDisabled]}
+            style={[
+              styles.btn,
+              styles.btnSecondary,
+              pwLoading && styles.btnDisabled,
+            ]}
             onPress={handleChangePassword}
             disabled={pwLoading}
             activeOpacity={0.85}
@@ -329,8 +413,12 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
 
         {/* ── Logout ── */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
-          <Text style={styles.logoutText}>🚪  Cerrar Sesión</Text>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.logoutText}>🚪 Cerrar Sesión</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -399,7 +487,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   heroAvatarText: { color: "#fff", fontSize: 28, fontWeight: "800" },
-  heroName: { fontSize: 22, fontWeight: "800", color: "#111827", marginBottom: 4 },
+  heroName: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 4,
+  },
   heroEmail: { fontSize: 14, color: "#6b7280", marginBottom: 12 },
   roleBadge: {
     backgroundColor: GREEN_LIGHT,
@@ -422,7 +515,12 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 5,
   },
-  cardTitle: { fontSize: 17, fontWeight: "700", color: "#111827", marginBottom: 18 },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 18,
+  },
 
   /* ── Feedback ── */
   errorBox: {
@@ -434,6 +532,21 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   errorText: { color: "#dc2626", fontSize: 13 },
+  loadingBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    backgroundColor: GREEN_LIGHT,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  loadingText: {
+    marginLeft: 8,
+    color: GREEN_DARK,
+    fontSize: 14,
+  },
   successBox: {
     backgroundColor: "#f0fdf4",
     borderWidth: 1.5,
@@ -511,5 +624,3 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: "#dc2626", fontSize: 15, fontWeight: "700" },
 });
-
-

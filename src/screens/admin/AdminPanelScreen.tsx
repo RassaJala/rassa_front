@@ -8,12 +8,11 @@ import {
   TextInput,
   ActivityIndicator,
   Switch,
-  Platform,
   useWindowDimensions,
 } from "react-native";
-import { useAuth } from "../../store/AuthContext";
-import { adminService } from "../../services/adminService";
-import { AdminUser } from "../../types/auth";
+import { useAuth } from "~/store/AuthContext";
+import { adminService } from "~/services/adminService";
+import { AdminUser } from "~/types/auth";
 
 /* ── Constants ── */
 const GREEN = "#16a34a";
@@ -55,21 +54,29 @@ function UserRow({
   onRoleChange,
   onToggleActive,
   updatingId,
-}: {
+}: Readonly<{
   user: AdminUser;
   onRoleChange: (id: number, role: string) => void;
   onToggleActive: (id: number, active: boolean) => void;
   updatingId: number | null;
-}) {
+}>) {
   const [showRoles, setShowRoles] = useState(false);
 
   return (
     <View style={styles.userRow}>
       {/* Avatar + name */}
       <View style={styles.userAvatarWrap}>
-        <View style={[styles.userAvatar, { backgroundColor: ROLE_COLORS[user.role] + "22" }]}>
-          <Text style={[styles.userAvatarText, { color: ROLE_COLORS[user.role] }]}>
-            {user.first_name?.[0]}{user.last_name?.[0]}
+        <View
+          style={[
+            styles.userAvatar,
+            { backgroundColor: ROLE_COLORS[user.role] + "22" },
+          ]}
+        >
+          <Text
+            style={[styles.userAvatarText, { color: ROLE_COLORS[user.role] }]}
+          >
+            {user.first_name?.[0]}
+            {user.last_name?.[0]}
           </Text>
         </View>
         <View style={styles.userInfo}>
@@ -83,27 +90,50 @@ function UserRow({
       {/* Role selector */}
       <View style={styles.roleWrap}>
         <TouchableOpacity
-          style={[styles.rolePill, { backgroundColor: ROLE_COLORS[user.role] + "18", borderColor: ROLE_COLORS[user.role] + "50" }]}
+          style={[
+            styles.rolePill,
+            {
+              backgroundColor: ROLE_COLORS[user.role] + "18",
+              borderColor: ROLE_COLORS[user.role] + "50",
+            },
+          ]}
           onPress={() => setShowRoles((v) => !v)}
           activeOpacity={0.8}
         >
-          <Text style={[styles.rolePillText, { color: ROLE_COLORS[user.role] }]}>
+          <Text
+            style={[styles.rolePillText, { color: ROLE_COLORS[user.role] }]}
+          >
             {ROLE_LABELS[user.role]}
           </Text>
-          <Text style={[styles.rolePillCaret, { color: ROLE_COLORS[user.role] }]}>▾</Text>
+          <Text
+            style={[styles.rolePillCaret, { color: ROLE_COLORS[user.role] }]}
+          >
+            ▾
+          </Text>
         </TouchableOpacity>
         {showRoles && (
           <View style={styles.roleDropdown}>
             {ROLE_OPTIONS.map((r) => (
               <TouchableOpacity
                 key={r}
-                style={[styles.roleOption, user.role === r && styles.roleOptionActive]}
+                style={[
+                  styles.roleOption,
+                  user.role === r && styles.roleOptionActive,
+                ]}
                 onPress={() => {
                   onRoleChange(user.id, r);
                   setShowRoles(false);
                 }}
               >
-                <Text style={[styles.roleOptionText, user.role === r && { color: ROLE_COLORS[r], fontWeight: "700" }]}>
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    user.role === r && {
+                      color: ROLE_COLORS[r],
+                      fontWeight: "700",
+                    },
+                  ]}
+                >
                   {ROLE_LABELS[r]}
                 </Text>
               </TouchableOpacity>
@@ -124,7 +154,12 @@ function UserRow({
               trackColor={{ false: "#e2e8f0", true: "#86efac" }}
               thumbColor={user.is_active ? GREEN : "#94a3b8"}
             />
-            <Text style={[styles.activeLabel, { color: user.is_active ? GREEN : "#94a3b8" }]}>
+            <Text
+              style={[
+                styles.activeLabel,
+                { color: user.is_active ? GREEN : "#94a3b8" },
+              ]}
+            >
               {user.is_active ? "Activo" : "Inactivo"}
             </Text>
           </>
@@ -152,19 +187,24 @@ export default function AdminPanelScreen({ navigation }: any) {
   const [totalUsers, setTotalUsers] = useState(0);
 
   /* ── Fetch users ── */
-  const fetchUsers = useCallback(async (q?: string) => {
-    setUsersLoading(true);
-    setUsersError("");
-    try {
-      const res = await adminService.getUsers(q ?? search);
-      setUsers(res.results);
-      setTotalUsers(res.count);
-    } catch {
-      setUsersError("No se pudieron cargar los usuarios. Verifica tu conexión.");
-    } finally {
-      setUsersLoading(false);
-    }
-  }, [search]);
+  const fetchUsers = useCallback(
+    async (q?: string) => {
+      setUsersLoading(true);
+      setUsersError("");
+      try {
+        const res = await adminService.getUsers(q ?? search);
+        setUsers(res.results);
+        setTotalUsers(res.count);
+      } catch {
+        setUsersError(
+          "No se pudieron cargar los usuarios. Verifica tu conexión.",
+        );
+      } finally {
+        setUsersLoading(false);
+      }
+    },
+    [search],
+  );
 
   useEffect(() => {
     if (activeSection === "Usuarios") fetchUsers();
@@ -182,7 +222,9 @@ export default function AdminPanelScreen({ navigation }: any) {
     setUpdatingId(id);
     try {
       const updated = await adminService.updateUser(id, { role });
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u)));
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u)),
+      );
     } catch {
       /* show nothing — API will handle feedback */
     } finally {
@@ -193,11 +235,18 @@ export default function AdminPanelScreen({ navigation }: any) {
   /* ── Toggle active ── */
   const handleToggleActive = async (id: number, active: boolean) => {
     setUpdatingId(id);
+    const previousUsers = users;
     try {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, is_active: active } : u)),
+      );
       await adminService.updateUser(id, { is_active: active });
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_active: active } : u)));
-    } catch {
-      /* noop */
+    } catch (err: any) {
+      console.error(
+        "Error toggling user active status:",
+        err?.response?.data || err.message,
+      );
+      setUsers(previousUsers);
     } finally {
       setUpdatingId(null);
     }
@@ -205,7 +254,12 @@ export default function AdminPanelScreen({ navigation }: any) {
 
   /* ── Stats derived from users ── */
   const statsData = [
-    { label: "Usuarios totales", value: String(totalUsers), icon: "👥", color: "#6366f1" },
+    {
+      label: "Usuarios totales",
+      value: String(totalUsers),
+      icon: "👥",
+      color: "#6366f1",
+    },
     {
       label: "Agricultores",
       value: String(users.filter((u) => u.role === "farmer").length),
@@ -241,12 +295,20 @@ export default function AdminPanelScreen({ navigation }: any) {
           {SECTIONS.map((s) => (
             <TouchableOpacity
               key={s.key}
-              style={[styles.sidebarItem, activeSection === s.key && styles.sidebarItemActive]}
+              style={[
+                styles.sidebarItem,
+                activeSection === s.key && styles.sidebarItemActive,
+              ]}
               onPress={() => setActiveSection(s.key)}
               activeOpacity={0.8}
             >
               <Text style={styles.sidebarItemIcon}>{s.icon}</Text>
-              <Text style={[styles.sidebarItemText, activeSection === s.key && styles.sidebarItemTextActive]}>
+              <Text
+                style={[
+                  styles.sidebarItemText,
+                  activeSection === s.key && styles.sidebarItemTextActive,
+                ]}
+              >
                 {s.key}
               </Text>
             </TouchableOpacity>
@@ -256,7 +318,8 @@ export default function AdminPanelScreen({ navigation }: any) {
             <View style={styles.sidebarUserRow}>
               <View style={styles.sidebarAvatar}>
                 <Text style={styles.sidebarAvatarText}>
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  {user?.first_name?.[0]}
+                  {user?.last_name?.[0]}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -270,17 +333,20 @@ export default function AdminPanelScreen({ navigation }: any) {
               onPress={() => navigation?.navigate?.("Profile")}
               style={styles.profileBtn}
             >
-              <Text style={styles.profileBtnText}>👤  Mi Perfil</Text>
+              <Text style={styles.profileBtnText}>👤 Mi Perfil</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-              <Text style={styles.logoutText}>🚪  Cerrar sesión</Text>
+              <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
       {/* ══ Main content ══ */}
-      <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
+      <ScrollView
+        style={styles.main}
+        contentContainerStyle={styles.mainContent}
+      >
         {/* Mobile header */}
         {isMobile && (
           <View style={styles.mobileHeader}>
@@ -296,15 +362,27 @@ export default function AdminPanelScreen({ navigation }: any) {
 
         {/* Mobile nav */}
         {isMobile && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mobileNav}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.mobileNav}
+          >
             {SECTIONS.map((s) => (
               <TouchableOpacity
                 key={s.key}
-                style={[styles.mobileNavItem, activeSection === s.key && styles.mobileNavItemActive]}
+                style={[
+                  styles.mobileNavItem,
+                  activeSection === s.key && styles.mobileNavItemActive,
+                ]}
                 onPress={() => setActiveSection(s.key)}
               >
                 <Text style={styles.mobileNavIcon}>{s.icon}</Text>
-                <Text style={[styles.mobileNavText, activeSection === s.key && styles.mobileNavTextActive]}>
+                <Text
+                  style={[
+                    styles.mobileNavText,
+                    activeSection === s.key && styles.mobileNavTextActive,
+                  ]}
+                >
                   {s.key}
                 </Text>
               </TouchableOpacity>
@@ -316,12 +394,17 @@ export default function AdminPanelScreen({ navigation }: any) {
         <View style={styles.topBar}>
           <View>
             <Text style={styles.pageTitle}>{activeSection}</Text>
-            {!isMobile && <Text style={styles.pageSubtitle}>Panel de administración · Rassa</Text>}
+            {!isMobile && (
+              <Text style={styles.pageSubtitle}>
+                Panel de administración · Rassa
+              </Text>
+            )}
           </View>
           {!isMobile && (
             <View style={styles.topAvatar}>
               <Text style={styles.topAvatarText}>
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
+                {user?.first_name?.[0]}
+                {user?.last_name?.[0]}
               </Text>
             </View>
           )}
@@ -333,9 +416,14 @@ export default function AdminPanelScreen({ navigation }: any) {
             {/* Stats grid */}
             <View style={styles.statsGrid}>
               {statsData.map((s) => (
-                <View key={s.label} style={[styles.statCard, { borderLeftColor: s.color }]}>
+                <View
+                  key={s.label}
+                  style={[styles.statCard, { borderLeftColor: s.color }]}
+                >
                   <Text style={styles.statIcon}>{s.icon}</Text>
-                  <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                  <Text style={[styles.statValue, { color: s.color }]}>
+                    {s.value}
+                  </Text>
                   <Text style={styles.statLabel}>{s.label}</Text>
                 </View>
               ))}
@@ -345,8 +433,18 @@ export default function AdminPanelScreen({ navigation }: any) {
             <Text style={styles.sectionTitle}>Acciones rápidas</Text>
             <View style={styles.actionsGrid}>
               {[
-                { label: "Gestionar Usuarios", icon: "👥", color: "#6366f1", target: "Usuarios" },
-                { label: "Mi Perfil", icon: "👤", color: "#16a34a", target: "Perfil" },
+                {
+                  label: "Gestionar Usuarios",
+                  icon: "👥",
+                  color: "#6366f1",
+                  target: "Usuarios",
+                },
+                {
+                  label: "Mi Perfil",
+                  icon: "👤",
+                  color: "#16a34a",
+                  target: "Perfil",
+                },
               ].map((a) => (
                 <TouchableOpacity
                   key={a.label}
@@ -354,7 +452,12 @@ export default function AdminPanelScreen({ navigation }: any) {
                   onPress={() => setActiveSection(a.target)}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.actionIcon, { backgroundColor: a.color + "18" }]}>
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      { backgroundColor: a.color + "18" },
+                    ]}
+                  >
                     <Text style={{ fontSize: 28 }}>{a.icon}</Text>
                   </View>
                   <Text style={styles.actionLabel}>{a.label}</Text>
@@ -364,12 +467,16 @@ export default function AdminPanelScreen({ navigation }: any) {
 
             {/* Admin info card */}
             <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>ℹ️  Módulo M3 — Usuarios y Roles</Text>
+              <Text style={styles.infoCardTitle}>
+                ℹ️ Módulo M3 — Usuarios y Roles
+              </Text>
               <Text style={styles.infoCardText}>
-                Este panel permite gestionar el acceso al sistema y la administración de las personas registradas mediante un esquema de autenticación y control de roles.{"\n\n"}
-                • 4 roles disponibles: Administrador, Vendedor, Agricultor, Cliente{"\n"}
-                • Búsqueda, cambio de rol y desactivación de cuentas{"\n"}
-                • Usuario administrador: admin@rassa.com
+                Este panel permite gestionar el acceso al sistema y la
+                administración de las personas registradas mediante un esquema
+                de autenticación y control de roles.{"\n\n"}• 4 roles
+                disponibles: Administrador, Vendedor, Agricultor, Cliente{"\n"}•
+                Búsqueda, cambio de rol y desactivación de cuentas{"\n"}•
+                Usuario administrador: admin@rassa.com
               </Text>
             </View>
           </>
@@ -390,12 +497,18 @@ export default function AdminPanelScreen({ navigation }: any) {
                   onChangeText={setSearch}
                 />
                 {search.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearch("")} style={styles.clearBtn}>
+                  <TouchableOpacity
+                    onPress={() => setSearch("")}
+                    style={styles.clearBtn}
+                  >
                     <Text style={styles.clearBtnText}>✕</Text>
                   </TouchableOpacity>
                 )}
               </View>
-              <TouchableOpacity style={styles.refreshBtn} onPress={() => fetchUsers()}>
+              <TouchableOpacity
+                style={styles.refreshBtn}
+                onPress={() => fetchUsers()}
+              >
                 <Text style={styles.refreshIcon}>↻</Text>
               </TouchableOpacity>
             </View>
@@ -403,15 +516,20 @@ export default function AdminPanelScreen({ navigation }: any) {
             {/* Stats mini */}
             <View style={styles.userStats}>
               <Text style={styles.userStatsText}>
-                {usersLoading ? "Cargando..." : `${users.length} de ${totalUsers} usuarios`}
+                {usersLoading
+                  ? "Cargando..."
+                  : `${users.length} de ${totalUsers} usuarios`}
               </Text>
             </View>
 
             {/* Error */}
             {!!usersError && (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>⚠️  {usersError}</Text>
-                <TouchableOpacity onPress={() => fetchUsers()} style={styles.retryBtn}>
+                <Text style={styles.errorText}>⚠️ {usersError}</Text>
+                <TouchableOpacity
+                  onPress={() => fetchUsers()}
+                  style={styles.retryBtn}
+                >
                   <Text style={styles.retryText}>Reintentar</Text>
                 </TouchableOpacity>
               </View>
@@ -430,7 +548,9 @@ export default function AdminPanelScreen({ navigation }: any) {
               <View style={styles.userTable}>
                 {/* Header */}
                 <View style={styles.userTableHeader}>
-                  <Text style={[styles.userTableHeaderCell, { flex: 2 }]}>Usuario</Text>
+                  <Text style={[styles.userTableHeaderCell, { flex: 2 }]}>
+                    Usuario
+                  </Text>
                   <Text style={styles.userTableHeaderCell}>Rol</Text>
                   <Text style={styles.userTableHeaderCell}>Estado</Text>
                 </View>
@@ -438,7 +558,9 @@ export default function AdminPanelScreen({ navigation }: any) {
                 {users.length === 0 ? (
                   <View style={styles.emptyWrap}>
                     <Text style={styles.emptyIcon}>🔍</Text>
-                    <Text style={styles.emptyText}>No se encontraron usuarios.</Text>
+                    <Text style={styles.emptyText}>
+                      No se encontraron usuarios.
+                    </Text>
                   </View>
                 ) : (
                   users.map((u, i) => (
@@ -462,7 +584,8 @@ export default function AdminPanelScreen({ navigation }: any) {
             <Text style={styles.placeholderIcon}>👤</Text>
             <Text style={styles.placeholderTitle}>Gestión de Perfil</Text>
             <Text style={styles.placeholderText}>
-              Edita tus datos personales y cambia tu contraseña desde la pantalla de perfil.
+              Edita tus datos personales y cambia tu contraseña desde la
+              pantalla de perfil.
             </Text>
             <TouchableOpacity
               style={styles.btn}
@@ -489,7 +612,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sidebarHeader: { paddingHorizontal: 20, marginBottom: 28 },
-  sidebarLogo: { fontSize: 20, fontWeight: "800", color: "#fff", marginBottom: 8 },
+  sidebarLogo: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#fff",
+    marginBottom: 8,
+  },
   badge: {
     backgroundColor: GREEN,
     borderRadius: 6,
@@ -514,7 +642,12 @@ const styles = StyleSheet.create({
   sidebarItemText: { color: "#94a3b8", fontSize: 14 },
   sidebarItemTextActive: { color: "#fff", fontWeight: "700" },
   sidebarFooter: { marginTop: "auto" as any, paddingHorizontal: 16, gap: 8 },
-  sidebarUserRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  sidebarUserRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 4,
+  },
   sidebarAvatar: {
     width: 36,
     height: 36,
@@ -592,7 +725,12 @@ const styles = StyleSheet.create({
   topAvatarText: { color: "#fff", fontWeight: "800", fontSize: 14 },
 
   /* ── Stats ── */
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 24,
+  },
   statCard: {
     flex: 1,
     minWidth: 130,
@@ -611,8 +749,18 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: "#64748b", marginTop: 4 },
 
   /* ── Actions ── */
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a", marginBottom: 12 },
-  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0f172a",
+    marginBottom: 12,
+  },
+  actionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 24,
+  },
   actionCard: {
     flex: 1,
     minWidth: 130,
@@ -634,7 +782,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  actionLabel: { fontSize: 12, fontWeight: "600", color: "#374151", textAlign: "center" },
+  actionLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#374151",
+    textAlign: "center",
+  },
 
   /* ── Info card ── */
   infoCard: {
@@ -644,7 +797,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#bbf7d0",
   },
-  infoCardTitle: { fontSize: 14, fontWeight: "700", color: GREEN_DARK, marginBottom: 8 },
+  infoCardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: GREEN_DARK,
+    marginBottom: 8,
+  },
   infoCardText: { fontSize: 12, color: "#374151", lineHeight: 18 },
 
   /* ── Users section ── */
@@ -729,7 +887,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
-  userTableHeaderCell: { flex: 1, fontWeight: "700", fontSize: 11, color: "#64748b", textTransform: "uppercase" as any },
+  userTableHeaderCell: {
+    flex: 1,
+    fontWeight: "700",
+    fontSize: 11,
+    color: "#64748b",
+    textTransform: "uppercase" as any,
+  },
   userRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -739,7 +903,12 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f1f5f9",
     gap: 6,
   },
-  userAvatarWrap: { flex: 2, flexDirection: "row", alignItems: "center", gap: 8 },
+  userAvatarWrap: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   userAvatar: {
     width: 34,
     height: 34,
@@ -794,7 +963,12 @@ const styles = StyleSheet.create({
   placeholderWrap: { alignItems: "center", paddingTop: 60, gap: 14 },
   placeholderIcon: { fontSize: 56 },
   placeholderTitle: { fontSize: 22, fontWeight: "800", color: "#0f172a" },
-  placeholderText: { fontSize: 14, color: "#64748b", textAlign: "center", maxWidth: 400 },
+  placeholderText: {
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    maxWidth: 400,
+  },
   btn: {
     backgroundColor: GREEN,
     borderRadius: 12,
@@ -810,5 +984,3 @@ const styles = StyleSheet.create({
   },
   btnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 });
-
-

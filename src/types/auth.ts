@@ -35,6 +35,7 @@ export interface UpdateProfilePayload {
 
 /** Payload for changing password */
 export interface ChangePasswordPayload {
-  old_password: string;
-  new_password: string;
+  old_password?: string;
+  new_password?: string;
+  confirm_new_password?: string;
 }

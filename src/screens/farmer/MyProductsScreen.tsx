@@ -10,13 +10,34 @@ import {
 import { useAuth } from "../../store/AuthContext";
 
 const mockProducts = [
-  { id: 1, name: "Manzanas Fuji", price: "$45/kg", stock: 200, status: "Activo", sales: 48 },
-  { id: 2, name: "Lechugas Romanas", price: "$18/pieza", stock: 150, status: "Activo", sales: 30 },
-  { id: 3, name: "Tomates Cherry", price: "$32/kg", stock: 0, status: "Agotado", sales: 75 },
+  {
+    id: 1,
+    name: "Manzanas Fuji",
+    price: "$45/kg",
+    stock: 200,
+    status: "Activo",
+    sales: 48,
+  },
+  {
+    id: 2,
+    name: "Lechugas Romanas",
+    price: "$18/pieza",
+    stock: 150,
+    status: "Activo",
+    sales: 30,
+  },
+  {
+    id: 3,
+    name: "Tomates Cherry",
+    price: "$32/kg",
+    stock: 0,
+    status: "Agotado",
+    sales: 75,
+  },
 ];
 
 export default function MyProductsScreen({ navigation }: any) {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { width } = useWindowDimensions();
   const isMobile = width < 600;
   const [products] = useState(mockProducts);
@@ -29,20 +50,46 @@ export default function MyProductsScreen({ navigation }: any) {
           <Text style={styles.logo}>🌿 Rassa</Text>
           <Text style={styles.welcome}>Panel Agricultor</Text>
         </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Salir</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Profile")}
+            style={styles.profileBtn}
+          >
+            <Text style={styles.profileBtnText}>👤 Perfil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>Salir</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: "Productos", value: products.length, icon: "🛍️", color: "#f59e0b" },
-            { label: "Ventas totales", value: products.reduce((a, p) => a + p.sales, 0), icon: "📈", color: "#16a34a" },
-            { label: "Activos", value: products.filter((p) => p.status === "Activo").length, icon: "✅", color: "#6366f1" },
+            {
+              label: "Productos",
+              value: products.length,
+              icon: "🛍️",
+              color: "#f59e0b",
+            },
+            {
+              label: "Ventas totales",
+              value: products.reduce((a, p) => a + p.sales, 0),
+              icon: "📈",
+              color: "#16a34a",
+            },
+            {
+              label: "Activos",
+              value: products.filter((p) => p.status === "Activo").length,
+              icon: "✅",
+              color: "#6366f1",
+            },
           ].map((s) => (
-            <View key={s.label} style={[styles.statCard, { borderTopColor: s.color }]}>
+            <View
+              key={s.label}
+              style={[styles.statCard, { borderTopColor: s.color }]}
+            >
               <Text style={{ fontSize: 24 }}>{s.icon}</Text>
               <Text style={styles.statValue}>{s.value}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
@@ -53,13 +100,19 @@ export default function MyProductsScreen({ navigation }: any) {
         {/* Products list */}
         <View style={styles.listHeader}>
           <Text style={styles.sectionTitle}>Mis Productos</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate("AddProduct")}>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => navigation.navigate("AddProduct")}
+          >
             <Text style={styles.addBtnText}>+ Agregar</Text>
           </TouchableOpacity>
         </View>
 
         {products.map((p) => (
-          <View key={p.id} style={[styles.productCard, isMobile && styles.productCardMobile]}>
+          <View
+            key={p.id}
+            style={[styles.productCard, isMobile && styles.productCardMobile]}
+          >
             <View style={styles.productLeft}>
               <View style={styles.productImg}>
                 <Text style={{ fontSize: 24 }}>🍎</Text>
@@ -70,11 +123,19 @@ export default function MyProductsScreen({ navigation }: any) {
                 <Text style={styles.productSales}>📦 {p.sales} vendidos</Text>
               </View>
             </View>
-            <View style={[styles.productRight, isMobile && styles.productRightMobile]}>
+            <View
+              style={[
+                styles.productRight,
+                isMobile && styles.productRightMobile,
+              ]}
+            >
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: p.status === "Activo" ? "#dcfce7" : "#fef2f2" },
+                  {
+                    backgroundColor:
+                      p.status === "Activo" ? "#dcfce7" : "#fef2f2",
+                  },
                 ]}
               >
                 <Text
@@ -117,11 +178,29 @@ const styles = StyleSheet.create({
   },
   logo: { fontSize: 22, fontWeight: "800", color: "#fff" },
   welcome: { fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 2 },
-  logoutBtn: { backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  headerActions: { flexDirection: "row", gap: 10, alignItems: "center" },
+  profileBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  profileBtnText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  logoutBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
   logoutText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  statsRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
+  statsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
+  },
   statCard: {
     flex: 1,
     minWidth: 100,
@@ -136,11 +215,26 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  statValue: { fontSize: 24, fontWeight: "800", color: "#1e293b", marginTop: 6 },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginTop: 6,
+  },
   statLabel: { fontSize: 12, color: "#64748b", marginTop: 2 },
-  listHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+  listHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
   sectionTitle: { fontSize: 18, fontWeight: "700", color: "#1e293b" },
-  addBtn: { backgroundColor: GREEN, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 9 },
+  addBtn: {
+    backgroundColor: GREEN,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
   addBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
   productCard: {
     backgroundColor: "#fff",
@@ -169,11 +263,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  productName: { fontSize: 14, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
-  productPrice: { fontSize: 13, color: GREEN, fontWeight: "600", marginBottom: 2 },
+  productName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 2,
+  },
+  productPrice: {
+    fontSize: 13,
+    color: GREEN,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
   productSales: { fontSize: 11, color: "#64748b" },
   productRight: { alignItems: "flex-end", gap: 4 },
-  productRightMobile: { alignItems: "flex-start", marginTop: 10, width: "100%", flexDirection: "row", justifyContent: "space-between" },
+  productRightMobile: {
+    alignItems: "flex-start",
+    marginTop: 10,
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   statusText: { fontSize: 12, fontWeight: "700" },
   stockText: { fontSize: 12, color: "#64748b" },

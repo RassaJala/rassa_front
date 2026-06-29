@@ -7,21 +7,44 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import { useAuth } from "../../store/AuthContext";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "~/store/AuthContext";
 
 const mockProducts = [
-  { id: 1, name: "Manzanas Fuji", price: "$45/kg", stock: 200, status: "Activo", category: "Frutas" },
-  { id: 2, name: "Lechugas Romanas", price: "$18/pieza", stock: 150, status: "Activo", category: "Verduras" },
-  { id: 3, name: "Tomates Cherry", price: "$32/kg", stock: 80, status: "Agotado", category: "Verduras" },
+  {
+    id: 1,
+    name: "Manzanas Fuji",
+    price: "$45/kg",
+    stock: 200,
+    status: "Activo",
+    category: "Frutas",
+  },
+  {
+    id: 2,
+    name: "Lechugas Romanas",
+    price: "$18/pieza",
+    stock: 150,
+    status: "Activo",
+    category: "Verduras",
+  },
+  {
+    id: 3,
+    name: "Tomates Cherry",
+    price: "$32/kg",
+    stock: 80,
+    status: "Agotado",
+    category: "Verduras",
+  },
 ];
 
 export default function HomeScreen() {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<any>();
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
 
   const filtered = mockProducts.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -43,6 +66,12 @@ export default function HomeScreen() {
               </View>
             )}
           </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Profile")}
+            style={styles.profileBtn}
+          >
+            <Text style={styles.profileBtnText}>👤 Perfil</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
             <Text style={styles.logoutText}>Salir</Text>
           </TouchableOpacity>
@@ -63,14 +92,27 @@ export default function HomeScreen() {
 
         {/* Hero banner */}
         <View style={styles.hero}>
-          <Text style={styles.heroText}>🌾 Productos frescos{"\n"}directo del campo</Text>
+          <Text style={styles.heroText}>
+            🌾 Productos frescos{"\n"}directo del campo
+          </Text>
           <Text style={styles.heroSub}>Los mejores agricultores a un clic</Text>
         </View>
 
         {/* Categories */}
         <Text style={styles.sectionTitle}>Categorías</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-          {["🍎 Frutas", "🥦 Verduras", "🌽 Granos", "🥕 Raíces", "🫐 Berries", "🌿 Hierbas"].map((c) => (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.catScroll}
+        >
+          {[
+            "🍎 Frutas",
+            "🥦 Verduras",
+            "🌽 Granos",
+            "🥕 Raíces",
+            "🫐 Berries",
+            "🌿 Hierbas",
+          ].map((c) => (
             <TouchableOpacity key={c} style={styles.catChip}>
               <Text style={styles.catChipText}>{c}</Text>
             </TouchableOpacity>
@@ -93,7 +135,10 @@ export default function HomeScreen() {
                 <View style={styles.productFooter}>
                   <Text style={styles.productPrice}>{p.price}</Text>
                   <TouchableOpacity
-                    style={[styles.addBtn, p.stock === 0 && styles.addBtnDisabled]}
+                    style={[
+                      styles.addBtn,
+                      p.stock === 0 && styles.addBtnDisabled,
+                    ]}
                     onPress={() => setCartCount((c) => c + 1)}
                     disabled={p.stock === 0}
                   >
@@ -144,7 +189,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cartBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800" },
-  logoutBtn: { backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  profileBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  profileBtnText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  logoutBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
   logoutText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
@@ -170,9 +227,20 @@ const styles = StyleSheet.create({
     padding: 28,
     marginBottom: 24,
   },
-  heroText: { fontSize: 26, fontWeight: "800", color: "#fff", lineHeight: 34, marginBottom: 8 },
+  heroText: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#fff",
+    lineHeight: 34,
+    marginBottom: 8,
+  },
   heroSub: { fontSize: 14, color: "rgba(255,255,255,0.8)" },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#1e293b", marginBottom: 12 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 12,
+  },
   catScroll: { marginBottom: 24 },
   catChip: {
     backgroundColor: "#dcfce7",
@@ -204,11 +272,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   productInfo: { padding: 16 },
-  productName: { fontSize: 16, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
+  productName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 2,
+  },
   productCategory: { fontSize: 12, color: "#64748b", marginBottom: 12 },
-  productFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  productFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   productPrice: { fontSize: 18, fontWeight: "800", color: GREEN },
-  addBtn: { backgroundColor: GREEN, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtn: {
+    backgroundColor: GREEN,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   addBtnDisabled: { backgroundColor: "#94a3b8" },
   addBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   stockText: { fontSize: 12, color: "#64748b" },
