@@ -10,8 +10,9 @@ import {
   Platform,
   ScrollView,
   Animated,
+  useWindowDimensions,
 } from "react-native";
-import { useAuth } from "../../store/AuthContext";
+import { useAuth } from "~/store/AuthContext";
 
 const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
@@ -34,11 +35,19 @@ function AnimatedInput({
 
   const handleFocus = () => {
     setFocused(true);
-    Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
   };
   const handleBlur = () => {
     setFocused(false);
-    Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+    Animated.timing(anim, {
+      toValue: 0,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
   };
 
   const borderColor = anim.interpolate({
@@ -48,7 +57,9 @@ function AnimatedInput({
 
   return (
     <View style={styles.fieldGroup}>
-      <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
+      <Text style={[styles.label, focused && styles.labelFocused]}>
+        {label}
+      </Text>
       <Animated.View style={[styles.inputWrapper, { borderColor }]}>
         <TextInput
           style={styles.input}
@@ -70,6 +81,8 @@ function AnimatedInput({
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -88,127 +101,199 @@ export default function LoginScreen({ navigation }: any) {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-        err.response?.data?.detail ||
-        "Credenciales incorrectas. Intenta de nuevo."
+          err.response?.data?.detail ||
+          "Credenciales incorrectas. Intenta de nuevo.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.root}>
+  // Mobile layout: single column with small logo
+  if (isMobile) {
+    return (
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={styles.root}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* ── Left panel – branding ── */}
-          <View style={styles.brandPanel}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>🌿</Text>
+        <ScrollView
+          contentContainerStyle={styles.mobileScroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Mobile logo header */}
+          <View style={styles.mobileLogoHeader}>
+            <View style={styles.mobileLogoCircle}>
+              <Text style={styles.mobileLogoText}>🌿</Text>
             </View>
-            <Text style={styles.brandTitle}>Rassa</Text>
-            <Text style={styles.brandSubtitle}>Tu mercado agrícola de confianza</Text>
-            <View style={styles.featureList}>
-              {[
-                { icon: "🛒", text: "Compra directa a agricultores" },
-                { icon: "🌾", text: "Productos frescos y naturales" },
-                { icon: "🚚", text: "Entrega rápida a tu puerta" },
-                { icon: "✅", text: "Calidad garantizada" },
-              ].map((f, i) => (
-                <View key={i} style={styles.featureItem}>
-                  <Text style={styles.featureIcon}>{f.icon}</Text>
-                  <Text style={styles.featureText}>{f.text}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={styles.mobileBrandTitle}>Rassa</Text>
           </View>
 
-          {/* ── Right panel – form ── */}
-          <View style={styles.formPanel}>
-            <View style={styles.card}>
-              {/* Header */}
-              <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-              <Text style={styles.cardSubtitle}>Bienvenido de nuevo 👋</Text>
+          {/* Login card */}
+          <View style={styles.mobileCard}>
+            <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+            <Text style={styles.cardSubtitle}>Bienvenido de nuevo 👋</Text>
 
-              {/* Error box */}
-              {!!error && (
-                <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>⚠️  {error}</Text>
-                </View>
-              )}
-
-              {/* Email */}
-              <AnimatedInput
-                label="Correo Electrónico"
-                placeholder="tu@correo.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-              />
-
-              {/* Password with toggle */}
-              <AnimatedInput
-                label="Contraseña"
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                rightElement={
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((v) => !v)}
-                    style={styles.eyeBtn}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Text style={styles.eyeIcon}>{showPassword ? "🙈" : "👁️"}</Text>
-                  </TouchableOpacity>
-                }
-              />
-
-              {/* Submit button */}
-              <TouchableOpacity
-                style={[styles.btn, loading && styles.btnDisabled]}
-                onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnText}>Iniciar Sesión</Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Register link */}
-              <View style={styles.registerRow}>
-                <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-                  <Text style={styles.registerLink}>Regístrate aquí</Text>
-                </TouchableOpacity>
+            {!!error && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {error}</Text>
               </View>
+            )}
+
+            <AnimatedInput
+              label="Correo Electrónico"
+              placeholder="tu@correo.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+
+            <AnimatedInput
+              label="Contraseña"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              rightElement={
+                <TouchableOpacity
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={styles.eyeIcon}>
+                    {showPassword ? "🙈" : "👁️"}
+                  </Text>
+                </TouchableOpacity>
+              }
+            />
+
+            <TouchableOpacity
+              style={[styles.btn, loading && styles.btnDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.btnText}>Iniciar Sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+                <Text style={styles.registerLink}>Regístrate aquí</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  // Desktop layout: two columns filling viewport
+  return (
+    <View style={styles.root}>
+      <View style={styles.desktopContainer}>
+        {/* Left panel – branding */}
+        <View style={styles.brandPanel}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoText}>🌿</Text>
+          </View>
+          <Text style={styles.brandTitle}>Rassa</Text>
+          <Text style={styles.brandSubtitle}>
+            Tu mercado agrícola de confianza
+          </Text>
+          <View style={styles.featureList}>
+            {[
+              { icon: "🛒", text: "Compra directa a agricultores" },
+              { icon: "🌾", text: "Productos frescos y naturales" },
+              { icon: "🚚", text: "Entrega rápida a tu puerta" },
+              { icon: "✅", text: "Calidad garantizada" },
+            ].map((f) => (
+              <View key={f.icon} style={styles.featureItem}>
+                <Text style={styles.featureIcon}>{f.icon}</Text>
+                <Text style={styles.featureText}>{f.text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Right panel – form */}
+        <View style={styles.formPanel}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+            <Text style={styles.cardSubtitle}>Bienvenido de nuevo 👋</Text>
+
+            {!!error && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {error}</Text>
+              </View>
+            )}
+
+            <AnimatedInput
+              label="Correo Electrónico"
+              placeholder="tu@correo.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+
+            <AnimatedInput
+              label="Contraseña"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              rightElement={
+                <TouchableOpacity
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={styles.eyeIcon}>
+                    {showPassword ? "🙈" : "👁️"}
+                  </Text>
+                </TouchableOpacity>
+              }
+            />
+
+            <TouchableOpacity
+              style={[styles.btn, loading && styles.btnDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.btnText}>Iniciar Sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+                <Text style={styles.registerLink}>Regístrate aquí</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: GREEN_BG },
-  flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    minHeight: "100%" as any,
-  },
 
-  /* ── Brand panel ── */
+  /* ── Desktop ── */
+  desktopContainer: {
+    flex: 1,
+    flexDirection: "row",
+  },
   brandPanel: {
     flex: 1,
-    minWidth: 300,
     backgroundColor: GREEN_PANEL,
     padding: 48,
     justifyContent: "center",
@@ -250,22 +335,61 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.9)",
     fontSize: 15,
   },
-
-  /* ── Form panel ── */
   formPanel: {
     flex: 1,
-    minWidth: 300,
     justifyContent: "center",
     alignItems: "center",
     padding: 32,
     backgroundColor: GREEN_BG,
   },
+
+  /* ── Mobile ── */
+  mobileScroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  mobileLogoHeader: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  mobileLogoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: GREEN_PANEL,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  mobileLogoText: { fontSize: 32 },
+  mobileBrandTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: GREEN_PANEL,
+  },
+
+  /* ── Card (shared) ── */
   card: {
     width: "100%",
     maxWidth: 440,
     backgroundColor: "#fff",
     borderRadius: 24,
     padding: 36,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  mobileCard: {
+    width: "100%",
+    maxWidth: 440,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 28,
+    alignSelf: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
@@ -337,7 +461,12 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   btnDisabled: { backgroundColor: "#86efac", shadowOpacity: 0 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
+  btnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
 
   /* ── Register link ── */
   registerRow: {

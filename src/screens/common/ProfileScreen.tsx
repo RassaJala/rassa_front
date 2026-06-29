@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useAuth } from "../../store/AuthContext";
 import { authService } from "../../services/authService";
@@ -27,6 +28,8 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 600;
 
   // ── Profile form state ──
   const [profileForm, setProfileForm] = useState({
@@ -181,7 +184,7 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           )}
 
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={[styles.fieldGroup, styles.flex]}>
               <Text style={styles.label}>Nombre</Text>
               <TextInput
@@ -276,7 +279,7 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           </View>
 
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={[styles.fieldGroup, styles.flex]}>
               <Text style={styles.label}>Nueva contraseña</Text>
               <View style={styles.inputRow}>
@@ -444,6 +447,7 @@ const styles = StyleSheet.create({
   /* ── Fields ── */
   flex: { flex: 1 },
   row: { flexDirection: "row", gap: 12 },
+  rowMobile: { flexDirection: "column" },
   fieldGroup: { marginBottom: 14 },
   label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 },
   input: {

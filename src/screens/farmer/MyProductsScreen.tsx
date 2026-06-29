@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useAuth } from "../../store/AuthContext";
 
@@ -16,6 +17,8 @@ const mockProducts = [
 
 export default function MyProductsScreen({ navigation }: any) {
   const { user, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 600;
   const [products] = useState(mockProducts);
 
   return (
@@ -56,10 +59,10 @@ export default function MyProductsScreen({ navigation }: any) {
         </View>
 
         {products.map((p) => (
-          <View key={p.id} style={styles.productCard}>
+          <View key={p.id} style={[styles.productCard, isMobile && styles.productCardMobile]}>
             <View style={styles.productLeft}>
               <View style={styles.productImg}>
-                <Text style={{ fontSize: 28 }}>🍎</Text>
+                <Text style={{ fontSize: 24 }}>🍎</Text>
               </View>
               <View>
                 <Text style={styles.productName}>{p.name}</Text>
@@ -67,7 +70,7 @@ export default function MyProductsScreen({ navigation }: any) {
                 <Text style={styles.productSales}>📦 {p.sales} vendidos</Text>
               </View>
             </View>
-            <View style={styles.productRight}>
+            <View style={[styles.productRight, isMobile && styles.productRightMobile]}>
               <View
                 style={[
                   styles.statusBadge,
@@ -118,12 +121,13 @@ const styles = StyleSheet.create({
   logoutText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
+  statsRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   statCard: {
     flex: 1,
+    minWidth: 100,
     backgroundColor: "#fff",
     borderRadius: 14,
-    padding: 16,
+    padding: 14,
     alignItems: "center",
     borderTopWidth: 4,
     shadowColor: "#000",
@@ -140,9 +144,9 @@ const styles = StyleSheet.create({
   addBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
   productCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -152,19 +156,24 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  productLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  productCardMobile: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  productLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   productImg: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 10,
     backgroundColor: "#f0fdf4",
     justifyContent: "center",
     alignItems: "center",
   },
-  productName: { fontSize: 15, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
-  productPrice: { fontSize: 14, color: GREEN, fontWeight: "600", marginBottom: 2 },
-  productSales: { fontSize: 12, color: "#64748b" },
-  productRight: { alignItems: "flex-end", gap: 6 },
+  productName: { fontSize: 14, fontWeight: "700", color: "#1e293b", marginBottom: 2 },
+  productPrice: { fontSize: 13, color: GREEN, fontWeight: "600", marginBottom: 2 },
+  productSales: { fontSize: 11, color: "#64748b" },
+  productRight: { alignItems: "flex-end", gap: 4 },
+  productRightMobile: { alignItems: "flex-start", marginTop: 10, width: "100%", flexDirection: "row", justifyContent: "space-between" },
   statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   statusText: { fontSize: 12, fontWeight: "700" },
   stockText: { fontSize: 12, color: "#64748b" },

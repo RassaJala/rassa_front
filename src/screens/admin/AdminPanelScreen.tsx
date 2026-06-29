@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useAuth } from "../../store/AuthContext";
 import { adminService } from "../../services/adminService";
@@ -138,6 +139,8 @@ function UserRow({
 /* ══════════════════════════════════════════ */
 export default function AdminPanelScreen({ navigation }: any) {
   const { user, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const [activeSection, setActiveSection] = useState("Dashboard");
 
   /* ── Users state ── */
@@ -225,68 +228,103 @@ export default function AdminPanelScreen({ navigation }: any) {
 
   return (
     <View style={styles.root}>
-      {/* ══ Sidebar ══ */}
-      <View style={styles.sidebar}>
-        <View style={styles.sidebarHeader}>
-          <Text style={styles.sidebarLogo}>🌿 Rassa</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Admin</Text>
-          </View>
-        </View>
-
-        {SECTIONS.map((s) => (
-          <TouchableOpacity
-            key={s.key}
-            style={[styles.sidebarItem, activeSection === s.key && styles.sidebarItemActive]}
-            onPress={() => setActiveSection(s.key)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.sidebarItemIcon}>{s.icon}</Text>
-            <Text style={[styles.sidebarItemText, activeSection === s.key && styles.sidebarItemTextActive]}>
-              {s.key}
-            </Text>
-          </TouchableOpacity>
-        ))}
-
-        <View style={styles.sidebarFooter}>
-          <View style={styles.sidebarUserRow}>
-            <View style={styles.sidebarAvatar}>
-              <Text style={styles.sidebarAvatarText}>
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sidebarUserName}>
-                {user?.first_name} {user?.last_name}
-              </Text>
-              <Text style={styles.sidebarUserEmail}>{user?.email}</Text>
+      {/* ══ Sidebar - hidden on mobile ══ */}
+      {!isMobile && (
+        <View style={styles.sidebar}>
+          <View style={styles.sidebarHeader}>
+            <Text style={styles.sidebarLogo}>🌿 Rassa</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Admin</Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => navigation?.navigate?.("Profile")}
-            style={styles.profileBtn}
-          >
-            <Text style={styles.profileBtnText}>👤  Mi Perfil</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>🚪  Cerrar sesión</Text>
-          </TouchableOpacity>
+
+          {SECTIONS.map((s) => (
+            <TouchableOpacity
+              key={s.key}
+              style={[styles.sidebarItem, activeSection === s.key && styles.sidebarItemActive]}
+              onPress={() => setActiveSection(s.key)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.sidebarItemIcon}>{s.icon}</Text>
+              <Text style={[styles.sidebarItemText, activeSection === s.key && styles.sidebarItemTextActive]}>
+                {s.key}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <View style={styles.sidebarFooter}>
+            <View style={styles.sidebarUserRow}>
+              <View style={styles.sidebarAvatar}>
+                <Text style={styles.sidebarAvatarText}>
+                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sidebarUserName}>
+                  {user?.first_name} {user?.last_name}
+                </Text>
+                <Text style={styles.sidebarUserEmail}>{user?.email}</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate?.("Profile")}
+              style={styles.profileBtn}
+            >
+              <Text style={styles.profileBtnText}>👤  Mi Perfil</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+              <Text style={styles.logoutText}>🚪  Cerrar sesión</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* ══ Main content ══ */}
       <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
+        {/* Mobile header */}
+        {isMobile && (
+          <View style={styles.mobileHeader}>
+            <View>
+              <Text style={styles.mobileLogo}>🌿 Rassa</Text>
+              <Text style={styles.mobileRole}>Admin</Text>
+            </View>
+            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+              <Text style={styles.logoutText}>Salir</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Mobile nav */}
+        {isMobile && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mobileNav}>
+            {SECTIONS.map((s) => (
+              <TouchableOpacity
+                key={s.key}
+                style={[styles.mobileNavItem, activeSection === s.key && styles.mobileNavItemActive]}
+                onPress={() => setActiveSection(s.key)}
+              >
+                <Text style={styles.mobileNavIcon}>{s.icon}</Text>
+                <Text style={[styles.mobileNavText, activeSection === s.key && styles.mobileNavTextActive]}>
+                  {s.key}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
         {/* Top bar */}
         <View style={styles.topBar}>
           <View>
             <Text style={styles.pageTitle}>{activeSection}</Text>
-            <Text style={styles.pageSubtitle}>Panel de administración · Rassa</Text>
+            {!isMobile && <Text style={styles.pageSubtitle}>Panel de administración · Rassa</Text>}
           </View>
-          <View style={styles.topAvatar}>
-            <Text style={styles.topAvatarText}>
-              {user?.first_name?.[0]}{user?.last_name?.[0]}
-            </Text>
-          </View>
+          {!isMobile && (
+            <View style={styles.topAvatar}>
+              <Text style={styles.topAvatarText}>
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* ── DASHBOARD ── */}
@@ -441,7 +479,7 @@ export default function AdminPanelScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, flexDirection: "row", backgroundColor: "#f8fafc" },
+  root: { flex: 1, backgroundColor: "#f8fafc" },
 
   /* ── Sidebar ── */
   sidebar: {
@@ -507,33 +545,60 @@ const styles = StyleSheet.create({
 
   /* ── Main ── */
   main: { flex: 1 },
-  mainContent: { padding: 28, paddingBottom: 60 },
+  mainContent: { padding: 20, paddingBottom: 40 },
+  mobileHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#0f172a",
+    padding: 16,
+    marginBottom: 12,
+  },
+  mobileLogo: { fontSize: 18, fontWeight: "800", color: "#fff" },
+  mobileRole: { fontSize: 11, color: GREEN, fontWeight: "600" },
+  mobileNav: { marginBottom: 16 },
+  mobileNavItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    gap: 6,
+  },
+  mobileNavItemActive: { backgroundColor: GREEN, borderColor: GREEN },
+  mobileNavIcon: { fontSize: 14 },
+  mobileNavText: { fontSize: 13, fontWeight: "600", color: "#64748b" },
+  mobileNavTextActive: { color: "#fff" },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  pageTitle: { fontSize: 26, fontWeight: "800", color: "#0f172a" },
+  pageTitle: { fontSize: 22, fontWeight: "800", color: "#0f172a" },
   pageSubtitle: { fontSize: 13, color: "#64748b", marginTop: 2 },
   topAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: GREEN,
     justifyContent: "center",
     alignItems: "center",
   },
-  topAvatarText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  topAvatarText: { color: "#fff", fontWeight: "800", fontSize: 14 },
 
   /* ── Stats ── */
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 28 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1,
-    minWidth: 160,
+    minWidth: 130,
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
     borderLeftWidth: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -541,19 +606,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  statIcon: { fontSize: 28, marginBottom: 8 },
-  statValue: { fontSize: 30, fontWeight: "800", color: "#0f172a" },
-  statLabel: { fontSize: 13, color: "#64748b", marginTop: 4 },
+  statIcon: { fontSize: 24, marginBottom: 6 },
+  statValue: { fontSize: 26, fontWeight: "800", color: "#0f172a" },
+  statLabel: { fontSize: 12, color: "#64748b", marginTop: 4 },
 
   /* ── Actions ── */
-  sectionTitle: { fontSize: 17, fontWeight: "700", color: "#0f172a", marginBottom: 14 },
-  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 28 },
+  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#0f172a", marginBottom: 12 },
+  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
   actionCard: {
     flex: 1,
-    minWidth: 140,
+    minWidth: 130,
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -562,28 +627,28 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   actionIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  actionLabel: { fontSize: 13, fontWeight: "600", color: "#374151", textAlign: "center" },
+  actionLabel: { fontSize: 12, fontWeight: "600", color: "#374151", textAlign: "center" },
 
   /* ── Info card ── */
   infoCard: {
     backgroundColor: "#f0fdf4",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#bbf7d0",
   },
-  infoCardTitle: { fontSize: 15, fontWeight: "700", color: GREEN_DARK, marginBottom: 10 },
-  infoCardText: { fontSize: 13, color: "#374151", lineHeight: 20 },
+  infoCardTitle: { fontSize: 14, fontWeight: "700", color: GREEN_DARK, marginBottom: 8 },
+  infoCardText: { fontSize: 12, color: "#374151", lineHeight: 18 },
 
   /* ── Users section ── */
-  searchRow: { flexDirection: "row", gap: 12, marginBottom: 14 },
+  searchRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
   searchBox: {
     flex: 1,
     flexDirection: "row",
@@ -648,7 +713,7 @@ const styles = StyleSheet.create({
   loadingText: { color: "#64748b", fontSize: 14 },
   userTable: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -659,46 +724,46 @@ const styles = StyleSheet.create({
   userTableHeader: {
     flexDirection: "row",
     backgroundColor: "#f1f5f9",
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
-  userTableHeaderCell: { flex: 1, fontWeight: "700", fontSize: 12, color: "#64748b", textTransform: "uppercase" as any },
+  userTableHeaderCell: { flex: 1, fontWeight: "700", fontSize: 11, color: "#64748b", textTransform: "uppercase" as any },
   userRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
-    gap: 8,
+    gap: 6,
   },
-  userAvatarWrap: { flex: 2, flexDirection: "row", alignItems: "center", gap: 10 },
+  userAvatarWrap: { flex: 2, flexDirection: "row", alignItems: "center", gap: 8 },
   userAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: "center",
     alignItems: "center",
   },
-  userAvatarText: { fontWeight: "800", fontSize: 14 },
+  userAvatarText: { fontWeight: "800", fontSize: 12 },
   userInfo: { flex: 1 },
-  userName: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
-  userEmail: { fontSize: 12, color: "#64748b" },
+  userName: { fontSize: 12, fontWeight: "700", color: "#0f172a" },
+  userEmail: { fontSize: 11, color: "#64748b" },
   roleWrap: { flex: 1, position: "relative" as any },
   rolePill: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 3,
     alignSelf: "flex-start",
   },
-  rolePillText: { fontSize: 12, fontWeight: "700" },
-  rolePillCaret: { fontSize: 10 },
+  rolePillText: { fontSize: 11, fontWeight: "700" },
+  rolePillCaret: { fontSize: 9 },
   roleDropdown: {
     position: "absolute" as any,
     top: 34,

@@ -7,12 +7,15 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 
 const CATEGORIES = ["Frutas", "Verduras", "Granos", "Raíces", "Hierbas", "Lácteos"];
 const UNITS = ["kg", "pieza", "caja", "bolsa", "litro"];
 
 export default function AddProductScreen({ navigation }: any) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 600;
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -120,7 +123,7 @@ export default function AddProductScreen({ navigation }: any) {
         </View>
 
         {/* Price & Stock row */}
-        <View style={styles.row}>
+        <View style={[styles.row, isMobile && styles.rowMobile]}>
           <View style={[styles.fieldGroup, styles.flex]}>
             <Text style={styles.label}>Precio *</Text>
             <TextInput
@@ -249,6 +252,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, color: "#64748b", fontWeight: "600" },
   chipTextActive: { color: "#15803d" },
   row: { flexDirection: "row", gap: 12 },
+  rowMobile: { flexDirection: "column" },
   spacer: { width: 12 },
   preview: { marginBottom: 20 },
   previewTitle: { fontSize: 14, fontWeight: "700", color: "#1e293b", marginBottom: 10 },
