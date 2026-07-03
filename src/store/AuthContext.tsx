@@ -27,11 +27,11 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function normalizeRole(role: string | undefined): UserRole {
-  const normalized = role?.toLowerCase();
-  if (normalized === "buyer" || normalized === "farmer" || normalized === "seller" || normalized === "admin") {
-    return normalized;
+  const valid: UserRole[] = ["Cliente", "Agricultor", "Administrador", "Vendedor"];
+  if (role && valid.includes(role as UserRole)) {
+    return role as UserRole;
   }
-  return "buyer";
+  return "Cliente";
 }
 
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {

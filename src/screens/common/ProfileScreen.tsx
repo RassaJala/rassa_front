@@ -20,10 +20,10 @@ const GREEN_LIGHT = "#dcfce7";
 const GREEN_BG = "#f0fdf4";
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: "⚙️ Administrador",
-  seller: "🏪 Vendedor",
-  farmer: "🌾 Agricultor",
-  buyer: "🛒 Cliente",
+  Administrador: "⚙️ Administrador",
+  Vendedor: "🏪 Vendedor",
+  Agricultor: "🌾 Agricultor",
+  Cliente: "🛒 Cliente",
 };
 
 export default function ProfileScreen({ navigation }: any) {
@@ -220,7 +220,7 @@ export default function ProfileScreen({ navigation }: any) {
           </Text>
           <View style={styles.roleBadge}>
             <Text style={styles.roleBadgeText}>
-              {ROLE_LABELS[user?.role ?? "buyer"]}
+              {ROLE_LABELS[user?.role ?? "Cliente"]}
             </Text>
           </View>
         </View>

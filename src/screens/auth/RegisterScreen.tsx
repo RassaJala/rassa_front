@@ -19,19 +19,19 @@ const GREEN_BG = "#f0fdf4";
 
 const ROLES = [
   {
-    value: "buyer",
+    value: "Cliente",
     label: "Cliente",
     emoji: "🛒",
     desc: "Compra productos frescos",
   },
   {
-    value: "farmer",
+    value: "Agricultor",
     label: "Agricultor",
     emoji: "🌾",
     desc: "Vende tus cosechas",
   },
   {
-    value: "seller",
+    value: "Vendedor",
     label: "Vendedor",
     emoji: "🏪",
     desc: "Gestiona tu tienda",
@@ -49,12 +49,12 @@ export default function RegisterScreen({ navigation }: any) {
     phone_number: "",
     password: "",
     confirmPassword: "",
-    role: "buyer",
+    role: "Cliente",
   });
   const ROLE_LABEL_MAP: Record<string, string> = {
-    buyer: "Cliente",
-    farmer: "Agricultor",
-    seller: "Vendedor",
+    Cliente: "Cliente",
+    Agricultor: "Agricultor",
+    Vendedor: "Vendedor",
   };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

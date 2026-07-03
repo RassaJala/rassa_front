@@ -68,28 +68,28 @@ export default function AppNavigator() {
 
   // Authenticated: route by role, all stacks include ProfileScreen
   switch (user?.role) {
-    case "farmer":
+    case "Agricultor":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="FarmerTabs" component={FarmerTabs} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       );
-    case "seller":
+    case "Vendedor":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       );
-    case "admin":
+    case "Administrador":
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
       );
-    case "buyer":
+    case "Cliente":
     default:
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>

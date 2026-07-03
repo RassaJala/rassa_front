@@ -19,18 +19,18 @@ const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
 const GREEN_LIGHT = "#dcfce7";
 
-const ROLE_OPTIONS = ["buyer", "farmer", "seller", "admin"];
+const ROLE_OPTIONS = ["Cliente", "Agricultor", "Vendedor", "Administrador"];
 const ROLE_LABELS: Record<string, string> = {
-  admin: "⚙️ Admin",
-  seller: "🏪 Vendedor",
-  farmer: "🌾 Agricultor",
-  buyer: "🛒 Cliente",
+  Administrador: "⚙️ Admin",
+  Vendedor: "🏪 Vendedor",
+  Agricultor: "🌾 Agricultor",
+  Cliente: "🛒 Cliente",
 };
 const ROLE_COLORS: Record<string, string> = {
-  admin: "#6366f1",
-  seller: "#f59e0b",
-  farmer: "#16a34a",
-  buyer: "#06b6d4",
+  Administrador: "#6366f1",
+  Vendedor: "#f59e0b",
+  Agricultor: "#16a34a",
+  Cliente: "#06b6d4",
 };
 
 const STATS = [
@@ -262,19 +262,19 @@ export default function AdminPanelScreen({ navigation }: any) {
     },
     {
       label: "Agricultores",
-      value: String(users.filter((u) => u.role === "farmer").length),
+      value: String(users.filter((u) => u.role === "Agricultor").length),
       icon: "🌾",
       color: "#16a34a",
     },
     {
       label: "Vendedores",
-      value: String(users.filter((u) => u.role === "seller").length),
+      value: String(users.filter((u) => u.role === "Vendedor").length),
       icon: "🏪",
       color: "#f59e0b",
     },
     {
       label: "Clientes",
-      value: String(users.filter((u) => u.role === "buyer").length),
+      value: String(users.filter((u) => u.role === "Cliente").length),
       icon: "🛒",
       color: "#06b6d4",
     },
