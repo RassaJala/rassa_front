@@ -1,30 +1,33 @@
+/* eslint-disable */
 /**
  * Configura reglas de linting, boundaries arquitectónicos y orden de imports.
  * No modificar la exportación final ni los grupos de perfectionist.
+ *
+ * Este archivo se auto-excluye de ESLint (en ignores), pero la extensión
+ * de VS Code a veces lo lintea de todas formas. El eslint-disable global
+ * previene esos falsos positivos en el IDE.
  */
 
 import eslint from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
+import boundariesPlugin from 'eslint-plugin-boundaries';
+import eslintCommentsPlugin from 'eslint-plugin-eslint-comments';
+import importXPlugin from 'eslint-plugin-import-x';
+import jsdocPlugin from 'eslint-plugin-jsdoc';
+import packageJsonPlugin from 'eslint-plugin-package-json';
+import perfectionistPlugin from 'eslint-plugin-perfectionist';
+import promisePlugin from 'eslint-plugin-promise';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import reactNativePlugin from 'eslint-plugin-react-native';
-import importXPlugin from 'eslint-plugin-import-x';
-import unusedImportsPlugin from 'eslint-plugin-unused-imports';
+import regexpPlugin from 'eslint-plugin-regexp';
+import securityPlugin from 'eslint-plugin-security';
 import sonarjsPlugin from 'eslint-plugin-sonarjs';
 import unicornPlugin from 'eslint-plugin-unicorn';
-import securityPlugin from 'eslint-plugin-security';
-import promisePlugin from 'eslint-plugin-promise';
-import perfectionistPlugin from 'eslint-plugin-perfectionist';
-import regexpPlugin from 'eslint-plugin-regexp';
-import eslintCommentsPlugin from 'eslint-plugin-eslint-comments';
-import boundariesPlugin from 'eslint-plugin-boundaries';
-import packageJsonPlugin from 'eslint-plugin-package-json';
-import jsdocPlugin from 'eslint-plugin-jsdoc';
+import unusedImportsPlugin from 'eslint-plugin-unused-imports';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
 
-// @ts-ignore
 import path from 'node:path';
-// @ts-ignore
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +64,7 @@ function createBaseRules() {
 
       // Comentarios ESLint
       'eslint-comments/no-unlimited-disable': 'error',
+      'eslint-comments/no-unused-disable': 'error',
       'eslint-comments/require-description': 'error',
     },
   });
@@ -95,6 +99,22 @@ function createTypeScriptRules() {
       // Evitar promesas flotantes (no gestionadas).
       '@typescript-eslint/no-floating-promises': 'error',
 
+      // NO-UNSAFE FAMILY — propagación estricta de any.
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+
+      // TIPOS CONSISTENTES Y ESTRICTOS //
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-import-type-side-effects': 'error',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      // Exigir tipos readonly en parámetros de componentes (previene mutaciones de props).
+      '@typescript-eslint/prefer-readonly-parameter-types': 'warn',
+
       // LIMPIEZA DE CÓDIGO //
       '@typescript-eslint/no-unused-vars': 'off', // Desactivada para delegar a unused-imports
       'unused-imports/no-unused-imports': 'error',
@@ -117,6 +137,7 @@ function createReactRules() {
     files: ['**/*.tsx', '**/*.ts'],
     plugins: {
       react: reactPlugin,
+
       'react-hooks': reactHooksPlugin as any,
     },
     settings: {
@@ -142,6 +163,17 @@ function createReactRules() {
       'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
       // Evitar props duplicadas en JSX.
       'react/jsx-no-duplicate-props': 'error',
+
+      // REACT — PATRONES DE CALIDAD //
+      'react/jsx-no-leaked-render': 'error',
+      'react/jsx-no-useless-fragment': 'warn',
+      'react/no-direct-mutation-state': 'error',
+      'react/jsx-boolean-value': 'warn',
+      'react/self-closing-comp': 'warn',
+      'react/jsx-fragments': 'warn',
+      'react/no-array-index-key': 'warn',
+      'react/jsx-no-constructed-context-values': 'error',
+      'react/forward-ref-uses-ref': 'error',
     },
   });
 }
@@ -158,6 +190,7 @@ function createReactNativeRules() {
       'react-native/no-unused-styles': 'error',
       'react-native/no-inline-styles': 'warn',
       'react-native/no-color-literals': 'error',
+      'react-native/no-single-element-style-arrays': 'error',
     },
   });
 }
@@ -187,6 +220,15 @@ function createImportsAndBoundariesRules() {
       ],
     },
     rules: {
+      // IMPORT-X — RESOLUCIÓN E INTEGRIDAD //
+      'import-x/no-unresolved': 'error',
+      'import-x/no-cycle': 'warn',
+      'import-x/no-self-import': 'error',
+      'import-x/no-useless-path-segments': 'error',
+      'import-x/no-duplicates': 'error',
+      'import-x/first': 'error',
+      'import-x/consistent-type-specifier-style': 'error',
+
       // Boundaries — dependencias unidireccionales: screens > features > components > hooks > services > api.
       'boundaries/dependencies': [
         'error',
@@ -257,6 +299,7 @@ function createImportsAndBoundariesRules() {
           ],
         },
       ],
+      'perfectionist/sort-named-imports': 'error',
     },
   });
 }
@@ -269,7 +312,7 @@ function createQualityAndSecurityRules() {
       unicorn: unicornPlugin,
       security: securityPlugin as any,
       promise: promisePlugin as any,
-      regexp: regexpPlugin as any,
+      regexp: regexpPlugin,
       jsdoc: jsdocPlugin,
       'package-json': packageJsonPlugin,
     },
@@ -278,16 +321,66 @@ function createQualityAndSecurityRules() {
       'sonarjs/cognitive-complexity': ['error', 15],
       'sonarjs/no-duplicated-branches': 'error',
 
+      // SONARJS — PREVENCIÓN DE BUGS //
+      'sonarjs/no-identical-conditions': 'error',
+      'sonarjs/no-identical-expressions': 'error',
+      'sonarjs/no-gratuitous-expressions': 'error',
+      'sonarjs/no-redundant-boolean': 'error',
+      'sonarjs/no-useless-catch': 'error',
+
+      // SONARJS — OLORES DE CÓDIGO //
+      'sonarjs/no-collapsible-if': 'warn',
+      'sonarjs/no-dead-store': 'warn',
+      'sonarjs/no-duplicate-string': ['warn', { threshold: 3 }],
+      'sonarjs/no-identical-functions': 'warn',
+      'sonarjs/prefer-immediate-return': 'warn',
+      'sonarjs/no-inverted-boolean-check': 'error',
+      'sonarjs/no-nested-switch': 'warn',
+      'sonarjs/no-nested-template-literals': 'warn',
+      'sonarjs/no-redundant-jump': 'warn',
+      'sonarjs/no-same-line-conditional': 'warn',
+
       // Seguridad — sin eval, regex anti-ReDoS.
       'security/detect-eval-with-expression': 'error',
+      'security/detect-object-injection': 'warn',
+
+      // RegExp — seguridad y limpieza.
       'regexp/no-super-linear-backtracking': 'error',
+      'regexp/no-useless-escape': 'error',
+      'regexp/no-empty-character-class': 'error',
+      'regexp/no-empty-group': 'error',
+      'regexp/no-empty-alternative': 'error',
+      'regexp/prefer-regexp-exec': 'warn',
+      'regexp/prefer-regexp-test': 'warn',
+      'regexp/no-useless-flag': 'error',
+      'regexp/prefer-character-class': 'warn',
+      'regexp/sort-character-class-elements': 'warn',
+      'regexp/no-useless-backreference': 'error',
 
       // Promesas — siempre retornar y capturar errores.
       'promise/always-return': 'error',
       'promise/catch-or-return': 'error',
+      'promise/no-nesting': 'warn',
+      'promise/prefer-catch': 'error',
+      'promise/no-return-wrap': 'error',
+      'promise/param-names': 'error',
+      'promise/no-multiple-resolved': 'error',
+      'promise/no-return-in-finally': 'warn',
 
-      // Unicorn — filename-case desactivado (React Native usa PascalCase).
+      // Unicorn — RN-compatible: sin undefined inútiles, spreads, concat.
       'unicorn/filename-case': 'off',
+      'unicorn/no-useless-undefined': 'error',
+      'unicorn/no-useless-spread': 'error',
+      'unicorn/no-useless-concat': 'error',
+      'unicorn/prefer-includes': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/prefer-array-some': 'error',
+      'unicorn/no-lonely-if': 'error',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/prefer-optional-catch-binding': 'error',
+      'unicorn/no-nested-ternary': 'warn',
+      'unicorn/no-named-default': 'error',
+      'unicorn/prefer-add-event-listener': 'error',
 
       // JSDoc — alineación de bloques de comentarios.
       'jsdoc/check-alignment': 'error',

@@ -5,7 +5,7 @@
 
 const config = {
   // Para archivos de TypeScript y React
-  '**/*.{ts,tsx}': (filenames: string[]): string[] => {
+  '**/*.{ts,tsx}': (filenames: readonly string[]): string[] => {
     const files = filenames.join(' ');
     return [
       `prettier --write ${files}`,
@@ -15,7 +15,9 @@ const config = {
   },
 
   // Para archivos de JavaScript y configuración
-  '**/*.{js,jsx,mjs,json,md,yml,yaml}': (filenames: string[]): string[] => {
+  '**/*.{js,jsx,mjs,json,md,yml,yaml}': (
+    filenames: readonly string[],
+  ): string[] => {
     const files = filenames.join(' ');
     return [`prettier --write ${files}`];
   },
