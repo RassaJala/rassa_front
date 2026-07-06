@@ -11,6 +11,7 @@ const config = {
       `prettier --write ${files}`,
       `eslint -c config/eslint.config.ts --fix ${files}`,
       'tsc --noEmit --skipLibCheck',
+      `git add ${files}`,
     ];
   },
 
@@ -19,7 +20,7 @@ const config = {
     filenames: readonly string[],
   ): string[] => {
     const files = filenames.join(' ');
-    return [`prettier --write ${files}`];
+    return [`prettier --write ${files}`, `git add ${files}`];
   },
 };
 
