@@ -1,5 +1,7 @@
-# Git hooks orchestration via lefthook.
-# pre-commit: format + lint on staged files. commitlint: validates commit message.
+# Configuración de Git hooks via lefthook.
+# pre-commit: verifica formato, lint y tipos. NO modifica archivos.
+# Si alguna verificación falla, el commit se rechaza y el working tree queda intacto.
+# El desarrollador corre `bun run format && bun run lint:fix` manualmente antes del commit.
 
 commit-msg:
   commands:
@@ -7,14 +9,20 @@ commit-msg:
       run: bunx commitlint --config config/commitlint.config.ts --edit {1}
 
 pre-commit:
+  # No stashear unstaged changes — evita pérdida de cambios si el hook falla o se interrumpe
+  stash_unstaged_changes: false
   parallel: true
   jobs:
     - name: prettier
-      run: bunx prettier --config config/prettier.config.mjs --write {staged_files}
+      # --check: solo verifica, no escribe. Si falla, el developer debe correr bun run format
+      run: bunx prettier --config config/prettier.config.mjs --check {staged_files}
       glob: '*.{ts,tsx,js,jsx,mjs,json,md,yml,yaml}'
-      stage_fixed: true
 
     - name: eslint
-      run: bunx eslint -c config/eslint.config.ts --fix {staged_files}
+      # Sin --fix: solo verifica. Si falla, el developer debe correr bun run lint:fix
+      run: bunx eslint -c config/eslint.config.ts {staged_files}
       glob: '*.{ts,tsx}'
-      stage_fixed: true
+
+    - name: typecheck
+      # Verifica que todos los tipos sean correctos
+      run: bunx tsc --noEmit
