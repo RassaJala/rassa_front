@@ -1,4 +1,4 @@
-export type UserRole = "buyer" | "farmer" | "admin";
+export type UserRole = 'buyer' | 'farmer' | 'admin';
 
 export interface User {
   id: number;
@@ -26,7 +26,7 @@ export interface Product {
 export interface Order {
   id: number;
   buyer: number;
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   total: string;
   items: OrderItem[];
   created_at: string;

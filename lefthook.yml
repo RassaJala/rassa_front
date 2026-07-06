@@ -1,14 +1,20 @@
-# Orquesta Git hooks. Relación: lefthook.yml → lint-staged.config.ts + commitlint.config.ts
-# lint-staged: formateo/lint sobre archivos staged. commitlint: valida mensaje de commit.
+# Git hooks orchestration via lefthook.
+# pre-commit: format + lint on staged files. commitlint: validates commit message.
 
-# hook ejecutado al escribir y guardar un mensaje de commit
 commit-msg:
   commands:
     commitlint:
       run: bunx commitlint --config config/commitlint.config.ts --edit {1}
 
-# hook ejecutado antes de validar físicamente el commit en el disco local
 pre-commit:
-  commands:
-    lint-staged:
-      run: bunx lint-staged --config config/lint-staged.config.ts
+  parallel: true
+  jobs:
+    - name: prettier
+      run: bunx prettier --config config/prettier.config.mjs --write {staged_files}
+      glob: '*.{ts,tsx,js,jsx,mjs,json,md,yml,yaml}'
+      stage_fixed: true
+
+    - name: eslint
+      run: bunx eslint -c config/eslint.config.ts --fix {staged_files}
+      glob: '*.{ts,tsx}'
+      stage_fixed: true

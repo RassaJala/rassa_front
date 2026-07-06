@@ -1,25 +1,22 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useAuth } from "../store/AuthContext";
+import React from 'react';
 
-// Auth screens
-import LoginScreen from "../screens/auth/LoginScreen";
-import RegisterScreen from "../screens/auth/RegisterScreen";
-
-// Buyer screens
-import HomeScreen from "../screens/buyer/HomeScreen";
-import ProductDetailScreen from "../screens/buyer/ProductDetailScreen";
-
-// Farmer screens
-import MyProductsScreen from "../screens/farmer/MyProductsScreen";
-import AddProductScreen from "../screens/farmer/AddProductScreen";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Admin screens
-import AdminPanelScreen from "../screens/admin/AdminPanelScreen";
-
+import AdminPanelScreen from '~/screens/admin/AdminPanelScreen';
+// Auth screens
+import LoginScreen from '~/screens/auth/LoginScreen';
+import RegisterScreen from '~/screens/auth/RegisterScreen';
+// Buyer screens
+import HomeScreen from '~/screens/buyer/HomeScreen';
+import ProductDetailScreen from '~/screens/buyer/ProductDetailScreen';
 // Common
-import SplashScreen from "../screens/common/SplashScreen";
+import SplashScreen from '~/screens/common/SplashScreen';
+import AddProductScreen from '~/screens/farmer/AddProductScreen';
+// Farmer screens
+import MyProductsScreen from '~/screens/farmer/MyProductsScreen';
+import { useAuth } from '~/store/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -51,7 +48,7 @@ function FarmerTabs() {
   );
 }
 
-export default function AppNavigator() {
+export default function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -64,16 +61,18 @@ export default function AppNavigator() {
 
   // Authenticated: route by role
   switch (user?.role) {
-    case "farmer":
+    case 'farmer':
       return <FarmerTabs />;
-    case "admin":
+    case 'admin':
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
         </Stack.Navigator>
       );
-    case "buyer":
-    default:
+    case 'buyer':
       return <BuyerTabs />;
+    case undefined:
+    default:
+      return <SplashScreen />;
   }
 }
