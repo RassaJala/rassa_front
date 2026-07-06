@@ -1,0 +1,32 @@
+{
+  /* --------------------------------------------------------
+     Extensiones sugeridas al abrir el proyecto en VSCode.
+     No eliminar ESLint, Prettier ni TypeScript.
+     -------------------------------------------------------- */
+  "recommendations": [
+    // ---- Formateo y Linting ----
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+
+    // ---- TypeScript y React ----
+    "dsznajder.es7-react-js-snippets",
+
+    // ---- Tailwind CSS / NativeWind ----
+    "bradlc.vscode-tailwindcss",
+
+    // ---- Expo ----
+    "expo.vscode-expo-tools",
+
+    // ---- Productividad ----
+    "christian-kohler.path-intellisense",
+    "usernamehw.errorlens",
+
+    // ---- Git ----
+    "eamodio.gitlens",
+
+    // ---- YAML y JSON ----
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml"
+  ],
+  "unwantedRecommendations": []
+}

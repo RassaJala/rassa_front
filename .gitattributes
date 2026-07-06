@@ -1,2 +1,42 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normaliza saltos de línea a LF y protege archivos binarios.
+
+# Forzar la normalización de texto global a saltos de línea LF en el repositorio.
+* text=auto eol=lf
+
+# Declarar explícitamente archivos de texto
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.json text
+*.json5 text
+*.md text
+*.css text
+*.html text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.config text
+.editorconfig text
+.gitignore text
+.gitattributes text
+
+# Declarar explícitamente archivos binarios (evitar cualquier intento de normalización eol)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tgz binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

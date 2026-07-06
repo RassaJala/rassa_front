@@ -1,0 +1,14 @@
+# Orquesta Git hooks. Relación: lefthook.yml → lint-staged.config.ts + commitlint.config.ts
+# lint-staged: formateo/lint sobre archivos staged. commitlint: valida mensaje de commit.
+
+# hook ejecutado al escribir y guardar un mensaje de commit
+commit-msg:
+  commands:
+    commitlint:
+      run: bunx commitlint --config config/commitlint.config.ts --edit {1}
+
+# hook ejecutado antes de validar físicamente el commit en el disco local
+pre-commit:
+  commands:
+    lint-staged:
+      run: bunx lint-staged --config config/lint-staged.config.ts

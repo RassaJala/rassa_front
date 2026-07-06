@@ -1,0 +1,28 @@
+{
+  /* --------------------------------------------------------
+     Extiende tsconfig.json para que ESLint analice archivos
+     de configuración en root (eslint.config.ts, etc.).
+     No modificar extends. Añadir nuevos .config a include.
+     -------------------------------------------------------- */
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Solo análisis estático, sin emitir archivos.
+    "noEmit": true,
+    // Tipos de Node para resolver en ESM.
+    "types": ["node"]
+  },
+  // Sobrescribe exclusiones del padre — ESLint debe analizar todos los archivos listados.
+  "exclude": [],
+  "include": [
+    "../src/**/*",
+    "../App.tsx",
+    "../nativewind-env.d.ts",
+    "eslint.config.ts",
+    "commitlint.config.ts",
+    "lint-staged.config.ts",
+    "prettier.config.mjs",
+    "../babel.config.js",
+    "../metro.config.js",
+    "../tailwind.config.js"
+  ]
+}
