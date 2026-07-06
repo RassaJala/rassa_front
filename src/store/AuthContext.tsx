@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 import React, {
   createContext,
   useCallback,
@@ -6,12 +6,12 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from "react";
+} from 'react';
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import api from "~/services/api";
-import type { User } from "~/types";
+import api from '~/services/api';
+import type { User } from '~/types';
 
 interface AuthState {
   user: User | null;
@@ -53,16 +53,16 @@ export function AuthProvider({
 
   async function restoreSession() {
     try {
-      const token = await AsyncStorage.getItem("access_token");
+      const token = await AsyncStorage.getItem('access_token');
       if (!token) {
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Readonly<AuthState> already applied
         setState((s: Readonly<AuthState>) => ({ ...s, isLoading: false }));
         return;
       }
-      const { data } = await api.get<User>("/auth/me/");
+      const { data } = await api.get<User>('/auth/me/');
       setState({ user: data, token, isLoading: false, isAuthenticated: true });
     } catch {
-      await AsyncStorage.multiRemove(["access_token", "refresh_token"]);
+      await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
       setState({
         user: null,
         token: null,
@@ -74,13 +74,13 @@ export function AuthProvider({
 
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await api.post<{ access: string; refresh: string }>(
-      "/token/",
+      '/token/',
       { email, password },
     );
-    await AsyncStorage.setItem("access_token", data.access);
-    await AsyncStorage.setItem("refresh_token", data.refresh);
+    await AsyncStorage.setItem('access_token', data.access);
+    await AsyncStorage.setItem('refresh_token', data.refresh);
     // fetch user profile
-    const { data: user } = await api.get<User>("/auth/me/");
+    const { data: user } = await api.get<User>('/auth/me/');
     setState({
       user,
       token: data.access,
@@ -91,7 +91,7 @@ export function AuthProvider({
 
   const register = useCallback(
     async (fields: Readonly<Partial<User> & { password: string }>) => {
-      await api.post("/auth/register/", fields);
+      await api.post('/auth/register/', fields);
       // auto-login after registration
       if (fields.email) {
         await login(fields.email, fields.password);
@@ -101,7 +101,7 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    await AsyncStorage.multiRemove(["access_token", "refresh_token"]);
+    await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
     setState({
       user: null,
       token: null,
@@ -124,6 +124,6 @@ export function AuthProvider({
 
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

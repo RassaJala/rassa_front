@@ -1,5 +1,5 @@
-import React from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import React from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 export default function SplashScreen(): React.JSX.Element {
   return (
