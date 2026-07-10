@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -6,6 +6,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+import { useNetInfo } from '@react-native-community/netinfo';
+import * as Sentry from '@sentry/react-native';
 
 import { useAuth } from '@/store/AuthContext';
 
@@ -16,12 +19,25 @@ export default function LoginScreen(): React.JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  function handleLoginPress() {
-    void handleLogin();
-  }
+  const netInfo = useNetInfo();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   async function handleLogin() {
+    if (isSubmitting) return;
+    
     setErrorMessage(null);
+
+    if (netInfo.isConnected === false) {
+      setErrorMessage('Sin conexión a Internet.');
+      return;
+    }
 
     if (!email.trim() || !password) {
       setErrorMessage('Ingresa tu correo y contraseña.');
@@ -49,9 +65,14 @@ export default function LoginScreen(): React.JSX.Element {
         message = JSON.stringify(error);
       }
 
-      setErrorMessage(message);
+      if (isMounted.current) {
+        setErrorMessage(message);
+      }
+      Sentry.captureException(error);
     } finally {
-      setIsSubmitting(false);
+      if (isMounted.current) {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -94,7 +115,7 @@ export default function LoginScreen(): React.JSX.Element {
         <Pressable
           className={`mt-6 rounded-xl bg-emerald-600 px-4 py-3 ${isSubmitting ? 'opacity-70' : ''}`}
           disabled={isSubmitting}
-          onPress={handleLoginPress}
+          onPress={() => void handleLogin()}
         >
           {isSubmitting ? (
             <ActivityIndicator color="#ffffff" />

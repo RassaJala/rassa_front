@@ -2,16 +2,16 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import api from '../services/api';
 import { AuthProvider, useAuth } from '../store/AuthContext';
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  multiRemove: jest.fn(),
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
 }));
 
 jest.mock('axios-retry', () => jest.fn());
@@ -66,7 +66,7 @@ describe('AuthContext', () => {
   });
 
   it('debería rechazar un rol desconocido en normalizeRole durante el login', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
 
     (api.post as jest.Mock).mockResolvedValueOnce({
       data: { access: '123', refresh: '456' },
@@ -105,7 +105,7 @@ describe('AuthContext', () => {
   });
 
   it('debería mapear correctamente un rol válido y nombre parcial en mapBackendUser', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
 
     (api.post as jest.Mock).mockResolvedValueOnce({
       data: { access: '123', refresh: '456' },
@@ -140,7 +140,7 @@ describe('AuthContext', () => {
   });
 
   it('debería mantener la sesión si restoreSession falla por un error de red o 5xx', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('valid_token');
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
 
     const networkError = new Error('Network Error') as any;
     networkError.isAxiosError = true;
@@ -154,12 +154,12 @@ describe('AuthContext', () => {
     );
 
     await waitFor(() => {
-      expect(AsyncStorage.multiRemove).not.toHaveBeenCalled();
+      expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
     });
   });
 
   it('debería limpiar tokens y estado al hacer logout', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue('valid_token');
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
     (api.get as jest.Mock).mockResolvedValue({
       data: {
         id: 1,
@@ -186,10 +186,8 @@ describe('AuthContext', () => {
       fireEvent.press(getByTestId('logout-btn'));
     });
 
-    expect(AsyncStorage.multiRemove).toHaveBeenCalledWith([
-      'access_token',
-      'refresh_token',
-    ]);
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('access_token');
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('refresh_token');
     expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
   });
 });

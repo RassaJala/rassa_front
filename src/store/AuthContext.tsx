@@ -9,8 +9,9 @@ import React, {
   useState,
 } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type { AxiosError, AxiosResponse } from 'axios';
+import axios from 'axios';
 
 import api from '@/services/api';
 import type { User, UserRole } from '@/types';
@@ -111,7 +112,7 @@ function parseLoginError(
   if (Array.isArray(responseData?.non_field_errors))
     return responseData.non_field_errors.join(' ');
   if (responseData?.message) return String(responseData.message);
-  if (responseData) return JSON.stringify(responseData);
+  if (responseData) return 'Error desconocido del servidor.';
   return axiosError.message;
 }
 
@@ -132,7 +133,7 @@ export function AuthProvider({
 
   async function restoreSession() {
     try {
-      const token = await AsyncStorage.getItem('access_token');
+      const token = await SecureStore.getItemAsync('access_token');
       if (!token) {
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
         setState((s) => ({ ...s, isLoading: false }));
@@ -146,8 +147,8 @@ export function AuthProvider({
         isAuthenticated: true,
       });
     } catch (error) {
-      if ((error as AxiosError).isAxiosError) {
-        const axiosError = error as AxiosError;
+      if (axios.isAxiosError(error)) {
+        const axiosError = error;
         // Do not clear tokens on 5xx or Network Errors (undefined response)
         if (!axiosError.response || axiosError.response.status >= 500) {
           // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
@@ -155,7 +156,10 @@ export function AuthProvider({
           return;
         }
       }
-      await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+      await Promise.all([
+        SecureStore.deleteItemAsync('access_token'),
+        SecureStore.deleteItemAsync('refresh_token'),
+      ]);
       setState({
         user: null,
         token: null,
@@ -186,8 +190,10 @@ export function AuthProvider({
         throw new Error('La respuesta del backend no incluyó los tokens.');
       }
 
-      await AsyncStorage.setItem('access_token', data.access);
-      await AsyncStorage.setItem('refresh_token', data.refresh);
+      await Promise.all([
+        SecureStore.setItemAsync('access_token', data.access),
+        SecureStore.setItemAsync('refresh_token', data.refresh),
+      ]);
 
       const { data: user } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
       setState({
@@ -197,7 +203,7 @@ export function AuthProvider({
         isAuthenticated: true,
       });
     } catch (error) {
-      if ((error as AxiosError).isAxiosError) {
+      if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const responseData = axiosError.response?.data;
         const status = axiosError.response?.status;
@@ -233,7 +239,10 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+    await Promise.all([
+      SecureStore.deleteItemAsync('access_token'),
+      SecureStore.deleteItemAsync('refresh_token'),
+    ]);
     setState({
       user: null,
       token: null,

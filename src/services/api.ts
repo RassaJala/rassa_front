@@ -1,5 +1,4 @@
-/* globals process -- Expo defines process.env at build time */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
@@ -36,7 +35,7 @@ axiosRetry(api, {
 // Attach JWT token to every request
 // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios config is mutable internally
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('access_token');
+  const token = await SecureStore.getItemAsync('access_token');
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -48,7 +47,7 @@ api.interceptors.request.use(async (config) => {
 async function handleTokenRefresh(
   originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
-  const refreshToken = await AsyncStorage.getItem('refresh_token');
+  const refreshToken = await SecureStore.getItemAsync('refresh_token');
   if (!refreshToken) {
     throw new Error('No refresh token');
   }
@@ -59,8 +58,10 @@ async function handleTokenRefresh(
   );
 
   const { access, refresh } = res.data;
-  await AsyncStorage.setItem('access_token', access);
-  await AsyncStorage.setItem('refresh_token', refresh);
+  await Promise.all([
+    SecureStore.setItemAsync('access_token', access),
+    SecureStore.setItemAsync('refresh_token', refresh),
+  ]);
 
   if (originalRequest.headers) {
     originalRequest.headers.Authorization = `Bearer ${access}`;
@@ -89,10 +90,16 @@ api.interceptors.response.use(
           try {
             return await handleTokenRefresh(originalRequest);
           } catch {
-            await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+            await Promise.all([
+              SecureStore.deleteItemAsync('access_token'),
+              SecureStore.deleteItemAsync('refresh_token'),
+            ]);
           }
         } else {
-          await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+          await Promise.all([
+            SecureStore.deleteItemAsync('access_token'),
+            SecureStore.deleteItemAsync('refresh_token'),
+          ]);
         }
       }
     }

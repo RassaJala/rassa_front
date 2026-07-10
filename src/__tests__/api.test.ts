@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string -- Test files are less strict */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 
 import api from '../services/api';
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  multiRemove: jest.fn(),
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
 }));
 
 jest.mock('axios-retry', () => jest.fn());
@@ -46,7 +46,7 @@ describe('API Interceptors', () => {
     axiosError.response = { status: 401 };
     axiosError.config = originalRequest;
 
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       'old_refresh_token',
     );
 
@@ -60,16 +60,16 @@ describe('API Interceptors', () => {
     // Ejecutamos el interceptor de error
     const result = await responseInterceptor(axiosError);
 
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith('refresh_token');
+    expect(SecureStore.getItemAsync).toHaveBeenCalledWith('refresh_token');
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/token/refresh/'),
       { refresh: 'old_refresh_token' },
     );
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'access_token',
       'new_access',
     );
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'refresh_token',
       'new_refresh',
     );
@@ -90,7 +90,7 @@ describe('API Interceptors', () => {
     axiosError.response = { status: 401 };
     axiosError.config = originalRequest;
 
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       'old_refresh_token',
     );
     (axios.post as jest.Mock).mockRejectedValueOnce(
@@ -101,9 +101,7 @@ describe('API Interceptors', () => {
       'Request failed with status code 401',
     );
 
-    expect(AsyncStorage.multiRemove).toHaveBeenCalledWith([
-      'access_token',
-      'refresh_token',
-    ]);
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('access_token');
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('refresh_token');
   });
 });

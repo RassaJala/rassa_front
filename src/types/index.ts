@@ -6,7 +6,6 @@ export interface User {
   username?: string;
   id_usuario?: number;
   telefono?: string | null;
-  phone_number?: string | null;
   role: UserRole;
   first_name: string;
   last_name: string;
