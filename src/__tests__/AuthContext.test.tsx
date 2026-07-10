@@ -3,6 +3,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 
 import * as SecureStore from 'expo-secure-store';
+
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import api from '../services/api';

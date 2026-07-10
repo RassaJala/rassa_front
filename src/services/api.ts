@@ -1,9 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
+
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
 function resolveBaseURL(): string {
+  // eslint-disable-next-line no-undef -- process is injected by expo
   const configured = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
   const trimmed = configured.replace(/\/$/, '');
 

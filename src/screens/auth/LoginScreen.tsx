@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -31,7 +31,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   async function handleLogin() {
     if (isSubmitting) return;
-    
+
     setErrorMessage(null);
 
     if (netInfo.isConnected === false) {
