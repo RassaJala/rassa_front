@@ -163,4 +163,24 @@ describe('API Interceptors', () => {
     expect(result.headers.Authorization).toBeUndefined();
     expect(result).toBe(config);
   });
+
+  it('no limpia tokens si el refresh funciona pero la repetición falla (B10)', async () => {
+    const originalRequest = { headers: {}, url: '/some-endpoint' };
+    const axiosError = makeAxiosError(401, originalRequest);
+
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
+      'old_refresh_token',
+    );
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: { access: 'new_access', refresh: 'new_refresh' },
+    });
+    const retryError = makeAxiosError(403, originalRequest);
+    (api as unknown as jest.Mock).mockRejectedValueOnce(retryError);
+
+    await expect(responseInterceptor(axiosError)).rejects.toThrow(
+      'Request failed with status code 403',
+    );
+
+    expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
+  });
 });

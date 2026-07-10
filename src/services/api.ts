@@ -8,6 +8,7 @@ import * as Storage from './storage';
 const API_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 3;
 const SERVER_ERROR_THRESHOLD = 500;
+const REFRESH_TIMEOUT_MS = 8_000;
 
 // Endpoints where we never attempt token refresh (login, refresh themselves)
 const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
@@ -48,7 +49,7 @@ axiosRetry(api, {
       axiosRetry.isNetworkOrIdempotentRequestError(error) ||
       (error.response?.status !== undefined &&
         error.response.status >= SERVER_ERROR_THRESHOLD)
-    );
+    ) && error.config?.method !== 'post';
   },
 });
 
@@ -82,10 +83,19 @@ async function refreshTokens(): Promise<string> {
     const refreshToken = await Storage.getItemAsync(Storage.REFRESH_TOKEN_KEY);
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const res = await api.post<{ access: string; refresh: string }>(
-      '/token/refresh/',
-      { refresh: refreshToken },
-    );
+    const res = await Promise.race([
+      api.post<{ access: string; refresh: string }>(
+        '/token/refresh/',
+        { refresh: refreshToken },
+      ),
+      new Promise<never>((_resolve, reject) =>
+        // eslint-disable-next-line no-undef -- global in RN/Node
+        setTimeout(
+          () => reject(new Error('Refresh token request timed out')),
+          REFRESH_TIMEOUT_MS,
+        ),
+      ),
+    ]);
 
     const { access, refresh } = res.data;
     await Promise.all([

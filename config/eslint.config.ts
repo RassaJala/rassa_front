@@ -62,6 +62,9 @@ function createBaseRules() {
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-redeclare': 'error',
 
+      // Deactivar no-unused-vars nativo; unused-imports plugin lo gestiona
+      'no-unused-vars': 'off',
+
       // Comentarios ESLint
       'eslint-comments/no-unlimited-disable': 'error',
       'eslint-comments/no-unused-disable': 'error',

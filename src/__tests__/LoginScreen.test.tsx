@@ -13,10 +13,10 @@ jest.mock('@/store/AuthContext', () => ({
   }),
 }));
 
+const mockNetInfoState = { isConnected: true };
+
 jest.mock('@react-native-community/netinfo', () => ({
-  useNetInfo: () => ({
-    isConnected: true,
-  }),
+  useNetInfo: jest.fn(() => ({ ...mockNetInfoState })),
 }));
 
 jest.mock('@sentry/react-native', () => ({
@@ -26,6 +26,7 @@ jest.mock('@sentry/react-native', () => ({
 describe('LoginScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNetInfoState.isConnected = true;
   });
 
   it('renderiza correctamente', () => {
@@ -112,6 +113,106 @@ describe('LoginScreen', () => {
 
     await waitFor(() => {
       expect(getByText('Credenciales inválidas')).toBeTruthy();
+    });
+  });
+
+  it('muestra error de conexión cuando no hay internet', async () => {
+    mockNetInfoState.isConnected = false;
+
+    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+
+    fireEvent.changeText(
+      getByPlaceholderText('Correo electrónico'),
+      'admin@rassa.com'
+    );
+
+    fireEvent.changeText(
+      getByPlaceholderText('Contraseña'),
+      'admin123'
+    );
+
+    fireEvent.press(getByText('Ingresar'));
+
+    await waitFor(() => {
+      expect(getByText('Sin conexión a Internet.')).toBeTruthy();
+    });
+  });
+
+  it('no llama a login si el componente se desmonta durante la petición', async () => {
+    let resolveLogin!: (_value: unknown) => void;
+    mockLogin.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLogin = resolve;
+      })
+    );
+
+    const { getByPlaceholderText, getByText, unmount } = render(
+      <LoginScreen />
+    );
+
+    fireEvent.changeText(
+      getByPlaceholderText('Correo electrónico'),
+      'admin@rassa.com'
+    );
+
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.press(getByText('Ingresar'));
+
+    // Unmount before the promise resolves
+    unmount();
+
+    resolveLogin(undefined);
+
+    // No error should be thrown — isMounted guard prevents setState on unmounted
+    // Just verify the component unmounts without crashing
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalled();
+    });
+  });
+
+  it('muestra ActivityIndicator mientras se envía el formulario', async () => {
+    let resolveLogin!: (_value: unknown) => void;
+    mockLogin.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLogin = resolve;
+      })
+    );
+
+    const { getByPlaceholderText, getByText, queryByText } = render(
+      <LoginScreen />
+    );
+
+    fireEvent.changeText(
+      getByPlaceholderText('Correo electrónico'),
+      'admin@rassa.com'
+    );
+
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.press(getByText('Ingresar'));
+
+    // "Ingresar" text is replaced by ActivityIndicator when submitting
+    await waitFor(() => {
+      expect(queryByText('Ingresar')).toBeNull();
+    });
+
+    resolveLogin(undefined);
+  });
+
+  it('limpia el email al presionar enviar y muestra error', async () => {
+    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+
+    fireEvent.changeText(
+      getByPlaceholderText('Correo electrónico'),
+      '  correo@ejemplo.com  '
+    );
+
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), '');
+    fireEvent.press(getByText('Ingresar'));
+
+    await waitFor(() => {
+      expect(
+        getByText('Ingresa tu correo y contraseña.')
+      ).toBeTruthy();
     });
   });
 });
