@@ -50,22 +50,14 @@ describe('LoginScreen', () => {
   it('valida un correo inválido', async () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'correo'
-    );
+    fireEvent.changeText(getByPlaceholderText('Correo electrónico'), 'correo');
 
-    fireEvent.changeText(
-      getByPlaceholderText('Contraseña'),
-      '123456'
-    );
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
 
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(
-        getByText('Ingresa un correo electrónico válido.')
-      ).toBeTruthy();
+      expect(getByText('Ingresa un correo electrónico válido.')).toBeTruthy();
     });
   });
 
@@ -76,21 +68,15 @@ describe('LoginScreen', () => {
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com'
+      'admin@rassa.com',
     );
 
-    fireEvent.changeText(
-      getByPlaceholderText('Contraseña'),
-      'admin123'
-    );
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
 
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith(
-        'admin@rassa.com',
-        'admin123'
-      );
+      expect(mockLogin).toHaveBeenCalledWith('admin@rassa.com', 'admin123');
     });
   });
 
@@ -101,13 +87,10 @@ describe('LoginScreen', () => {
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com'
+      'admin@rassa.com',
     );
 
-    fireEvent.changeText(
-      getByPlaceholderText('Contraseña'),
-      '123456'
-    );
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
 
     fireEvent.press(getByText('Ingresar'));
 
@@ -123,13 +106,10 @@ describe('LoginScreen', () => {
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com'
+      'admin@rassa.com',
     );
 
-    fireEvent.changeText(
-      getByPlaceholderText('Contraseña'),
-      'admin123'
-    );
+    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
 
     fireEvent.press(getByText('Ingresar'));
 
@@ -143,16 +123,16 @@ describe('LoginScreen', () => {
     mockLogin.mockReturnValue(
       new Promise((resolve) => {
         resolveLogin = resolve;
-      })
+      }),
     );
 
     const { getByPlaceholderText, getByText, unmount } = render(
-      <LoginScreen />
+      <LoginScreen />,
     );
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com'
+      'admin@rassa.com',
     );
 
     fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
@@ -175,16 +155,16 @@ describe('LoginScreen', () => {
     mockLogin.mockReturnValue(
       new Promise((resolve) => {
         resolveLogin = resolve;
-      })
+      }),
     );
 
     const { getByPlaceholderText, getByText, queryByText } = render(
-      <LoginScreen />
+      <LoginScreen />,
     );
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com'
+      'admin@rassa.com',
     );
 
     fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
@@ -203,16 +183,14 @@ describe('LoginScreen', () => {
 
     fireEvent.changeText(
       getByPlaceholderText('Correo electrónico'),
-      '  correo@ejemplo.com  '
+      '  correo@ejemplo.com  ',
     );
 
     fireEvent.changeText(getByPlaceholderText('Contraseña'), '');
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(
-        getByText('Ingresa tu correo y contraseña.')
-      ).toBeTruthy();
+      expect(getByText('Ingresa tu correo y contraseña.')).toBeTruthy();
     });
   });
 });

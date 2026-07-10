@@ -46,10 +46,11 @@ axiosRetry(api, {
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      (error.response?.status !== undefined &&
-        error.response.status >= SERVER_ERROR_THRESHOLD)
-    ) && error.config?.method !== 'post';
+      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        (error.response?.status !== undefined &&
+          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
+      error.config?.method !== 'post'
+    );
   },
 });
 
@@ -84,10 +85,9 @@ async function refreshTokens(): Promise<string> {
     if (!refreshToken) throw new Error('No refresh token available');
 
     const res = await Promise.race([
-      api.post<{ access: string; refresh: string }>(
-        '/token/refresh/',
-        { refresh: refreshToken },
-      ),
+      api.post<{ access: string; refresh: string }>('/token/refresh/', {
+        refresh: refreshToken,
+      }),
       new Promise<never>((_resolve, reject) =>
         // eslint-disable-next-line no-undef -- global in RN/Node
         setTimeout(

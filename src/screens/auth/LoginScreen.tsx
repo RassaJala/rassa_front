@@ -106,9 +106,11 @@ export default function LoginScreen(): React.JSX.Element {
           onChangeText={setPassword}
         />
 
-        {errorMessage ? <Text className="mt-4 text-center text-sm text-red-600">
+        {errorMessage ? (
+          <Text className="mt-4 text-center text-sm text-red-600">
             {errorMessage}
-          </Text> : null}
+          </Text>
+        ) : null}
 
         <Pressable
           disabled={isSubmitting}
