@@ -6,9 +6,9 @@ import * as SecureStore from 'expo-secure-store';
 
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
-import api from '../services/api';
 import { AuthProvider, useAuth } from '../store/AuthContext';
 
+// Mock SecureStore before anything else
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
@@ -17,28 +17,35 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('axios-retry', () => jest.fn());
 
-jest.mock('../services/api', () => {
+// Mock axios so the real api module creates a mock-based instance
+jest.mock('axios', () => {
+  const mockAxios = jest.fn() as any;
+  mockAxios.create = jest.fn(() => mockAxios);
+  mockAxios.get = jest.fn();
+  mockAxios.post = jest.fn();
+  mockAxios.isAxiosError = jest.fn((err: any) => err?.isAxiosError === true);
+  mockAxios.interceptors = {
+    request: { use: jest.fn() },
+    response: { use: jest.fn() },
+  };
   return {
     __esModule: true,
-    default: {
-      get: jest.fn(),
-      post: jest.fn(),
-      interceptors: {
-        request: { use: jest.fn() },
-        response: { use: jest.fn() },
-      },
-    },
+    default: mockAxios,
   };
 });
 
+// After the axios mock, import api — it will create a mock-based instance
+const { default: api } = require('../services/api');
+
 function TestComponent() {
-  const { user, login, logout, isAuthenticated } = useAuth();
+  const { user, login, logout, isAuthenticated, isLoading } = useAuth();
 
   return (
     <View>
       <Text testID="auth-status">
         {isAuthenticated ? 'Autenticado' : 'No Autenticado'}
       </Text>
+      <Text testID="loading-status">{isLoading ? 'Cargando' : 'Listo'}</Text>
       <Text testID="user-role">{user?.role ?? 'Sin Rol'}</Text>
       <Text testID="user-name">{user?.first_name ?? 'Sin Nombre'}</Text>
       <Text
@@ -61,27 +68,30 @@ function TestComponent() {
   );
 }
 
+const DEFAULT_BACKEND_USER = {
+  id: 1,
+  email: 'test@test.com',
+  username: 'testuser',
+  id_usuario: 1,
+  telefono: null,
+  rol: 'buyer',
+  nombre: 'Test User',
+};
+
 describe('AuthContext', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('debería rechazar un rol desconocido en normalizeRole durante el login', async () => {
-    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+  // ── normalizeRole ─────────────────────────────────────
 
+  it('rechaza un rol desconocido y lanza error', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
     (api.post as jest.Mock).mockResolvedValueOnce({
       data: { access: '123', refresh: '456' },
     });
     (api.get as jest.Mock).mockResolvedValueOnce({
-      data: {
-        id: 1,
-        email: 'test@test.com',
-        username: 'test',
-        id_usuario: 1,
-        telefono: '12345',
-        rol: 'hacker',
-        nombre: 'Malicious User',
-      },
+      data: { ...DEFAULT_BACKEND_USER, rol: 'hacker' },
     });
 
     const consoleWarnSpy = jest
@@ -99,28 +109,19 @@ describe('AuthContext', () => {
     });
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Rol no reconocido'),
+      'Rol de usuario inválido o no reconocido: "hacker". Denegando acceso para evitar puerta trasera.',
     );
     expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
     consoleWarnSpy.mockRestore();
   });
 
-  it('debería mapear correctamente un rol válido y nombre parcial en mapBackendUser', async () => {
+  it('mapea correctamente un rol válido y nombre parcial', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
-
     (api.post as jest.Mock).mockResolvedValueOnce({
       data: { access: '123', refresh: '456' },
     });
     (api.get as jest.Mock).mockResolvedValueOnce({
-      data: {
-        id: 1,
-        email: 'test@test.com',
-        username: 'test',
-        id_usuario: 1,
-        telefono: null,
-        rol: 'ADMIN',
-        nombre: null,
-      },
+      data: { ...DEFAULT_BACKEND_USER, rol: 'ADMIN', nombre: null },
     });
 
     const { getByTestId } = render(
@@ -140,7 +141,144 @@ describe('AuthContext', () => {
     expect(getByTestId('user-name').props.children).toBe('');
   });
 
-  it('debería mantener la sesión si restoreSession falla por un error de red o 5xx', async () => {
+  // ── Login success flow ─────────────────────────────────
+
+  it('login exitoso: almacena tokens, mapea usuario y actualiza estado', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: { access: 'token123', refresh: 'refresh456' },
+    });
+    (api.get as jest.Mock).mockResolvedValueOnce({
+      data: DEFAULT_BACKEND_USER,
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('Autenticado');
+    });
+
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'access_token',
+      'token123',
+    );
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'refresh_token',
+      'refresh456',
+    );
+    expect(getByTestId('user-role').props.children).toBe('buyer');
+    expect(getByTestId('user-name').props.children).toBe('Test');
+  });
+
+  // ── parseLoginError branches ──────────────────────────
+
+  it('parsea error de login cuando response.data es string', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+
+    const axiosError = new Error('Request failed') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = { status: 400, data: 'Email inválido' };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  it('parsea error de login con detail', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+
+    const axiosError = new Error('Request failed') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 401,
+      data: { detail: 'Credenciales inválidas.' },
+    };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  it('parsea error de login con non_field_errors', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+
+    const axiosError = new Error('Request failed') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 400,
+      data: { non_field_errors: ['Error 1', 'Error 2'] },
+    };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  // ── restoreSession ────────────────────────────────────
+
+  it('restoreSession: autentica con token válido', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+    (api.get as jest.Mock).mockResolvedValue({
+      data: DEFAULT_BACKEND_USER,
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('Autenticado');
+    });
+    expect(getByTestId('user-role').props.children).toBe('buyer');
+  });
+
+  it('restoreSession: mantiene sesión en error de red o 5xx', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
 
     const networkError = new Error('Network Error') as any;
@@ -159,18 +297,52 @@ describe('AuthContext', () => {
     });
   });
 
-  it('debería limpiar tokens y estado al hacer logout', async () => {
+  it('restoreSession: limpia tokens en error 4xx', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+
+    const authError = new Error('Unauthorized') as any;
+    authError.isAxiosError = true;
+    authError.response = { status: 401, data: {} };
+    (api.get as jest.Mock).mockRejectedValueOnce(authError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('access_token');
+    });
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  // ── Loading state ─────────────────────────────────────
+
+  it('loading state: isLoading es true antes de restaurar sesión', () => {
+    (SecureStore.getItemAsync as jest.Mock).mockReturnValue(
+      new Promise(() => {
+        /* never resolves — keep isLoading true */
+      }),
+    );
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    expect(getByTestId('loading-status').props.children).toBe('Cargando');
+  });
+
+  // ── Logout ────────────────────────────────────────────
+
+  it('limpia tokens y estado al hacer logout', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
     (api.get as jest.Mock).mockResolvedValue({
-      data: {
-        id: 1,
-        email: 't',
-        username: 't',
-        id_usuario: 1,
-        telefono: null,
-        rol: 'buyer',
-        nombre: 'Test',
-      },
+      data: DEFAULT_BACKEND_USER,
     });
 
     const { getByTestId } = render(
@@ -190,5 +362,55 @@ describe('AuthContext', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('access_token');
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('refresh_token');
     expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+  });
+
+  // ── Login fallos específicos ─────────────────────────
+
+  it('login falla con 401 en /token/ (credenciales inválidas)', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+
+    const axiosError = new Error('Unauthorized') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 401,
+      data: { detail: 'Invalid credentials' },
+    };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  it('login falla con error no-Axios (red caída)', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    (api.post as jest.Mock).mockRejectedValueOnce(
+      new TypeError('fetch failed'),
+    );
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
   });
 });

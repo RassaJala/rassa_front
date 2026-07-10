@@ -11,9 +11,15 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 
 import { useAuth } from '@/store/AuthContext';
+import { getLoginErrorMessage } from '@/utils/authError';
+
+const PLACEHOLDER_COLOR = '#94a3b8';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +30,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   useEffect(() => {
     isMounted.current = true;
+
     return () => {
       isMounted.current = false;
     };
@@ -44,7 +51,7 @@ export default function LoginScreen(): React.JSX.Element {
       return;
     }
 
-    if (!email.includes('@')) {
+    if (!EMAIL_REGEX.test(email.trim())) {
       setErrorMessage('Ingresa un correo electrónico válido.');
       return;
     }
@@ -54,20 +61,12 @@ export default function LoginScreen(): React.JSX.Element {
     try {
       await login(email.trim(), password);
     } catch (error) {
-      let message =
-        'No se pudo iniciar sesión. Revisa el backend y la URL de la API.';
-
-      if (error instanceof Error) {
-        message = error.message;
-      } else if (typeof error === 'string') {
-        message = error;
-      } else if (error && typeof error === 'object') {
-        message = JSON.stringify(error);
-      }
+      const message = getLoginErrorMessage(error);
 
       if (isMounted.current) {
         setErrorMessage(message);
       }
+
       Sentry.captureException(error);
     } finally {
       if (isMounted.current) {
@@ -82,6 +81,7 @@ export default function LoginScreen(): React.JSX.Element {
         <Text className="mb-2 text-2xl font-semibold text-slate-900">
           Iniciar sesión
         </Text>
+
         <Text className="mb-6 text-sm text-slate-600">
           Ingresa tus credenciales para continuar.
         </Text>
@@ -89,36 +89,36 @@ export default function LoginScreen(): React.JSX.Element {
         <TextInput
           autoCapitalize="none"
           autoComplete="email"
-          className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900"
           keyboardType="email-address"
-          onChangeText={setEmail}
+          className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900"
           placeholder="Correo electrónico"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={email}
+          onChangeText={setEmail}
         />
 
         <TextInput
           className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900"
-          onChangeText={setPassword}
           placeholder="Contraseña"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           secureTextEntry
           value={password}
+          onChangeText={setPassword}
         />
 
-        {errorMessage ? (
-          <Text className="mt-4 text-center text-sm text-red-600">
+        {errorMessage ? <Text className="mt-4 text-center text-sm text-red-600">
             {errorMessage}
-          </Text>
-        ) : null}
+          </Text> : null}
 
         <Pressable
-          className={`mt-6 rounded-xl bg-emerald-600 px-4 py-3 ${isSubmitting ? 'opacity-70' : ''}`}
           disabled={isSubmitting}
           onPress={() => void handleLogin()}
+          className={`mt-6 rounded-xl bg-emerald-600 px-4 py-3 ${
+            isSubmitting ? 'opacity-70' : ''
+          }`}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text className="text-center font-semibold text-white">
               Ingresar
