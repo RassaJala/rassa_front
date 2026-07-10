@@ -164,6 +164,32 @@ describe('API Interceptors', () => {
     expect(result).toBe(config);
   });
 
+  it('coalesce 401s concurrentes en un solo refresh (single-flight, B2)', async () => {
+    const req1 = { headers: {} as Record<string, string>, url: '/endpoint-1' };
+    const req2 = { headers: {} as Record<string, string>, url: '/endpoint-2' };
+    const err1 = makeAxiosError(401, req1);
+    const err2 = makeAxiosError(401, req2);
+
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('refresh_token');
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: { access: 'new_token', refresh: 'new_refresh' },
+    });
+    (api as unknown as jest.Mock).mockResolvedValue({ data: 'ok' });
+
+    await Promise.all([responseInterceptor(err1), responseInterceptor(err2)]);
+
+    // Single flight: refreshTokens called exactly once
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post).toHaveBeenCalledWith('/token/refresh/', {
+      refresh: 'refresh_token',
+    });
+
+    // Both original requests retried with the new token
+    expect(api).toHaveBeenCalledTimes(2);
+    expect(req1.headers.Authorization).toBe('Bearer new_token');
+    expect(req2.headers.Authorization).toBe('Bearer new_token');
+  });
+
   it('no limpia tokens si el refresh funciona pero la repetición falla (B10)', async () => {
     const originalRequest = { headers: {}, url: '/some-endpoint' };
     const axiosError = makeAxiosError(401, originalRequest);

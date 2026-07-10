@@ -35,8 +35,9 @@ interface LoginResponse {
 
 const AUTH_LOGIN_ENDPOINT = '/token/';
 const AUTH_PROFILE_ENDPOINT = '/auth/me/';
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
+// Keys are defined in storage.ts; import for deduplication (W3)
+const ACCESS_TOKEN_KEY = Storage.ACCESS_TOKEN_KEY;
+const REFRESH_TOKEN_KEY = Storage.REFRESH_TOKEN_KEY;
 
 interface AuthState {
   user: User | null;
@@ -44,12 +45,10 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-/* eslint-disable no-unused-vars -- interface params are type-only, not runtime bindings */
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
-/* eslint-enable no-unused-vars -- re-enable after interface */
 
 interface AuthProviderProps {
   readonly children: ReactNode;
@@ -156,16 +155,29 @@ export function AuthProvider({
         isAuthenticated: true,
       }));
     } catch (error) {
-      // Do not clear tokens on 5xx or Network Errors (undefined response)
-      if (
-        axios.isAxiosError(error) &&
-        (!error.response || error.response.status >= 500)
-      ) {
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
-        setState((prev) => ({ ...prev, isLoading: false }));
+      // Only clear session on 401 (token expired/invalid).
+      // 403, 429, network errors, 5xx should NOT log the user out (C1).
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        await clearSession();
         return;
       }
-      await clearSession();
+      // Transient error — one retry after 1s delay (C2)
+      try {
+        // eslint-disable-next-line no-undef -- setTimeout is global in RN
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({
+          ...prev,
+          user: mapBackendUser(data),
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+      } catch {
+        // Still failing — show app unauthenticated, tokens remain valid
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({ ...prev, isLoading: false }));
+      }
     }
   }, [clearSession]);
 
@@ -218,13 +230,16 @@ export function AuthProvider({
           responseData,
           url: axiosError.config?.url,
         });
-        throw new Error(errorMessage, { cause: error });
+        /* eslint-disable-next-line preserve-caught-error -- No incluimos el AxiosError
+         * como cause porque contiene email/password en config.data y Sentry
+         * serializaría las credenciales en la cadena de errores. */
+        throw new Error(errorMessage);
       }
 
       console.error('Login error', error);
       throw error instanceof Error
         ? error
-        : new Error('Error desconocido de autenticación', { cause: error });
+        : new Error('Error desconocido de autenticación');
     }
   }, []);
 
