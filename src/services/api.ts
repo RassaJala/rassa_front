@@ -1,8 +1,8 @@
-import * as SecureStore from 'expo-secure-store';
-
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
+
+import * as Storage from './storage';
 
 function resolveBaseURL(): string {
   // eslint-disable-next-line no-undef -- process is injected by expo
@@ -37,7 +37,7 @@ axiosRetry(api, {
 // Attach JWT token to every request
 // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios config is mutable internally
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('access_token');
+  const token = await Storage.getItemAsync('access_token');
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -49,7 +49,7 @@ api.interceptors.request.use(async (config) => {
 async function handleTokenRefresh(
   originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
-  const refreshToken = await SecureStore.getItemAsync('refresh_token');
+  const refreshToken = await Storage.getItemAsync('refresh_token');
   if (!refreshToken) {
     throw new Error('No refresh token');
   }
@@ -61,8 +61,8 @@ async function handleTokenRefresh(
 
   const { access, refresh } = res.data;
   await Promise.all([
-    SecureStore.setItemAsync('access_token', access),
-    SecureStore.setItemAsync('refresh_token', refresh),
+    Storage.setItemAsync('access_token', access),
+    Storage.setItemAsync('refresh_token', refresh),
   ]);
 
   if (originalRequest.headers) {
@@ -93,14 +93,14 @@ api.interceptors.response.use(
             return await handleTokenRefresh(originalRequest);
           } catch {
             await Promise.all([
-              SecureStore.deleteItemAsync('access_token'),
-              SecureStore.deleteItemAsync('refresh_token'),
+              Storage.deleteItemAsync('access_token'),
+              Storage.deleteItemAsync('refresh_token'),
             ]);
           }
         } else {
           await Promise.all([
-            SecureStore.deleteItemAsync('access_token'),
-            SecureStore.deleteItemAsync('refresh_token'),
+            Storage.deleteItemAsync('access_token'),
+            Storage.deleteItemAsync('refresh_token'),
           ]);
         }
       }
