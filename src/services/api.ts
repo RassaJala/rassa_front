@@ -1,7 +1,8 @@
 /* globals process -- Expo defines process.env at build time */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AxiosError } from 'axios';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 
 function resolveBaseURL(): string {
   const configured = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -14,9 +15,21 @@ const baseURL = resolveBaseURL();
 
 const api = axios.create({
   baseURL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+  },
+});
+
+axiosRetry(api, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return (
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status !== undefined && error.response.status >= 500)
+    );
   },
 });
 
@@ -32,6 +45,29 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+async function handleTokenRefresh(
+  originalRequest: InternalAxiosRequestConfig,
+): Promise<unknown> {
+  const refreshToken = await AsyncStorage.getItem('refresh_token');
+  if (!refreshToken) {
+    throw new Error('No refresh token');
+  }
+
+  const res = await axios.post<{ access: string; refresh: string }>(
+    `${baseURL}/token/refresh/`,
+    { refresh: refreshToken },
+  );
+
+  const { access, refresh } = res.data;
+  await AsyncStorage.setItem('access_token', access);
+  await AsyncStorage.setItem('refresh_token', refresh);
+
+  if (originalRequest.headers) {
+    originalRequest.headers.Authorization = `Bearer ${access}`;
+  }
+  return api(originalRequest);
+}
+
 // Handle 401 and clear tokens when the request is unauthorized.
 api.interceptors.response.use(
   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios response is mutable internally
@@ -39,8 +75,25 @@ api.interceptors.response.use(
   async (error: unknown) => {
     if (error instanceof Error && (error as AxiosError).isAxiosError) {
       const axiosErr = error as AxiosError;
+      const originalRequest = axiosErr.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
+
       if (axiosErr.response?.status === 401) {
-        await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+        if (
+          originalRequest &&
+          !originalRequest._retry &&
+          originalRequest.url !== '/token/'
+        ) {
+          originalRequest._retry = true;
+          try {
+            return await handleTokenRefresh(originalRequest);
+          } catch {
+            await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+          }
+        } else {
+          await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+        }
       }
     }
     throw error;

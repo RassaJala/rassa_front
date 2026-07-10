@@ -12,8 +12,8 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AxiosError, AxiosResponse } from 'axios';
 
-import api from '~/services/api';
-import type { User, UserRole } from '~/types';
+import api from '@/services/api';
+import type { User, UserRole } from '@/types';
 
 interface BackendUser {
   id: number;
@@ -76,11 +76,19 @@ function normalizeRole(role?: string): UserRole {
     return 'farmer';
   }
 
-  return 'buyer';
+  if (normalized === 'buyer' || normalized === 'comprador') {
+    return 'buyer';
+  }
+
+  console.warn(
+    `Rol no reconocido: "${role}". Denegando acceso para evitar puerta trasera.`,
+  );
+  throw new Error(`Rol de usuario inválido o no reconocido: ${role}`);
 }
 
 function mapBackendUser(user: Readonly<BackendUser>): User {
-  const [firstName, ...lastNameParts] = user.nombre.trim().split(/\s+/);
+  const nombre = user.nombre ?? '';
+  const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
 
   return {
     id: user.id,
@@ -92,6 +100,19 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
     first_name: firstName ?? '',
     last_name: lastNameParts.join(' '),
   };
+}
+
+function parseLoginError(
+  axiosError: AxiosError<Record<string, unknown>>,
+): string {
+  const responseData = axiosError.response?.data;
+  if (typeof responseData === 'string') return responseData;
+  if (responseData?.detail) return String(responseData.detail);
+  if (Array.isArray(responseData?.non_field_errors))
+    return responseData.non_field_errors.join(' ');
+  if (responseData?.message) return String(responseData.message);
+  if (responseData) return JSON.stringify(responseData);
+  return axiosError.message;
 }
 
 // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- AuthProviderProps already has readonly properties
@@ -124,7 +145,16 @@ export function AuthProvider({
         isLoading: false,
         isAuthenticated: true,
       });
-    } catch {
+    } catch (error) {
+      if ((error as AxiosError).isAxiosError) {
+        const axiosError = error as AxiosError;
+        // Do not clear tokens on 5xx or Network Errors (undefined response)
+        if (!axiosError.response || axiosError.response.status >= 500) {
+          // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+          setState((s) => ({ ...s, isLoading: false }));
+          return;
+        }
+      }
       await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
       setState({
         user: null,
@@ -146,14 +176,9 @@ export function AuthProvider({
       const loginPayload = {
         email,
         password,
-        username: email,
       };
 
-      let response = await requestTokens(loginPayload);
-
-      if (!response.data?.access || !response.data?.refresh) {
-        response = await requestTokens({ password, username: email });
-      }
+      const response = await requestTokens(loginPayload);
 
       const { data } = response;
 
@@ -177,18 +202,10 @@ export function AuthProvider({
         const responseData = axiosError.response?.data;
         const status = axiosError.response?.status;
 
-        const message =
-          typeof responseData === 'string'
-            ? responseData
-            : (responseData?.detail ??
-              (Array.isArray(responseData?.non_field_errors)
-                ? responseData.non_field_errors.join(' ')
-                : undefined) ??
-              responseData?.message ??
-              (responseData && JSON.stringify(responseData)) ??
-              axiosError.message);
+        const message = parseLoginError(axiosError);
 
-        const errorMessage = `Error de autenticación (${status}): ${message}`;
+        const statusStr = status ? ` (${status})` : '';
+        const errorMessage = `Error de autenticación${statusStr}: ${message}`;
         console.error(errorMessage, {
           status,
           responseData,

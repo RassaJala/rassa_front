@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 
-import { useAuth } from '~/store/AuthContext';
+import { useAuth } from '@/store/AuthContext';
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
