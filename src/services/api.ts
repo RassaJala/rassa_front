@@ -36,7 +36,6 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios response is mutable internally
   (response) => response,
-  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Error can be mutable
   async (error: unknown) => {
     if (error instanceof Error && (error as AxiosError).isAxiosError) {
       const axiosErr = error as AxiosError;

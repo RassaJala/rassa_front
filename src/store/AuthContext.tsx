@@ -1,12 +1,12 @@
 /* globals console -- Allow console methods for logging */
 import type { ReactNode } from 'react';
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -180,13 +180,13 @@ export function AuthProvider({
         const message =
           typeof responseData === 'string'
             ? responseData
-            : responseData?.detail ??
+            : (responseData?.detail ??
               (Array.isArray(responseData?.non_field_errors)
                 ? responseData.non_field_errors.join(' ')
                 : undefined) ??
               responseData?.message ??
               (responseData && JSON.stringify(responseData)) ??
-              axiosError.message;
+              axiosError.message);
 
         const errorMessage = `Error de autenticación (${status}): ${message}`;
         console.error(errorMessage, {

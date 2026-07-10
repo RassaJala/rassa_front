@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Pressable,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 import { useAuth } from '~/store/AuthContext';
@@ -38,7 +38,8 @@ export default function LoginScreen(): React.JSX.Element {
     try {
       await login(email.trim(), password);
     } catch (error) {
-      let message = 'No se pudo iniciar sesión. Revisa el backend y la URL de la API.';
+      let message =
+        'No se pudo iniciar sesión. Revisa el backend y la URL de la API.';
 
       if (error instanceof Error) {
         message = error.message;
