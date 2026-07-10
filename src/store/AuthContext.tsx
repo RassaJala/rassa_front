@@ -1,3 +1,4 @@
+/* globals console -- Allow console methods for logging */
 import type { ReactNode } from 'react';
 import React, {
     createContext,
@@ -9,7 +10,7 @@ import React, {
 } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AxiosError } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import api from '~/services/api';
 import type { User, UserRole } from '~/types';
@@ -78,7 +79,7 @@ function normalizeRole(role?: string): UserRole {
   return 'buyer';
 }
 
-function mapBackendUser(user: BackendUser): User {
+function mapBackendUser(user: Readonly<BackendUser>): User {
   const [firstName, ...lastNameParts] = user.nombre.trim().split(/\s+/);
 
   return {
@@ -112,8 +113,8 @@ export function AuthProvider({
     try {
       const token = await AsyncStorage.getItem('access_token');
       if (!token) {
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Readonly<AuthState> already applied
-        setState((s: Readonly<AuthState>) => ({ ...s, isLoading: false }));
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((s) => ({ ...s, isLoading: false }));
         return;
       }
       const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
@@ -135,7 +136,9 @@ export function AuthProvider({
   }
 
   const login = useCallback(async (email: string, password: string) => {
-    async function requestTokens(payload: Record<string, string>) {
+    async function requestTokens(
+      payload: Readonly<Record<string, string>>,
+    ): Promise<AxiosResponse<LoginResponse>> {
       return api.post<LoginResponse>(AUTH_LOGIN_ENDPOINT, payload);
     }
 
@@ -191,13 +194,13 @@ export function AuthProvider({
           responseData,
           url: axiosError.config?.url,
         });
-        throw new Error(errorMessage);
+        throw new Error(errorMessage, { cause: error });
       }
 
       console.error('Login error', error);
       throw error instanceof Error
         ? error
-        : new Error('Error desconocido de autenticación');
+        : new Error('Error desconocido de autenticación', { cause: error });
     }
   }, []);
 

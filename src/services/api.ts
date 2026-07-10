@@ -21,7 +21,7 @@ const api = axios.create({
 });
 
 // Attach JWT token to every request
-// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios interceptors mutate config internally
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios config is mutable internally
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('access_token');
 
@@ -34,10 +34,15 @@ api.interceptors.request.use(async (config) => {
 
 // Handle 401 and clear tokens when the request is unauthorized.
 api.interceptors.response.use(
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Axios response is mutable internally
   (response) => response,
-  async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Error can be mutable
+  async (error: unknown) => {
+    if (error instanceof Error && (error as AxiosError).isAxiosError) {
+      const axiosErr = error as AxiosError;
+      if (axiosErr.response?.status === 401) {
+        await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
+      }
     }
     throw error;
   },

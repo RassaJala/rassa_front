@@ -16,6 +16,10 @@ export default function LoginScreen(): React.JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  function handleLoginPress() {
+    void handleLogin();
+  }
+
   async function handleLogin() {
     setErrorMessage(null);
 
@@ -34,14 +38,15 @@ export default function LoginScreen(): React.JSX.Element {
     try {
       await login(email.trim(), password);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'string'
-          ? error
-          : error && typeof error === 'object'
-          ? JSON.stringify(error)
-          : 'No se pudo iniciar sesión. Revisa el backend y la URL de la API.';
+      let message = 'No se pudo iniciar sesión. Revisa el backend y la URL de la API.';
+
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === 'string') {
+        message = error;
+      } else if (error && typeof error === 'object') {
+        message = JSON.stringify(error);
+      }
 
       setErrorMessage(message);
     } finally {
@@ -88,7 +93,7 @@ export default function LoginScreen(): React.JSX.Element {
         <Pressable
           className={`mt-6 rounded-xl bg-emerald-600 px-4 py-3 ${isSubmitting ? 'opacity-70' : ''}`}
           disabled={isSubmitting}
-          onPress={handleLogin}
+          onPress={handleLoginPress}
         >
           {isSubmitting ? (
             <ActivityIndicator color="#ffffff" />
