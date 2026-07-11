@@ -69,13 +69,18 @@ function TestComponent() {
 }
 
 const DEFAULT_BACKEND_USER = {
-  id: 1,
-  email: 'test@test.com',
-  username: 'testuser',
   id_usuario: 1,
+  email: 'test@test.com',
   telefono: null,
-  rol: 'buyer',
+  role: 'buyer',
   nombre: 'Test User',
+  apellido_paterno: null,
+  apellido_materno: null,
+  fecha_nacimiento: null,
+  genero: null,
+  direccion: null,
+  localidad: null,
+  localidad_nombre: null,
 };
 
 describe('AuthContext', () => {
@@ -91,7 +96,7 @@ describe('AuthContext', () => {
       data: { access: '123', refresh: '456' },
     });
     (api.get as jest.Mock).mockResolvedValueOnce({
-      data: { ...DEFAULT_BACKEND_USER, rol: 'hacker' },
+      data: { data: { ...DEFAULT_BACKEND_USER, role: 'hacker' } },
     });
 
     const consoleWarnSpy = jest
@@ -121,7 +126,7 @@ describe('AuthContext', () => {
       data: { access: '123', refresh: '456' },
     });
     (api.get as jest.Mock).mockResolvedValueOnce({
-      data: { ...DEFAULT_BACKEND_USER, rol: 'ADMIN', nombre: null },
+      data: { data: { ...DEFAULT_BACKEND_USER, role: 'ADMIN', nombre: null } },
     });
 
     const { getByTestId } = render(
@@ -149,7 +154,7 @@ describe('AuthContext', () => {
       data: { access: 'token123', refresh: 'refresh456' },
     });
     (api.get as jest.Mock).mockResolvedValueOnce({
-      data: DEFAULT_BACKEND_USER,
+      data: { data: DEFAULT_BACKEND_USER },
     });
 
     const { getByTestId } = render(
@@ -263,7 +268,7 @@ describe('AuthContext', () => {
   it('restoreSession: autentica con token válido', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
     (api.get as jest.Mock).mockResolvedValue({
-      data: DEFAULT_BACKEND_USER,
+      data: { data: DEFAULT_BACKEND_USER },
     });
 
     const { getByTestId } = render(
@@ -342,7 +347,7 @@ describe('AuthContext', () => {
   it('limpia tokens y estado al hacer logout', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
     (api.get as jest.Mock).mockResolvedValue({
-      data: DEFAULT_BACKEND_USER,
+      data: { data: DEFAULT_BACKEND_USER },
     });
 
     const { getByTestId } = render(

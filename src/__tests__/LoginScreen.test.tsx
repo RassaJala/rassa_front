@@ -32,8 +32,8 @@ describe('LoginScreen', () => {
   it('renderiza correctamente', () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
-    expect(getByPlaceholderText('Correo electrónico')).toBeTruthy();
-    expect(getByPlaceholderText('Contraseña')).toBeTruthy();
+    expect(getByPlaceholderText('ej: usuario@correo.com')).toBeTruthy();
+    expect(getByPlaceholderText('Tu contraseña')).toBeTruthy();
     expect(getByText('Ingresar')).toBeTruthy();
   });
 
@@ -43,16 +43,16 @@ describe('LoginScreen', () => {
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(getByText('Ingresa tu correo y contraseña.')).toBeTruthy();
+      expect(getByText('El correo electrónico es obligatorio.')).toBeTruthy();
     });
   });
 
   it('valida un correo inválido', async () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
-    fireEvent.changeText(getByPlaceholderText('Correo electrónico'), 'correo');
+    fireEvent.changeText(getByPlaceholderText('ej: usuario@correo.com'), 'correo');
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), '123456');
 
     fireEvent.press(getByText('Ingresar'));
 
@@ -67,11 +67,11 @@ describe('LoginScreen', () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
+      getByPlaceholderText('ej: usuario@correo.com'),
       'admin@rassa.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), 'admin123');
 
     fireEvent.press(getByText('Ingresar'));
 
@@ -86,11 +86,11 @@ describe('LoginScreen', () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
+      getByPlaceholderText('ej: usuario@correo.com'),
       'admin@rassa.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), '123456');
 
     fireEvent.press(getByText('Ingresar'));
 
@@ -105,16 +105,18 @@ describe('LoginScreen', () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
+      getByPlaceholderText('ej: usuario@correo.com'),
       'admin@rassa.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), 'admin123');
 
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(getByText('Sin conexión a Internet.')).toBeTruthy();
+      expect(
+        getByText('Sin conexión a Internet. Verifica tu conexión e inténtalo de nuevo.'),
+      ).toBeTruthy();
     });
   });
 
@@ -131,11 +133,11 @@ describe('LoginScreen', () => {
     );
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
+      getByPlaceholderText('ej: usuario@correo.com'),
       'admin@rassa.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), 'admin123');
     fireEvent.press(getByText('Ingresar'));
 
     // Unmount before the promise resolves
@@ -163,11 +165,11 @@ describe('LoginScreen', () => {
     );
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
+      getByPlaceholderText('ej: usuario@correo.com'),
       'admin@rassa.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(getByPlaceholderText('Tu contraseña'), 'admin123');
     fireEvent.press(getByText('Ingresar'));
 
     // "Ingresar" text is replaced by ActivityIndicator when submitting
@@ -178,19 +180,18 @@ describe('LoginScreen', () => {
     resolveLogin(undefined);
   });
 
-  it('limpia el email al presionar enviar y muestra error', async () => {
+  it('muestra error de campo cuando falta la contraseña', async () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
     fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      '  correo@ejemplo.com  ',
+      getByPlaceholderText('ej: usuario@correo.com'),
+      'correo@ejemplo.com',
     );
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '');
     fireEvent.press(getByText('Ingresar'));
 
     await waitFor(() => {
-      expect(getByText('Ingresa tu correo y contraseña.')).toBeTruthy();
+      expect(getByText('La contraseña es obligatoria.')).toBeTruthy();
     });
   });
 });
