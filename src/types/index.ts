@@ -9,6 +9,25 @@ export interface User {
   role: UserRole;
   first_name: string;
   last_name: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno?: string | null;
+  fecha_nacimiento: string;
+  genero: string;
+  direccion: string;
+  localidad: number;
+  localidad_nombre?: string | null;
+}
+
+export interface Municipio {
+  id_municipio: number;
+  nombre: string;
+}
+
+export interface Localidad {
+  id_localidad: number;
+  nombre: string;
+  municipio_id: number;
 }
 
 export interface Product {

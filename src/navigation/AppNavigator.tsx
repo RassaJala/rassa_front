@@ -12,9 +12,10 @@ import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 // Common
+import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
-import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
+import AddProductScreen from '@/screens/farmer/AddProductScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import { useAuth } from '@/store/AuthContext';
 
@@ -35,6 +36,7 @@ function BuyerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -44,6 +46,7 @@ function FarmerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="MyProducts" component={MyProductsScreen} />
       <Tab.Screen name="AddProduct" component={AddProductScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

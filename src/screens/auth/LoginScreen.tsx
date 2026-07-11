@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { useNetInfo } from '@react-native-community/netinfo';
+import { useNavigation } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 
 import { useAuth } from '@/store/AuthContext';
@@ -19,6 +20,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
+  const navigation = useNavigation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -126,6 +128,15 @@ export default function LoginScreen(): React.JSX.Element {
               Ingresar
             </Text>
           )}
+        </Pressable>
+
+        <Pressable
+          onPress={() => navigation.navigate('Register' as never)}
+          className="mt-4"
+        >
+          <Text className="text-center text-sm font-medium text-emerald-600">
+            ¿No tienes cuenta? Regístrate aquí
+          </Text>
         </Pressable>
       </View>
     </View>

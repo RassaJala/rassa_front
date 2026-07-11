@@ -6,6 +6,13 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import LoginScreen from '@/screens/auth/LoginScreen';
 
 const mockLogin = jest.fn();
+const mockNavigate = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
 
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({

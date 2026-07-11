@@ -14,18 +14,23 @@ import axios from 'axios';
 
 import api from '@/services/api';
 import * as Storage from '@/services/storage';
-import type { User, UserRole } from '@/types';
+import type { ApiResponse, User, UserRole } from '@/types';
 
 interface BackendUser {
-  /** Database primary key (Django ID) */
   id: number;
   email: string;
   username: string;
-  /** External user ID from the authentication provider or related profile ID */
   id_usuario: number;
   telefono: string | null;
-  rol: string;
+  role: string;
   nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+  fecha_nacimiento: string;
+  genero: string;
+  direccion: string;
+  localidad: number;
+  localidad_nombre: string | null;
 }
 
 interface LoginResponse {
@@ -48,6 +53,8 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  register: (payload: Record<string, unknown>) => Promise<void>;
+  updateProfile: (payload: Record<string, unknown>) => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -89,14 +96,22 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
 
   return {
-    id: user.id,
+    id: user.id ?? user.id_usuario,
     email: user.email,
-    username: user.username,
+    username: user.username ?? user.email,
     id_usuario: user.id_usuario,
     telefono: user.telefono,
-    role: normalizeRole(user.rol),
+    role: normalizeRole(user.role),
     first_name: firstName ?? '',
     last_name: lastNameParts.join(' '),
+    nombre: user.nombre,
+    apellido_paterno: user.apellido_paterno,
+    apellido_materno: user.apellido_materno,
+    fecha_nacimiento: user.fecha_nacimiento,
+    genero: user.genero,
+    direccion: user.direccion,
+    localidad: user.localidad,
+    localidad_nombre: user.localidad_nombre,
   };
 }
 
@@ -146,11 +161,13 @@ export function AuthProvider({
         setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
-      const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+      const { data } = await api.get<ApiResponse<BackendUser>>(
+        AUTH_PROFILE_ENDPOINT,
+      );
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
-        user: mapBackendUser(data),
+        user: mapBackendUser(data.data),
         isLoading: false,
         isAuthenticated: true,
       }));
@@ -165,11 +182,13 @@ export function AuthProvider({
       try {
         // eslint-disable-next-line no-undef -- setTimeout is global in RN
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+        const { data } = await api.get<ApiResponse<BackendUser>>(
+          AUTH_PROFILE_ENDPOINT,
+        );
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
         setState((prev) => ({
           ...prev,
-          user: mapBackendUser(data),
+          user: mapBackendUser(data.data),
           isLoading: false,
           isAuthenticated: true,
         }));
@@ -206,8 +225,10 @@ export function AuthProvider({
         Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
       ]);
 
-      const { data: user } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
-      const mappedUser = mapBackendUser(user);
+      const { data: userResponse } = await api.get<ApiResponse<BackendUser>>(
+        AUTH_PROFILE_ENDPOINT,
+      );
+      const mappedUser = mapBackendUser(userResponse.data);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
@@ -243,6 +264,66 @@ export function AuthProvider({
     }
   }, []);
 
+  const register = useCallback(async (payload: Record<string, unknown>) => {
+    try {
+      const { data: responseBody } = await api.post<
+        ApiResponse<BackendUser & { access: string; refresh: string }>
+      >('/auth/register/', payload);
+
+      const user = responseBody.data;
+
+      if (!user?.access || !user?.refresh) {
+        throw new Error('La respuesta del backend no incluyó los tokens.');
+      }
+
+      await Promise.all([
+        Storage.setItemAsync(ACCESS_TOKEN_KEY, user.access),
+        Storage.setItemAsync(REFRESH_TOKEN_KEY, user.refresh),
+      ]);
+
+      const mappedUser = mapBackendUser(user);
+      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+      setState((prev) => ({
+        ...prev,
+        user: mappedUser,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<Record<string, unknown>>;
+        const message = parseLoginError(axiosError);
+        throw new Error(message, { cause: error });
+      }
+      throw error;
+    }
+  }, []);
+
+  const updateProfile = useCallback(
+    async (payload: Record<string, unknown>) => {
+      try {
+        const { data: responseBody } = await api.patch<
+          ApiResponse<BackendUser>
+        >('/auth/me/', payload);
+
+        const mappedUser = mapBackendUser(responseBody.data);
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({
+          ...prev,
+          user: mappedUser,
+        }));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as AxiosError<Record<string, unknown>>;
+          const message = parseLoginError(axiosError);
+          throw new Error(message, { cause: error });
+        }
+        throw error;
+      }
+    },
+    [],
+  );
+
   const logout = useCallback(async () => {
     await clearSession();
   }, [clearSession]);
@@ -250,8 +331,8 @@ export function AuthProvider({
   return (
     <AuthContext.Provider
       value={useMemo(
-        () => ({ ...state, login, logout }),
-        [state, login, logout],
+        () => ({ ...state, login, logout, register, updateProfile }),
+        [state, login, logout, register, updateProfile],
       )}
     >
       {children}
