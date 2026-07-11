@@ -3,7 +3,9 @@ export type UserRole = 'buyer' | 'farmer' | 'admin';
 export interface User {
   id: number;
   email: string;
-  phone_number: string;
+  username?: string;
+  id_usuario?: number;
+  telefono?: string | null;
   role: UserRole;
   first_name: string;
   last_name: string;

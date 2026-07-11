@@ -1,3 +1,4 @@
+/* globals console -- Allow console methods for logging */
 import type { ReactNode } from 'react';
 import React, {
   createContext,
@@ -8,27 +9,46 @@ import React, {
   useState,
 } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AxiosError } from 'axios';
+import axios from 'axios';
 
-import api from '~/services/api';
-import type { User } from '~/types';
+import api from '@/services/api';
+import * as Storage from '@/services/storage';
+import type { User, UserRole } from '@/types';
+
+interface BackendUser {
+  /** Database primary key (Django ID) */
+  id: number;
+  email: string;
+  username: string;
+  /** External user ID from the authentication provider or related profile ID */
+  id_usuario: number;
+  telefono: string | null;
+  rol: string;
+  nombre: string;
+}
+
+interface LoginResponse {
+  access: string;
+  refresh: string;
+}
+
+const AUTH_LOGIN_ENDPOINT = '/token/';
+const AUTH_PROFILE_ENDPOINT = '/auth/me/';
+// Keys are defined in storage.ts; import for deduplication (W3)
+const ACCESS_TOKEN_KEY = Storage.ACCESS_TOKEN_KEY;
+const REFRESH_TOKEN_KEY = Storage.REFRESH_TOKEN_KEY;
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
 
-/* eslint-disable no-unused-vars -- interface params are type-only, not runtime bindings */
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (
-    data: Readonly<Partial<User> & { password: string }>,
-  ) => Promise<void>;
   logout: () => Promise<void>;
 }
-/* eslint-enable no-unused-vars -- re-enable after interface */
 
 interface AuthProviderProps {
   readonly children: ReactNode;
@@ -36,85 +56,202 @@ interface AuthProviderProps {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ROLE_MAP: Record<string, UserRole> = {
+  admin: 'admin',
+  administrator: 'admin',
+  administrador: 'admin',
+  farmer: 'farmer',
+  productor: 'farmer',
+  seller: 'farmer',
+  agricultor: 'farmer',
+  vendedor: 'farmer',
+  buyer: 'buyer',
+  comprador: 'buyer',
+  cliente: 'buyer',
+};
+
+function normalizeRole(role?: string): UserRole {
+  const normalized = role?.toLowerCase() ?? '';
+  // eslint-disable-next-line security/detect-object-injection -- ROLE_MAP is a safe static dictionary
+  const mappedRole = ROLE_MAP[normalized];
+
+  if (mappedRole) {
+    return mappedRole;
+  }
+
+  const message = `Rol de usuario inválido o no reconocido: "${role}"`;
+  console.warn(`${message}. Denegando acceso para evitar puerta trasera.`);
+  throw new Error(message);
+}
+
+function mapBackendUser(user: Readonly<BackendUser>): User {
+  const nombre = user.nombre ?? '';
+  const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    id_usuario: user.id_usuario,
+    telefono: user.telefono,
+    role: normalizeRole(user.rol),
+    first_name: firstName ?? '',
+    last_name: lastNameParts.join(' '),
+  };
+}
+
+function parseLoginError(
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- External library type
+  axiosError: AxiosError<Record<string, unknown>>,
+): string {
+  const responseData = axiosError.response?.data;
+  if (typeof responseData === 'string') return responseData;
+  if (responseData?.detail) return String(responseData.detail);
+  if (Array.isArray(responseData?.non_field_errors))
+    return responseData.non_field_errors.join(' ');
+  if (responseData?.message) return String(responseData.message);
+  if (responseData) return 'Error desconocido del servidor.';
+  return axiosError.message;
+}
+
 // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- AuthProviderProps already has readonly properties
 export function AuthProvider({
   children,
 }: Readonly<AuthProviderProps>): React.JSX.Element {
   const [state, setState] = useState<AuthState>({
     user: null,
-    token: null,
     isLoading: true,
     isAuthenticated: false,
   });
 
-  useEffect(() => {
-    void restoreSession();
+  const clearSession = useCallback(async () => {
+    await Promise.all([
+      Storage.deleteItemAsync(ACCESS_TOKEN_KEY),
+      Storage.deleteItemAsync(REFRESH_TOKEN_KEY),
+    ]);
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+    setState((prev) => ({
+      ...prev,
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+    }));
   }, []);
 
-  async function restoreSession() {
+  const restoreSession = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem('access_token');
+      const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
       if (!token) {
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Readonly<AuthState> already applied
-        setState((s: Readonly<AuthState>) => ({ ...s, isLoading: false }));
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
-      const { data } = await api.get<User>('/auth/me/');
-      setState({ user: data, token, isLoading: false, isAuthenticated: true });
-    } catch {
-      await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-      setState({
-        user: null,
-        token: null,
+      const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+      setState((prev) => ({
+        ...prev,
+        user: mapBackendUser(data),
         isLoading: false,
-        isAuthenticated: false,
-      });
+        isAuthenticated: true,
+      }));
+    } catch (error) {
+      // Only clear session on 401 (token expired/invalid).
+      // 403, 429, network errors, 5xx should NOT log the user out (C1).
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        await clearSession();
+        return;
+      }
+      // Transient error — one retry after 1s delay (C2)
+      try {
+        // eslint-disable-next-line no-undef -- setTimeout is global in RN
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({
+          ...prev,
+          user: mapBackendUser(data),
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+      } catch {
+        // Still failing — show app unauthenticated, tokens remain valid
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({ ...prev, isLoading: false }));
+      }
     }
-  }
+  }, [clearSession]);
+
+  useEffect(() => {
+    void restoreSession();
+  }, [restoreSession]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { data } = await api.post<{ access: string; refresh: string }>(
-      '/token/',
-      { email, password },
-    );
-    await AsyncStorage.setItem('access_token', data.access);
-    await AsyncStorage.setItem('refresh_token', data.refresh);
-    // fetch user profile
-    const { data: user } = await api.get<User>('/auth/me/');
-    setState({
-      user,
-      token: data.access,
-      isLoading: false,
-      isAuthenticated: true,
-    });
-  }, []);
+    try {
+      const loginPayload = {
+        email,
+        password,
+      };
 
-  const register = useCallback(
-    async (fields: Readonly<Partial<User> & { password: string }>) => {
-      await api.post('/auth/register/', fields);
-      // auto-login after registration
-      if (fields.email) {
-        await login(fields.email, fields.password);
+      const { data } = await api.post<LoginResponse>(
+        AUTH_LOGIN_ENDPOINT,
+        loginPayload,
+      );
+
+      if (!data?.access || !data?.refresh) {
+        throw new Error('La respuesta del backend no incluyó los tokens.');
       }
-    },
-    [login],
-  );
+
+      await Promise.all([
+        Storage.setItemAsync(ACCESS_TOKEN_KEY, data.access),
+        Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
+      ]);
+
+      const { data: user } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+      const mappedUser = mapBackendUser(user);
+      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+      setState((prev) => ({
+        ...prev,
+        user: mappedUser,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<Record<string, unknown>>;
+        const responseData = axiosError.response?.data;
+        const status = axiosError.response?.status;
+
+        const message = parseLoginError(axiosError);
+
+        const statusStr = status ? ` (${status})` : '';
+        const errorMessage = `Error de autenticación${statusStr}: ${message}`;
+        console.error(errorMessage, {
+          status,
+          responseData,
+          url: axiosError.config?.url,
+        });
+        /* eslint-disable-next-line preserve-caught-error -- No incluimos el AxiosError
+         * como cause porque contiene email/password en config.data y Sentry
+         * serializaría las credenciales en la cadena de errores. */
+        throw new Error(errorMessage);
+      }
+
+      console.error('Login error', error);
+      throw error instanceof Error
+        ? error
+        : new Error('Error desconocido de autenticación');
+    }
+  }, []);
 
   const logout = useCallback(async () => {
-    await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-    setState({
-      user: null,
-      token: null,
-      isLoading: false,
-      isAuthenticated: false,
-    });
-  }, []);
+    await clearSession();
+  }, [clearSession]);
 
   return (
     <AuthContext.Provider
       value={useMemo(
-        () => ({ ...state, login, register, logout }),
-        [state, login, register, logout],
+        () => ({ ...state, login, logout }),
+        [state, login, logout],
       )}
     >
       {children}

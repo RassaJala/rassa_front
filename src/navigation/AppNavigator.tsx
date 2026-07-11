@@ -4,19 +4,19 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Admin screens
-import AdminPanelScreen from '~/screens/admin/AdminPanelScreen';
+import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 // Auth screens
-import LoginScreen from '~/screens/auth/LoginScreen';
-import RegisterScreen from '~/screens/auth/RegisterScreen';
+import LoginScreen from '@/screens/auth/LoginScreen';
+import RegisterScreen from '@/screens/auth/RegisterScreen';
 // Buyer screens
-import HomeScreen from '~/screens/buyer/HomeScreen';
-import ProductDetailScreen from '~/screens/buyer/ProductDetailScreen';
+import HomeScreen from '@/screens/buyer/HomeScreen';
+import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 // Common
-import SplashScreen from '~/screens/common/SplashScreen';
-import AddProductScreen from '~/screens/farmer/AddProductScreen';
+import SplashScreen from '@/screens/common/SplashScreen';
+import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
-import MyProductsScreen from '~/screens/farmer/MyProductsScreen';
-import { useAuth } from '~/store/AuthContext';
+import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+import { useAuth } from '@/store/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
