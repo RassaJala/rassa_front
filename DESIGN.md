@@ -2,7 +2,18 @@
 name: Rassa
 description: Plataforma de e-commerce para productos del campo — compradores (mobile-first), agricultores (responsive), administradores (web-first). Mobile, tablet y desktop desde una misma base.
 version: 1.0.0
-tags: [ecommerce, marketplace, campo, mobile, web, tablet, responsive, expo, react-native]
+tags:
+  [
+    ecommerce,
+    marketplace,
+    campo,
+    mobile,
+    web,
+    tablet,
+    responsive,
+    expo,
+    react-native,
+  ]
 ---
 
 ## Design Philosophy
@@ -50,33 +61,33 @@ La pantalla es > 80% neutros. Cada color de marca aparece **una sola vez con un 
 
 ### Paleta completa (solo 4 colores de marca)
 
-| Rol | Color | Hex | Se usa exactamente en |
-|-----|-------|-----|----------------------|
-| **Marca** — identidad | Forest (hojas) | `#3A6D56` | Solo header y logo. Nada más. |
-| **CTA** — acción | Coral (tomate) | `#DE393A` | Botones, links, tabs activos. Un solo lugar por pantalla. |
-| **Cálido** — precios | Naranja (zanahoria) | `#E46C38` | Precios, badge "Oferta", estrellas. |
-| **Texto** — contraste | Ink (contorno) | `#1D1D1D` | Texto principal, iconos. |
+| Rol                   | Color               | Hex       | Se usa exactamente en                                     |
+| --------------------- | ------------------- | --------- | --------------------------------------------------------- |
+| **Marca** — identidad | Forest (hojas)      | `#3A6D56` | Solo header y logo. Nada más.                             |
+| **CTA** — acción      | Coral (tomate)      | `#DE393A` | Botones, links, tabs activos. Un solo lugar por pantalla. |
+| **Cálido** — precios  | Naranja (zanahoria) | `#E46C38` | Precios, badge "Oferta", estrellas.                       |
+| **Texto** — contraste | Ink (contorno)      | `#1D1D1D` | Texto principal, iconos.                                  |
 
 No hay más. No hay sage, no hay olive, no hay acentos compitiendo.
 
 ### Neutros
 
-| Uso | Clase | Hex |
-|-----|-------|-----|
-| Fondo general | `bg-gray-50` | `#f9fafb` |
-| Superficies (cards, modales, sidebar) | `bg-white` | `#ffffff` |
-| Texto principal | `text-brand-ink` | `#1D1D1D` |
-| Texto secundario | `text-gray-500` | `#6b7280` |
-| Bordes y separadores | `border-gray-200` | `#e5e7eb` |
-| Placeholder / disabled | `text-gray-400` | `#9ca3af` |
+| Uso                                   | Clase             | Hex       |
+| ------------------------------------- | ----------------- | --------- |
+| Fondo general                         | `bg-gray-50`      | `#f9fafb` |
+| Superficies (cards, modales, sidebar) | `bg-white`        | `#ffffff` |
+| Texto principal                       | `text-brand-ink`  | `#1D1D1D` |
+| Texto secundario                      | `text-gray-500`   | `#6b7280` |
+| Bordes y separadores                  | `border-gray-200` | `#e5e7eb` |
+| Placeholder / disabled                | `text-gray-400`   | `#9ca3af` |
 
 ### Semánticos
 
-| Uso | Clase | Hex |
-|-----|-------|-----|
-| Error / alerta | `text-red-500` / `bg-red-500` | `#ef4444` |
-| Éxito / confirmación | `text-brand-green-forest` | `#3A6D56` |
-| Advertencia | `text-brand-orange` | `#E46C38` |
+| Uso                  | Clase                         | Hex       |
+| -------------------- | ----------------------------- | --------- |
+| Error / alerta       | `text-red-500` / `bg-red-500` | `#ef4444` |
+| Éxito / confirmación | `text-brand-green-forest`     | `#3A6D56` |
+| Advertencia          | `text-brand-orange`           | `#E46C38` |
 
 ### Reglas de uso (no negociables)
 
@@ -103,32 +114,32 @@ Cada clase light tiene su contraparte `dark:`. **Siempre hay que escribir ambas*
 <Text className="text-gray-900 dark:text-gray-100" />
 ```
 
-| Uso | Light | Dark |
-|-----|-------|------|
-| Fondo general | `bg-gray-50` | `dark:bg-gray-950` |
-| Superficies (cards, modales, sidebar) | `bg-white` | `dark:bg-gray-900` |
-| Superficie elevada (dropdowns, modales) | `bg-white` | `dark:bg-gray-800` |
-| Texto principal | `text-gray-900` | `dark:text-gray-100` |
-| Texto secundario | `text-gray-500` | `dark:text-gray-400` |
-| Texto placeholder / disabled | `text-gray-400` | `dark:text-gray-500` |
-| Bordes y separadores | `border-gray-200` | `dark:border-gray-800` |
-| Header nav | `bg-brand-green-forest` | `dark:bg-brand-green-forest` (se mantiene) |
-| Texto principal | `text-brand-ink` | `dark:text-gray-100` |
-| Action (tabs activos, links) | `text-brand-coral` | `dark:text-brand-coral` (se mantiene) |
-| Precios, estrellas, badges oferta | `text-brand-orange` | `dark:text-brand-orange` (se mantiene) |
+| Uso                                     | Light                   | Dark                                       |
+| --------------------------------------- | ----------------------- | ------------------------------------------ |
+| Fondo general                           | `bg-gray-50`            | `dark:bg-gray-950`                         |
+| Superficies (cards, modales, sidebar)   | `bg-white`              | `dark:bg-gray-900`                         |
+| Superficie elevada (dropdowns, modales) | `bg-white`              | `dark:bg-gray-800`                         |
+| Texto principal                         | `text-gray-900`         | `dark:text-gray-100`                       |
+| Texto secundario                        | `text-gray-500`         | `dark:text-gray-400`                       |
+| Texto placeholder / disabled            | `text-gray-400`         | `dark:text-gray-500`                       |
+| Bordes y separadores                    | `border-gray-200`       | `dark:border-gray-800`                     |
+| Header nav                              | `bg-brand-green-forest` | `dark:bg-brand-green-forest` (se mantiene) |
+| Texto principal                         | `text-brand-ink`        | `dark:text-gray-100`                       |
+| Action (tabs activos, links)            | `text-brand-coral`      | `dark:text-brand-coral` (se mantiene)      |
+| Precios, estrellas, badges oferta       | `text-brand-orange`     | `dark:text-brand-orange` (se mantiene)     |
 
 ### Restrained Palette en dark mode
 
 Las mismas reglas aplican: sin fondos tintados, superficies neutras, un color de marca visible por pantalla.
 
-| Elemento | Antes (vieja paleta) | Ahora (restrained) |
-|----------|---------------------|-------------------|
-| Category chips | `bg-[#1A3329]` tinte verde | `bg-gray-800` + `border-gray-700` neutro |
-| Product image bg | `bg-[#1A3329]` / `bg-[#451a03]` tintes | `bg-gray-800` neutro |
-| Sidebar activo | `bg-[#1A3329]` tinte verde | solo `border-r-2 border-brand-green-forest` |
-| Status badges | `bg-[#1A3329]` / `bg-[#271a00]` tintes | `bg-gray-800` neutro, texto semántico |
-| Tab activo | `text-brand-green-forest` | `text-brand-coral` |
-| Acciones y links | `text-brand-green-forest` | `text-brand-coral` |
+| Elemento         | Antes (vieja paleta)                   | Ahora (restrained)                          |
+| ---------------- | -------------------------------------- | ------------------------------------------- |
+| Category chips   | `bg-[#1A3329]` tinte verde             | `bg-gray-800` + `border-gray-700` neutro    |
+| Product image bg | `bg-[#1A3329]` / `bg-[#451a03]` tintes | `bg-gray-800` neutro                        |
+| Sidebar activo   | `bg-[#1A3329]` tinte verde             | solo `border-r-2 border-brand-green-forest` |
+| Status badges    | `bg-[#1A3329]` / `bg-[#271a00]` tintes | `bg-gray-800` neutro, texto semántico       |
+| Tab activo       | `text-brand-green-forest`              | `text-brand-coral`                          |
+| Acciones y links | `text-brand-green-forest`              | `text-brand-coral`                          |
 
 ### Shadows en dark mode
 
@@ -136,7 +147,7 @@ En modo oscuro las sombras no se ven (fondo negro). Reemplazar con bordes sutile
 
 ```tsx
 // ✅ Light: shadow — Dark: borde delgado
-<View className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-none dark:border dark:border-gray-800" />
+<View className="bg-white shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none" />
 ```
 
 ### Layout patterns en dark mode
@@ -147,7 +158,7 @@ Como referencia rápida, los cambios son siempre los mismos:
 ```tsx
 // Mobile
 <ScrollView className="flex-1 bg-gray-50 dark:bg-gray-950">
-  <View className="bg-white dark:bg-gray-900 rounded-xl shadow-sm dark:shadow-none dark:border dark:border-gray-800 p-4">
+  <View className="rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
     <Text className="text-gray-900 dark:text-gray-100">Contenido</Text>
     <Text className="text-gray-500 dark:text-gray-400">Metadato</Text>
   </View>
@@ -160,7 +171,7 @@ NativeWind usa `class` strategy por defecto. El toggle se aplica así:
 
 ```tsx
 // Toggle manual
-import { useColorScheme } from "nativewind";
+import { useColorScheme } from 'nativewind';
 
 function App() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -171,16 +182,25 @@ function App() {
 Para Paper, configurar el tema en el `Provider`:
 
 ```tsx
-import { MD3DarkTheme, MD3LightTheme, Provider as PaperProvider } from "react-native-paper";
+import {
+  MD3DarkTheme,
+  MD3LightTheme,
+  Provider as PaperProvider,
+} from 'react-native-paper';
 
-const brandCoral = "#DE393A";
-const theme = colorScheme === "dark"
-  ? { ...MD3DarkTheme, colors: { ...MD3DarkTheme.colors, primary: brandCoral } }
-  : { ...MD3LightTheme, colors: { ...MD3LightTheme.colors, primary: brandCoral } };
+const brandCoral = '#DE393A';
+const theme =
+  colorScheme === 'dark'
+    ? {
+        ...MD3DarkTheme,
+        colors: { ...MD3DarkTheme.colors, primary: brandCoral },
+      }
+    : {
+        ...MD3LightTheme,
+        colors: { ...MD3LightTheme.colors, primary: brandCoral },
+      };
 
-<PaperProvider theme={theme}>
-  {/* app */}
-</PaperProvider>
+<PaperProvider theme={theme}>{/* app */}</PaperProvider>;
 ```
 
 ### Regla clave
@@ -191,11 +211,11 @@ const theme = colorScheme === "dark"
 
 El proyecto usa Expo + NativeWind, que corre en mobile, tablet y web con el mismo código. Los breakpoints determinan cómo se adapta cada componente:
 
-| Rango | Alias | Target | Layout |
-|-------|-------|--------|--------|
-| `< 640px` | `mobile` | Phones | navegación bottom tabs, 1 columna, full-width |
-| `640px - 1023px` | `tablet` | Tablets portrait/landscape | sidebar colapsable, grid 2 columnas |
-| `≥ 1024px` | `desktop` | Web desktop | sidebar fija, grid 3+ columnas, tablas densas |
+| Rango            | Alias     | Target                     | Layout                                        |
+| ---------------- | --------- | -------------------------- | --------------------------------------------- |
+| `< 640px`        | `mobile`  | Phones                     | navegación bottom tabs, 1 columna, full-width |
+| `640px - 1023px` | `tablet`  | Tablets portrait/landscape | sidebar colapsable, grid 2 columnas           |
+| `≥ 1024px`       | `desktop` | Web desktop                | sidebar fija, grid 3+ columnas, tablas densas |
 
 NativeWind expone estos breakpoints como `sm:`, `md:`, `lg:`:
 
@@ -212,11 +232,11 @@ NativeWind expone estos breakpoints como `sm:`, `md:`, `lg:`:
 
 Cada rol tiene un patrón de navegación distinto que se adapta al viewport:
 
-| Rol | Mobile (< 640px) | Tablet (640-1023px) | Desktop (≥ 1024px) |
-|-----|-----------------|---------------------|--------------------|
-| **Comprador** | Bottom tabs | Bottom tabs + split view | Top nav compacta + grid |
-| **Agricultor** | Bottom tabs | Sidebar colapsable + contenido | Sidebar fija + dashboard |
-| **Admin** | Sidebar como overlay | Sidebar colapsable fija | Sidebar fija expandida + tablas |
+| Rol            | Mobile (< 640px)     | Tablet (640-1023px)            | Desktop (≥ 1024px)              |
+| -------------- | -------------------- | ------------------------------ | ------------------------------- |
+| **Comprador**  | Bottom tabs          | Bottom tabs + split view       | Top nav compacta + grid         |
+| **Agricultor** | Bottom tabs          | Sidebar colapsable + contenido | Sidebar fija + dashboard        |
+| **Admin**      | Sidebar como overlay | Sidebar colapsable fija        | Sidebar fija expandida + tablas |
 
 ```tsx
 // Patrón de navegación responsive (ej. para agricultor/admin)
@@ -224,9 +244,9 @@ function AppNavigator() {
   const isDesktop = useMediaQuery({ minWidth: 1024 });
   const isTablet = useMediaQuery({ minWidth: 640, maxWidth: 1023 });
 
-  if (isDesktop) return <AdminLayout />;       // sidebar fija
-  if (isTablet)  return <TabletLayout />;       // sidebar colapsable
-  return <MobileLayout />;                       // bottom tabs
+  if (isDesktop) return <AdminLayout />; // sidebar fija
+  if (isTablet) return <TabletLayout />; // sidebar colapsable
+  return <MobileLayout />; // bottom tabs
 }
 ```
 
@@ -234,15 +254,15 @@ function AppNavigator() {
 
 Usamos la jerarquía nativa de `react-native` con Tailwind. Sin fuentes personalizadas (por ahora).
 
-| Elemento | Clase | Tamaño | Peso | Uso |
-|----------|-------|--------|------|-----|
-| Título grande | `text-3xl font-bold` | 30px | Bold | Hero, landing, empty states |
-| Título pantalla | `text-2xl font-bold` | 24px | Bold | Header de pantalla |
-| Título sección | `text-xl font-semibold` | 20px | Semibold | Secciones internas |
-| Subtítulo | `text-lg font-medium` | 18px | Medium | Cards, listas |
-| Cuerpo | `text-base` | 16px | Normal (400) | Párrafos, descripciones |
-| Cuerpo chico | `text-sm` | 14px | Normal | Metadatos, chips |
-| Etiqueta / caption | `text-xs` | 12px | Medium | Badges, timestamps |
+| Elemento           | Clase                   | Tamaño | Peso         | Uso                         |
+| ------------------ | ----------------------- | ------ | ------------ | --------------------------- |
+| Título grande      | `text-3xl font-bold`    | 30px   | Bold         | Hero, landing, empty states |
+| Título pantalla    | `text-2xl font-bold`    | 24px   | Bold         | Header de pantalla          |
+| Título sección     | `text-xl font-semibold` | 20px   | Semibold     | Secciones internas          |
+| Subtítulo          | `text-lg font-medium`   | 18px   | Medium       | Cards, listas               |
+| Cuerpo             | `text-base`             | 16px   | Normal (400) | Párrafos, descripciones     |
+| Cuerpo chico       | `text-sm`               | 14px   | Normal       | Metadatos, chips            |
+| Etiqueta / caption | `text-xs`               | 12px   | Medium       | Badges, timestamps          |
 
 Regla: **máximo 2 pesos distintos por pantalla**. Si estás usando `font-bold` + `font-semibold` + `font-medium` en la misma vista, simplificá.
 
@@ -251,8 +271,10 @@ Regla: **máximo 2 pesos distintos por pantalla**. Si estás usando `font-bold` 
 El nombre **"RASSA"** en el logo usa una **sans-serif condensada, monolineal** (similar a Futura Condensed Medium, Oswald Light). Es una fuente geométrica de grosor uniforme y vértices afilados, que contrasta con la suavidad de la ilustración del logo. Para mantener coherencia visual cuando aparezca el brand en la UI:
 
 ```tsx
-<Text className="text-2xl font-bold tracking-tight text-brand-green-forest"
-      style={{ fontFamily: "sans-serif-condensed" }}>
+<Text
+  className="text-2xl font-bold tracking-tight text-brand-green-forest"
+  style={{ fontFamily: 'sans-serif-condensed' }}
+>
   RASSA
 </Text>
 ```
@@ -271,20 +293,20 @@ Usamos la escala nativa de Tailwind. No inventar valores custom.
 
 ## Border Radius
 
-| Uso | Clase | Valor |
-|-----|-------|-------|
-| Botones, inputs | `rounded-lg` | 8px |
-| Cards, modales | `rounded-xl` | 12px |
-| Badges, chips | `rounded-full` | 9999px |
+| Uso             | Clase          | Valor  |
+| --------------- | -------------- | ------ |
+| Botones, inputs | `rounded-lg`   | 8px    |
+| Cards, modales  | `rounded-xl`   | 12px   |
+| Badges, chips   | `rounded-full` | 9999px |
 
 ## Shadows
 
 Usar NativeWind `shadow-*` classes. Sin estilos de sombra en línea.
 
-| Uso | Clase |
-|-----|-------|
+| Uso            | Clase       |
+| -------------- | ----------- |
 | Cards elevadas | `shadow-sm` |
-| Modales, FABs | `shadow-lg` |
+| Modales, FABs  | `shadow-lg` |
 
 ## Components
 
@@ -292,17 +314,17 @@ Preferir **React Native Paper** para componentes interactivos complejos. Usar **
 
 Paper corre en mobile, tablet y web — mismos componentes, mismo comportamiento.
 
-| Componente | Librería | Notas |
-|-----------|----------|-------|
-| Button | Paper `Button` | `mode="contained"` con `buttonColor` = `#DE393A` (coral) |
-| TextInput | Paper `TextInput` | Siempre con `mode="outlined"` |
-| Card | Paper `Card` | O View nativa con `bg-white rounded-xl shadow-sm p-4` |
-| Dialog / Modal | Paper `Dialog` | Consistencia cross-platform |
-| Bottom tabs | React Navigation | Mobile: visible siempre. Web: ocultar con `lg:hidden` |
-| Sidebar | View + NativeWind | Solo web/tablet. `hidden lg:flex` en desktop |
-| Data Table | View + FlatList | Web: columnas fijas. Mobile: cards horizontales |
-| List / FlatList | React Native | `ItemSeparatorComponent` con `h-px bg-gray-200` en listas |
-| Badge / Chip | View + NativeWind | `bg-gray-100 rounded-full px-3 py-1` |
+| Componente      | Librería          | Notas                                                     |
+| --------------- | ----------------- | --------------------------------------------------------- |
+| Button          | Paper `Button`    | `mode="contained"` con `buttonColor` = `#DE393A` (coral)  |
+| TextInput       | Paper `TextInput` | Siempre con `mode="outlined"`                             |
+| Card            | Paper `Card`      | O View nativa con `bg-white rounded-xl shadow-sm p-4`     |
+| Dialog / Modal  | Paper `Dialog`    | Consistencia cross-platform                               |
+| Bottom tabs     | React Navigation  | Mobile: visible siempre. Web: ocultar con `lg:hidden`     |
+| Sidebar         | View + NativeWind | Solo web/tablet. `hidden lg:flex` en desktop              |
+| Data Table      | View + FlatList   | Web: columnas fijas. Mobile: cards horizontales           |
+| List / FlatList | React Native      | `ItemSeparatorComponent` con `h-px bg-gray-200` en listas |
+| Badge / Chip    | View + NativeWind | `bg-gray-100 rounded-full px-3 py-1`                      |
 
 ### Botones primarios (coral — acción principal)
 
@@ -315,7 +337,11 @@ Paper corre en mobile, tablet y web — mismos componentes, mismo comportamiento
 ### Botones secundarios (coral outline)
 
 ```tsx
-<Button mode="outlined" textColor="#DE393A" className="rounded-lg border-brand-red-coral">
+<Button
+  mode="outlined"
+  textColor="#DE393A"
+  className="rounded-lg border-brand-red-coral"
+>
   Ver detalles
 </Button>
 ```
@@ -334,16 +360,19 @@ Usar `@expo/vector-icons` (MaterialCommunityIcons por defecto).
 
 ```tsx
 <ScrollView className="flex-1 bg-gray-50">
-  <View className="p-4 gap-4">{/* contenido */}</View>
+  <View className="gap-4 p-4">{/* contenido */}</View>
 </ScrollView>
 ```
 
 ### Tablet (640px - 1023px) — sidebar colapsable + grid
 
 ```tsx
-<View className="flex-1 bg-gray-50 flex-row">
+<View className="flex-1 flex-row bg-gray-50">
   {/* Sidebar colapsable — 64px cuando colapsa, 240px cuando expande */}
-  <Sidebar collapsed={isCollapsed} className="bg-white border-r border-gray-200" />
+  <Sidebar
+    collapsed={isCollapsed}
+    className="border-r border-gray-200 bg-white"
+  />
 
   {/* Contenido principal */}
   <ScrollView className="flex-1 p-6">
@@ -355,39 +384,39 @@ Usar `@expo/vector-icons` (MaterialCommunityIcons por defecto).
 ### Desktop (≥ 1024px) — sidebar fija + layout denso
 
 ```tsx
-<View className="flex-1 bg-gray-50 flex-row">
+<View className="flex-1 flex-row bg-gray-50">
   {/* Sidebar fija 260px */}
-  <View className="w-64 bg-white border-r border-gray-200 min-h-screen" />
+  <View className="min-h-screen w-64 border-r border-gray-200 bg-white" />
 
   {/* Main */}
   <ScrollView className="flex-1 p-8">
     {/* Header de página */}
-    <View className="flex-row justify-between items-center mb-8">
+    <View className="mb-8 flex-row items-center justify-between">
       <Text className="text-2xl font-bold text-gray-900">Pedidos</Text>
-      <Button mode="contained" buttonColor="#DE393A">+ Nuevo</Button>
+      <Button mode="contained" buttonColor="#DE393A">
+        + Nuevo
+      </Button>
     </View>
 
     {/* Tabla de datos (admin) */}
-    <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+    <View className="overflow-hidden rounded-xl bg-white shadow-sm">
       {/* table header + rows */}
     </View>
 
     {/* Grid 3 columnas (productos) */}
-    <View className="grid grid-cols-3 gap-6 mt-8">
-      {/* cards */}
-    </View>
+    <View className="mt-8 grid grid-cols-3 gap-6">{/* cards */}</View>
   </ScrollView>
 </View>
 ```
 
 ### Pantallas con scroll
+
 ```tsx
-<ScrollView className="flex-1 bg-gray-50 p-4">
-  {/* contenido */}
-</ScrollView>
+<ScrollView className="flex-1 bg-gray-50 p-4">{/* contenido */}</ScrollView>
 ```
 
 ### Pantallas con lista
+
 ```tsx
 <FlatList
   data={items}
@@ -398,31 +427,30 @@ Usar `@expo/vector-icons` (MaterialCommunityIcons por defecto).
 ```
 
 ### Cards producto / item
+
 ```tsx
-<View className="bg-white rounded-xl shadow-sm p-4">
-  {/* contenido */}
-</View>
+<View className="rounded-xl bg-white p-4 shadow-sm">{/* contenido */}</View>
 ```
 
 ### Data table (admin — web)
 
 ```tsx
-<View className="bg-white rounded-xl shadow-sm overflow-hidden">
+<View className="overflow-hidden rounded-xl bg-white shadow-sm">
   {/* Header de la tabla */}
-  <View className="flex-row px-6 py-3 bg-gray-50 border-b border-gray-200">
-    <Text className="text-xs font-medium text-gray-500 w-16">ID</Text>
-    <Text className="text-xs font-medium text-gray-500 flex-1">Producto</Text>
-    <Text className="text-xs font-medium text-gray-500 w-24">Precio</Text>
-    <Text className="text-xs font-medium text-gray-500 w-20">Stock</Text>
-    <Text className="text-xs font-medium text-gray-500 w-20">Estado</Text>
+  <View className="flex-row border-b border-gray-200 bg-gray-50 px-6 py-3">
+    <Text className="w-16 text-xs font-medium text-gray-500">ID</Text>
+    <Text className="flex-1 text-xs font-medium text-gray-500">Producto</Text>
+    <Text className="w-24 text-xs font-medium text-gray-500">Precio</Text>
+    <Text className="w-20 text-xs font-medium text-gray-500">Stock</Text>
+    <Text className="w-20 text-xs font-medium text-gray-500">Estado</Text>
   </View>
   {/* Filas */}
-  {items.map(item => (
-    <View className="flex-row items-center px-6 py-4 border-b border-gray-100">
-      <Text className="text-sm text-gray-900 w-16">{item.id}</Text>
-      <Text className="text-sm text-gray-900 flex-1">{item.name}</Text>
-      <Text className="text-sm text-gray-900 w-24">{item.price}</Text>
-      <Text className="text-sm text-gray-500 w-20">{item.stock}</Text>
+  {items.map((item) => (
+    <View className="flex-row items-center border-b border-gray-100 px-6 py-4">
+      <Text className="w-16 text-sm text-gray-900">{item.id}</Text>
+      <Text className="flex-1 text-sm text-gray-900">{item.name}</Text>
+      <Text className="w-24 text-sm text-gray-900">{item.price}</Text>
+      <Text className="w-20 text-sm text-gray-500">{item.stock}</Text>
       <Badge status={item.status} />
     </View>
   ))}
@@ -432,22 +460,30 @@ Usar `@expo/vector-icons` (MaterialCommunityIcons por defecto).
 ### Sidebar (admin / agricultor web)
 
 ```tsx
-<View className="bg-white border-r border-gray-200 w-64 min-h-screen pt-6">
+<View className="min-h-screen w-64 border-r border-gray-200 bg-white pt-6">
   {/* Logo */}
-  <Text className="text-xl font-bold text-brand-green-forest px-6 mb-8">Rassa</Text>
+  <Text className="mb-8 px-6 text-xl font-bold text-brand-green-forest">
+    Rassa
+  </Text>
 
   {/* Items */}
-  {navItems.map(item => {
+  {navItems.map((item) => {
     const active = item.key === currentRoute;
     return (
       <Pressable
         key={item.key}
-        className={`flex-row items-center px-6 py-3 gap-3 ${
-          active ? "border-r-2 border-brand-green-forest" : ""
+        className={`flex-row items-center gap-3 px-6 py-3 ${
+          active ? 'border-r-2 border-brand-green-forest' : ''
         }`}
       >
-        <Icon icon={item.icon} size={20} color={active ? "#3A6D56" : "#6b7280"} />
-        <Text className={`text-sm ${active ? "text-brand-green-forest font-medium" : "text-gray-600"}`}>
+        <Icon
+          icon={item.icon}
+          size={20}
+          color={active ? '#3A6D56' : '#6b7280'}
+        />
+        <Text
+          className={`text-sm ${active ? 'font-medium text-brand-green-forest' : 'text-gray-600'}`}
+        >
           {item.label}
         </Text>
       </Pressable>
