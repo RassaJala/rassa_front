@@ -17,15 +17,20 @@ import * as Storage from '@/services/storage';
 import type { User, UserRole } from '@/types';
 
 interface BackendUser {
-  /** Database primary key (Django ID) */
-  id: number;
-  email: string;
-  username: string;
-  /** External user ID from the authentication provider or related profile ID */
+  /** Django Usuario primary key */
   id_usuario: number;
+  email: string;
   telefono: string | null;
-  rol: string;
+  /** English key from Django UserSerializer (not 'rol') */
+  role: string;
   nombre: string;
+  apellido_paterno: string | null;
+  apellido_materno: string | null;
+  fecha_nacimiento: string | null;
+  genero: string | null;
+  direccion: string | null;
+  localidad: number | null;
+  localidad_nombre: string | null;
 }
 
 interface LoginResponse {
@@ -89,12 +94,12 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
 
   return {
-    id: user.id,
+    id: user.id_usuario,
     email: user.email,
-    username: user.username,
+    username: user.email,
     id_usuario: user.id_usuario,
     telefono: user.telefono,
-    role: normalizeRole(user.rol),
+    role: normalizeRole(user.role),
     first_name: firstName ?? '',
     last_name: lastNameParts.join(' '),
   };
@@ -146,11 +151,15 @@ export function AuthProvider({
         setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
-      const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+      const { data: body } = await api.get<{ data: BackendUser }>(
+        AUTH_PROFILE_ENDPOINT,
+      );
+      const userData = body.data;
+      const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
-        user: mapBackendUser(data),
+        user: mappedUser,
         isLoading: false,
         isAuthenticated: true,
       }));
@@ -165,11 +174,15 @@ export function AuthProvider({
       try {
         // eslint-disable-next-line no-undef -- setTimeout is global in RN
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const { data } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
+        const { data: retryBody } = await api.get<{ data: BackendUser }>(
+          AUTH_PROFILE_ENDPOINT,
+        );
+        const retryUserData = retryBody.data;
+        const retryMappedUser = mapBackendUser(retryUserData);
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
         setState((prev) => ({
           ...prev,
-          user: mapBackendUser(data),
+          user: retryMappedUser,
           isLoading: false,
           isAuthenticated: true,
         }));
@@ -206,8 +219,11 @@ export function AuthProvider({
         Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
       ]);
 
-      const { data: user } = await api.get<BackendUser>(AUTH_PROFILE_ENDPOINT);
-      const mappedUser = mapBackendUser(user);
+      const { data: profileBody } = await api.get<{ data: BackendUser }>(
+        AUTH_PROFILE_ENDPOINT,
+      );
+      const userData = profileBody.data;
+      const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
@@ -224,8 +240,8 @@ export function AuthProvider({
         const message = parseLoginError(axiosError);
 
         const statusStr = status ? ` (${status})` : '';
-        const errorMessage = `Error de autenticación${statusStr}: ${message}`;
-        console.error(errorMessage, {
+        const logMessage = `Error de autenticación${statusStr}: ${message}`;
+        console.error(logMessage, {
           status,
           responseData,
           url: axiosError.config?.url,
@@ -233,7 +249,7 @@ export function AuthProvider({
         /* eslint-disable-next-line preserve-caught-error -- No incluimos el AxiosError
          * como cause porque contiene email/password en config.data y Sentry
          * serializaría las credenciales en la cadena de errores. */
-        throw new Error(errorMessage);
+        throw new Error(message);
       }
 
       console.error('Login error', error);
