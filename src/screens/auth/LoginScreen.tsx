@@ -110,7 +110,9 @@ export default function LoginScreen(): React.JSX.Element {
           <Pressable
             className="absolute right-3 top-0 h-full justify-center"
             onPress={() => setShowPassword((prev) => !prev)}
-            accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            accessibilityLabel={
+              showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+            }
             accessibilityRole="button"
             hitSlop={8}
           >

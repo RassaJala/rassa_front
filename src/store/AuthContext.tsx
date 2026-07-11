@@ -151,7 +151,9 @@ export function AuthProvider({
         setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
-      const { data: body } = await api.get<{ data: BackendUser }>(AUTH_PROFILE_ENDPOINT);
+      const { data: body } = await api.get<{ data: BackendUser }>(
+        AUTH_PROFILE_ENDPOINT,
+      );
       const userData = body.data;
       const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
@@ -172,7 +174,9 @@ export function AuthProvider({
       try {
         // eslint-disable-next-line no-undef -- setTimeout is global in RN
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const { data: retryBody } = await api.get<{ data: BackendUser }>(AUTH_PROFILE_ENDPOINT);
+        const { data: retryBody } = await api.get<{ data: BackendUser }>(
+          AUTH_PROFILE_ENDPOINT,
+        );
         const retryUserData = retryBody.data;
         const retryMappedUser = mapBackendUser(retryUserData);
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
@@ -215,7 +219,9 @@ export function AuthProvider({
         Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
       ]);
 
-      const { data: profileBody } = await api.get<{ data: BackendUser }>(AUTH_PROFILE_ENDPOINT);
+      const { data: profileBody } = await api.get<{ data: BackendUser }>(
+        AUTH_PROFILE_ENDPOINT,
+      );
       const userData = profileBody.data;
       const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter

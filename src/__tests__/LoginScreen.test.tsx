@@ -50,7 +50,10 @@ describe('LoginScreen', () => {
   it('valida un correo inválido', async () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
-    fireEvent.changeText(getByPlaceholderText('ej: usuario@correo.com'), 'correo');
+    fireEvent.changeText(
+      getByPlaceholderText('ej: usuario@correo.com'),
+      'correo',
+    );
 
     fireEvent.changeText(getByPlaceholderText('Tu contraseña'), '123456');
 
@@ -115,7 +118,9 @@ describe('LoginScreen', () => {
 
     await waitFor(() => {
       expect(
-        getByText('Sin conexión a Internet. Verifica tu conexión e inténtalo de nuevo.'),
+        getByText(
+          'Sin conexión a Internet. Verifica tu conexión e inténtalo de nuevo.',
+        ),
       ).toBeTruthy();
     });
   });
