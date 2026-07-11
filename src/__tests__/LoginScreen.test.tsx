@@ -50,10 +50,7 @@ describe('LoginScreen', () => {
   it('valida un correo inválido', async () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'correo',
-    );
+    fireEvent.changeText(getByPlaceholderText('Correo electrónico'), 'correo');
 
     fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
 
