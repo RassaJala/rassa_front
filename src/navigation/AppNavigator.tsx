@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Admin screens
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import CategoryListScreen from '@/screens/admin/CategoryListScreen';
+import UnitListScreen from '@/screens/admin/UnitListScreen';
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -17,9 +19,11 @@ import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import { useAuth } from '@/store/AuthContext';
+import type { AdminStackParamList } from '@/types';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
 function AuthStack() {
   return (
@@ -48,6 +52,16 @@ function FarmerTabs() {
   );
 }
 
+function AdminScreens() {
+  return (
+    <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+      <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
+      <AdminStack.Screen name="CategoryList" component={CategoryListScreen} />
+      <AdminStack.Screen name="UnitList" component={UnitListScreen} />
+    </AdminStack.Navigator>
+  );
+}
+
 export default function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -64,11 +78,7 @@ export default function AppNavigator(): React.JSX.Element {
     case 'farmer':
       return <FarmerTabs />;
     case 'admin':
-      return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        </Stack.Navigator>
-      );
+      return <AdminScreens />;
     case 'buyer':
       return <BuyerTabs />;
     case undefined:
