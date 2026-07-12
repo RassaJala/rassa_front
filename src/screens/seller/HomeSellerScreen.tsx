@@ -4,7 +4,6 @@ import { Text, View } from 'react-native';
 export default function HomeSellerScreen(): React.JSX.Element {
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
-
       <Text className="text-3xl font-bold text-green-700">
         Bienvenido Vendedor
       </Text>
@@ -13,7 +12,6 @@ export default function HomeSellerScreen(): React.JSX.Element {
         Desde aquí podrás administrar las ventas de productos agrícolas
         publicados en RASSA JALA.
       </Text>
-
     </View>
   );
 }

@@ -32,7 +32,6 @@ function AuthStack() {
   );
 }
 
-
 function BuyerTabs() {
   return (
     <Tab.Navigator
@@ -48,16 +47,9 @@ function BuyerTabs() {
             Notificaciones: 'notifications',
           } as const;
 
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
 
-          return (
-            <Ionicons
-              name={iconName}
-              size={size}
-              color={color}
-            />
-          );
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
@@ -67,19 +59,12 @@ function BuyerTabs() {
         options={{ title: 'Inicio' }}
       />
 
-      <Tab.Screen
-        name="Carrito"
-        component={CarritoScreen}
-      />
+      <Tab.Screen name="Carrito" component={CarritoScreen} />
 
-      <Tab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-      />
+      <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
     </Tab.Navigator>
   );
 }
-
 
 function FarmerTabs() {
   return (
@@ -96,16 +81,9 @@ function FarmerTabs() {
             Notificaciones: 'notifications',
           } as const;
 
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
 
-          return (
-            <Ionicons
-              name={iconName}
-              size={size}
-              color={color}
-            />
-          );
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
@@ -121,14 +99,10 @@ function FarmerTabs() {
         options={{ title: 'Agregar' }}
       />
 
-      <Tab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-      />
+      <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
     </Tab.Navigator>
   );
 }
-
 
 function SellerTabs() {
   return (
@@ -146,16 +120,9 @@ function SellerTabs() {
             Perfil: 'person',
           } as const;
 
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
 
-          return (
-            <Ionicons
-              name={iconName}
-              size={size}
-              color={color}
-            />
-          );
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
@@ -186,26 +153,16 @@ function SellerTabs() {
   );
 }
 
-
 export default function AppNavigator(): React.JSX.Element {
-  const {
-    isAuthenticated,
-    isLoading,
-    user,
-  } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const [checkingOnboarding, setCheckingOnboarding] =
-    useState(true);
-
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     const verifyOnboarding = async () => {
-      const completed =
-        await Storage.getItemAsync(
-          Storage.ONBOARDING_KEY,
-        );
+      const completed = await Storage.getItemAsync(Storage.ONBOARDING_KEY);
 
       if (!completed) {
         setShowOnboarding(true);
@@ -217,20 +174,15 @@ export default function AppNavigator(): React.JSX.Element {
     void verifyOnboarding();
   }, []);
 
-
   if (isLoading || checkingOnboarding) {
     return <SplashScreen />;
   }
-
 
   if (showOnboarding) {
     return (
       <OnboardingScreen
         onFinish={async () => {
-          await Storage.setItemAsync(
-            Storage.ONBOARDING_KEY,
-            'true',
-          );
+          await Storage.setItemAsync(Storage.ONBOARDING_KEY, 'true');
 
           setShowOnboarding(false);
         }}
@@ -238,11 +190,9 @@ export default function AppNavigator(): React.JSX.Element {
     );
   }
 
-
   if (!isAuthenticated) {
     return <AuthStack />;
   }
-
 
   switch (user?.role) {
     case 'farmer':
@@ -254,10 +204,7 @@ export default function AppNavigator(): React.JSX.Element {
     case 'admin':
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="AdminPanel"
-            component={AdminPanelScreen}
-          />
+          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
         </Stack.Navigator>
       );
 
