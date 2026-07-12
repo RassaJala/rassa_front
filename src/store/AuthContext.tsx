@@ -146,8 +146,8 @@ export function AuthProvider({
 
   const clearSession = useCallback(async () => {
     await Promise.all([
-      Storage.removeItemAsync(ACCESS_TOKEN_KEY),
-      Storage.removeItemAsync(REFRESH_TOKEN_KEY),
+      Storage.deleteItemAsync(ACCESS_TOKEN_KEY),
+      Storage.deleteItemAsync(REFRESH_TOKEN_KEY),
     ]);
     // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
     setState((prev) => ({
