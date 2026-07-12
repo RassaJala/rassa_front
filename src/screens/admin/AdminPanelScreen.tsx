@@ -19,12 +19,12 @@ import * as Sentry from '@sentry/react-native';
 import axios from 'axios';
 
 import LogoutButton from '@/components/LogoutButton';
-import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import type { Localidad, Municipio } from '@/types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const PLACEHOLDER_COLOR = '#9ca3af';
 
 function parseAxiosError(error: unknown): string {
   if (axios.isAxiosError(error) && error.response?.data) {
@@ -121,6 +121,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Modals
   const [showMunicipioModal, setShowMunicipioModal] = useState(false);
@@ -249,30 +250,67 @@ export default function AdminPanelScreen(): React.JSX.Element {
     }
   }
 
+  if (!showForm) {
+    return (
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950 px-6 pt-12">
+        <View className="mb-6">
+          <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100 mb-1">
+            Panel de Admin
+          </Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            Gestiona la plataforma RASSA JALA.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => setShowForm(true)}
+          className="mb-4 rounded-lg bg-brand-red-coral py-2.5 px-4 self-start shadow-sm"
+        >
+          <Text className="font-semibold text-white text-sm">
+            Agregar usuario
+          </Text>
+        </TouchableOpacity>
+
+        <View className="mt-auto mb-8">
+          <LogoutButton mode="outlined" />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
-      className="flex-1 bg-white px-6 py-8"
+      className="flex-1 bg-gray-50 dark:bg-gray-950 px-6 py-8"
       contentContainerStyle={styles.scrollContent}
     >
       <View className="mb-6 flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold text-slate-900">
+          <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
             Panel de Admin
           </Text>
-          <Text className="text-sm text-slate-500">
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
             Registro de agricultores y compradores
           </Text>
         </View>
-        <LogoutButton mode="outlined" />
+        <TouchableOpacity
+          onPress={() => {
+            setShowForm(false);
+            setSuccessMessage(null);
+            setErrorMessage(null);
+          }}
+          className="rounded-lg border border-gray-200 px-3.5 py-1.5 bg-white dark:border-gray-800 dark:bg-gray-900"
+        >
+          <Text className="text-gray-500 dark:text-gray-400 font-medium">Volver</Text>
+        </TouchableOpacity>
       </View>
 
-      <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-        <Text className="mb-4 border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+      <View className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+        <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-semibold text-brand-ink dark:border-gray-800 dark:text-gray-100">
           Registrar Nuevo Usuario
         </Text>
 
         {/* Rol Selection */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Rol de Usuario *
         </Text>
         <View className="mb-4 flex-row space-x-2">
@@ -280,15 +318,15 @@ export default function AdminPanelScreen(): React.JSX.Element {
             <TouchableOpacity
               key={r}
               onPress={() => setRole(r)}
-              className={`flex-1 rounded-xl border py-2.5 ${
+              className={`flex-1 rounded-lg border py-2.5 ${
                 role === r
-                  ? 'border-emerald-600 bg-emerald-50'
-                  : 'border-slate-300 bg-white'
+                  ? 'border-brand-red-coral bg-red-50/10'
+                  : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
               }`}
             >
               <Text
                 className={`text-center font-medium ${
-                  role === r ? 'text-emerald-700' : 'text-slate-600'
+                  role === r ? 'text-brand-red-coral' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {getRoleLabel(r)}
@@ -298,89 +336,89 @@ export default function AdminPanelScreen(): React.JSX.Element {
         </View>
 
         {/* Account Info */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Correo electrónico *
         </Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="ejemplo@correo.com"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={email}
           onChangeText={setEmail}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Contraseña *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="••••••••"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
         {/* Personal Details */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Nombre *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Nombre(s)"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={nombre}
           onChangeText={setNombre}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Apellido Paterno *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Paterno"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={apellidoPaterno}
           onChangeText={setApellidoPaterno}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Apellido Materno
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Materno"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={apellidoMaterno}
           onChangeText={setApellidoMaterno}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Teléfono *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="10 dígitos"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           keyboardType="phone-pad"
           value={telefono}
           onChangeText={setTelefono}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Fecha de Nacimiento (AAAA-MM-DD) *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={fechaNacimiento}
           onChangeText={setFechaNacimiento}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Género *
         </Text>
         <View className="mb-3 flex-row space-x-2">
@@ -388,15 +426,15 @@ export default function AdminPanelScreen(): React.JSX.Element {
             <TouchableOpacity
               key={g}
               onPress={() => setSexo(g)}
-              className={`flex-1 rounded-xl border py-2.5 ${
+              className={`flex-1 rounded-lg border py-2.5 ${
                 sexo === g
-                  ? 'border-emerald-600 bg-emerald-50'
-                  : 'border-slate-300 bg-white'
+                  ? 'border-brand-red-coral bg-red-50/10'
+                  : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
               }`}
             >
               <Text
                 className={`text-center font-medium ${
-                  sexo === g ? 'text-emerald-700' : 'text-slate-600'
+                  sexo === g ? 'text-brand-red-coral' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {getGenderLabel(g)}
@@ -405,35 +443,37 @@ export default function AdminPanelScreen(): React.JSX.Element {
           ))}
         </View>
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Dirección *
         </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Calle, número, colonia"
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={domicilio}
           onChangeText={setDomicilio}
         />
 
         {/* Catalog Selectors */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Municipio *
         </Text>
         <TouchableOpacity
           onPress={() => setShowMunicipioModal(true)}
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950"
         >
           <Text
             className={`text-base ${
-              selectedMunicipioNombre ? 'text-slate-900' : 'text-slate-400'
+              selectedMunicipioNombre
+                ? 'text-brand-ink dark:text-gray-100'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             {selectedMunicipioNombre || 'Seleccionar Municipio'}
           </Text>
         </TouchableOpacity>
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Localidad *
         </Text>
         <TouchableOpacity
@@ -444,11 +484,13 @@ export default function AdminPanelScreen(): React.JSX.Element {
             }
             setShowLocalidadModal(true);
           }}
-          className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          className="mb-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950"
         >
           <Text
             className={`text-base ${
-              localidadNombre ? 'text-slate-900' : 'text-slate-400'
+              localidadNombre
+                ? 'text-brand-ink dark:text-gray-100'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             {localidadNombre || 'Seleccionar Localidad'}
@@ -456,13 +498,13 @@ export default function AdminPanelScreen(): React.JSX.Element {
         </TouchableOpacity>
 
         {successMessage ? (
-          <Text className="mb-4 text-center text-sm font-medium text-green-600">
+          <Text className="mb-4 text-center text-sm font-medium text-brand-green-forest">
             {successMessage}
           </Text>
         ) : null}
 
         {errorMessage ? (
-          <Text className="mb-4 text-center text-sm font-medium text-red-600">
+          <Text className="mb-4 text-center text-sm font-medium text-red-500">
             {errorMessage}
           </Text>
         ) : null}
@@ -471,13 +513,14 @@ export default function AdminPanelScreen(): React.JSX.Element {
           mode="contained"
           disabled={isSubmitting}
           onPress={() => void handleAddUser()}
-          style={styles.submitButton}
+          buttonColor="#DE393A"
+          className="rounded-lg"
           contentStyle={styles.buttonContent}
         >
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            'Registrar Usuario'
+            'Agregar usuario'
           )}
         </Button>
       </View>
@@ -560,10 +603,6 @@ export default function AdminPanelScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
   },
   buttonContent: {
     paddingVertical: 6,
