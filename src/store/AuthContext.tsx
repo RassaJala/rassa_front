@@ -62,17 +62,24 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ROLE_MAP: Record<string, UserRole> = {
+  // Administrador
   admin: 'admin',
   administrator: 'admin',
   administrador: 'admin',
+
+  // Agricultor
   farmer: 'farmer',
-  productor: 'farmer',
-  seller: 'farmer',
   agricultor: 'farmer',
-  vendedor: 'farmer',
+  productor: 'farmer',
+
+  // Vendedor
+  seller: 'seller',
+  vendedor: 'seller',
+
+  // Cliente
   buyer: 'buyer',
-  comprador: 'buyer',
   cliente: 'buyer',
+  comprador: 'buyer',
 };
 
 function normalizeRole(role?: string): UserRole {
@@ -144,7 +151,10 @@ export function AuthProvider({
   }, []);
 
   const restoreSession = useCallback(async () => {
-    try {
+  // Pequeña espera para mostrar la pantalla inicial mientras se valida la sesión
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  try {
       const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
       if (!token) {
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
