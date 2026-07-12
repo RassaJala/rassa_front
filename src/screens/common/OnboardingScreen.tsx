@@ -22,7 +22,7 @@ const slides = [
     description:
       'Los agricultores pueden mostrar sus productos y administrar sus publicaciones.',
   },
-];
+] as const;
 
 interface Props {
   readonly onFinish: () => void;
@@ -35,7 +35,7 @@ export default function OnboardingScreen({
 
   const fade = useRef(new Animated.Value(1)).current;
 
-  const currentSlide = slides[current];
+  const currentSlide = slides[current] ?? slides[0];
 
   const next = (): void => {
     if (current < slides.length - 1) {
