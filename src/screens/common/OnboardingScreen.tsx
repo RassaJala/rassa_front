@@ -1,12 +1,10 @@
 import React, { useRef, useState } from 'react';
+import type { ImageSourcePropType } from 'react-native';
+import { Animated, Image, Text, TouchableOpacity, View } from 'react-native';
 
-import {
-  Animated,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+const logo: ImageSourcePropType = {
+  uri: 'asset:///assets/logo-rassa.jpeg',
+};
 
 const slides = [
   {
@@ -27,7 +25,7 @@ const slides = [
 ];
 
 interface Props {
-  onFinish: () => void;
+  readonly onFinish: () => void;
 }
 
 export default function OnboardingScreen({
@@ -39,11 +37,7 @@ export default function OnboardingScreen({
 
   const currentSlide = slides[current];
 
-if (!currentSlide) {
-  return <></>;
-}
-
-  const next = () => {
+  const next = (): void => {
     if (current < slides.length - 1) {
       Animated.sequence([
         Animated.timing(fade, {
@@ -73,35 +67,27 @@ if (!currentSlide) {
         }}
         className="items-center"
       >
-        {/* LOGO */}
         <Image
-          source={require('../../../assets/logo-rassa.jpeg')}
-          style={{
-            width: '100%',
-            height: 250,
-            marginBottom: 50,
-          }}
+          source={logo}
+          className="mb-10 h-64 w-full"
           resizeMode="contain"
         />
 
-        {/* TÍTULO */}
         <Text className="text-center text-3xl font-bold text-white">
           {currentSlide.title}
         </Text>
 
-        {/* DESCRIPCIÓN */}
         <Text className="mt-4 text-center text-lg text-white">
           {currentSlide.description}
         </Text>
       </Animated.View>
 
-      {/* INDICADORES */}
       <View className="mt-10 flex-row">
-        {slides.map((_, index) => (
+        {slides.map((slide) => (
           <View
-            key={index}
+            key={slide.title}
             className={
-              index === current
+              slide.title === currentSlide.title
                 ? 'mx-1 h-3 w-8 rounded-full bg-white'
                 : 'mx-1 h-3 w-3 rounded-full bg-green-300'
             }
@@ -109,7 +95,6 @@ if (!currentSlide) {
         ))}
       </View>
 
-      {/* BOTÓN */}
       <TouchableOpacity
         onPress={next}
         className="absolute bottom-16 rounded-full bg-white px-12 py-4"
