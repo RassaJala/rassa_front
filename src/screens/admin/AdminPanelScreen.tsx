@@ -27,26 +27,38 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const PLACEHOLDER_COLOR = '#9ca3af';
 
 function parseAxiosError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const data = error.response.data as unknown;
-    if (typeof data === 'string') return data;
-    if (typeof data === 'object' && data !== null) {
-      const dict = data as Record<string, unknown>;
-      if (dict.detail) return String(dict.detail);
-      if (dict.message) return String(dict.message);
-      const errors = Object.entries(dict)
-        .map(([field, fieldErrors]) => {
-          const prefix = field !== 'non_field_errors' ? `${field}: ` : '';
-          const messages = Array.isArray(fieldErrors)
-            ? fieldErrors.join(' ')
-            : String(fieldErrors);
-          return `${prefix}${messages}`;
-        })
-        .join('\n');
-      if (errors) return errors;
-    }
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error
+      ? error.message
+      : 'Error al registrar al usuario.';
   }
-  if (error instanceof Error) return error.message;
+
+  const data = error.response?.data as unknown;
+  if (!data) {
+    return 'Error al registrar al usuario.';
+  }
+
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  if (typeof data === 'object') {
+    const dict = data as Record<string, unknown>;
+    if (dict.detail) return String(dict.detail);
+    if (dict.message) return String(dict.message);
+
+    const errors = Object.entries(dict)
+      .map(([field, fieldErrors]) => {
+        const prefix = field !== 'non_field_errors' ? `${field}: ` : '';
+        const messages = Array.isArray(fieldErrors)
+          ? fieldErrors.join(' ')
+          : String(fieldErrors);
+        return `${prefix}${messages}`;
+      })
+      .join('\n');
+    if (errors) return errors;
+  }
+
   return 'Error al registrar al usuario.';
 }
 
@@ -252,9 +264,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
 
   if (!showForm) {
     return (
-      <View className="flex-1 bg-gray-50 dark:bg-gray-950 px-6 pt-12">
+      <View className="flex-1 bg-gray-50 px-6 pt-12 dark:bg-gray-950">
         <View className="mb-6">
-          <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100 mb-1">
+          <Text className="mb-1 text-2xl font-bold text-brand-ink dark:text-gray-100">
             Panel de Admin
           </Text>
           <Text className="text-sm text-gray-500 dark:text-gray-400">
@@ -264,14 +276,14 @@ export default function AdminPanelScreen(): React.JSX.Element {
 
         <TouchableOpacity
           onPress={() => setShowForm(true)}
-          className="mb-4 rounded-lg bg-brand-red-coral py-2.5 px-4 self-start shadow-sm"
+          className="mb-4 self-start rounded-lg bg-brand-red-coral px-4 py-2.5 shadow-sm"
         >
-          <Text className="font-semibold text-white text-sm">
+          <Text className="text-sm font-semibold text-white">
             Agregar usuario
           </Text>
         </TouchableOpacity>
 
-        <View className="mt-auto mb-8">
+        <View className="mb-8 mt-auto">
           <LogoutButton mode="outlined" />
         </View>
       </View>
@@ -280,7 +292,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50 dark:bg-gray-950 px-6 py-8"
+      className="flex-1 bg-gray-50 px-6 py-8 dark:bg-gray-950"
       contentContainerStyle={styles.scrollContent}
     >
       <View className="mb-6 flex-row items-center justify-between">
@@ -298,9 +310,11 @@ export default function AdminPanelScreen(): React.JSX.Element {
             setSuccessMessage(null);
             setErrorMessage(null);
           }}
-          className="rounded-lg border border-gray-200 px-3.5 py-1.5 bg-white dark:border-gray-800 dark:bg-gray-900"
+          className="rounded-lg border border-gray-200 bg-white px-3.5 py-1.5 dark:border-gray-800 dark:bg-gray-900"
         >
-          <Text className="text-gray-500 dark:text-gray-400 font-medium">Volver</Text>
+          <Text className="font-medium text-gray-500 dark:text-gray-400">
+            Volver
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -326,7 +340,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
             >
               <Text
                 className={`text-center font-medium ${
-                  role === r ? 'text-brand-red-coral' : 'text-gray-500 dark:text-gray-400'
+                  role === r
+                    ? 'text-brand-red-coral'
+                    : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {getRoleLabel(r)}
@@ -434,7 +450,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
             >
               <Text
                 className={`text-center font-medium ${
-                  sexo === g ? 'text-brand-red-coral' : 'text-gray-500 dark:text-gray-400'
+                  sexo === g
+                    ? 'text-brand-red-coral'
+                    : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {getGenderLabel(g)}

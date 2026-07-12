@@ -210,7 +210,6 @@ export default function RegisterScreen(): React.JSX.Element {
           onChangeText={setPassword}
         />
 
-
         {/* Personal Details */}
         <Text className="mb-1 text-sm font-medium text-slate-700">
           Nombre *

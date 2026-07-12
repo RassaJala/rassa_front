@@ -113,7 +113,9 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   };
 }
 
-function parseLoginError(axiosError: Readonly<AxiosError<Record<string, unknown>>>): string {
+function parseLoginError(
+  axiosError: Readonly<AxiosError<Record<string, unknown>>>,
+): string {
   const status = axiosError.response?.status;
   const data = axiosError.response?.data;
 
