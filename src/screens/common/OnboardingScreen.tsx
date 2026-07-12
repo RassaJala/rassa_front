@@ -37,6 +37,12 @@ export default function OnboardingScreen({
 
   const fade = useRef(new Animated.Value(1)).current;
 
+  const currentSlide = slides[current];
+
+if (!currentSlide) {
+  return <></>;
+}
+
   const next = () => {
     if (current < slides.length - 1) {
       Animated.sequence([
@@ -53,7 +59,7 @@ export default function OnboardingScreen({
         }),
       ]).start();
 
-      setCurrent(current + 1);
+      setCurrent((previous) => previous + 1);
     } else {
       onFinish();
     }
@@ -71,21 +77,21 @@ export default function OnboardingScreen({
         <Image
           source={require('../../../assets/logo-rassa.jpeg')}
           style={{
-  width: '100%',
-  height: 250,
-  marginBottom: 50,
-}}
+            width: '100%',
+            height: 250,
+            marginBottom: 50,
+          }}
           resizeMode="contain"
         />
 
         {/* TÍTULO */}
         <Text className="text-center text-3xl font-bold text-white">
-          {slides[current].title}
+          {currentSlide.title}
         </Text>
 
         {/* DESCRIPCIÓN */}
         <Text className="mt-4 text-center text-lg text-white">
-          {slides[current].description}
+          {currentSlide.description}
         </Text>
       </Animated.View>
 
