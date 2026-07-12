@@ -17,19 +17,17 @@ import * as Storage from '@/services/storage';
 import type { ApiResponse, User, UserRole } from '@/types';
 
 interface BackendUser {
-  id: number;
-  email: string;
-  username: string;
   id_usuario: number;
+  email: string;
   telefono: string | null;
   role: string;
   nombre: string;
-  apellido_paterno: string;
+  apellido_paterno: string | null;
   apellido_materno: string | null;
-  fecha_nacimiento: string;
-  genero: string;
-  direccion: string;
-  localidad: number;
+  fecha_nacimiento: string | null;
+  genero: string | null;
+  direccion: string | null;
+  localidad: number | null;
   localidad_nombre: string | null;
 }
 
@@ -96,44 +94,51 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
 
   return {
-    id: user.id ?? user.id_usuario,
+    id: user.id_usuario,
     email: user.email,
-    username: user.username ?? user.email,
+    username: user.email,
     id_usuario: user.id_usuario,
     telefono: user.telefono,
     role: normalizeRole(user.role),
     first_name: firstName ?? '',
     last_name: lastNameParts.join(' '),
-    nombre: user.nombre,
-    apellido_paterno: user.apellido_paterno,
+    nombre: user.nombre ?? '',
+    apellido_paterno: user.apellido_paterno ?? '',
     apellido_materno: user.apellido_materno,
-    fecha_nacimiento: user.fecha_nacimiento,
-    genero: user.genero,
-    direccion: user.direccion,
-    localidad: user.localidad,
+    fecha_nacimiento: user.fecha_nacimiento ?? '',
+    genero: user.genero ?? '',
+    direccion: user.direccion ?? '',
+    localidad: user.localidad ?? 0,
     localidad_nombre: user.localidad_nombre,
   };
 }
 
-function parseLoginError(
-  // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- External library type
-  axiosError: AxiosError<Record<string, unknown>>,
-): string {
-  const responseData = axiosError.response?.data;
-  if (typeof responseData === 'string') return responseData;
-  if (responseData?.detail) return String(responseData.detail);
-  if (Array.isArray(responseData?.non_field_errors))
-    return responseData.non_field_errors.join(' ');
-  if (responseData?.message) return String(responseData.message);
-  if (responseData) return 'Error desconocido del servidor.';
-  return axiosError.message;
+function parseLoginError(axiosError: Readonly<AxiosError<Record<string, unknown>>>): string {
+  const status = axiosError.response?.status;
+  const data = axiosError.response?.data;
+
+  if (status === 400 && data) {
+    if (data.email) return 'Email inválido';
+    if (data.password) return 'Contraseña inválida';
+    if (Array.isArray(data.non_field_errors)) {
+      return data.non_field_errors.join(' ');
+    }
+  }
+  if (status === 401) {
+    return typeof data?.detail === 'string'
+      ? data.detail
+      : 'Credenciales inválidas.';
+  }
+  if (status === 403) return 'Acceso denegado.';
+  if (status === 500) return 'Error interno del servidor. Inténtalo más tarde.';
+
+  return 'Error de conexión con el servidor.';
 }
 
-// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- AuthProviderProps already has readonly properties
 export function AuthProvider({
   children,
-}: Readonly<AuthProviderProps>): React.JSX.Element {
-  const [state, setState] = useState<AuthState>({
+}: AuthProviderProps): React.JSX.Element {
+  const [state, setState] = useState<Readonly<AuthState>>({
     user: null,
     isLoading: true,
     isAuthenticated: false,
@@ -141,8 +146,8 @@ export function AuthProvider({
 
   const clearSession = useCallback(async () => {
     await Promise.all([
-      Storage.deleteItemAsync(ACCESS_TOKEN_KEY),
-      Storage.deleteItemAsync(REFRESH_TOKEN_KEY),
+      Storage.removeItemAsync(ACCESS_TOKEN_KEY),
+      Storage.removeItemAsync(REFRESH_TOKEN_KEY),
     ]);
     // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
     setState((prev) => ({
@@ -161,13 +166,15 @@ export function AuthProvider({
         setState((prev) => ({ ...prev, isLoading: false }));
         return;
       }
-      const { data } = await api.get<ApiResponse<BackendUser>>(
+      const { data: body } = await api.get<{ data: BackendUser }>(
         AUTH_PROFILE_ENDPOINT,
       );
+      const userData = body.data;
+      const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
-        user: mapBackendUser(data.data),
+        user: mappedUser,
         isLoading: false,
         isAuthenticated: true,
       }));
@@ -182,13 +189,15 @@ export function AuthProvider({
       try {
         // eslint-disable-next-line no-undef -- setTimeout is global in RN
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const { data } = await api.get<ApiResponse<BackendUser>>(
+        const { data: retryBody } = await api.get<{ data: BackendUser }>(
           AUTH_PROFILE_ENDPOINT,
         );
+        const retryUserData = retryBody.data;
+        const retryMappedUser = mapBackendUser(retryUserData);
         // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
         setState((prev) => ({
           ...prev,
-          user: mapBackendUser(data.data),
+          user: retryMappedUser,
           isLoading: false,
           isAuthenticated: true,
         }));
@@ -225,10 +234,11 @@ export function AuthProvider({
         Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
       ]);
 
-      const { data: userResponse } = await api.get<ApiResponse<BackendUser>>(
+      const { data: profileBody } = await api.get<{ data: BackendUser }>(
         AUTH_PROFILE_ENDPOINT,
       );
-      const mappedUser = mapBackendUser(userResponse.data);
+      const userData = profileBody.data;
+      const mappedUser = mapBackendUser(userData);
       // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
       setState((prev) => ({
         ...prev,
@@ -245,8 +255,8 @@ export function AuthProvider({
         const message = parseLoginError(axiosError);
 
         const statusStr = status ? ` (${status})` : '';
-        const errorMessage = `Error de autenticación${statusStr}: ${message}`;
-        console.error(errorMessage, {
+        const logMessage = `Error de autenticación${statusStr}: ${message}`;
+        console.error(logMessage, {
           status,
           responseData,
           url: axiosError.config?.url,
@@ -254,7 +264,7 @@ export function AuthProvider({
         /* eslint-disable-next-line preserve-caught-error -- No incluimos el AxiosError
          * como cause porque contiene email/password en config.data y Sentry
          * serializaría las credenciales en la cadena de errores. */
-        throw new Error(errorMessage);
+        throw new Error(message);
       }
 
       console.error('Login error', error);

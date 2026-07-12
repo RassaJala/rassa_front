@@ -69,10 +69,8 @@ function TestComponent() {
 }
 
 const DEFAULT_BACKEND_USER = {
-  id: 1,
-  email: 'test@test.com',
-  username: 'testuser',
   id_usuario: 1,
+  email: 'test@test.com',
   telefono: null,
   role: 'buyer',
   nombre: 'Test User',

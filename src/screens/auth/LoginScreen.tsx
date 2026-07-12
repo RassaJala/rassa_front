@@ -24,6 +24,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -99,14 +100,29 @@ export default function LoginScreen(): React.JSX.Element {
           onChangeText={setEmail}
         />
 
-        <TextInput
-          className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900"
-          placeholder="Contraseña"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <View className="relative mb-4">
+          <TextInput
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 pr-16 text-base text-slate-900"
+            placeholder="Contraseña"
+            placeholderTextColor={PLACEHOLDER_COLOR}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <Pressable
+            className="absolute right-3 top-0 h-full justify-center"
+            onPress={() => setShowPassword((prev) => !prev)}
+            accessibilityLabel={
+              showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+            }
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Text className="text-sm font-medium text-emerald-600">
+              {showPassword ? 'Ocultar' : 'Mostrar'}
+            </Text>
+          </Pressable>
+        </View>
 
         {errorMessage ? (
           <Text className="mt-4 text-center text-sm text-red-600">

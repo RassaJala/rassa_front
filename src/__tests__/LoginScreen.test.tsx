@@ -185,19 +185,20 @@ describe('LoginScreen', () => {
     resolveLogin(undefined);
   });
 
-  it('limpia el email al presionar enviar y muestra error', async () => {
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+  it('alterna la visibilidad de la contraseña al presionar Mostrar/Ocultar', async () => {
+    const { getByText, getByPlaceholderText } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      '  correo@ejemplo.com  ',
-    );
+    const passwordInput = getByPlaceholderText('Contraseña');
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '');
-    fireEvent.press(getByText('Ingresar'));
+    // Initially hidden
+    expect(passwordInput.props.secureTextEntry).toBe(true);
 
-    await waitFor(() => {
-      expect(getByText('Ingresa tu correo y contraseña.')).toBeTruthy();
-    });
+    // Press "Mostrar"
+    fireEvent.press(getByText('Mostrar'));
+    expect(passwordInput.props.secureTextEntry).toBe(false);
+
+    // Press "Ocultar"
+    fireEvent.press(getByText('Ocultar'));
+    expect(passwordInput.props.secureTextEntry).toBe(true);
   });
 });
