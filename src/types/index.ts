@@ -9,6 +9,15 @@ export interface User {
   role: UserRole;
   first_name: string;
   last_name: string;
+  /** Full name from backend (nombre) */
+  nombre?: string;
+  apellido_paterno?: string | null;
+  apellido_materno?: string | null;
+  fecha_nacimiento?: string | null;
+  genero?: string | null;
+  direccion?: string | null;
+  localidad?: number | null;
+  localidad_nombre?: string | null;
 }
 
 export interface Product {

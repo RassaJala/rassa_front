@@ -12,6 +12,7 @@ import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 // Common
+import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
@@ -35,6 +36,11 @@ function BuyerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Perfil' }}
+      />
     </Tab.Navigator>
   );
 }
@@ -44,6 +50,11 @@ function FarmerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="MyProducts" component={MyProductsScreen} />
       <Tab.Screen name="AddProduct" component={AddProductScreen} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Perfil' }}
+      />
     </Tab.Navigator>
   );
 }
@@ -65,9 +76,14 @@ export default function AppNavigator(): React.JSX.Element {
       return <FarmerTabs />;
     case 'admin':
       return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        </Stack.Navigator>
+        <Tab.Navigator screenOptions={{ headerShown: false }}>
+          <Tab.Screen name="AdminPanel" component={AdminPanelScreen} />
+          <Tab.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ tabBarLabel: 'Perfil' }}
+          />
+        </Tab.Navigator>
       );
     case 'buyer':
       return <BuyerTabs />;

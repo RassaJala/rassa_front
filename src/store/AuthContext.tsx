@@ -102,6 +102,14 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
     role: normalizeRole(user.role),
     first_name: firstName ?? '',
     last_name: lastNameParts.join(' '),
+    nombre: user.nombre,
+    apellido_paterno: user.apellido_paterno,
+    apellido_materno: user.apellido_materno,
+    fecha_nacimiento: user.fecha_nacimiento,
+    genero: user.genero,
+    direccion: user.direccion,
+    localidad: user.localidad,
+    localidad_nombre: user.localidad_nombre,
   };
 }
 
