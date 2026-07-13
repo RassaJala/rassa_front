@@ -2,6 +2,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
+// ── Animation constants ────────────────────────────────────
+const DISPLAY_DURATION = 3000;
+const FADE_IN_DURATION = 250;
+const FADE_OUT_DURATION = 200;
+const SLIDE_DISTANCE = 50;
+
 interface ToastProps {
   readonly visible: boolean;
   readonly message: string;
@@ -14,27 +20,27 @@ export default function Toast({
   visible,
   message,
   type = 'success',
-  duration = 3000,
+  duration = DISPLAY_DURATION,
   onDismiss,
 }: ToastProps): React.JSX.Element | null {
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(50)).current;
+  const translateY = useRef(new Animated.Value(SLIDE_DISTANCE)).current;
 
   useEffect(() => {
     if (!visible) return;
 
     opacity.setValue(0);
-    translateY.setValue(50);
+    translateY.setValue(SLIDE_DISTANCE);
 
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 250,
+        duration: FADE_IN_DURATION,
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 250,
+        duration: FADE_IN_DURATION,
         useNativeDriver: true,
       }),
     ]).start();
@@ -43,12 +49,12 @@ export default function Toast({
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 0,
-          duration: 200,
+          duration: FADE_OUT_DURATION,
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
-          toValue: 50,
-          duration: 200,
+          toValue: SLIDE_DISTANCE,
+          duration: FADE_OUT_DURATION,
           useNativeDriver: true,
         }),
       ]).start(() => onDismiss());
