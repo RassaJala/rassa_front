@@ -7,6 +7,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -51,7 +52,6 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-
   logout: () => Promise<void>;
 }
 
@@ -103,19 +103,12 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
 
   return {
     id: user.id_usuario,
-
     email: user.email,
-
     username: user.email,
-
     id_usuario: user.id_usuario,
-
     telefono: user.telefono,
-
     role: normalizeRole(user.role),
-
     first_name: firstName ?? '',
-
     last_name: lastNameParts.join(' '),
   };
 }
@@ -144,78 +137,92 @@ function parseLoginError(
   return axiosError.message || 'Error desconocido';
 }
 
+function sanitizeAxiosError(error: AxiosError): {
+  status: number | undefined;
+  message: string;
+} {
+  return {
+    status: error.response?.status,
+    message: error.message,
+  };
+}
+
 export function AuthProvider({
   children,
 }: Readonly<AuthProviderProps>): React.JSX.Element {
   const [state, setState] = useState<AuthState>({
     user: null,
-
     isLoading: true,
-
     isAuthenticated: false,
   });
+
+  const restoreInProgress = useRef(false);
 
   const clearSession = useCallback(async () => {
     await Promise.all([
       Storage.deleteItemAsync(ACCESS_TOKEN_KEY),
-
       Storage.deleteItemAsync(REFRESH_TOKEN_KEY),
     ]);
 
     setState((prev) => ({
       ...prev,
-
       user: null,
-
       isAuthenticated: false,
-
       isLoading: false,
     }));
   }, []);
 
-  const restoreSession = useCallback(async () => {
-    const loadProfile = async (): Promise<void> => {
-      const { data } = await api.get<{
-        data: BackendUser;
-      }>(AUTH_PROFILE_ENDPOINT);
+  const fetchUserProfile = useCallback(async (): Promise<User> => {
+    const { data } = await api.get<{ data: BackendUser }>(
+      AUTH_PROFILE_ENDPOINT,
+    );
 
-      const userData = mapBackendUser(data.data);
+    return mapBackendUser(data.data);
+  }, []);
 
-      setState((prev) => ({
-        ...prev,
-        user: userData,
-        isAuthenticated: true,
-        isLoading: false,
-      }));
-    };
+  const applyUserProfile = useCallback((userData: User) => {
+    setState((prev) => ({
+      ...prev,
+      user: userData,
+      isAuthenticated: true,
+      isLoading: false,
+    }));
+  }, []);
 
-    try {
-      const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
+  const retryFetchProfile = useCallback(async (): Promise<User> => {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 1000);
+    });
 
-      if (!token) {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
+    return fetchUserProfile();
+  }, [fetchUserProfile]);
 
-        return;
-      }
+  const logSafeError = useCallback((prefix: string, err: unknown) => {
+    const safe = axios.isAxiosError(err)
+      ? sanitizeAxiosError(err)
+      : { status: undefined, message: String(err) };
 
-      await loadProfile();
-    } catch (error) {
+    console.error(prefix, safe);
+  }, []);
+
+  const handleRestoreError = useCallback(
+    async (error: unknown) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         await clearSession();
         return;
       }
 
-      try {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 1000);
-        });
+      const isNetworkError = axios.isAxiosError(error) && !error.response;
 
-        await loadProfile();
-
+      if (!isNetworkError) {
+        logSafeError('Error al restaurar sesión:', error);
+        await clearSession();
         return;
+      }
+
+      try {
+        const userData = await retryFetchProfile();
+        applyUserProfile(userData);
       } catch (retryError) {
         if (
           axios.isAxiosError(retryError) &&
@@ -225,74 +232,101 @@ export function AuthProvider({
           return;
         }
 
-        console.error(
-          'No fue posible restaurar la sesión después del reintento.',
+        logSafeError(
+          'Restauración de sesión falló después del reintento.',
           retryError,
         );
 
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
+    },
+    [applyUserProfile, clearSession, logSafeError, retryFetchProfile],
+  );
+
+  const restoreSession = useCallback(async () => {
+    if (restoreInProgress.current) {
+      return;
     }
-  }, [clearSession]);
+
+    restoreInProgress.current = true;
+
+    try {
+      const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
+
+      if (!token) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      const userData = await fetchUserProfile();
+      applyUserProfile(userData);
+    } catch (error) {
+      await handleRestoreError(error);
+    } finally {
+      restoreInProgress.current = false;
+    }
+  }, [applyUserProfile, fetchUserProfile, handleRestoreError]);
 
   useEffect(() => {
     void restoreSession();
   }, [restoreSession]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const { data } = await api.post<LoginResponse>(AUTH_LOGIN_ENDPOINT, {
-        email,
-        password,
-      });
-
-      if (!data?.access || !data?.refresh) {
-        throw new Error(
-          'La respuesta del backend no incluyó los tokens de autenticación.',
-        );
+  const login = useCallback(
+    async (email: string, password: string) => {
+      if (restoreInProgress.current) {
+        return;
       }
 
-      await Promise.all([
-        Storage.setItemAsync(ACCESS_TOKEN_KEY, data.access),
-        Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
-      ]);
+      try {
+        const { data } = await api.post<LoginResponse>(AUTH_LOGIN_ENDPOINT, {
+          email,
+          password,
+        });
 
-      const { data: profile } = await api.get<{
-        data: BackendUser;
-      }>(AUTH_PROFILE_ENDPOINT);
+        if (!data?.access || !data?.refresh) {
+          throw new Error(
+            'La respuesta del backend no incluyó los tokens de autenticación.',
+          );
+        }
 
-      const userData = mapBackendUser(profile.data);
+        await Promise.all([
+          Storage.setItemAsync(ACCESS_TOKEN_KEY, data.access),
+          Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
+        ]);
 
-      setState((prev) => ({
-        ...prev,
-        user: userData,
-        isLoading: false,
-        isAuthenticated: true,
-      }));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = parseLoginError(
-          error as AxiosError<Record<string, unknown>>,
-        );
+        const userData = await fetchUserProfile();
 
-        console.error(message);
+        setState((prev) => ({
+          ...prev,
+          user: userData,
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message = parseLoginError(
+            error as AxiosError<Record<string, unknown>>,
+          );
 
-        // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: AxiosError contiene email/contraseña en config.data; Sentry serializa toda la cadena.
-        throw new Error(message);
+          const safe = sanitizeAxiosError(error);
+
+          console.error('Login falló:', safe);
+
+          // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: AxiosError contiene email/contraseña en config.data; Sentry serializa toda la cadena.
+          throw new Error(message);
+        }
+
+        if (error instanceof Error) {
+          // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: el error original podría contener datos sensibles del request.
+          throw new Error(error.message);
+        }
+
+        // eslint-disable-next-line preserve-caught-error -- Error genérico; no hay causa segura que adjuntar.
+        throw new Error('Error desconocido de autenticación');
       }
-
-      if (error instanceof Error) {
-        // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: el error original podría contener datos sensibles del request.
-        throw new Error(error.message);
-      }
-
-      // eslint-disable-next-line preserve-caught-error -- Error genérico; no hay causa segura que adjuntar.
-      throw new Error('Error desconocido de autenticación');
-    }
-  }, []);
+    },
+    [fetchUserProfile],
+  );
 
   const logout = useCallback(async () => {
     await clearSession();
@@ -303,12 +337,9 @@ export function AuthProvider({
       value={useMemo(
         () => ({
           ...state,
-
           login,
-
           logout,
         }),
-
         [state, login, logout],
       )}
     >
