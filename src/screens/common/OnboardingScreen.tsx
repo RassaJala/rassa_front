@@ -1,10 +1,11 @@
+/* globals require -- React Native module resolution */
+
 import React, { useRef, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Animated, Image, Text, TouchableOpacity, View } from 'react-native';
 
-const logo: ImageSourcePropType = {
-  uri: 'asset:///assets/logo-rassa.jpeg',
-};
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- require() retorna any en React Native; el tipo se declara explícitamente.
+const logo: ImageSourcePropType = require('../../../assets/logo-rassa.jpeg');
 
 const slides = [
   {

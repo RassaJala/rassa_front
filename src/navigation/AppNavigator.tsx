@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { colors } from '@/constants/colors';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -37,8 +38,8 @@ function BuyerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#15803d',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: colors.primaryDark,
+        tabBarInactiveTintColor: colors.textSecondary,
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
@@ -71,8 +72,8 @@ function FarmerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#15803d',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: colors.primaryDark,
+        tabBarInactiveTintColor: colors.textSecondary,
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
@@ -109,8 +110,8 @@ function SellerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#15803d',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: colors.primaryDark,
+        tabBarInactiveTintColor: colors.textSecondary,
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
@@ -161,14 +162,16 @@ export default function AppNavigator(): React.JSX.Element {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
-    const verifyOnboarding = async () => {
-      const completed = await Storage.getItemAsync(Storage.ONBOARDING_KEY);
+    const verifyOnboarding = async (): Promise<void> => {
+      try {
+        const completed = await Storage.getItemAsync(Storage.ONBOARDING_KEY);
 
-      if (!completed) {
-        setShowOnboarding(true);
+        setShowOnboarding(!completed);
+      } catch {
+        setShowOnboarding(false);
+      } finally {
+        setCheckingOnboarding(false);
       }
-
-      setCheckingOnboarding(false);
     };
 
     void verifyOnboarding();
@@ -181,10 +184,11 @@ export default function AppNavigator(): React.JSX.Element {
   if (showOnboarding) {
     return (
       <OnboardingScreen
-        onFinish={async () => {
-          await Storage.setItemAsync(Storage.ONBOARDING_KEY, 'true');
-
-          setShowOnboarding(false);
+        onFinish={() => {
+          void (async () => {
+            await Storage.setItemAsync(Storage.ONBOARDING_KEY, 'true');
+            setShowOnboarding(false);
+          })();
         }}
       />
     );

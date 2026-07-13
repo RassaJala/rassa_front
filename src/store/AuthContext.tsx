@@ -87,7 +87,9 @@ function normalizeRole(role?: string): UserRole {
     return mappedRole;
   }
 
-  const message = `Rol inválido: "${role}"`;
+  const message =
+    `Rol de usuario inválido o no reconocido: "${role}". ` +
+    'Denegando acceso para evitar puerta trasera.';
 
   console.warn(message);
 
@@ -172,23 +174,7 @@ export function AuthProvider({
   }, []);
 
   const restoreSession = useCallback(async () => {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 3000);
-    });
-
-    try {
-      const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
-
-      if (!token) {
-        setState((prev) => ({
-          ...prev,
-
-          isLoading: false,
-        }));
-
-        return;
-      }
-
+    const loadProfile = async (): Promise<void> => {
       const { data } = await api.get<{
         data: BackendUser;
       }>(AUTH_PROFILE_ENDPOINT);
@@ -197,25 +183,58 @@ export function AuthProvider({
 
       setState((prev) => ({
         ...prev,
-
         user: userData,
-
-        isLoading: false,
-
         isAuthenticated: true,
+        isLoading: false,
       }));
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        await clearSession();
+    };
+
+    try {
+      const token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
+
+      if (!token) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+        }));
 
         return;
       }
 
-      setState((prev) => ({
-        ...prev,
+      await loadProfile();
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        await clearSession();
+        return;
+      }
 
-        isLoading: false,
-      }));
+      try {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 1000);
+        });
+
+        await loadProfile();
+
+        return;
+      } catch (retryError) {
+        if (
+          axios.isAxiosError(retryError) &&
+          retryError.response?.status === 401
+        ) {
+          await clearSession();
+          return;
+        }
+
+        console.error(
+          'No fue posible restaurar la sesión después del reintento.',
+          retryError,
+        );
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+        }));
+      }
     }
   }, [clearSession]);
 
@@ -230,9 +249,14 @@ export function AuthProvider({
         password,
       });
 
+      if (!data?.access || !data?.refresh) {
+        throw new Error(
+          'La respuesta del backend no incluyó los tokens de autenticación.',
+        );
+      }
+
       await Promise.all([
         Storage.setItemAsync(ACCESS_TOKEN_KEY, data.access),
-
         Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
       ]);
 
@@ -244,11 +268,8 @@ export function AuthProvider({
 
       setState((prev) => ({
         ...prev,
-
         user: userData,
-
         isLoading: false,
-
         isAuthenticated: true,
       }));
     } catch (error) {
@@ -259,20 +280,17 @@ export function AuthProvider({
 
         console.error(message);
 
-        throw new Error(message, {
-          cause: error,
-        });
+        // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: AxiosError contiene email/contraseña en config.data; Sentry serializa toda la cadena.
+        throw new Error(message);
       }
 
       if (error instanceof Error) {
-        throw new Error(error.message, {
-          cause: error,
-        });
+        // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: el error original podría contener datos sensibles del request.
+        throw new Error(error.message);
       }
 
-      throw new Error('Error desconocido de autenticación', {
-        cause: error,
-      });
+      // eslint-disable-next-line preserve-caught-error -- Error genérico; no hay causa segura que adjuntar.
+      throw new Error('Error desconocido de autenticación');
     }
   }, []);
 
