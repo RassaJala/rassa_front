@@ -7,12 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-
-import { useNetInfo } from '@react-native-community/netinfo';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
-import axios from 'axios';
 import {
   Button,
   Dialog,
@@ -20,6 +14,12 @@ import {
   Portal,
   TextInput as PaperInput,
 } from 'react-native-paper';
+
+import { useNetInfo } from '@react-native-community/netinfo';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import axios from 'axios';
 
 import Toast from '@/components/Toast';
 import api from '@/services/api';
@@ -210,12 +210,12 @@ export default function UnitListScreen({
 
     const trimmedName = formNombre.trim();
     const nameLower = trimmedName.toLocaleLowerCase();
-    const duplicate = (units ?? []).find(
+    const isDuplicate = (units ?? []).some(
       (u) =>
         u.nombre.toLocaleLowerCase() === nameLower &&
         u.id_unidad !== editingUnit?.id_unidad,
     );
-    if (duplicate) {
+    if (isDuplicate) {
       setFormError(`Ya existe una unidad con el nombre "${trimmedName}".`);
       return;
     }
@@ -428,12 +428,7 @@ export default function UnitListScreen({
       <FAB
         icon="plus"
         color="white"
-        style={{
-          position: 'absolute',
-          right: 16,
-          bottom: 24,
-          backgroundColor: '#DE393A',
-        }}
+        className="absolute bottom-6 right-4 bg-brand-red-coral"
         onPress={openCreateModal}
       />
 

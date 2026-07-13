@@ -7,12 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-
-import { useNetInfo } from '@react-native-community/netinfo';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AxiosError } from 'axios';
-import axios from 'axios';
 import {
   Button,
   Dialog,
@@ -20,6 +14,12 @@ import {
   Portal,
   TextInput as PaperInput,
 } from 'react-native-paper';
+
+import { useNetInfo } from '@react-native-community/netinfo';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import axios from 'axios';
 
 import Toast from '@/components/Toast';
 import api from '@/services/api';
@@ -205,12 +205,12 @@ export default function CategoryListScreen({
 
     const trimmedName = formNombre.trim();
     const nameLower = trimmedName.toLocaleLowerCase();
-    const duplicate = (categories ?? []).find(
+    const isDuplicate = (categories ?? []).some(
       (c) =>
         c.nombre.toLocaleLowerCase() === nameLower &&
         c.id_categoria !== editingCategory?.id_categoria,
     );
-    if (duplicate) {
+    if (isDuplicate) {
       setFormError(`Ya existe una categoría con el nombre "${trimmedName}".`);
       return;
     }
@@ -419,12 +419,7 @@ export default function CategoryListScreen({
       <FAB
         icon="plus"
         color="white"
-        style={{
-          position: 'absolute',
-          right: 16,
-          bottom: 24,
-          backgroundColor: '#DE393A',
-        }}
+        className="absolute bottom-6 right-4 bg-brand-red-coral"
         onPress={openCreateModal}
       />
 
