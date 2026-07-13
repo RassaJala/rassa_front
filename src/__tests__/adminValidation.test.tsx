@@ -3,6 +3,9 @@ import React from 'react';
 
 import { fireEvent, render } from '@testing-library/react-native';
 
+import Toast from '@/components/Toast';
+import type { Category } from '@/types';
+
 // Minimal mock for Animated that avoids native driver connections in Jest.
 // The real timing/parallel with useNativeDriver triggers the native renderer
 // which fails with a react/react-native-renderer version mismatch.
@@ -36,7 +39,9 @@ jest.mock('react-native/Libraries/Animated/Animated', () => {
       parallel: jest.fn((animations) => ({
         ...emptyAnimation,
         start: jest.fn((cb?: (r?: { finished: boolean }) => void) => {
-          animations.forEach((a: { start: Function }) => a.start());
+          animations.forEach((a: { start: Function }) => {
+            a.start();
+          });
           cb?.({ finished: true });
         }),
         _isUsingNativeDriver: () => false,
@@ -65,9 +70,6 @@ jest.mock('react-native/Libraries/Animated/Animated', () => {
     },
   };
 });
-
-import Toast from '@/components/Toast';
-import type { Category } from '@/types';
 
 // ── Mock dependencies ────────────────────────────────────
 

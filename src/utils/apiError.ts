@@ -1,4 +1,4 @@
-/* global console -- used in error logging; RN console not in ESLint env */
+/* global console, __DEV__ -- console + RN dev-mode flag set by Metro bundler */
 import type { AxiosError } from 'axios';
 import axios from 'axios';
 
