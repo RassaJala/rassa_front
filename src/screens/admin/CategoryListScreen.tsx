@@ -1,3 +1,4 @@
+/* global console */
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -54,7 +55,7 @@ function extractApiError(error: unknown): string {
       trimmed.startsWith('<html') ||
       trimmed.includes('Traceback (most recent call last)')
     ) {
-      global.console.error(
+      console.error(
         '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         axiosErr.response?.status,
       );

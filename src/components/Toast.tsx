@@ -1,3 +1,4 @@
+/* global setTimeout, clearTimeout, console */
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
@@ -38,7 +39,7 @@ export default function Toast({
       }),
     ]).start();
 
-    const timer = global.setTimeout(() => {
+    const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 0,
@@ -53,7 +54,7 @@ export default function Toast({
       ]).start(() => onDismiss());
     }, duration);
 
-    return () => global.clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [visible, duration, onDismiss, opacity, translateY]);
 
   if (!visible) return null;
