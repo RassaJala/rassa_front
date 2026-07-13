@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { colors } from '@/constants/colors';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -41,19 +40,22 @@ function BuyerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: '#DE393A',
+        tabBarInactiveTintColor: '#6b7280',
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
             Home: 'home',
             Carrito: 'cart',
-            Notificaciones: 'notifications',
+            Notificaciones: 'bell',
           } as const;
 
-          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName =
+            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return (
+            <MaterialCommunityIcons name={iconName} size={size} color={color} />
+          );
         },
       })}
     >
@@ -75,19 +77,22 @@ function FarmerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: '#DE393A',
+        tabBarInactiveTintColor: '#6b7280',
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
             MyProducts: 'leaf',
-            AddProduct: 'add-circle',
-            Notificaciones: 'notifications',
+            AddProduct: 'plus-circle',
+            Notificaciones: 'bell',
           } as const;
 
-          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName =
+            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return (
+            <MaterialCommunityIcons name={iconName} size={size} color={color} />
+          );
         },
       })}
     >
@@ -113,20 +118,23 @@ function SellerTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: '#DE393A',
+        tabBarInactiveTintColor: '#6b7280',
 
         tabBarIcon: ({ color, size }) => {
           const icons = {
             SellerHome: 'storefront',
             Sales: 'cash',
-            Notificaciones: 'notifications',
-            Perfil: 'person',
+            Notificaciones: 'bell',
+            Perfil: 'account',
           } as const;
 
-          const iconName = icons[route.name as keyof typeof icons] ?? 'ellipse';
+          const iconName =
+            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return (
+            <MaterialCommunityIcons name={iconName} size={size} color={color} />
+          );
         },
       })}
     >

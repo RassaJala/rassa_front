@@ -24,7 +24,7 @@ export default function SplashScreen(): React.JSX.Element {
   }, [opacity, scale]);
 
   return (
-    <View className="flex-1 items-center justify-center bg-green-600">
+    <View className="flex-1 items-center justify-center bg-brand-green-forest dark:bg-brand-green-forest">
       <Animated.View
         style={{
           transform: [
@@ -46,9 +46,11 @@ export default function SplashScreen(): React.JSX.Element {
           resizeMode="contain"
         />
 
-        <Text className="text-4xl font-bold text-white">RASSA JALA</Text>
+        <Text className="text-4xl font-bold text-white dark:text-gray-100">
+          RASSA JALA
+        </Text>
 
-        <Text className="mt-3 text-white">
+        <Text className="mt-3 text-white dark:text-gray-100">
           Conectando productores y compradores.
         </Text>
 
@@ -60,7 +62,9 @@ export default function SplashScreen(): React.JSX.Element {
           className="mt-8"
         />
 
-        <Text className="mt-3 text-white">Cargando sesión...</Text>
+        <Text className="mt-3 text-white dark:text-gray-100">
+          Cargando sesión...
+        </Text>
       </Animated.View>
     </View>
   );

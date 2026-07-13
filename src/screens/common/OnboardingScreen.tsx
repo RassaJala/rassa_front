@@ -1,8 +1,9 @@
 /* globals require -- React Native module resolution */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Image, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- require() retorna any en React Native; el tipo se declara explícitamente.
 const logo: ImageSourcePropType = require('../../../assets/logo-rassa.jpeg');
@@ -33,63 +34,92 @@ export default function OnboardingScreen({
   onFinish,
 }: Props): React.JSX.Element {
   const [current, setCurrent] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const currentSlide = slides[current] ?? slides[0];
 
-  const next = (): void => {
-    if (current < slides.length - 1) {
-      setCurrent((previous) => previous + 1);
-    } else {
-      onFinish();
-    }
+  const goToNext = (): void => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      if (current < slides.length - 1) {
+        setCurrent((previous) => previous + 1);
+      } else {
+        onFinish();
+        return;
+      }
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    });
   };
 
   return (
-    <View className="flex-1 bg-green-600">
-      <View className="flex-9 items-center justify-center px-16">
-        <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-white/20">
-          <Image source={logo} className="h-10 w-10" resizeMode="contain" />
-        </View>
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+      {/* Contenido principal */}
+      <View className="flex-1 items-center justify-center px-8">
+        <Animated.View style={{ opacity: fadeAnim }} className="items-center">
+          {/* Logo */}
+          <Image
+            source={logo}
+            className="mb-10 h-48 w-48 rounded-full"
+            resizeMode="contain"
+          />
 
-        <Text className="mb-4 text-center text-2xl font-bold text-white">
-          {currentSlide.title}
-        </Text>
+          {/* Título */}
+          <Text className="mb-5 text-center text-3xl font-bold text-brand-ink dark:text-gray-100">
+            {currentSlide.title}
+          </Text>
 
-        <Text className="px-4 text-center text-base leading-6 text-white/90">
-          {currentSlide.description}
-        </Text>
+          {/* Descripción */}
+          <Text className="px-6 text-center text-lg leading-7 text-gray-500 dark:text-gray-400">
+            {currentSlide.description}
+          </Text>
+        </Animated.View>
       </View>
 
-      <View className="items-center pb-16">
-        <View className="mb-8 flex-row">
+      {/* Parte inferior */}
+      <View className="items-center pb-3 pt-1">
+        {/* Indicadores */}
+        <View className="mb-10 flex-row">
           {slides.map((slide, index) => (
             <View
               key={slide.title}
               className={`mx-1 rounded-full ${
-                index === current ? 'h-3 w-10 bg-white' : 'h-3 w-3 bg-white/40'
+                index === current
+                  ? 'h-3 w-10 bg-brand-red-coral'
+                  : 'h-3 w-3 bg-gray-300 dark:bg-gray-600'
               }`}
             />
           ))}
         </View>
 
-        <TouchableOpacity
-          onPress={next}
-          className="w-64 items-center rounded-full bg-white py-4"
-          activeOpacity={0.8}
+        {/* Botón */}
+        <Button
+          mode="contained"
+          buttonColor="#DE393A"
+          textColor="#ffffff"
+          onPress={goToNext}
+          className="w-56 rounded-full"
         >
-          <Text className="text-lg font-bold text-green-700">
-            {current === slides.length - 1 ? 'Comenzar' : 'Siguiente'}
-          </Text>
-        </TouchableOpacity>
+          {current === slides.length - 1 ? 'Comenzar' : 'Siguiente'}
+        </Button>
 
+        {/* Omitir */}
         {current < slides.length - 1 && (
-          <TouchableOpacity
+          <Button
+            mode="text"
+            textColor="#6b7280"
             onPress={onFinish}
-            className="mt-4 py-2"
-            activeOpacity={0.7}
+            className="mt-4"
           >
-            <Text className="text-sm text-white/70">Omitir</Text>
-          </TouchableOpacity>
+            Omitir
+          </Button>
         )}
       </View>
     </View>
