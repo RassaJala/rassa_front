@@ -68,11 +68,7 @@ export default function OnboardingScreen({
         }}
         className="items-center"
       >
-        <Image
-          source={logo}
-          className="mb-10 h-64 w-full"
-          resizeMode="contain"
-        />
+        <Image source={logo} className="mb-8 h-48 w-48" resizeMode="contain" />
 
         <Text className="text-center text-3xl font-bold text-white">
           {currentSlide.title}

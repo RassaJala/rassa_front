@@ -159,7 +159,7 @@ export function AuthProvider({
   const restoreInProgress = useRef(false);
 
   const clearSession = useCallback(async () => {
-    await Promise.all([
+    await Promise.allSettled([
       Storage.deleteItemAsync(ACCESS_TOKEN_KEY),
       Storage.deleteItemAsync(REFRESH_TOKEN_KEY),
     ]);
@@ -277,6 +277,8 @@ export function AuthProvider({
         return;
       }
 
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       try {
         const { data } = await api.post<LoginResponse>(AUTH_LOGIN_ENDPOINT, {
           email,
@@ -289,7 +291,7 @@ export function AuthProvider({
           );
         }
 
-        await Promise.all([
+        await Promise.allSettled([
           Storage.setItemAsync(ACCESS_TOKEN_KEY, data.access),
           Storage.setItemAsync(REFRESH_TOKEN_KEY, data.refresh),
         ]);
@@ -303,6 +305,8 @@ export function AuthProvider({
           isAuthenticated: true,
         }));
       } catch (error) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+
         if (axios.isAxiosError(error)) {
           const message = parseLoginError(
             error as AxiosError<Record<string, unknown>>,
