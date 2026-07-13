@@ -21,6 +21,7 @@ import {
   TextInput as PaperInput,
 } from 'react-native-paper';
 
+import Toast from '@/components/Toast';
 import api from '@/services/api';
 import type { AdminStackParamList, Category } from '@/types';
 
@@ -40,7 +41,7 @@ function extractApiError(error: unknown): string {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
-  const axiosErr = error as AxiosError<Record<string, unknown>>;
+  const axiosErr = error as AxiosError<Record<string, unknown> | string>;
   const data = axiosErr.response?.data;
 
   if (!data) return 'Error del servidor. Intenta de nuevo.';
@@ -100,6 +101,9 @@ export default function CategoryListScreen({
   const [formDescripcion, setFormDescripcion] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
+  // ── Toast state ────────────────────────────────────────────
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   // ── Delete dialog state ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
@@ -122,7 +126,6 @@ export default function CategoryListScreen({
       const res = await api.post('/categorias/', payload);
       return res.data;
     },
-    onSuccess: invalidateAndClose,
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
     },
@@ -141,7 +144,6 @@ export default function CategoryListScreen({
       const res = await api.patch(`/categorias/${id}/`, payload);
       return res.data;
     },
-    onSuccess: invalidateAndClose,
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
     },
@@ -151,17 +153,20 @@ export default function CategoryListScreen({
     mutationFn: async (id: number) => {
       await api.delete(`/categorias/${id}/`);
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      setDeleteTarget(null);
-    },
     onError: () => {
       // Try soft-delete if hard delete fails (protected by FK)
       if (deleteTarget) {
-        updateMutation.mutate({
-          id: deleteTarget.id_categoria,
-          estado: false,
-        });
+        updateMutation.mutate(
+          { id: deleteTarget.id_categoria, estado: false },
+          {
+            onSuccess: () => {
+              void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+              setToastMessage(
+                `Se desactivó la categoría "${deleteTarget?.nombre ?? ''}"`,
+              );
+            },
+          },
+        );
       }
       setDeleteTarget(null);
     },
@@ -198,35 +203,74 @@ export default function CategoryListScreen({
       return;
     }
 
+    const trimmedName = formNombre.trim();
+    const nameLower = trimmedName.toLocaleLowerCase();
+    const duplicate = (categories ?? []).find(
+      (c) =>
+        c.nombre.toLocaleLowerCase() === nameLower &&
+        c.id_categoria !== editingCategory?.id_categoria,
+    );
+    if (duplicate) {
+      setFormError(`Ya existe una categoría con el nombre "${trimmedName}".`);
+      return;
+    }
+
     if (editingCategory) {
-      updateMutation.mutate({
-        id: editingCategory.id_categoria,
-        nombre: formNombre.trim(),
-        descripcion: formDescripcion.trim(),
-      });
+      updateMutation.mutate(
+        {
+          id: editingCategory.id_categoria,
+          nombre: trimmedName,
+          descripcion: formDescripcion.trim(),
+        },
+        {
+          onSuccess: () => {
+            invalidateAndClose();
+            setToastMessage(`Se editó la categoría "${trimmedName}"`);
+          },
+        },
+      );
     } else {
-      createMutation.mutate({
-        nombre: formNombre.trim(),
-        descripcion: formDescripcion.trim(),
-        estado: true,
-      });
+      createMutation.mutate(
+        {
+          nombre: trimmedName,
+          descripcion: formDescripcion.trim(),
+          estado: true,
+        },
+        {
+          onSuccess: () => {
+            invalidateAndClose();
+            setToastMessage(`Se creó la categoría "${trimmedName}"`);
+          },
+        },
+      );
     }
   }, [
     formNombre,
     formDescripcion,
     editingCategory,
+    categories,
+    invalidateAndClose,
     createMutation,
     updateMutation,
   ]);
 
   const handleToggleStatus = useCallback(
     (cat: Category) => {
-      updateMutation.mutate({
-        id: cat.id_categoria,
-        estado: !cat.estado,
-      });
+      const newStatus = !cat.estado;
+      const action = newStatus ? 'activó' : 'desactivó';
+      const name = cat.nombre;
+
+      updateMutation.mutate(
+        { id: cat.id_categoria, estado: newStatus },
+        {
+          onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+            setToastMessage(`Se ${action} la categoría "${name}"`);
+          },
+        },
+      );
     },
-    [updateMutation],
+    [updateMutation, queryClient],
   );
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -452,9 +496,17 @@ export default function CategoryListScreen({
             </Button>
             <Button
               onPress={() => {
-                if (deleteTarget) {
-                  deleteMutation.mutate(deleteTarget.id_categoria);
-                }
+                if (!deleteTarget) return;
+                const name = deleteTarget.nombre;
+                deleteMutation.mutate(deleteTarget.id_categoria, {
+                  onSuccess: () => {
+                    void queryClient.invalidateQueries({
+                      queryKey: QUERY_KEY,
+                    });
+                    setDeleteTarget(null);
+                    setToastMessage(`Se eliminó la categoría "${name}"`);
+                  },
+                });
               }}
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
@@ -465,6 +517,13 @@ export default function CategoryListScreen({
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* ── Toast notifications ─────────────────────────────── */}
+      <Toast
+        visible={toastMessage !== null}
+        message={toastMessage ?? ''}
+        onDismiss={() => setToastMessage(null)}
+      />
     </View>
   );
 }

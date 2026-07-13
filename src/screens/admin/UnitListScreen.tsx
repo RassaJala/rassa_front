@@ -21,6 +21,7 @@ import {
   TextInput as PaperInput,
 } from 'react-native-paper';
 
+import Toast from '@/components/Toast';
 import api from '@/services/api';
 import type { AdminStackParamList, Unit } from '@/types';
 
@@ -40,7 +41,7 @@ function extractApiError(error: unknown): string {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
-  const axiosErr = error as AxiosError<Record<string, unknown>>;
+  const axiosErr = error as AxiosError<Record<string, unknown> | string>;
   const data = axiosErr.response?.data;
 
   if (!data) return 'Error del servidor. Intenta de nuevo.';
@@ -100,6 +101,9 @@ export default function UnitListScreen({
   const [formAbreviatura, setFormAbreviatura] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
+  // ── Toast state ────────────────────────────────────────────
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   // ── Delete dialog state ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<Unit | null>(null);
 
@@ -122,7 +126,6 @@ export default function UnitListScreen({
       const res = await api.post('/unidades/', payload);
       return res.data;
     },
-    onSuccess: invalidateAndClose,
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
     },
@@ -141,7 +144,6 @@ export default function UnitListScreen({
       const res = await api.patch(`/unidades/${id}/`, payload);
       return res.data;
     },
-    onSuccess: invalidateAndClose,
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
     },
@@ -151,17 +153,20 @@ export default function UnitListScreen({
     mutationFn: async (id: number) => {
       await api.delete(`/unidades/${id}/`);
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      setDeleteTarget(null);
-    },
     onError: () => {
       // Try soft-delete if hard delete fails (protected by FK)
       if (deleteTarget) {
-        updateMutation.mutate({
-          id: deleteTarget.id_unidad,
-          estado: false,
-        });
+        updateMutation.mutate(
+          { id: deleteTarget.id_unidad, estado: false },
+          {
+            onSuccess: () => {
+              void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+              setToastMessage(
+                `Se desactivó la unidad "${deleteTarget?.nombre ?? ''}"`,
+              );
+            },
+          },
+        );
       }
       setDeleteTarget(null);
     },
@@ -203,35 +208,74 @@ export default function UnitListScreen({
       return;
     }
 
+    const trimmedName = formNombre.trim();
+    const nameLower = trimmedName.toLocaleLowerCase();
+    const duplicate = (units ?? []).find(
+      (u) =>
+        u.nombre.toLocaleLowerCase() === nameLower &&
+        u.id_unidad !== editingUnit?.id_unidad,
+    );
+    if (duplicate) {
+      setFormError(`Ya existe una unidad con el nombre "${trimmedName}".`);
+      return;
+    }
+
     if (editingUnit) {
-      updateMutation.mutate({
-        id: editingUnit.id_unidad,
-        nombre: formNombre.trim(),
-        abreviatura: formAbreviatura.trim(),
-      });
+      updateMutation.mutate(
+        {
+          id: editingUnit.id_unidad,
+          nombre: trimmedName,
+          abreviatura: formAbreviatura.trim(),
+        },
+        {
+          onSuccess: () => {
+            invalidateAndClose();
+            setToastMessage(`Se editó la unidad "${trimmedName}"`);
+          },
+        },
+      );
     } else {
-      createMutation.mutate({
-        nombre: formNombre.trim(),
-        abreviatura: formAbreviatura.trim(),
-        estado: true,
-      });
+      createMutation.mutate(
+        {
+          nombre: trimmedName,
+          abreviatura: formAbreviatura.trim(),
+          estado: true,
+        },
+        {
+          onSuccess: () => {
+            invalidateAndClose();
+            setToastMessage(`Se creó la unidad "${trimmedName}"`);
+          },
+        },
+      );
     }
   }, [
     formNombre,
     formAbreviatura,
     editingUnit,
+    units,
+    invalidateAndClose,
     createMutation,
     updateMutation,
   ]);
 
   const handleToggleStatus = useCallback(
     (unit: Unit) => {
-      updateMutation.mutate({
-        id: unit.id_unidad,
-        estado: !unit.estado,
-      });
+      const newStatus = !unit.estado;
+      const action = newStatus ? 'activó' : 'desactivó';
+      const name = unit.nombre;
+
+      updateMutation.mutate(
+        { id: unit.id_unidad, estado: newStatus },
+        {
+          onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+            setToastMessage(`Se ${action} la unidad "${name}"`);
+          },
+        },
+      );
     },
-    [updateMutation],
+    [updateMutation, queryClient],
   );
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -460,9 +504,17 @@ export default function UnitListScreen({
             </Button>
             <Button
               onPress={() => {
-                if (deleteTarget) {
-                  deleteMutation.mutate(deleteTarget.id_unidad);
-                }
+                if (!deleteTarget) return;
+                const name = deleteTarget.nombre;
+                deleteMutation.mutate(deleteTarget.id_unidad, {
+                  onSuccess: () => {
+                    void queryClient.invalidateQueries({
+                      queryKey: QUERY_KEY,
+                    });
+                    setDeleteTarget(null);
+                    setToastMessage(`Se eliminó la unidad "${name}"`);
+                  },
+                });
               }}
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
@@ -473,6 +525,13 @@ export default function UnitListScreen({
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* ── Toast notifications ─────────────────────────────── */}
+      <Toast
+        visible={toastMessage !== null}
+        message={toastMessage ?? ''}
+        onDismiss={() => setToastMessage(null)}
+      />
     </View>
   );
 }
