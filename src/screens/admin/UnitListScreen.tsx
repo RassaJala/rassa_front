@@ -1,4 +1,4 @@
-/* global console */
+/* global console -- used in error logging; RN console not in ESLint env */
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
