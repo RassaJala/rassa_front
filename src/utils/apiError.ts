@@ -7,10 +7,7 @@ import axios from 'axios';
  * @param error - The caught error (unknown type)
  * @param fieldKeys - Backend field names to check for validation errors
  */
-export function extractApiError(
-  error: unknown,
-  fieldKeys: string[],
-): string {
+export function extractApiError(error: unknown, fieldKeys: string[]): string {
   if (!axios.isAxiosError(error)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }

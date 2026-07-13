@@ -32,8 +32,7 @@ describe('extractApiError', () => {
   });
 
   it('detecta HTML error page y loggea', () => {
-    const html =
-      '<!DOCTYPE html><html><body>Server Error</body></html>';
+    const html = '<!DOCTYPE html><html><body>Server Error</body></html>';
     const axiosError = {
       isAxiosError: true,
       response: { data: html, status: 500 },

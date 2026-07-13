@@ -112,9 +112,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           ) : null}
           <View
             className={`mt-1.5 self-start rounded-full px-2.5 py-0.5 ${
-              item.estado
-                ? 'bg-green-100'
-                : 'bg-gray-100 dark:bg-gray-800'
+              item.estado ? 'bg-green-100' : 'bg-gray-100 dark:bg-gray-800'
             }`}
           >
             <Text
@@ -167,10 +165,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
 
 export default function CrudListScreen<
   T extends { nombre: string; estado: boolean },
->({
-  config,
-  navigation,
-}: CrudListScreenProps<T>): React.JSX.Element | null {
+>({ config, navigation }: CrudListScreenProps<T>): React.JSX.Element | null {
   // ── Hooks must be called unconditionally, in same order every render ──
   const { user } = useAuth();
   const netInfo = useNetInfo();
@@ -223,10 +218,7 @@ export default function CrudListScreen<
   // ── Mutations ──────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const { data } = await api.post<ApiResponse<T>>(
-        config.endpoint,
-        payload,
-      );
+      const { data } = await api.post<ApiResponse<T>>(config.endpoint, payload);
 
       return data;
     },
@@ -299,13 +291,14 @@ export default function CrudListScreen<
     const initial: Record<string, string> = {};
 
     for (const field of config.fields) {
-      initial[field.name] = field.name === 'nombre'
-        ? item.nombre
-        : field.name === 'descripcion' && 'descripcion' in item
-          ? String((item as Record<string, unknown>).descripcion ?? '')
-          : field.name === 'abreviatura' && 'abreviatura' in item
-            ? String((item as Record<string, unknown>).abreviatura ?? '')
-            : '';
+      initial[field.name] =
+        field.name === 'nombre'
+          ? item.nombre
+          : field.name === 'descripcion' && 'descripcion' in item
+            ? String((item as Record<string, unknown>).descripcion ?? '')
+            : field.name === 'abreviatura' && 'abreviatura' in item
+              ? String((item as Record<string, unknown>).abreviatura ?? '')
+              : '';
     }
     setEditingItem(item);
     setFormValues(initial);
@@ -517,18 +510,23 @@ export default function CrudListScreen<
                     onToggleStatus: () => handleToggleStatus(item),
                     onDelete: () => setDeleteTarget(item),
                   })
-                : defaultRenderListItem(item, (i) => {
-                    const second = config.fields[1];
+                : defaultRenderListItem(
+                    item,
+                    (i) => {
+                      const second = config.fields[1];
 
-                    if (!second) return null;
-                    const val = (i as Record<string, unknown>)[second.name];
+                      if (!second) return null;
+                      const val = (i as Record<string, unknown>)[second.name];
 
-                    return val != null ? String(val) : null;
-                  }, config, {
-                    onEdit: () => openEditModal(item),
-                    onToggleStatus: () => handleToggleStatus(item),
-                    onDelete: () => setDeleteTarget(item),
-                  })}
+                      return val != null ? String(val) : null;
+                    },
+                    config,
+                    {
+                      onEdit: () => openEditModal(item),
+                      onToggleStatus: () => handleToggleStatus(item),
+                      onDelete: () => setDeleteTarget(item),
+                    },
+                  )}
             </>
           )}
           ItemSeparatorComponent={() => (
@@ -566,9 +564,13 @@ export default function CrudListScreen<
                   setFormValues((prev) => ({ ...prev, [field.name]: text }));
                   setFormError(null);
                 }}
-                {...(field.placeholder ? { placeholder: field.placeholder } : {})}
+                {...(field.placeholder
+                  ? { placeholder: field.placeholder }
+                  : {})}
                 {...(field.multiline ? { multiline: true } : {})}
-                {...(field.numberOfLines ? { numberOfLines: field.numberOfLines } : {})}
+                {...(field.numberOfLines
+                  ? { numberOfLines: field.numberOfLines }
+                  : {})}
                 className={field.multiline ? '' : 'mb-3'}
               />
             ))}
@@ -598,9 +600,7 @@ export default function CrudListScreen<
           <Dialog.Title>{config.deleteDialogTitle}</Dialog.Title>
           <Dialog.Content>
             <Text className="text-base text-gray-600 dark:text-gray-400">
-              {deleteTarget
-                ? config.deleteConfirmText(deleteTarget)
-                : ''}
+              {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
             </Text>
             <Text className="mt-2 text-sm text-gray-400 dark:text-gray-500">
               Si {config.entityNamePluralLower} tiene productos asociados, se

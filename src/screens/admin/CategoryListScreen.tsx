@@ -23,7 +23,12 @@ const categoryConfig = {
   getId: (item: Category) => item.id_categoria,
   fields: [
     { name: 'nombre', label: 'Nombre' },
-    { name: 'descripcion', label: 'Descripción', multiline: true, numberOfLines: 3 },
+    {
+      name: 'descripcion',
+      label: 'Descripción',
+      multiline: true,
+      numberOfLines: 3,
+    },
   ] as const,
   errorFieldKeys: ['nombre', 'descripcion', 'detail'] as const,
   emptyIcon: '📂',
