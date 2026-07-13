@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string -- Test files are less strict */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string, @typescript-eslint/no-unsafe-argument -- Test files are less strict */
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -23,6 +23,7 @@ jest.mock('axios', () => {
   mockAxios.create = jest.fn(() => mockAxios);
   mockAxios.get = jest.fn();
   mockAxios.post = jest.fn();
+  mockAxios.patch = jest.fn();
   mockAxios.isAxiosError = jest.fn((err: any) => err?.isAxiosError === true);
   mockAxios.interceptors = {
     request: { use: jest.fn() },
@@ -38,7 +39,17 @@ jest.mock('axios', () => {
 const { default: api } = require('../services/api');
 
 function TestComponent() {
-  const { user, login, logout, isAuthenticated, isLoading } = useAuth();
+  const {
+    user,
+    login,
+    logout,
+    register,
+    updateProfile,
+    changePassword,
+    isAuthenticated,
+    isLoading,
+  } = useAuth();
+  const [errorMsg, setErrorMsg] = React.useState('');
 
   return (
     <View>
@@ -47,11 +58,15 @@ function TestComponent() {
       </Text>
       <Text testID="loading-status">{isLoading ? 'Cargando' : 'Listo'}</Text>
       <Text testID="user-role">{user?.role ?? 'Sin Rol'}</Text>
-      <Text testID="user-name">{user?.first_name ?? 'Sin Nombre'}</Text>
+      <Text testID="user-name">{user?.nombre ?? 'Sin Nombre'}</Text>
+      <Text testID="error-message">{errorMsg}</Text>
       <Text
         testID="login-btn"
         onPress={() => {
-          login('test@test.com', 'password').catch(() => {});
+          setErrorMsg('');
+          login('test@test.com', 'password').catch((err: any) => {
+            setErrorMsg(err.message);
+          });
         }}
       >
         Login
@@ -63,6 +78,63 @@ function TestComponent() {
         }}
       >
         Logout
+      </Text>
+      <Text
+        testID="register-btn"
+        onPress={() => {
+          setErrorMsg('');
+          register({
+            email: 'reg@test.com',
+            password: 'password',
+            telefono: '1234567890',
+            role: 'buyer',
+            nombre: 'Reg User',
+            apellido_paterno: 'Reg',
+            apellido_materno: null,
+            fecha_nacimiento: '1995-05-05',
+            sexo: 'M',
+            domicilio: 'Calle Reg 123',
+            fk_localidad: 1,
+          }).catch((err: any) => {
+            setErrorMsg(err.message);
+          });
+        }}
+      >
+        Register
+      </Text>
+      <Text
+        testID="update-profile-btn"
+        onPress={() => {
+          setErrorMsg('');
+          updateProfile({
+            nombre: 'Updated Name',
+            apellido_paterno: 'Updated',
+            apellido_materno: null,
+            telefono: '0987654321',
+            fecha_nacimiento: '1995-05-05',
+            sexo: 'F',
+            domicilio: 'Updated Calle 123',
+            fk_localidad: 2,
+          }).catch((err: any) => {
+            setErrorMsg(err.message);
+          });
+        }}
+      >
+        Update Profile
+      </Text>
+      <Text
+        testID="change-password-btn"
+        onPress={() => {
+          setErrorMsg('');
+          changePassword({
+            old_password: 'password',
+            new_password: 'new_password',
+          }).catch((err: any) => {
+            setErrorMsg(err.message);
+          });
+        }}
+      >
+        Change Password
       </Text>
     </View>
   );
@@ -180,10 +252,10 @@ describe('AuthContext', () => {
       'refresh456',
     );
     expect(getByTestId('user-role').props.children).toBe('buyer');
-    expect(getByTestId('user-name').props.children).toBe('Test');
+    expect(getByTestId('user-name').props.children).toBe('Test User');
   });
 
-  // ── parseLoginError branches ──────────────────────────
+  // ── parseAuthError branches ──────────────────────────
 
   it('parsea error de login cuando response.data es string', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
@@ -205,7 +277,9 @@ describe('AuthContext', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+      expect(getByTestId('error-message').props.children).toBe(
+        'Email inválido',
+      );
     });
   });
 
@@ -232,7 +306,9 @@ describe('AuthContext', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+      expect(getByTestId('error-message').props.children).toBe(
+        'Credenciales inválidas.',
+      );
     });
   });
 
@@ -259,7 +335,9 @@ describe('AuthContext', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+      expect(getByTestId('error-message').props.children).toBe(
+        'Error 1 Error 2',
+      );
     });
   });
 
@@ -378,7 +456,7 @@ describe('AuthContext', () => {
     axiosError.isAxiosError = true;
     axiosError.response = {
       status: 401,
-      data: { detail: 'Invalid credentials' },
+      data: { detail: 'Credenciales inválidas.' },
     };
     axiosError.config = { url: '/token/' };
     (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
@@ -394,7 +472,9 @@ describe('AuthContext', () => {
     });
 
     await waitFor(() => {
-      expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+      expect(getByTestId('error-message').props.children).toBe(
+        'Credenciales inválidas.',
+      );
     });
   });
 
@@ -416,6 +496,221 @@ describe('AuthContext', () => {
 
     await waitFor(() => {
       expect(getByTestId('auth-status').props.children).toBe('No Autenticado');
+    });
+  });
+
+  // ── Register tests ────────────────────────────────────
+
+  it('register exitoso: realiza POST, almacena tokens, actualiza estado', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: {
+        data: {
+          ...DEFAULT_BACKEND_USER,
+          access: 'reg_access',
+          refresh: 'reg_refresh',
+        },
+      },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('Autenticado');
+    });
+
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'access_token',
+      'reg_access',
+    );
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'refresh_token',
+      'reg_refresh',
+    );
+    expect(getByTestId('user-name').props.children).toBe('Test User');
+  });
+
+  it('register falla con 400 y mensaje en español', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+
+    const axiosError = new Error('Bad Request') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 400,
+      data: { detail: 'El correo electrónico ya está registrado.' },
+    };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'El correo electrónico ya está registrado.',
+      );
+    });
+  });
+
+  it('register falla con error de red', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    (api.post as jest.Mock).mockRejectedValueOnce(
+      new TypeError('Network Error'),
+    );
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe('Network Error');
+    });
+  });
+
+  // ── Update Profile tests ──────────────────────────────
+
+  it('updateProfile exitoso: realiza PATCH y actualiza datos del usuario', async () => {
+    // Primero simulamos sesión activa
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { data: DEFAULT_BACKEND_USER },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('auth-status').props.children).toBe('Autenticado');
+    });
+
+    // Simulamos respuesta PATCH exitosa
+    (api.patch as jest.Mock).mockResolvedValueOnce({
+      data: {
+        data: {
+          ...DEFAULT_BACKEND_USER,
+          nombre: 'Updated Name User',
+        },
+      },
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('update-profile-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('user-name').props.children).toBe('Updated Name User');
+    });
+  });
+
+  it('updateProfile falla y devuelve error del parser', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { data: DEFAULT_BACKEND_USER },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const axiosError = new Error('Bad Request') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 400,
+      data: { detail: 'Error en la localidad seleccionada.' },
+    };
+    (api.patch as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    await act(async () => {
+      fireEvent.press(getByTestId('update-profile-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'Error en la localidad seleccionada.',
+      );
+    });
+  });
+
+  // ── Change Password tests ─────────────────────────────
+
+  it('changePassword exitoso: realiza POST a endpoint', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { data: DEFAULT_BACKEND_USER },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: { message: 'Password changed successfully' },
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('change-password-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe('');
+    });
+  });
+
+  it('changePassword falla y devuelve mensaje de error', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { data: DEFAULT_BACKEND_USER },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const axiosError = new Error('Bad Request') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = {
+      status: 400,
+      data: { detail: 'La contraseña actual es incorrecta.' },
+    };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    await act(async () => {
+      fireEvent.press(getByTestId('change-password-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'La contraseña actual es incorrecta.',
+      );
     });
   });
 });

@@ -1,10 +1,6 @@
-/* globals console -- Allow console methods for logging */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,22 +13,17 @@ import { Button } from 'react-native-paper';
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 
+import CatalogSelector from '@/components/CatalogSelector';
 import { colors } from '@/constants/colors';
-import api from '@/services/api';
+import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { Localidad, Municipio } from '@/types';
+import { getGenderLabel } from '@/utils/gender';
+import { DATE_REGEX, MIN_PASSWORD_LENGTH } from '@/utils/validation';
 
 type ActiveTab = 'ver' | 'editar' | 'password';
 
-const PLACEHOLDER_COLOR = '#94a3b8';
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-// Helper to get gender labels
-function getGenderLabel(val: string) {
-  if (val === 'M') return 'Masculino';
-  if (val === 'F') return 'Femenino';
-  return 'Otro';
-}
+const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
 
 // Helper to get role labels
 function getRoleLabel(role?: string) {
@@ -102,8 +93,7 @@ function ProfileViewTab({ user }: ProfileViewTabProps): React.JSX.Element {
 }
 
 // ── SUB-COMPONENT: Edit Profile Tab ───────────────────────────
-interface ProfileEditTabProps {
-  readonly isSubmitting: boolean;
+interface ProfileFormFields {
   readonly nombre: string;
   readonly setNombre: (val: string) => void;
   readonly apellidoPaterno: string;
@@ -114,42 +104,44 @@ interface ProfileEditTabProps {
   readonly setTelefono: (val: string) => void;
   readonly fechaNacimiento: string;
   readonly setFechaNacimiento: (val: string) => void;
-  readonly sexo: string;
-  readonly setSexo: (val: string) => void;
+  readonly sexo: 'M' | 'F' | 'O';
+  readonly setSexo: (val: 'M' | 'F' | 'O') => void;
   readonly domicilio: string;
   readonly setDomicilio: (val: string) => void;
-  readonly selectedMunicipioNombre: string;
-  readonly setShowMunicipioModal: (val: boolean) => void;
+}
+
+interface ProfileLocationFields {
   readonly selectedMunicipioId: number | null;
-  readonly setErrorMessage: (val: string | null) => void;
-  readonly setShowLocalidadModal: (val: boolean) => void;
+  readonly selectedMunicipioNombre: string;
+  readonly localidadId: number | null;
   readonly localidadNombre: string;
-  readonly handleUpdateProfile: () => void;
+  readonly municipios: Municipio[];
+  readonly localidades: Localidad[];
+  readonly isLoadingMunicipios: boolean;
+  readonly isLoadingLocalidades: boolean;
+  readonly errorMunicipios: string | null;
+  readonly errorLocalidades: string | null;
+  readonly refetchMunicipios: () => void;
+  readonly refetchLocalidades: () => void;
+  readonly handleSelectMunicipio: (id: number, nombre: string) => void;
+  readonly handleSelectLocalidad: (id: number, nombre: string) => void;
+}
+
+interface ProfileEditTabProps {
+  readonly isSubmitting: boolean;
+  readonly form: ProfileFormFields;
+  readonly location: ProfileLocationFields;
+  readonly callbacks: {
+    readonly handleUpdateProfile: () => void;
+    readonly setErrorMessage: (val: string | null) => void;
+  };
 }
 
 function ProfileEditTab({
   isSubmitting,
-  nombre,
-  setNombre,
-  apellidoPaterno,
-  setApellidoPaterno,
-  apellidoMaterno,
-  setApellidoMaterno,
-  telefono,
-  setTelefono,
-  fechaNacimiento,
-  setFechaNacimiento,
-  sexo,
-  setSexo,
-  domicilio,
-  setDomicilio,
-  selectedMunicipioNombre,
-  setShowMunicipioModal,
-  selectedMunicipioId,
-  setErrorMessage,
-  setShowLocalidadModal,
-  localidadNombre,
-  handleUpdateProfile,
+  form,
+  location,
+  callbacks,
 }: ProfileEditTabProps): React.JSX.Element {
   return (
     <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
@@ -161,9 +153,9 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="Nombre"
-        placeholderTextColor={PLACEHOLDER_COLOR}
-        value={nombre}
-        onChangeText={setNombre}
+        placeholderTextColor={colors.placeholder}
+        value={form.nombre}
+        onChangeText={form.setNombre}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -172,9 +164,9 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="Apellido Paterno"
-        placeholderTextColor={PLACEHOLDER_COLOR}
-        value={apellidoPaterno}
-        onChangeText={setApellidoPaterno}
+        placeholderTextColor={colors.placeholder}
+        value={form.apellidoPaterno}
+        onChangeText={form.setApellidoPaterno}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -183,9 +175,9 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="Apellido Materno"
-        placeholderTextColor={PLACEHOLDER_COLOR}
-        value={apellidoMaterno}
-        onChangeText={setApellidoMaterno}
+        placeholderTextColor={colors.placeholder}
+        value={form.apellidoMaterno}
+        onChangeText={form.setApellidoMaterno}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -194,10 +186,10 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="Teléfono"
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={colors.placeholder}
         keyboardType="phone-pad"
-        value={telefono}
-        onChangeText={setTelefono}
+        value={form.telefono}
+        onChangeText={form.setTelefono}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -206,26 +198,26 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="AAAA-MM-DD"
-        placeholderTextColor={PLACEHOLDER_COLOR}
-        value={fechaNacimiento}
-        onChangeText={setFechaNacimiento}
+        placeholderTextColor={colors.placeholder}
+        value={form.fechaNacimiento}
+        onChangeText={form.setFechaNacimiento}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">Género *</Text>
       <View className="mb-3 flex-row space-x-2">
-        {['M', 'F', 'O'].map((g) => (
+        {(['M', 'F', 'O'] as const).map((g) => (
           <TouchableOpacity
             key={g}
-            onPress={() => setSexo(g)}
+            onPress={() => form.setSexo(g)}
             className={`flex-1 rounded-xl border py-2.5 ${
-              sexo === g
+              form.sexo === g
                 ? 'border-emerald-600 bg-emerald-50'
                 : 'border-slate-300 bg-white'
             }`}
           >
             <Text
               className={`text-center font-medium ${
-                sexo === g ? 'text-emerald-700' : 'text-slate-600'
+                form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
               }`}
             >
               {getGenderLabel(g)}
@@ -240,49 +232,34 @@ function ProfileEditTab({
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="Calle, número, colonia"
-        placeholderTextColor={PLACEHOLDER_COLOR}
-        value={domicilio}
-        onChangeText={setDomicilio}
+        placeholderTextColor={colors.placeholder}
+        value={form.domicilio}
+        onChangeText={form.setDomicilio}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Municipio *
-      </Text>
-      <TouchableOpacity
-        onPress={() => setShowMunicipioModal(true)}
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-3"
-      >
-        <Text
-          className={`text-base ${selectedMunicipioNombre ? 'text-slate-900' : 'text-slate-400'}`}
-        >
-          {selectedMunicipioNombre || 'Seleccionar Municipio'}
-        </Text>
-      </TouchableOpacity>
-
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Localidad *
-      </Text>
-      <TouchableOpacity
-        onPress={() => {
-          if (!selectedMunicipioId) {
-            setErrorMessage('Selecciona primero un municipio.');
-            return;
-          }
-          setShowLocalidadModal(true);
-        }}
-        className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3"
-      >
-        <Text
-          className={`text-base ${localidadNombre ? 'text-slate-900' : 'text-slate-400'}`}
-        >
-          {localidadNombre || 'Seleccionar Localidad'}
-        </Text>
-      </TouchableOpacity>
+      <CatalogSelector
+        selectedMunicipioId={location.selectedMunicipioId}
+        selectedMunicipioNombre={location.selectedMunicipioNombre}
+        onSelectMunicipio={location.handleSelectMunicipio}
+        localidadId={location.localidadId}
+        localidadNombre={location.localidadNombre}
+        onSelectLocalidad={location.handleSelectLocalidad}
+        municipios={location.municipios}
+        localidades={location.localidades}
+        isLoadingMunicipios={location.isLoadingMunicipios}
+        isLoadingLocalidades={location.isLoadingLocalidades}
+        errorMunicipios={location.errorMunicipios}
+        errorLocalidades={location.errorLocalidades}
+        refetchMunicipios={location.refetchMunicipios}
+        refetchLocalidades={location.refetchLocalidades}
+        setErrorMessage={callbacks.setErrorMessage}
+      />
 
       <Button
+        testID="save-changes-button"
         mode="contained"
         disabled={isSubmitting}
-        onPress={handleUpdateProfile}
+        onPress={callbacks.handleUpdateProfile}
         style={styles.submitButton}
         contentStyle={styles.buttonContent}
       >
@@ -324,9 +301,10 @@ function ProfilePasswordTab({
         Contraseña Actual *
       </Text>
       <TextInput
+        testID="old-password-input"
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="••••••••"
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={oldPassword}
         onChangeText={setOldPassword}
@@ -336,9 +314,10 @@ function ProfilePasswordTab({
         Nueva Contraseña (mínimo 6 caracteres) *
       </Text>
       <TextInput
+        testID="new-password-input"
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="••••••••"
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={newPassword}
         onChangeText={setNewPassword}
@@ -348,15 +327,17 @@ function ProfilePasswordTab({
         Confirmar Nueva Contraseña *
       </Text>
       <TextInput
+        testID="confirm-password-input"
         className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
         placeholder="••••••••"
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
 
       <Button
+        testID="change-password-button"
         mode="contained"
         disabled={isSubmitting}
         onPress={handleChangePassword}
@@ -375,8 +356,9 @@ function ProfilePasswordTab({
 
 // ── MAIN COMPONENT: ProfileScreen ────────────────────────────
 export default function ProfileScreen(): React.JSX.Element {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, changePassword, logout } = useAuth();
   const netInfo = useNetInfo();
+  const isMounted = useRef(true);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('ver');
 
@@ -392,72 +374,53 @@ export default function ProfileScreen(): React.JSX.Element {
   const [fechaNacimiento, setFechaNacimiento] = useState(
     user?.fecha_nacimiento ?? '',
   );
-  const [sexo, setSexo] = useState(user?.genero ?? 'M');
-  const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
-  const [localidadId, setLocalidadId] = useState<number | null>(
-    user?.localidad ?? null,
+  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>(
+    (user?.genero as 'M' | 'F' | 'O') ?? 'M',
   );
-  const [localidadNombre, setLocalidadNombre] = useState(
+  const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
+
+  // Catalog Hook (Pass user's current values to initialize correctly)
+  const catalog = useCatalogs(
+    user?.localidad ?? null,
+    user?.localidad ?? null,
+    '',
     user?.localidad_nombre ?? '',
   );
-
-  // Catalog States
-  const [municipios, setMunicipios] = useState<Municipio[]>([]);
-  const [localidades, setLocalidades] = useState<Localidad[]>([]);
-  const [selectedMunicipioId, setSelectedMunicipioId] = useState<number | null>(
-    null,
-  );
-  const [selectedMunicipioNombre, setSelectedMunicipioNombre] = useState('');
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Modals
-  const [showMunicipioModal, setShowMunicipioModal] = useState(false);
-  const [showLocalidadModal, setShowLocalidadModal] = useState(false);
-
   // Change Password States
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Load Municipios on Edit Tab
   useEffect(() => {
-    if (activeTab === 'editar') {
-      const fetchMunicipios = async () => {
-        try {
-          const { data } = await api.get<{ data: Municipio[] }>('/municipios/');
-          setMunicipios(data.data);
-        } catch (error) {
-          console.error('Error al cargar municipios:', error);
-          Sentry.captureException(error);
-        }
-      };
-      void fetchMunicipios();
-    }
-  }, [activeTab]);
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-  // Load Localidades when Selected Municipio changes
+  // Sync state if user data loads late
   useEffect(() => {
-    if (selectedMunicipioId !== null) {
-      const fetchLocalidades = async () => {
-        try {
-          const { data } = await api.get<{ data: Localidad[] }>(
-            `/localidades/?municipio_id=${selectedMunicipioId}`,
-          );
-          setLocalidades(data.data);
-        } catch (error) {
-          console.error('Error al cargar localidades:', error);
-          Sentry.captureException(error);
-        }
-      };
-      void fetchLocalidades();
-    } else {
-      setLocalidades([]);
+    if (user) {
+      setNombre(user.nombre ?? '');
+      setApellidoPaterno(user.apellido_paterno ?? '');
+      setApellidoMaterno(user.apellido_materno ?? '');
+      setTelefono(user.telefono ?? '');
+      setFechaNacimiento(user.fecha_nacimiento ?? '');
+      setSexo((user.genero as 'M' | 'F' | 'O') ?? 'M');
+      setDomicilio(user.direccion ?? '');
+      if (user.localidad) {
+        catalog.setLocalidadId(user.localidad);
+        catalog.setLocalidadNombre(user.localidad_nombre ?? '');
+      }
     }
-  }, [selectedMunicipioId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- catalog object reference changes on every render, including it would cause infinite rerender loop
+  }, [user]);
 
   // Handle Edit Profile Submission
   async function handleUpdateProfile() {
@@ -476,7 +439,7 @@ export default function ProfileScreen(): React.JSX.Element {
       !telefono.trim() ||
       !fechaNacimiento.trim() ||
       !domicilio.trim() ||
-      localidadId === null
+      catalog.localidadId === null
     ) {
       setErrorMessage('Por favor, completa todos los campos obligatorios.');
       return;
@@ -500,18 +463,26 @@ export default function ProfileScreen(): React.JSX.Element {
         fecha_nacimiento: fechaNacimiento,
         sexo,
         domicilio: domicilio.trim(),
-        fk_localidad: localidadId,
+        fk_localidad: catalog.localidadId,
       };
 
       await updateProfile(payload);
-      setSuccessMessage('Perfil actualizado exitosamente.');
+      if (isMounted.current) {
+        setSuccessMessage('Perfil actualizado exitosamente.');
+      }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Error al actualizar perfil.',
-      );
+      if (isMounted.current) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Error al actualizar perfil.',
+        );
+      }
       Sentry.captureException(error);
     } finally {
-      setIsSubmitting(false);
+      if (isMounted.current) {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -531,8 +502,10 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setErrorMessage('La nueva contraseña debe tener al menos 6 caracteres.');
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setErrorMessage(
+        `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
       return;
     }
 
@@ -544,25 +517,69 @@ export default function ProfileScreen(): React.JSX.Element {
     setIsSubmitting(true);
 
     try {
-      await api.post('/auth/change-password/', {
+      await changePassword({
         old_password: oldPassword,
         new_password: newPassword,
       });
 
-      setSuccessMessage('Contraseña cambiada exitosamente. Cerrando sesión...');
+      if (isMounted.current) {
+        setSuccessMessage(
+          'Contraseña cambiada exitosamente. Cerrando sesión...',
+        );
+      }
       // eslint-disable-next-line no-undef -- setTimeout is global in RN
       setTimeout(() => {
         void logout();
-      }, 2000);
+      }, PASSWORD_CHANGE_LOGOUT_DELAY_MS);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Error al cambiar contraseña.',
-      );
+      if (isMounted.current) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Error al cambiar contraseña.',
+        );
+      }
       Sentry.captureException(error);
     } finally {
-      setIsSubmitting(false);
+      if (isMounted.current) {
+        setIsSubmitting(false);
+      }
     }
   }
+
+  const formFields: ProfileFormFields = {
+    nombre,
+    setNombre,
+    apellidoPaterno,
+    setApellidoPaterno,
+    apellidoMaterno,
+    setApellidoMaterno,
+    telefono,
+    setTelefono,
+    fechaNacimiento,
+    setFechaNacimiento,
+    sexo,
+    setSexo,
+    domicilio,
+    setDomicilio,
+  };
+
+  const locationFields: ProfileLocationFields = {
+    selectedMunicipioId: catalog.selectedMunicipioId,
+    selectedMunicipioNombre: catalog.selectedMunicipioNombre,
+    localidadId: catalog.localidadId,
+    localidadNombre: catalog.localidadNombre,
+    municipios: catalog.municipios,
+    localidades: catalog.localidades,
+    isLoadingMunicipios: catalog.isLoadingMunicipios,
+    isLoadingLocalidades: catalog.isLoadingLocalidades,
+    errorMunicipios: catalog.errorMunicipios,
+    errorLocalidades: catalog.errorLocalidades,
+    refetchMunicipios: catalog.refetchMunicipios,
+    refetchLocalidades: catalog.refetchLocalidades,
+    handleSelectMunicipio: catalog.handleSelectMunicipio,
+    handleSelectLocalidad: catalog.handleSelectLocalidad,
+  };
 
   return (
     <ScrollView
@@ -662,33 +679,18 @@ export default function ProfileScreen(): React.JSX.Element {
         </View>
       ) : null}
 
-      {/* TAB CONTENT */}
+      {/* Tab Contents */}
       {activeTab === 'ver' && <ProfileViewTab user={user} />}
 
       {activeTab === 'editar' && (
         <ProfileEditTab
           isSubmitting={isSubmitting}
-          nombre={nombre}
-          setNombre={setNombre}
-          apellidoPaterno={apellidoPaterno}
-          setApellidoPaterno={setApellidoPaterno}
-          apellidoMaterno={apellidoMaterno}
-          setApellidoMaterno={setApellidoMaterno}
-          telefono={telefono}
-          setTelefono={setTelefono}
-          fechaNacimiento={fechaNacimiento}
-          setFechaNacimiento={setFechaNacimiento}
-          sexo={sexo}
-          setSexo={setSexo}
-          domicilio={domicilio}
-          setDomicilio={setDomicilio}
-          selectedMunicipioNombre={selectedMunicipioNombre}
-          setShowMunicipioModal={setShowMunicipioModal}
-          selectedMunicipioId={selectedMunicipioId}
-          setErrorMessage={setErrorMessage}
-          setShowLocalidadModal={setShowLocalidadModal}
-          localidadNombre={localidadNombre}
-          handleUpdateProfile={handleUpdateProfile}
+          form={formFields}
+          location={locationFields}
+          callbacks={{
+            handleUpdateProfile,
+            setErrorMessage,
+          }}
         />
       )}
 
@@ -704,78 +706,6 @@ export default function ProfileScreen(): React.JSX.Element {
           handleChangePassword={handleChangePassword}
         />
       )}
-
-      {/* Municipio Selection Modal */}
-      <Modal visible={showMunicipioModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
-                Seleccionar Municipio
-              </Text>
-              <Pressable onPress={() => setShowMunicipioModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={municipios}
-              keyExtractor={(item) => String(item.id_municipio)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedMunicipioId(item.id_municipio);
-                    setSelectedMunicipioNombre(item.nombre);
-                    setLocalidadId(null);
-                    setLocalidadNombre('');
-                    setShowMunicipioModal(false);
-                  }}
-                  className="border-b border-slate-100 py-4"
-                >
-                  <Text className="text-base text-slate-800">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Localidad Selection Modal */}
-      <Modal visible={showLocalidadModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
-                Seleccionar Localidad
-              </Text>
-              <Pressable onPress={() => setShowLocalidadModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={localidades}
-              keyExtractor={(item) => String(item.id_localidad)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setLocalidadId(item.id_localidad);
-                    setLocalidadNombre(item.nombre);
-                    setShowLocalidadModal(false);
-                  }}
-                  className="border-b border-slate-100 py-4"
-                >
-                  <Text className="text-base text-slate-800">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
@@ -787,6 +717,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
+    marginTop: 16,
   },
   buttonContent: {
     paddingVertical: 6,

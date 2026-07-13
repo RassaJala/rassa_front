@@ -14,7 +14,14 @@ import axios from 'axios';
 
 import api from '@/services/api';
 import * as Storage from '@/services/storage';
-import type { ApiResponse, User, UserRole } from '@/types';
+import type {
+  ApiResponse,
+  ChangePasswordPayload,
+  RegisterPayload,
+  UpdateProfilePayload,
+  User,
+  UserRole,
+} from '@/types';
 
 interface BackendUser {
   id_usuario: number;
@@ -48,11 +55,12 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-interface AuthContextType extends AuthState {
+export interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (payload: Record<string, unknown>) => Promise<void>;
-  updateProfile: (payload: Record<string, unknown>) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  changePassword: (payload: ChangePasswordPayload) => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -113,23 +121,48 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   };
 }
 
-function parseLoginError(
+function extractErrorMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+  const dict = data as Record<string, unknown>;
+  if (typeof dict.detail === 'string') return dict.detail;
+  if (typeof dict.email === 'string') return dict.email;
+  if (typeof dict.password === 'string') return dict.password;
+  if (Array.isArray(dict.non_field_errors)) {
+    return dict.non_field_errors.join(' ');
+  }
+  if (typeof dict.message === 'string') return dict.message;
+  return null;
+}
+
+function parseAuthError(
   axiosError: Readonly<AxiosError<Record<string, unknown>>>,
+  context: 'login' | 'register' | 'updateProfile' | 'changePassword',
 ): string {
   const status = axiosError.response?.status;
   const data = axiosError.response?.data;
 
-  if (status === 400 && data) {
-    if (data.email) return 'Email inválido';
-    if (data.password) return 'Contraseña inválida';
-    if (Array.isArray(data.non_field_errors)) {
-      return data.non_field_errors.join(' ');
-    }
+  if (status === 429) {
+    return 'Límite de peticiones excedido. Inténtalo más tarde.';
   }
+  if (status === 502 || status === 503 || status === 504) {
+    return 'El servidor no está disponible temporalmente. Inténtalo más tarde.';
+  }
+
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  const extractedMsg = extractErrorMessage(data);
+  if (extractedMsg !== null) {
+    return extractedMsg;
+  }
+
   if (status === 401) {
-    return typeof data?.detail === 'string'
-      ? data.detail
-      : 'Credenciales inválidas.';
+    return context === 'login'
+      ? 'Credenciales inválidas.'
+      : 'Sesión expirada o no autorizada.';
   }
   if (status === 403) return 'Acceso denegado.';
   if (status === 500) return 'Error interno del servidor. Inténtalo más tarde.';
@@ -254,7 +287,7 @@ export function AuthProvider({
         const responseData = axiosError.response?.data;
         const status = axiosError.response?.status;
 
-        const message = parseLoginError(axiosError);
+        const message = parseAuthError(axiosError, 'login');
 
         const statusStr = status ? ` (${status})` : '';
         const logMessage = `Error de autenticación${statusStr}: ${message}`;
@@ -276,7 +309,7 @@ export function AuthProvider({
     }
   }, []);
 
-  const register = useCallback(async (payload: Record<string, unknown>) => {
+  const register = useCallback(async (payload: RegisterPayload) => {
     try {
       const { data: responseBody } = await api.post<
         ApiResponse<BackendUser & { access: string; refresh: string }>
@@ -304,37 +337,51 @@ export function AuthProvider({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
-        const message = parseLoginError(axiosError);
-        throw new Error(message, { cause: error });
+        const message = parseAuthError(axiosError, 'register');
+        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
+        throw new Error(message);
       }
       throw error;
     }
   }, []);
 
-  const updateProfile = useCallback(
-    async (payload: Record<string, unknown>) => {
-      try {
-        const { data: responseBody } = await api.patch<
-          ApiResponse<BackendUser>
-        >('/auth/me/', payload);
+  const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
+    try {
+      const { data: responseBody } = await api.patch<ApiResponse<BackendUser>>(
+        '/auth/me/',
+        payload,
+      );
 
-        const mappedUser = mapBackendUser(responseBody.data);
-        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
-        setState((prev) => ({
-          ...prev,
-          user: mappedUser,
-        }));
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const axiosError = error as AxiosError<Record<string, unknown>>;
-          const message = parseLoginError(axiosError);
-          throw new Error(message, { cause: error });
-        }
-        throw error;
+      const mappedUser = mapBackendUser(responseBody.data);
+      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+      setState((prev) => ({
+        ...prev,
+        user: mappedUser,
+      }));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<Record<string, unknown>>;
+        const message = parseAuthError(axiosError, 'updateProfile');
+        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
+        throw new Error(message);
       }
-    },
-    [],
-  );
+      throw error;
+    }
+  }, []);
+
+  const changePassword = useCallback(async (payload: ChangePasswordPayload) => {
+    try {
+      await api.post('/auth/change-password/', payload);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<Record<string, unknown>>;
+        const message = parseAuthError(axiosError, 'changePassword');
+        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
+        throw new Error(message);
+      }
+      throw error;
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     await clearSession();
@@ -343,8 +390,15 @@ export function AuthProvider({
   return (
     <AuthContext.Provider
       value={useMemo(
-        () => ({ ...state, login, logout, register, updateProfile }),
-        [state, login, logout, register, updateProfile],
+        () => ({
+          ...state,
+          login,
+          logout,
+          register,
+          updateProfile,
+          changePassword,
+        }),
+        [state, login, logout, register, updateProfile, changePassword],
       )}
     >
       {children}

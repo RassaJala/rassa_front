@@ -1,10 +1,6 @@
-/* globals console -- Allow console methods for logging */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,13 +14,18 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import axios from 'axios';
 
+import CatalogSelector from '@/components/CatalogSelector';
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
+import { useCatalogs } from '@/hooks/useCatalogs';
 import api from '@/services/api';
-import type { Localidad, Municipio } from '@/types';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const PLACEHOLDER_COLOR = '#9ca3af';
+import type { RegisterRole } from '@/types';
+import { getGenderLabel } from '@/utils/gender';
+import {
+  DATE_REGEX,
+  EMAIL_REGEX,
+  MIN_PASSWORD_LENGTH,
+} from '@/utils/validation';
 
 function parseAxiosError(error: unknown): string {
   if (!axios.isAxiosError(error)) {
@@ -63,13 +64,13 @@ function parseAxiosError(error: unknown): string {
 }
 
 function validateForm(fields: {
-  email: string;
-  telefono: string;
-  nombre: string;
-  apellidoPaterno: string;
-  fechaNacimiento: string;
-  domicilio: string;
-  localidadId: number | null;
+  readonly email: string;
+  readonly telefono: string;
+  readonly nombre: string;
+  readonly apellidoPaterno: string;
+  readonly fechaNacimiento: string;
+  readonly domicilio: string;
+  readonly localidadId: number | null;
 }): string | null {
   const {
     email,
@@ -106,28 +107,22 @@ function validateForm(fields: {
 
 export default function AdminPanelScreen(): React.JSX.Element {
   const netInfo = useNetInfo();
+  const isMounted = useRef(true);
 
   // Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [role, setRole] = useState<'buyer' | 'farmer'>('farmer');
+  const [role, setRole] = useState<RegisterRole>('farmer');
   const [nombre, setNombre] = useState('');
   const [apellidoPaterno, setApellidoPaterno] = useState('');
   const [apellidoMaterno, setApellidoMaterno] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [sexo, setSexo] = useState<'M' | 'F' | 'O'>('M');
   const [domicilio, setDomicilio] = useState('');
-  const [localidadId, setLocalidadId] = useState<number | null>(null);
-  const [localidadNombre, setLocalidadNombre] = useState('');
 
-  // Catalog States
-  const [municipios, setMunicipios] = useState<Municipio[]>([]);
-  const [localidades, setLocalidades] = useState<Localidad[]>([]);
-  const [selectedMunicipioId, setSelectedMunicipioId] = useState<number | null>(
-    null,
-  );
-  const [selectedMunicipioNombre, setSelectedMunicipioNombre] = useState('');
+  // Catalog Hook
+  const catalog = useCatalogs();
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,53 +130,17 @@ export default function AdminPanelScreen(): React.JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Modals
-  const [showMunicipioModal, setShowMunicipioModal] = useState(false);
-  const [showLocalidadModal, setShowLocalidadModal] = useState(false);
-
-  // Load Municipios on Mount (since Admin is authenticated, this will succeed)
   useEffect(() => {
-    const fetchMunicipios = async () => {
-      try {
-        const { data } = await api.get<{ data: Municipio[] }>('/municipios/');
-        setMunicipios(data.data);
-      } catch (error) {
-        console.error('Error al cargar municipios:', error);
-        Sentry.captureException(error);
-      }
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
     };
-    void fetchMunicipios();
   }, []);
 
-  // Load Localidades when Selected Municipio changes
-  useEffect(() => {
-    if (selectedMunicipioId !== null) {
-      const fetchLocalidades = async () => {
-        try {
-          const { data } = await api.get<{ data: Localidad[] }>(
-            `/localidades/?municipio_id=${selectedMunicipioId}`,
-          );
-          setLocalidades(data.data);
-        } catch (error) {
-          console.error('Error al cargar localidades:', error);
-          Sentry.captureException(error);
-        }
-      };
-      void fetchLocalidades();
-    } else {
-      setLocalidades([]);
-    }
-  }, [selectedMunicipioId]);
-
-  function getGenderLabel(val: string) {
-    if (val === 'M') return 'Masculino';
-    if (val === 'F') return 'Femenino';
-    return 'Otro';
-  }
-
-  function getRoleLabel(val: string) {
+  function getRoleLabel(val: RegisterRole) {
     if (val === 'farmer') return 'Agricultor';
-    return 'Comprador/Vendedor';
+    if (val === 'seller') return 'Vendedor';
+    return 'Cliente';
   }
 
   async function handleAddUser() {
@@ -202,7 +161,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
       apellidoPaterno,
       fechaNacimiento,
       domicilio,
-      localidadId,
+      localidadId: catalog.localidadId,
     });
 
     if (validationError) {
@@ -210,8 +169,10 @@ export default function AdminPanelScreen(): React.JSX.Element {
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMessage('La contraseña debe tener al menos 6 caracteres.');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setErrorMessage(
+        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
       return;
     }
 
@@ -229,36 +190,42 @@ export default function AdminPanelScreen(): React.JSX.Element {
         fecha_nacimiento: fechaNacimiento,
         sexo,
         domicilio: domicilio.trim(),
-        fk_localidad: localidadId,
+        fk_localidad: catalog.localidadId,
       };
 
       // Call register API directly (ignoring returned tokens to maintain Admin session)
       await api.post('/auth/register/', payload);
 
-      setSuccessMessage(
-        `Usuario (${getRoleLabel(role)}) registrado exitosamente.`,
-      );
+      if (isMounted.current) {
+        setSuccessMessage(
+          `Usuario (${getRoleLabel(role)}) registrado exitosamente.`,
+        );
 
-      // Reset form
-      setEmail('');
-      setPassword('');
-      setTelefono('');
-      setNombre('');
-      setApellidoPaterno('');
-      setApellidoMaterno('');
-      setFechaNacimiento('');
-      setSexo('M');
-      setDomicilio('');
-      setLocalidadId(null);
-      setLocalidadNombre('');
-      setSelectedMunicipioId(null);
-      setSelectedMunicipioNombre('');
+        // Reset form
+        setEmail('');
+        setPassword('');
+        setTelefono('');
+        setNombre('');
+        setApellidoPaterno('');
+        setApellidoMaterno('');
+        setFechaNacimiento('');
+        setSexo('M');
+        setDomicilio('');
+        catalog.setLocalidadId(null);
+        catalog.setLocalidadNombre('');
+        catalog.setSelectedMunicipioId(null);
+        catalog.setSelectedMunicipioNombre('');
+      }
     } catch (error) {
-      const msg = parseAxiosError(error);
-      setErrorMessage(msg);
+      if (isMounted.current) {
+        const msg = parseAxiosError(error);
+        setErrorMessage(msg);
+      }
       Sentry.captureException(error);
     } finally {
-      setIsSubmitting(false);
+      if (isMounted.current) {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -270,7 +237,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
             Panel de Admin
           </Text>
           <Text className="text-sm text-gray-500 dark:text-gray-400">
-            Gestiona la plataforma RASSA JALA.
+            Gestiona los usuarios y configuraciones del sistema.
           </Text>
         </View>
 
@@ -296,14 +263,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
       contentContainerStyle={styles.scrollContent}
     >
       <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
-            Panel de Admin
-          </Text>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">
-            Registro de agricultores y compradores
-          </Text>
-        </View>
+        <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
+          Registrar Usuario
+        </Text>
         <TouchableOpacity
           onPress={() => {
             setShowForm(false);
@@ -318,23 +280,19 @@ export default function AdminPanelScreen(): React.JSX.Element {
         </TouchableOpacity>
       </View>
 
-      <View className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
-        <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-semibold text-brand-ink dark:border-gray-800 dark:text-gray-100">
-          Registrar Nuevo Usuario
-        </Text>
-
-        {/* Rol Selection */}
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Rol de Usuario *
+      <View className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        {/* Role Toggle */}
+        <Text className="mb-2 text-sm font-medium text-brand-ink dark:text-gray-300">
+          Rol del usuario
         </Text>
         <View className="mb-4 flex-row space-x-2">
-          {(['farmer', 'buyer'] as const).map((r) => (
+          {(['buyer', 'farmer', 'seller'] as const).map((r) => (
             <TouchableOpacity
               key={r}
               onPress={() => setRole(r)}
               className={`flex-1 rounded-lg border py-2.5 ${
                 role === r
-                  ? 'border-brand-red-coral bg-red-50/10'
+                  ? 'border-brand-red-coral bg-brand-red-coral/5 dark:bg-brand-red-coral/10'
                   : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
               }`}
             >
@@ -351,7 +309,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
           ))}
         </View>
 
-        {/* Account Info */}
+        {/* Form Fields */}
         <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Correo electrónico *
         </Text>
@@ -360,7 +318,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
           keyboardType="email-address"
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="ejemplo@correo.com"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={email}
           onChangeText={setEmail}
         />
@@ -371,20 +329,19 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="••••••••"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
-        {/* Personal Details */}
         <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
           Nombre *
         </Text>
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Nombre(s)"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={nombre}
           onChangeText={setNombre}
         />
@@ -395,7 +352,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Paterno"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={apellidoPaterno}
           onChangeText={setApellidoPaterno}
         />
@@ -406,7 +363,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Materno"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={apellidoMaterno}
           onChangeText={setApellidoMaterno}
         />
@@ -417,7 +374,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="10 dígitos"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           keyboardType="phone-pad"
           value={telefono}
           onChangeText={setTelefono}
@@ -429,7 +386,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="AAAA-MM-DD"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={fechaNacimiento}
           onChangeText={setFechaNacimiento}
         />
@@ -467,53 +424,29 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Calle, número, colonia"
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={colors.placeholder}
           value={domicilio}
           onChangeText={setDomicilio}
         />
 
         {/* Catalog Selectors */}
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Municipio *
-        </Text>
-        <TouchableOpacity
-          onPress={() => setShowMunicipioModal(true)}
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950"
-        >
-          <Text
-            className={`text-base ${
-              selectedMunicipioNombre
-                ? 'text-brand-ink dark:text-gray-100'
-                : 'text-gray-400 dark:text-gray-500'
-            }`}
-          >
-            {selectedMunicipioNombre || 'Seleccionar Municipio'}
-          </Text>
-        </TouchableOpacity>
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Localidad *
-        </Text>
-        <TouchableOpacity
-          onPress={() => {
-            if (!selectedMunicipioId) {
-              setErrorMessage('Selecciona primero un municipio.');
-              return;
-            }
-            setShowLocalidadModal(true);
-          }}
-          className="mb-4 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950"
-        >
-          <Text
-            className={`text-base ${
-              localidadNombre
-                ? 'text-brand-ink dark:text-gray-100'
-                : 'text-gray-400 dark:text-gray-500'
-            }`}
-          >
-            {localidadNombre || 'Seleccionar Localidad'}
-          </Text>
-        </TouchableOpacity>
+        <CatalogSelector
+          selectedMunicipioId={catalog.selectedMunicipioId}
+          selectedMunicipioNombre={catalog.selectedMunicipioNombre}
+          onSelectMunicipio={catalog.handleSelectMunicipio}
+          localidadId={catalog.localidadId}
+          localidadNombre={catalog.localidadNombre}
+          onSelectLocalidad={catalog.handleSelectLocalidad}
+          municipios={catalog.municipios}
+          localidades={catalog.localidades}
+          isLoadingMunicipios={catalog.isLoadingMunicipios}
+          isLoadingLocalidades={catalog.isLoadingLocalidades}
+          errorMunicipios={catalog.errorMunicipios}
+          errorLocalidades={catalog.errorLocalidades}
+          refetchMunicipios={catalog.refetchMunicipios}
+          refetchLocalidades={catalog.refetchLocalidades}
+          setErrorMessage={setErrorMessage}
+        />
 
         {successMessage ? (
           <Text className="mb-4 text-center text-sm font-medium text-brand-green-forest">
@@ -542,78 +475,6 @@ export default function AdminPanelScreen(): React.JSX.Element {
           )}
         </Button>
       </View>
-
-      {/* Municipio Selection Modal */}
-      <Modal visible={showMunicipioModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
-                Seleccionar Municipio
-              </Text>
-              <Pressable onPress={() => setShowMunicipioModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={municipios}
-              keyExtractor={(item) => String(item.id_municipio)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedMunicipioId(item.id_municipio);
-                    setSelectedMunicipioNombre(item.nombre);
-                    setLocalidadId(null);
-                    setLocalidadNombre('');
-                    setShowMunicipioModal(false);
-                  }}
-                  className="border-b border-slate-100 py-4"
-                >
-                  <Text className="text-base text-slate-800">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Localidad Selection Modal */}
-      <Modal visible={showLocalidadModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
-                Seleccionar Localidad
-              </Text>
-              <Pressable onPress={() => setShowLocalidadModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={localidades}
-              keyExtractor={(item) => String(item.id_localidad)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    setLocalidadId(item.id_localidad);
-                    setLocalidadNombre(item.nombre);
-                    setShowLocalidadModal(false);
-                  }}
-                  className="border-b border-slate-100 py-4"
-                >
-                  <Text className="text-base text-slate-800">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
