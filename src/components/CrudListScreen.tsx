@@ -250,27 +250,6 @@ export default function CrudListScreen<
     mutationFn: async (id: number) => {
       await api.delete(`${config.endpoint}${id}/`);
     },
-    onError: () => {
-      // Try soft-delete if hard delete fails (protected by FK)
-      if (deleteTarget) {
-        const id = config.getId(deleteTarget);
-
-        updateMutation.mutate(
-          { id, estado: false },
-          {
-            onSuccess: () => {
-              void queryClient.invalidateQueries({
-                queryKey: [...config.queryKey],
-              });
-              toast(
-                `Se desactivó ${config.entityName} "${deleteTarget?.nombre ?? ''}"`,
-              );
-            },
-          },
-        );
-      }
-      setDeleteTarget(null);
-    },
   });
 
   // ── Handlers ───────────────────────────────────────────────
@@ -617,15 +596,31 @@ export default function CrudListScreen<
             <Button
               onPress={() => {
                 if (!deleteTarget) return;
+                const id = config.getId(deleteTarget);
                 const name = deleteTarget.nombre;
 
-                deleteMutation.mutate(config.getId(deleteTarget), {
+                deleteMutation.mutate(id, {
                   onSuccess: () => {
                     void queryClient.invalidateQueries({
                       queryKey: [...config.queryKey],
                     });
                     setDeleteTarget(null);
                     toast(config.toastDeleted(name));
+                  },
+                  onError: () => {
+                    // Soft-delete fallback if hard delete fails (FK protection)
+                    updateMutation.mutate(
+                      { id, estado: false },
+                      {
+                        onSuccess: () => {
+                          void queryClient.invalidateQueries({
+                            queryKey: [...config.queryKey],
+                          });
+                          toast(`Se desactivó ${config.entityName} "${name}"`);
+                        },
+                      },
+                    );
+                    setDeleteTarget(null);
                   },
                 });
               }}

@@ -26,10 +26,12 @@ export function extractApiError(error: unknown, fieldKeys: string[]): string {
       trimmed.startsWith('<html') ||
       trimmed.includes('Traceback (most recent call last)')
     ) {
-      console.error(
-        '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
-        axiosErr.response?.status,
-      );
+      if (__DEV__) {
+        console.warn(
+          '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
+          axiosErr.response?.status,
+        );
+      }
       return 'Error interno del servidor. Revisa los logs del backend.';
     }
     return trimmed;

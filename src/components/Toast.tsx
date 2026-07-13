@@ -67,9 +67,9 @@ export default function Toast({
 
   const bgClass =
     type === 'success'
-      ? 'bg-green-700'
+      ? 'bg-brand-green-forest'
       : type === 'error'
-        ? 'bg-red-600'
+        ? 'bg-brand-red-coral'
         : 'bg-gray-800 dark:bg-gray-700';
 
   return (
