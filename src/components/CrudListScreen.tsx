@@ -1,4 +1,3 @@
-/* global console -- used in error logging; RN console not in ESLint env */
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -172,19 +171,8 @@ export default function CrudListScreen<
   config,
   navigation,
 }: CrudListScreenProps<T>): React.JSX.Element | null {
-  // ── Role guard ──────────────────────────────────────────────
+  // ── Hooks must be called unconditionally, in same order every render ──
   const { user } = useAuth();
-
-  if (user?.role !== 'admin') {
-    return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-600 dark:text-gray-400">
-          No tienes permisos para acceder a esta sección.
-        </Text>
-      </View>
-    );
-  }
-
   const netInfo = useNetInfo();
   const queryClient = useQueryClient();
 
@@ -229,7 +217,7 @@ export default function CrudListScreen<
     setEditingItem(null);
     setFormValues({});
     setFormError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config is stable, navigation is only used for type param
   }, [queryClient]);
 
   // ── Mutations ──────────────────────────────────────────────
@@ -276,10 +264,7 @@ export default function CrudListScreen<
         const id = config.getId(deleteTarget);
 
         updateMutation.mutate(
-          { id, estado: false } as unknown as { id: number } & Record<
-            string,
-            unknown
-          >,
+          { id, estado: false },
           {
             onSuccess: () => {
               void queryClient.invalidateQueries({
@@ -307,7 +292,7 @@ export default function CrudListScreen<
     setFormValues(initial);
     setFormError(null);
     setModalVisible(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config is stable reference; navigation is stable screen
   }, []);
 
   const openEditModal = useCallback((item: T) => {
@@ -326,7 +311,7 @@ export default function CrudListScreen<
     setFormValues(initial);
     setFormError(null);
     setModalVisible(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- item is the active argument; stable screen refs
   }, []);
 
   const closeModal = useCallback(() => {
@@ -339,7 +324,7 @@ export default function CrudListScreen<
     }
     setFormValues(empty);
     setFormError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config.fields shape is stable; closeModal ref is stable
   }, []);
 
   const handleSave = useCallback(() => {
@@ -385,7 +370,7 @@ export default function CrudListScreen<
         {
           id: config.getId(editingItem),
           ...updatePayload,
-        } as unknown as { id: number } & Record<string, unknown>,
+        },
         {
           onSuccess: () => {
             invalidateAndClose();
@@ -401,7 +386,7 @@ export default function CrudListScreen<
         },
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config, navigation, toast, setForm* are stable refs
   }, [formValues, editingItem, items]);
 
   const handleToggleStatus = useCallback(
@@ -414,7 +399,7 @@ export default function CrudListScreen<
         {
           id: config.getId(item),
           estado: newStatus,
-        } as unknown as { id: number } & Record<string, unknown>,
+        },
         {
           onSuccess: () => {
             void queryClient.invalidateQueries({
@@ -434,11 +419,22 @@ export default function CrudListScreen<
         },
       );
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createMutation is intentionally excluded to avoid circular dep; config/navigation are stable
     [updateMutation, queryClient],
   );
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  // ── Role guard ──────────────────────────────────────────────
+  if (user?.role !== 'admin') {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
+        <Text className="text-center text-base text-gray-600 dark:text-gray-400">
+          No tienes permisos para acceder a esta sección.
+        </Text>
+      </View>
+    );
+  }
 
   // ── Loading ────────────────────────────────────────────────
   if (isLoading) {
