@@ -4,8 +4,8 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PaperProvider } from 'react-native-paper';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';

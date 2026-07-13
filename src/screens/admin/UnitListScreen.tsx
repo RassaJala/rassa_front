@@ -11,8 +11,8 @@ import {
   Button,
   Dialog,
   FAB,
-  Portal,
   TextInput as PaperInput,
+  Portal,
 } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
@@ -23,7 +23,7 @@ import axios from 'axios';
 
 import Toast from '@/components/Toast';
 import api from '@/services/api';
-import type { AdminStackParamList, Unit } from '@/types';
+import type { AdminStackParamList, ApiResponse, Unit } from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   AdminStackParamList,
@@ -54,7 +54,7 @@ function extractApiError(error: unknown): string {
       trimmed.startsWith('<html') ||
       trimmed.includes('Traceback (most recent call last)')
     ) {
-      console.error(
+      global.console.error(
         '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         axiosErr.response?.status,
       );
@@ -89,8 +89,8 @@ export default function UnitListScreen({
   } = useQuery<Unit[]>({
     queryKey: QUERY_KEY,
     queryFn: async () => {
-      const res = await api.get('/unidades/');
-      return res.data.data as Unit[];
+      const { data } = await api.get<ApiResponse<Unit[]>>('/unidades/');
+      return data.data;
     },
   });
 
@@ -123,8 +123,8 @@ export default function UnitListScreen({
       abreviatura: string;
       estado: boolean;
     }) => {
-      const res = await api.post('/unidades/', payload);
-      return res.data;
+      const { data } = await api.post<ApiResponse<Unit>>('/unidades/', payload);
+      return data;
     },
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
@@ -141,8 +141,11 @@ export default function UnitListScreen({
       abreviatura?: string;
       estado?: boolean;
     }) => {
-      const res = await api.patch(`/unidades/${id}/`, payload);
-      return res.data;
+      const { data } = await api.patch<ApiResponse<Unit>>(
+        `/unidades/${id}/`,
+        payload,
+      );
+      return data;
     },
     onError: (error: unknown) => {
       setFormError(extractApiError(error));

@@ -11,8 +11,8 @@ import {
   Button,
   Dialog,
   FAB,
-  Portal,
   TextInput as PaperInput,
+  Portal,
 } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
@@ -23,7 +23,7 @@ import axios from 'axios';
 
 import Toast from '@/components/Toast';
 import api from '@/services/api';
-import type { AdminStackParamList, Category } from '@/types';
+import type { AdminStackParamList, ApiResponse, Category } from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   AdminStackParamList,
@@ -54,7 +54,7 @@ function extractApiError(error: unknown): string {
       trimmed.startsWith('<html') ||
       trimmed.includes('Traceback (most recent call last)')
     ) {
-      console.error(
+      global.console.error(
         '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         axiosErr.response?.status,
       );
@@ -89,8 +89,8 @@ export default function CategoryListScreen({
   } = useQuery<Category[]>({
     queryKey: QUERY_KEY,
     queryFn: async () => {
-      const res = await api.get('/categorias/');
-      return res.data.data as Category[];
+      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
+      return data.data;
     },
   });
 
@@ -123,8 +123,11 @@ export default function CategoryListScreen({
       descripcion: string;
       estado: boolean;
     }) => {
-      const res = await api.post('/categorias/', payload);
-      return res.data;
+      const { data } = await api.post<ApiResponse<Category>>(
+        '/categorias/',
+        payload,
+      );
+      return data;
     },
     onError: (error: unknown) => {
       setFormError(extractApiError(error));
@@ -141,8 +144,11 @@ export default function CategoryListScreen({
       descripcion?: string;
       estado?: boolean;
     }) => {
-      const res = await api.patch(`/categorias/${id}/`, payload);
-      return res.data;
+      const { data } = await api.patch<ApiResponse<Category>>(
+        `/categorias/${id}/`,
+        payload,
+      );
+      return data;
     },
     onError: (error: unknown) => {
       setFormError(extractApiError(error));

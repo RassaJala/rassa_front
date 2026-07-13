@@ -38,7 +38,7 @@ export default function Toast({
       }),
     ]).start();
 
-    const timer = setTimeout(() => {
+    const timer = global.setTimeout(() => {
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 0,
@@ -53,7 +53,7 @@ export default function Toast({
       ]).start(() => onDismiss());
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => global.clearTimeout(timer);
   }, [visible, duration, onDismiss, opacity, translateY]);
 
   if (!visible) return null;

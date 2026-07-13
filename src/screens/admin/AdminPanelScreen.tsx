@@ -48,9 +48,7 @@ export default function AdminPanelScreen({
         {menuItems.map((item) => (
           <Pressable
             key={item.key}
-            onPress={() =>
-              navigation.navigate(item.key as 'CategoryList' | 'UnitList')
-            }
+            onPress={() => navigation.navigate(item.key)}
             className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <Text className="mr-4 text-3xl">{item.icon}</Text>
