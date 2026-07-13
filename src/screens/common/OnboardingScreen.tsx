@@ -1,8 +1,8 @@
 /* globals require -- React Native module resolution */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
-import { Animated, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- require() retorna any en React Native; el tipo se declara explícitamente.
 const logo: ImageSourcePropType = require('../../../assets/logo-rassa.jpeg');
@@ -34,26 +34,10 @@ export default function OnboardingScreen({
 }: Props): React.JSX.Element {
   const [current, setCurrent] = useState(0);
 
-  const fade = useRef(new Animated.Value(1)).current;
-
   const currentSlide = slides[current] ?? slides[0];
 
   const next = (): void => {
     if (current < slides.length - 1) {
-      Animated.sequence([
-        Animated.timing(fade, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-
-        Animated.timing(fade, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
       setCurrent((previous) => previous + 1);
     } else {
       onFinish();
@@ -61,45 +45,53 @@ export default function OnboardingScreen({
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-green-600 px-8">
-      <Animated.View
-        style={{
-          opacity: fade,
-        }}
-        className="items-center"
-      >
-        <Image source={logo} className="mb-8 h-48 w-48" resizeMode="contain" />
+    <View className="flex-1 bg-green-600">
+      <View className="flex-9 items-center justify-center px-16">
+        <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-white/20">
+          <Image source={logo} className="h-10 w-10" resizeMode="contain" />
+        </View>
 
-        <Text className="text-center text-3xl font-bold text-white">
+        <Text className="mb-4 text-center text-2xl font-bold text-white">
           {currentSlide.title}
         </Text>
 
-        <Text className="mt-4 text-center text-lg text-white">
+        <Text className="px-4 text-center text-base leading-6 text-white/90">
           {currentSlide.description}
         </Text>
-      </Animated.View>
-
-      <View className="mt-10 flex-row">
-        {slides.map((slide) => (
-          <View
-            key={slide.title}
-            className={
-              slide.title === currentSlide.title
-                ? 'mx-1 h-3 w-8 rounded-full bg-white'
-                : 'mx-1 h-3 w-3 rounded-full bg-green-300'
-            }
-          />
-        ))}
       </View>
 
-      <TouchableOpacity
-        onPress={next}
-        className="absolute bottom-16 rounded-full bg-white px-12 py-4"
-      >
-        <Text className="font-bold text-green-700">
-          {current === slides.length - 1 ? 'Comenzar' : 'Siguiente'}
-        </Text>
-      </TouchableOpacity>
+      <View className="items-center pb-16">
+        <View className="mb-8 flex-row">
+          {slides.map((slide, index) => (
+            <View
+              key={slide.title}
+              className={`mx-1 rounded-full ${
+                index === current ? 'h-3 w-10 bg-white' : 'h-3 w-3 bg-white/40'
+              }`}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity
+          onPress={next}
+          className="w-64 items-center rounded-full bg-white py-4"
+          activeOpacity={0.8}
+        >
+          <Text className="text-lg font-bold text-green-700">
+            {current === slides.length - 1 ? 'Comenzar' : 'Siguiente'}
+          </Text>
+        </TouchableOpacity>
+
+        {current < slides.length - 1 && (
+          <TouchableOpacity
+            onPress={onFinish}
+            className="mt-4 py-2"
+            activeOpacity={0.7}
+          >
+            <Text className="text-sm text-white/70">Omitir</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

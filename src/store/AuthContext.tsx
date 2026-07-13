@@ -190,8 +190,10 @@ export function AuthProvider({
   }, []);
 
   const retryFetchProfile = useCallback(async (): Promise<User> => {
+    const delay = 1000 + Math.random() * 1000;
+
     await new Promise<void>((resolve) => {
-      setTimeout(resolve, 1000);
+      setTimeout(resolve, delay);
     });
 
     return fetchUserProfile();
@@ -237,7 +239,7 @@ export function AuthProvider({
           retryError,
         );
 
-        setState((prev) => ({ ...prev, isLoading: false }));
+        await clearSession();
       }
     },
     [applyUserProfile, clearSession, logSafeError, retryFetchProfile],
