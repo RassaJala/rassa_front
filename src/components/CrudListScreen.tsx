@@ -21,6 +21,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
+import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
@@ -74,6 +75,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     items: T[] | undefined,
     editingItem: T | null,
   ) => string | null;
+  readonly trashScreenName?: 'CategoryTrash' | 'UnitTrash';
 }
 
 // ── Navigation type ────────────────────────────────────────
@@ -110,7 +112,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           <MaterialCommunityIcons
             name={item.estado ? 'check-circle-outline' : 'circle-outline'}
             size={20}
-            color={item.estado ? '#3A6D56' : '#9ca3af'}
+            color={item.estado ? colors.brandGreenForest : colors.iconMuted}
           />
         </View>
 
@@ -154,7 +156,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           <MaterialCommunityIcons
             name="pencil-outline"
             size={14}
-            color="#DE393A"
+            color={colors.brandRedCoral}
           />
           <Text className="text-xs font-medium text-brand-red-coral">
             Editar
@@ -168,7 +170,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           <MaterialCommunityIcons
             name={item.estado ? 'close-circle-outline' : 'check-circle-outline'}
             size={14}
-            color="#6b7280"
+            color={colors.textSecondary}
           />
           <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
             {item.estado ? 'Desactivar' : 'Activar'}
@@ -182,7 +184,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           <MaterialCommunityIcons
             name="trash-can-outline"
             size={14}
-            color="#ef4444"
+            color={colors.error}
           />
           <Text className="text-xs font-medium text-red-500">Eliminar</Text>
         </Pressable>
@@ -465,7 +467,7 @@ export default function CrudListScreen<
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <ActivityIndicator size="large" color="#DE393A" />
+        <ActivityIndicator size="large" color={colors.brandRedCoral} />
       </View>
     );
   }
@@ -477,7 +479,7 @@ export default function CrudListScreen<
         <MaterialCommunityIcons
           name="alert-circle-outline"
           size={48}
-          color="#6b7280"
+          color={colors.textSecondary}
         />
         <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
           {netInfo.isConnected === false
@@ -488,7 +490,11 @@ export default function CrudListScreen<
           onPress={() => void refetch()}
           className="mt-4 flex-row items-center gap-2 rounded-lg bg-brand-red-coral px-6 py-3"
         >
-          <MaterialCommunityIcons name="refresh" size={18} color="#ffffff" />
+          <MaterialCommunityIcons
+            name="refresh"
+            size={18}
+            color={colors.iconWhite}
+          />
           <Text className="font-semibold text-white">Reintentar</Text>
         </Pressable>
       </View>
@@ -511,12 +517,25 @@ export default function CrudListScreen<
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
-              color="#ffffff"
+              color={colors.iconWhite}
             />
           </Pressable>
           <Text className="text-2xl font-bold tracking-tight text-white">
             {config.headerTitle}
           </Text>
+          {config.trashScreenName ? (
+            <Pressable
+              onPress={() => navigation.navigate(config.trashScreenName!)}
+              className="ml-auto h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              hitSlop={12}
+            >
+              <MaterialCommunityIcons
+                name="delete-restore"
+                size={22}
+                color={colors.iconWhite}
+              />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -526,7 +545,7 @@ export default function CrudListScreen<
           <MaterialCommunityIcons
             name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
             size={64}
-            color="#9ca3af"
+            color={colors.iconMuted}
           />
           <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
             {config.emptyText}
@@ -544,7 +563,7 @@ export default function CrudListScreen<
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor="#DE393A"
+              tintColor={colors.brandRedCoral}
             />
           }
           renderItem={({ item }) => (
@@ -601,7 +620,7 @@ export default function CrudListScreen<
                 <MaterialCommunityIcons
                   name="alert-circle"
                   size={18}
-                  color="#ef4444"
+                  color={colors.error}
                 />
                 <Text className="flex-1 text-sm leading-5 text-red-600 dark:text-red-400">
                   {formError}
@@ -632,13 +651,17 @@ export default function CrudListScreen<
           </Dialog.Content>
 
           <Dialog.Actions>
-            <Button onPress={closeModal} textColor="#6b7280" compact>
+            <Button
+              onPress={closeModal}
+              textColor={colors.textSecondary}
+              compact
+            >
               Cancelar
             </Button>
             <Button
               onPress={handleSave}
               mode="contained"
-              buttonColor="#DE393A"
+              buttonColor={colors.brandRedCoral}
               loading={isSaving}
               disabled={isSaving}
               compact
@@ -665,7 +688,7 @@ export default function CrudListScreen<
                 <MaterialCommunityIcons
                   name="trash-can-outline"
                   size={28}
-                  color="#ef4444"
+                  color={colors.error}
                 />
               </View>
               <Text className="text-base leading-6 text-gray-700 dark:text-gray-300">
@@ -683,7 +706,7 @@ export default function CrudListScreen<
           <Dialog.Actions>
             <Button
               onPress={() => setDeleteTarget(null)}
-              textColor="#6b7280"
+              textColor={colors.textSecondary}
               compact
             >
               Cancelar
@@ -726,7 +749,7 @@ export default function CrudListScreen<
                 });
               }}
               mode="contained"
-              buttonColor="#ef4444"
+              buttonColor={colors.error}
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
               compact

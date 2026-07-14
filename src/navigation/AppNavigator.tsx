@@ -6,7 +6,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Admin screens
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import CategoryListScreen from '@/screens/admin/CategoryListScreen';
+import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
+import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -58,6 +60,8 @@ function AdminScreens() {
       <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
       <AdminStack.Screen name="CategoryList" component={CategoryListScreen} />
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
+      <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
+      <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
     </AdminStack.Navigator>
   );
 }

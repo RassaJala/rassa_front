@@ -47,6 +47,7 @@ const categoryConfig = {
   toastActivated: (name: string) => `Se activó la categoría "${name}"`,
   toastDeactivated: (name: string) => `Se desactivó la categoría "${name}"`,
   statusLabels: { active: 'Activo', inactive: 'Inactivo' },
+  trashScreenName: 'CategoryTrash' as const,
   validate: (formValues: Record<string, string>) => {
     if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
     if (!(formValues.descripcion ?? '').trim())

@@ -68,4 +68,6 @@ export type AdminStackParamList = {
   AdminPanel: undefined;
   CategoryList: undefined;
   UnitList: undefined;
+  CategoryTrash: undefined;
+  UnitTrash: undefined;
 };

@@ -46,6 +46,7 @@ const unitConfig = {
   toastActivated: (name: string) => `Se activó la unidad "${name}"`,
   toastDeactivated: (name: string) => `Se desactivó la unidad "${name}"`,
   statusLabels: { active: 'Activo', inactive: 'Inactivo' },
+  trashScreenName: 'UnitTrash' as const,
   validate: (formValues: Record<string, string>) => {
     if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
     if (!(formValues.abreviatura ?? '').trim())
