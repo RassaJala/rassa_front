@@ -6,9 +6,9 @@ import {
   Provider as PaperProvider,
 } from 'react-native-paper';
 
-import { useColorScheme } from 'nativewind';
-
 import { StatusBar } from 'expo-status-bar';
+
+import { useColorScheme } from 'nativewind';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
