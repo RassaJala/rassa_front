@@ -52,7 +52,9 @@ function ProfileViewTab({ user }: ProfileViewTabProps): React.JSX.Element {
 
       <View className="space-y-4">
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Nombre Completo</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Nombre Completo
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.nombre} {user?.apellido_paterno}{' '}
             {user?.apellido_materno ?? ''}
@@ -60,35 +62,45 @@ function ProfileViewTab({ user }: ProfileViewTabProps): React.JSX.Element {
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Teléfono</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Teléfono
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.telefono ?? 'No especificado'}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Fecha de Nacimiento</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Fecha de Nacimiento
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.fecha_nacimiento}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Género</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Género
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.genero ? getGenderLabel(user.genero) : 'No especificado'}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Dirección</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Dirección
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.direccion}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">Localidad</Text>
+          <Text className="text-xs text-gray-500 dark:text-gray-400">
+            Localidad
+          </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.localidad_nombre}
           </Text>
@@ -208,7 +220,9 @@ function ProfileEditTab({
         />
       </TouchableOpacity>
 
-      <Text className="mb-2 text-sm font-normal text-gray-700 dark:text-gray-300">Género *</Text>
+      <Text className="mb-2 text-sm font-normal text-gray-700 dark:text-gray-300">
+        Género *
+      </Text>
       <SegmentedButtons
         value={form.sexo}
         onValueChange={form.setSexo}
@@ -580,7 +594,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50 px-4 py-4 dark:bg-gray-955"
+      className="dark:bg-gray-955 flex-1 bg-gray-50 px-4 py-4"
       contentContainerStyle={styles.scrollContent}
     >
       {/* Profile Header */}
@@ -593,7 +607,9 @@ export default function ProfileScreen(): React.JSX.Element {
         <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
           {user?.nombre} {user?.apellido_paterno}
         </Text>
-        <Text className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</Text>
+        <Text className="text-sm text-gray-500 dark:text-gray-400">
+          {user?.email}
+        </Text>
         <View className="mt-2 rounded-full bg-red-50 px-3 py-1 dark:bg-brand-red-coral/20">
           <Text className="text-xs font-bold text-brand-red-coral">
             {getRoleLabel(user?.role)}
@@ -627,7 +643,7 @@ export default function ProfileScreen(): React.JSX.Element {
       ) : null}
 
       {errorMessage ? (
-        <View className="mb-4 rounded-xl border border-red-300 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-955/20">
+        <View className="dark:bg-red-955/20 mb-4 rounded-xl border border-red-300 bg-red-50 p-4 dark:border-red-900/50">
           <Text className="text-center text-sm font-bold text-red-600 dark:text-red-400">
             {errorMessage}
           </Text>
@@ -686,4 +702,3 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 });
-

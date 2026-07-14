@@ -63,7 +63,9 @@ export default function CatalogSelector({
             Error al cargar municipios
           </Text>
           <TouchableOpacity onPress={() => void refetchMunicipios()}>
-            <Text className="font-semibold text-red-700 dark:text-red-300">Reintentar</Text>
+            <Text className="font-semibold text-red-700 dark:text-red-300">
+              Reintentar
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -94,9 +96,13 @@ export default function CatalogSelector({
       </Text>
       {selectedMunicipioId && errorLocalidades ? (
         <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
-          <Text className="text-sm text-red-600 dark:text-red-400">No se pudieron cargar</Text>
+          <Text className="text-sm text-red-600 dark:text-red-400">
+            No se pudieron cargar
+          </Text>
           <TouchableOpacity onPress={() => void refetchLocalidades()}>
-            <Text className="font-semibold text-red-700 dark:text-red-300">Reintentar</Text>
+            <Text className="font-semibold text-red-700 dark:text-red-300">
+              Reintentar
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -136,7 +142,9 @@ export default function CatalogSelector({
                 Seleccionar Municipio
               </Text>
               <Pressable onPress={() => setShowMunicipioModal(false)}>
-                <Text className="font-semibold text-brand-red-coral">Cerrar</Text>
+                <Text className="font-semibold text-brand-red-coral">
+                  Cerrar
+                </Text>
               </Pressable>
             </View>
 
@@ -170,7 +178,9 @@ export default function CatalogSelector({
                 Seleccionar Localidad
               </Text>
               <Pressable onPress={() => setShowLocalidadModal(false)}>
-                <Text className="font-semibold text-brand-red-coral">Cerrar</Text>
+                <Text className="font-semibold text-brand-red-coral">
+                  Cerrar
+                </Text>
               </Pressable>
             </View>
 
@@ -197,4 +207,3 @@ export default function CatalogSelector({
     </View>
   );
 }
-

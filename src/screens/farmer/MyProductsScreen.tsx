@@ -29,4 +29,3 @@ export default function MyProductsScreen(): React.JSX.Element {
     </View>
   );
 }
-

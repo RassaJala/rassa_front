@@ -22,7 +22,7 @@ export default function App(): React.JSX.Element {
   const brandCoral = '#DE393A';
 
   const brandCoralLight = '#FEF2F2'; // red-50 tint — active segment background (light)
-  const brandCoralDark = '#3B1212';  // dark coral tint — active segment background (dark)
+  const brandCoralDark = '#3B1212'; // dark coral tint — active segment background (dark)
 
   const theme =
     colorScheme === 'dark'
@@ -58,4 +58,3 @@ export default function App(): React.JSX.Element {
     </QueryClientProvider>
   );
 }
-

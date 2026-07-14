@@ -127,7 +127,9 @@ export default function DatePickerModal({
                 step === 'year' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Año</Text>
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Año
+              </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedYear ?? '----'}
               </Text>
@@ -141,7 +143,9 @@ export default function DatePickerModal({
                 step === 'month' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Mes</Text>
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Mes
+              </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
               </Text>
@@ -155,7 +159,9 @@ export default function DatePickerModal({
                 step === 'day' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Día</Text>
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Día
+              </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedDay ?? '--'}
               </Text>
@@ -172,7 +178,9 @@ export default function DatePickerModal({
                     testID={`year-option-${item}`}
                     onPress={() => handleSelectYear(item)}
                     className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedYear === item ? 'bg-red-50 dark:bg-brand-red-coral/20' : ''
+                      selectedYear === item
+                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
+                        : ''
                     }`}
                   >
                     <Text
@@ -197,7 +205,9 @@ export default function DatePickerModal({
                     testID={`month-option-${index}`}
                     onPress={() => handleSelectMonth(index)}
                     className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedMonth === index ? 'bg-red-50 dark:bg-brand-red-coral/20' : ''
+                      selectedMonth === index
+                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
+                        : ''
                     }`}
                   >
                     <Text
@@ -232,7 +242,9 @@ export default function DatePickerModal({
                   >
                     <Text
                       className={`text-base font-semibold ${
-                        selectedDay === item ? 'text-white' : 'text-brand-ink dark:text-gray-200'
+                        selectedDay === item
+                          ? 'text-white'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -260,4 +272,3 @@ export default function DatePickerModal({
     </Modal>
   );
 }
-
