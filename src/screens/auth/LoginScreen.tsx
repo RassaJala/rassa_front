@@ -7,8 +7,10 @@ import {
   View,
 } from 'react-native';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
+import { useColorScheme } from 'nativewind';
 
 import { useAuth } from '@/store/AuthContext';
 import { getLoginErrorMessage } from '@/utils/authError';
@@ -19,6 +21,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,73 +79,111 @@ export default function LoginScreen(): React.JSX.Element {
     }
   }
 
+  const isDark = colorScheme === 'dark';
+
   return (
-    <View className="flex-1 justify-center bg-gray-50 px-6 py-8 dark:bg-gray-950">
-      <View className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
-        <Text className="mb-2 text-2xl font-bold text-brand-ink dark:text-gray-100">
-          Iniciar sesión
+    <View className="flex-1 flex-col bg-gray-50 dark:bg-gray-950 md:flex-row">
+      <View className="hidden items-center justify-center bg-brand-green-forest p-12 md:flex md:w-1/2">
+        <Text className="mb-4 text-center text-5xl font-bold text-white">
+          RASSA JALA
         </Text>
 
-        <Text className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-          Ingresa tus credenciales para continuar.
+        <Text className="px-4 text-center text-lg leading-7 text-brand-green-sage">
+          La plataforma que conecta productores y compradores de alimentos de
+          manera directa y transparente.
         </Text>
+      </View>
 
-        <TextInput
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          placeholder="Correo electrónico"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={email}
-          onChangeText={setEmail}
-        />
-
-        <View className="relative mb-4">
-          <TextInput
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            placeholder="Contraseña"
-            placeholderTextColor={PLACEHOLDER_COLOR}
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
+      <View className="flex-1 items-center justify-center px-6 py-10 md:w-1/2 md:px-16">
+        <Pressable
+          className="absolute right-4 top-12 rounded-full bg-gray-200 p-3 dark:bg-gray-800 md:right-8 md:top-8"
+          onPress={() => {
+            toggleColorScheme();
+          }}
+          accessibilityLabel="Alternar tema claro y oscuro"
+          accessibilityRole="button"
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name={isDark ? 'weather-sunny' : 'weather-night'}
+            size={20}
+            color={isDark ? '#ffffff' : '#1D1D1D'}
           />
-          <Pressable
-            className="absolute right-3 top-0 h-full justify-center"
-            onPress={() => setShowPassword((prev) => !prev)}
-            accessibilityLabel={
-              showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
-            }
-            accessibilityRole="button"
-            hitSlop={8}
-          >
-            <Text className="text-sm font-medium text-brand-red-coral">
-              {showPassword ? 'Ocultar' : 'Mostrar'}
+        </Pressable>
+
+        <View className="w-full max-w-sm">
+          <View className="mb-8 items-center md:hidden">
+            <Text className="text-3xl font-bold text-brand-ink dark:text-white">
+              RASSA JALA
             </Text>
+          </View>
+
+          <Text className="mb-2 text-3xl font-bold text-brand-ink dark:text-white">
+            Iniciar sesión
+          </Text>
+
+          <Text className="mb-8 text-base text-gray-500 dark:text-gray-400">
+            Ingresa tus credenciales para continuar.
+          </Text>
+
+          <TextInput
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            className="mb-4 rounded-xl border border-gray-200 bg-white px-4 py-4 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+            placeholder="Correo electrónico"
+            placeholderTextColor={PLACEHOLDER_COLOR}
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <View className="relative mb-4">
+            <TextInput
+              className="rounded-xl border border-gray-200 bg-white px-4 py-4 pr-16 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              placeholder="Contraseña"
+              placeholderTextColor={PLACEHOLDER_COLOR}
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <Pressable
+              className="absolute right-3 top-0 h-full justify-center"
+              onPress={() => setShowPassword((prev) => !prev)}
+              accessibilityLabel={
+                showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              }
+              accessibilityRole="button"
+              hitSlop={8}
+            >
+              <Text className="text-sm font-medium text-brand-red-coral">
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </Text>
+            </Pressable>
+          </View>
+
+          {errorMessage ? (
+            <Text className="mb-4 text-center text-sm text-red-500">
+              {errorMessage}
+            </Text>
+          ) : null}
+
+          <Pressable
+            disabled={isSubmitting}
+            onPress={() => void handleLogin()}
+            className={`mt-2 rounded-xl bg-brand-red-coral py-4 ${
+              isSubmitting ? 'opacity-70' : ''
+            }`}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-center text-base font-semibold text-white">
+                Ingresar
+              </Text>
+            )}
           </Pressable>
         </View>
-
-        {errorMessage ? (
-          <Text className="mt-4 text-center text-sm text-red-500">
-            {errorMessage}
-          </Text>
-        ) : null}
-
-        <Pressable
-          disabled={isSubmitting}
-          onPress={() => void handleLogin()}
-          className={`mt-6 rounded-xl bg-brand-red-coral px-4 py-3 ${
-            isSubmitting ? 'opacity-70' : ''
-          }`}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-center font-semibold text-white">
-              Ingresar
-            </Text>
-          )}
-        </Pressable>
       </View>
     </View>
   );
