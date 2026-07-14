@@ -305,18 +305,22 @@ export default function CrudListScreen<
     // eslint-disable-next-line react-hooks/exhaustive-deps -- config is stable reference; navigation is stable screen
   }, []);
 
+  function fieldValueFor(name: string, item: T): string {
+    if (name === 'descripcion' && 'descripcion' in item) {
+      return String((item as Record<string, unknown>).descripcion ?? '');
+    }
+    if (name === 'abreviatura' && 'abreviatura' in item) {
+      return String((item as Record<string, unknown>).abreviatura ?? '');
+    }
+    return '';
+  }
+
   const openEditModal = useCallback((item: T) => {
     const initial: Record<string, string> = {};
 
     for (const field of config.fields) {
       initial[field.name] =
-        field.name === 'nombre'
-          ? item.nombre
-          : field.name === 'descripcion' && 'descripcion' in item
-            ? String((item as Record<string, unknown>).descripcion ?? '')
-            : field.name === 'abreviatura' && 'abreviatura' in item
-              ? String((item as Record<string, unknown>).abreviatura ?? '')
-              : '';
+        field.name === 'nombre' ? item.nombre : fieldValueFor(field.name, item);
     }
     setEditingItem(item);
     setFormValues(initial);
@@ -502,6 +506,7 @@ export default function CrudListScreen<
   }
 
   const isEmpty = !items || items.length === 0;
+  const trashScreen = config.trashScreenName;
 
   // ── Render ─────────────────────────────────────────────────
   return (
@@ -523,9 +528,9 @@ export default function CrudListScreen<
           <Text className="text-2xl font-bold tracking-tight text-white">
             {config.headerTitle}
           </Text>
-          {config.trashScreenName ? (
+          {trashScreen ? (
             <Pressable
-              onPress={() => navigation.navigate(config.trashScreenName!)}
+              onPress={() => navigation.navigate(trashScreen)}
               className="ml-auto h-11 w-11 items-center justify-center rounded-full active:opacity-80"
               hitSlop={12}
             >
@@ -566,33 +571,29 @@ export default function CrudListScreen<
               tintColor={colors.brandRedCoral}
             />
           }
-          renderItem={({ item }) => (
-            <>
-              {config.renderListItem
-                ? config.renderListItem(item, {
+          renderItem={({ item }) =>
+            config.renderListItem
+              ? config.renderListItem(item, {
+                  onEdit: () => openEditModal(item),
+                  onToggleStatus: () => handleToggleStatus(item),
+                  onDelete: () => setDeleteTarget(item),
+                })
+              : defaultRenderListItem(
+                  item,
+                  (i) => {
+                    const second = config.fields[1];
+                    if (!second) return null;
+                    const val = (i as Record<string, unknown>)[second.name];
+                    return val != null ? String(val) : null;
+                  },
+                  config,
+                  {
                     onEdit: () => openEditModal(item),
                     onToggleStatus: () => handleToggleStatus(item),
                     onDelete: () => setDeleteTarget(item),
-                  })
-                : defaultRenderListItem(
-                    item,
-                    (i) => {
-                      const second = config.fields[1];
-
-                      if (!second) return null;
-                      const val = (i as Record<string, unknown>)[second.name];
-
-                      return val != null ? String(val) : null;
-                    },
-                    config,
-                    {
-                      onEdit: () => openEditModal(item),
-                      onToggleStatus: () => handleToggleStatus(item),
-                      onDelete: () => setDeleteTarget(item),
-                    },
-                  )}
-            </>
-          )}
+                  },
+                )
+          }
           ItemSeparatorComponent={() => (
             <View className="h-px bg-gray-200 dark:bg-gray-800" />
           )}
