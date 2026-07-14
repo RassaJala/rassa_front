@@ -15,11 +15,10 @@ import {
   Portal,
 } from 'react-native-paper';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Toast from '@/components/Toast';
 import api from '@/services/api';
@@ -500,7 +499,7 @@ export default function CrudListScreen<
       {isEmpty ? (
         <View className="flex-1 items-center justify-center px-6">
           <MaterialCommunityIcons
-            name={config.emptyIcon as any}
+            name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
             size={64}
             color="#9ca3af"
           />
