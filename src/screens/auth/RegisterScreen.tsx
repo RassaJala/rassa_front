@@ -26,11 +26,6 @@ import {
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
 
-const ROLE_LABELS: Record<RegisterRole, string> = {
-  buyer: 'Cliente',
-  farmer: 'Agricultor',
-  seller: 'Vendedor',
-};
 
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
