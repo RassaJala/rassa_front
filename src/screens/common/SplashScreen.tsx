@@ -50,7 +50,7 @@ export default function SplashScreen(): React.JSX.Element {
           RASSA JALA
         </Text>
 
-        <Text className="mt-3 text-white dark:text-gray-100">
+        <Text className="mt-3 text-white dark:text-gray-100 md:hidden">
           Conectando productores y compradores.
         </Text>
 
