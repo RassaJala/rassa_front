@@ -15,14 +15,19 @@ import { useNavigation } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
+import DatePickerModal from '@/components/DatePickerModal';
 import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { RegisterRole } from '@/types';
 import { getGenderLabel } from '@/utils/gender';
 import {
+  cleanAddress,
+  cleanName,
+  cleanPhoneNumber,
   DATE_REGEX,
   EMAIL_REGEX,
+  formatPhoneNumber,
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
 
@@ -50,6 +55,7 @@ export default function RegisterScreen(): React.JSX.Element {
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -68,10 +74,11 @@ export default function RegisterScreen(): React.JSX.Element {
     }
 
     // Validations
+    const rawTelefono = cleanPhoneNumber(telefono);
     if (
       !email.trim() ||
       !password ||
-      !telefono.trim() ||
+      !rawTelefono ||
       !nombre.trim() ||
       !apellidoPaterno.trim() ||
       !fechaNacimiento.trim() ||
@@ -94,6 +101,11 @@ export default function RegisterScreen(): React.JSX.Element {
       return;
     }
 
+    if (rawTelefono.length !== 10) {
+      setErrorMessage('El teléfono debe tener exactamente 10 dígitos.');
+      return;
+    }
+
     if (!DATE_REGEX.test(fechaNacimiento)) {
       setErrorMessage(
         'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
@@ -107,7 +119,7 @@ export default function RegisterScreen(): React.JSX.Element {
       const payload = {
         email: email.trim(),
         password,
-        telefono: telefono.trim(),
+        telefono: rawTelefono,
         role,
         nombre: nombre.trim(),
         apellido_paterno: apellidoPaterno.trim(),
@@ -183,7 +195,7 @@ export default function RegisterScreen(): React.JSX.Element {
           placeholder="Nombre(s)"
           placeholderTextColor={colors.placeholder}
           value={nombre}
-          onChangeText={setNombre}
+          onChangeText={(val) => setNombre(cleanName(val))}
         />
 
         <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -194,7 +206,7 @@ export default function RegisterScreen(): React.JSX.Element {
           placeholder="Apellido Paterno"
           placeholderTextColor={colors.placeholder}
           value={apellidoPaterno}
-          onChangeText={setApellidoPaterno}
+          onChangeText={(val) => setApellidoPaterno(cleanName(val))}
         />
 
         <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -205,7 +217,7 @@ export default function RegisterScreen(): React.JSX.Element {
           placeholder="Apellido Materno"
           placeholderTextColor={colors.placeholder}
           value={apellidoMaterno}
-          onChangeText={setApellidoMaterno}
+          onChangeText={(val) => setApellidoMaterno(cleanName(val))}
         />
 
         <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -213,23 +225,30 @@ export default function RegisterScreen(): React.JSX.Element {
         </Text>
         <TextInput
           className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-          placeholder="10 dígitos"
+          placeholder="xxx-xxx-xx-xx"
           placeholderTextColor={colors.placeholder}
           keyboardType="phone-pad"
           value={telefono}
-          onChangeText={setTelefono}
+          onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
         />
 
         <Text className="mb-1 text-sm font-medium text-slate-700">
-          Fecha de Nacimiento (AAAA-MM-DD) *
+          Fecha de Nacimiento *
         </Text>
-        <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor={colors.placeholder}
-          value={fechaNacimiento}
-          onChangeText={setFechaNacimiento}
-        />
+        <TouchableOpacity
+          testID="birthdate-pressable"
+          onPress={() => setIsDatePickerVisible(true)}
+        >
+          <View pointerEvents="none">
+            <TextInput
+              className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={colors.placeholder}
+              value={fechaNacimiento}
+              editable={false}
+            />
+          </View>
+        </TouchableOpacity>
 
         <Text className="mb-1 text-sm font-medium text-slate-700">
           Género *
@@ -262,7 +281,7 @@ export default function RegisterScreen(): React.JSX.Element {
           placeholder="Calle, número, colonia"
           placeholderTextColor={colors.placeholder}
           value={domicilio}
-          onChangeText={setDomicilio}
+          onChangeText={(val) => setDomicilio(cleanAddress(val))}
         />
 
         {/* Catalog Selectors & Modals */}
@@ -306,6 +325,12 @@ export default function RegisterScreen(): React.JSX.Element {
           </Text>
         </TouchableOpacity>
       </View>
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={setFechaNacimiento}
+        initialDate={fechaNacimiento}
+      />
     </ScrollView>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -14,12 +14,20 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
+import DatePickerModal from '@/components/DatePickerModal';
 import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { Localidad, Municipio } from '@/types';
 import { getGenderLabel } from '@/utils/gender';
-import { DATE_REGEX, MIN_PASSWORD_LENGTH } from '@/utils/validation';
+import {
+  cleanAddress,
+  cleanName,
+  cleanPhoneNumber,
+  DATE_REGEX,
+  formatPhoneNumber,
+  MIN_PASSWORD_LENGTH,
+} from '@/utils/validation';
 
 type ActiveTab = 'ver' | 'editar' | 'password';
 
@@ -134,6 +142,7 @@ interface ProfileEditTabProps {
   readonly callbacks: {
     readonly handleUpdateProfile: () => void;
     readonly setErrorMessage: (val: string | null) => void;
+    readonly onOpenDatePicker: () => void;
   };
 }
 
@@ -155,7 +164,7 @@ function ProfileEditTab({
         placeholder="Nombre"
         placeholderTextColor={colors.placeholder}
         value={form.nombre}
-        onChangeText={form.setNombre}
+        onChangeText={(val) => form.setNombre(cleanName(val))}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -166,7 +175,7 @@ function ProfileEditTab({
         placeholder="Apellido Paterno"
         placeholderTextColor={colors.placeholder}
         value={form.apellidoPaterno}
-        onChangeText={form.setApellidoPaterno}
+        onChangeText={(val) => form.setApellidoPaterno(cleanName(val))}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -177,7 +186,7 @@ function ProfileEditTab({
         placeholder="Apellido Materno"
         placeholderTextColor={colors.placeholder}
         value={form.apellidoMaterno}
-        onChangeText={form.setApellidoMaterno}
+        onChangeText={(val) => form.setApellidoMaterno(cleanName(val))}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
@@ -185,23 +194,30 @@ function ProfileEditTab({
       </Text>
       <TextInput
         className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-        placeholder="Teléfono"
+        placeholder="xxx-xxx-xx-xx"
         placeholderTextColor={colors.placeholder}
         keyboardType="phone-pad"
         value={form.telefono}
-        onChangeText={form.setTelefono}
+        onChangeText={(val) => form.setTelefono(formatPhoneNumber(val))}
       />
 
       <Text className="mb-1 text-sm font-medium text-slate-700">
-        Fecha de Nacimiento (AAAA-MM-DD) *
+        Fecha de Nacimiento *
       </Text>
-      <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-        placeholder="AAAA-MM-DD"
-        placeholderTextColor={colors.placeholder}
-        value={form.fechaNacimiento}
-        onChangeText={form.setFechaNacimiento}
-      />
+      <TouchableOpacity
+        testID="birthdate-pressable"
+        onPress={callbacks.onOpenDatePicker}
+      >
+        <View pointerEvents="none">
+          <TextInput
+            className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor={colors.placeholder}
+            value={form.fechaNacimiento}
+            editable={false}
+          />
+        </View>
+      </TouchableOpacity>
 
       <Text className="mb-1 text-sm font-medium text-slate-700">Género *</Text>
       <View className="mb-3 flex-row space-x-2">
@@ -209,16 +225,14 @@ function ProfileEditTab({
           <TouchableOpacity
             key={g}
             onPress={() => form.setSexo(g)}
-            className={`flex-1 rounded-xl border py-2.5 ${
-              form.sexo === g
+            className={`flex-1 rounded-xl border py-2.5 ${form.sexo === g
                 ? 'border-emerald-600 bg-emerald-50'
                 : 'border-slate-300 bg-white'
-            }`}
+              }`}
           >
             <Text
-              className={`text-center font-medium ${
-                form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
-              }`}
+              className={`text-center font-medium ${form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
+                }`}
             >
               {getGenderLabel(g)}
             </Text>
@@ -234,7 +248,7 @@ function ProfileEditTab({
         placeholder="Calle, número, colonia"
         placeholderTextColor={colors.placeholder}
         value={form.domicilio}
-        onChangeText={form.setDomicilio}
+        onChangeText={(val) => form.setDomicilio(cleanAddress(val))}
       />
 
       <CatalogSelector
@@ -370,7 +384,9 @@ export default function ProfileScreen(): React.JSX.Element {
   const [apellidoMaterno, setApellidoMaterno] = useState(
     user?.apellido_materno ?? '',
   );
-  const [telefono, setTelefono] = useState(user?.telefono ?? '');
+  const [telefono, setTelefono] = useState(
+    formatPhoneNumber(user?.telefono ?? ''),
+  );
   const [fechaNacimiento, setFechaNacimiento] = useState(
     user?.fecha_nacimiento ?? '',
   );
@@ -391,6 +407,7 @@ export default function ProfileScreen(): React.JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   // Change Password States
   const [oldPassword, setOldPassword] = useState('');
@@ -410,7 +427,7 @@ export default function ProfileScreen(): React.JSX.Element {
       setNombre(user.nombre ?? '');
       setApellidoPaterno(user.apellido_paterno ?? '');
       setApellidoMaterno(user.apellido_materno ?? '');
-      setTelefono(user.telefono ?? '');
+      setTelefono(formatPhoneNumber(user.telefono ?? ''));
       setFechaNacimiento(user.fecha_nacimiento ?? '');
       setSexo((user.genero as 'M' | 'F' | 'O') ?? 'M');
       setDomicilio(user.direccion ?? '');
@@ -433,15 +450,21 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
+    const rawTelefono = cleanPhoneNumber(telefono);
     if (
       !nombre.trim() ||
       !apellidoPaterno.trim() ||
-      !telefono.trim() ||
+      !rawTelefono ||
       !fechaNacimiento.trim() ||
       !domicilio.trim() ||
       catalog.localidadId === null
     ) {
       setErrorMessage('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+
+    if (rawTelefono.length !== 10) {
+      setErrorMessage('El teléfono debe tener exactamente 10 dígitos.');
       return;
     }
 
@@ -459,7 +482,7 @@ export default function ProfileScreen(): React.JSX.Element {
         nombre: nombre.trim(),
         apellido_paterno: apellidoPaterno.trim(),
         apellido_materno: apellidoMaterno.trim() || null,
-        telefono: telefono.trim(),
+        telefono: rawTelefono,
         fecha_nacimiento: fechaNacimiento,
         sexo,
         domicilio: domicilio.trim(),
@@ -612,14 +635,12 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'ver' ? 'bg-white shadow-sm' : ''
-          }`}
+          className={`flex-1 rounded-lg py-2 ${activeTab === 'ver' ? 'bg-white shadow-sm' : ''
+            }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'ver' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
+            className={`text-center text-sm font-medium ${activeTab === 'ver' ? 'text-emerald-700' : 'text-slate-600'
+              }`}
           >
             Ver
           </Text>
@@ -630,14 +651,12 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'editar' ? 'bg-white shadow-sm' : ''
-          }`}
+          className={`flex-1 rounded-lg py-2 ${activeTab === 'editar' ? 'bg-white shadow-sm' : ''
+            }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'editar' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
+            className={`text-center text-sm font-medium ${activeTab === 'editar' ? 'text-emerald-700' : 'text-slate-600'
+              }`}
           >
             Editar
           </Text>
@@ -648,14 +667,12 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'password' ? 'bg-white shadow-sm' : ''
-          }`}
+          className={`flex-1 rounded-lg py-2 ${activeTab === 'password' ? 'bg-white shadow-sm' : ''
+            }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'password' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
+            className={`text-center text-sm font-medium ${activeTab === 'password' ? 'text-emerald-700' : 'text-slate-600'
+              }`}
           >
             Seguridad
           </Text>
@@ -690,6 +707,7 @@ export default function ProfileScreen(): React.JSX.Element {
           callbacks={{
             handleUpdateProfile,
             setErrorMessage,
+            onOpenDatePicker: () => setIsDatePickerVisible(true),
           }}
         />
       )}
@@ -706,6 +724,12 @@ export default function ProfileScreen(): React.JSX.Element {
           handleChangePassword={handleChangePassword}
         />
       )}
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={setFechaNacimiento}
+        initialDate={fechaNacimiento}
+      />
     </ScrollView>
   );
 }

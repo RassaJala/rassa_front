@@ -127,12 +127,24 @@ function extractErrorMessage(data: unknown): string | null {
   }
   const dict = data as Record<string, unknown>;
   if (typeof dict.detail === 'string') return dict.detail;
-  if (typeof dict.email === 'string') return dict.email;
-  if (typeof dict.password === 'string') return dict.password;
+  if (typeof dict.message === 'string') return dict.message;
   if (Array.isArray(dict.non_field_errors)) {
     return dict.non_field_errors.join(' ');
   }
-  if (typeof dict.message === 'string') return dict.message;
+
+  // Iterate over all fields to find any validation errors (which are strings or arrays of strings)
+  for (const [field, value] of Object.entries(dict)) {
+    if (
+      field === 'detail' ||
+      field === 'message' ||
+      field === 'non_field_errors'
+    ) {
+      continue;
+    }
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.join(' ');
+  }
+
   return null;
 }
 
