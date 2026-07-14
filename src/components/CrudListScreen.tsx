@@ -459,7 +459,7 @@ export default function CrudListScreen<
   if (user?.role !== 'admin') {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <MaterialCommunityIcons name="lock-outline" size={48} color="#9ca3af" />
+        <MaterialCommunityIcons name="lock-outline" size={48} color={colors.iconMuted} />
         <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
           No tienes permisos para acceder a esta sección.
         </Text>

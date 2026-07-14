@@ -235,7 +235,7 @@ export default function TrashListScreen<
                   <MaterialCommunityIcons
                     name="delete-restore"
                     size={20}
-                    color="#d97706"
+                    color={colors.warning}
                   />
                 </View>
                 <View className="flex-1">
