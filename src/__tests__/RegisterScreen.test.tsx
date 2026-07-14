@@ -230,49 +230,7 @@ describe('RegisterScreen', () => {
     });
   });
 
-  it('permite cambiar el tipo de cuenta y envía el rol correspondiente', async () => {
-    mockRegister.mockResolvedValueOnce(undefined);
 
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
-
-    // Seleccionar "Agricultor"
-    fireEvent.press(getByText('Agricultor'));
-
-    fireEvent.changeText(
-      getByPlaceholderText('ejemplo@correo.com'),
-      'agricultor@test.com',
-    );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AgriNombre');
-    fireEvent.changeText(
-      getByPlaceholderText('Apellido Paterno'),
-      'PaternoTest',
-    );
-    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
-    fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), '1995-10-10');
-    fireEvent.changeText(
-      getByPlaceholderText('Calle, número, colonia'),
-      'Calle 123',
-    );
-
-    fireEvent.press(getByText('Registrarse'));
-
-    await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith({
-        email: 'agricultor@test.com',
-        password: 'password123',
-        telefono: '1234567890',
-        role: 'farmer',
-        nombre: 'AgriNombre',
-        apellido_paterno: 'PaternoTest',
-        apellido_materno: null,
-        fecha_nacimiento: '1995-10-10',
-        sexo: 'M',
-        domicilio: 'Calle 123',
-        fk_localidad: 10,
-      });
-    });
-  });
 
   it('muestra error de reintento si falla la carga de municipios', () => {
     mockUseCatalogs.errorMunicipios = 'API Error';

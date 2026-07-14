@@ -201,4 +201,10 @@ describe('LoginScreen', () => {
     fireEvent.press(getByText('Ocultar'));
     expect(passwordInput.props.secureTextEntry).toBe(true);
   });
+
+  it('navega a Register al presionar Regístrate aquí', () => {
+    const { getByText } = render(<LoginScreen />);
+    fireEvent.press(getByText('¿No tienes cuenta? Regístrate aquí'));
+    expect(mockNavigate).toHaveBeenCalledWith('Register');
+  });
 });

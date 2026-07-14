@@ -42,7 +42,7 @@ export default function RegisterScreen(): React.JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [role, setRole] = useState<RegisterRole>('buyer');
+  const role: RegisterRole = 'buyer';
   const [nombre, setNombre] = useState('');
   const [apellidoPaterno, setApellidoPaterno] = useState('');
   const [apellidoMaterno, setApellidoMaterno] = useState('');
@@ -153,33 +153,6 @@ export default function RegisterScreen(): React.JSX.Element {
         <Text className="mb-6 text-sm text-slate-600">
           Completa los siguientes datos para registrarte.
         </Text>
-
-        {/* Tipo de Cuenta (Rol) Selector */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Tipo de cuenta *
-        </Text>
-        <View className="mb-4 flex-row space-x-2">
-          {(['buyer', 'farmer'] as const).map((r) => (
-            <TouchableOpacity
-              key={r}
-              onPress={() => setRole(r)}
-              className={`flex-1 rounded-xl border py-2.5 ${
-                role === r
-                  ? 'border-emerald-600 bg-emerald-50'
-                  : 'border-slate-300 bg-white'
-              }`}
-            >
-              <Text
-                className={`text-center font-medium ${
-                  role === r ? 'text-emerald-700' : 'text-slate-600'
-                }`}
-              >
-                {/* eslint-disable-next-line security/detect-object-injection -- ROLE_LABELS is a safe static dictionary */}
-                {ROLE_LABELS[r]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* Account Info */}
         <Text className="mb-1 text-sm font-medium text-slate-700">
