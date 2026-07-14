@@ -49,6 +49,8 @@ const categoryConfig = {
   statusLabels: { active: 'Activo', inactive: 'Inactivo' },
   validate: (formValues: Record<string, string>) => {
     if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
+    if (!(formValues.descripcion ?? '').trim())
+      return 'La descripción es obligatoria.';
     return null;
   },
 };

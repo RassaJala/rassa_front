@@ -181,9 +181,11 @@ export default function CrudListScreen<
   } = useQuery<T[]>({
     queryKey: [...config.queryKey],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<T[]>>(config.endpoint);
+      const { data } = await api.get<ApiResponse<{ results: T[] }>>(
+        config.endpoint,
+      );
 
-      return data.data;
+      return data.data.results;
     },
     staleTime: 30_000,
     retry: 2,

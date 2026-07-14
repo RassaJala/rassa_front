@@ -185,23 +185,48 @@ describe('Toast component', () => {
 describe('CategoryListScreen validate', () => {
   const catValidate = (formValues: Record<string, string>) => {
     if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
+    if (!(formValues.descripcion ?? '').trim())
+      return 'La descripción es obligatoria.';
     return null;
   };
 
   it('retorna null para valores válidos', () => {
-    expect(catValidate({ nombre: 'Frutas' })).toBeNull();
+    expect(
+      catValidate({ nombre: 'Frutas', descripcion: 'Frutas frescas' }),
+    ).toBeNull();
     expect(
       catValidate({ nombre: 'Verduras', descripcion: 'Cosas verdes' }),
     ).toBeNull();
   });
 
   it('retorna error cuando el nombre está vacío', () => {
-    expect(catValidate({ nombre: '' })).toBe('El nombre es obligatorio.');
-    expect(catValidate({ nombre: '   ' })).toBe('El nombre es obligatorio.');
+    expect(catValidate({ nombre: '', descripcion: 'Cosas' })).toBe(
+      'El nombre es obligatorio.',
+    );
+    expect(catValidate({ nombre: '   ', descripcion: 'Cosas' })).toBe(
+      'El nombre es obligatorio.',
+    );
   });
 
   it('retorna error cuando falta la clave nombre', () => {
-    expect(catValidate({})).toBe('El nombre es obligatorio.');
+    expect(catValidate({ descripcion: 'Cosas' })).toBe(
+      'El nombre es obligatorio.',
+    );
+  });
+
+  it('retorna error cuando la descripción está vacía', () => {
+    expect(catValidate({ nombre: 'Frutas', descripcion: '' })).toBe(
+      'La descripción es obligatoria.',
+    );
+    expect(catValidate({ nombre: 'Frutas', descripcion: '   ' })).toBe(
+      'La descripción es obligatoria.',
+    );
+  });
+
+  it('retorna error cuando falta la clave descripcion', () => {
+    expect(catValidate({ nombre: 'Frutas' })).toBe(
+      'La descripción es obligatoria.',
+    );
   });
 });
 
