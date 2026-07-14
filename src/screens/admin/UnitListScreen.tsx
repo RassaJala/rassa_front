@@ -30,7 +30,7 @@ const unitConfig = {
     },
   ] as const,
   errorFieldKeys: ['nombre', 'abreviatura', 'detail'] as const,
-  emptyIcon: '📏',
+  emptyIcon: 'ruler',
   emptyText: 'No hay unidades',
   emptyDescription: 'Agrega una unidad de medida para comenzar.',
   headerTitle: 'Unidades de Medida',

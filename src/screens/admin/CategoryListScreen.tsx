@@ -31,7 +31,7 @@ const categoryConfig = {
     },
   ] as const,
   errorFieldKeys: ['nombre', 'descripcion', 'detail'] as const,
-  emptyIcon: '📂',
+  emptyIcon: 'folder-open-outline',
   emptyText: 'No hay categorías',
   emptyDescription: 'Agrega una categoría para comenzar.',
   headerTitle: 'Categorías',

@@ -19,8 +19,9 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 import Toast from '@/components/Toast';
-import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
@@ -100,9 +101,17 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
 
   return (
     <View className="rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
-      <View className="flex-row items-center">
+      <View className="flex-row items-start">
+        <View className="mr-3 mt-0.5 h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <MaterialCommunityIcons
+            name={item.estado ? 'check-circle-outline' : 'circle-outline'}
+            size={20}
+            color={item.estado ? '#3A6D56' : '#9ca3af'}
+          />
+        </View>
+
         <View className="flex-1">
-          <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
+          <Text className="text-lg font-medium text-brand-ink dark:text-gray-100">
             {item.nombre}
           </Text>
           {secondValue ? (
@@ -111,14 +120,16 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
             </Text>
           ) : null}
           <View
-            className={`mt-1.5 self-start rounded-full px-2.5 py-0.5 ${
-              item.estado ? 'bg-green-100' : 'bg-gray-100 dark:bg-gray-800'
+            className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${
+              item.estado
+                ? 'bg-gray-100 dark:bg-gray-800'
+                : 'bg-gray-100 dark:bg-gray-800'
             }`}
           >
             <Text
               className={`text-xs font-medium ${
                 item.estado
-                  ? 'text-green-700'
+                  ? 'text-brand-green-forest'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
@@ -130,31 +141,46 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
         </View>
       </View>
 
-      <View className="mt-3 flex-row items-center gap-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+      <View className="mt-3 flex-row items-center justify-end gap-4 border-t border-gray-100 pt-3 dark:border-gray-800">
         <Pressable
           onPress={actions.onEdit}
-          className="rounded-md border border-gray-300 px-3 py-1.5 dark:border-gray-600"
-          hitSlop={4}
+          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          hitSlop={8}
         >
-          <Text className="text-brand-coral text-xs font-medium">Editar</Text>
+          <MaterialCommunityIcons
+            name="pencil-outline"
+            size={14}
+            color="#DE393A"
+          />
+          <Text className="text-xs font-medium text-brand-red-coral">
+            Editar
+          </Text>
         </Pressable>
         <Pressable
           onPress={actions.onToggleStatus}
-          className="rounded-md border border-gray-300 px-3 py-1.5 dark:border-gray-600"
-          hitSlop={4}
+          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          hitSlop={8}
         >
-          <Text className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <MaterialCommunityIcons
+            name={item.estado ? 'close-circle-outline' : 'check-circle-outline'}
+            size={14}
+            color="#6b7280"
+          />
+          <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
             {item.estado ? 'Desactivar' : 'Activar'}
           </Text>
         </Pressable>
         <Pressable
           onPress={actions.onDelete}
-          className="rounded-md border border-red-300 px-3 py-1.5 dark:border-red-800"
-          hitSlop={4}
+          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          hitSlop={8}
         >
-          <Text className="text-xs font-medium text-red-600 dark:text-red-400">
-            Eliminar
-          </Text>
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={14}
+            color="#ef4444"
+          />
+          <Text className="text-xs font-medium text-red-500">Eliminar</Text>
         </Pressable>
       </View>
     </View>
@@ -414,7 +440,7 @@ export default function CrudListScreen<
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <ActivityIndicator size="large" color={colors.error} />
+        <ActivityIndicator size="large" color="#DE393A" />
       </View>
     );
   }
@@ -423,16 +449,21 @@ export default function CrudListScreen<
   if (isError) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <Text className="text-4xl">⚠️</Text>
-        <Text className="mt-4 text-center text-base text-gray-600 dark:text-gray-400">
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={48}
+          color="#6b7280"
+        />
+        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
           {netInfo.isConnected === false
             ? 'Sin conexión a Internet. Verifica tu conexión.'
             : config.loadingErrorText}
         </Text>
         <Pressable
           onPress={() => void refetch()}
-          className="mt-4 rounded-lg bg-brand-red-coral px-6 py-3"
+          className="mt-4 flex-row items-center gap-2 rounded-lg bg-brand-red-coral px-6 py-3"
         >
+          <MaterialCommunityIcons name="refresh" size={18} color="#ffffff" />
           <Text className="font-semibold text-white">Reintentar</Text>
         </Pressable>
       </View>
@@ -463,8 +494,12 @@ export default function CrudListScreen<
       {/* Empty state */}
       {isEmpty ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-5xl">{config.emptyIcon}</Text>
-          <Text className="mt-4 text-center text-lg font-semibold text-gray-500 dark:text-gray-400">
+          <MaterialCommunityIcons
+            name={config.emptyIcon as any}
+            size={64}
+            color="#9ca3af"
+          />
+          <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
             {config.emptyText}
           </Text>
           <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
@@ -480,7 +515,7 @@ export default function CrudListScreen<
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor={colors.error}
+              tintColor="#DE393A"
             />
           }
           renderItem={({ item }) => (
@@ -557,14 +592,15 @@ export default function CrudListScreen<
             ))}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={closeModal} textColor={colors.textSecondary}>
+            <Button onPress={closeModal} textColor="#6b7280">
               Cancelar
             </Button>
             <Button
               onPress={handleSave}
+              mode="contained"
+              buttonColor="#DE393A"
               loading={isSaving}
               disabled={isSaving}
-              textColor={colors.error}
             >
               Guardar
             </Button>
@@ -589,10 +625,7 @@ export default function CrudListScreen<
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button
-              onPress={() => setDeleteTarget(null)}
-              textColor={colors.textSecondary}
-            >
+            <Button onPress={() => setDeleteTarget(null)} textColor="#6b7280">
               Cancelar
             </Button>
             <Button
@@ -626,9 +659,10 @@ export default function CrudListScreen<
                   },
                 });
               }}
+              mode="contained"
+              buttonColor="#ef4444"
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
-              textColor={colors.error}
             >
               Eliminar
             </Button>
