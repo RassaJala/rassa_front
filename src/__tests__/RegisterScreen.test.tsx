@@ -230,8 +230,6 @@ describe('RegisterScreen', () => {
     });
   });
 
-
-
   it('muestra error de reintento si falla la carga de municipios', () => {
     mockUseCatalogs.errorMunicipios = 'API Error';
     mockUseCatalogs.selectedMunicipioNombre = ''; // force showing error view instead of selected

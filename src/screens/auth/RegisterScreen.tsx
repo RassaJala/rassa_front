@@ -26,7 +26,6 @@ import {
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
 
-
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
