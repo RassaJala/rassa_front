@@ -13,7 +13,7 @@ import * as Sentry from '@sentry/react-native';
 import { useAuth } from '@/store/AuthContext';
 import { getLoginErrorMessage } from '@/utils/authError';
 
-const PLACEHOLDER_COLOR = '#94a3b8';
+const PLACEHOLDER_COLOR = '#9ca3af';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
@@ -77,13 +77,13 @@ export default function LoginScreen(): React.JSX.Element {
   }
 
   return (
-    <View className="flex-1 justify-center bg-white px-6 py-8">
-      <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-        <Text className="mb-2 text-2xl font-semibold text-slate-900">
+    <View className="flex-1 justify-center bg-gray-50 px-6 py-8 dark:bg-gray-950">
+      <View className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+        <Text className="mb-2 text-2xl font-bold text-brand-ink dark:text-gray-100">
           Iniciar sesión
         </Text>
 
-        <Text className="mb-6 text-sm text-slate-600">
+        <Text className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           Ingresa tus credenciales para continuar.
         </Text>
 
@@ -91,7 +91,7 @@ export default function LoginScreen(): React.JSX.Element {
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
-          className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900"
+          className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           placeholder="Correo electrónico"
           placeholderTextColor={PLACEHOLDER_COLOR}
           value={email}
@@ -100,7 +100,7 @@ export default function LoginScreen(): React.JSX.Element {
 
         <View className="relative mb-4">
           <TextInput
-            className="rounded-xl border border-slate-300 bg-white px-4 py-3 pr-16 text-base text-slate-900"
+            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-base text-brand-ink dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             placeholder="Contraseña"
             placeholderTextColor={PLACEHOLDER_COLOR}
             secureTextEntry={!showPassword}
@@ -116,14 +116,14 @@ export default function LoginScreen(): React.JSX.Element {
             accessibilityRole="button"
             hitSlop={8}
           >
-            <Text className="text-sm font-medium text-emerald-600">
+            <Text className="text-sm font-medium text-brand-red-coral">
               {showPassword ? 'Ocultar' : 'Mostrar'}
             </Text>
           </Pressable>
         </View>
 
         {errorMessage ? (
-          <Text className="mt-4 text-center text-sm text-red-600">
+          <Text className="mt-4 text-center text-sm text-red-500">
             {errorMessage}
           </Text>
         ) : null}
@@ -131,7 +131,7 @@ export default function LoginScreen(): React.JSX.Element {
         <Pressable
           disabled={isSubmitting}
           onPress={() => void handleLogin()}
-          className={`mt-6 rounded-xl bg-emerald-600 px-4 py-3 ${
+          className={`mt-6 rounded-xl bg-brand-red-coral px-4 py-3 ${
             isSubmitting ? 'opacity-70' : ''
           }`}
         >

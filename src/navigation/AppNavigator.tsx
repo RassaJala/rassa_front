@@ -7,7 +7,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
-import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import AdminDashboardScreen from '@/screens/admin/AdminDashboardScreen';
+import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
+import AdminUsersScreen from '@/screens/admin/AdminUsersScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
@@ -165,6 +167,54 @@ function SellerTabs() {
   );
 }
 
+function AdminTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#DE393A',
+        tabBarInactiveTintColor: '#6b7280',
+
+        tabBarIcon: ({ color, size }) => {
+          const icons = {
+            AdminDashboard: 'view-dashboard',
+            AdminUsers: 'account-group',
+            AdminProducts: 'package-variant',
+            Notificaciones: 'bell',
+          } as const;
+
+          const iconName =
+            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
+
+          return (
+            <MaterialCommunityIcons name={iconName} size={size} color={color} />
+          );
+        },
+      })}
+    >
+      <Tab.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={{ title: 'Panel' }}
+      />
+
+      <Tab.Screen
+        name="AdminUsers"
+        component={AdminUsersScreen}
+        options={{ title: 'Usuarios' }}
+      />
+
+      <Tab.Screen
+        name="AdminProducts"
+        component={AdminProductsScreen}
+        options={{ title: 'Productos' }}
+      />
+
+      <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
+    </Tab.Navigator>
+  );
+}
+
 const SPLASH_TIMEOUT_MS = 5000;
 
 export default function AppNavigator(): React.JSX.Element {
@@ -241,11 +291,7 @@ export default function AppNavigator(): React.JSX.Element {
       return <SellerTabs />;
 
     case 'admin':
-      return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        </Stack.Navigator>
-      );
+      return <AdminTabs />;
 
     case 'buyer':
       return <BuyerTabs />;
