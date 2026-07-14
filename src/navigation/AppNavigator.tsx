@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -41,26 +40,10 @@ function AuthStack() {
 function BuyerTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         header: () => <Navbar />,
-        tabBarActiveTintColor: '#DE393A',
-        tabBarInactiveTintColor: '#6b7280',
-
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            Home: 'home',
-            Carrito: 'cart',
-            Notificaciones: 'bell',
-          } as const;
-
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
-
-          return (
-            <MaterialCommunityIcons name={iconName} size={size} color={color} />
-          );
-        },
-      })}
+        tabBarStyle: { display: 'none' },
+      }}
     >
       <Tab.Screen
         name="Home"
@@ -78,26 +61,10 @@ function BuyerTabs() {
 function FarmerTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         header: () => <Navbar />,
-        tabBarActiveTintColor: '#DE393A',
-        tabBarInactiveTintColor: '#6b7280',
-
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            MyProducts: 'leaf',
-            AddProduct: 'plus-circle',
-            Notificaciones: 'bell',
-          } as const;
-
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
-
-          return (
-            <MaterialCommunityIcons name={iconName} size={size} color={color} />
-          );
-        },
-      })}
+        tabBarStyle: { display: 'none' },
+      }}
     >
       <Tab.Screen
         name="MyProducts"
@@ -119,27 +86,10 @@ function FarmerTabs() {
 function SellerTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         header: () => <Navbar />,
-        tabBarActiveTintColor: '#DE393A',
-        tabBarInactiveTintColor: '#6b7280',
-
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            SellerHome: 'storefront',
-            Sales: 'cash',
-            Notificaciones: 'bell',
-            Perfil: 'account',
-          } as const;
-
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
-
-          return (
-            <MaterialCommunityIcons name={iconName} size={size} color={color} />
-          );
-        },
-      })}
+        tabBarStyle: { display: 'none' },
+      }}
     >
       <Tab.Screen
         name="SellerHome"
@@ -171,27 +121,10 @@ function SellerTabs() {
 function AdminTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         header: () => <Navbar />,
-        tabBarActiveTintColor: '#DE393A',
-        tabBarInactiveTintColor: '#6b7280',
-
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            AdminDashboard: 'view-dashboard',
-            AdminUsers: 'account-group',
-            AdminProducts: 'package-variant',
-            Notificaciones: 'bell',
-          } as const;
-
-          const iconName =
-            icons[route.name as keyof typeof icons] ?? 'dots-horizontal';
-
-          return (
-            <MaterialCommunityIcons name={iconName} size={size} color={color} />
-          );
-        },
-      })}
+        tabBarStyle: { display: 'none' },
+      }}
     >
       <Tab.Screen
         name="AdminDashboard"
