@@ -429,7 +429,8 @@ export default function CrudListScreen<
   if (user?.role !== 'admin') {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-600 dark:text-gray-400">
+        <MaterialCommunityIcons name="lock-outline" size={48} color="#9ca3af" />
+        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
           No tienes permisos para acceder a esta sección.
         </Text>
       </View>
@@ -476,16 +477,20 @@ export default function CrudListScreen<
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <View className="bg-brand-green-forest px-4 pb-4 pt-12">
+      <View className="bg-brand-green-forest px-4 pb-5 pt-14 shadow-sm">
         <View className="flex-row items-center">
           <Pressable
             onPress={() => navigation.goBack()}
-            className="mr-3 h-10 w-10 items-center justify-center rounded-full"
-            hitSlop={8}
+            className="mr-3 h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+            hitSlop={12}
           >
-            <Text className="text-2xl text-white">←</Text>
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color="#ffffff"
+            />
           </Pressable>
-          <Text className="text-xl font-bold text-white">
+          <Text className="text-2xl font-bold tracking-tight text-white">
             {config.headerTitle}
           </Text>
         </View>
@@ -562,15 +567,25 @@ export default function CrudListScreen<
       {/* ── Create / Edit modal ──────────────────────────────── */}
       <Portal>
         <Dialog visible={modalVisible} onDismiss={closeModal}>
-          <Dialog.Title>
+          <Dialog.Title className="text-xl font-bold text-brand-ink dark:text-gray-100">
             {editingItem ? config.editDialogTitle : config.newDialogTitle}
           </Dialog.Title>
+
           <Dialog.Content>
             {formError ? (
-              <Text className="mb-3 text-sm text-red-500">{formError}</Text>
+              <View className="mb-4 flex-row items-start gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={18}
+                  color="#ef4444"
+                />
+                <Text className="flex-1 text-sm leading-5 text-red-600 dark:text-red-400">
+                  {formError}
+                </Text>
+              </View>
             ) : null}
 
-            {config.fields.map((field) => (
+            {config.fields.map((field, idx) => (
               <PaperInput
                 key={field.name}
                 label={field.label}
@@ -587,12 +602,13 @@ export default function CrudListScreen<
                 {...(field.numberOfLines
                   ? { numberOfLines: field.numberOfLines }
                   : {})}
-                className={field.multiline ? '' : 'mb-3'}
+                className={idx < config.fields.length - 1 ? 'mb-3' : ''}
               />
             ))}
           </Dialog.Content>
+
           <Dialog.Actions>
-            <Button onPress={closeModal} textColor="#6b7280">
+            <Button onPress={closeModal} textColor="#6b7280" compact>
               Cancelar
             </Button>
             <Button
@@ -601,6 +617,7 @@ export default function CrudListScreen<
               buttonColor="#DE393A"
               loading={isSaving}
               disabled={isSaving}
+              compact
             >
               Guardar
             </Button>
@@ -614,18 +631,37 @@ export default function CrudListScreen<
           visible={deleteTarget !== null}
           onDismiss={() => setDeleteTarget(null)}
         >
-          <Dialog.Title>{config.deleteDialogTitle}</Dialog.Title>
+          <Dialog.Title className="text-xl font-bold text-brand-ink dark:text-gray-100">
+            {config.deleteDialogTitle}
+          </Dialog.Title>
+
           <Dialog.Content>
-            <Text className="text-base text-gray-600 dark:text-gray-400">
-              {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
-            </Text>
-            <Text className="mt-2 text-sm text-gray-400 dark:text-gray-500">
-              Si {config.entityNamePluralLower} tiene productos asociados, se
-              desactivará en lugar de eliminarse.
-            </Text>
+            <View className="mb-4 items-center">
+              <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={28}
+                  color="#ef4444"
+                />
+              </View>
+              <Text className="text-base leading-6 text-gray-700 dark:text-gray-300">
+                {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
+              </Text>
+            </View>
+            <View className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+              <Text className="text-sm leading-5 text-gray-500 dark:text-gray-400">
+                Si {config.entityNamePluralLower} tiene productos asociados, se
+                desactivará en lugar de eliminarse.
+              </Text>
+            </View>
           </Dialog.Content>
+
           <Dialog.Actions>
-            <Button onPress={() => setDeleteTarget(null)} textColor="#6b7280">
+            <Button
+              onPress={() => setDeleteTarget(null)}
+              textColor="#6b7280"
+              compact
+            >
               Cancelar
             </Button>
             <Button
@@ -663,6 +699,7 @@ export default function CrudListScreen<
               buttonColor="#ef4444"
               loading={deleteMutation.isPending}
               disabled={deleteMutation.isPending}
+              compact
             >
               Eliminar
             </Button>
