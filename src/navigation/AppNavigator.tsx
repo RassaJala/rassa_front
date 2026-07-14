@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import Navbar from '@/components/Navbar';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminDashboardScreen from '@/screens/admin/AdminDashboardScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
@@ -41,7 +42,7 @@ function BuyerTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        header: () => <Navbar />,
         tabBarActiveTintColor: '#DE393A',
         tabBarInactiveTintColor: '#6b7280',
 
@@ -78,7 +79,7 @@ function FarmerTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        header: () => <Navbar />,
         tabBarActiveTintColor: '#DE393A',
         tabBarInactiveTintColor: '#6b7280',
 
@@ -119,7 +120,7 @@ function SellerTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        header: () => <Navbar />,
         tabBarActiveTintColor: '#DE393A',
         tabBarInactiveTintColor: '#6b7280',
 
@@ -171,7 +172,7 @@ function AdminTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        header: () => <Navbar />,
         tabBarActiveTintColor: '#DE393A',
         tabBarInactiveTintColor: '#6b7280',
 
