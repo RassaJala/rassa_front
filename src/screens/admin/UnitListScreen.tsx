@@ -52,6 +52,27 @@ const unitConfig = {
       return 'La abreviatura es obligatoria.';
     return null;
   },
+  extraDuplicateCheck: (
+    formValues: Record<string, string>,
+    items: Unit[] | undefined,
+    editingItem: Unit | null,
+  ) => {
+    const abbrev = (formValues.abreviatura ?? '').trim();
+    if (!abbrev) return null;
+
+    const abbrevLower = abbrev.toLocaleLowerCase();
+    const isAbbrevDuplicate = (items ?? []).some(
+      (u) =>
+        (u.abreviatura ?? '').toLocaleLowerCase() === abbrevLower &&
+        (!editingItem || u.id_unidad !== editingItem.id_unidad),
+    );
+
+    if (isAbbrevDuplicate) {
+      return `Ya existe una unidad con la abreviatura "${abbrev}".`;
+    }
+
+    return null;
+  },
 };
 
 export default function UnitListScreen({

@@ -69,6 +69,11 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     },
   ) => React.JSX.Element;
   readonly validate: (formValues: Record<string, string>) => string | null;
+  readonly extraDuplicateCheck?: (
+    formValues: Record<string, string>,
+    items: T[] | undefined,
+    editingItem: T | null,
+  ) => string | null;
 }
 
 // ── Navigation type ────────────────────────────────────────
@@ -224,14 +229,19 @@ export default function CrudListScreen<
 
   // ── Toast state ────────────────────────────────────────────
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   // ── Delete dialog state ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────
-  const toast = useCallback((message: string) => {
-    setToastMessage(message);
-  }, []);
+  const toast = useCallback(
+    (message: string, type: 'success' | 'error' = 'success') => {
+      setToastMessage(message);
+      setToastType(type);
+    },
+    [],
+  );
 
   const invalidateAndClose = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
@@ -341,7 +351,7 @@ export default function CrudListScreen<
     const nameLower = trimmedName.toLocaleLowerCase();
     const isDuplicate = (items ?? []).some(
       (item) =>
-        item.nombre.toLocaleLowerCase() === nameLower &&
+        (item.nombre ?? '').toLocaleLowerCase() === nameLower &&
         (!editingItem || config.getId(item) !== config.getId(editingItem)),
     );
 
@@ -351,6 +361,21 @@ export default function CrudListScreen<
       );
 
       return;
+    }
+
+    // Extra duplicate check (e.g. abbreviation for units)
+    if (config.extraDuplicateCheck) {
+      const extraError = config.extraDuplicateCheck(
+        formValues,
+        items,
+        editingItem,
+      );
+
+      if (extraError) {
+        setFormError(extraError);
+
+        return;
+      }
     }
 
     // Build payload
@@ -688,6 +713,12 @@ export default function CrudListScreen<
                           });
                           toast(`Se desactivó ${config.entityName} "${name}"`);
                         },
+                        onError: () => {
+                          toast(
+                            `Error al eliminar ${config.entityName} "${name}". Intenta de nuevo.`,
+                            'error',
+                          );
+                        },
                       },
                     );
                     setDeleteTarget(null);
@@ -710,7 +741,11 @@ export default function CrudListScreen<
       <Toast
         visible={toastMessage !== null}
         message={toastMessage ?? ''}
-        onDismiss={() => setToastMessage(null)}
+        type={toastType}
+        onDismiss={() => {
+          setToastMessage(null);
+          setToastType('success');
+        }}
       />
     </View>
   );
