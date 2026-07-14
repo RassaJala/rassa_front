@@ -225,14 +225,16 @@ function ProfileEditTab({
           <TouchableOpacity
             key={g}
             onPress={() => form.setSexo(g)}
-            className={`flex-1 rounded-xl border py-2.5 ${form.sexo === g
+            className={`flex-1 rounded-xl border py-2.5 ${
+              form.sexo === g
                 ? 'border-emerald-600 bg-emerald-50'
                 : 'border-slate-300 bg-white'
-              }`}
+            }`}
           >
             <Text
-              className={`text-center font-medium ${form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
-                }`}
+              className={`text-center font-medium ${
+                form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
+              }`}
             >
               {getGenderLabel(g)}
             </Text>
@@ -635,12 +637,14 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${activeTab === 'ver' ? 'bg-white shadow-sm' : ''
-            }`}
+          className={`flex-1 rounded-lg py-2 ${
+            activeTab === 'ver' ? 'bg-white shadow-sm' : ''
+          }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${activeTab === 'ver' ? 'text-emerald-700' : 'text-slate-600'
-              }`}
+            className={`text-center text-sm font-medium ${
+              activeTab === 'ver' ? 'text-emerald-700' : 'text-slate-600'
+            }`}
           >
             Ver
           </Text>
@@ -651,12 +655,14 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${activeTab === 'editar' ? 'bg-white shadow-sm' : ''
-            }`}
+          className={`flex-1 rounded-lg py-2 ${
+            activeTab === 'editar' ? 'bg-white shadow-sm' : ''
+          }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${activeTab === 'editar' ? 'text-emerald-700' : 'text-slate-600'
-              }`}
+            className={`text-center text-sm font-medium ${
+              activeTab === 'editar' ? 'text-emerald-700' : 'text-slate-600'
+            }`}
           >
             Editar
           </Text>
@@ -667,12 +673,14 @@ export default function ProfileScreen(): React.JSX.Element {
             setErrorMessage(null);
             setSuccessMessage(null);
           }}
-          className={`flex-1 rounded-lg py-2 ${activeTab === 'password' ? 'bg-white shadow-sm' : ''
-            }`}
+          className={`flex-1 rounded-lg py-2 ${
+            activeTab === 'password' ? 'bg-white shadow-sm' : ''
+          }`}
         >
           <Text
-            className={`text-center text-sm font-medium ${activeTab === 'password' ? 'text-emerald-700' : 'text-slate-600'
-              }`}
+            className={`text-center text-sm font-medium ${
+              activeTab === 'password' ? 'text-emerald-700' : 'text-slate-600'
+            }`}
           >
             Seguridad
           </Text>
