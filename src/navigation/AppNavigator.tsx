@@ -21,6 +21,8 @@ import { useAuth } from '@/store/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const BuyerStack = createNativeStackNavigator();
+const FarmerStack = createNativeStackNavigator();
 
 function AuthStack() {
   return (
@@ -36,8 +38,16 @@ function BuyerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
+  );
+}
+
+function BuyerNavigator() {
+  return (
+    <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
+      <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
+      <BuyerStack.Screen name="Profile" component={ProfileScreen} />
+    </BuyerStack.Navigator>
   );
 }
 
@@ -46,8 +56,16 @@ function FarmerTabs() {
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="MyProducts" component={MyProductsScreen} />
       <Tab.Screen name="AddProduct" component={AddProductScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
+  );
+}
+
+function FarmerNavigator() {
+  return (
+    <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
+      <FarmerStack.Screen name="FarmerTabs" component={FarmerTabs} />
+      <FarmerStack.Screen name="Profile" component={ProfileScreen} />
+    </FarmerStack.Navigator>
   );
 }
 
@@ -65,7 +83,7 @@ export default function AppNavigator(): React.JSX.Element {
   // Authenticated: route by role
   switch (user?.role) {
     case 'farmer':
-      return <FarmerTabs />;
+      return <FarmerNavigator />;
     case 'admin':
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -73,7 +91,7 @@ export default function AppNavigator(): React.JSX.Element {
         </Stack.Navigator>
       );
     case 'buyer':
-      return <BuyerTabs />;
+      return <BuyerNavigator />;
     case undefined:
     default:
       return <SplashScreen />;

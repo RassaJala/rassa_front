@@ -1,21 +1,19 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
-import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { Localidad, Municipio } from '@/types';
@@ -47,51 +45,51 @@ interface ProfileViewTabProps {
 
 function ProfileViewTab({ user }: ProfileViewTabProps): React.JSX.Element {
   return (
-    <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-      <Text className="mb-4 border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
         Detalles Personales
       </Text>
 
       <View className="space-y-4">
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Nombre Completo</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Nombre Completo</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.nombre} {user?.apellido_paterno}{' '}
             {user?.apellido_materno ?? ''}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Teléfono</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Teléfono</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.telefono ?? 'No especificado'}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Fecha de Nacimiento</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Fecha de Nacimiento</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.fecha_nacimiento}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Género</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Género</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.genero ? getGenderLabel(user.genero) : 'No especificado'}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Dirección</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Dirección</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.direccion}
           </Text>
         </View>
 
         <View className="mb-3">
-          <Text className="text-xs text-slate-500">Localidad</Text>
-          <Text className="text-base font-medium text-slate-800">
+          <Text className="text-xs text-gray-500 dark:text-gray-400">Localidad</Text>
+          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
             {user?.localidad_nombre}
           </Text>
         </View>
@@ -153,102 +151,80 @@ function ProfileEditTab({
   callbacks,
 }: ProfileEditTabProps): React.JSX.Element {
   return (
-    <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-      <Text className="mb-4 border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
         Editar Perfil
       </Text>
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">Nombre *</Text>
       <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Nombre *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="Nombre"
-        placeholderTextColor={colors.placeholder}
         value={form.nombre}
         onChangeText={(val) => form.setNombre(cleanName(val))}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Apellido Paterno *
-      </Text>
       <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Apellido Paterno *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="Apellido Paterno"
-        placeholderTextColor={colors.placeholder}
         value={form.apellidoPaterno}
         onChangeText={(val) => form.setApellidoPaterno(cleanName(val))}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Apellido Materno
-      </Text>
       <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Apellido Materno"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="Apellido Materno"
-        placeholderTextColor={colors.placeholder}
         value={form.apellidoMaterno}
         onChangeText={(val) => form.setApellidoMaterno(cleanName(val))}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Teléfono *
-      </Text>
       <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Teléfono *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="xxx-xxx-xx-xx"
-        placeholderTextColor={colors.placeholder}
         keyboardType="phone-pad"
         value={form.telefono}
         onChangeText={(val) => form.setTelefono(formatPhoneNumber(val))}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Fecha de Nacimiento *
-      </Text>
       <TouchableOpacity
         testID="birthdate-pressable"
         onPress={callbacks.onOpenDatePicker}
       >
-        <View pointerEvents="none">
-          <TextInput
-            className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor={colors.placeholder}
-            value={form.fechaNacimiento}
-            editable={false}
-          />
-        </View>
+        <TextInput
+          mode="outlined"
+          label="Fecha de Nacimiento *"
+          className="mb-4 bg-white dark:bg-gray-900"
+          placeholder="AAAA-MM-DD"
+          value={form.fechaNacimiento}
+          showSoftInputOnFocus={false}
+          onChangeText={form.setFechaNacimiento}
+        />
       </TouchableOpacity>
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">Género *</Text>
-      <View className="mb-3 flex-row space-x-2">
-        {(['M', 'F', 'O'] as const).map((g) => (
-          <TouchableOpacity
-            key={g}
-            onPress={() => form.setSexo(g)}
-            className={`flex-1 rounded-xl border py-2.5 ${
-              form.sexo === g
-                ? 'border-emerald-600 bg-emerald-50'
-                : 'border-slate-300 bg-white'
-            }`}
-          >
-            <Text
-              className={`text-center font-medium ${
-                form.sexo === g ? 'text-emerald-700' : 'text-slate-600'
-              }`}
-            >
-              {getGenderLabel(g)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <Text className="mb-2 text-sm font-normal text-gray-700 dark:text-gray-300">Género *</Text>
+      <SegmentedButtons
+        value={form.sexo}
+        onValueChange={form.setSexo}
+        buttons={[
+          { value: 'M', label: 'Masculino' },
+          { value: 'F', label: 'Femenino' },
+          { value: 'O', label: 'Otro' },
+        ]}
+        style={styles.segmentedButtons}
+      />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Dirección *
-      </Text>
       <TextInput
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Dirección *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="Calle, número, colonia"
-        placeholderTextColor={colors.placeholder}
         value={form.domicilio}
         onChangeText={(val) => form.setDomicilio(cleanAddress(val))}
       />
@@ -276,7 +252,8 @@ function ProfileEditTab({
         mode="contained"
         disabled={isSubmitting}
         onPress={callbacks.handleUpdateProfile}
-        style={styles.submitButton}
+        buttonColor="#DE393A"
+        className="mt-4 rounded-lg"
         contentStyle={styles.buttonContent}
       >
         {isSubmitting ? <ActivityIndicator color="#fff" /> : 'Guardar Cambios'}
@@ -308,45 +285,39 @@ function ProfilePasswordTab({
   handleChangePassword,
 }: ProfilePasswordTabProps): React.JSX.Element {
   return (
-    <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-      <Text className="mb-4 border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
         Cambiar Contraseña
       </Text>
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Contraseña Actual *
-      </Text>
       <TextInput
         testID="old-password-input"
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Contraseña Actual *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="••••••••"
-        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={oldPassword}
         onChangeText={setOldPassword}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Nueva Contraseña (mínimo 6 caracteres) *
-      </Text>
       <TextInput
         testID="new-password-input"
-        className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Nueva Contraseña (mínimo 6 caracteres) *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="••••••••"
-        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={newPassword}
         onChangeText={setNewPassword}
       />
 
-      <Text className="mb-1 text-sm font-medium text-slate-700">
-        Confirmar Nueva Contraseña *
-      </Text>
       <TextInput
         testID="confirm-password-input"
-        className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+        mode="outlined"
+        label="Confirmar Nueva Contraseña *"
+        className="mb-4 bg-white dark:bg-gray-900"
         placeholder="••••••••"
-        placeholderTextColor={colors.placeholder}
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -357,7 +328,8 @@ function ProfilePasswordTab({
         mode="contained"
         disabled={isSubmitting}
         onPress={handleChangePassword}
-        style={styles.submitButton}
+        buttonColor="#DE393A"
+        className="mt-4 rounded-lg"
         contentStyle={styles.buttonContent}
       >
         {isSubmitting ? (
@@ -608,97 +580,55 @@ export default function ProfileScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-white px-6 py-6"
+      className="flex-1 bg-gray-50 px-4 py-4 dark:bg-gray-955"
       contentContainerStyle={styles.scrollContent}
     >
       {/* Profile Header */}
-      <View className="mb-6 items-center rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-        <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-emerald-600">
+      <View className="mb-6 items-center rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-brand-red-coral">
           <Text className="text-2xl font-bold text-white">
             {user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'}
           </Text>
         </View>
-        <Text className="text-xl font-semibold text-slate-900">
+        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
           {user?.nombre} {user?.apellido_paterno}
         </Text>
-        <Text className="text-sm text-slate-500">{user?.email}</Text>
-        <View className="mt-2 rounded-full bg-emerald-100 px-3 py-1">
-          <Text className="text-xs font-semibold text-emerald-800">
+        <Text className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</Text>
+        <View className="mt-2 rounded-full bg-red-50 px-3 py-1 dark:bg-brand-red-coral/20">
+          <Text className="text-xs font-bold text-brand-red-coral">
             {getRoleLabel(user?.role)}
           </Text>
         </View>
       </View>
 
       {/* Tabs */}
-      <View className="mb-6 flex-row rounded-xl border border-slate-200 bg-slate-50 p-1">
-        <TouchableOpacity
-          onPress={() => {
-            setActiveTab('ver');
-            setErrorMessage(null);
-            setSuccessMessage(null);
-          }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'ver' ? 'bg-white shadow-sm' : ''
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'ver' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
-          >
-            Ver
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            setActiveTab('editar');
-            setErrorMessage(null);
-            setSuccessMessage(null);
-          }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'editar' ? 'bg-white shadow-sm' : ''
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'editar' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
-          >
-            Editar
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            setActiveTab('password');
-            setErrorMessage(null);
-            setSuccessMessage(null);
-          }}
-          className={`flex-1 rounded-lg py-2 ${
-            activeTab === 'password' ? 'bg-white shadow-sm' : ''
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === 'password' ? 'text-emerald-700' : 'text-slate-600'
-            }`}
-          >
-            Seguridad
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <SegmentedButtons
+        value={activeTab}
+        onValueChange={(val) => {
+          setActiveTab(val);
+          setErrorMessage(null);
+          setSuccessMessage(null);
+        }}
+        buttons={[
+          { value: 'ver', label: 'Ver' },
+          { value: 'editar', label: 'Editar' },
+          { value: 'password', label: 'Seguridad' },
+        ]}
+        style={styles.tabsButtons}
+      />
 
       {/* Feedback Messages */}
       {successMessage ? (
-        <View className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4">
-          <Text className="text-center text-sm font-medium text-green-800">
+        <View className="mb-4 rounded-xl border border-brand-green-forest bg-brand-green-forest/10 p-4">
+          <Text className="text-center text-sm font-bold text-brand-green-forest">
             {successMessage}
           </Text>
         </View>
       ) : null}
 
       {errorMessage ? (
-        <View className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4">
-          <Text className="text-center text-sm font-medium text-red-800">
+        <View className="mb-4 rounded-xl border border-red-300 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-955/20">
+          <Text className="text-center text-sm font-bold text-red-600 dark:text-red-400">
             {errorMessage}
           </Text>
         </View>
@@ -746,12 +676,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    marginTop: 16,
-  },
   buttonContent: {
     paddingVertical: 6,
   },
+  segmentedButtons: {
+    marginBottom: 16,
+  },
+  tabsButtons: {
+    marginBottom: 24,
+  },
 });
+

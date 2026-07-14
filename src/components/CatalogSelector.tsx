@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '@/constants/colors';
 import type { Localidad, Municipio } from '@/types';
 
 interface CatalogSelectorProps {
@@ -50,33 +49,37 @@ export default function CatalogSelector({
   const [showMunicipioModal, setShowMunicipioModal] = useState(false);
   const [showLocalidadModal, setShowLocalidadModal] = useState(false);
 
+  const brandCoral = '#DE393A';
+
   return (
     <View>
       {/* Selector de Municipio */}
-      <Text className="mb-1 text-sm font-medium text-slate-700">
+      <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
         Municipio *
       </Text>
       {errorMunicipios ? (
-        <View className="mb-3 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2">
-          <Text className="text-sm text-red-600">
+        <View className="mb-3 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
+          <Text className="text-sm text-red-600 dark:text-red-400">
             Error al cargar municipios
           </Text>
           <TouchableOpacity onPress={() => void refetchMunicipios()}>
-            <Text className="font-semibold text-red-700">Reintentar</Text>
+            <Text className="font-semibold text-red-700 dark:text-red-300">Reintentar</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <TouchableOpacity
           onPress={() => setShowMunicipioModal(true)}
           disabled={isLoadingMunicipios}
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          className="mb-3 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
         >
           {isLoadingMunicipios ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={brandCoral} />
           ) : (
             <Text
               className={`text-base ${
-                selectedMunicipioNombre ? 'text-slate-900' : 'text-slate-400'
+                selectedMunicipioNombre
+                  ? 'text-brand-ink dark:text-gray-100'
+                  : 'text-gray-400 dark:text-gray-500'
               }`}
             >
               {selectedMunicipioNombre || 'Seleccionar Municipio'}
@@ -86,14 +89,14 @@ export default function CatalogSelector({
       )}
 
       {/* Selector de Localidad */}
-      <Text className="mb-1 text-sm font-medium text-slate-700">
+      <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
         Localidad *
       </Text>
       {selectedMunicipioId && errorLocalidades ? (
-        <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2">
-          <Text className="text-sm text-red-600">No se pudieron cargar</Text>
+        <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
+          <Text className="text-sm text-red-600 dark:text-red-400">No se pudieron cargar</Text>
           <TouchableOpacity onPress={() => void refetchLocalidades()}>
-            <Text className="font-semibold text-red-700">Reintentar</Text>
+            <Text className="font-semibold text-red-700 dark:text-red-300">Reintentar</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -106,14 +109,16 @@ export default function CatalogSelector({
             setShowLocalidadModal(true);
           }}
           disabled={isLoadingLocalidades}
-          className="mb-4 rounded-xl border border-slate-300 bg-white px-4 py-3"
+          className="mb-4 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
         >
           {isLoadingLocalidades ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={brandCoral} />
           ) : (
             <Text
               className={`text-base ${
-                localidadNombre ? 'text-slate-900' : 'text-slate-400'
+                localidadNombre
+                  ? 'text-brand-ink dark:text-gray-100'
+                  : 'text-gray-400 dark:text-gray-500'
               }`}
             >
               {localidadNombre || 'Seleccionar Localidad'}
@@ -125,13 +130,13 @@ export default function CatalogSelector({
       {/* Modal Municipio */}
       <Modal visible={showMunicipioModal} animationType="slide" transparent>
         <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
+          <View className="h-2/3 rounded-t-xl bg-white p-6 dark:bg-gray-900">
             <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
+              <Text className="text-lg font-semibold text-brand-ink dark:text-gray-100">
                 Seleccionar Municipio
               </Text>
               <Pressable onPress={() => setShowMunicipioModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
+                <Text className="font-semibold text-brand-red-coral">Cerrar</Text>
               </Pressable>
             </View>
 
@@ -144,9 +149,9 @@ export default function CatalogSelector({
                     onSelectMunicipio(item.id_municipio, item.nombre);
                     setShowMunicipioModal(false);
                   }}
-                  className="border-b border-slate-100 py-4"
+                  className="border-b border-gray-100 py-4 dark:border-gray-800"
                 >
-                  <Text className="text-base text-slate-800">
+                  <Text className="text-base text-brand-ink dark:text-gray-200">
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
@@ -159,13 +164,13 @@ export default function CatalogSelector({
       {/* Modal Localidad */}
       <Modal visible={showLocalidadModal} animationType="slide" transparent>
         <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-3xl bg-white p-6">
+          <View className="h-2/3 rounded-t-xl bg-white p-6 dark:bg-gray-900">
             <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
+              <Text className="text-lg font-semibold text-brand-ink dark:text-gray-100">
                 Seleccionar Localidad
               </Text>
               <Pressable onPress={() => setShowLocalidadModal(false)}>
-                <Text className="font-semibold text-emerald-600">Cerrar</Text>
+                <Text className="font-semibold text-brand-red-coral">Cerrar</Text>
               </Pressable>
             </View>
 
@@ -178,9 +183,9 @@ export default function CatalogSelector({
                     onSelectLocalidad(item.id_localidad, item.nombre);
                     setShowLocalidadModal(false);
                   }}
-                  className="border-b border-slate-100 py-4"
+                  className="border-b border-gray-100 py-4 dark:border-gray-800"
                 >
-                  <Text className="text-base text-slate-800">
+                  <Text className="text-base text-brand-ink dark:text-gray-200">
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
@@ -192,3 +197,4 @@ export default function CatalogSelector({
     </View>
   );
 }
+

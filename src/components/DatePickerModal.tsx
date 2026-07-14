@@ -110,25 +110,25 @@ export default function DatePickerModal({
         className="flex-1 items-center justify-center bg-black/50"
       >
         <Pressable
-          className="w-[88%] max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+          className="w-[88%] max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900"
           onPress={(e) => e.stopPropagation()} // Prevent closing when tapping card
         >
           {/* Modal Header */}
-          <Text className="mb-4 text-center text-xl font-bold text-slate-800">
+          <Text className="mb-4 text-center text-xl font-bold text-brand-ink dark:text-gray-100">
             Fecha de Nacimiento
           </Text>
 
           {/* Current Selection Indicators */}
-          <View className="mb-4 flex-row justify-between rounded-xl bg-slate-100 p-2">
+          <View className="mb-4 flex-row justify-between rounded-xl bg-gray-100 p-2 dark:bg-gray-800">
             <TouchableOpacity
               testID="tab-year-selector"
               onPress={() => setStep('year')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'year' ? 'bg-white shadow-sm' : ''
+                step === 'year' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-slate-500">Año</Text>
-              <Text className="text-sm font-semibold text-emerald-700">
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Año</Text>
+              <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedYear ?? '----'}
               </Text>
             </TouchableOpacity>
@@ -138,11 +138,11 @@ export default function DatePickerModal({
               disabled={selectedYear === null}
               onPress={() => setStep('month')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'month' ? 'bg-white shadow-sm' : ''
+                step === 'month' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-slate-500">Mes</Text>
-              <Text className="text-sm font-semibold text-emerald-700">
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Mes</Text>
+              <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
               </Text>
             </TouchableOpacity>
@@ -152,11 +152,11 @@ export default function DatePickerModal({
               disabled={selectedMonth === null}
               onPress={() => setStep('day')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'day' ? 'bg-white shadow-sm' : ''
+                step === 'day' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
-              <Text className="text-xs font-medium text-slate-500">Día</Text>
-              <Text className="text-sm font-semibold text-emerald-700">
+              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">Día</Text>
+              <Text className="text-sm font-semibold text-brand-red-coral">
                 {selectedDay ?? '--'}
               </Text>
             </TouchableOpacity>
@@ -171,15 +171,15 @@ export default function DatePickerModal({
                     key={item}
                     testID={`year-option-${item}`}
                     onPress={() => handleSelectYear(item)}
-                    className={`items-center border-b border-slate-100 py-3 ${
-                      selectedYear === item ? 'bg-emerald-50' : ''
+                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
+                      selectedYear === item ? 'bg-red-50 dark:bg-brand-red-coral/20' : ''
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
                         selectedYear === item
-                          ? 'text-emerald-700'
-                          : 'text-slate-700'
+                          ? 'text-brand-red-coral'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -196,15 +196,15 @@ export default function DatePickerModal({
                     key={item}
                     testID={`month-option-${index}`}
                     onPress={() => handleSelectMonth(index)}
-                    className={`items-center border-b border-slate-100 py-3 ${
-                      selectedMonth === index ? 'bg-emerald-50' : ''
+                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
+                      selectedMonth === index ? 'bg-red-50 dark:bg-brand-red-coral/20' : ''
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
                         selectedMonth === index
-                          ? 'text-emerald-700'
-                          : 'text-slate-700'
+                          ? 'text-brand-red-coral'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -217,26 +217,22 @@ export default function DatePickerModal({
             {step === 'day' && (
               <ScrollView
                 testID="days-grid"
-                contentContainerStyle={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'flex-start',
-                }}
+                contentContainerClassName="flex-row flex-wrap justify-start"
               >
                 {daysArray.map((item) => (
                   <TouchableOpacity
                     key={item}
                     testID={`day-option-${item}`}
                     onPress={() => handleSelectDay(item)}
-                    className={`m-[1%] aspect-square w-[18%] items-center justify-center rounded-xl border border-slate-100 ${
+                    className={`m-[1%] aspect-square w-[18%] items-center justify-center rounded-xl border border-gray-100 dark:border-gray-800 ${
                       selectedDay === item
-                        ? 'border-emerald-600 bg-emerald-600'
-                        : 'bg-white'
+                        ? 'border-brand-red-coral bg-brand-red-coral'
+                        : 'bg-white dark:bg-gray-800'
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
-                        selectedDay === item ? 'text-white' : 'text-slate-700'
+                        selectedDay === item ? 'text-white' : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -248,13 +244,13 @@ export default function DatePickerModal({
           </View>
 
           {/* Action Buttons */}
-          <View className="mt-4 flex-row justify-end space-x-3 border-t border-slate-100 pt-3">
+          <View className="mt-4 flex-row justify-end space-x-3 border-t border-gray-100 pt-3 dark:border-gray-800">
             <TouchableOpacity
               testID="btn-cancel"
               onPress={onClose}
               className="px-4 py-2"
             >
-              <Text className="text-base font-medium text-slate-500">
+              <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
                 Cancelar
               </Text>
             </TouchableOpacity>
@@ -264,3 +260,4 @@ export default function DatePickerModal({
     </Modal>
   );
 }
+

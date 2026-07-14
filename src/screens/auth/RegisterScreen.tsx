@@ -4,11 +4,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
@@ -16,11 +15,9 @@ import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
-import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { RegisterRole } from '@/types';
-import { getGenderLabel } from '@/utils/gender';
 import {
   cleanAddress,
   cleanName,
@@ -149,137 +146,111 @@ export default function RegisterScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-white px-6 py-8"
+      className="flex-1 bg-gray-50 px-4 py-4 dark:bg-gray-950"
       contentContainerStyle={styles.scrollContent}
     >
-      <View className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-        <Text className="mb-2 text-2xl font-semibold text-slate-900">
+      <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <Text className="mb-2 text-2xl font-bold text-brand-ink dark:text-gray-100">
           Crear cuenta
         </Text>
-        <Text className="mb-6 text-sm text-slate-600">
+        <Text className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           Completa los siguientes datos para registrarte.
         </Text>
 
         {/* Account Info */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Correo electrónico *
-        </Text>
         <TextInput
+          mode="outlined"
+          label="Correo electrónico *"
           autoCapitalize="none"
           keyboardType="email-address"
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="ejemplo@correo.com"
-          placeholderTextColor={colors.placeholder}
           value={email}
           onChangeText={setEmail}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Contraseña (mínimo 6 caracteres) *
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          mode="outlined"
+          label="Contraseña (mínimo 6 caracteres) *"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="••••••••"
-          placeholderTextColor={colors.placeholder}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
 
         {/* Personal Details */}
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Nombre *
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          mode="outlined"
+          label="Nombre *"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="Nombre(s)"
-          placeholderTextColor={colors.placeholder}
           value={nombre}
           onChangeText={(val) => setNombre(cleanName(val))}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Apellido Paterno *
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          mode="outlined"
+          label="Apellido Paterno *"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="Apellido Paterno"
-          placeholderTextColor={colors.placeholder}
           value={apellidoPaterno}
           onChangeText={(val) => setApellidoPaterno(cleanName(val))}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Apellido Materno
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          mode="outlined"
+          label="Apellido Materno"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="Apellido Materno"
-          placeholderTextColor={colors.placeholder}
           value={apellidoMaterno}
           onChangeText={(val) => setApellidoMaterno(cleanName(val))}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Teléfono *
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-          placeholder="xxx-xxx-xx-xx"
-          placeholderTextColor={colors.placeholder}
+          mode="outlined"
+          label="Teléfono *"
+          className="mb-4 bg-white dark:bg-gray-900"
+          placeholder="10 dígitos"
           keyboardType="phone-pad"
           value={telefono}
           onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
         />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Fecha de Nacimiento *
-        </Text>
         <TouchableOpacity
           testID="birthdate-pressable"
           onPress={() => setIsDatePickerVisible(true)}
         >
-          <View pointerEvents="none">
-            <TextInput
-              className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
-              placeholder="AAAA-MM-DD"
-              placeholderTextColor={colors.placeholder}
-              value={fechaNacimiento}
-              editable={false}
-            />
-          </View>
+          <TextInput
+            mode="outlined"
+            label="Fecha de Nacimiento *"
+            className="mb-4 bg-white dark:bg-gray-900"
+            placeholder="AAAA-MM-DD"
+            value={fechaNacimiento}
+            showSoftInputOnFocus={false}
+            onChangeText={setFechaNacimiento}
+          />
         </TouchableOpacity>
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
+        <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           Género *
         </Text>
-        <View className="mb-3 flex-row space-x-2">
-          {(['M', 'F', 'O'] as const).map((g) => (
-            <TouchableOpacity
-              key={g}
-              onPress={() => setSexo(g)}
-              className={`flex-1 rounded-xl border py-2.5 ${
-                sexo === g
-                  ? 'border-emerald-600 bg-emerald-50'
-                  : 'border-slate-300 bg-white'
-              }`}
-            >
-              <Text
-                className={`text-center font-medium ${sexo === g ? 'text-emerald-700' : 'text-slate-600'}`}
-              >
-                {getGenderLabel(g)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <SegmentedButtons
+          value={sexo}
+          onValueChange={setSexo}
+          buttons={[
+            { value: 'M', label: 'Masculino' },
+            { value: 'F', label: 'Femenino' },
+            { value: 'O', label: 'Otro' },
+          ]}
+          style={styles.segmentedButtons}
+        />
 
-        <Text className="mb-1 text-sm font-medium text-slate-700">
-          Dirección *
-        </Text>
         <TextInput
-          className="mb-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base text-slate-900"
+          mode="outlined"
+          label="Dirección *"
+          className="mb-4 bg-white dark:bg-gray-900"
           placeholder="Calle, número, colonia"
-          placeholderTextColor={colors.placeholder}
           value={domicilio}
           onChangeText={(val) => setDomicilio(cleanAddress(val))}
         />
@@ -313,14 +284,15 @@ export default function RegisterScreen(): React.JSX.Element {
           mode="contained"
           disabled={isSubmitting}
           onPress={() => void handleRegister()}
-          style={styles.submitButton}
+          buttonColor="#DE393A"
+          className="rounded-lg"
           contentStyle={styles.buttonContent}
         >
           {isSubmitting ? <ActivityIndicator color="#fff" /> : 'Registrarse'}
         </Button>
 
         <TouchableOpacity onPress={() => navigation.goBack()} className="mt-4">
-          <Text className="text-center text-sm font-medium text-slate-500">
+          <Text className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
             ¿Ya tienes cuenta? Inicia sesión
           </Text>
         </TouchableOpacity>
@@ -339,11 +311,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-  },
   buttonContent: {
     paddingVertical: 6,
   },
+  segmentedButtons: {
+    marginBottom: 16,
+  },
 });
+

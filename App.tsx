@@ -1,5 +1,12 @@
 import '~/styles/global.css';
 import React from 'react';
+import {
+  MD3DarkTheme,
+  MD3LightTheme,
+  Provider as PaperProvider,
+} from 'react-native-paper';
+
+import { useColorScheme } from 'nativewind';
 
 import { StatusBar } from 'expo-status-bar';
 
@@ -12,14 +19,44 @@ import { AuthProvider } from '~/store/AuthContext';
 const queryClient = new QueryClient();
 
 export default function App(): React.JSX.Element {
+  const { colorScheme } = useColorScheme();
+  const brandCoral = '#DE393A';
+
+  const brandCoralLight = '#FEF2F2'; // red-50 tint — active segment background (light)
+  const brandCoralDark = '#3B1212';  // dark coral tint — active segment background (dark)
+
+  const theme =
+    colorScheme === 'dark'
+      ? {
+          ...MD3DarkTheme,
+          colors: {
+            ...MD3DarkTheme.colors,
+            primary: brandCoral,
+            secondaryContainer: brandCoralDark,
+            onSecondaryContainer: brandCoral,
+          },
+        }
+      : {
+          ...MD3LightTheme,
+          colors: {
+            ...MD3LightTheme.colors,
+            primary: brandCoral,
+            secondaryContainer: brandCoralLight,
+            onSecondaryContainer: brandCoral,
+          },
+        };
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <NavigationContainer>
-          <AppNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
+        <PaperProvider theme={theme}>
+          <NavigationContainer>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </PaperProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
