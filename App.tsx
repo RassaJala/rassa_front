@@ -8,10 +8,9 @@ import {
 
 import { StatusBar } from 'expo-status-bar';
 
-import { useColorScheme } from 'nativewind';
-
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useColorScheme } from 'nativewind';
 
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
