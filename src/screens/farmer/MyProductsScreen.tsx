@@ -5,8 +5,8 @@ import LogoutButton from '@/components/LogoutButton';
 
 export default function MyProductsScreen(): React.JSX.Element {
   return (
-    <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="text-lg text-gray-600">
+    <View className="flex-1 items-center justify-center bg-white px-6 dark:bg-gray-950">
+      <Text className="text-lg text-gray-600 dark:text-gray-300">
         My Products (Farmer) - Coming soon
       </Text>
 

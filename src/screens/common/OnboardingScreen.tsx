@@ -67,7 +67,7 @@ export default function OnboardingScreen({
           {/* Logo */}
           <Image
             source={logo}
-            className="mb-10 h-50 w-50 rounded-full"
+            className="h-50 w-50 mb-10 rounded-full"
             resizeMode="contain"
           />
 
