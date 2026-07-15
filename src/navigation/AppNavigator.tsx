@@ -9,6 +9,7 @@ import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -62,6 +63,7 @@ function AdminScreens() {
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+      <AdminStack.Screen name="UserManagement" component={UserManagementScreen} />
     </AdminStack.Navigator>
   );
 }

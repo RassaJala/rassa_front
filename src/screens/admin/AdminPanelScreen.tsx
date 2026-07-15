@@ -17,6 +17,12 @@ interface Props {
 
 const menuItems = [
   {
+    key: 'UserManagement',
+    label: 'Usuarios',
+    icon: '👥',
+    description: 'Gestionar usuarios, roles y estados de cuenta',
+  },
+  {
     key: 'CategoryList',
     label: 'Categorías',
     icon: '📂',
@@ -49,7 +55,9 @@ export default function AdminPanelScreen({
           <Pressable
             key={item.key}
             onPress={() =>
-              navigation.navigate(item.key as 'CategoryList' | 'UnitList')
+              navigation.navigate(
+                item.key as 'UserManagement' | 'CategoryList' | 'UnitList',
+              )
             }
             className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
