@@ -12,10 +12,11 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { useColorScheme } from 'nativewind';
 
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
 import { getLoginErrorMessage } from '@/utils/authError';
 
-const PLACEHOLDER_COLOR = '#9ca3af';
+const PLACEHOLDER_COLOR = colors.textTertiary;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
@@ -95,7 +96,7 @@ export default function LoginScreen(): React.JSX.Element {
         <MaterialCommunityIcons
           name={isDark ? 'weather-sunny' : 'weather-night'}
           size={20}
-          color={isDark ? '#ffffff' : '#1D1D1D'}
+          color={isDark ? colors.surface : colors.iconDark}
         />
       </Pressable>
 
@@ -164,7 +165,7 @@ export default function LoginScreen(): React.JSX.Element {
           }`}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text className="text-center text-base font-semibold text-white">
               Ingresar

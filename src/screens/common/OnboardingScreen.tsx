@@ -5,6 +5,8 @@ import type { ImageSourcePropType } from 'react-native';
 import { Animated, Image, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 
+import { colors } from '@/constants/colors';
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- require() retorna any en React Native; el tipo se declara explícitamente.
 const logo: ImageSourcePropType = require('../../../assets/logo-rassa.jpeg');
 
@@ -102,8 +104,8 @@ export default function OnboardingScreen({
         {/* Botón */}
         <Button
           mode="contained"
-          buttonColor="#DE393A"
-          textColor="#ffffff"
+          buttonColor={colors.brandRedCoral}
+          textColor={colors.surface}
           onPress={goToNext}
           className="w-56 rounded-full"
         >
@@ -114,7 +116,7 @@ export default function OnboardingScreen({
         {current < slides.length - 1 && (
           <Button
             mode="text"
-            textColor="#6b7280"
+            textColor={colors.textSecondary}
             onPress={onFinish}
             className="mt-4"
           >

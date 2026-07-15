@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useColorScheme } from 'nativewind';
 
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
 import type { UserRole } from '@/types';
 
@@ -78,7 +79,13 @@ export default function Navbar(): React.JSX.Element {
               <MaterialCommunityIcons
                 name={item.icon as never}
                 size={18}
-                color={isActive ? '#3A6D56' : isDark ? '#9ca3af' : '#6b7280'}
+                color={
+                  isActive
+                    ? colors.brandGreenForest
+                    : isDark
+                      ? colors.textTertiary
+                      : colors.textSecondary
+                }
               />
 
               <Text
@@ -107,7 +114,7 @@ export default function Navbar(): React.JSX.Element {
         <MaterialCommunityIcons
           name={isDark ? 'weather-sunny' : 'weather-night'}
           size={20}
-          color={isDark ? '#ffffff' : '#1D1D1D'}
+          color={isDark ? colors.surface : colors.iconDark}
         />
       </Pressable>
 
@@ -118,7 +125,11 @@ export default function Navbar(): React.JSX.Element {
         accessibilityRole="button"
         hitSlop={8}
       >
-        <MaterialCommunityIcons name="logout" size={18} color="#DE393A" />
+        <MaterialCommunityIcons
+          name="logout"
+          size={18}
+          color={colors.brandRedCoral}
+        />
 
         <Text className="ml-1.5 text-sm font-medium text-brand-red-coral">
           Salir
