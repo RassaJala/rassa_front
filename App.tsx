@@ -1,7 +1,8 @@
-import '~/styles/global.css';
 import React from 'react';
+import '~/styles/global.css';
 
 import { StatusBar } from 'expo-status-bar';
+import { PaperProvider } from 'react-native-paper';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,12 +15,14 @@ const queryClient = new QueryClient();
 export default function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NavigationContainer>
-          <AppNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
-      </AuthProvider>
+      <PaperProvider>
+        <AuthProvider>
+          <NavigationContainer>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </AuthProvider>
+      </PaperProvider>
     </QueryClientProvider>
   );
 }
