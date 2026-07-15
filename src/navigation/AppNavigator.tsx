@@ -27,6 +27,14 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
+export type RootStackParamList = {
+  MyProducts: undefined;
+  AddProduct: { productoId?: number } | undefined;
+  Login: undefined;
+  Register: undefined;
+  AdminPanel: undefined;
+};
+
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -45,12 +53,12 @@ function BuyerTabs() {
   );
 }
 
-function FarmerTabs() {
+function FarmerStack() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="MyProducts" component={MyProductsScreen} />
-      <Tab.Screen name="AddProduct" component={AddProductScreen} />
-    </Tab.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MyProducts" component={MyProductsScreen} />
+      <Stack.Screen name="AddProduct" component={AddProductScreen} />
+    </Stack.Navigator>
   );
 }
 
@@ -80,7 +88,7 @@ export default function AppNavigator(): React.JSX.Element {
   // Authenticated: route by role
   switch (user?.role) {
     case 'farmer':
-      return <FarmerTabs />;
+      return <FarmerStack />;
     case 'admin':
       return <AdminScreens />;
     case 'buyer':
