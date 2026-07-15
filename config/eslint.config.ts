@@ -204,7 +204,19 @@ function createReactNativeRules() {
   });
 }
 
-// 6. Imports y arquitectura — orden alfabético y límites de dependencias.
+// 6. Test files — Jest globals (describe, it, expect, jest, etc.).
+function createTestFileRules() {
+  return defineConfig({
+    files: ['src/__tests__/**/*.ts', 'src/__tests__/**/*.tsx'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+  });
+}
+
+// 7. Imports y arquitectura — orden alfabético y límites de dependencias.
 function createImportsAndBoundariesRules() {
   return defineConfig({
     plugins: {
@@ -405,6 +417,7 @@ export default defineConfig(
   ...createTypeScriptRules(),
   ...createReactRules(),
   ...createReactNativeRules(),
+  ...createTestFileRules(),
   ...createImportsAndBoundariesRules(),
   ...createQualityAndSecurityRules(),
 );
