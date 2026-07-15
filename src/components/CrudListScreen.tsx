@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -233,8 +233,42 @@ export default function CrudListScreen<
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
+  // ── Search / Filter state ──────────────────────────────────
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermDebounced, setSearchTermDebounced] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'todos' | 'activos' | 'inactivos'
+  >('todos');
+
   // ── Delete dialog state ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
+
+  // ── Debounce search term ────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchTermDebounced(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // ── Filtered items ──────────────────────────────────────────
+  const filteredItems = useMemo(() => {
+    return (items ?? []).filter((item) => {
+      const search = searchTermDebounced.toLowerCase().trim();
+      const matchesSearch =
+        !search ||
+        item.nombre.toLowerCase().includes(search) ||
+        (config.fields[1] != null
+          ? String(
+              (item as Record<string, unknown>)[config.fields[1].name] ?? '',
+            )
+              .toLowerCase()
+              .includes(search)
+          : false);
+      const matchesStatus =
+        statusFilter === 'todos' ||
+        (statusFilter === 'activos' ? item.estado : !item.estado);
+      return matchesSearch && matchesStatus;
+    });
+  }, [items, searchTermDebounced, statusFilter]);
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
@@ -510,6 +544,8 @@ export default function CrudListScreen<
   }
 
   const isEmpty = !items || items.length === 0;
+  const hasItems = items && items.length > 0;
+  const noSearchResults = hasItems && filteredItems.length === 0;
   const trashScreen = config.trashScreenName;
 
   // ── Render ─────────────────────────────────────────────────
@@ -548,6 +584,53 @@ export default function CrudListScreen<
         </View>
       </View>
 
+      {/* ── Search bar ─────────────────────────────────────────── */}
+      <View className="bg-gray-50 px-4 pb-1 pt-3 dark:bg-gray-950">
+        <PaperInput
+          mode="outlined"
+          placeholder={`Buscar ${config.entityNamePluralLower}...`}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          left={<PaperInput.Icon icon="magnify" />}
+          right={
+            searchTerm ? (
+              <PaperInput.Icon icon="close" onPress={() => setSearchTerm('')} />
+            ) : null
+          }
+          className="bg-white dark:bg-gray-900"
+          outlineStyle={{ borderColor: colors.textSecondary }}
+        />
+      </View>
+
+      {/* ── Filter chips ──────────────────────────────────────── */}
+      <View className="flex-row gap-2 px-4 pb-2">
+        {(['todos', 'activos', 'inactivos'] as const).map((filter) => (
+          <Pressable
+            key={filter}
+            onPress={() => setStatusFilter(filter)}
+            className={`rounded-full px-3 py-1 ${
+              statusFilter === filter
+                ? 'bg-brand-red-coral'
+                : 'bg-gray-100 dark:bg-gray-800'
+            }`}
+          >
+            <Text
+              className={`text-xs font-medium ${
+                statusFilter === filter
+                  ? 'text-white'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              {filter === 'todos'
+                ? 'Todos'
+                : filter === 'activos'
+                  ? 'Activos'
+                  : 'Inactivos'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
       {/* Empty state */}
       {isEmpty ? (
         <View className="flex-1 items-center justify-center px-6">
@@ -563,9 +646,20 @@ export default function CrudListScreen<
             {config.emptyDescription}
           </Text>
         </View>
+      ) : noSearchResults ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <MaterialCommunityIcons
+            name="file-search-outline"
+            size={64}
+            color={colors.iconMuted}
+          />
+          <Text className="mt-4 text-center text-lg text-gray-500 dark:text-gray-400">
+            No se encontraron resultados para "{searchTermDebounced}".
+          </Text>
+        </View>
       ) : (
         <FlatList
-          data={items}
+          data={filteredItems}
           keyExtractor={(item) => String(config.getId(item))}
           contentContainerClassName="p-4 pb-24 gap-3"
           refreshControl={
