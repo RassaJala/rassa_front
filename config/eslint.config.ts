@@ -10,6 +10,7 @@
 
 import eslint from '@eslint/js';
 import boundariesPlugin from 'eslint-plugin-boundaries';
+import globals from 'globals';
 import eslintCommentsPlugin from 'eslint-plugin-eslint-comments';
 import importXPlugin from 'eslint-plugin-import-x';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
@@ -187,6 +188,11 @@ function createReactNativeRules() {
     files: ['**/*.tsx', '**/*.ts'],
     plugins: {
       'react-native': reactNativePlugin as any,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
     },
     rules: {
       // Estilos — sin unused, inline ni colores hardcodeados.

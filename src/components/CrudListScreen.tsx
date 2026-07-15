@@ -268,7 +268,7 @@ export default function CrudListScreen<
         (statusFilter === 'activos' ? item.estado : !item.estado);
       return matchesSearch && matchesStatus;
     });
-  }, [items, searchTermDebounced, statusFilter]);
+  }, [items, searchTermDebounced, statusFilter, config.fields]);
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
