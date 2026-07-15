@@ -19,7 +19,9 @@ import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
+import FarmerDashboardScreen from '@/screens/farmer/FarmerDashboardScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import { useAuth } from '@/store/AuthContext';
 import type { AdminStackParamList } from '@/types';
 
@@ -28,8 +30,10 @@ const Tab = createBottomTabNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
 export type RootStackParamList = {
+  FarmerDashboard: undefined;
   MyProducts: undefined;
   AddProduct: { productoId?: number } | undefined;
+  PublicationWizard: { publicationId?: number } | undefined;
   Login: undefined;
   Register: undefined;
   AdminPanel: undefined;
@@ -56,8 +60,10 @@ function BuyerTabs() {
 function FarmerStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="FarmerDashboard" component={FarmerDashboardScreen} />
       <Stack.Screen name="MyProducts" component={MyProductsScreen} />
       <Stack.Screen name="AddProduct" component={AddProductScreen} />
+      <Stack.Screen name="PublicationWizard" component={PublicationWizardScreen} />
     </Stack.Navigator>
   );
 }
