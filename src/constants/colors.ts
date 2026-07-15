@@ -15,4 +15,7 @@ export const colors = {
   brandGreenForest: '#3A6D56',
   brandRedCoral: '#DE393A',
   iconDark: '#1D1D1D',
+  brandInk: '#1f2937', // gray-800
+  iconMuted: '#9ca3af', // gray-400
+  iconWhite: '#ffffff',
 };

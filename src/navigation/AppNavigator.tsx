@@ -7,9 +7,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import Navbar from '@/components/Navbar';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
-import AdminDashboardScreen from '@/screens/admin/AdminDashboardScreen';
-import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
-import AdminUsersScreen from '@/screens/admin/AdminUsersScreen';
+import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import CategoryListScreen from '@/screens/admin/CategoryListScreen';
+import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
+import UnitListScreen from '@/screens/admin/UnitListScreen';
+import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
@@ -24,9 +26,11 @@ import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
+import type { AdminStackParamList } from '@/types';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
 function AuthStack() {
   return (
@@ -118,34 +122,15 @@ function SellerTabs() {
   );
 }
 
-function AdminTabs() {
+function AdminScreens() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        header: () => <Navbar />,
-        tabBarStyle: { display: 'none' },
-      }}
-    >
-      <Tab.Screen
-        name="AdminDashboard"
-        component={AdminDashboardScreen}
-        options={{ title: 'Panel' }}
-      />
-
-      <Tab.Screen
-        name="AdminUsers"
-        component={AdminUsersScreen}
-        options={{ title: 'Usuarios' }}
-      />
-
-      <Tab.Screen
-        name="AdminProducts"
-        component={AdminProductsScreen}
-        options={{ title: 'Productos' }}
-      />
-
-      <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
-    </Tab.Navigator>
+    <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+      <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
+      <AdminStack.Screen name="CategoryList" component={CategoryListScreen} />
+      <AdminStack.Screen name="UnitList" component={UnitListScreen} />
+      <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
+      <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+    </AdminStack.Navigator>
   );
 }
 
@@ -225,8 +210,7 @@ export default function AppNavigator(): React.JSX.Element {
       return <SellerTabs />;
 
     case 'admin':
-      return <AdminTabs />;
-
+      return <AdminScreens />;
     case 'buyer':
       return <BuyerTabs />;
 
