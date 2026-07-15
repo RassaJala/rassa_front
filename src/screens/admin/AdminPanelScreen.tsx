@@ -21,7 +21,7 @@ import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import api from '@/services/api';
 import type { RegisterRole } from '@/types';
-import { getGenderLabel } from '@/utils/gender';
+import { getGenderLabel, getRoleLabel } from '@/utils/labels';
 import {
   cleanAddress,
   cleanName,
@@ -29,8 +29,11 @@ import {
   DATE_REGEX,
   EMAIL_REGEX,
   formatPhoneNumber,
+  isAdult,
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
+
+const BRAND_RED_CORAL = colors.brand.redCoral;
 
 function parseAxiosError(error: unknown): string {
   if (!axios.isAxiosError(error)) {
@@ -113,6 +116,10 @@ function validateForm(fields: {
     return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
   }
 
+  if (!isAdult(fechaNacimiento)) {
+    return 'El usuario debe ser mayor de 18 años.';
+  }
+
   return null;
 }
 
@@ -149,12 +156,6 @@ export default function AdminPanelScreen(): React.JSX.Element {
     };
   }, []);
 
-  function getRoleLabel(val: RegisterRole) {
-    if (val === 'farmer') return 'Agricultor';
-    if (val === 'seller') return 'Vendedor';
-    return 'Cliente';
-  }
-
   async function handleAddUser() {
     if (isSubmitting) return;
     setErrorMessage(null);
@@ -185,6 +186,11 @@ export default function AdminPanelScreen(): React.JSX.Element {
       setErrorMessage(
         `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
       );
+      return;
+    }
+
+    if (!isAdult(fechaNacimiento)) {
+      setErrorMessage('Debes ser mayor de 18 años para registrarte.');
       return;
     }
 
@@ -483,7 +489,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
           mode="contained"
           disabled={isSubmitting}
           onPress={() => void handleAddUser()}
-          buttonColor="#DE393A"
+          buttonColor={BRAND_RED_CORAL}
           className="rounded-lg"
           contentStyle={styles.buttonContent}
         >

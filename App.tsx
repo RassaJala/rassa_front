@@ -9,13 +9,36 @@ import {
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react-native';
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { useColorScheme } from 'nativewind';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error: Error) => {
+      Sentry.captureException(error, {
+        extra: {
+          message: error.message,
+          stack: error.stack,
+        },
+      });
+    },
+  }),
+});
 
 export default function App(): React.JSX.Element {
   const { colorScheme } = useColorScheme();
@@ -49,10 +72,12 @@ export default function App(): React.JSX.Element {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <PaperProvider theme={theme}>
-          <NavigationContainer>
-            <AppNavigator />
-            <StatusBar style="auto" />
-          </NavigationContainer>
+          <ErrorBoundary>
+            <NavigationContainer>
+              <AppNavigator />
+              <StatusBar style="auto" />
+            </NavigationContainer>
+          </ErrorBoundary>
         </PaperProvider>
       </AuthProvider>
     </QueryClientProvider>

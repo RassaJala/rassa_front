@@ -15,6 +15,7 @@ import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
+import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { RegisterRole } from '@/types';
@@ -25,8 +26,11 @@ import {
   DATE_REGEX,
   EMAIL_REGEX,
   formatPhoneNumber,
+  isAdult,
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
+
+const BRAND_RED_CORAL = colors.brand.redCoral;
 
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
@@ -107,6 +111,12 @@ export default function RegisterScreen(): React.JSX.Element {
       setErrorMessage(
         'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
       );
+      return;
+    }
+
+    // Validar edad >= 18 años
+    if (!isAdult(fechaNacimiento)) {
+      setErrorMessage('Debes ser mayor de 18 años para registrarte.');
       return;
     }
 
@@ -284,7 +294,7 @@ export default function RegisterScreen(): React.JSX.Element {
           mode="contained"
           disabled={isSubmitting}
           onPress={() => void handleRegister()}
-          buttonColor="#DE393A"
+          buttonColor={BRAND_RED_CORAL}
           className="rounded-lg"
           contentStyle={styles.buttonContent}
         >

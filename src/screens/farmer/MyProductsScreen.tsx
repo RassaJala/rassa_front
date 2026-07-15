@@ -5,6 +5,9 @@ import { Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
+
+const BRAND_RED_CORAL = colors.brand.redCoral;
 
 export default function MyProductsScreen(): React.JSX.Element {
   const navigation = useNavigation();
@@ -18,7 +21,7 @@ export default function MyProductsScreen(): React.JSX.Element {
       <View className="mt-6 w-full max-w-xs gap-3">
         <Button
           mode="outlined"
-          textColor="#DE393A"
+          textColor={BRAND_RED_CORAL}
           className="rounded-lg border-brand-red-coral"
           onPress={() => navigation.navigate('Profile' as never)}
         >

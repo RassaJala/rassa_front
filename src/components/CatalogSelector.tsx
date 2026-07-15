@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
-  Pressable,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Button, Dialog } from 'react-native-paper';
 
+import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import type { Localidad, Municipio } from '@/types';
 
 interface CatalogSelectorProps {
@@ -46,10 +46,8 @@ export default function CatalogSelector({
   refetchLocalidades,
   setErrorMessage,
 }: CatalogSelectorProps): React.JSX.Element {
-  const [showMunicipioModal, setShowMunicipioModal] = useState(false);
-  const [showLocalidadModal, setShowLocalidadModal] = useState(false);
-
-  const brandCoral = '#DE393A';
+  const [showMunicipioDialog, setShowMunicipioDialog] = useState(false);
+  const [showLocalidadDialog, setShowLocalidadDialog] = useState(false);
 
   return (
     <View>
@@ -70,12 +68,12 @@ export default function CatalogSelector({
         </View>
       ) : (
         <TouchableOpacity
-          onPress={() => setShowMunicipioModal(true)}
+          onPress={() => setShowMunicipioDialog(true)}
           disabled={isLoadingMunicipios}
           className="mb-3 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
         >
           {isLoadingMunicipios ? (
-            <ActivityIndicator size="small" color={brandCoral} />
+            <ActivityIndicator size="small" color={BRAND_RED_CORAL} />
           ) : (
             <Text
               className={`text-base ${
@@ -112,13 +110,13 @@ export default function CatalogSelector({
               setErrorMessage('Selecciona primero un municipio.');
               return;
             }
-            setShowLocalidadModal(true);
+            setShowLocalidadDialog(true);
           }}
           disabled={isLoadingLocalidades}
           className="mb-4 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
         >
           {isLoadingLocalidades ? (
-            <ActivityIndicator size="small" color={brandCoral} />
+            <ActivityIndicator size="small" color={BRAND_RED_CORAL} />
           ) : (
             <Text
               className={`text-base ${
@@ -133,77 +131,65 @@ export default function CatalogSelector({
         </TouchableOpacity>
       )}
 
-      {/* Modal Municipio */}
-      <Modal visible={showMunicipioModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-xl bg-white p-6 dark:bg-gray-900">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-brand-ink dark:text-gray-100">
-                Seleccionar Municipio
-              </Text>
-              <Pressable onPress={() => setShowMunicipioModal(false)}>
-                <Text className="font-semibold text-brand-red-coral">
-                  Cerrar
+      {/* Dialog Municipio */}
+      <Dialog
+        visible={showMunicipioDialog}
+        onDismiss={() => setShowMunicipioDialog(false)}
+      >
+        <Dialog.Title>Seleccionar Municipio</Dialog.Title>
+        <Dialog.Content>
+          <FlatList
+            data={municipios}
+            keyExtractor={(item) => String(item.id_municipio)}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  onSelectMunicipio(item.id_municipio, item.nombre);
+                  setShowMunicipioDialog(false);
+                }}
+                className="border-b border-gray-100 py-4 dark:border-gray-800"
+              >
+                <Text className="text-base text-brand-ink dark:text-gray-200">
+                  {item.nombre}
                 </Text>
-              </Pressable>
-            </View>
+              </TouchableOpacity>
+            )}
+          />
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={() => setShowMunicipioDialog(false)}>Cerrar</Button>
+        </Dialog.Actions>
+      </Dialog>
 
-            <FlatList
-              data={municipios}
-              keyExtractor={(item) => String(item.id_municipio)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    onSelectMunicipio(item.id_municipio, item.nombre);
-                    setShowMunicipioModal(false);
-                  }}
-                  className="border-b border-gray-100 py-4 dark:border-gray-800"
-                >
-                  <Text className="text-base text-brand-ink dark:text-gray-200">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal Localidad */}
-      <Modal visible={showLocalidadModal} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="h-2/3 rounded-t-xl bg-white p-6 dark:bg-gray-900">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-brand-ink dark:text-gray-100">
-                Seleccionar Localidad
-              </Text>
-              <Pressable onPress={() => setShowLocalidadModal(false)}>
-                <Text className="font-semibold text-brand-red-coral">
-                  Cerrar
+      {/* Dialog Localidad */}
+      <Dialog
+        visible={showLocalidadDialog}
+        onDismiss={() => setShowLocalidadDialog(false)}
+      >
+        <Dialog.Title>Seleccionar Localidad</Dialog.Title>
+        <Dialog.Content>
+          <FlatList
+            data={localidades}
+            keyExtractor={(item) => String(item.id_localidad)}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  onSelectLocalidad(item.id_localidad, item.nombre);
+                  setShowLocalidadDialog(false);
+                }}
+                className="border-b border-gray-100 py-4 dark:border-gray-800"
+              >
+                <Text className="text-base text-brand-ink dark:text-gray-200">
+                  {item.nombre}
                 </Text>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={localidades}
-              keyExtractor={(item) => String(item.id_localidad)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    onSelectLocalidad(item.id_localidad, item.nombre);
-                    setShowLocalidadModal(false);
-                  }}
-                  className="border-b border-gray-100 py-4 dark:border-gray-800"
-                >
-                  <Text className="text-base text-brand-ink dark:text-gray-200">
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+              </TouchableOpacity>
+            )}
+          />
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={() => setShowLocalidadDialog(false)}>Cerrar</Button>
+        </Dialog.Actions>
+      </Dialog>
     </View>
   );
 }

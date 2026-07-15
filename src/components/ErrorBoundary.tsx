@@ -1,0 +1,79 @@
+import React, { Component } from 'react';
+import { Text, View } from 'react-native';
+import { Button, Card } from 'react-native-paper';
+
+import * as Sentry from '@sentry/react-native';
+
+interface Props {
+  readonly children: React.ReactNode;
+  readonly fallback?: React.ReactNode;
+}
+
+interface State {
+  readonly hasError: boolean;
+  readonly error: Error | null;
+}
+
+export default class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
+  }
+
+  handleRetry = (): void => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  override render(): React.JSX.Element {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback as React.JSX.Element;
+      }
+
+      // eslint-disable-next-line no-undef -- __DEV__ is global in React Native
+      const isDev = __DEV__;
+
+      return (
+        <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
+          <Card className="w-full max-w-md">
+            <View className="items-center p-6">
+              <Text className="mb-4 text-center text-lg font-semibold text-brand-ink dark:text-gray-100">
+                Algo salió mal
+              </Text>
+              <Text className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                Ocurrió un error inesperado. Por favor, intenta de nuevo.
+              </Text>
+              {isDev && this.state.error ? (
+                <View className="mb-4 max-h-48 w-full overflow-y-auto rounded bg-gray-100 p-3 dark:bg-gray-900">
+                  <Text className="font-mono text-xs text-red-600 dark:text-red-400">
+                    {this.state.error.message}
+                    {this.state.error.stack
+                      ? `\n\n${this.state.error.stack}`
+                      : ''}
+                  </Text>
+                </View>
+              ) : null}
+              <Button mode="contained" onPress={this.handleRetry}>
+                Reintentar
+              </Button>
+            </View>
+          </Card>
+        </View>
+      );
+    }
+
+    return this.props.children as React.JSX.Element;
+  }
+}

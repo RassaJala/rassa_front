@@ -53,6 +53,7 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isRegistering: boolean;
 }
 
 export interface AuthContextType extends AuthState {
@@ -189,6 +190,7 @@ export function AuthProvider({
     user: null,
     isLoading: true,
     isAuthenticated: false,
+    isRegistering: false,
   });
 
   const clearSession = useCallback(async () => {
@@ -321,41 +323,55 @@ export function AuthProvider({
     }
   }, []);
 
-  const register = useCallback(async (payload: RegisterPayload) => {
-    try {
-      const { data: responseBody } = await api.post<
-        ApiResponse<BackendUser & { access: string; refresh: string }>
-      >('/auth/register/', payload);
-
-      const user = responseBody.data;
-
-      if (!user?.access || !user?.refresh) {
-        throw new Error('La respuesta del backend no incluyó los tokens.');
+  const register = useCallback(
+    async (payload: RegisterPayload) => {
+      // Prevent double submission
+      if (state.isRegistering) {
+        throw new Error('Ya hay un registro en curso. Por favor, espera.');
       }
 
-      await Promise.all([
-        Storage.setItemAsync(ACCESS_TOKEN_KEY, user.access),
-        Storage.setItemAsync(REFRESH_TOKEN_KEY, user.refresh),
-      ]);
+      // Set registering flag
+      setState((prev) => ({ ...prev, isRegistering: true }));
 
-      const mappedUser = mapBackendUser(user);
-      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
-      setState((prev) => ({
-        ...prev,
-        user: mappedUser,
-        isLoading: false,
-        isAuthenticated: true,
-      }));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<Record<string, unknown>>;
-        const message = parseAuthError(axiosError, 'register');
-        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
-        throw new Error(message);
+      try {
+        const { data: responseBody } = await api.post<
+          ApiResponse<BackendUser & { access: string; refresh: string }>
+        >('/auth/register/', payload);
+
+        const user = responseBody.data;
+
+        if (!user?.access || !user?.refresh) {
+          throw new Error('La respuesta del backend no incluyó los tokens.');
+        }
+
+        await Promise.all([
+          Storage.setItemAsync(ACCESS_TOKEN_KEY, user.access),
+          Storage.setItemAsync(REFRESH_TOKEN_KEY, user.refresh),
+        ]);
+
+        const mappedUser = mapBackendUser(user);
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({
+          ...prev,
+          user: mappedUser,
+          isLoading: false,
+          isAuthenticated: true,
+          isRegistering: false,
+        }));
+      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types -- Local setState callback parameter
+        setState((prev) => ({ ...prev, isRegistering: false }));
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as AxiosError<Record<string, unknown>>;
+          const message = parseAuthError(axiosError, 'register');
+          // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
+          throw new Error(message);
+        }
+        throw error;
       }
-      throw error;
-    }
-  }, []);
+    },
+    [state],
+  );
 
   const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
     try {

@@ -14,29 +14,24 @@ import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
+import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { Localidad, Municipio } from '@/types';
-import { getGenderLabel } from '@/utils/gender';
+import { getGenderLabel, getRoleLabel } from '@/utils/labels';
 import {
   cleanAddress,
   cleanName,
   cleanPhoneNumber,
   DATE_REGEX,
   formatPhoneNumber,
+  isAdult,
   MIN_PASSWORD_LENGTH,
 } from '@/utils/validation';
 
 type ActiveTab = 'ver' | 'editar' | 'password';
 
 const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
-
-// Helper to get role labels
-function getRoleLabel(role?: string) {
-  if (role === 'farmer') return 'Agricultor';
-  if (role === 'buyer') return 'Comprador';
-  return 'Administrador';
-}
 
 // ── SUB-COMPONENT: View Profile Tab ───────────────────────────
 interface ProfileViewTabProps {
@@ -266,7 +261,7 @@ function ProfileEditTab({
         mode="contained"
         disabled={isSubmitting}
         onPress={callbacks.handleUpdateProfile}
-        buttonColor="#DE393A"
+        buttonColor={BRAND_RED_CORAL}
         className="mt-4 rounded-lg"
         contentStyle={styles.buttonContent}
       >
@@ -342,7 +337,7 @@ function ProfilePasswordTab({
         mode="contained"
         disabled={isSubmitting}
         onPress={handleChangePassword}
-        buttonColor="#DE393A"
+        buttonColor={BRAND_RED_CORAL}
         className="mt-4 rounded-lg"
         contentStyle={styles.buttonContent}
       >
@@ -401,11 +396,17 @@ export default function ProfileScreen(): React.JSX.Element {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  // eslint-disable-next-line no-undef -- setTimeout is global in RN
+  const logoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      if (logoutTimeoutRef.current) {
+        // eslint-disable-next-line no-undef -- clearTimeout is global in RN
+        clearTimeout(logoutTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -460,6 +461,11 @@ export default function ProfileScreen(): React.JSX.Element {
       setErrorMessage(
         'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
       );
+      return;
+    }
+
+    if (!isAdult(fechaNacimiento)) {
+      setErrorMessage('Debes ser mayor de 18 años.');
       return;
     }
 
@@ -525,6 +531,12 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
+    // Validar que la nueva contraseña sea diferente a la actual
+    if (oldPassword === newPassword) {
+      setErrorMessage('La nueva contraseña debe ser diferente a la actual.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -539,7 +551,7 @@ export default function ProfileScreen(): React.JSX.Element {
         );
       }
       // eslint-disable-next-line no-undef -- setTimeout is global in RN
-      setTimeout(() => {
+      logoutTimeoutRef.current = setTimeout(() => {
         void logout();
       }, PASSWORD_CHANGE_LOGOUT_DELAY_MS);
     } catch (error) {

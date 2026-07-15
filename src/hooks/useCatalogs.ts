@@ -81,6 +81,7 @@ export function useCatalogs(
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    placeholderData: (previousData) => previousData,
   });
 
   const handleSelectMunicipio = (id: number, nombre: string) => {

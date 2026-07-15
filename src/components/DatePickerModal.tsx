@@ -37,7 +37,9 @@ export default function DatePickerModal({
   initialDate,
 }: DatePickerModalProps): React.JSX.Element {
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 120 }, (_, i) => currentYear - i); // Up to 120 years back
+  // Only allow birth years that correspond to age >= 18
+  const maxAdultYear = currentYear - 18;
+  const years = Array.from({ length: 103 }, (_, i) => maxAdultYear - i);
 
   const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);

@@ -12,4 +12,7 @@ export const colors = {
   success: '#22c55e', // green-500
   warning: '#f59e0b', // amber-500
   placeholder: '#94a3b8',
+  brand: {
+    redCoral: '#DE393A',
+  },
 };
