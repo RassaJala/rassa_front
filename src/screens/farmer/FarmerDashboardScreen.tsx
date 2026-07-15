@@ -105,12 +105,12 @@ export default function FarmerDashboardScreen({
 
   const renderItem = useCallback(
     ({ item }: { item: Publicacion }) => {
-      const colors = STATUS_COLORS[item.estado] ?? STATUS_COLORS.borrador;
+      const statusColors = STATUS_COLORS[item.estado] ?? STATUS_COLORS.borrador;
       const productCount = item.productos.length;
 
       return (
         <Pressable
-          className={`mb-3 rounded-xl border p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:shadow-none ${colors.border} bg-white`}
+          className={`mb-3 rounded-xl border p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:shadow-none ${statusColors.border} bg-white`}
           onPress={() => handleOpenPublication(item)}
           accessibilityRole="button"
           accessibilityLabel={`Publicación semana ${String(item.semana)}`}
@@ -119,8 +119,8 @@ export default function FarmerDashboardScreen({
             <Text className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Semana {String(item.semana)}
             </Text>
-            <View className={`rounded-full px-2.5 py-1 ${colors.bg}`}>
-              <Text className={`text-xs font-medium ${colors.text}`}>
+            <View className={`rounded-full px-2.5 py-1 ${statusColors.bg}`}>
+              <Text className={`text-xs font-medium ${statusColors.text}`}>
                 {STATUS_LABELS[item.estado]}
               </Text>
             </View>
