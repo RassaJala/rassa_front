@@ -14,10 +14,11 @@ const REFRESH_TIMEOUT_MS = 8_000;
 const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 
 function resolveBaseURL(): string {
-  // eslint-disable-next-line no-undef -- process is injected by expo
+  /* eslint-disable no-undef -- process is injected by expo */
   const configured: string = String(
     process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000',
   );
+  /* eslint-enable no-undef -- re-enable after process access */
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
