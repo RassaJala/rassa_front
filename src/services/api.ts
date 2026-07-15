@@ -15,7 +15,7 @@ const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 
 function resolveBaseURL(): string {
   // eslint-disable-next-line no-undef -- process is injected by expo
-  const configured = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+  const configured: string = String(process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
