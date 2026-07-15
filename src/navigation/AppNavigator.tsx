@@ -63,7 +63,10 @@ function FarmerStack() {
       <Stack.Screen name="FarmerDashboard" component={FarmerDashboardScreen} />
       <Stack.Screen name="MyProducts" component={MyProductsScreen} />
       <Stack.Screen name="AddProduct" component={AddProductScreen} />
-      <Stack.Screen name="PublicationWizard" component={PublicationWizardScreen} />
+      <Stack.Screen
+        name="PublicationWizard"
+        component={PublicationWizardScreen}
+      />
     </Stack.Navigator>
   );
 }

@@ -17,10 +17,11 @@ const PLACEHOLDER_COLOR = '#94a3b8';
 
 export default function HomeScreen(): React.JSX.Element {
   const [search, setSearch] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
+  const [selectedCategoria, setSelectedCategoria] = useState<number | null>(
+    null,
+  );
 
-  const nombreFilter =
-    search.trim().length > 0 ? search.trim() : undefined;
+  const nombreFilter = search.trim().length > 0 ? search.trim() : undefined;
 
   const categoriaFilter =
     selectedCategoria !== null ? selectedCategoria : undefined;
@@ -40,7 +41,7 @@ export default function HomeScreen(): React.JSX.Element {
   const renderItem = useCallback(
     ({ item }: { item: Producto }) => (
       <Pressable
-        className="w-[48%] mb-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+        className="mb-3 w-[48%] rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
         accessibilityRole="button"
         accessibilityLabel={`Producto: ${item.nombre_producto}`}
       >

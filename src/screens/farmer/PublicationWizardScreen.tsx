@@ -19,10 +19,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LogoutButton from '@/components/LogoutButton';
 import { colors } from '@/constants/colors';
 import { useProductos } from '@/hooks/useProductos';
-import {
-  useProductosSemanales,
-  usePublicacion,
-} from '@/hooks/usePublications';
+import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
 import {
   usePublicationWizard,
   WIZARD_STEPS,
@@ -98,7 +95,10 @@ export default function PublicationWizardScreen({
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch {
-      Alert.alert('Error', 'No se pudo publicar. Verifica que todos los productos tengan foto, stock, precio y unidad.');
+      Alert.alert(
+        'Error',
+        'No se pudo publicar. Verifica que todos los productos tengan foto, stock, precio y unidad.',
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -153,7 +153,9 @@ export default function PublicationWizardScreen({
                 >
                   <Text
                     className={`text-xs font-bold ${
-                      isActive || isDone ? 'text-white' : 'text-gray-500 dark:text-gray-400'
+                      isActive || isDone
+                        ? 'text-white'
+                        : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     {isDone ? '✓' : String(index + 1)}
@@ -161,7 +163,9 @@ export default function PublicationWizardScreen({
                 </View>
                 <Text
                   className={`mt-1 text-[10px] ${
-                    isActive ? 'font-medium text-brand-coral' : 'text-gray-400 dark:text-gray-500'
+                    isActive
+                      ? 'text-brand-coral font-medium'
+                      : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   {STEP_LABELS[step]}
@@ -216,10 +220,7 @@ export default function PublicationWizardScreen({
                 wizard.currentStep === 'productos' &&
                 !wizard.validateItems()
               ) {
-                Alert.alert(
-                  'Error',
-                  'Corrige los errores antes de continuar.',
-                );
+                Alert.alert('Error', 'Corrige los errores antes de continuar.');
                 return;
               }
               wizard.nextStep();
@@ -253,12 +254,18 @@ function StepFecha({
 
       <View className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
         <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">Fecha de publicación</Text>
-          <Text className="text-base font-semibold text-gray-900 dark:text-gray-100">{fecha}</Text>
+          <Text className="text-sm text-gray-600 dark:text-gray-400">
+            Fecha de publicación
+          </Text>
+          <Text className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {fecha}
+          </Text>
         </View>
 
         <View className="flex-row items-center justify-between">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">Número de semana</Text>
+          <Text className="text-sm text-gray-600 dark:text-gray-400">
+            Número de semana
+          </Text>
           <Text className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Semana {String(semana)}
           </Text>
@@ -356,12 +363,19 @@ function WizardItemCard({
 }: {
   item: WizardItemDraft;
   allProductos: Producto[];
-  validation: { stock?: string; precio?: string; fk_unidad?: string; foto?: string } | undefined;
-  onUpdate: (tempId: string, field: string, value: string | number | null) => void;
+  validation:
+    | { stock?: string; precio?: string; fk_unidad?: string; foto?: string }
+    | undefined;
+  onUpdate: (
+    tempId: string,
+    field: string,
+    value: string | number | null,
+  ) => void;
   onRemove: (tempId: string) => void;
 }): React.JSX.Element {
   const producto = allProductos.find((p) => p.id_producto === item.fk_producto);
-  const nombre = producto?.nombre_producto ?? `Producto #${String(item.fk_producto)}`;
+  const nombre =
+    producto?.nombre_producto ?? `Producto #${String(item.fk_producto)}`;
 
   const pickImage = async (): Promise<void> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -385,7 +399,9 @@ function WizardItemCard({
   return (
     <View className="mb-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">{nombre}</Text>
+        <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {nombre}
+        </Text>
         <Pressable
           onPress={() => onRemove(item.tempId)}
           accessibilityRole="button"
@@ -399,7 +415,9 @@ function WizardItemCard({
       <Pressable
         onPress={pickImage}
         className={`mb-3 h-24 items-center justify-center rounded-lg border-2 border-dashed ${
-          validation?.foto ? 'border-red-400 bg-red-50 dark:bg-red-950' : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'
+          validation?.foto
+            ? 'border-red-400 bg-red-50 dark:bg-red-950'
+            : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800'
         }`}
         accessibilityRole="button"
         accessibilityLabel="Seleccionar imagen"
@@ -411,7 +429,9 @@ function WizardItemCard({
             resizeMode="cover"
           />
         ) : (
-          <Text className="text-xs text-gray-400 dark:text-gray-500">Toca para foto</Text>
+          <Text className="text-xs text-gray-400 dark:text-gray-500">
+            Toca para foto
+          </Text>
         )}
       </Pressable>
       {validation?.foto ? (
@@ -423,7 +443,9 @@ function WizardItemCard({
         <View className="flex-1">
           <TextInput
             className={`rounded-lg border bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:bg-gray-800 dark:text-gray-100 ${
-              validation?.stock ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              validation?.stock
+                ? 'border-red-500'
+                : 'border-gray-300 dark:border-gray-600'
             }`}
             placeholder="Stock"
             placeholderTextColor={PLACEHOLDER_COLOR}
@@ -432,14 +454,18 @@ function WizardItemCard({
             keyboardType="number-pad"
           />
           {validation?.stock ? (
-            <Text className="mt-0.5 text-xs text-red-500">{validation.stock}</Text>
+            <Text className="mt-0.5 text-xs text-red-500">
+              {validation.stock}
+            </Text>
           ) : null}
         </View>
 
         <View className="flex-1">
           <TextInput
             className={`rounded-lg border bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:bg-gray-800 dark:text-gray-100 ${
-              validation?.precio ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              validation?.precio
+                ? 'border-red-500'
+                : 'border-gray-300 dark:border-gray-600'
             }`}
             placeholder="Precio ($)"
             placeholderTextColor={PLACEHOLDER_COLOR}
@@ -448,14 +474,18 @@ function WizardItemCard({
             keyboardType="decimal-pad"
           />
           {validation?.precio ? (
-            <Text className="mt-0.5 text-xs text-red-500">{validation.precio}</Text>
+            <Text className="mt-0.5 text-xs text-red-500">
+              {validation.precio}
+            </Text>
           ) : null}
         </View>
       </View>
 
       {/* Unidad */}
       <View>
-        <Text className="mb-1 text-xs text-gray-500 dark:text-gray-400">Unidad</Text>
+        <Text className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+          Unidad
+        </Text>
         <View className="flex-row flex-wrap gap-1.5">
           {ALL_UNIDADES.map((u) => (
             <Pressable
@@ -471,7 +501,9 @@ function WizardItemCard({
             >
               <Text
                 className={`text-xs font-medium ${
-                  item.fk_unidad === u.id ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+                  item.fk_unidad === u.id
+                    ? 'text-white'
+                    : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {u.label}
@@ -480,7 +512,9 @@ function WizardItemCard({
           ))}
         </View>
         {validation?.fk_unidad ? (
-          <Text className="mt-0.5 text-xs text-red-500">{validation.fk_unidad}</Text>
+          <Text className="mt-0.5 text-xs text-red-500">
+            {validation.fk_unidad}
+          </Text>
         ) : null}
       </View>
     </View>
@@ -516,7 +550,9 @@ function ProductPickerModal({
             Seleccionar producto
           </Text>
           <Pressable onPress={onClose} accessibilityRole="button">
-            <Text className="text-sm text-gray-500 dark:text-gray-400">Cancelar</Text>
+            <Text className="text-sm text-gray-500 dark:text-gray-400">
+              Cancelar
+            </Text>
           </Pressable>
         </View>
 
@@ -539,7 +575,7 @@ function ProductPickerModal({
                   </Text>
                 ) : null}
               </View>
-              <Text className="text-xs text-brand-coral">Agregar</Text>
+              <Text className="text-brand-coral text-xs">Agregar</Text>
             </Pressable>
           )}
           ListEmptyComponent={
@@ -576,8 +612,12 @@ function StepResumen({
         </View>
       ) : (
         wizard.items.map((item) => {
-          const producto = allProductos.find((p) => p.id_producto === item.fk_producto);
-          const nombre = producto?.nombre_producto ?? `Producto #${String(item.fk_producto)}`;
+          const producto = allProductos.find(
+            (p) => p.id_producto === item.fk_producto,
+          );
+          const nombre =
+            producto?.nombre_producto ??
+            `Producto #${String(item.fk_producto)}`;
           const unidad = ALL_UNIDADES.find((u) => u.id === item.fk_unidad);
           const hasErrors = wizard.itemValidations.has(item.tempId);
 
@@ -614,7 +654,7 @@ function StepResumen({
               {hasErrors ? (
                 <Text className="text-xs text-red-500">⚠</Text>
               ) : (
-                <Text className="text-xs text-brand-coral">✓</Text>
+                <Text className="text-brand-coral text-xs">✓</Text>
               )}
             </View>
           );
@@ -659,7 +699,9 @@ function StepPublicar({
       </Text>
 
       <View className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-        <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Resumen</Text>
+        <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Resumen
+        </Text>
         <Text className="text-sm text-gray-600 dark:text-gray-400">
           {productCount === 0
             ? 'Sin productos'

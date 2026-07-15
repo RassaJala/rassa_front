@@ -2,7 +2,8 @@ import api from './api';
 
 // ── Backend response types ─────────────────────────────────
 
-export type PublicacionEstado = 'borrador' | 'publicado' | 'cerrado' | 'cancelado';
+export type PublicacionEstado =
+  'borrador' | 'publicado' | 'cerrado' | 'cancelado';
 
 export interface ProductoSemanal {
   id_producto_semanal: number;
@@ -39,9 +40,9 @@ export interface ApiResponse<T> {
 
 // ── API functions ──────────────────────────────────────────
 
-export async function getPublicaciones(
-  params?: { estado?: PublicacionEstado | undefined },
-): Promise<ApiResponse<PublicacionList>> {
+export async function getPublicaciones(params?: {
+  estado?: PublicacionEstado | undefined;
+}): Promise<ApiResponse<PublicacionList>> {
   const { data } = await api.get<ApiResponse<PublicacionList>>(
     '/publicaciones/',
     { params },
@@ -59,9 +60,7 @@ export async function getPublicacion(
 }
 
 export async function createPublicacion(): Promise<ApiResponse<Publicacion>> {
-  const { data } = await api.post<ApiResponse<Publicacion>>(
-    '/publicaciones/',
-  );
+  const { data } = await api.post<ApiResponse<Publicacion>>('/publicaciones/');
   return data;
 }
 
@@ -105,7 +104,13 @@ export async function getProductosSemanales(
 
 export async function addProductoSemanal(
   pubId: number,
-  payload: { fk_producto: number; fk_unidad: number; stock: number; precio: number; foto?: string | null },
+  payload: {
+    fk_producto: number;
+    fk_unidad: number;
+    stock: number;
+    precio: number;
+    foto?: string | null;
+  },
 ): Promise<ApiResponse<ProductoSemanal>> {
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/`,
@@ -117,7 +122,13 @@ export async function addProductoSemanal(
 export async function updateProductoSemanal(
   pubId: number,
   itemId: number,
-  payload: { fk_producto?: number; fk_unidad?: number; stock?: number; precio?: number; foto?: string | null },
+  payload: {
+    fk_producto?: number;
+    fk_unidad?: number;
+    stock?: number;
+    precio?: number;
+    foto?: string | null;
+  },
 ): Promise<ApiResponse<ProductoSemanal>> {
   const { data } = await api.patch<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,

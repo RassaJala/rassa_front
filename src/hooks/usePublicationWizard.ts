@@ -13,7 +13,12 @@ import {
 
 export type WizardStep = 'fecha' | 'productos' | 'resumen' | 'publicar';
 
-export const WIZARD_STEPS: WizardStep[] = ['fecha', 'productos', 'resumen', 'publicar'];
+export const WIZARD_STEPS: WizardStep[] = [
+  'fecha',
+  'productos',
+  'resumen',
+  'publicar',
+];
 
 export interface WizardItemDraft {
   tempId: string;
@@ -50,7 +55,11 @@ interface UsePublicationWizardResult {
   prevStep: () => void;
   addItem: (producto: Producto) => void;
   removeItem: (tempId: string) => void;
-  updateItem: (tempId: string, field: string, value: string | number | null) => void;
+  updateItem: (
+    tempId: string,
+    field: string,
+    value: string | number | null,
+  ) => void;
   validateItems: () => boolean;
   publish: () => Promise<void>;
   saveDraft: () => Promise<void>;
@@ -102,7 +111,9 @@ export function usePublicationWizard({
   }));
 
   const [localItems, setLocalItems] = useState<WizardItemDraft[]>([]);
-  const [itemValidations, setItemValidations] = useState<Map<string, WizardItemValidation>>(new Map());
+  const [itemValidations, setItemValidations] = useState<
+    Map<string, WizardItemValidation>
+  >(new Map());
 
   const activeItems = publicacion ? items : localItems;
 
@@ -180,7 +191,9 @@ export function usePublicationWizard({
     if (!publicacion) return;
 
     for (const item of activeItems) {
-      const isExisting = productos.some((p) => String(p.id_producto_semanal) === item.tempId);
+      const isExisting = productos.some(
+        (p) => String(p.id_producto_semanal) === item.tempId,
+      );
 
       const payload = {
         fk_producto: item.fk_producto,
@@ -204,7 +217,9 @@ export function usePublicationWizard({
       }
     }
 
-    const existingIds = new Set(productos.map((p) => String(p.id_producto_semanal)));
+    const existingIds = new Set(
+      productos.map((p) => String(p.id_producto_semanal)),
+    );
     const currentIds = new Set(activeItems.map((i) => i.tempId));
 
     for (const id of existingIds) {
@@ -217,7 +232,15 @@ export function usePublicationWizard({
     }
 
     await publishMutation.mutateAsync(publicacion.id_publicacion);
-  }, [publicacion, activeItems, productos, addItemMutation, updateItemMutation, removeItemMutation, publishMutation]);
+  }, [
+    publicacion,
+    activeItems,
+    productos,
+    addItemMutation,
+    updateItemMutation,
+    removeItemMutation,
+    publishMutation,
+  ]);
 
   const saveDraft = useCallback(async () => {
     let pub = publicacion;
@@ -237,7 +260,9 @@ export function usePublicationWizard({
           foto: item.foto,
         };
 
-        const isExisting = productos.some((p) => String(p.id_producto_semanal) === item.tempId);
+        const isExisting = productos.some(
+          (p) => String(p.id_producto_semanal) === item.tempId,
+        );
 
         if (isExisting) {
           await updateItemMutation.mutateAsync({
@@ -253,7 +278,14 @@ export function usePublicationWizard({
         }
       }
     }
-  }, [publicacion, activeItems, productos, createMutation, addItemMutation, updateItemMutation]);
+  }, [
+    publicacion,
+    activeItems,
+    productos,
+    createMutation,
+    addItemMutation,
+    updateItemMutation,
+  ]);
 
   return {
     currentStep,
@@ -262,7 +294,11 @@ export function usePublicationWizard({
     itemValidations,
     hasItemErrors: itemValidations.size > 0,
     isCreating: createMutation.isPending,
-    isPublishing: publishMutation.isPending || addItemMutation.isPending || updateItemMutation.isPending || removeItemMutation.isPending,
+    isPublishing:
+      publishMutation.isPending ||
+      addItemMutation.isPending ||
+      updateItemMutation.isPending ||
+      removeItemMutation.isPending,
     goToStep,
     nextStep,
     prevStep,

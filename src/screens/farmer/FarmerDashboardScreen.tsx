@@ -25,11 +25,30 @@ const STATUS_TABS: { key: PublicacionEstado | 'all'; label: string }[] = [
   { key: 'cerrado', label: 'Cerradas' },
 ];
 
-const STATUS_COLORS: Record<PublicacionEstado, { bg: string; text: string; border: string }> = {
-  borrador: { bg: 'bg-amber-50 dark:bg-amber-950', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-  publicado: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-brand-coral', border: 'border-gray-200 dark:border-gray-700' },
-  cerrado: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-500 dark:text-gray-400', border: 'border-gray-200 dark:border-gray-700' },
-  cancelado: { bg: 'bg-red-50 dark:bg-red-950', text: 'text-red-500', border: 'border-red-200 dark:border-red-800' },
+const STATUS_COLORS: Record<
+  PublicacionEstado,
+  { bg: string; text: string; border: string }
+> = {
+  borrador: {
+    bg: 'bg-amber-50 dark:bg-amber-950',
+    text: 'text-amber-700 dark:text-amber-400',
+    border: 'border-amber-200 dark:border-amber-800',
+  },
+  publicado: {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    text: 'text-brand-coral',
+    border: 'border-gray-200 dark:border-gray-700',
+  },
+  cerrado: {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    text: 'text-gray-500 dark:text-gray-400',
+    border: 'border-gray-200 dark:border-gray-700',
+  },
+  cancelado: {
+    bg: 'bg-red-50 dark:bg-red-950',
+    text: 'text-red-500',
+    border: 'border-red-200 dark:border-red-800',
+  },
 };
 
 const STATUS_LABELS: Record<PublicacionEstado, string> = {
@@ -40,13 +59,17 @@ const STATUS_LABELS: Record<PublicacionEstado, string> = {
 };
 
 interface Props {
-  navigation: { navigate: (screen: string, params?: Record<string, unknown>) => void };
+  navigation: {
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
+  };
 }
 
 export default function FarmerDashboardScreen({
   navigation,
 }: Props): React.JSX.Element {
-  const [selectedTab, setSelectedTab] = useState<PublicacionEstado | 'all'>('all');
+  const [selectedTab, setSelectedTab] = useState<PublicacionEstado | 'all'>(
+    'all',
+  );
 
   const filterEstado = selectedTab === 'all' ? undefined : selectedTab;
   const { data: response, isLoading } = usePublicaciones(filterEstado);
@@ -214,7 +237,9 @@ export default function FarmerDashboardScreen({
               >
                 <Text
                   className={`text-sm font-medium ${
-                    isSelected ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+                    isSelected
+                      ? 'text-white'
+                      : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {tab.label}

@@ -110,7 +110,16 @@ export function useClosePublicacion(): UseMutationResult<
 export function useAddProductoSemanal(): UseMutationResult<
   ApiResponse<ProductoSemanal>,
   Error,
-  { pubId: number; payload: { fk_producto: number; fk_unidad: number; stock: number; precio: number; foto?: string | null } }
+  {
+    pubId: number;
+    payload: {
+      fk_producto: number;
+      fk_unidad: number;
+      stock: number;
+      precio: number;
+      foto?: string | null;
+    };
+  }
 > {
   const queryClient = useQueryClient();
   return useMutation({
@@ -127,7 +136,17 @@ export function useAddProductoSemanal(): UseMutationResult<
 export function useUpdateProductoSemanal(): UseMutationResult<
   ApiResponse<ProductoSemanal>,
   Error,
-  { pubId: number; itemId: number; payload: { fk_producto?: number; fk_unidad?: number; stock?: number; precio?: number; foto?: string | null } }
+  {
+    pubId: number;
+    itemId: number;
+    payload: {
+      fk_producto?: number;
+      fk_unidad?: number;
+      stock?: number;
+      precio?: number;
+      foto?: string | null;
+    };
+  }
 > {
   const queryClient = useQueryClient();
   return useMutation({

@@ -25,7 +25,9 @@ export function useProductos(params?: {
   });
 }
 
-export function useProducto(id: number): UseQueryResult<ApiResponse<ProductoDetail>> {
+export function useProducto(
+  id: number,
+): UseQueryResult<ApiResponse<ProductoDetail>> {
   return useQuery({
     queryKey: ['productos', id],
     queryFn: () => productosApi.getProducto(id),
@@ -69,8 +71,13 @@ export function useUpdateProducto(): UseMutationResult<
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Record<string, unknown> }) =>
-      productosApi.updateProducto(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: Record<string, unknown>;
+    }) => productosApi.updateProducto(id, payload),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['productos'] });
       void queryClient.invalidateQueries({

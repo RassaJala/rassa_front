@@ -11,28 +11,41 @@ import {
 } from 'react-native';
 
 import LogoutButton from '@/components/LogoutButton';
-import { useCategorias, useDeleteProducto, useProductos } from '@/hooks/useProductos';
+import {
+  useCategorias,
+  useDeleteProducto,
+  useProductos,
+} from '@/hooks/useProductos';
 import type { Producto } from '@/services/productos';
 
 const PLACEHOLDER_COLOR = '#94a3b8';
 
 interface Props {
-  navigation: { navigate: (screen: string, params?: Record<string, unknown>) => void };
+  navigation: {
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
+  };
 }
 
-export default function MyProductsScreen({ navigation }: Props): React.JSX.Element {
+export default function MyProductsScreen({
+  navigation,
+}: Props): React.JSX.Element {
   const [search, setSearch] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
+  const [selectedCategoria, setSelectedCategoria] = useState<number | null>(
+    null,
+  );
 
   const nombreFilter = search.trim().length > 0 ? search.trim() : undefined;
-  const categoriaFilter = selectedCategoria !== null ? selectedCategoria : undefined;
+  const categoriaFilter =
+    selectedCategoria !== null ? selectedCategoria : undefined;
 
-  const { data: productosResponse, isLoading: isLoadingProductos } = useProductos({
-    categoria: categoriaFilter,
-    nombre: nombreFilter,
-  });
+  const { data: productosResponse, isLoading: isLoadingProductos } =
+    useProductos({
+      categoria: categoriaFilter,
+      nombre: nombreFilter,
+    });
 
-  const { data: categoriasResponse, isLoading: isLoadingCategorias } = useCategorias();
+  const { data: categoriasResponse, isLoading: isLoadingCategorias } =
+    useCategorias();
   const deleteMutation = useDeleteProducto();
 
   const productos = productosResponse?.data ?? [];
@@ -79,7 +92,10 @@ export default function MyProductsScreen({ navigation }: Props): React.JSX.Eleme
         )}
 
         <View className="ml-3 flex-1">
-          <Text className="text-sm font-medium text-slate-900" numberOfLines={1}>
+          <Text
+            className="text-sm font-medium text-slate-900"
+            numberOfLines={1}
+          >
             {item.nombre_producto}
           </Text>
 
@@ -93,9 +109,7 @@ export default function MyProductsScreen({ navigation }: Props): React.JSX.Eleme
             <Text className="text-sm font-semibold text-emerald-600">
               ${item.precio}
             </Text>
-            <Text className="text-xs text-slate-400">
-              Stock: {item.stock}
-            </Text>
+            <Text className="text-xs text-slate-400">Stock: {item.stock}</Text>
           </View>
         </View>
 
