@@ -1,5 +1,6 @@
 import '~/styles/global.css';
 import React from 'react';
+import { PaperProvider } from 'react-native-paper';
 
 import { StatusBar } from 'expo-status-bar';
 
@@ -14,12 +15,14 @@ const queryClient = new QueryClient();
 export default function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NavigationContainer>
-          <AppNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
-      </AuthProvider>
+      <PaperProvider>
+        <AuthProvider>
+          <NavigationContainer>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </AuthProvider>
+      </PaperProvider>
     </QueryClientProvider>
   );
 }
