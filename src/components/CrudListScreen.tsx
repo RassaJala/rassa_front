@@ -108,85 +108,80 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
   return (
     <View className="rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
       <View className="flex-row items-start">
-        <View className="mr-3 mt-0.5 h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-          <MaterialCommunityIcons
-            name={item.estado ? 'check-circle-outline' : 'circle-outline'}
-            size={20}
-            color={item.estado ? colors.brandGreenForest : colors.iconMuted}
-          />
-        </View>
-
         <View className="flex-1">
-          <Text className="text-lg font-medium text-brand-ink dark:text-gray-100">
-            {item.nombre}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <View
+              className={`h-2.5 w-2.5 rounded-full ${
+                item.estado
+                  ? 'bg-brand-green-forest'
+                  : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            />
+            <Text className="text-lg font-medium text-brand-ink dark:text-gray-100">
+              {item.nombre}
+            </Text>
+          </View>
           {secondValue ? (
-            <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            <Text className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
               {secondValue}
             </Text>
           ) : null}
-          <View
-            className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${
+        </View>
+
+        <View
+          className={`ml-3 self-start rounded-full px-2.5 py-0.5 ${
+            item.estado
+              ? 'bg-gray-100 dark:bg-gray-800'
+              : 'bg-gray-100 dark:bg-gray-800'
+          }`}
+        >
+          <Text
+            className={`text-xs font-medium ${
               item.estado
-                ? 'bg-gray-100 dark:bg-gray-800'
-                : 'bg-gray-100 dark:bg-gray-800'
+                ? 'text-brand-green-forest'
+                : 'text-gray-500 dark:text-gray-400'
             }`}
           >
-            <Text
-              className={`text-xs font-medium ${
-                item.estado
-                  ? 'text-brand-green-forest'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              {item.estado
-                ? config.statusLabels.active
-                : config.statusLabels.inactive}
-            </Text>
-          </View>
+            {item.estado
+              ? config.statusLabels.active
+              : config.statusLabels.inactive}
+          </Text>
         </View>
       </View>
 
-      <View className="mt-3 flex-row items-center justify-end gap-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+      <View className="mt-3 flex-row items-center justify-end gap-1">
         <Pressable
           onPress={actions.onEdit}
-          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name="pencil-outline"
-            size={14}
+            size={18}
             color={colors.brandRedCoral}
           />
-          <Text className="text-xs font-medium text-brand-red-coral">
-            Editar
-          </Text>
         </Pressable>
         <Pressable
           onPress={actions.onToggleStatus}
-          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name={item.estado ? 'close-circle-outline' : 'check-circle-outline'}
-            size={14}
+            size={18}
             color={colors.textSecondary}
           />
-          <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            {item.estado ? 'Desactivar' : 'Activar'}
-          </Text>
         </Pressable>
         <Pressable
           onPress={actions.onDelete}
-          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          className="h-9 w-9 items-center justify-center rounded-full active:opacity-70"
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name="trash-can-outline"
-            size={14}
+            size={18}
             color={colors.error}
           />
-          <Text className="text-xs font-medium text-red-500">Eliminar</Text>
         </Pressable>
       </View>
     </View>
@@ -587,7 +582,7 @@ export default function CrudListScreen<
       {/* ── Search bar ─────────────────────────────────────────── */}
       <View className="bg-gray-50 px-4 pb-1 pt-3 dark:bg-gray-950">
         <PaperInput
-          mode="outlined"
+          mode="flat"
           placeholder={`Buscar ${config.entityNamePluralLower}...`}
           value={searchTerm}
           onChangeText={setSearchTerm}
@@ -597,8 +592,8 @@ export default function CrudListScreen<
               <PaperInput.Icon icon="close" onPress={() => setSearchTerm('')} />
             ) : null
           }
-          className="bg-white dark:bg-gray-900"
-          outlineStyle={{ borderColor: colors.textSecondary }}
+          className="rounded-xl bg-white dark:bg-gray-900"
+          underlineStyle={{ display: 'none' }}
         />
       </View>
 
