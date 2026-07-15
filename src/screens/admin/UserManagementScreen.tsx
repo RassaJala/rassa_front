@@ -1,3 +1,4 @@
+/* globals setTimeout, clearTimeout -- RN timer functions not in ESLint env */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,12 +10,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Button, Dialog, Portal, RadioButton } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Dialog, Portal, RadioButton } from 'react-native-paper';
 
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
@@ -182,8 +183,8 @@ export default function UserManagementScreen({
     },
     onError: (error: unknown) => {
       const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response
-          ?.data?.detail ?? 'Error al cambiar estado';
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? 'Error al cambiar estado';
 
       showToast(detail, 'error');
       // Refresh in case backend rejected a self-deactivation
@@ -193,13 +194,7 @@ export default function UserManagementScreen({
 
   // ── Role change mutation ──
   const roleMutation = useMutation({
-    mutationFn: async ({
-      userId,
-      role,
-    }: {
-      userId: number;
-      role: string;
-    }) => {
+    mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
       const { data } = await api.patch<ApiResponse<AdminUser>>(
         `/admin/usuarios/${userId}/`,
         { role },
@@ -214,8 +209,8 @@ export default function UserManagementScreen({
     },
     onError: (error: unknown) => {
       const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response
-          ?.data?.detail ?? 'Error al cambiar rol';
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? 'Error al cambiar rol';
 
       showToast(detail, 'error');
     },
@@ -347,13 +342,13 @@ export default function UserManagementScreen({
               <Text className="text-sm text-gray-600 dark:text-gray-400">
                 {item.estado ? 'Activo' : 'Inactivo'}
               </Text>
-              {self && (
+              {self ? (
                 <View className="rounded bg-amber-100 px-1.5 py-0.5 dark:bg-amber-900">
                   <Text className="text-xs text-amber-700 dark:text-amber-300">
                     tú
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <Pressable
@@ -557,10 +552,7 @@ export default function UserManagementScreen({
 
       {/* ═══ Role Change Modal ═══ */}
       <Portal>
-        <Dialog
-          visible={roleModalUser !== null}
-          onDismiss={closeRoleModal}
-        >
+        <Dialog visible={roleModalUser !== null} onDismiss={closeRoleModal}>
           <Dialog.Title>Cambiar Rol</Dialog.Title>
 
           <Dialog.Content>
@@ -586,9 +578,7 @@ export default function UserManagementScreen({
                       <RadioButton
                         value={opt.value}
                         color={colors.primary}
-                        status={
-                          newRole === opt.value ? 'checked' : 'unchecked'
-                        }
+                        status={newRole === opt.value ? 'checked' : 'unchecked'}
                       />
                       <Text
                         className="ml-2 text-base font-medium"
@@ -604,10 +594,7 @@ export default function UserManagementScreen({
           </Dialog.Content>
 
           <Dialog.Actions>
-            <Button
-              onPress={closeRoleModal}
-              textColor={colors.textSecondary}
-            >
+            <Button onPress={closeRoleModal} textColor={colors.textSecondary}>
               Cancelar
             </Button>
             <Button
@@ -660,9 +647,7 @@ export default function UserManagementScreen({
             <Button
               onPress={confirmDeactivation}
               textColor={colors.error}
-              disabled={
-                confirmUser !== null ? isSelf(confirmUser) : true
-              }
+              disabled={confirmUser !== null ? isSelf(confirmUser) : true}
               loading={toggleMutation.isPending}
             >
               Desactivar

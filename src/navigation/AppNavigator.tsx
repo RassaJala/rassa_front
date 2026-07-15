@@ -63,7 +63,10 @@ function AdminScreens() {
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
-      <AdminStack.Screen name="UserManagement" component={UserManagementScreen} />
+      <AdminStack.Screen
+        name="UserManagement"
+        component={UserManagementScreen}
+      />
     </AdminStack.Navigator>
   );
 }
