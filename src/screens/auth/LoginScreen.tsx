@@ -10,10 +10,10 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
-import { useColorScheme } from 'nativewind';
 
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import { getLoginErrorMessage } from '@/utils/authError';
 
 const PLACEHOLDER_COLOR = colors.textTertiary;
@@ -22,7 +22,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme, toggleColorScheme } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

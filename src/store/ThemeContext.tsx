@@ -1,0 +1,117 @@
+import type { ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import { useColorScheme as useNativewindScheme } from 'nativewind';
+
+import * as Storage from '@/services/storage';
+
+const THEME_STORAGE_KEY = 'color_scheme_preference';
+
+type ThemePreference = 'light' | 'dark' | 'system';
+type ResolvedScheme = 'light' | 'dark';
+
+interface ThemeContextValue {
+  colorScheme: ResolvedScheme;
+  themePreference: ThemePreference;
+  isLoaded: boolean;
+  toggleColorScheme: () => void;
+  setThemePreference: (pref: ThemePreference) => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+export function ThemeProvider({
+  children,
+}: Readonly<{ children: ReactNode }>): React.JSX.Element {
+  const { colorScheme: systemScheme, setColorScheme: setNativewindScheme } =
+    useNativewindScheme();
+
+  const [preference, setPreference] = useState<ThemePreference>('system');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSavedTheme(): Promise<void> {
+      const saved = await Storage.getItemAsync(THEME_STORAGE_KEY);
+
+      if (cancelled) return;
+
+      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        setPreference(saved);
+        if (saved !== 'system') {
+          setNativewindScheme(saved);
+        }
+      }
+
+      setIsLoaded(true);
+    }
+
+    void loadSavedTheme();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setNativewindScheme]);
+
+  const resolvedScheme: ResolvedScheme = useMemo(() => {
+    if (preference === 'system') {
+      return (systemScheme as ResolvedScheme) ?? 'light';
+    }
+    return preference;
+  }, [preference, systemScheme]);
+
+  const toggleColorScheme = useCallback(() => {
+    const next: ResolvedScheme = resolvedScheme === 'dark' ? 'light' : 'dark';
+    setPreference(next);
+    setNativewindScheme(next);
+    void Storage.setItemAsync(THEME_STORAGE_KEY, next);
+  }, [resolvedScheme, setNativewindScheme]);
+
+  const setThemePreference = useCallback(
+    (pref: ThemePreference) => {
+      setPreference(pref);
+      setNativewindScheme(pref === 'system' ? 'system' : pref);
+      void Storage.setItemAsync(THEME_STORAGE_KEY, pref);
+    },
+    [setNativewindScheme],
+  );
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      colorScheme: resolvedScheme,
+      themePreference: preference,
+      isLoaded,
+      toggleColorScheme,
+      setThemePreference,
+    }),
+    [
+      resolvedScheme,
+      preference,
+      isLoaded,
+      toggleColorScheme,
+      setThemePreference,
+    ],
+  );
+
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
+}
+
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+
+  if (!ctx) {
+    throw new Error('useTheme debe usarse dentro de un ThemeProvider');
+  }
+
+  return ctx;
+}

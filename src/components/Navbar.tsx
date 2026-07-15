@@ -3,10 +3,10 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useColorScheme } from 'nativewind';
 
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type { UserRole } from '@/types';
 
 interface NavItem {
@@ -42,7 +42,7 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
 
 export default function Navbar(): React.JSX.Element {
   const { user, logout } = useAuth();
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme, toggleColorScheme } = useTheme();
   const navigation = useNavigation();
 
   const state = navigation.getState();

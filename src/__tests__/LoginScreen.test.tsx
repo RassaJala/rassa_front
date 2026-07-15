@@ -13,6 +13,13 @@ jest.mock('@/store/AuthContext', () => ({
   }),
 }));
 
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    toggleColorScheme: jest.fn(),
+  }),
+}));
+
 const mockNetInfoState = { isConnected: true };
 
 jest.mock('@react-native-community/netinfo', () => ({
