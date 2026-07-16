@@ -119,7 +119,7 @@ export default function LoginScreen(): React.JSX.Element {
           <MaterialCommunityIcons
             name={isDark ? 'weather-sunny' : 'weather-night'}
             size={20}
-            color={isDark ? '#ffffff' : '#1d1d1d'}
+            color={isDark ? colors.iconWhite : colors.iconDark}
           />
         </Pressable>
       ) : null}
