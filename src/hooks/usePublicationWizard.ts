@@ -42,7 +42,6 @@ export interface WizardItemValidation {
 interface UsePublicationWizardParams {
   publicacion: Publicacion | undefined;
   productos: ProductoSemanal[];
-  allProductos: Producto[];
 }
 
 interface UsePublicationWizardResult {
@@ -116,9 +115,14 @@ async function uploadLocalPhoto(
 }
 
 type MutateAsyncFn = (
-  // eslint-disable-next-line eslint-comments/require-description, @typescript-eslint/no-explicit-any -- TanStack mutation types are complex; any is the pragmatic choice here
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TanStack mutation types are complex; any is the pragmatic choice here
   vars: any,
 ) => Promise<{ data: { id_producto_semanal: number } }>;
+
+interface PersistResult {
+  itemId: number;
+  isNew: boolean;
+}
 
 async function persistItem(
   pubId: number,
@@ -126,7 +130,7 @@ async function persistItem(
   existingItems: ProductoSemanal[],
   addMutateAsync: MutateAsyncFn,
   updateMutateAsync: MutateAsyncFn,
-): Promise<void> {
+): Promise<PersistResult> {
   const isExisting = existingItems.some(
     (p) => String(p.id_producto_semanal) === item.tempId,
   );
@@ -160,12 +164,13 @@ async function persistItem(
       // Photo upload failed — item was created/updated without photo
     }
   }
+
+  return { itemId, isNew: !isExisting };
 }
 
 export function usePublicationWizard({
   publicacion,
   productos,
-  allProductos: _allProductos,
 }: UsePublicationWizardParams): UsePublicationWizardResult {
   const [stepIndex, setStepIndex] = useState(0);
   const publicationRef = useRef(publicacion);
@@ -282,15 +287,35 @@ export function usePublicationWizard({
 
     if (!pub) return;
 
-    // Persist items
-    for (const item of activeItems) {
-      await persistItem(
-        pub.id_publicacion,
-        item,
-        productos,
-        addItemMutation.mutateAsync,
-        updateItemMutation.mutateAsync,
-      );
+    // Persist items with rollback on failure
+    const createdIds: number[] = [];
+
+    try {
+      for (const item of activeItems) {
+        const result = await persistItem(
+          pub.id_publicacion,
+          item,
+          productos,
+          addItemMutation.mutateAsync,
+          updateItemMutation.mutateAsync,
+        );
+        if (result.isNew) {
+          createdIds.push(result.itemId);
+        }
+      }
+    } catch (error) {
+      // Compensation: delete items created in this run
+      for (const id of createdIds) {
+        try {
+          await removeItemMutation.mutateAsync({
+            pubId: pub.id_publicacion,
+            itemId: id,
+          });
+        } catch {
+          // Best-effort cleanup — log and continue
+        }
+      }
+      throw error;
     }
 
     // Remove deleted items
@@ -328,16 +353,35 @@ export function usePublicationWizard({
       publicationRef.current = pub;
     }
 
-    if (pub) {
+    if (!pub) return;
+
+    const createdIds: number[] = [];
+
+    try {
       for (const item of activeItems) {
-        await persistItem(
+        const result = await persistItem(
           pub.id_publicacion,
           item,
           productos,
           addItemMutation.mutateAsync,
           updateItemMutation.mutateAsync,
         );
+        if (result.isNew) {
+          createdIds.push(result.itemId);
+        }
       }
+    } catch (error) {
+      for (const id of createdIds) {
+        try {
+          await removeItemMutation.mutateAsync({
+            pubId: pub.id_publicacion,
+            itemId: id,
+          });
+        } catch {
+          // Best-effort cleanup
+        }
+      }
+      throw error;
     }
   }, [
     activeItems,
@@ -345,6 +389,7 @@ export function usePublicationWizard({
     createMutation,
     addItemMutation,
     updateItemMutation,
+    removeItemMutation,
   ]);
 
   return {

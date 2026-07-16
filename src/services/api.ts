@@ -48,11 +48,21 @@ axiosRetry(api, {
   retries: MAX_RETRIES,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
+    // POST: retry only on network errors (server likely never received the request)
+    if (error.config?.method === 'post') {
+      return (
+        !error.response &&
+        (error.code === 'ECONNABORTED' ||
+          error.code === 'ERR_NETWORK' ||
+          error.code === 'ECONNREFUSED' ||
+          error.code === 'ENOTFOUND')
+      );
+    }
+
     return (
-      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-        (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
-      error.config?.method !== 'post'
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status !== undefined &&
+        error.response.status >= SERVER_ERROR_THRESHOLD)
     );
   },
 });
