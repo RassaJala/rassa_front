@@ -17,7 +17,7 @@ interface Props {
 const categoryConfig = {
   queryKey: ['categories'] as const,
   endpoint: '/categorias/',
-  comingSoon: false,
+  comingSoon: true,
   entityName: 'categoría',
   entityNamePlural: 'Categorías',
   entityNamePluralLower: 'categorías',
