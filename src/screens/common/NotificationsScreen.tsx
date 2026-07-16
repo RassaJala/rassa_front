@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 
 export default function NotificationsScreen(): React.JSX.Element {
   return (
-    <View className="flex-1 items-center justify-center bg-white px-6 dark:bg-gray-900">
+    <View className="flex-1 items-center justify-center bg-white px-6 dark:bg-gray-950">
       <Text className="text-6xl">🔔</Text>
 
       <Text className="mt-5 text-2xl font-bold text-brand-ink dark:text-gray-100">

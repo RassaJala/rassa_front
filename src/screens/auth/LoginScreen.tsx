@@ -22,7 +22,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
-  const { colorScheme, toggleColorScheme } = useTheme();
+  const { colorScheme, toggleColorScheme, isLoaded } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -84,21 +84,23 @@ export default function LoginScreen(): React.JSX.Element {
 
   return (
     <View className="flex-1 items-center justify-center bg-gray-50 px-6 py-10 dark:bg-gray-950">
-      <Pressable
-        className="absolute right-4 top-12 rounded-full bg-gray-200 p-3 dark:bg-gray-800"
-        onPress={() => {
-          toggleColorScheme();
-        }}
-        accessibilityLabel="Alternar tema claro y oscuro"
-        accessibilityRole="button"
-        hitSlop={8}
-      >
-        <MaterialCommunityIcons
-          name={isDark ? 'weather-sunny' : 'weather-night'}
-          size={20}
-          color={isDark ? colors.surface : colors.iconDark}
-        />
-      </Pressable>
+      {isLoaded ? (
+        <Pressable
+          className="absolute right-4 top-12 rounded-full bg-gray-200 p-3 dark:bg-gray-700"
+          onPress={() => {
+            toggleColorScheme();
+          }}
+          accessibilityLabel="Alternar tema claro y oscuro"
+          accessibilityRole="button"
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name={isDark ? 'weather-sunny' : 'weather-night'}
+            size={20}
+            color={isDark ? '#ffffff' : '#1d1d1d'}
+          />
+        </Pressable>
+      ) : null}
 
       <View className="w-full max-w-sm">
         <View className="mb-8 items-center">

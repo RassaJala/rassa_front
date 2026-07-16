@@ -42,7 +42,7 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
 
 export default function Navbar(): React.JSX.Element {
   const { user, logout } = useAuth();
-  const { colorScheme, toggleColorScheme } = useTheme();
+  const { colorScheme, toggleColorScheme, isLoaded } = useTheme();
   const navigation = useNavigation();
 
   const state = navigation.getState();
@@ -104,21 +104,23 @@ export default function Navbar(): React.JSX.Element {
         })}
       </ScrollView>
 
-      <Pressable
-        className="ml-2 rounded-lg px-3 py-2"
-        onPress={() => {
-          toggleColorScheme();
-        }}
-        accessibilityLabel="Alternar tema claro y oscuro"
-        accessibilityRole="button"
-        hitSlop={8}
-      >
-        <MaterialCommunityIcons
-          name={isDark ? 'weather-sunny' : 'weather-night'}
-          size={20}
-          color={isDark ? colors.surface : colors.iconDark}
-        />
-      </Pressable>
+      {isLoaded ? (
+        <Pressable
+          className="ml-2 rounded-full bg-gray-200 p-2.5 dark:bg-gray-700"
+          onPress={() => {
+            toggleColorScheme();
+          }}
+          accessibilityLabel="Alternar tema claro y oscuro"
+          accessibilityRole="button"
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name={isDark ? 'weather-sunny' : 'weather-night'}
+            size={20}
+            color={isDark ? '#ffffff' : '#1d1d1d'}
+          />
+        </Pressable>
+      ) : null}
 
       <Pressable
         className="ml-2 flex-row items-center rounded-lg px-3 py-2"

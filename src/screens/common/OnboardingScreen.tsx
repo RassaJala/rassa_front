@@ -1,6 +1,6 @@
 /* globals require -- React Native module resolution */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Animated, Image, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
@@ -37,6 +37,12 @@ export default function OnboardingScreen({
 }: Props): React.JSX.Element {
   const [current, setCurrent] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    return () => {
+      fadeAnim.stopAnimation();
+    };
+  }, [fadeAnim]);
 
   const currentSlide = slides[current] ?? slides[0];
 
