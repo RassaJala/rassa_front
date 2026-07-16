@@ -70,4 +70,5 @@ export type AdminStackParamList = {
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
+  Notificaciones: undefined;
 };

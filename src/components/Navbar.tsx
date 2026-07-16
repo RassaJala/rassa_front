@@ -17,9 +17,9 @@ interface NavItem {
 
 const NAV_CONFIG: Record<UserRole, NavItem[]> = {
   admin: [
-    { label: 'Home', screen: 'AdminDashboard', icon: 'view-dashboard' },
-    { label: 'Usuarios', screen: 'AdminUsers', icon: 'account-group' },
-    { label: 'Productos', screen: 'AdminProducts', icon: 'package-variant' },
+    { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
+    { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
+    { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
     { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   buyer: [
@@ -63,7 +63,7 @@ export default function Navbar(): React.JSX.Element {
         className="flex-1"
       >
         {items.map((item) => {
-          const isActive = currentRoute === item.screen;
+          const isActive = currentRoute === item.screen || (currentRoute === 'AdminPanel' && item.screen === 'AdminDashboard');
 
           return (
             <Pressable

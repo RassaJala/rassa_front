@@ -124,12 +124,20 @@ function SellerTabs() {
 
 function AdminScreens() {
   return (
-    <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+    <AdminStack.Navigator
+      screenOptions={{
+        header: () => <Navbar />,
+      }}
+    >
       <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
       <AdminStack.Screen name="CategoryList" component={CategoryListScreen} />
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+      <AdminStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+      />
     </AdminStack.Navigator>
   );
 }
