@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Button } from 'react-native-paper';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
@@ -20,7 +22,7 @@ import LogoutButton from '@/components/LogoutButton';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import api from '@/services/api';
-import type { RegisterRole } from '@/types';
+import type { AdminStackParamList, RegisterRole } from '@/types';
 import { getGenderLabel, getRoleLabel } from '@/utils/labels';
 import {
   cleanAddress,
@@ -138,7 +140,33 @@ function validateForm(fields: {
   return null;
 }
 
-export default function AdminPanelScreen(): React.JSX.Element {
+type NavigationProp = NativeStackNavigationProp<
+  AdminStackParamList,
+  'AdminPanel'
+>;
+
+interface Props {
+  readonly navigation: NavigationProp;
+}
+
+const menuItems = [
+  {
+    key: 'CategoryList',
+    label: 'Categorías',
+    icon: '📂',
+    description: 'Administrar categorías de productos',
+  },
+  {
+    key: 'UnitList',
+    label: 'Unidades de Medida',
+    icon: '📏',
+    description: 'Administrar unidades (kg, pz, lt...)',
+  },
+];
+
+export default function AdminPanelScreen({
+  navigation,
+}: Props): React.JSX.Element {
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
@@ -258,27 +286,58 @@ export default function AdminPanelScreen(): React.JSX.Element {
 
   if (!showForm) {
     return (
-      <View className="flex-1 bg-gray-50 px-6 pt-12 dark:bg-gray-950">
-        <View className="mb-6">
-          <Text className="mb-1 text-2xl font-bold text-brand-ink dark:text-gray-100">
-            Panel de Admin
-          </Text>
-          <Text className="text-sm text-gray-500 dark:text-gray-400">
-            Gestiona los usuarios y configuraciones del sistema.
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+        {/* Header */}
+        <View className="bg-brand-green-forest px-4 pb-6 pt-12">
+          <Text className="text-2xl font-bold text-white">Panel Admin</Text>
+          <Text className="mt-1 text-sm text-white/80">
+            Administración del sistema
           </Text>
         </View>
 
-        <TouchableOpacity
-          onPress={() => setShowForm(true)}
-          className="mb-4 self-start rounded-lg bg-brand-red-coral px-4 py-2.5 shadow-sm"
-        >
-          <Text className="text-sm font-semibold text-white">
-            Agregar usuario
-          </Text>
-        </TouchableOpacity>
+        {/* Menu */}
+        <View className="flex-1 gap-3 p-4">
+          <Pressable
+            onPress={() => setShowForm(true)}
+            className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
+          >
+            <Text className="mr-4 text-3xl">👤</Text>
+            <View className="flex-1">
+              <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
+                Registrar Usuario
+              </Text>
+              <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                Agregar un nuevo usuario al sistema
+              </Text>
+            </View>
+            <Text className="text-xl text-gray-300">→</Text>
+          </Pressable>
 
-        <View className="mb-8 mt-auto">
-          <LogoutButton mode="outlined" />
+          {menuItems.map((item) => (
+            <Pressable
+              key={item.key}
+              onPress={() =>
+                navigation.navigate(item.key as 'CategoryList' | 'UnitList')
+              }
+              className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
+            >
+              <Text className="mr-4 text-3xl">{item.icon}</Text>
+              <View className="flex-1">
+                <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
+                  {item.label}
+                </Text>
+                <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                  {item.description}
+                </Text>
+              </View>
+              <Text className="text-xl text-gray-300">→</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Logout */}
+        <View className="border-t border-gray-200 p-4 dark:border-gray-800">
+          <LogoutButton mode="contained" />
         </View>
       </View>
     );

@@ -25,4 +25,12 @@ export const colors = {
     mountainMid: '#B2C2B2',
     mountainBot: '#A19FB6',
   },
+  // Brand palette
+  brandRedCoral: '#DE393A',
+  brandGreenForest: '#3A6D56',
+  brandInk: '#1f2937', // gray-800
+
+  // Icon / utility
+  iconMuted: '#9ca3af', // gray-400
+  iconWhite: '#ffffff',
 };

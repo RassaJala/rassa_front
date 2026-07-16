@@ -5,6 +5,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // Admin screens
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import CategoryListScreen from '@/screens/admin/CategoryListScreen';
+import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
+import UnitListScreen from '@/screens/admin/UnitListScreen';
+import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 // Auth screens
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -18,6 +22,7 @@ import SplashScreen from '@/screens/common/SplashScreen';
 import AddProductScreen from '@/screens/farmer/AddProductScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import { useAuth } from '@/store/AuthContext';
+import type { AdminStackParamList } from '@/types';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -42,10 +47,6 @@ export type FarmerTabsParamList = {
 export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
-};
-
-export type AdminStackParamList = {
-  AdminPanel: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -100,6 +101,18 @@ function FarmerNavigator() {
   );
 }
 
+function AdminScreens() {
+  return (
+    <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+      <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
+      <AdminStack.Screen name="CategoryList" component={CategoryListScreen} />
+      <AdminStack.Screen name="UnitList" component={UnitListScreen} />
+      <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
+      <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+    </AdminStack.Navigator>
+  );
+}
+
 export default function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -116,11 +129,7 @@ export default function AppNavigator(): React.JSX.Element {
     case 'farmer':
       return <FarmerNavigator />;
     case 'admin':
-      return (
-        <AdminStack.Navigator screenOptions={{ headerShown: false }}>
-          <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        </AdminStack.Navigator>
-      );
+      return <AdminScreens />;
     case 'buyer':
       return <BuyerNavigator />;
     case undefined:

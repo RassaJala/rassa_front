@@ -99,13 +99,30 @@ export interface OrderItem {
 }
 
 export interface Category {
-  id: number;
-  name: string;
-  description: string;
-  created_at: string;
+  id_categoria: number;
+  nombre: string;
+  descripcion: string;
+  estado: boolean;
+  creado_en: string;
+}
+
+export interface Unit {
+  id_unidad: number;
+  nombre: string;
+  abreviatura: string;
+  estado: boolean;
+  creado_en: string;
 }
 
 export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+export type AdminStackParamList = {
+  AdminPanel: undefined;
+  CategoryList: undefined;
+  UnitList: undefined;
+  CategoryTrash: undefined;
+  UnitTrash: undefined;
+};
