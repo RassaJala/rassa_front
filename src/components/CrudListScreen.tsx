@@ -219,7 +219,11 @@ export default function CrudListScreen<
       >(config.endpoint);
 
       if (Array.isArray(data)) return data;
-      if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }
@@ -483,18 +487,18 @@ export default function CrudListScreen<
   if (config.comingSoon) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-          <MaterialCommunityIcons
-            name="wrench-clock-outline"
-            size={64}
-            color={colors.iconMuted}
-          />
-          <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
-            Funcionalidad en desarrollo
-          </Text>
-          <Text className="mt-2 text-center text-sm text-gray-400 dark:text-gray-500">
-            Esta sección estará disponible próximamente.
-          </Text>
-        </View>
+        <MaterialCommunityIcons
+          name="wrench-clock-outline"
+          size={64}
+          color={colors.iconMuted}
+        />
+        <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
+          Funcionalidad en desarrollo
+        </Text>
+        <Text className="mt-2 text-center text-sm text-gray-400 dark:text-gray-500">
+          Esta sección estará disponible próximamente.
+        </Text>
+      </View>
     );
   }
 

@@ -73,7 +73,11 @@ export default function TrashListScreen<
       >(`${config.endpoint}trash/`);
 
       if (Array.isArray(data)) return data;
-      if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }

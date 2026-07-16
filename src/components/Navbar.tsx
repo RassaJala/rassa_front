@@ -63,7 +63,9 @@ export default function Navbar(): React.JSX.Element {
         className="flex-1"
       >
         {items.map((item) => {
-          const isActive = currentRoute === item.screen || (currentRoute === 'AdminPanel' && item.screen === 'AdminDashboard');
+          const isActive =
+            currentRoute === item.screen ||
+            (currentRoute === 'AdminPanel' && item.screen === 'AdminDashboard');
 
           return (
             <Pressable
