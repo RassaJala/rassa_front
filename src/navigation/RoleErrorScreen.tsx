@@ -10,7 +10,7 @@ export function RoleErrorScreen({
   onLogout,
 }: Readonly<{ onLogout: () => void }>): React.JSX.Element {
   return (
-    <View className="flex-1 items-center justify-center bg-white px-8 dark:bg-gray-900">
+    <View className="flex-1 items-center justify-center bg-white px-8 dark:bg-gray-950">
       <MaterialCommunityIcons name="alert" size={64} color={colors.error} />
 
       <Text className="mt-6 text-center text-xl font-bold text-brand-ink dark:text-gray-100">

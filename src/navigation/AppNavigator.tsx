@@ -1,6 +1,7 @@
 /* globals clearTimeout, setTimeout -- Required for React Native timers */
 
 import React, { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -170,6 +171,12 @@ export default function AppNavigator(): React.JSX.Element {
   }, [isLoading, checkingOnboarding]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setShowOnboarding(false);
+      setCheckingOnboarding(false);
+      return;
+    }
+
     const verifyOnboarding = async (): Promise<void> => {
       try {
         const completed = await Storage.getItemAsync(Storage.ONBOARDING_KEY);

@@ -1,7 +1,7 @@
+/* globals require -- React Native module resolution */
+
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Image, Text, View } from 'react-native';
-
-declare const require: (path: string) => number;
 
 export default function SplashScreen(): React.JSX.Element {
   const scale = useRef(new Animated.Value(0.7)).current;
@@ -39,7 +39,7 @@ export default function SplashScreen(): React.JSX.Element {
         className="items-center"
       >
         <Image
-          source={require('../../../assets/icon.png')}
+          source={require('../../../assets/icon.png') as number}
 
           className="mb-6 h-32 w-32"
 
@@ -50,11 +50,9 @@ export default function SplashScreen(): React.JSX.Element {
           RASSA JALA
         </Text>
 
-        <View className="md:hidden">
-          <Text className="mt-3 text-center text-white dark:text-gray-100">
-            Conectando productores y compradores.
-          </Text>
-        </View>
+        <Text className="mt-3 text-center text-white dark:text-gray-100">
+          Conectando productores y compradores.
+        </Text>
 
         <ActivityIndicator
           size="large"

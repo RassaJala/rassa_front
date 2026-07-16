@@ -126,13 +126,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
               {secondValue}
             </Text>
           ) : null}
-          <View
-            className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${
-              item.estado
-                ? 'bg-gray-100 dark:bg-gray-800'
-                : 'bg-gray-100 dark:bg-gray-800'
-            }`}
-          >
+          <View className="mt-2 self-start rounded-full bg-gray-100 px-2.5 py-0.5 dark:bg-gray-800">
             <Text
               className={`text-xs font-medium ${
                 item.estado
