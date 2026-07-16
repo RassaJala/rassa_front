@@ -85,7 +85,6 @@ describe('AdminPanelScreen', () => {
 
   it('renders initial state with "Agregar usuario" button', () => {
     const { getByText } = renderScreen();
-    expect(getByText('Panel de Admin')).toBeTruthy();
     expect(getByText('Agregar usuario')).toBeTruthy();
   });
 

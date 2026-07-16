@@ -132,7 +132,6 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
   };
 }
 
-<<<<<<< HEAD
 function extractErrorMessage(data: unknown): string | null {
   if (!data || typeof data !== 'object') {
     return null;
@@ -192,7 +191,8 @@ function parseAuthError(
   if (status === 500) return 'Error interno del servidor. Inténtalo más tarde.';
 
   return 'Error de conexión con el servidor.';
-=======
+}
+
 function parseLoginError(
   axiosError: AxiosError<Record<string, unknown>>,
 ): string {
@@ -225,7 +225,6 @@ function sanitizeAxiosError(error: AxiosError): {
     status: error.response?.status,
     message: error.message,
   };
->>>>>>> main
 }
 
 export function AuthProvider({
@@ -238,11 +237,8 @@ export function AuthProvider({
     isRegistering: false,
   });
 
-<<<<<<< HEAD
   const isRegisteringRef = useRef(false);
-=======
   const restoreInProgress = useRef(false);
->>>>>>> main
 
   const clearSession = useCallback(async () => {
     await Promise.allSettled([
@@ -394,8 +390,9 @@ export function AuthProvider({
         setState((prev) => ({ ...prev, isLoading: false }));
 
         if (axios.isAxiosError(error)) {
-          const message = parseLoginError(
+          const message = parseAuthError(
             error as AxiosError<Record<string, unknown>>,
+            'login',
           );
 
           const safe = sanitizeAxiosError(error);

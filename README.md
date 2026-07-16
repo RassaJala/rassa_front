@@ -28,6 +28,19 @@ cd Rassa
 bun install
 ```
 
+### ⚠️ Notas de Instalación y Hooks Locales (Lefthook)
+El proyecto utiliza nuevas dependencias nativas (`@react-native-community/datetimepicker`, `@react-native-community/netinfo`, `react-native-reanimated` y `react-native-worklets-core`) e integra **Lefthook** para validaciones previas al commit.
+
+Si experimentás errores durante la instalación (por ejemplo, si no tenés `bun` o `bunx` instalados globalmente en tu sistema de manera nativa), podés instalar y compilar el árbol de dependencias usando `npm` ignorando temporalmente los scripts de ciclo de vida:
+```bash
+npm install --legacy-peer-deps --ignore-scripts
+```
+
+Si los Git hooks locales te impiden realizar commits debido a la falta de Bun en tu PATH, podés confirmarlos omitiendo las validaciones:
+```bash
+git commit -m "tu mensaje" --no-verify
+```
+
 ## Ejecutar
 
 ```bash

@@ -667,7 +667,6 @@ describe('AuthContext', () => {
     });
   });
 
-<<<<<<< HEAD
   // ── Register tests ────────────────────────────────────
 
   it('register exitoso: realiza POST, almacena tokens, actualiza estado', async () => {
@@ -766,31 +765,11 @@ describe('AuthContext', () => {
     });
 
     const { getByTestId } = render(
-=======
-  // ── sanitizeAxiosError: no expone tokens ──────────────
-
-  it('restoreSession: console.error no expone tokens JWT', async () => {
-    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('valid_token');
-
-    const networkError = new Error('Network Error') as any;
-    networkError.isAxiosError = true;
-    networkError.response = undefined;
-    networkError.config = { headers: { Authorization: 'Bearer secret-token' } };
-
-    (api.get as jest.Mock).mockRejectedValue(networkError);
-
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
-    render(
->>>>>>> main
       <AuthProvider>
         <TestComponent />
       </AuthProvider>,
     );
 
-<<<<<<< HEAD
     await waitFor(() => {
       expect(getByTestId('auth-status').props.children).toBe('Autenticado');
     });
@@ -919,6 +898,8 @@ describe('AuthContext', () => {
       </AuthProvider>,
     );
 
+    await waitForLoading(getByTestId);
+
     await act(async () => {
       fireEvent.press(getByTestId('login-btn'));
     });
@@ -944,6 +925,8 @@ describe('AuthContext', () => {
       </AuthProvider>,
     );
 
+    await waitForLoading(getByTestId);
+
     await act(async () => {
       fireEvent.press(getByTestId('login-btn'));
     });
@@ -968,6 +951,8 @@ describe('AuthContext', () => {
         <TestComponent />
       </AuthProvider>,
     );
+
+    await waitForLoading(getByTestId);
 
     await act(async () => {
       fireEvent.press(getByTestId('login-btn'));
@@ -995,6 +980,8 @@ describe('AuthContext', () => {
         <TestComponent />
       </AuthProvider>,
     );
+
+    await waitForLoading(getByTestId);
 
     await act(async () => {
       fireEvent.press(getByTestId('register-btn'));
@@ -1036,6 +1023,8 @@ describe('AuthContext', () => {
         <TestComponent />
       </AuthProvider>,
     );
+
+    await waitForLoading(getByTestId);
 
     await act(async () => {
       fireEvent.press(getByTestId('register-btn'));

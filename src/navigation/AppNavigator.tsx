@@ -32,10 +32,6 @@ import { useAuth } from '@/store/AuthContext';
 import type {
   AdminStackParamList,
   AuthStackParamList,
-  BuyerStackParamList,
-  BuyerTabsParamList,
-  FarmerStackParamList,
-  FarmerTabsParamList,
 } from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
