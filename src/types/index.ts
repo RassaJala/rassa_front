@@ -1,4 +1,4 @@
-export type UserRole = 'buyer' | 'farmer' | 'admin';
+export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
   id: number;
@@ -125,6 +125,7 @@ export type AdminStackParamList = {
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
+  Notificaciones: undefined;
 };
 
 export type AuthStackParamList = {

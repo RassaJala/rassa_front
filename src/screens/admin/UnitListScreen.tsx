@@ -17,6 +17,7 @@ interface Props {
 const unitConfig = {
   queryKey: ['units'] as const,
   endpoint: '/unidades/',
+  comingSoon: false,
   entityName: 'unidad',
   entityNamePlural: 'Unidades de Medida',
   entityNamePluralLower: 'unidades de medida',

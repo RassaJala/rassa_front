@@ -15,7 +15,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
-import LogoutButton from '@/components/LogoutButton';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
@@ -153,17 +152,8 @@ export default function AdminPanelScreen({
 
   if (!showForm) {
     return (
-      <View className="flex-1 bg-gray-50 dark:bg-gray-950">
-        {/* Header */}
-        <View className="bg-brand-green-forest px-4 pb-6 pt-12">
-          <Text className="text-2xl font-bold text-white">Panel de Admin</Text>
-          <Text className="mt-1 text-sm text-white/80">
-            Administración del sistema
-          </Text>
-        </View>
-
-        {/* Menu */}
-        <View className="flex-1 gap-3 p-4">
+      <View className="flex-1 bg-gray-50 p-4 dark:bg-gray-950">
+        <View className="flex-1 gap-3">
           <Pressable
             onPress={() => setShowForm(true)}
             className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
@@ -200,11 +190,6 @@ export default function AdminPanelScreen({
               <Text className="text-xl text-gray-300">→</Text>
             </Pressable>
           ))}
-        </View>
-
-        {/* Logout */}
-        <View className="border-t border-gray-200 p-4 dark:border-gray-800">
-          <LogoutButton mode="contained" />
         </View>
       </View>
     );

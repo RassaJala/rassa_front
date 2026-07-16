@@ -1,4 +1,3 @@
-import '~/styles/global.css';
 import React from 'react';
 import {
   MD3DarkTheme,
@@ -18,8 +17,10 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import '~/styles/global.css';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
+import { ThemeProvider } from '~/store/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,16 +71,18 @@ export default function App(): React.JSX.Element {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <ThemeProvider>
         <PaperProvider theme={theme}>
-          <ErrorBoundary>
-            <NavigationContainer>
-              <AppNavigator />
-              <StatusBar style="auto" />
-            </NavigationContainer>
-          </ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
+              <NavigationContainer>
+                <AppNavigator />
+                <StatusBar style="auto" />
+              </NavigationContainer>
+            </ErrorBoundary>
+          </AuthProvider>
         </PaperProvider>
-      </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -14,7 +14,7 @@ export default function MyProductsScreen(): React.JSX.Element {
   return (
     <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
       <Text variant="bodyLarge" className="text-gray-500 dark:text-gray-400">
-        My Products (Farmer) - Coming soon
+        Mis productos (Agricultor) — Próximamente
       </Text>
 
       <View className="mt-6 w-full max-w-xs gap-3">
