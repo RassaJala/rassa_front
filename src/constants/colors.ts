@@ -11,6 +11,7 @@ export const colors = {
   error: '#ef4444', // red-500
   success: '#22c55e', // green-500
   warning: '#f59e0b', // amber-500
+  info: '#3b82f6', // blue-500
 
   // Brand palette
   brandRedCoral: '#DE393A',

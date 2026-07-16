@@ -6,16 +6,25 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import LogoutButton from '@/components/LogoutButton';
 import type { AdminStackParamList } from '@/types';
 
+type AdminScreen = keyof AdminStackParamList;
+
 type NavigationProp = NativeStackNavigationProp<
   AdminStackParamList,
   'AdminPanel'
 >;
 
+interface MenuItem {
+  key: AdminScreen;
+  label: string;
+  icon: string;
+  description: string;
+}
+
 interface Props {
   navigation: NavigationProp;
 }
 
-const menuItems = [
+const menuItems: MenuItem[] = [
   {
     key: 'UserManagement',
     label: 'Usuarios',
@@ -54,11 +63,7 @@ export default function AdminPanelScreen({
         {menuItems.map((item) => (
           <Pressable
             key={item.key}
-            onPress={() =>
-              navigation.navigate(
-                item.key as 'UserManagement' | 'CategoryList' | 'UnitList',
-              )
-            }
+            onPress={() => navigation.navigate(item.key)}
             className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <Text className="mr-4 text-3xl">{item.icon}</Text>

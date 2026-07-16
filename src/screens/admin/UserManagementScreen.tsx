@@ -22,6 +22,7 @@ import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
+import { getRoleLabel } from '@/utils/labels';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -59,31 +60,20 @@ const STATUS_FILTERS = [
 ] as const;
 
 const ROLE_OPTIONS = [
-  { label: 'Admin', value: 'admin', color: '#ef4444' },
+  { label: 'Admin', value: 'admin', color: colors.error },
   { label: 'Agricultor', value: 'farmer', color: colors.primary },
   { label: 'Vendedor', value: 'seller', color: colors.accent },
-  { label: 'Cliente', value: 'buyer', color: '#3b82f6' },
+  { label: 'Cliente', value: 'buyer', color: colors.info },
 ] as const;
 
-const ROLE_LABEL_MAP: Record<string, string> = {
-  admin: 'Admin',
-  farmer: 'Agricultor',
-  seller: 'Vendedor',
-  buyer: 'Cliente',
-};
-
 const ROLE_COLOR_MAP: Record<string, string> = {
-  admin: '#ef4444',
+  admin: colors.error,
   farmer: colors.primary,
   seller: colors.accent,
-  buyer: '#3b82f6',
+  buyer: colors.info,
 };
 
 // ── Helpers ────────────────────────────────────────────────
-
-function getRoleLabel(role: string): string {
-  return ROLE_LABEL_MAP[role] ?? role;
-}
 
 function getRoleBadgeBg(role: string): string {
   const color = ROLE_COLOR_MAP[role] ?? '#6b7280';
@@ -157,8 +147,9 @@ export default function UserManagementScreen({
     isError,
     refetch,
     isRefetching,
-  } = useQuery({
+  } = useQuery<AdminUser[]>({
     queryKey: ['admin-users', debouncedSearch, roleFilter, statusFilter],
+    enabled: netInfo.isConnected ?? true,
     queryFn: async () => {
       const { data: response } = await api.get<ApiResponse<AdminUser[]>>(
         `/admin/usuarios/${queryString}`,
@@ -179,6 +170,7 @@ export default function UserManagementScreen({
     },
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setConfirmUser(null);
       showToast(data.message ?? 'Estado actualizado', 'success');
     },
     onError: (error: unknown) => {
@@ -240,6 +232,7 @@ export default function UserManagementScreen({
 
   const handleRoleSave = useCallback(() => {
     if (!roleModalUser || !newRole) return;
+    if (roleMutation.isPending) return;
 
     // Same role — no-op
     if (newRole === roleModalUser.role) {
@@ -252,6 +245,8 @@ export default function UserManagementScreen({
 
   const handleTogglePress = useCallback(
     (user: AdminUser) => {
+      if (toggleMutation.isPending) return;
+
       // Deactivating → require confirmation
       if (user.estado) {
         setConfirmUser(user);
@@ -267,8 +262,6 @@ export default function UserManagementScreen({
     if (confirmUser) {
       toggleMutation.mutate(confirmUser.id_usuario);
     }
-
-    setConfirmUser(null);
   }, [confirmUser, toggleMutation]);
 
   const isSelf = useCallback(
@@ -469,55 +462,68 @@ export default function UserManagementScreen({
       </View>
 
       {/* ═══ Filters ═══ */}
-      <View className="px-4 pb-2">
-        {/* Rol filter chips */}
-        <View className="mb-2 flex-row flex-wrap gap-2">
-          {ROLE_FILTERS.map((opt) => (
-            <Pressable
-              key={String(opt.value)}
-              onPress={() => setRoleFilter(opt.value)}
-              className={`rounded-full px-3.5 py-1.5 ${
-                roleFilter === opt.value
-                  ? 'bg-brand-green-forest'
-                  : 'bg-white dark:bg-gray-800'
-              }`}
-            >
-              <Text
-                className={`text-xs font-medium ${
+      <View className="mx-4 mb-3 rounded-xl bg-white p-3 shadow-sm dark:bg-gray-900 dark:shadow-none">
+        {/* Rol filter */}
+        <View>
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Rol
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {ROLE_FILTERS.map((opt) => (
+              <Pressable
+                key={String(opt.value)}
+                onPress={() => setRoleFilter(opt.value)}
+                className={`rounded-full px-3.5 py-1.5 ${
                   roleFilter === opt.value
-                    ? 'text-white'
-                    : 'text-gray-600 dark:text-gray-300'
+                    ? 'bg-brand-green-forest'
+                    : 'bg-gray-100 dark:bg-gray-800'
                 }`}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  className={`text-xs font-medium ${
+                    roleFilter === opt.value
+                      ? 'text-white'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
-        {/* Status filter chips */}
-        <View className="flex-row flex-wrap gap-2">
-          {STATUS_FILTERS.map((opt) => (
-            <Pressable
-              key={String(opt.value)}
-              onPress={() => setStatusFilter(opt.value)}
-              className={`rounded-full px-3.5 py-1.5 ${
-                statusFilter === opt.value
-                  ? 'bg-brand-green-forest'
-                  : 'bg-white dark:bg-gray-800'
-              }`}
-            >
-              <Text
-                className={`text-xs font-medium ${
+        {/* Divider */}
+        <View className="my-3 h-px bg-gray-100 dark:bg-gray-800" />
+
+        {/* Status filter */}
+        <View>
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Estado
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {STATUS_FILTERS.map((opt) => (
+              <Pressable
+                key={String(opt.value)}
+                onPress={() => setStatusFilter(opt.value)}
+                className={`rounded-full px-3.5 py-1.5 ${
                   statusFilter === opt.value
-                    ? 'text-white'
-                    : 'text-gray-600 dark:text-gray-300'
+                    ? 'bg-brand-green-forest'
+                    : 'bg-gray-100 dark:bg-gray-800'
                 }`}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  className={`text-xs font-medium ${
+                    statusFilter === opt.value
+                      ? 'text-white'
+                      : 'text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </View>
 
