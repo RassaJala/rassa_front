@@ -5,12 +5,10 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { Button, Dialog, Portal, RadioButton } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
@@ -18,77 +16,18 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
+import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
+import EmptyState from '@/components/UserManagement/EmptyState';
+import FilterBar from '@/components/UserManagement/FilterBar';
+import RoleDialog from '@/components/UserManagement/RoleDialog';
+import UserCard from '@/components/UserManagement/UserCard';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
-import { getRoleLabel } from '@/utils/labels';
-
-// ── Types ──────────────────────────────────────────────────
-
-interface AdminUser {
-  id_usuario: number;
-  email: string;
-  telefono: string | null;
-  role: 'buyer' | 'farmer' | 'admin' | 'seller';
-  nombre: string;
-  apellido_paterno: string | null;
-  apellido_materno: string | null;
-  fecha_nacimiento: string | null;
-  genero: string | null;
-  direccion: string | null;
-  localidad: number | null;
-  localidad_nombre: string | null;
-  estado: boolean;
-  creado_en: string;
-}
-
-// ── Constants ──────────────────────────────────────────────
-
-const ROLE_FILTERS = [
-  { label: 'Todos', value: null as string | null },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Agricultor', value: 'Agricultor' },
-  { label: 'Vendedor', value: 'Vendedor' },
-  { label: 'Cliente', value: 'Cliente' },
-] as const;
-
-const STATUS_FILTERS = [
-  { label: 'Todos', value: null as string | null },
-  { label: 'Activos', value: 'true' },
-  { label: 'Inactivos', value: 'false' },
-] as const;
-
-const ROLE_OPTIONS = [
-  { label: 'Admin', value: 'admin', color: colors.error },
-  { label: 'Agricultor', value: 'farmer', color: colors.primary },
-  { label: 'Vendedor', value: 'seller', color: colors.accent },
-  { label: 'Cliente', value: 'buyer', color: colors.info },
-] as const;
-
-const ROLE_COLOR_MAP: Record<string, string> = {
-  admin: colors.error,
-  farmer: colors.primary,
-  seller: colors.accent,
-  buyer: colors.info,
-};
-
-// ── Helpers ────────────────────────────────────────────────
-
-function getRoleBadgeBg(role: string): string {
-  const color = ROLE_COLOR_MAP[role] ?? '#6b7280';
-  return `${color}1A`; // ~10% opacity hex
-}
-
-function getFullName(user: AdminUser): string {
-  return [user.nombre, user.apellido_paterno, user.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
+import type { AdminUser } from '@/types/userManagement';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'UserManagement'>;
-
-// ── Component ──────────────────────────────────────────────
 
 export default function UserManagementScreen({
   navigation,
@@ -106,6 +45,7 @@ export default function UserManagementScreen({
   // Debounce search input — 400ms after last keystroke
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
+
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -220,9 +160,9 @@ export default function UserManagementScreen({
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  const openRoleModal = useCallback((user: AdminUser) => {
-    setRoleModalUser(user);
-    setNewRole(user.role);
+  const openRoleModal = useCallback((targetUser: AdminUser) => {
+    setRoleModalUser(targetUser);
+    setNewRole(targetUser.role);
   }, []);
 
   const closeRoleModal = useCallback(() => {
@@ -237,6 +177,7 @@ export default function UserManagementScreen({
     // Same role — no-op
     if (newRole === roleModalUser.role) {
       closeRoleModal();
+
       return;
     }
 
@@ -244,15 +185,15 @@ export default function UserManagementScreen({
   }, [roleModalUser, newRole, roleMutation, closeRoleModal]);
 
   const handleTogglePress = useCallback(
-    (user: AdminUser) => {
+    (targetUser: AdminUser) => {
       if (toggleMutation.isPending) return;
 
       // Deactivating → require confirmation
-      if (user.estado) {
-        setConfirmUser(user);
+      if (targetUser.estado) {
+        setConfirmUser(targetUser);
       } else {
         // Reactivating — go directly
-        toggleMutation.mutate(user.id_usuario);
+        toggleMutation.mutate(targetUser.id_usuario);
       }
     },
     [toggleMutation],
@@ -265,7 +206,8 @@ export default function UserManagementScreen({
   }, [confirmUser, toggleMutation]);
 
   const isSelf = useCallback(
-    (user: AdminUser): boolean => currentUser?.id_usuario === user.id_usuario,
+    (targetUser: AdminUser): boolean =>
+      currentUser?.id_usuario === targetUser.id_usuario,
     [currentUser?.id_usuario],
   );
 
@@ -277,110 +219,15 @@ export default function UserManagementScreen({
 
   // ── Render user card ──
   const renderUser = useCallback(
-    ({ item }: { item: AdminUser }) => {
-      const self = isSelf(item);
-
-      return (
-        <View className="mx-4 mb-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-          {/* Top row: name + role badge */}
-          <View className="mb-3 flex-row items-center justify-between">
-            <View className="mr-2 flex-1">
-              <Text
-                className="text-base font-semibold text-brand-ink dark:text-gray-100"
-                numberOfLines={1}
-              >
-                {getFullName(item)}
-              </Text>
-              <Text
-                className="text-sm text-gray-500 dark:text-gray-400"
-                numberOfLines={1}
-              >
-                {item.email}
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={() => openRoleModal(item)}
-              className="rounded-full px-3 py-1"
-              style={{ backgroundColor: getRoleBadgeBg(item.role) }}
-            >
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: ROLE_COLOR_MAP[item.role] ?? '#6b7280' }}
-              >
-                {getRoleLabel(item.role)}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Bottom row: toggle + change role button */}
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <Switch
-                value={item.estado}
-                onValueChange={() => handleTogglePress(item)}
-                disabled={self}
-                trackColor={{
-                  false: colors.border,
-                  true: colors.success,
-                }}
-                thumbColor={
-                  self
-                    ? colors.iconMuted
-                    : item.estado
-                      ? colors.primary
-                      : colors.iconMuted
-                }
-              />
-              <Text className="text-sm text-gray-600 dark:text-gray-400">
-                {item.estado ? 'Activo' : 'Inactivo'}
-              </Text>
-              {self ? (
-                <View className="rounded bg-amber-100 px-1.5 py-0.5 dark:bg-amber-900">
-                  <Text className="text-xs text-amber-700 dark:text-amber-300">
-                    tú
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            <Pressable
-              onPress={() => openRoleModal(item)}
-              className="flex-row items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 dark:bg-gray-800"
-            >
-              <MaterialCommunityIcons
-                name="account-cog-outline"
-                size={16}
-                color={colors.textSecondary}
-              />
-              <Text className="text-sm text-gray-600 dark:text-gray-400">
-                Rol
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      );
-    },
-    [handleTogglePress, isSelf, openRoleModal],
-  );
-
-  // ── Empty state ──
-  const ListEmptyComponent = useCallback(
-    () => (
-      <View className="items-center justify-center px-8 py-20">
-        <MaterialCommunityIcons
-          name="account-search-outline"
-          size={64}
-          color={colors.iconMuted}
-        />
-        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
-          {debouncedSearch || roleFilter || statusFilter
-            ? 'No se encontraron usuarios con esos filtros.'
-            : 'No hay usuarios registrados.'}
-        </Text>
-      </View>
+    ({ item }: { item: AdminUser }) => (
+      <UserCard
+        user={item}
+        isSelf={isSelf(item)}
+        onTogglePress={handleTogglePress}
+        onRolePress={openRoleModal}
+      />
     ),
-    [debouncedSearch, roleFilter, statusFilter],
+    [handleTogglePress, isSelf, openRoleModal],
   );
 
   // ── Error state ──
@@ -397,15 +244,6 @@ export default function UserManagementScreen({
             ? 'Sin conexión a Internet. Verifica tu conexión.'
             : 'Error al cargar usuarios.'}
         </Text>
-
-        <Button
-          mode="contained"
-          onPress={() => void refetch()}
-          className="mt-4"
-          buttonColor={colors.primary}
-        >
-          Reintentar
-        </Button>
       </View>
     );
   }
@@ -462,70 +300,12 @@ export default function UserManagementScreen({
       </View>
 
       {/* ═══ Filters ═══ */}
-      <View className="mx-4 mb-3 rounded-xl bg-white p-3 shadow-sm dark:bg-gray-900 dark:shadow-none">
-        {/* Rol filter */}
-        <View>
-          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Rol
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {ROLE_FILTERS.map((opt) => (
-              <Pressable
-                key={String(opt.value)}
-                onPress={() => setRoleFilter(opt.value)}
-                className={`rounded-full px-3.5 py-1.5 ${
-                  roleFilter === opt.value
-                    ? 'bg-brand-green-forest'
-                    : 'bg-gray-100 dark:bg-gray-800'
-                }`}
-              >
-                <Text
-                  className={`text-xs font-medium ${
-                    roleFilter === opt.value
-                      ? 'text-white'
-                      : 'text-gray-600 dark:text-gray-300'
-                  }`}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Divider */}
-        <View className="my-3 h-px bg-gray-100 dark:bg-gray-800" />
-
-        {/* Status filter */}
-        <View>
-          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Estado
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {STATUS_FILTERS.map((opt) => (
-              <Pressable
-                key={String(opt.value)}
-                onPress={() => setStatusFilter(opt.value)}
-                className={`rounded-full px-3.5 py-1.5 ${
-                  statusFilter === opt.value
-                    ? 'bg-brand-green-forest'
-                    : 'bg-gray-100 dark:bg-gray-800'
-                }`}
-              >
-                <Text
-                  className={`text-xs font-medium ${
-                    statusFilter === opt.value
-                      ? 'text-white'
-                      : 'text-gray-600 dark:text-gray-300'
-                  }`}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </View>
+      <FilterBar
+        roleFilter={roleFilter}
+        statusFilter={statusFilter}
+        onRoleFilterChange={setRoleFilter}
+        onStatusFilterChange={setStatusFilter}
+      />
 
       {/* ═══ User list ═══ */}
       {isLoading ? (
@@ -539,7 +319,11 @@ export default function UserManagementScreen({
           data={users}
           renderItem={renderUser}
           keyExtractor={keyExtractor}
-          ListEmptyComponent={ListEmptyComponent}
+          ListEmptyComponent={
+            <EmptyState
+              hasFilters={!!(debouncedSearch || roleFilter || statusFilter)}
+            />
+          }
           contentContainerStyle={{
             paddingTop: 8,
             paddingBottom: 40,
@@ -557,110 +341,23 @@ export default function UserManagementScreen({
       )}
 
       {/* ═══ Role Change Modal ═══ */}
-      <Portal>
-        <Dialog visible={roleModalUser !== null} onDismiss={closeRoleModal}>
-          <Dialog.Title>Cambiar Rol</Dialog.Title>
+      <RoleDialog
+        user={roleModalUser}
+        selectedRole={newRole}
+        isPending={roleMutation.isPending}
+        onRoleChange={setNewRole}
+        onSave={handleRoleSave}
+        onDismiss={closeRoleModal}
+      />
 
-          <Dialog.Content>
-            {roleModalUser !== null && (
-              <>
-                <Text className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                  Usuario:{' '}
-                  <Text className="font-medium text-gray-800 dark:text-gray-200">
-                    {getFullName(roleModalUser)}
-                  </Text>
-                </Text>
-
-                <RadioButton.Group
-                  onValueChange={(value: string) => setNewRole(value)}
-                  value={newRole}
-                >
-                  {ROLE_OPTIONS.map((opt) => (
-                    <Pressable
-                      key={opt.value}
-                      onPress={() => setNewRole(opt.value)}
-                      className="flex-row items-center py-1.5"
-                    >
-                      <RadioButton
-                        value={opt.value}
-                        color={colors.primary}
-                        status={newRole === opt.value ? 'checked' : 'unchecked'}
-                      />
-                      <Text
-                        className="ml-2 text-base font-medium"
-                        style={{ color: opt.color }}
-                      >
-                        {opt.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </RadioButton.Group>
-              </>
-            )}
-          </Dialog.Content>
-
-          <Dialog.Actions>
-            <Button onPress={closeRoleModal} textColor={colors.textSecondary}>
-              Cancelar
-            </Button>
-            <Button
-              onPress={handleRoleSave}
-              textColor={colors.primary}
-              loading={roleMutation.isPending}
-            >
-              Guardar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      {/* ═══ Deactivation Confirmation Dialog ═══ */}
-      <Portal>
-        <Dialog
-          visible={confirmUser !== null}
-          onDismiss={() => setConfirmUser(null)}
-        >
-          <Dialog.Title>Confirmar desactivación</Dialog.Title>
-
-          <Dialog.Content>
-            {confirmUser !== null && (
-              <>
-                <Text className="text-base text-gray-700 dark:text-gray-300">
-                  {isSelf(confirmUser)
-                    ? 'No puedes desactivar tu propia cuenta.'
-                    : `¿Estás seguro de desactivar a ${confirmUser.nombre}?\n\nEl usuario perderá acceso al sistema hasta que sea reactivado.`}
-                </Text>
-
-                {isSelf(confirmUser) && (
-                  <View className="mt-3 rounded-lg bg-red-50 p-3 dark:bg-red-900/30">
-                    <Text className="text-sm text-red-600 dark:text-red-400">
-                      Para desactivar tu cuenta necesitarías que otro
-                      administrador lo haga.
-                    </Text>
-                  </View>
-                )}
-              </>
-            )}
-          </Dialog.Content>
-
-          <Dialog.Actions>
-            <Button
-              onPress={() => setConfirmUser(null)}
-              textColor={colors.textSecondary}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onPress={confirmDeactivation}
-              textColor={colors.error}
-              disabled={confirmUser !== null ? isSelf(confirmUser) : true}
-              loading={toggleMutation.isPending}
-            >
-              Desactivar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      {/* ═══ Deactivation Confirmation ═══ */}
+      <ConfirmDeactivationDialog
+        user={confirmUser}
+        isPending={toggleMutation.isPending}
+        isSelf={confirmUser !== null ? isSelf(confirmUser) : false}
+        onConfirm={confirmDeactivation}
+        onDismiss={() => setConfirmUser(null)}
+      />
 
       {/* ═══ Toast ═══ */}
       <Toast
