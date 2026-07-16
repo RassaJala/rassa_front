@@ -18,10 +18,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LogoutButton from '@/components/LogoutButton';
 import { colors } from '@/constants/colors';
 import { useProductForm } from '@/hooks/useProductForm';
-import type { RootStackParamList } from '@/navigation/AppNavigator';
+import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Unidad } from '@/services/productos';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AddProduct'>;
+type Props = NativeStackScreenProps<FarmerStackParamList, 'AddProduct'>;
 
 const INPUT_CLASS =
   'rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900';

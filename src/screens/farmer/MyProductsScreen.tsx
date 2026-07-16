@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+
 import LogoutButton from '@/components/LogoutButton';
 import { colors } from '@/constants/colors';
 import {
@@ -17,17 +19,15 @@ import {
   useDeleteProducto,
   useProductos,
 } from '@/hooks/useProductos';
+import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Producto } from '@/services/productos';
 
 const PLACEHOLDER_COLOR = colors.iconMuted;
 
-interface Props {
-  navigation: {
-    navigate: (screen: string, params?: Record<string, unknown>) => void;
-  };
-}
+type Props = NativeStackScreenProps<FarmerStackParamList, 'MyProducts'>;
 
 export default function MyProductsScreen({
+  route: _route,
   navigation,
 }: Props): React.JSX.Element {
   const [search, setSearch] = useState('');

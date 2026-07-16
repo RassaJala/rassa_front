@@ -28,11 +28,11 @@ import type {
   WizardItemDraft,
   WizardItemField,
 } from '@/hooks/usePublicationWizard';
-import type { RootStackParamList } from '@/navigation/AppNavigator';
+import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Producto } from '@/services/productos';
 import type { Publicacion } from '@/services/publications';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'PublicationWizard'>;
+type Props = NativeStackScreenProps<FarmerStackParamList, 'PublicationWizard'>;
 
 const STEP_LABELS: Record<string, string> = {
   fecha: 'Fecha',

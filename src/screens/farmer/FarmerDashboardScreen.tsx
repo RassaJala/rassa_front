@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Button } from 'react-native-paper';
 
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+
 import LogoutButton from '@/components/LogoutButton';
 import { colors } from '@/constants/colors';
 import {
@@ -17,13 +19,10 @@ import {
   useDeletePublicacion,
   usePublicaciones,
 } from '@/hooks/usePublications';
+import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Publicacion, PublicacionEstado } from '@/services/publications';
 
-interface Props {
-  navigation: {
-    navigate: (screen: string, params?: Record<string, unknown>) => void;
-  };
-}
+type Props = NativeStackScreenProps<FarmerStackParamList, 'FarmerDashboard'>;
 
 const STATUS_TABS: { key: PublicacionEstado | 'all'; label: string }[] = [
   { key: 'all', label: 'Todas' },
@@ -66,6 +65,7 @@ const STATUS_LABELS: Record<PublicacionEstado, string> = {
 };
 
 export default function FarmerDashboardScreen({
+  route: _route,
   navigation,
 }: Props): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState<PublicacionEstado | 'all'>(

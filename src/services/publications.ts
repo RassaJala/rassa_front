@@ -4,6 +4,13 @@ import api from './api';
 
 export type { ApiResponse } from '@/types';
 
+// ── Defensive ID guard ─────────────────────────────────────
+function assertValidId(id: number, label: string): void {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error(`${label} must be a positive integer, got ${String(id)}`);
+  }
+}
+
 // ── Backend response types ─────────────────────────────────
 
 export type PublicacionEstado =
@@ -66,6 +73,7 @@ export async function createPublicacion(): Promise<ApiResponse<Publicacion>> {
 export async function deletePublicacion(
   id: number,
 ): Promise<ApiResponse<null>> {
+  assertValidId(id, 'publicacionId');
   const { data } = await api.delete<ApiResponse<null>>(
     `/publicaciones/${String(id)}/`,
   );
@@ -75,6 +83,7 @@ export async function deletePublicacion(
 export async function publishPublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
+  assertValidId(id, 'publicacionId');
   const { data } = await api.post<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/publish/`,
   );
@@ -84,6 +93,7 @@ export async function publishPublicacion(
 export async function closePublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
+  assertValidId(id, 'publicacionId');
   const { data } = await api.post<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/close/`,
   );
@@ -111,6 +121,7 @@ export async function addProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, 'publicacionId');
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/`,
     payload,
@@ -129,6 +140,8 @@ export async function updateProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, 'publicacionId');
+  assertValidId(itemId, 'productoSemanalId');
   const { data } = await api.patch<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
     payload,
@@ -140,6 +153,8 @@ export async function deleteProductoSemanal(
   pubId: number,
   itemId: number,
 ): Promise<ApiResponse<null>> {
+  assertValidId(pubId, 'publicacionId');
+  assertValidId(itemId, 'productoSemanalId');
   const { data } = await api.delete<ApiResponse<null>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
   );
@@ -150,6 +165,8 @@ export async function restoreProductoSemanal(
   pubId: number,
   itemId: number,
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, 'publicacionId');
+  assertValidId(itemId, 'productoSemanalId');
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/restore/`,
   );

@@ -28,6 +28,7 @@ import type { AdminStackParamList } from '@/types';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
+const FarmerNav = createNativeStackNavigator<FarmerStackParamList>();
 
 export type RootStackParamList = {
   FarmerDashboard: undefined;
@@ -37,6 +38,13 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   AdminPanel: undefined;
+};
+
+export type FarmerStackParamList = {
+  FarmerDashboard: undefined;
+  MyProducts: undefined;
+  AddProduct: { productoId?: number } | undefined;
+  PublicationWizard: { publicationId?: number } | undefined;
 };
 
 function AuthStack() {
@@ -59,15 +67,18 @@ function BuyerTabs() {
 
 function FarmerStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="FarmerDashboard" component={FarmerDashboardScreen} />
-      <Stack.Screen name="MyProducts" component={MyProductsScreen} />
-      <Stack.Screen name="AddProduct" component={AddProductScreen} />
-      <Stack.Screen
+    <FarmerNav.Navigator screenOptions={{ headerShown: false }}>
+      <FarmerNav.Screen
+        name="FarmerDashboard"
+        component={FarmerDashboardScreen}
+      />
+      <FarmerNav.Screen name="MyProducts" component={MyProductsScreen} />
+      <FarmerNav.Screen name="AddProduct" component={AddProductScreen} />
+      <FarmerNav.Screen
         name="PublicationWizard"
         component={PublicationWizardScreen}
       />
-    </Stack.Navigator>
+    </FarmerNav.Navigator>
   );
 }
 

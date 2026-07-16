@@ -4,6 +4,13 @@ import api from './api';
 
 export type { ApiResponse } from '@/types';
 
+// ── Defensive ID guard ─────────────────────────────────────
+function assertValidId(id: number, label: string): void {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error(`${label} must be a positive integer, got ${String(id)}`);
+  }
+}
+
 // ── Backend response types (match Django serializers) ──────
 
 export interface Categoria {
@@ -95,6 +102,7 @@ export async function updateProducto(
   id: number,
   payload: CreateProductoPayload,
 ): Promise<ApiResponse<ProductoDetail>> {
+  assertValidId(id, 'productoId');
   const { data } = await api.put<ApiResponse<ProductoDetail>>(
     `/productos/${String(id)}/`,
     payload,
@@ -103,6 +111,7 @@ export async function updateProducto(
 }
 
 export async function deleteProducto(id: number): Promise<ApiResponse<null>> {
+  assertValidId(id, 'productoId');
   const { data } = await api.delete<ApiResponse<null>>(
     `/productos/${String(id)}/`,
   );
@@ -113,6 +122,7 @@ export async function uploadProductoImagen(
   id: number,
   formData: FormData,
 ): Promise<ApiResponse<ProductoImagen>> {
+  assertValidId(id, 'productoId');
   const { data } = await api.post<ApiResponse<ProductoImagen>>(
     `/productos/${String(id)}/imagen/`,
     formData,
