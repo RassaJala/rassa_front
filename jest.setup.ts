@@ -1,6 +1,6 @@
 // jest.setup.ts - Global test setup
 // Mock React Native globals
-global.__DEV__ = true;
+(global as any).__DEV__ = true;
 
 // Suppress React 18 act() warnings in tests (known issue with react-test-renderer)
 const originalConsoleError = console.error;
@@ -16,7 +16,7 @@ console.error = (...args) => {
 };
 
 // Debug: confirm setup is running
-console.log('[jest.setup.ts] __DEV__ set to:', global.__DEV__);
+console.log('[jest.setup.ts] __DEV__ set to:', (global as any).__DEV__);
 
 // Mock @sentry/react-native
 jest.mock('@sentry/react-native', () => ({
@@ -25,7 +25,9 @@ jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
   setUser: jest.fn(),
   configureScope: jest.fn(),
-  withScope: jest.fn((callback) => callback({ setTag: jest.fn(), setExtra: jest.fn() })),
+  withScope: jest.fn((callback) =>
+    callback({ setTag: jest.fn(), setExtra: jest.fn() }),
+  ),
 }));
 
 // Mock react-native modules that use native code

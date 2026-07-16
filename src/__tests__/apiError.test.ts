@@ -2,7 +2,7 @@
 import { extractApiError } from '@/utils/apiError';
 
 // Mock __DEV__ for tests
-global.__DEV__ = true;
+(global as any).__DEV__ = true;
 
 describe('extractApiError', () => {
   it('devuelve mensaje de un Error normal', () => {
