@@ -1,12 +1,33 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
 
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import '@testing-library/jest-native/extend-expect';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import { useCatalogs } from '@/hooks/useCatalogs';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import api from '@/services/api';
+import type { AdminStackParamList } from '@/types';
+
+const mockNavigate = jest.fn();
+
+const mockNavigation = {
+  navigate: mockNavigate,
+  goBack: jest.fn(),
+  reset: jest.fn(),
+  setParams: jest.fn(),
+  dispatch: jest.fn(),
+  setOptions: jest.fn(),
+  isFocused: jest.fn(),
+  canGoBack: jest.fn(),
+  getId: jest.fn(),
+  getState: jest.fn(),
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+  navigateDeprecated: jest.fn(),
+  preload: jest.fn(),
+} as unknown as NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
 jest.mock('@/hooks/useCatalogs');
 jest.mock('@/services/api');
@@ -59,7 +80,8 @@ beforeEach(() => {
 });
 
 describe('AdminPanelScreen', () => {
-  const renderScreen = () => render(<AdminPanelScreen />);
+  const renderScreen = () =>
+    render(<AdminPanelScreen navigation={mockNavigation} />);
 
   it('renders initial state with "Agregar usuario" button', () => {
     const { getByText } = renderScreen();
@@ -198,8 +220,14 @@ describe('AdminPanelScreen', () => {
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
-    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
-    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
+    fireEvent.changeText(
+      getByPlaceholderText('Apellido Paterno'),
+      'AdminLastName',
+    );
+    fireEvent.changeText(
+      getByPlaceholderText('Calle, número, colonia'),
+      'Calle 123',
+    );
     fireEvent.press(getByText('Agregar usuario'));
 
     await waitFor(() => {
@@ -240,8 +268,14 @@ describe('AdminPanelScreen', () => {
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
-    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
-    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
+    fireEvent.changeText(
+      getByPlaceholderText('Apellido Paterno'),
+      'AdminLastName',
+    );
+    fireEvent.changeText(
+      getByPlaceholderText('Calle, número, colonia'),
+      'Calle 123',
+    );
     fireEvent.press(getByText('Agregar usuario'));
 
     await waitFor(() => {
@@ -273,8 +307,14 @@ describe('AdminPanelScreen', () => {
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
-    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
-    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
+    fireEvent.changeText(
+      getByPlaceholderText('Apellido Paterno'),
+      'AdminLastName',
+    );
+    fireEvent.changeText(
+      getByPlaceholderText('Calle, número, colonia'),
+      'Calle 123',
+    );
 
     const submitBtn = getByTestId('button');
     fireEvent.press(submitBtn);

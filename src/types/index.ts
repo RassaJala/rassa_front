@@ -126,3 +126,28 @@ export type AdminStackParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
 };
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+export type BuyerTabsParamList = {
+  Home: undefined;
+  ProductDetail: undefined;
+};
+
+export type BuyerStackParamList = {
+  BuyerTabs: undefined;
+  Profile: undefined;
+};
+
+export type FarmerTabsParamList = {
+  MyProducts: undefined;
+  AddProduct: undefined;
+};
+
+export type FarmerStackParamList = {
+  FarmerTabs: undefined;
+  Profile: undefined;
+};

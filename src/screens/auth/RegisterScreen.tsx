@@ -30,7 +30,6 @@ import {
   validatePhone,
 } from '@/utils/validation';
 
-
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
@@ -107,7 +106,10 @@ export default function RegisterScreen(): React.JSX.Element {
       return;
     }
 
-    const birthdateErr = validateBirthdate(fechaNacimiento, 'Debes ser mayor de 18 años para registrarte.');
+    const birthdateErr = validateBirthdate(
+      fechaNacimiento,
+      'Debes ser mayor de 18 años para registrarte.',
+    );
     if (birthdateErr) {
       setErrorMessage(birthdateErr);
       return;

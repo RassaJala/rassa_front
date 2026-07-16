@@ -6,7 +6,7 @@ import type { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
 import LogoutButton from '@/components/LogoutButton';
-import type { BuyerStackParamList } from '@/navigation/AppNavigator';
+import type { BuyerStackParamList } from '@/types';
 
 export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp<BuyerStackParamList>>();

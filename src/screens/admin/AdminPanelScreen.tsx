@@ -10,11 +10,10 @@ import {
   View,
 } from 'react-native';
 import { Button } from 'react-native-paper';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useNetInfo } from '@react-native-community/netinfo';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
-import axios from 'axios';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
@@ -23,6 +22,7 @@ import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import api from '@/services/api';
 import type { AdminStackParamList, RegisterRole } from '@/types';
+import { extractApiError } from '@/utils/apiError';
 import { getGenderLabel, getRoleLabel } from '@/utils/labels';
 import {
   cleanAddress,
@@ -35,75 +35,44 @@ import {
   validatePhone,
 } from '@/utils/validation';
 
+const PLACEHOLDER_COLOR = '#9ca3af';
 
-function extractAxiosErrorData(error: unknown): unknown {
-  if (axios.isAxiosError(error)) {
-    return error.response?.data;
-  }
-  const errObj = error as { response?: { data?: unknown } } | null | undefined;
-  if (errObj && typeof errObj === 'object' && 'response' in errObj) {
-    return errObj.response?.data;
-  }
-  return null;
+const menuItems = [
+  {
+    key: 'CategoryList',
+    label: 'Categorías',
+    icon: '📂',
+    description: 'Administrar categorías de productos',
+  },
+  {
+    key: 'UnitList',
+    label: 'Unidades de Medida',
+    icon: '📏',
+    description: 'Administrar unidades (kg, pz, lt...)',
+  },
+];
+
+type NavigationProp = NativeStackNavigationProp<
+  AdminStackParamList,
+  'AdminPanel'
+>;
+
+interface Props {
+  readonly navigation: NavigationProp;
 }
 
-function parseAxiosError(error: unknown): string {
-  const data = extractAxiosErrorData(error);
-
-  if (!data) {
-    return error instanceof Error
-      ? error.message
-      : 'Error al registrar al usuario.';
-  }
-
-  if (typeof data === 'string') {
-    return data;
-  }
-
-  if (typeof data === 'object') {
-    const dict = data as Record<string, unknown>;
-    if (dict.detail) return String(dict.detail);
-    if (dict.message) return String(dict.message);
-
-    const errors = Object.entries(dict)
-      .map(([field, fieldErrors]) => {
-        const prefix = field !== 'non_field_errors' ? `${field}: ` : '';
-        const messages = Array.isArray(fieldErrors)
-          ? fieldErrors.join(' ')
-          : String(fieldErrors);
-        return `${prefix}${messages}`;
-      })
-      .join('\n');
-    if (errors) return errors;
-  }
-
-  return 'Error al registrar al usuario.';
-}
-
-function validateForm(fields: {
-  readonly email: string;
-  readonly password?: string;
-  readonly telefono: string;
-  readonly nombre: string;
-  readonly apellidoPaterno: string;
-  readonly fechaNacimiento: string;
-  readonly domicilio: string;
-  readonly localidadId: number | null;
-}): string | null {
-  const {
-    email,
-    password,
-    telefono,
-    nombre,
-    apellidoPaterno,
-    fechaNacimiento,
-    domicilio,
-    localidadId,
-  } = fields;
-
+function validateRegistrationForm(
+  email: string,
+  password: string | undefined,
+  telefono: string,
+  nombre: string,
+  apellidoPaterno: string,
+  fechaNacimiento: string,
+  domicilio: string,
+  localidadId: number | null,
+): string | null {
   const rawTelefono = cleanPhoneNumber(telefono);
 
-  // Format validations are conditional on having content to allow fallback to required fields check
   if (email.trim()) {
     const emailErr = validateEmail(email);
     if (emailErr) return emailErr;
@@ -120,7 +89,10 @@ function validateForm(fields: {
   }
 
   if (fechaNacimiento.trim()) {
-    const birthdateErr = validateBirthdate(fechaNacimiento, 'El usuario debe ser mayor de 18 años.');
+    const birthdateErr = validateBirthdate(
+      fechaNacimiento,
+      'El usuario debe ser mayor de 18 años.',
+    );
     if (birthdateErr) return birthdateErr;
   }
 
@@ -137,32 +109,14 @@ function validateForm(fields: {
     return 'Por favor, completa todos los campos obligatorios.';
   }
 
+  const birthdateErr = validateBirthdate(
+    fechaNacimiento,
+    'Debes ser mayor de 18 años para registrarte.',
+  );
+  if (birthdateErr) return birthdateErr;
+
   return null;
 }
-
-type NavigationProp = NativeStackNavigationProp<
-  AdminStackParamList,
-  'AdminPanel'
->;
-
-interface Props {
-  readonly navigation: NavigationProp;
-}
-
-const menuItems = [
-  {
-    key: 'CategoryList',
-    label: 'Categorías',
-    icon: '📂',
-    description: 'Administrar categorías de productos',
-  },
-  {
-    key: 'UnitList',
-    label: 'Unidades de Medida',
-    icon: '📏',
-    description: 'Administrar unidades (kg, pz, lt...)',
-  },
-];
 
 export default function AdminPanelScreen({
   navigation,
@@ -209,7 +163,8 @@ export default function AdminPanelScreen({
       return;
     }
 
-    const validationError = validateForm({
+    // Use extracted validation function
+    const validationError = validateRegistrationForm(
       email,
       password,
       telefono,
@@ -217,17 +172,11 @@ export default function AdminPanelScreen({
       apellidoPaterno,
       fechaNacimiento,
       domicilio,
-      localidadId: catalog.localidadId,
-    });
+      catalog.localidadId,
+    );
 
     if (validationError) {
       setErrorMessage(validationError);
-      return;
-    }
-
-    const birthdateErr = validateBirthdate(fechaNacimiento, 'Debes ser mayor de 18 años para registrarte.');
-    if (birthdateErr) {
-      setErrorMessage(birthdateErr);
       return;
     }
 
@@ -257,23 +206,22 @@ export default function AdminPanelScreen({
         );
 
         // Reset form
-        setEmail('');
-        setPassword('');
-        setTelefono('');
-        setNombre('');
-        setApellidoPaterno('');
-        setApellidoMaterno('');
-        setFechaNacimiento('');
-        setSexo('M');
-        setDomicilio('');
-        catalog.setLocalidadId(null);
-        catalog.setLocalidadNombre('');
-        catalog.setSelectedMunicipioId(null);
-        catalog.setSelectedMunicipioNombre('');
+        resetForm();
       }
     } catch (error) {
       if (isMounted.current) {
-        const msg = parseAxiosError(error);
+        const msg = extractApiError(error, [
+          'email',
+          'password',
+          'telefono',
+          'nombre',
+          'apellido_paterno',
+          'apellido_materno',
+          'fecha_nacimiento',
+          'sexo',
+          'domicilio',
+          'fk_localidad',
+        ]);
         setErrorMessage(msg);
       }
       Sentry.captureException(error);
@@ -282,6 +230,22 @@ export default function AdminPanelScreen({
         setIsSubmitting(false);
       }
     }
+  }
+
+  function resetForm() {
+    setEmail('');
+    setPassword('');
+    setTelefono('');
+    setNombre('');
+    setApellidoPaterno('');
+    setApellidoMaterno('');
+    setFechaNacimiento('');
+    setSexo('M');
+    setDomicilio('');
+    catalog.setLocalidadId(null);
+    catalog.setLocalidadNombre('');
+    catalog.setSelectedMunicipioId(null);
+    catalog.setSelectedMunicipioNombre('');
   }
 
   if (!showForm) {
@@ -404,7 +368,7 @@ export default function AdminPanelScreen({
           keyboardType="email-address"
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="ejemplo@correo.com"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={email}
           onChangeText={setEmail}
         />
@@ -415,7 +379,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="••••••••"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -427,7 +391,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Nombre(s)"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={nombre}
           onChangeText={(val) => setNombre(cleanName(val))}
         />
@@ -438,7 +402,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Paterno"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={apellidoPaterno}
           onChangeText={(val) => setApellidoPaterno(cleanName(val))}
         />
@@ -449,7 +413,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Materno"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={apellidoMaterno}
           onChangeText={(val) => setApellidoMaterno(cleanName(val))}
         />
@@ -460,7 +424,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="xxx-xxx-xx-xx"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           keyboardType="phone-pad"
           value={telefono}
           onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
@@ -477,7 +441,7 @@ export default function AdminPanelScreen({
             <TextInput
               className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
               placeholder="AAAA-MM-DD"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={PLACEHOLDER_COLOR}
               value={fechaNacimiento}
               showSoftInputOnFocus={false}
               onChangeText={setFechaNacimiento}
@@ -518,7 +482,7 @@ export default function AdminPanelScreen({
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Calle, número, colonia"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={domicilio}
           onChangeText={(val) => setDomicilio(cleanAddress(val))}
         />

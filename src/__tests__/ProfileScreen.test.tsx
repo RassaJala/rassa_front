@@ -264,7 +264,10 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Seguridad'));
       fireEvent.changeText(getByTestId('old-password-input'), 'samepassword');
       fireEvent.changeText(getByTestId('new-password-input'), 'samepassword');
-      fireEvent.changeText(getByTestId('confirm-password-input'), 'samepassword');
+      fireEvent.changeText(
+        getByTestId('confirm-password-input'),
+        'samepassword',
+      );
       fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(
@@ -287,7 +290,10 @@ describe('ProfileScreen', () => {
         fireEvent.press(getByText('Seguridad'));
         fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
         fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-        fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+        fireEvent.changeText(
+          getByTestId('confirm-password-input'),
+          'newpassword1',
+        );
         fireEvent.press(getByTestId('change-password-button'));
         await waitFor(() => {
           expect(
@@ -310,7 +316,10 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Seguridad'));
       fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
       fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Contraseña actual incorrecta.')).toBeTruthy();
@@ -325,7 +334,10 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Seguridad'));
       fireEvent.changeText(getByTestId('old-password-input'), 'wrongpassword');
       fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Sesión expirada o no autorizada.')).toBeTruthy();
@@ -376,7 +388,10 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Seguridad'));
       fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
       fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       fireEvent.press(getByTestId('change-password-button'));
       unmount();
       // If no error thrown, cleanup works

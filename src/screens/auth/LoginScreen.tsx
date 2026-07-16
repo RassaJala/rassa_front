@@ -12,15 +12,17 @@ import { useNavigation } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 
 import { useAuth } from '@/store/AuthContext';
+import type { AuthStackParamList } from '@/types';
 import { getLoginErrorMessage } from '@/utils/authError';
+import { EMAIL_REGEX } from '@/utils/validation';
 
 const PLACEHOLDER_COLOR = '#94a3b8';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
-
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<{
+    navigate: (name: keyof AuthStackParamList) => void;
+  }>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -147,7 +149,7 @@ export default function LoginScreen(): React.JSX.Element {
         </Pressable>
 
         <Pressable
-          onPress={() => navigation.navigate('Register' as never)}
+          onPress={() => navigation.navigate('Register')}
           className="mt-4"
         >
           <Text className="text-center text-sm font-medium text-emerald-600">

@@ -11,11 +11,7 @@ import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
 import CatalogSelector from '@/components/CatalogSelector';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import type { Localidad, Municipio } from '@/types';
-import {
-  cleanAddress,
-  cleanName,
-  formatPhoneNumber,
-} from '@/utils/validation';
+import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
 
 export interface ProfileFormFields {
   readonly nombre: string;

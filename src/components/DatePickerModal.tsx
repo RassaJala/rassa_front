@@ -23,6 +23,9 @@ const MONTH_NAMES = [
   'Diciembre',
 ];
 
+// Years back from 18 years ago (allows ages 18 to ~121)
+const YEARS_BACK = 103;
+
 interface DatePickerModalProps {
   readonly visible: boolean;
   readonly onClose: () => void;
@@ -39,7 +42,7 @@ export default function DatePickerModal({
   const currentYear = new Date().getFullYear();
   // Only allow birth years that correspond to age >= 18
   const maxAdultYear = currentYear - 18;
-  const years = Array.from({ length: 103 }, (_, i) => maxAdultYear - i);
+  const years = Array.from({ length: YEARS_BACK }, (_, i) => maxAdultYear - i);
 
   const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);

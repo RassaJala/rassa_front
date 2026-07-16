@@ -52,7 +52,9 @@ function MunicipioSelector({
       {errorMunicipios ? (
         <View className="mb-3 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
           <Text className="text-sm text-red-600 dark:text-red-400">
-            {errorMunicipios !== 'API Error' ? errorMunicipios : 'Error al cargar municipios'}
+            {errorMunicipios !== 'API Error'
+              ? errorMunicipios
+              : 'Error al cargar municipios'}
           </Text>
           <TouchableOpacity onPress={() => void refetchMunicipios()}>
             <Text className="font-semibold text-red-700 dark:text-red-300">
@@ -64,10 +66,14 @@ function MunicipioSelector({
         <TouchableOpacity
           onPress={onPress}
           disabled={isLoadingMunicipios}
-          className="mb-3 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-955"
+          className="dark:bg-gray-955 mb-3 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800"
         >
           {isLoadingMunicipios ? (
-            <ActivityIndicator testID="loading-municipios" size="small" color={BRAND_RED_CORAL} />
+            <ActivityIndicator
+              testID="loading-municipios"
+              size="small"
+              color={BRAND_RED_CORAL}
+            />
           ) : (
             <Text
               className={`text-base ${
@@ -110,7 +116,9 @@ function LocalidadSelector({
       {selectedMunicipioId && errorLocalidades ? (
         <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
           <Text className="text-sm text-red-600 dark:text-red-400">
-            {errorLocalidades !== 'API Error' ? errorLocalidades : 'Error al cargar localidades'}
+            {errorLocalidades !== 'API Error'
+              ? errorLocalidades
+              : 'Error al cargar localidades'}
           </Text>
           <TouchableOpacity onPress={() => void refetchLocalidades()}>
             <Text className="font-semibold text-red-700 dark:text-red-300">
@@ -125,7 +133,11 @@ function LocalidadSelector({
           className="mb-4 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
         >
           {isLoadingLocalidades ? (
-            <ActivityIndicator testID="loading-localidades" size="small" color={BRAND_RED_CORAL} />
+            <ActivityIndicator
+              testID="loading-localidades"
+              size="small"
+              color={BRAND_RED_CORAL}
+            />
           ) : (
             <Text
               className={`text-base ${
@@ -214,7 +226,9 @@ export default function CatalogSelector({
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowMunicipioDialog(false)}>Cerrar</Button>
+            <Button onPress={() => setShowMunicipioDialog(false)}>
+              Cerrar
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -245,7 +259,9 @@ export default function CatalogSelector({
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowLocalidadDialog(false)}>Cerrar</Button>
+            <Button onPress={() => setShowLocalidadDialog(false)}>
+              Cerrar
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

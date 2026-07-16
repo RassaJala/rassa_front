@@ -22,32 +22,14 @@ import SplashScreen from '@/screens/common/SplashScreen';
 import AddProductScreen from '@/screens/farmer/AddProductScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import { useAuth } from '@/store/AuthContext';
-import type { AdminStackParamList } from '@/types';
-
-export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-};
-
-export type BuyerTabsParamList = {
-  Home: undefined;
-  ProductDetail: undefined;
-};
-
-export type BuyerStackParamList = {
-  BuyerTabs: undefined;
-  Profile: undefined;
-};
-
-export type FarmerTabsParamList = {
-  MyProducts: undefined;
-  AddProduct: undefined;
-};
-
-export type FarmerStackParamList = {
-  FarmerTabs: undefined;
-  Profile: undefined;
-};
+import type {
+  AdminStackParamList,
+  AuthStackParamList,
+  BuyerStackParamList,
+  BuyerTabsParamList,
+  FarmerStackParamList,
+  FarmerTabsParamList,
+} from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator<BuyerTabsParamList>();

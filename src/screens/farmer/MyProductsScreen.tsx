@@ -6,7 +6,7 @@ import type { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
 import LogoutButton from '@/components/LogoutButton';
-import type { FarmerStackParamList } from '@/navigation/AppNavigator';
+import type { FarmerStackParamList } from '@/types';
 
 export default function MyProductsScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp<FarmerStackParamList>>();

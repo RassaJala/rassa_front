@@ -44,7 +44,11 @@ describe('useCatalogs', () => {
       .mockResolvedValueOnce({ data: { data: localidades } });
   });
 
-  const TestComponent = ({ initialMunicipioId = null }: { initialMunicipioId?: number | null }) => {
+  const TestComponent = ({
+    initialMunicipioId = null,
+  }: {
+    initialMunicipioId?: number | null;
+  }) => {
     const catalog = useCatalogs(initialMunicipioId);
     return (
       <View>
@@ -74,7 +78,7 @@ describe('useCatalogs', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <TestComponent initialMunicipioId={initialMunicipioId} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
   it('fetches municipios on initial render', async () => {

@@ -50,42 +50,38 @@ beforeEach(() => {
 });
 
 describe('CatalogSelector', () => {
-  it('renders municipio selector', () => {
-    const { getByText } = render(<CatalogSelector {...defaultProps} />);
+  it('renders municipio selector', async () => {
+    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
     expect(getByText('Municipio *')).toBeTruthy();
     expect(getByText('Seleccionar Municipio')).toBeTruthy();
   });
 
-  it('renders localidad selector', () => {
-    const { getByText } = render(<CatalogSelector {...defaultProps} />);
+  it('renders localidad selector', async () => {
+    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
     expect(getByText('Localidad *')).toBeTruthy();
     expect(getByText('Seleccionar Localidad')).toBeTruthy();
   });
 
-  it('shows loading indicator for municipios', () => {
-    const { getByTestId } = render(
-      <CatalogSelector {...defaultProps} isLoadingMunicipios />,
-    );
+  it('shows loading indicator for municipios', async () => {
+    const { getByTestId } = await render(<CatalogSelector {...defaultProps} isLoadingMunicipios />);
     expect(getByTestId('loading-municipios')).toBeTruthy();
   });
 
-  it('shows loading indicator for localidades', () => {
-    const { getByTestId } = render(
-      <CatalogSelector {...defaultProps} isLoadingLocalidades />,
-    );
+  it('shows loading indicator for localidades', async () => {
+    const { getByTestId } = await render(<CatalogSelector {...defaultProps} isLoadingLocalidades />);
     expect(getByTestId('loading-localidades')).toBeTruthy();
   });
 
   it('opens municipio dialog on press', async () => {
-    const { getByText } = render(<CatalogSelector {...defaultProps} />);
+    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
     fireEvent.press(getByText('Seleccionar Municipio'));
     await waitFor(() => {
-      expect(getByText('Seleccionar Municipio')).toBeTruthy(); // Dialog title
+      expect(getByText('Seleccionar Municipio')).toBeTruthy();
     });
   });
 
   it('opens localidad dialog on press when municipio selected', async () => {
-    const { getByText } = render(
+    const { getByText } = await render(
       <CatalogSelector
         {...defaultProps}
         selectedMunicipioId={1}
@@ -94,49 +90,39 @@ describe('CatalogSelector', () => {
     );
     fireEvent.press(getByText('Seleccionar Localidad'));
     await waitFor(() => {
-      expect(getByText('Seleccionar Localidad')).toBeTruthy(); // Dialog title
+      expect(getByText('Seleccionar Localidad')).toBeTruthy();
     });
   });
 
-  it('shows error message for municipios', () => {
-    const { getByText } = render(
-      <CatalogSelector {...defaultProps} errorMunicipios="Error loading" />,
+  it('shows error message for municipios', async () => {
+    const { getByText } = await render(<CatalogSelector {...defaultProps} errorMunicipios="Error loading" />);
+    expect(getByText('Error loading')).toBeTruthy();
+  });
+
+  it('shows error message for localidades', async () => {
+    const { getByText } = await render(
+      <CatalogSelector {...defaultProps} selectedMunicipioId={1} errorLocalidades="Error loading" />,
     );
     expect(getByText('Error loading')).toBeTruthy();
   });
 
-  it('shows error message for localidades', () => {
-    const { getByText } = render(
-      <CatalogSelector
-        {...defaultProps}
-        selectedMunicipioId={1}
-        errorLocalidades="Error loading"
-      />,
-    );
-    expect(getByText('Error loading')).toBeTruthy();
-  });
-
-  it('disables localidad selector when no municipio selected', () => {
-    const { getByText } = render(<CatalogSelector {...defaultProps} />);
+  it('disables localidad selector when no municipio selected', async () => {
+    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
     const localidadButton = getByText('Seleccionar Localidad');
     expect(localidadButton).toBeTruthy();
-    // The button should be disabled when no municipio is selected
   });
 
   it('calls onSelectMunicipio when municipio is selected', async () => {
-    const { getByText } = render(<CatalogSelector {...defaultProps} />);
+    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
     fireEvent.press(getByText('Seleccionar Municipio'));
     await waitFor(() => {
       fireEvent.press(getByText('Municipio 1'));
     });
-    expect(defaultProps.onSelectMunicipio).toHaveBeenCalledWith(
-      1,
-      'Municipio 1',
-    );
+    expect(defaultProps.onSelectMunicipio).toHaveBeenCalledWith(1, 'Municipio 1');
   });
 
   it('calls onSelectLocalidad when localidad is selected', async () => {
-    const { getByText } = render(
+    const { getByText } = await render(
       <CatalogSelector
         {...defaultProps}
         selectedMunicipioId={1}
@@ -147,27 +133,18 @@ describe('CatalogSelector', () => {
     await waitFor(() => {
       fireEvent.press(getByText('Localidad 1'));
     });
-    expect(defaultProps.onSelectLocalidad).toHaveBeenCalledWith(
-      1,
-      'Localidad 1',
-    );
+    expect(defaultProps.onSelectLocalidad).toHaveBeenCalledWith(1, 'Localidad 1');
   });
 
-  it('calls refetchMunicipios on retry', () => {
-    const { getByText } = render(
-      <CatalogSelector {...defaultProps} errorMunicipios="Error" />,
-    );
+  it('calls refetchMunicipios on retry', async () => {
+    const { getByText } = await render(<CatalogSelector {...defaultProps} errorMunicipios="Error" />);
     fireEvent.press(getByText('Reintentar'));
     expect(defaultProps.refetchMunicipios).toHaveBeenCalled();
   });
 
-  it('calls refetchLocalidades on retry', () => {
-    const { getByText } = render(
-      <CatalogSelector
-        {...defaultProps}
-        selectedMunicipioId={1}
-        errorLocalidades="Error"
-      />,
+  it('calls refetchLocalidades on retry', async () => {
+    const { getByText } = await render(
+      <CatalogSelector {...defaultProps} selectedMunicipioId={1} errorLocalidades="Error" />,
     );
     fireEvent.press(getByText('Reintentar'));
     expect(defaultProps.refetchLocalidades).toHaveBeenCalled();

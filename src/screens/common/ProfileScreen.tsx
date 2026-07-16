@@ -92,7 +92,9 @@ function getPasswordChangeErrorMessage(error: unknown): string {
     return 'Sesión expirada o no autorizada.';
   }
 
-  return error instanceof Error ? error.message : 'Error al cambiar contraseña.';
+  return error instanceof Error
+    ? error.message
+    : 'Error al cambiar contraseña.';
 }
 
 export default function ProfileScreen(): React.JSX.Element {

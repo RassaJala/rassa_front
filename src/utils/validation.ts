@@ -74,7 +74,10 @@ export function validatePhone(phone: string): string | null {
   return null;
 }
 
-export function validateBirthdate(dateStr: string, customMsg?: string): string | null {
+export function validateBirthdate(
+  dateStr: string,
+  customMsg?: string,
+): string | null {
   if (!dateStr.trim()) {
     return 'Por favor, completa todos los campos obligatorios.';
   }
