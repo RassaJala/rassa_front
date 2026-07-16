@@ -234,7 +234,6 @@ export function AuthProvider({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
-        const responseData = axiosError.response?.data;
         const status = axiosError.response?.status;
 
         const message = parseLoginError(axiosError);
@@ -243,7 +242,6 @@ export function AuthProvider({
         const logMessage = `Error de autenticación${statusStr}: ${message}`;
         console.error(logMessage, {
           status,
-          responseData,
           url: axiosError.config?.url,
         });
         /* eslint-disable-next-line preserve-caught-error -- No incluimos el AxiosError

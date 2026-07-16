@@ -4,11 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ApiResponse,
   Categoria,
+  CreateProductoPayload,
   Producto,
   ProductoDetail,
   Unidad,
 } from '@/services/productos';
 import * as productosApi from '@/services/productos';
+
+export { productosApi };
 
 export function useProductos(params?: {
   categoria?: number | undefined;
@@ -52,11 +55,11 @@ export function useUnidades(): UseQueryResult<ApiResponse<Unidad[]>> {
 export function useCreateProducto(): UseMutationResult<
   ApiResponse<ProductoDetail>,
   Error,
-  Record<string, unknown>
+  CreateProductoPayload
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Record<string, unknown>) =>
+    mutationFn: (payload: CreateProductoPayload) =>
       productosApi.createProducto(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['productos'] });
@@ -67,7 +70,7 @@ export function useCreateProducto(): UseMutationResult<
 export function useUpdateProducto(): UseMutationResult<
   ApiResponse<ProductoDetail>,
   Error,
-  { id: number; payload: Record<string, unknown> }
+  { id: number; payload: CreateProductoPayload }
 > {
   const queryClient = useQueryClient();
   return useMutation({
@@ -76,7 +79,7 @@ export function useUpdateProducto(): UseMutationResult<
       payload,
     }: {
       id: number;
-      payload: Record<string, unknown>;
+      payload: CreateProductoPayload;
     }) => productosApi.updateProducto(id, payload),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['productos'] });

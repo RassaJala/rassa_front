@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
 import {
   useCategorias,
   useDeleteProducto,
@@ -18,7 +19,7 @@ import {
 } from '@/hooks/useProductos';
 import type { Producto } from '@/services/productos';
 
-const PLACEHOLDER_COLOR = '#94a3b8';
+const PLACEHOLDER_COLOR = colors.iconMuted;
 
 interface Props {
   navigation: {
@@ -106,7 +107,7 @@ export default function MyProductsScreen({
           ) : null}
 
           <View className="mt-1 flex-row items-center gap-2">
-            <Text className="text-sm font-semibold text-emerald-600">
+            <Text className="text-primary text-sm font-semibold">
               ${item.precio}
             </Text>
             <Text className="text-xs text-slate-400">Stock: {item.stock}</Text>
@@ -170,7 +171,7 @@ export default function MyProductsScreen({
                   }
                   className={`mr-2 rounded-full border px-3 py-1.5 ${
                     isSelected
-                      ? 'border-emerald-600 bg-emerald-600'
+                      ? 'border-primary bg-primary'
                       : 'border-slate-300 bg-white'
                   }`}
                   accessibilityRole="button"
@@ -195,7 +196,7 @@ export default function MyProductsScreen({
       <View className="px-4 py-3">
         <Pressable
           onPress={() => navigation.navigate('AddProduct', {})}
-          className="items-center rounded-xl bg-emerald-600 py-3"
+          className="bg-primary items-center rounded-xl py-3"
           accessibilityRole="button"
           accessibilityLabel="Agregar producto"
         >
@@ -208,7 +209,7 @@ export default function MyProductsScreen({
       {/* Product list */}
       {isLoadingProductos ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#059669" size="large" />
+          <ActivityIndicator color={colors.primary} size="large" />
           <Text className="mt-3 text-sm text-slate-500">
             Cargando productos...
           </Text>

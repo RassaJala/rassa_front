@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
 import { useProductForm } from '@/hooks/useProductForm';
 import type { RootStackParamList } from '@/navigation/AppNavigator';
 import type { Unidad } from '@/services/productos';
@@ -24,6 +25,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AddProduct'>;
 
 const INPUT_CLASS =
   'rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900';
+
+const PLACEHOLDER_COLOR = colors.iconMuted;
 
 export default function AddProductScreen({
   route,
@@ -44,24 +47,29 @@ export default function AddProductScreen({
   } = useProductForm(productoId);
 
   const pickImage = async (): Promise<void> => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permiso requerido',
-        'Necesitamos acceso a tu galería para seleccionar una imagen.',
-      );
-      return;
-    }
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permiso requerido',
+          'Necesitamos acceso a tu galería para seleccionar una imagen.',
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      updateField('imagenUri', result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        updateField('imagenUri', result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert('Error', 'No se pudo abrir el selector de imágenes.');
     }
   };
 
@@ -86,7 +94,7 @@ export default function AddProductScreen({
   if (isEditing && isLoadingProducto) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#059669" size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
@@ -109,8 +117,7 @@ export default function AddProductScreen({
       >
         <TouchableOpacity
           onPress={pickImage}
-          className="mb-4 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
-          style={{ height: 180 }}
+          className="mb-4 h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
           accessibilityRole="button"
           accessibilityLabel="Seleccionar imagen"
         >
@@ -137,7 +144,7 @@ export default function AddProductScreen({
           <TextInput
             className={inputClass(!!errors.nombre_producto)}
             placeholder="Ej: Tomate rojo"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={form.nombre}
             onChangeText={(v) => updateField('nombre', v)}
           />
@@ -155,7 +162,7 @@ export default function AddProductScreen({
           <TextInput
             className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-900"
             placeholder="Descripción del producto..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={form.descripcion}
             onChangeText={(v) => updateField('descripcion', v)}
             multiline
@@ -172,7 +179,7 @@ export default function AddProductScreen({
             <TextInput
               className={inputClass(!!errors.precio)}
               placeholder="0.00"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={PLACEHOLDER_COLOR}
               value={form.precio}
               onChangeText={(v) => updateField('precio', v)}
               keyboardType="decimal-pad"
@@ -189,7 +196,7 @@ export default function AddProductScreen({
             <TextInput
               className={inputClass(!!errors.stock)}
               placeholder="0"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={PLACEHOLDER_COLOR}
               value={form.stock}
               onChangeText={(v) => updateField('stock', v)}
               keyboardType="number-pad"
@@ -288,8 +295,8 @@ export default function AddProductScreen({
           <Switch
             value={form.esPerecedero}
             onValueChange={(v) => updateField('esPerecedero', v)}
-            trackColor={{ false: '#d1d5db', true: '#86efac' }}
-            thumbColor={form.esPerecedero ? '#16a34a' : '#f3f4f6'}
+            trackColor={{ false: colors.border, true: colors.success }}
+            thumbColor={form.esPerecedero ? colors.primary : colors.background}
           />
         </View>
 
@@ -305,7 +312,7 @@ export default function AddProductScreen({
           }
         >
           {isSaving ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.iconWhite} />
           ) : (
             <Text className="text-base font-semibold text-white">
               {isEditing ? 'Actualizar Producto' : 'Crear Producto'}

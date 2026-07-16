@@ -1,4 +1,8 @@
+import type { ApiResponse } from '@/types';
+
 import api from './api';
+
+export type { ApiResponse } from '@/types';
 
 // ── Backend response types ─────────────────────────────────
 
@@ -31,11 +35,6 @@ export interface PublicacionList {
   next: string | null;
   previous: string | null;
   results: Publicacion[];
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
 }
 
 // ── API functions ──────────────────────────────────────────

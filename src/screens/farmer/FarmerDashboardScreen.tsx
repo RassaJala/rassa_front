@@ -1,7 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   FlatList,
   Pressable,
   Text,
@@ -17,6 +18,12 @@ import {
   usePublicaciones,
 } from '@/hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '@/services/publications';
+
+interface Props {
+  navigation: {
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
+  };
+}
 
 const STATUS_TABS: { key: PublicacionEstado | 'all'; label: string }[] = [
   { key: 'all', label: 'Todas' },
@@ -58,12 +65,6 @@ const STATUS_LABELS: Record<PublicacionEstado, string> = {
   cancelado: 'Cancelado',
 };
 
-interface Props {
-  navigation: {
-    navigate: (screen: string, params?: Record<string, unknown>) => void;
-  };
-}
-
 export default function FarmerDashboardScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -72,11 +73,20 @@ export default function FarmerDashboardScreen({
   );
 
   const filterEstado = selectedTab === 'all' ? undefined : selectedTab;
-  const { data: response, isLoading } = usePublicaciones(filterEstado);
+  const { data: response, isLoading, refetch } = usePublicaciones(filterEstado);
   const deleteMutation = useDeletePublicacion();
   const closeMutation = useClosePublicacion();
 
   const publicaciones = response?.data?.results ?? [];
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void refetch();
+      }
+    });
+    return () => subscription.remove();
+  }, [refetch]);
 
   const handleNewPublication = useCallback(() => {
     navigation.navigate('PublicationWizard', {});

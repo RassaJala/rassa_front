@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import type { Producto } from '@/services/productos';
 import type { ProductoSemanal, Publicacion } from '@/services/publications';
@@ -19,6 +19,8 @@ export const WIZARD_STEPS: WizardStep[] = [
   'resumen',
   'publicar',
 ];
+
+export type WizardItemField = 'fk_unidad' | 'stock' | 'precio' | 'foto';
 
 export interface WizardItemDraft {
   tempId: string;
@@ -57,7 +59,7 @@ interface UsePublicationWizardResult {
   removeItem: (tempId: string) => void;
   updateItem: (
     tempId: string,
-    field: string,
+    field: WizardItemField,
     value: string | number | null,
   ) => void;
   validateItems: () => boolean;
@@ -72,12 +74,16 @@ function generateTempId(): string {
 function validateItem(item: WizardItemDraft): WizardItemValidation {
   const errors: WizardItemValidation = {};
 
-  if (!item.stock || Number(item.stock) <= 0) {
-    errors.stock = 'El stock debe ser mayor a 0.';
+  const stockNum = Number(item.stock);
+  if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
+    errors.stock = 'El stock debe ser un número mayor a 0.';
   }
-  if (!item.precio || Number(item.precio) <= 0) {
-    errors.precio = 'El precio debe ser mayor a 0.';
+
+  const precioNum = Number(item.precio);
+  if (!item.precio || Number.isNaN(precioNum) || precioNum <= 0) {
+    errors.precio = 'El precio debe ser un número mayor a 0.';
   }
+
   if (!item.fk_unidad) {
     errors.fk_unidad = 'Selecciona una unidad.';
   }
@@ -94,6 +100,8 @@ export function usePublicationWizard({
   allProductos: _allProductos,
 }: UsePublicationWizardParams): UsePublicationWizardResult {
   const [stepIndex, setStepIndex] = useState(0);
+  const publicationRef = useRef(publicacion);
+  publicationRef.current = publicacion;
 
   const createMutation = useCreatePublicacion();
   const publishMutation = usePublishPublicacion();
@@ -111,11 +119,19 @@ export function usePublicationWizard({
   }));
 
   const [localItems, setLocalItems] = useState<WizardItemDraft[]>([]);
+  const [localItemsInitialized, setLocalItemsInitialized] = useState(false);
   const [itemValidations, setItemValidations] = useState<
     Map<string, WizardItemValidation>
   >(new Map());
 
-  const activeItems = publicacion ? items : localItems;
+  // Initialize localItems from server data when editing an existing publication
+  if (publicacion && !localItemsInitialized && items.length > 0) {
+    setLocalItems(items);
+    setLocalItemsInitialized(true);
+  }
+
+  const activeItems =
+    publicacion && localItemsInitialized ? localItems : localItems;
 
   const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
 
@@ -158,7 +174,7 @@ export function usePublicationWizard({
   }, []);
 
   const updateItem = useCallback(
-    (tempId: string, field: string, value: string | number | null) => {
+    (tempId: string, field: WizardItemField, value: string | number | null) => {
       setLocalItems((prev) =>
         prev.map((i) => (i.tempId === tempId ? { ...i, [field]: value } : i)),
       );
@@ -188,8 +204,17 @@ export function usePublicationWizard({
   }, [activeItems]);
 
   const publish = useCallback(async () => {
-    if (!publicacion) return;
+    // Ensure publication exists — create if needed
+    let pub = publicationRef.current;
+    if (!pub) {
+      const result = await createMutation.mutateAsync();
+      pub = result.data;
+      publicationRef.current = pub;
+    }
 
+    if (!pub) return;
+
+    // Persist items
     for (const item of activeItems) {
       const isExisting = productos.some(
         (p) => String(p.id_producto_semanal) === item.tempId,
@@ -205,18 +230,19 @@ export function usePublicationWizard({
 
       if (isExisting) {
         await updateItemMutation.mutateAsync({
-          pubId: publicacion.id_publicacion,
+          pubId: pub.id_publicacion,
           itemId: Number(item.tempId),
           payload,
         });
       } else {
         await addItemMutation.mutateAsync({
-          pubId: publicacion.id_publicacion,
+          pubId: pub.id_publicacion,
           payload,
         });
       }
     }
 
+    // Remove deleted items
     const existingIds = new Set(
       productos.map((p) => String(p.id_producto_semanal)),
     );
@@ -225,17 +251,17 @@ export function usePublicationWizard({
     for (const id of existingIds) {
       if (!currentIds.has(id)) {
         await removeItemMutation.mutateAsync({
-          pubId: publicacion.id_publicacion,
+          pubId: pub.id_publicacion,
           itemId: Number(id),
         });
       }
     }
 
-    await publishMutation.mutateAsync(publicacion.id_publicacion);
+    await publishMutation.mutateAsync(pub.id_publicacion);
   }, [
-    publicacion,
     activeItems,
     productos,
+    createMutation,
     addItemMutation,
     updateItemMutation,
     removeItemMutation,
@@ -243,11 +269,12 @@ export function usePublicationWizard({
   ]);
 
   const saveDraft = useCallback(async () => {
-    let pub = publicacion;
+    let pub = publicationRef.current;
 
     if (!pub) {
       const result = await createMutation.mutateAsync();
       pub = result.data;
+      publicationRef.current = pub;
     }
 
     if (pub) {
@@ -279,7 +306,6 @@ export function usePublicationWizard({
       }
     }
   }, [
-    publicacion,
     activeItems,
     productos,
     createMutation,

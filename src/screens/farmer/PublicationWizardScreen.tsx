@@ -18,13 +18,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import LogoutButton from '@/components/LogoutButton';
 import { colors } from '@/constants/colors';
-import { useProductos } from '@/hooks/useProductos';
+import { useProductos, useUnidades } from '@/hooks/useProductos';
 import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
 import {
   usePublicationWizard,
   WIZARD_STEPS,
 } from '@/hooks/usePublicationWizard';
-import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
+import type {
+  WizardItemDraft,
+  WizardItemField,
+} from '@/hooks/usePublicationWizard';
 import type { RootStackParamList } from '@/navigation/AppNavigator';
 import type { Producto } from '@/services/productos';
 import type { Publicacion } from '@/services/publications';
@@ -49,12 +52,17 @@ export default function PublicationWizardScreen({
   const { data: pubResponse, isLoading: isLoadingPub } = usePublicacion(
     publicationId ?? 0,
   );
-  const { data: itemsResponse } = useProductosSemanales(publicationId ?? 0);
-  const { data: allProductosResponse } = useProductos();
+  const { data: itemsResponse, isLoading: isLoadingItems } =
+    useProductosSemanales(publicationId ?? 0);
+  const { data: allProductosResponse, isLoading: isLoadingProducts } =
+    useProductos();
+  const { data: unidadesResponse, isLoading: isLoadingUnidades } =
+    useUnidades();
 
   const publicacion = pubResponse?.data;
   const productos = itemsResponse?.data ?? [];
   const allProductos = allProductosResponse?.data ?? [];
+  const unidades = unidadesResponse?.data ?? [];
 
   const wizard = usePublicationWizard({
     publicacion,
@@ -64,6 +72,9 @@ export default function PublicationWizardScreen({
 
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const isMutating =
+    wizard.isCreating || wizard.isPublishing || isSavingDraft || isPublishing;
 
   const handleSaveDraft = useCallback(async () => {
     setIsSavingDraft(true);
@@ -104,10 +115,27 @@ export default function PublicationWizardScreen({
     }
   }, [wizard, navigation]);
 
-  if (isLoadingPub && publicationId) {
+  // Show combined loading state when editing an existing publication
+  const isLoadingData = publicationId && (isLoadingPub || isLoadingItems);
+  if (isLoadingData) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-gray-950">
         <ActivityIndicator color={colors.brandRedCoral} size="large" />
+        <Text className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          Cargando publicación...
+        </Text>
+      </View>
+    );
+  }
+
+  // Loading state for new publication (need products and units)
+  if (isLoadingProducts || isLoadingUnidades) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-950">
+        <ActivityIndicator color={colors.brandRedCoral} size="large" />
+        <Text className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          Cargando datos...
+        </Text>
       </View>
     );
   }
@@ -182,10 +210,18 @@ export default function PublicationWizardScreen({
           <StepFecha publicacion={publicacion} />
         )}
         {wizard.currentStep === 'productos' && (
-          <StepProductos wizard={wizard} allProductos={allProductos} />
+          <StepProductos
+            wizard={wizard}
+            allProductos={allProductos}
+            unidades={unidades}
+          />
         )}
         {wizard.currentStep === 'resumen' && (
-          <StepResumen wizard={wizard} allProductos={allProductos} />
+          <StepResumen
+            wizard={wizard}
+            allProductos={allProductos}
+            unidades={unidades}
+          />
         )}
         {wizard.currentStep === 'publicar' && (
           <StepPublicar
@@ -205,6 +241,7 @@ export default function PublicationWizardScreen({
             mode="outlined"
             textColor={colors.textSecondary}
             onPress={wizard.prevStep}
+            disabled={isMutating}
             style={{ flex: 1 }}
             labelStyle={{ fontSize: 14 }}
           >
@@ -215,6 +252,7 @@ export default function PublicationWizardScreen({
           <Button
             mode="contained"
             buttonColor={colors.brandRedCoral}
+            disabled={isMutating}
             onPress={() => {
               if (
                 wizard.currentStep === 'productos' &&
@@ -286,16 +324,50 @@ function StepFecha({
 function StepProductos({
   wizard,
   allProductos,
+  unidades,
 }: {
   wizard: ReturnType<typeof usePublicationWizard>;
   allProductos: Producto[];
+  unidades: { id_unidad: number; tipo: string }[];
 }): React.JSX.Element {
   const [showProductPicker, setShowProductPicker] = useState(false);
+
+  const addedIds = new Set(wizard.items.map((i) => i.fk_producto));
+  const availableProducts = allProductos.filter(
+    (p) => !addedIds.has(p.id_producto),
+  );
 
   const handleAddProduct = useCallback(
     (producto: Producto) => {
       wizard.addItem(producto);
       setShowProductPicker(false);
+    },
+    [wizard],
+  );
+
+  const handlePickImage = useCallback(
+    async (tempId: string): Promise<void> => {
+      try {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
+          return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          wizard.updateItem(tempId, 'foto', result.assets[0].uri);
+        }
+      } catch {
+        Alert.alert('Error', 'No se pudo abrir el selector de imágenes.');
+      }
     },
     [wizard],
   );
@@ -320,9 +392,11 @@ function StepProductos({
               key={item.tempId}
               item={item}
               allProductos={allProductos}
+              unidades={unidades}
               validation={wizard.itemValidations.get(item.tempId)}
               onUpdate={wizard.updateItem}
               onRemove={wizard.removeItem}
+              onPickImage={handlePickImage}
             />
           ))
         )}
@@ -333,6 +407,7 @@ function StepProductos({
           mode="outlined"
           textColor={colors.brandRedCoral}
           onPress={() => setShowProductPicker(true)}
+          disabled={availableProducts.length === 0}
           labelStyle={{ fontSize: 14 }}
           contentStyle={{ paddingVertical: 4 }}
           style={{ borderColor: colors.brandRedCoral, borderStyle: 'dashed' }}
@@ -343,7 +418,7 @@ function StepProductos({
 
       {showProductPicker ? (
         <ProductPickerModal
-          allProductos={allProductos}
+          allProductos={availableProducts}
           onSelect={handleAddProduct}
           onClose={() => setShowProductPicker(false)}
         />
@@ -357,44 +432,29 @@ function StepProductos({
 function WizardItemCard({
   item,
   allProductos,
+  unidades,
   validation,
   onUpdate,
   onRemove,
+  onPickImage,
 }: {
   item: WizardItemDraft;
   allProductos: Producto[];
+  unidades: { id_unidad: number; tipo: string }[];
   validation:
     | { stock?: string; precio?: string; fk_unidad?: string; foto?: string }
     | undefined;
   onUpdate: (
     tempId: string,
-    field: string,
+    field: WizardItemField,
     value: string | number | null,
   ) => void;
   onRemove: (tempId: string) => void;
+  onPickImage: (tempId: string) => void;
 }): React.JSX.Element {
   const producto = allProductos.find((p) => p.id_producto === item.fk_producto);
   const nombre =
     producto?.nombre_producto ?? `Producto #${String(item.fk_producto)}`;
-
-  const pickImage = async (): Promise<void> => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      onUpdate(item.tempId, 'foto', result.assets[0].uri);
-    }
-  };
 
   return (
     <View className="mb-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -413,7 +473,7 @@ function WizardItemCard({
 
       {/* Photo */}
       <Pressable
-        onPress={pickImage}
+        onPress={() => onPickImage(item.tempId)}
         className={`mb-3 h-24 items-center justify-center rounded-lg border-2 border-dashed ${
           validation?.foto
             ? 'border-red-400 bg-red-50 dark:bg-red-950'
@@ -481,32 +541,32 @@ function WizardItemCard({
         </View>
       </View>
 
-      {/* Unidad */}
+      {/* Unidad — loaded from API */}
       <View>
         <Text className="mb-1 text-xs text-gray-500 dark:text-gray-400">
           Unidad
         </Text>
         <View className="flex-row flex-wrap gap-1.5">
-          {ALL_UNIDADES.map((u) => (
+          {unidades.map((u) => (
             <Pressable
-              key={u.id}
-              onPress={() => onUpdate(item.tempId, 'fk_unidad', u.id)}
+              key={u.id_unidad}
+              onPress={() => onUpdate(item.tempId, 'fk_unidad', u.id_unidad)}
               className={`rounded-full border px-2.5 py-1 ${
-                item.fk_unidad === u.id
+                item.fk_unidad === u.id_unidad
                   ? 'border-brand-coral bg-brand-coral'
                   : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
               }`}
               accessibilityRole="button"
-              accessibilityState={{ selected: item.fk_unidad === u.id }}
+              accessibilityState={{ selected: item.fk_unidad === u.id_unidad }}
             >
               <Text
                 className={`text-xs font-medium ${
-                  item.fk_unidad === u.id
+                  item.fk_unidad === u.id_unidad
                     ? 'text-white'
                     : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {u.label}
+                {u.tipo}
               </Text>
             </Pressable>
           ))}
@@ -521,16 +581,6 @@ function WizardItemCard({
   );
 }
 
-// ── Common unidades for the wizard ─────────────────────────
-
-const ALL_UNIDADES = [
-  { id: 1, label: 'Kg' },
-  { id: 2, label: 'Pieza' },
-  { id: 3, label: 'Manojo' },
-  { id: 4, label: 'Litro' },
-  { id: 5, label: 'Bulto' },
-];
-
 // ── Product Picker Modal ───────────────────────────────────
 
 function ProductPickerModal({
@@ -543,13 +593,21 @@ function ProductPickerModal({
   onClose: () => void;
 }): React.JSX.Element {
   return (
-    <View className="absolute inset-0 z-50 bg-black/50">
+    <View
+      className="absolute inset-0 z-50 bg-black/50"
+      accessibilityViewIsModal
+      accessibilityLabel="Seleccionar producto"
+    >
       <View className="mx-4 mt-20 max-h-[70vh] rounded-2xl bg-white p-4 dark:bg-gray-900">
         <View className="mb-3 flex-row items-center justify-between">
           <Text className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Seleccionar producto
           </Text>
-          <Pressable onPress={onClose} accessibilityRole="button">
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar selector"
+          >
             <Text className="text-sm text-gray-500 dark:text-gray-400">
               Cancelar
             </Text>
@@ -564,6 +622,7 @@ function ProductPickerModal({
               onPress={() => onSelect(producto)}
               className="flex-row items-center border-b border-gray-100 py-3 dark:border-gray-800"
               accessibilityRole="button"
+              accessibilityLabel={`Agregar ${producto.nombre_producto}`}
             >
               <View className="flex-1">
                 <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -594,9 +653,11 @@ function ProductPickerModal({
 function StepResumen({
   wizard,
   allProductos,
+  unidades,
 }: {
   wizard: ReturnType<typeof usePublicationWizard>;
   allProductos: Producto[];
+  unidades: { id_unidad: number; tipo: string }[];
 }): React.JSX.Element {
   return (
     <ScrollView className="flex-1 px-4 py-4">
@@ -618,7 +679,7 @@ function StepResumen({
           const nombre =
             producto?.nombre_producto ??
             `Producto #${String(item.fk_producto)}`;
-          const unidad = ALL_UNIDADES.find((u) => u.id === item.fk_unidad);
+          const unidad = unidades.find((u) => u.id_unidad === item.fk_unidad);
           const hasErrors = wizard.itemValidations.has(item.tempId);
 
           return (
@@ -647,7 +708,7 @@ function StepResumen({
                   {nombre}
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-gray-400">
-                  {item.stock} {unidad?.label ?? '?'} · ${item.precio}
+                  {item.stock} {unidad?.tipo ?? '?'} · ${item.precio}
                 </Text>
               </View>
 
@@ -728,7 +789,7 @@ function StepPublicar({
       <View className="mt-3">
         <Button
           mode="outlined"
-          textColor="#6b7280"
+          textColor={colors.textSecondary}
           onPress={onSaveDraft}
           disabled={isSavingDraft}
           labelStyle={{ fontSize: 16 }}

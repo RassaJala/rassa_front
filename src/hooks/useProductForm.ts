@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
+  productosApi,
   useCategorias,
   useCreateProducto,
   useProducto,
   useUnidades,
   useUpdateProducto,
 } from '@/hooks/useProductos';
-import type { Categoria, Unidad } from '@/services/productos';
+import type {
+  Categoria,
+  CreateProductoPayload,
+  ProductoDetail,
+  Unidad,
+} from '@/services/productos';
+import type { ApiResponse } from '@/types';
 
 interface FormErrors {
   nombre_producto?: string;
@@ -39,14 +46,20 @@ function validateForm(data: FormState): FormErrors {
 
   if (!data.precio.trim()) {
     errors.precio = 'El precio es obligatorio.';
-  } else if (Number.parseFloat(data.precio) < 0) {
-    errors.precio = 'El precio no puede ser negativo.';
+  } else {
+    const precioNum = Number.parseFloat(data.precio);
+    if (Number.isNaN(precioNum) || precioNum < 0) {
+      errors.precio = 'El precio debe ser un número válido.';
+    }
   }
 
   if (!data.stock.trim()) {
     errors.stock = 'El stock es obligatorio.';
-  } else if (Number.parseInt(data.stock, 10) < 0) {
-    errors.stock = 'El stock no puede ser negativo.';
+  } else {
+    const stockNum = Number.parseInt(data.stock, 10);
+    if (Number.isNaN(stockNum) || stockNum < 0) {
+      errors.stock = 'El stock debe ser un número entero válido.';
+    }
   }
 
   if (data.fkCategoria === null) {
@@ -94,13 +107,15 @@ export function useProductForm(productoId?: number): UseProductFormResult {
     imagenUri: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const isInitialized = useRef(false);
 
   const categorias: Categoria[] = categoriasResponse?.data ?? [];
   const unidades: Unidad[] = unidadesResponse?.data ?? [];
 
   useEffect(() => {
-    if (isEditing && productoResponse?.data) {
+    if (isEditing && productoResponse?.data && !isInitialized.current) {
       const p = productoResponse.data;
+      isInitialized.current = true;
       setForm({
         nombre: p.nombre_producto,
         descripcion: p.descripcion,
@@ -129,23 +144,48 @@ export function useProductForm(productoId?: number): UseProductFormResult {
       return;
     }
 
-    const payload: Record<string, unknown> = {
+    const payload: CreateProductoPayload = {
       nombre_producto: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
       precio: Number.parseFloat(form.precio),
       stock: Number.parseInt(form.stock, 10),
-      fk_categoria: form.fkCategoria,
-      fk_unidad: form.fkUnidad,
+      fk_categoria: form.fkCategoria as number,
+      fk_unidad: form.fkUnidad as number,
       es_perecedero: form.esPerecedero,
+    };
+
+    const onMutationSuccess = async (result: ApiResponse<ProductoDetail>) => {
+      if (form.imagenUri && !form.imagenUri.startsWith('http')) {
+        try {
+          const formData = new FormData();
+          const filename = form.imagenUri.split('/').pop() ?? 'photo.jpg';
+          const ext = filename.split('.').pop() ?? 'jpg';
+          formData.append('imagen', {
+            uri: form.imagenUri,
+            name: filename,
+            type: `image/${ext}`,
+          } as unknown as Blob);
+          await productosApi.uploadProductoImagen(
+            result.data.id_producto,
+            formData,
+          );
+        } catch {
+          // Image upload failed silently — product was created/updated
+        }
+      }
+      onSuccess();
     };
 
     if (isEditing && productoId) {
       updateMutation.mutate(
         { id: productoId, payload },
-        { onSuccess, onError },
+        { onSuccess: onMutationSuccess, onError },
       );
     } else {
-      createMutation.mutate(payload, { onSuccess, onError });
+      createMutation.mutate(payload, {
+        onSuccess: onMutationSuccess,
+        onError,
+      });
     }
   };
 

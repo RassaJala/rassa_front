@@ -1,4 +1,8 @@
+import type { ApiResponse } from '@/types';
+
 import api from './api';
+
+export type { ApiResponse } from '@/types';
 
 // ── Backend response types (match Django serializers) ──────
 
@@ -40,9 +44,14 @@ export interface ProductoDetail extends Producto {
   imagenes: ProductoImagen[];
 }
 
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
+export interface CreateProductoPayload {
+  nombre_producto: string;
+  descripcion: string;
+  precio: number;
+  stock: number;
+  fk_categoria: number;
+  fk_unidad: number;
+  es_perecedero: boolean;
 }
 
 // ── API functions ──────────────────────────────────────────
@@ -73,7 +82,7 @@ export async function getProducto(
 }
 
 export async function createProducto(
-  payload: Record<string, unknown>,
+  payload: CreateProductoPayload,
 ): Promise<ApiResponse<ProductoDetail>> {
   const { data } = await api.post<ApiResponse<ProductoDetail>>(
     '/productos/',
@@ -84,7 +93,7 @@ export async function createProducto(
 
 export async function updateProducto(
   id: number,
-  payload: Record<string, unknown>,
+  payload: CreateProductoPayload,
 ): Promise<ApiResponse<ProductoDetail>> {
   const { data } = await api.put<ApiResponse<ProductoDetail>>(
     `/productos/${String(id)}/`,
@@ -107,7 +116,10 @@ export async function uploadProductoImagen(
   const { data } = await api.post<ApiResponse<ProductoImagen>>(
     `/productos/${String(id)}/imagen/`,
     formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60_000,
+    },
   );
   return data;
 }
