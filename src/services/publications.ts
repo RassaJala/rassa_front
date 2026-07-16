@@ -172,3 +172,21 @@ export async function restoreProductoSemanal(
   );
   return data;
 }
+
+export async function uploadProductoSemanalImagen(
+  pubId: number,
+  itemId: number,
+  formData: FormData,
+): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, 'publicacionId');
+  assertValidId(itemId, 'productoSemanalId');
+  const { data } = await api.post<ApiResponse<ProductoSemanal>>(
+    `/publicaciones/${String(pubId)}/productos/${String(itemId)}/imagen/`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60_000,
+    },
+  );
+  return data;
+}

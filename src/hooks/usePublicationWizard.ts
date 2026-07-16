@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import type { Producto } from '@/services/productos';
+import { uploadProductoSemanalImagen } from '@/services/publications';
 import type { ProductoSemanal, Publicacion } from '@/services/publications';
 
 import {
@@ -92,6 +93,73 @@ function validateItem(item: WizardItemDraft): WizardItemValidation {
   }
 
   return errors;
+}
+
+function isLocalFileUri(uri: string): boolean {
+  return uri.startsWith('file://');
+}
+
+async function uploadLocalPhoto(
+  pubId: number,
+  itemId: number,
+  fotoUri: string,
+): Promise<void> {
+  const formData = new FormData();
+  const filename = fotoUri.split('/').pop() ?? 'photo.jpg';
+  const ext = filename.split('.').pop() ?? 'jpg';
+  formData.append('imagen', {
+    uri: fotoUri,
+    name: filename,
+    type: `image/${ext}`,
+  } as unknown as Blob);
+  await uploadProductoSemanalImagen(pubId, itemId, formData);
+}
+
+type MutateAsyncFn = (
+  // eslint-disable-next-line eslint-comments/require-description, @typescript-eslint/no-explicit-any -- TanStack mutation types are complex; any is the pragmatic choice here
+  vars: any,
+) => Promise<{ data: { id_producto_semanal: number } }>;
+
+async function persistItem(
+  pubId: number,
+  item: WizardItemDraft,
+  existingItems: ProductoSemanal[],
+  addMutateAsync: MutateAsyncFn,
+  updateMutateAsync: MutateAsyncFn,
+): Promise<void> {
+  const isExisting = existingItems.some(
+    (p) => String(p.id_producto_semanal) === item.tempId,
+  );
+
+  const payload = {
+    fk_producto: item.fk_producto,
+    fk_unidad: item.fk_unidad,
+    stock: Number(item.stock),
+    precio: Number(item.precio),
+    foto: isLocalFileUri(item.foto ?? '') ? null : item.foto,
+  };
+
+  let itemId: number;
+
+  if (isExisting) {
+    const result = await updateMutateAsync({
+      pubId,
+      itemId: Number(item.tempId),
+      payload,
+    });
+    itemId = result.data.id_producto_semanal;
+  } else {
+    const result = await addMutateAsync({ pubId, payload });
+    itemId = result.data.id_producto_semanal;
+  }
+
+  if (item.foto && isLocalFileUri(item.foto)) {
+    try {
+      await uploadLocalPhoto(pubId, itemId, item.foto);
+    } catch {
+      // Photo upload failed — item was created/updated without photo
+    }
+  }
 }
 
 export function usePublicationWizard({
@@ -216,30 +284,13 @@ export function usePublicationWizard({
 
     // Persist items
     for (const item of activeItems) {
-      const isExisting = productos.some(
-        (p) => String(p.id_producto_semanal) === item.tempId,
+      await persistItem(
+        pub.id_publicacion,
+        item,
+        productos,
+        addItemMutation.mutateAsync,
+        updateItemMutation.mutateAsync,
       );
-
-      const payload = {
-        fk_producto: item.fk_producto,
-        fk_unidad: item.fk_unidad,
-        stock: Number(item.stock),
-        precio: Number(item.precio),
-        foto: item.foto,
-      };
-
-      if (isExisting) {
-        await updateItemMutation.mutateAsync({
-          pubId: pub.id_publicacion,
-          itemId: Number(item.tempId),
-          payload,
-        });
-      } else {
-        await addItemMutation.mutateAsync({
-          pubId: pub.id_publicacion,
-          payload,
-        });
-      }
     }
 
     // Remove deleted items
@@ -279,30 +330,13 @@ export function usePublicationWizard({
 
     if (pub) {
       for (const item of activeItems) {
-        const payload = {
-          fk_producto: item.fk_producto,
-          fk_unidad: item.fk_unidad,
-          stock: Number(item.stock),
-          precio: Number(item.precio),
-          foto: item.foto,
-        };
-
-        const isExisting = productos.some(
-          (p) => String(p.id_producto_semanal) === item.tempId,
+        await persistItem(
+          pub.id_publicacion,
+          item,
+          productos,
+          addItemMutation.mutateAsync,
+          updateItemMutation.mutateAsync,
         );
-
-        if (isExisting) {
-          await updateItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId: Number(item.tempId),
-            payload,
-          });
-        } else {
-          await addItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            payload,
-          });
-        }
       }
     }
   }, [

@@ -39,11 +39,15 @@ export default function MyProductsScreen({
   const categoriaFilter =
     selectedCategoria !== null ? selectedCategoria : undefined;
 
-  const { data: productosResponse, isLoading: isLoadingProductos } =
-    useProductos({
-      categoria: categoriaFilter,
-      nombre: nombreFilter,
-    });
+  const {
+    data: productosResponse,
+    isLoading: isLoadingProductos,
+    isError: isErrorProductos,
+    refetch: refetchProductos,
+  } = useProductos({
+    categoria: categoriaFilter,
+    nombre: nombreFilter,
+  });
 
   const { data: categoriasResponse, isLoading: isLoadingCategorias } =
     useCategorias();
@@ -213,6 +217,23 @@ export default function MyProductsScreen({
           <Text className="mt-3 text-sm text-slate-500">
             Cargando productos...
           </Text>
+        </View>
+      ) : isErrorProductos ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="mb-2 text-center text-sm font-medium text-red-600">
+            Error al cargar productos
+          </Text>
+          <Text className="mb-4 text-center text-xs text-slate-500">
+            Verifica tu conexión y vuelve a intentar.
+          </Text>
+          <Pressable
+            onPress={() => void refetchProductos()}
+            className="rounded-xl border border-red-300 bg-red-50 px-4 py-2"
+            accessibilityRole="button"
+            accessibilityLabel="Reintentar"
+          >
+            <Text className="text-sm font-medium text-red-600">Reintentar</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList

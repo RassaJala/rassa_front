@@ -73,7 +73,12 @@ export default function FarmerDashboardScreen({
   );
 
   const filterEstado = selectedTab === 'all' ? undefined : selectedTab;
-  const { data: response, isLoading, refetch } = usePublicaciones(filterEstado);
+  const {
+    data: response,
+    isLoading,
+    isError,
+    refetch,
+  } = usePublicaciones(filterEstado);
   const deleteMutation = useDeletePublicacion();
   const closeMutation = useClosePublicacion();
 
@@ -280,6 +285,23 @@ export default function FarmerDashboardScreen({
           <Text className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             Cargando publicaciones...
           </Text>
+        </View>
+      ) : isError ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="mb-2 text-center text-sm font-medium text-red-600">
+            Error al cargar publicaciones
+          </Text>
+          <Text className="mb-4 text-center text-xs text-gray-500 dark:text-gray-400">
+            Verifica tu conexión y vuelve a intentar.
+          </Text>
+          <Button
+            mode="outlined"
+            textColor={colors.brandRedCoral}
+            onPress={() => void refetch()}
+            labelStyle={{ fontSize: 14 }}
+          >
+            Reintentar
+          </Button>
         </View>
       ) : (
         <FlatList
