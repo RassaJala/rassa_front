@@ -13,6 +13,16 @@ export const colors = {
   warning: '#f59e0b', // amber-500
   placeholder: '#94a3b8',
   brand: {
+    greenForest: '#3A6D56',
+    greenSage: '#AEC0BC',
+    greenOlive: '#CED295',
     redCoral: '#DE393A',
+    magenta: '#D52E7A',
+    orange: '#E46C38',
+    skin: '#D8D3C8',
+    ink: '#1D1D1D',
+    mountainTop: '#EEAA6F',
+    mountainMid: '#B2C2B2',
+    mountainBot: '#A19FB6',
   },
 };

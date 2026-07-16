@@ -1,27 +1,28 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import { View } from 'react-native';
+import { Button, Text } from 'react-native-paper';
 
+import type { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
 import LogoutButton from '@/components/LogoutButton';
-import { colors } from '@/constants/colors';
-
-const BRAND_RED_CORAL = colors.brand.redCoral;
+import type { BuyerStackParamList } from '@/navigation/AppNavigator';
 
 export default function HomeScreen(): React.JSX.Element {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<BuyerStackParamList>>();
 
   return (
-    <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="text-lg text-gray-600">Home (Buyer) - Coming soon</Text>
+    <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
+      <Text variant="bodyLarge" className="text-gray-500 dark:text-gray-400">
+        Home (Buyer) - Coming soon
+      </Text>
 
       <View className="mt-6 w-full max-w-xs gap-3">
         <Button
           mode="outlined"
-          textColor={BRAND_RED_CORAL}
+          textColor="#DE393A"
           className="rounded-lg border-brand-red-coral"
-          onPress={() => navigation.navigate('Profile' as never)}
+          onPress={() => navigation.navigate('Profile')}
         >
           Mi Perfil
         </Button>

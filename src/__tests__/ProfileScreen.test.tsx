@@ -116,8 +116,9 @@ describe('ProfileScreen', () => {
     });
 
     it('validates required fields', async () => {
-      const { getByText } = renderScreen();
+      const { getByText, getByPlaceholderText } = renderScreen();
       fireEvent.press(getByText('Editar'));
+      fireEvent.changeText(getByPlaceholderText('Nombre'), '');
       fireEvent.press(getByText('Guardar Cambios'));
       await waitFor(() => {
         expect(
@@ -197,7 +198,7 @@ describe('ProfileScreen', () => {
     });
 
     it('shows offline error when no connection', async () => {
-      mockUseNetInfo.mockReturnValueOnce({ isConnected: false });
+      mockUseNetInfo.mockReturnValue({ isConnected: false });
       const { getByText } = renderScreen();
       fireEvent.press(getByText('Editar'));
       fireEvent.press(getByText('Guardar Cambios'));
@@ -214,27 +215,29 @@ describe('ProfileScreen', () => {
     });
 
     it('shows password change form', () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      expect(getByPlaceholderText('••••••••')).toBeTruthy();
+      expect(getByTestId('old-password-input')).toBeTruthy();
+      expect(getByTestId('new-password-input')).toBeTruthy();
+      expect(getByTestId('confirm-password-input')).toBeTruthy();
     });
 
     it('validates all fields required', async () => {
-      const { getByText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Por favor, completa todos los campos.')).toBeTruthy();
       });
     });
 
     it('validates new password length', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'oldpass');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), '123');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), '123');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
+      fireEvent.changeText(getByTestId('new-password-input'), '123');
+      fireEvent.changeText(getByTestId('confirm-password-input'), '123');
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(
           getByText('La nueva contraseña debe tener al menos 6 caracteres.'),
@@ -243,12 +246,12 @@ describe('ProfileScreen', () => {
     });
 
     it('validates password confirmation matches', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'oldpassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'different');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
+      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'different');
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(
           getByText('La confirmación de la contraseña no coincide.'),
@@ -257,12 +260,12 @@ describe('ProfileScreen', () => {
     });
 
     it('validates new password different from old', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'samepassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'samepassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'samepassword');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'samepassword');
+      fireEvent.changeText(getByTestId('new-password-input'), 'samepassword');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'samepassword');
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(
           getByText('La nueva contraseña debe ser diferente a la actual.'),
@@ -271,34 +274,44 @@ describe('ProfileScreen', () => {
     });
 
     it('shows success message and logs out on successful change', async () => {
-      mockAuth.changePassword.mockResolvedValueOnce(undefined);
-      mockAuth.logout.mockResolvedValueOnce(undefined);
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'oldpassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.press(getByText('Cambiar Contraseña'));
-      await waitFor(() => {
-        expect(
-          getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
-        ).toBeTruthy();
-      });
-      await waitFor(() => {
-        expect(mockAuth.logout).toHaveBeenCalled();
-      });
+      const originalSetTimeout = global.setTimeout;
+      global.setTimeout = ((fn: () => void) => {
+        fn();
+        return 0 as unknown as NodeJS.Timeout;
+      }) as unknown as typeof global.setTimeout;
+
+      try {
+        mockAuth.changePassword.mockResolvedValueOnce(undefined);
+        mockAuth.logout.mockResolvedValueOnce(undefined);
+        const { getByText, getByTestId } = renderScreen();
+        fireEvent.press(getByText('Seguridad'));
+        fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
+        fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+        fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+        fireEvent.press(getByTestId('change-password-button'));
+        await waitFor(() => {
+          expect(
+            getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
+          ).toBeTruthy();
+        });
+        await waitFor(() => {
+          expect(mockAuth.logout).toHaveBeenCalled();
+        });
+      } finally {
+        global.setTimeout = originalSetTimeout;
+      }
     });
 
     it('shows error on API failure', async () => {
       mockAuth.changePassword.mockRejectedValueOnce(
         new Error('Contraseña actual incorrecta.'),
       );
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'oldpassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
+      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Contraseña actual incorrecta.')).toBeTruthy();
       });
@@ -308,12 +321,12 @@ describe('ProfileScreen', () => {
       mockAuth.changePassword.mockRejectedValueOnce({
         response: { status: 401, data: { detail: 'Unauthorized' } },
       });
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'wrongpassword');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'wrongpassword');
+      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Sesión expirada o no autorizada.')).toBeTruthy();
       });
@@ -322,7 +335,7 @@ describe('ProfileScreen', () => {
 
   describe('offline handling', () => {
     it('shows offline error when submitting edit without connection', async () => {
-      mockUseNetInfo.mockReturnValueOnce({ isConnected: false });
+      mockUseNetInfo.mockReturnValue({ isConnected: false });
       const { getByText, getByPlaceholderText } = renderScreen();
       fireEvent.press(getByText('Editar'));
       const today = new Date();
@@ -338,10 +351,10 @@ describe('ProfileScreen', () => {
     });
 
     it('shows offline error when changing password without connection', async () => {
-      mockUseNetInfo.mockReturnValueOnce({ isConnected: false });
-      const { getByText } = renderScreen();
+      mockUseNetInfo.mockReturnValue({ isConnected: false });
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.press(getByTestId('change-password-button'));
       await waitFor(() => {
         expect(getByText('Sin conexión a Internet.')).toBeTruthy();
       });
@@ -359,12 +372,12 @@ describe('ProfileScreen', () => {
   describe('cleanup on unmount', () => {
     it('clears logout timeout on unmount', () => {
       const { unmount } = renderScreen();
-      const { getByText, getByPlaceholderText } = renderScreen();
+      const { getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'oldpass');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'newpassword1');
-      fireEvent.press(getByText('Cambiar Contraseña'));
+      fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
+      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+      fireEvent.changeText(getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.press(getByTestId('change-password-button'));
       unmount();
       // If no error thrown, cleanup works
       expect(true).toBe(true);

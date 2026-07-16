@@ -1,357 +1,100 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SegmentedButtons } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
+import axios from 'axios';
 
-import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
+import type {
+  ProfileFormFields,
+  ProfileLocationFields,
+} from '@/components/Profile/ProfileEditTab';
+import ProfileEditTab from '@/components/Profile/ProfileEditTab';
+import ProfilePasswordTab from '@/components/Profile/ProfilePasswordTab';
+import ProfileViewTab from '@/components/Profile/ProfileViewTab';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
-import type { Localidad, Municipio } from '@/types';
-import { getGenderLabel, getRoleLabel } from '@/utils/labels';
+import { getRoleLabel } from '@/utils/labels';
 import {
-  cleanAddress,
-  cleanName,
   cleanPhoneNumber,
-  DATE_REGEX,
   formatPhoneNumber,
-  isAdult,
-  MIN_PASSWORD_LENGTH,
+  validateBirthdate,
+  validatePassword,
+  validatePhone,
 } from '@/utils/validation';
 
 type ActiveTab = 'ver' | 'editar' | 'password';
 
 const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
 
-// ── SUB-COMPONENT: View Profile Tab ───────────────────────────
-interface ProfileViewTabProps {
-  readonly user: ReturnType<typeof useAuth>['user'];
+function validateProfileEdit(
+  nombre: string,
+  apellidoPaterno: string,
+  rawTelefono: string,
+  fechaNacimiento: string,
+  domicilio: string,
+  localidadId: number | null,
+): string | null {
+  if (
+    !nombre.trim() ||
+    !apellidoPaterno.trim() ||
+    !rawTelefono ||
+    !fechaNacimiento.trim() ||
+    !domicilio.trim() ||
+    localidadId === null
+  ) {
+    return 'Por favor, completa todos los campos obligatorios.';
+  }
+
+  const phoneErr = validatePhone(rawTelefono);
+  if (phoneErr) return phoneErr;
+
+  const birthdateErr = validateBirthdate(fechaNacimiento);
+  if (birthdateErr) return birthdateErr;
+
+  return null;
 }
 
-function ProfileViewTab({ user }: ProfileViewTabProps): React.JSX.Element {
-  return (
-    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
-        Detalles Personales
-      </Text>
+function validatePasswordChange(
+  oldPass: string,
+  newPass: string,
+  confirmPass: string,
+): string | null {
+  if (!oldPass || !newPass || !confirmPass) {
+    return 'Por favor, completa todos los campos.';
+  }
 
-      <View className="space-y-4">
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Nombre Completo
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.nombre} {user?.apellido_paterno}{' '}
-            {user?.apellido_materno ?? ''}
-          </Text>
-        </View>
+  const newPassErr = validatePassword(newPass);
+  if (newPassErr) {
+    return 'La nueva contraseña debe tener al menos 6 caracteres.';
+  }
 
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Teléfono
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.telefono ?? 'No especificado'}
-          </Text>
-        </View>
+  if (newPass !== confirmPass) {
+    return 'La confirmación de la contraseña no coincide.';
+  }
 
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Fecha de Nacimiento
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.fecha_nacimiento}
-          </Text>
-        </View>
+  if (oldPass === newPass) {
+    return 'La nueva contraseña debe ser diferente a la actual.';
+  }
 
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Género
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.genero ? getGenderLabel(user.genero) : 'No especificado'}
-          </Text>
-        </View>
-
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Dirección
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.direccion}
-          </Text>
-        </View>
-
-        <View className="mb-3">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Localidad
-          </Text>
-          <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.localidad_nombre}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
+  return null;
 }
 
-// ── SUB-COMPONENT: Edit Profile Tab ───────────────────────────
-interface ProfileFormFields {
-  readonly nombre: string;
-  readonly setNombre: (val: string) => void;
-  readonly apellidoPaterno: string;
-  readonly setApellidoPaterno: (val: string) => void;
-  readonly apellidoMaterno: string;
-  readonly setApellidoMaterno: (val: string) => void;
-  readonly telefono: string;
-  readonly setTelefono: (val: string) => void;
-  readonly fechaNacimiento: string;
-  readonly setFechaNacimiento: (val: string) => void;
-  readonly sexo: 'M' | 'F' | 'O';
-  readonly setSexo: (val: 'M' | 'F' | 'O') => void;
-  readonly domicilio: string;
-  readonly setDomicilio: (val: string) => void;
+function getPasswordChangeErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    return 'Sesión expirada o no autorizada.';
+  }
+
+  const errObj = error as { response?: { status?: number } } | null | undefined;
+  if (errObj?.response?.status === 401) {
+    return 'Sesión expirada o no autorizada.';
+  }
+
+  return error instanceof Error ? error.message : 'Error al cambiar contraseña.';
 }
 
-interface ProfileLocationFields {
-  readonly selectedMunicipioId: number | null;
-  readonly selectedMunicipioNombre: string;
-  readonly localidadId: number | null;
-  readonly localidadNombre: string;
-  readonly municipios: Municipio[];
-  readonly localidades: Localidad[];
-  readonly isLoadingMunicipios: boolean;
-  readonly isLoadingLocalidades: boolean;
-  readonly errorMunicipios: string | null;
-  readonly errorLocalidades: string | null;
-  readonly refetchMunicipios: () => void;
-  readonly refetchLocalidades: () => void;
-  readonly handleSelectMunicipio: (id: number, nombre: string) => void;
-  readonly handleSelectLocalidad: (id: number, nombre: string) => void;
-}
-
-interface ProfileEditTabProps {
-  readonly isSubmitting: boolean;
-  readonly form: ProfileFormFields;
-  readonly location: ProfileLocationFields;
-  readonly callbacks: {
-    readonly handleUpdateProfile: () => void;
-    readonly setErrorMessage: (val: string | null) => void;
-    readonly onOpenDatePicker: () => void;
-  };
-}
-
-function ProfileEditTab({
-  isSubmitting,
-  form,
-  location,
-  callbacks,
-}: ProfileEditTabProps): React.JSX.Element {
-  return (
-    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
-        Editar Perfil
-      </Text>
-
-      <TextInput
-        mode="outlined"
-        label="Nombre *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="Nombre"
-        value={form.nombre}
-        onChangeText={(val) => form.setNombre(cleanName(val))}
-      />
-
-      <TextInput
-        mode="outlined"
-        label="Apellido Paterno *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="Apellido Paterno"
-        value={form.apellidoPaterno}
-        onChangeText={(val) => form.setApellidoPaterno(cleanName(val))}
-      />
-
-      <TextInput
-        mode="outlined"
-        label="Apellido Materno"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="Apellido Materno"
-        value={form.apellidoMaterno}
-        onChangeText={(val) => form.setApellidoMaterno(cleanName(val))}
-      />
-
-      <TextInput
-        mode="outlined"
-        label="Teléfono *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="xxx-xxx-xx-xx"
-        keyboardType="phone-pad"
-        value={form.telefono}
-        onChangeText={(val) => form.setTelefono(formatPhoneNumber(val))}
-      />
-
-      <TouchableOpacity
-        testID="birthdate-pressable"
-        onPress={callbacks.onOpenDatePicker}
-      >
-        <TextInput
-          mode="outlined"
-          label="Fecha de Nacimiento *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="AAAA-MM-DD"
-          value={form.fechaNacimiento}
-          showSoftInputOnFocus={false}
-          onChangeText={form.setFechaNacimiento}
-        />
-      </TouchableOpacity>
-
-      <Text className="mb-2 text-sm font-normal text-gray-700 dark:text-gray-300">
-        Género *
-      </Text>
-      <SegmentedButtons
-        value={form.sexo}
-        onValueChange={form.setSexo}
-        buttons={[
-          { value: 'M', label: 'Masculino' },
-          { value: 'F', label: 'Femenino' },
-          { value: 'O', label: 'Otro' },
-        ]}
-        style={styles.segmentedButtons}
-      />
-
-      <TextInput
-        mode="outlined"
-        label="Dirección *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="Calle, número, colonia"
-        value={form.domicilio}
-        onChangeText={(val) => form.setDomicilio(cleanAddress(val))}
-      />
-
-      <CatalogSelector
-        selectedMunicipioId={location.selectedMunicipioId}
-        selectedMunicipioNombre={location.selectedMunicipioNombre}
-        onSelectMunicipio={location.handleSelectMunicipio}
-        localidadId={location.localidadId}
-        localidadNombre={location.localidadNombre}
-        onSelectLocalidad={location.handleSelectLocalidad}
-        municipios={location.municipios}
-        localidades={location.localidades}
-        isLoadingMunicipios={location.isLoadingMunicipios}
-        isLoadingLocalidades={location.isLoadingLocalidades}
-        errorMunicipios={location.errorMunicipios}
-        errorLocalidades={location.errorLocalidades}
-        refetchMunicipios={location.refetchMunicipios}
-        refetchLocalidades={location.refetchLocalidades}
-        setErrorMessage={callbacks.setErrorMessage}
-      />
-
-      <Button
-        testID="save-changes-button"
-        mode="contained"
-        disabled={isSubmitting}
-        onPress={callbacks.handleUpdateProfile}
-        buttonColor={BRAND_RED_CORAL}
-        className="mt-4 rounded-lg"
-        contentStyle={styles.buttonContent}
-      >
-        {isSubmitting ? <ActivityIndicator color="#fff" /> : 'Guardar Cambios'}
-      </Button>
-    </View>
-  );
-}
-
-// ── SUB-COMPONENT: Change Password Tab ───────────────────────
-interface ProfilePasswordTabProps {
-  readonly isSubmitting: boolean;
-  readonly oldPassword: string;
-  readonly setOldPassword: (val: string) => void;
-  readonly newPassword: string;
-  readonly setNewPassword: (val: string) => void;
-  readonly confirmPassword: string;
-  readonly setConfirmPassword: (val: string) => void;
-  readonly handleChangePassword: () => void;
-}
-
-function ProfilePasswordTab({
-  isSubmitting,
-  oldPassword,
-  setOldPassword,
-  newPassword,
-  setNewPassword,
-  confirmPassword,
-  setConfirmPassword,
-  handleChangePassword,
-}: ProfilePasswordTabProps): React.JSX.Element {
-  return (
-    <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
-        Cambiar Contraseña
-      </Text>
-
-      <TextInput
-        testID="old-password-input"
-        mode="outlined"
-        label="Contraseña Actual *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="••••••••"
-        secureTextEntry
-        value={oldPassword}
-        onChangeText={setOldPassword}
-      />
-
-      <TextInput
-        testID="new-password-input"
-        mode="outlined"
-        label="Nueva Contraseña (mínimo 6 caracteres) *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="••••••••"
-        secureTextEntry
-        value={newPassword}
-        onChangeText={setNewPassword}
-      />
-
-      <TextInput
-        testID="confirm-password-input"
-        mode="outlined"
-        label="Confirmar Nueva Contraseña *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="••••••••"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-
-      <Button
-        testID="change-password-button"
-        mode="contained"
-        disabled={isSubmitting}
-        onPress={handleChangePassword}
-        buttonColor={BRAND_RED_CORAL}
-        className="mt-4 rounded-lg"
-        contentStyle={styles.buttonContent}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          'Cambiar Contraseña'
-        )}
-      </Button>
-    </View>
-  );
-}
-
-// ── MAIN COMPONENT: ProfileScreen ────────────────────────────
 export default function ProfileScreen(): React.JSX.Element {
   const { user, updateProfile, changePassword, logout } = useAuth();
   const netInfo = useNetInfo();
@@ -406,9 +149,10 @@ export default function ProfileScreen(): React.JSX.Element {
       if (logoutTimeoutRef.current) {
         // eslint-disable-next-line no-undef -- clearTimeout is global in RN
         clearTimeout(logoutTimeoutRef.current);
+        void logout();
       }
     };
-  }, []);
+  }, [logout]);
 
   // Sync state if user data loads late
   useEffect(() => {
@@ -440,32 +184,17 @@ export default function ProfileScreen(): React.JSX.Element {
     }
 
     const rawTelefono = cleanPhoneNumber(telefono);
-    if (
-      !nombre.trim() ||
-      !apellidoPaterno.trim() ||
-      !rawTelefono ||
-      !fechaNacimiento.trim() ||
-      !domicilio.trim() ||
-      catalog.localidadId === null
-    ) {
-      setErrorMessage('Por favor, completa todos los campos obligatorios.');
-      return;
-    }
+    const validationError = validateProfileEdit(
+      nombre,
+      apellidoPaterno,
+      rawTelefono,
+      fechaNacimiento,
+      domicilio,
+      catalog.localidadId,
+    );
 
-    if (rawTelefono.length !== 10) {
-      setErrorMessage('El teléfono debe tener exactamente 10 dígitos.');
-      return;
-    }
-
-    if (!DATE_REGEX.test(fechaNacimiento)) {
-      setErrorMessage(
-        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
-      );
-      return;
-    }
-
-    if (!isAdult(fechaNacimiento)) {
-      setErrorMessage('Debes ser mayor de 18 años.');
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
@@ -480,7 +209,7 @@ export default function ProfileScreen(): React.JSX.Element {
         fecha_nacimiento: fechaNacimiento,
         sexo,
         domicilio: domicilio.trim(),
-        fk_localidad: catalog.localidadId,
+        fk_localidad: catalog.localidadId ?? 0,
       };
 
       await updateProfile(payload);
@@ -514,26 +243,14 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      setErrorMessage('Por favor, completa todos los campos.');
-      return;
-    }
+    const validationError = validatePasswordChange(
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    );
 
-    if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setErrorMessage(
-        `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
-      );
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setErrorMessage('La confirmación de la contraseña no coincide.');
-      return;
-    }
-
-    // Validar que la nueva contraseña sea diferente a la actual
-    if (oldPassword === newPassword) {
-      setErrorMessage('La nueva contraseña debe ser diferente a la actual.');
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
@@ -556,11 +273,7 @@ export default function ProfileScreen(): React.JSX.Element {
       }, PASSWORD_CHANGE_LOGOUT_DELAY_MS);
     } catch (error) {
       if (isMounted.current) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Error al cambiar contraseña.',
-        );
+        setErrorMessage(getPasswordChangeErrorMessage(error));
       }
       Sentry.captureException(error);
     } finally {
@@ -703,12 +416,6 @@ export default function ProfileScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
-  },
-  buttonContent: {
-    paddingVertical: 6,
-  },
-  segmentedButtons: {
-    marginBottom: 16,
   },
   tabsButtons: {
     marginBottom: 24,

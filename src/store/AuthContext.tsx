@@ -334,9 +334,35 @@ export function AuthProvider({
       setState((prev) => ({ ...prev, isRegistering: true }));
 
       try {
+        const {
+          email,
+          password,
+          telefono,
+          role,
+          nombre,
+          apellido_paterno,
+          apellido_materno,
+          fecha_nacimiento,
+          sexo,
+          domicilio,
+          fk_localidad,
+        } = payload;
+
         const { data: responseBody } = await api.post<
           ApiResponse<BackendUser & { access: string; refresh: string }>
-        >('/auth/register/', payload);
+        >('/auth/register/', {
+          email,
+          password,
+          telefono,
+          role,
+          nombre,
+          apellido_paterno,
+          apellido_materno,
+          fecha_nacimiento,
+          sexo,
+          domicilio,
+          fk_localidad,
+        });
 
         const user = responseBody.data;
 

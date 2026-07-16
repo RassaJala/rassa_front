@@ -10,6 +10,12 @@ import api from '@/services/api';
 
 jest.mock('@/hooks/useCatalogs');
 jest.mock('@/services/api');
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: () => ({
+    logout: jest.fn(),
+    user: { id_usuario: 1, nombre: 'Admin', role: 'admin' },
+  }),
+}));
 jest.mock('@react-native-community/netinfo', () => ({
   useNetInfo: () => ({ isConnected: true }),
 }));
@@ -21,10 +27,10 @@ const mockApiPatch = api.patch as jest.Mock;
 const mockCatalog = {
   municipios: [{ id_municipio: 1, nombre: 'Municipio 1' }],
   localidades: [{ id_localidad: 1, nombre: 'Localidad 1', municipio_id: 1 }],
-  selectedMunicipioId: null,
-  selectedMunicipioNombre: '',
-  localidadId: null,
-  localidadNombre: '',
+  selectedMunicipioId: 1,
+  selectedMunicipioNombre: 'Municipio 1',
+  localidadId: 1,
+  localidadNombre: 'Localidad 1',
   isLoadingMunicipios: false,
   isLoadingLocalidades: false,
   errorMunicipios: null,
@@ -191,6 +197,9 @@ describe('AdminPanelScreen', () => {
       '555-123-45-67',
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
+    fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
+    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
+    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
     fireEvent.press(getByText('Agregar usuario'));
 
     await waitFor(() => {
@@ -230,6 +239,9 @@ describe('AdminPanelScreen', () => {
       '555-123-45-67',
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
+    fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
+    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
+    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
     fireEvent.press(getByText('Agregar usuario'));
 
     await waitFor(() => {
@@ -245,7 +257,7 @@ describe('AdminPanelScreen', () => {
         ),
     );
 
-    const { getByText, getByPlaceholderText } = renderScreen();
+    const { getByText, getByPlaceholderText, getByTestId } = renderScreen();
     const today = new Date();
     const eighteenYearsAgo = `${today.getFullYear() - 18}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -260,9 +272,13 @@ describe('AdminPanelScreen', () => {
       '555-123-45-67',
     );
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
+    fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
+    fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'AdminLastName');
+    fireEvent.changeText(getByPlaceholderText('Calle, número, colonia'), 'Calle 123');
 
-    fireEvent.press(getByText('Agregar usuario'));
-    fireEvent.press(getByText('Agregar usuario'));
+    const submitBtn = getByTestId('button');
+    fireEvent.press(submitBtn);
+    fireEvent.press(submitBtn);
 
     await waitFor(() => {
       expect(mockApiPost).toHaveBeenCalledTimes(1);

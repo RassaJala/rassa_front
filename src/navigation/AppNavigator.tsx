@@ -19,10 +19,41 @@ import AddProductScreen from '@/screens/farmer/AddProductScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import { useAuth } from '@/store/AuthContext';
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
-const BuyerStack = createNativeStackNavigator();
-const FarmerStack = createNativeStackNavigator();
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+export type BuyerTabsParamList = {
+  Home: undefined;
+  ProductDetail: undefined;
+};
+
+export type BuyerStackParamList = {
+  BuyerTabs: undefined;
+  Profile: undefined;
+};
+
+export type FarmerTabsParamList = {
+  MyProducts: undefined;
+  AddProduct: undefined;
+};
+
+export type FarmerStackParamList = {
+  FarmerTabs: undefined;
+  Profile: undefined;
+};
+
+export type AdminStackParamList = {
+  AdminPanel: undefined;
+};
+
+const Stack = createNativeStackNavigator<AuthStackParamList>();
+const BuyerTab = createBottomTabNavigator<BuyerTabsParamList>();
+const FarmerTab = createBottomTabNavigator<FarmerTabsParamList>();
+const BuyerStack = createNativeStackNavigator<BuyerStackParamList>();
+const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
+const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
 function AuthStack() {
   return (
@@ -35,10 +66,10 @@ function AuthStack() {
 
 function BuyerTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="ProductDetail" component={ProductDetailScreen} />
-    </Tab.Navigator>
+    <BuyerTab.Navigator screenOptions={{ headerShown: false }}>
+      <BuyerTab.Screen name="Home" component={HomeScreen} />
+      <BuyerTab.Screen name="ProductDetail" component={ProductDetailScreen} />
+    </BuyerTab.Navigator>
   );
 }
 
@@ -53,10 +84,10 @@ function BuyerNavigator() {
 
 function FarmerTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="MyProducts" component={MyProductsScreen} />
-      <Tab.Screen name="AddProduct" component={AddProductScreen} />
-    </Tab.Navigator>
+    <FarmerTab.Navigator screenOptions={{ headerShown: false }}>
+      <FarmerTab.Screen name="MyProducts" component={MyProductsScreen} />
+      <FarmerTab.Screen name="AddProduct" component={AddProductScreen} />
+    </FarmerTab.Navigator>
   );
 }
 
@@ -86,9 +117,9 @@ export default function AppNavigator(): React.JSX.Element {
       return <FarmerNavigator />;
     case 'admin':
       return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
-        </Stack.Navigator>
+        <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+          <AdminStack.Screen name="AdminPanel" component={AdminPanelScreen} />
+        </AdminStack.Navigator>
       );
     case 'buyer':
       return <BuyerNavigator />;

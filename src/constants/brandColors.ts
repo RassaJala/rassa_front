@@ -1,3 +1,5 @@
-export const BRAND_RED_CORAL = '#DE393A';
-export const BRAND_GREEN_FOREST = '#2E7D32';
-export const BRAND_INK = '#1A1A2E';
+import { colors } from './colors';
+
+export const BRAND_RED_CORAL = colors.brand.redCoral;
+export const BRAND_GREEN_FOREST = colors.brand.greenForest;
+export const BRAND_INK = colors.brand.ink;

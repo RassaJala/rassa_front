@@ -17,7 +17,7 @@ import axios from 'axios';
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
 import LogoutButton from '@/components/LogoutButton';
-import { colors } from '@/constants/colors';
+import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import api from '@/services/api';
 import type { RegisterRole } from '@/types';
@@ -26,25 +26,32 @@ import {
   cleanAddress,
   cleanName,
   cleanPhoneNumber,
-  DATE_REGEX,
-  EMAIL_REGEX,
   formatPhoneNumber,
-  isAdult,
-  MIN_PASSWORD_LENGTH,
+  validateBirthdate,
+  validateEmail,
+  validatePassword,
+  validatePhone,
 } from '@/utils/validation';
 
-const BRAND_RED_CORAL = colors.brand.redCoral;
+
+function extractAxiosErrorData(error: unknown): unknown {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data;
+  }
+  const errObj = error as { response?: { data?: unknown } } | null | undefined;
+  if (errObj && typeof errObj === 'object' && 'response' in errObj) {
+    return errObj.response?.data;
+  }
+  return null;
+}
 
 function parseAxiosError(error: unknown): string {
-  if (!axios.isAxiosError(error)) {
+  const data = extractAxiosErrorData(error);
+
+  if (!data) {
     return error instanceof Error
       ? error.message
       : 'Error al registrar al usuario.';
-  }
-
-  const data = error.response?.data as unknown;
-  if (!data) {
-    return 'Error al registrar al usuario.';
   }
 
   if (typeof data === 'string') {
@@ -73,6 +80,7 @@ function parseAxiosError(error: unknown): string {
 
 function validateForm(fields: {
   readonly email: string;
+  readonly password?: string;
   readonly telefono: string;
   readonly nombre: string;
   readonly apellidoPaterno: string;
@@ -82,6 +90,7 @@ function validateForm(fields: {
 }): string | null {
   const {
     email,
+    password,
     telefono,
     nombre,
     apellidoPaterno,
@@ -92,8 +101,30 @@ function validateForm(fields: {
 
   const rawTelefono = cleanPhoneNumber(telefono);
 
+  // Format validations are conditional on having content to allow fallback to required fields check
+  if (email.trim()) {
+    const emailErr = validateEmail(email);
+    if (emailErr) return emailErr;
+  }
+
+  if (password) {
+    const passErr = validatePassword(password);
+    if (passErr) return passErr;
+  }
+
+  if (rawTelefono) {
+    const phoneErr = validatePhone(rawTelefono);
+    if (phoneErr) return phoneErr;
+  }
+
+  if (fechaNacimiento.trim()) {
+    const birthdateErr = validateBirthdate(fechaNacimiento, 'El usuario debe ser mayor de 18 años.');
+    if (birthdateErr) return birthdateErr;
+  }
+
   if (
     !email.trim() ||
+    (password !== undefined && !password) ||
     !rawTelefono ||
     !nombre.trim() ||
     !apellidoPaterno.trim() ||
@@ -102,22 +133,6 @@ function validateForm(fields: {
     localidadId === null
   ) {
     return 'Por favor, completa todos los campos obligatorios.';
-  }
-
-  if (!EMAIL_REGEX.test(email.trim())) {
-    return 'Ingresa un correo electrónico válido.';
-  }
-
-  if (rawTelefono.length !== 10) {
-    return 'El teléfono debe tener exactamente 10 dígitos.';
-  }
-
-  if (!DATE_REGEX.test(fechaNacimiento)) {
-    return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
-  }
-
-  if (!isAdult(fechaNacimiento)) {
-    return 'El usuario debe ser mayor de 18 años.';
   }
 
   return null;
@@ -166,9 +181,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
       return;
     }
 
-    // Validations
     const validationError = validateForm({
       email,
+      password,
       telefono,
       nombre,
       apellidoPaterno,
@@ -182,15 +197,9 @@ export default function AdminPanelScreen(): React.JSX.Element {
       return;
     }
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setErrorMessage(
-        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
-      );
-      return;
-    }
-
-    if (!isAdult(fechaNacimiento)) {
-      setErrorMessage('Debes ser mayor de 18 años para registrarte.');
+    const birthdateErr = validateBirthdate(fechaNacimiento, 'Debes ser mayor de 18 años para registrarte.');
+    if (birthdateErr) {
+      setErrorMessage(birthdateErr);
       return;
     }
 
@@ -336,7 +345,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
           keyboardType="email-address"
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="ejemplo@correo.com"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
         />
@@ -347,7 +356,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="••••••••"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -359,7 +368,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Nombre(s)"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           value={nombre}
           onChangeText={(val) => setNombre(cleanName(val))}
         />
@@ -370,7 +379,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Paterno"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           value={apellidoPaterno}
           onChangeText={(val) => setApellidoPaterno(cleanName(val))}
         />
@@ -381,7 +390,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Apellido Materno"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           value={apellidoMaterno}
           onChangeText={(val) => setApellidoMaterno(cleanName(val))}
         />
@@ -392,7 +401,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="xxx-xxx-xx-xx"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           keyboardType="phone-pad"
           value={telefono}
           onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
@@ -409,9 +418,10 @@ export default function AdminPanelScreen(): React.JSX.Element {
             <TextInput
               className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
               placeholder="AAAA-MM-DD"
-              placeholderTextColor={colors.placeholder}
+              placeholderTextColor="#9ca3af"
               value={fechaNacimiento}
-              editable={false}
+              showSoftInputOnFocus={false}
+              onChangeText={setFechaNacimiento}
             />
           </View>
         </TouchableOpacity>
@@ -449,7 +459,7 @@ export default function AdminPanelScreen(): React.JSX.Element {
         <TextInput
           className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           placeholder="Calle, número, colonia"
-          placeholderTextColor={colors.placeholder}
+          placeholderTextColor="#9ca3af"
           value={domicilio}
           onChangeText={(val) => setDomicilio(cleanAddress(val))}
         />

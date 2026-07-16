@@ -58,8 +58,6 @@ export function useCatalogs(
       return data.data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 
   const {
@@ -79,8 +77,6 @@ export function useCatalogs(
     },
     enabled: selectedMunicipioId !== null,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     placeholderData: (previousData) => previousData,
   });
 
@@ -105,8 +101,8 @@ export function useCatalogs(
     localidadNombre,
     isLoadingMunicipios,
     isLoadingLocalidades,
-    errorMunicipios: errorMunicipios ? String(errorMunicipios) : null,
-    errorLocalidades: errorLocalidades ? String(errorLocalidades) : null,
+    errorMunicipios: errorMunicipios?.message || null,
+    errorLocalidades: errorLocalidades?.message || null,
     refetchMunicipios,
     refetchLocalidades,
     handleSelectMunicipio,

@@ -109,7 +109,7 @@ describe('validation utilities', () => {
 
     it('removes disallowed characters', () => {
       expect(cleanAddress('Calle @#$%')).toBe('Calle #');
-      expect(cleanAddress('Dirección!')).toBe('Direccin');
+      expect(cleanAddress('Dirección!')).toBe('Dirección');
     });
   });
 

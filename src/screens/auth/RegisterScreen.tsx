@@ -15,7 +15,7 @@ import * as Sentry from '@sentry/react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
-import { colors } from '@/constants/colors';
+import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { RegisterRole } from '@/types';
@@ -23,14 +23,13 @@ import {
   cleanAddress,
   cleanName,
   cleanPhoneNumber,
-  DATE_REGEX,
-  EMAIL_REGEX,
   formatPhoneNumber,
-  isAdult,
-  MIN_PASSWORD_LENGTH,
+  validateBirthdate,
+  validateEmail,
+  validatePassword,
+  validatePhone,
 } from '@/utils/validation';
 
-const BRAND_RED_CORAL = colors.brand.redCoral;
 
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
@@ -90,33 +89,27 @@ export default function RegisterScreen(): React.JSX.Element {
       return;
     }
 
-    if (!EMAIL_REGEX.test(email.trim())) {
-      setErrorMessage('Ingresa un correo electrónico válido.');
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setErrorMessage(emailErr);
       return;
     }
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setErrorMessage(
-        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
-      );
+    const passErr = validatePassword(password);
+    if (passErr) {
+      setErrorMessage(passErr);
       return;
     }
 
-    if (rawTelefono.length !== 10) {
-      setErrorMessage('El teléfono debe tener exactamente 10 dígitos.');
+    const phoneErr = validatePhone(rawTelefono);
+    if (phoneErr) {
+      setErrorMessage(phoneErr);
       return;
     }
 
-    if (!DATE_REGEX.test(fechaNacimiento)) {
-      setErrorMessage(
-        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
-      );
-      return;
-    }
-
-    // Validar edad >= 18 años
-    if (!isAdult(fechaNacimiento)) {
-      setErrorMessage('Debes ser mayor de 18 años para registrarte.');
+    const birthdateErr = validateBirthdate(fechaNacimiento, 'Debes ser mayor de 18 años para registrarte.');
+    if (birthdateErr) {
+      setErrorMessage(birthdateErr);
       return;
     }
 
