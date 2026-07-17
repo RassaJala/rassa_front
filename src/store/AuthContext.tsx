@@ -11,8 +11,8 @@ import React, {
   useState,
 } from 'react';
 
-import axios from 'axios';
 import type { AxiosError } from 'axios';
+import axios from 'axios';
 
 import api from '@/services/api';
 import * as Storage from '@/services/storage';
@@ -193,29 +193,6 @@ function parseAuthError(
   return 'Error de conexión con el servidor.';
 }
 
-function parseLoginError(
-  axiosError: AxiosError<Record<string, unknown>>,
-): string {
-  const responseData = axiosError.response?.data;
-
-  if (typeof responseData === 'string') {
-    return responseData;
-  }
-
-  if (responseData?.detail) {
-    return String(responseData.detail);
-  }
-
-  if (Array.isArray(responseData?.non_field_errors)) {
-    return responseData.non_field_errors.join(' ');
-  }
-
-  if (responseData?.message) {
-    return String(responseData.message);
-  }
-
-  return axiosError.message || 'Error desconocido';
-}
 
 function sanitizeAxiosError(error: AxiosError): {
   status: number | undefined;
