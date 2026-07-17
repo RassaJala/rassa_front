@@ -193,7 +193,6 @@ function parseAuthError(
   return 'Error de conexión con el servidor.';
 }
 
-
 function sanitizeAxiosError(error: AxiosError): {
   status: number | undefined;
   message: string;

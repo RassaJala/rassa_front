@@ -29,10 +29,7 @@ import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
-import type {
-  AdminStackParamList,
-  AuthStackParamList,
-} from '@/types';
+import type { AdminStackParamList, AuthStackParamList } from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
@@ -41,7 +38,6 @@ const SellerTab = createBottomTabNavigator();
 const BuyerStack = createNativeStackNavigator();
 const FarmerStack = createNativeStackNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
-
 
 function AuthStack() {
   return (
