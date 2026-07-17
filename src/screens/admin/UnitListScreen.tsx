@@ -18,7 +18,7 @@ const unitConfig = {
   queryKey: ['units'] as const,
   endpoint: '/unidades/',
   entityName: 'unidad',
-  entityNamePlural: 'Unidades de Medida',
+  entityNamePlural: 'Unites de Medida',
   entityNamePluralLower: 'unidades de medida',
   getId: (item: Unit) => item.id_unidad,
   fields: [
@@ -33,7 +33,7 @@ const unitConfig = {
   emptyIcon: 'ruler',
   emptyText: 'No hay unidades',
   emptyDescription: 'Agrega una unidad de medida para comenzar.',
-  headerTitle: 'Unidades de Medida',
+  headerTitle: 'Unites de Medida',
   loadingErrorText: 'Error al cargar unidades de medida.',
   newDialogTitle: 'Nueva unidad',
   editDialogTitle: 'Editar unidad',

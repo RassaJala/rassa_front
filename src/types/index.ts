@@ -11,18 +11,20 @@ export interface User {
   last_name: string;
 }
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
+export interface Producto {
+  id_producto: number;
+  nombre_producto: string;
+  descripcion: string;
+  precio: string;
   stock: number;
-  image: string;
-  farmer: number;
-  category: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  es_perecedero: boolean;
+  imagen: string | null;
+  estado: boolean;
+  categoria: Category;
+  unidad: Unidad | null;
+  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
+  imagen_principal: string | null;
+  creado_en: string;
 }
 
 export interface Order {
@@ -51,6 +53,11 @@ export interface Category {
   creado_en: string;
 }
 
+export interface Unidad {
+  id_unidad: number;
+  tipo: string;
+}
+
 export interface Unit {
   id_unidad: number;
   nombre: string;
@@ -70,4 +77,9 @@ export type AdminStackParamList = {
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
+};
+
+export type FarmerStackParamList = {
+  ProductList: undefined;
+  ProductForm: { productoId?: number };
 };

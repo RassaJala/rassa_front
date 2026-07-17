@@ -17,15 +17,16 @@ import HomeScreen from '@/screens/buyer/HomeScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 // Common
 import SplashScreen from '@/screens/common/SplashScreen';
-import AddProductScreen from '@/screens/farmer/AddProductScreen';
 // Farmer screens
-import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
+import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import { useAuth } from '@/store/AuthContext';
-import type { AdminStackParamList } from '@/types';
+import type { AdminStackParamList, FarmerStackParamList } from '@/types';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
+const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
 
 function AuthStack() {
   return (
@@ -45,12 +46,16 @@ function BuyerTabs() {
   );
 }
 
-function FarmerTabs() {
+function FarmerScreens() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="MyProducts" component={MyProductsScreen} />
-      <Tab.Screen name="AddProduct" component={AddProductScreen} />
-    </Tab.Navigator>
+    <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
+      <FarmerStack.Screen name="ProductList" component={ProductListScreen} />
+      <FarmerStack.Screen 
+        name="ProductForm" 
+        component={ProductFormScreen} 
+        options={{ presentation: 'transparentModal' }}
+      />
+    </FarmerStack.Navigator>
   );
 }
 
@@ -80,7 +85,7 @@ export default function AppNavigator(): React.JSX.Element {
   // Authenticated: route by role
   switch (user?.role) {
     case 'farmer':
-      return <FarmerTabs />;
+      return <FarmerScreens />;
     case 'admin':
       return <AdminScreens />;
     case 'buyer':
