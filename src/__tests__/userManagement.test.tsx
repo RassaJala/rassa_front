@@ -55,8 +55,8 @@ describe('getRoleLabel', () => {
     expect(getRoleLabel('seller')).toBe('Vendedor');
   });
 
-  it('retorna "Cliente" para role buyer', () => {
-    expect(getRoleLabel('buyer')).toBe('Cliente');
+  it('retorna "Comprador" para role buyer', () => {
+    expect(getRoleLabel('buyer')).toBe('Comprador');
   });
 
   it('retorna el mismo valor si el role no está mapeado', () => {

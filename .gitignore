@@ -5,6 +5,7 @@ node_modules/
 .npm
 .eslintcache
 .knipcache
+package-lock.json
 
 # Expo y compilaciones web
 .expo/
@@ -49,3 +50,6 @@ Thumbs.db
 
 # AI agent tools
 .atl/
+
+# Local review files
+REVISION_PR11.md

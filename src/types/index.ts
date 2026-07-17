@@ -1,14 +1,69 @@
-export type UserRole = 'buyer' | 'farmer' | 'admin';
+export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
   id: number;
   email: string;
+  /** @deprecated Siempre es igual a email */
   username?: string;
+  /** @deprecated Siempre es igual a id */
   id_usuario?: number;
   telefono?: string | null;
   role: UserRole;
+  /** @deprecated Usar nombre completo en su lugar */
   first_name: string;
+  /** @deprecated Usar apellido_paterno/apellido_materno en su lugar */
   last_name: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno?: string | null;
+  fecha_nacimiento: string;
+  genero: string;
+  direccion: string;
+  localidad: number;
+  localidad_nombre?: string | null;
+}
+
+export type RegisterRole = 'buyer' | 'farmer' | 'seller';
+
+export interface RegisterPayload {
+  email: string;
+  password?: string;
+  telefono: string;
+  role: RegisterRole;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+  fecha_nacimiento: string;
+  sexo: 'M' | 'F' | 'O';
+  domicilio: string;
+  fk_localidad: number;
+}
+
+export interface UpdateProfilePayload {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+  telefono: string;
+  fecha_nacimiento: string;
+  sexo: 'M' | 'F' | 'O';
+  domicilio: string;
+  fk_localidad: number;
+}
+
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+}
+
+export interface Municipio {
+  id_municipio: number;
+  nombre: string;
+}
+
+export interface Localidad {
+  id_localidad: number;
+  nombre: string;
+  municipio_id: number;
 }
 
 export interface Product {
@@ -71,4 +126,30 @@ export type AdminStackParamList = {
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
+  Notificaciones: undefined;
+};
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+export type BuyerTabsParamList = {
+  Home: undefined;
+  ProductDetail: undefined;
+};
+
+export type BuyerStackParamList = {
+  BuyerTabs: undefined;
+  Profile: undefined;
+};
+
+export type FarmerTabsParamList = {
+  MyProducts: undefined;
+  AddProduct: undefined;
+};
+
+export type FarmerStackParamList = {
+  FarmerTabs: undefined;
+  Profile: undefined;
 };

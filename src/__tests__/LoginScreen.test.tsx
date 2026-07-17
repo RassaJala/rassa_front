@@ -6,10 +6,24 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import LoginScreen from '@/screens/auth/LoginScreen';
 
 const mockLogin = jest.fn();
+const mockNavigate = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
 
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
     login: mockLogin,
+  }),
+}));
+
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    toggleColorScheme: jest.fn(),
   }),
 }));
 
@@ -193,5 +207,11 @@ describe('LoginScreen', () => {
     // Press "Ocultar"
     fireEvent.press(getByText('Ocultar'));
     expect(passwordInput.props.secureTextEntry).toBe(true);
+  });
+
+  it('navega a Register al presionar Regístrate aquí', () => {
+    const { getByText } = render(<LoginScreen />);
+    fireEvent.press(getByText('¿No tienes cuenta? Regístrate aquí'));
+    expect(mockNavigate).toHaveBeenCalledWith('Register');
   });
 });
