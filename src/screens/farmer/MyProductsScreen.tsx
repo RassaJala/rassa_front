@@ -13,6 +13,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
 import {
   useCategorias,
   useDeleteProducto,
@@ -20,6 +21,8 @@ import {
 } from '@/hooks/useProductos';
 import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Producto } from '@/services/productos';
+
+const PLACEHOLDER_COLOR = colors.iconMuted;
 
 type Props = NativeStackScreenProps<FarmerStackParamList, 'MyProducts'>;
 
@@ -74,7 +77,7 @@ export default function MyProductsScreen({
   const renderItem = useCallback(
     ({ item }: { item: Producto }) => (
       <Pressable
-        className="mb-3 flex-row items-center rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
+        className="mb-3 flex-row items-center rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
         onPress={() =>
           navigation.navigate('AddProduct', { productoId: item.id_producto })
         }
@@ -88,46 +91,40 @@ export default function MyProductsScreen({
             resizeMode="cover"
           />
         ) : (
-          <View className="h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-            <Text className="text-xs text-gray-400 dark:text-gray-500">
-              Sin imagen
-            </Text>
+          <View className="h-16 w-16 items-center justify-center rounded-lg bg-slate-100">
+            <Text className="text-xs text-slate-400">Sin imagen</Text>
           </View>
         )}
 
         <View className="ml-3 flex-1">
           <Text
-            className="text-sm font-medium text-gray-900 dark:text-gray-100"
+            className="text-sm font-medium text-slate-900"
             numberOfLines={1}
           >
             {item.nombre_producto}
           </Text>
 
           {item.categoria ? (
-            <Text className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <Text className="mt-0.5 text-xs text-slate-500">
               {item.categoria.nombre}
             </Text>
           ) : null}
 
           <View className="mt-1 flex-row items-center gap-2">
-            <Text className="text-sm font-semibold text-brand-orange">
+            <Text className="text-primary text-sm font-semibold">
               ${item.precio}
             </Text>
-            <Text className="text-xs text-gray-400 dark:text-gray-500">
-              Stock: {item.stock}
-            </Text>
+            <Text className="text-xs text-slate-400">Stock: {item.stock}</Text>
           </View>
         </View>
 
         <Pressable
           onPress={() => handleDelete(item)}
-          className="ml-2 rounded-lg bg-red-50 px-3 py-2 dark:bg-red-950"
+          className="ml-2 rounded-lg bg-red-50 px-3 py-2"
           accessibilityRole="button"
           accessibilityLabel={`Eliminar ${item.nombre_producto}`}
         >
-          <Text className="text-xs font-medium text-red-600 dark:text-red-400">
-            Eliminar
-          </Text>
+          <Text className="text-xs font-medium text-red-600">Eliminar</Text>
         </Pressable>
       </Pressable>
     ),
@@ -140,11 +137,11 @@ export default function MyProductsScreen({
   );
 
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
-      {/* Header — Forest vive solo aquí */}
-      <View className="border-b border-gray-200 bg-brand-green-forest px-4 pb-3 pt-12 dark:border-gray-800">
+    <View className="flex-1 bg-slate-50">
+      {/* Header */}
+      <View className="border-b border-slate-200 bg-white px-4 pb-3 pt-12">
         <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-lg font-semibold text-white">
+          <Text className="text-lg font-semibold text-slate-900">
             Mis Productos
           </Text>
           <LogoutButton mode="text" />
@@ -153,9 +150,9 @@ export default function MyProductsScreen({
         {/* Search bar */}
         <TextInput
           autoCapitalize="none"
-          className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-base text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-base text-slate-900"
           placeholder="Buscar productos..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={PLACEHOLDER_COLOR}
           value={search}
           onChangeText={setSearch}
         />
@@ -163,7 +160,7 @@ export default function MyProductsScreen({
 
       {/* Category chips */}
       {isLoadingCategorias ? null : (
-        <View className="border-b border-gray-100 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
+        <View className="border-b border-slate-100 bg-white px-4 py-2">
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -178,8 +175,8 @@ export default function MyProductsScreen({
                   }
                   className={`mr-2 rounded-full border px-3 py-1.5 ${
                     isSelected
-                      ? 'border-brand-red-coral bg-brand-red-coral'
-                      : 'border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-800'
+                      ? 'border-primary bg-primary'
+                      : 'border-slate-300 bg-white'
                   }`}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}
@@ -187,9 +184,7 @@ export default function MyProductsScreen({
                 >
                   <Text
                     className={`text-sm font-medium ${
-                      isSelected
-                        ? 'text-white'
-                        : 'text-gray-700 dark:text-gray-300'
+                      isSelected ? 'text-white' : 'text-slate-700'
                     }`}
                   >
                     {item.nombre}
@@ -201,11 +196,11 @@ export default function MyProductsScreen({
         </View>
       )}
 
-      {/* Add button — Coral es el único CTA */}
+      {/* Add button */}
       <View className="px-4 py-3">
         <Pressable
           onPress={() => navigation.navigate('AddProduct', {})}
-          className="items-center rounded-xl bg-brand-red-coral py-3"
+          className="bg-primary items-center rounded-xl py-3"
           accessibilityRole="button"
           accessibilityLabel="Agregar producto"
         >
@@ -218,28 +213,26 @@ export default function MyProductsScreen({
       {/* Product list */}
       {isLoadingProductos ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#DE393A" size="large" />
-          <Text className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          <ActivityIndicator color={colors.primary} size="large" />
+          <Text className="mt-3 text-sm text-slate-500">
             Cargando productos...
           </Text>
         </View>
       ) : isErrorProductos ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="mb-2 text-center text-sm font-medium text-red-600 dark:text-red-400">
+          <Text className="mb-2 text-center text-sm font-medium text-red-600">
             Error al cargar productos
           </Text>
-          <Text className="mb-4 text-center text-xs text-gray-500 dark:text-gray-400">
+          <Text className="mb-4 text-center text-xs text-slate-500">
             Verifica tu conexión y vuelve a intentar.
           </Text>
           <Pressable
             onPress={() => void refetchProductos()}
-            className="rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-800 dark:bg-red-950"
+            className="rounded-xl border border-red-300 bg-red-50 px-4 py-2"
             accessibilityRole="button"
             accessibilityLabel="Reintentar"
           >
-            <Text className="text-sm font-medium text-red-600 dark:text-red-400">
-              Reintentar
-            </Text>
+            <Text className="text-sm font-medium text-red-600">Reintentar</Text>
           </Pressable>
         </View>
       ) : (
@@ -250,7 +243,7 @@ export default function MyProductsScreen({
           contentContainerStyle={{ padding: 16 }}
           ListEmptyComponent={
             <View className="flex-1 items-center py-12">
-              <Text className="text-sm text-gray-500 dark:text-gray-400">
+              <Text className="text-sm text-slate-500">
                 No se encontraron productos.
               </Text>
             </View>

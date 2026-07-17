@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import LogoutButton from '@/components/LogoutButton';
+import { colors } from '@/constants/colors';
 import { useProductForm } from '@/hooks/useProductForm';
 import type { FarmerStackParamList } from '@/navigation/AppNavigator';
 import type { Unidad } from '@/services/productos';
@@ -23,7 +24,9 @@ import type { Unidad } from '@/services/productos';
 type Props = NativeStackScreenProps<FarmerStackParamList, 'AddProduct'>;
 
 const INPUT_CLASS =
-  'rounded-xl border bg-gray-50 px-4 py-3 text-base text-gray-900 dark:bg-gray-800 dark:text-gray-100';
+  'rounded-xl border bg-slate-50 px-4 py-3 text-base text-slate-900';
+
+const PLACEHOLDER_COLOR = colors.iconMuted;
 
 export default function AddProductScreen({
   route,
@@ -90,20 +93,19 @@ export default function AddProductScreen({
 
   if (isEditing && isLoadingProducto) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-950">
-        <ActivityIndicator color="#DE393A" size="large" />
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   const inputClass = (hasError: boolean) =>
-    `${INPUT_CLASS} ${hasError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-700'}`;
+    `${INPUT_CLASS} ${hasError ? 'border-red-500' : 'border-slate-300'}`;
 
   return (
-    <View className="flex-1 bg-white dark:bg-gray-950">
-      {/* Header — Forest vive solo aquí */}
-      <View className="flex-row items-center justify-between border-b border-gray-200 bg-brand-green-forest px-4 pb-3 pt-12 dark:border-gray-800">
-        <Text className="text-lg font-semibold text-white">
+    <View className="flex-1 bg-white">
+      <View className="flex-row items-center justify-between border-b border-slate-200 px-4 pb-3 pt-12">
+        <Text className="text-lg font-semibold text-slate-900">
           {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
         </Text>
         <LogoutButton mode="text" />
@@ -115,7 +117,7 @@ export default function AddProductScreen({
       >
         <TouchableOpacity
           onPress={pickImage}
-          className="mb-4 h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
+          className="mb-4 h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
           accessibilityRole="button"
           accessibilityLabel="Seleccionar imagen"
         >
@@ -127,10 +129,8 @@ export default function AddProductScreen({
             />
           ) : (
             <View className="items-center">
-              <Text className="text-4xl text-gray-400 dark:text-gray-500">
-                📷
-              </Text>
-              <Text className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <Text className="text-4xl text-slate-400">📷</Text>
+              <Text className="mt-2 text-sm text-slate-500">
                 Toca para seleccionar imagen
               </Text>
             </View>
@@ -138,31 +138,31 @@ export default function AddProductScreen({
         </TouchableOpacity>
 
         <View className="mb-4">
-          <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Text className="mb-1 text-sm font-medium text-slate-700">
             Nombre del producto *
           </Text>
           <TextInput
             className={inputClass(!!errors.nombre_producto)}
             placeholder="Ej: Tomate rojo"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={form.nombre}
             onChangeText={(v) => updateField('nombre', v)}
           />
           {errors.nombre_producto ? (
-            <Text className="mt-1 text-xs text-red-500 dark:text-red-400">
+            <Text className="mt-1 text-xs text-red-500">
               {errors.nombre_producto}
             </Text>
           ) : null}
         </View>
 
         <View className="mb-4">
-          <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Text className="mb-1 text-sm font-medium text-slate-700">
             Descripción
           </Text>
           <TextInput
-            className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-base text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-900"
             placeholder="Descripción del producto..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={PLACEHOLDER_COLOR}
             value={form.descripcion}
             onChangeText={(v) => updateField('descripcion', v)}
             multiline
@@ -173,46 +173,42 @@ export default function AddProductScreen({
 
         <View className="mb-4 flex-row gap-3">
           <View className="flex-1">
-            <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Text className="mb-1 text-sm font-medium text-slate-700">
               Precio ($) *
             </Text>
             <TextInput
               className={inputClass(!!errors.precio)}
               placeholder="0.00"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={PLACEHOLDER_COLOR}
               value={form.precio}
               onChangeText={(v) => updateField('precio', v)}
               keyboardType="decimal-pad"
             />
             {errors.precio ? (
-              <Text className="mt-1 text-xs text-red-500 dark:text-red-400">
-                {errors.precio}
-              </Text>
+              <Text className="mt-1 text-xs text-red-500">{errors.precio}</Text>
             ) : null}
           </View>
 
           <View className="flex-1">
-            <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Text className="mb-1 text-sm font-medium text-slate-700">
               Stock *
             </Text>
             <TextInput
               className={inputClass(!!errors.stock)}
               placeholder="0"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={PLACEHOLDER_COLOR}
               value={form.stock}
               onChangeText={(v) => updateField('stock', v)}
               keyboardType="number-pad"
             />
             {errors.stock ? (
-              <Text className="mt-1 text-xs text-red-500 dark:text-red-400">
-                {errors.stock}
-              </Text>
+              <Text className="mt-1 text-xs text-red-500">{errors.stock}</Text>
             ) : null}
           </View>
         </View>
 
         <View className="mb-4">
-          <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Text className="mb-1 text-sm font-medium text-slate-700">
             Categoría *
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -222,8 +218,8 @@ export default function AddProductScreen({
                 onPress={() => updateField('fkCategoria', cat.id_categoria)}
                 className={`rounded-full border px-3 py-2 ${
                   form.fkCategoria === cat.id_categoria
-                    ? 'border-brand-red-coral bg-brand-red-coral'
-                    : 'border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-800'
+                    ? 'border-emerald-600 bg-emerald-600'
+                    : 'border-slate-300 bg-white'
                 }`}
                 accessibilityRole="button"
                 accessibilityState={{
@@ -234,7 +230,7 @@ export default function AddProductScreen({
                   className={`text-sm font-medium ${
                     form.fkCategoria === cat.id_categoria
                       ? 'text-white'
-                      : 'text-gray-700 dark:text-gray-300'
+                      : 'text-slate-700'
                   }`}
                 >
                   {cat.nombre}
@@ -243,14 +239,14 @@ export default function AddProductScreen({
             ))}
           </View>
           {errors.fk_categoria ? (
-            <Text className="mt-1 text-xs text-red-500 dark:text-red-400">
+            <Text className="mt-1 text-xs text-red-500">
               {errors.fk_categoria}
             </Text>
           ) : null}
         </View>
 
         <View className="mb-4">
-          <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Text className="mb-1 text-sm font-medium text-slate-700">
             Unidad de medida *
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -260,8 +256,8 @@ export default function AddProductScreen({
                 onPress={() => updateField('fkUnidad', u.id_unidad)}
                 className={`rounded-full border px-3 py-2 ${
                   form.fkUnidad === u.id_unidad
-                    ? 'border-brand-red-coral bg-brand-red-coral'
-                    : 'border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-800'
+                    ? 'border-emerald-600 bg-emerald-600'
+                    : 'border-slate-300 bg-white'
                 }`}
                 accessibilityRole="button"
                 accessibilityState={{
@@ -272,7 +268,7 @@ export default function AddProductScreen({
                   className={`text-sm font-medium ${
                     form.fkUnidad === u.id_unidad
                       ? 'text-white'
-                      : 'text-gray-700 dark:text-gray-300'
+                      : 'text-slate-700'
                   }`}
                 >
                   {u.tipo}
@@ -281,35 +277,34 @@ export default function AddProductScreen({
             ))}
           </View>
           {errors.fk_unidad ? (
-            <Text className="mt-1 text-xs text-red-500 dark:text-red-400">
+            <Text className="mt-1 text-xs text-red-500">
               {errors.fk_unidad}
             </Text>
           ) : null}
         </View>
 
-        <View className="mb-6 flex-row items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+        <View className="mb-6 flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <View>
-            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Text className="text-sm font-medium text-slate-700">
               ¿Es perecedero?
             </Text>
-            <Text className="text-xs text-gray-500 dark:text-gray-400">
+            <Text className="text-xs text-slate-500">
               Producto con fecha de caducidad
             </Text>
           </View>
           <Switch
             value={form.esPerecedero}
             onValueChange={(v) => updateField('esPerecedero', v)}
-            trackColor={{ false: '#e5e7eb', true: '#3A6D56' }}
-            thumbColor={form.esPerecedero ? '#ffffff' : '#f3f4f6'}
+            trackColor={{ false: colors.border, true: colors.success }}
+            thumbColor={form.esPerecedero ? colors.primary : colors.background}
           />
         </View>
 
-        {/* Submit — Coral es el único CTA */}
         <TouchableOpacity
           onPress={onSubmit}
           disabled={isSaving}
           className={`items-center rounded-xl py-4 ${
-            isSaving ? 'bg-gray-400 dark:bg-gray-600' : 'bg-brand-red-coral'
+            isSaving ? 'bg-emerald-400' : 'bg-emerald-600'
           }`}
           accessibilityRole="button"
           accessibilityLabel={
@@ -317,7 +312,7 @@ export default function AddProductScreen({
           }
         >
           {isSaving ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.iconWhite} />
           ) : (
             <Text className="text-base font-semibold text-white">
               {isEditing ? 'Actualizar Producto' : 'Crear Producto'}
