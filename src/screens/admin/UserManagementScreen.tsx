@@ -170,9 +170,23 @@ export default function UserManagementScreen({
     setNewRole('');
   }, []);
 
+  const isSelf = useCallback(
+    (targetUser: AdminUser): boolean =>
+      currentUser?.id_usuario === targetUser.id_usuario,
+    [currentUser?.id_usuario],
+  );
+
   const handleRoleSave = useCallback(() => {
     if (!roleModalUser || !newRole) return;
     if (roleMutation.isPending) return;
+
+    // Self role-change protection: admin cannot change own role
+    if (isSelf(roleModalUser)) {
+      closeRoleModal();
+      showToast('No puedes cambiar tu propio rol.', 'info');
+
+      return;
+    }
 
     // Same role — no-op
     if (newRole === roleModalUser.role) {
@@ -182,7 +196,7 @@ export default function UserManagementScreen({
     }
 
     roleMutation.mutate({ userId: roleModalUser.id_usuario, role: newRole });
-  }, [roleModalUser, newRole, roleMutation, closeRoleModal]);
+  }, [roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf]);
 
   const handleTogglePress = useCallback(
     (targetUser: AdminUser) => {
@@ -204,12 +218,6 @@ export default function UserManagementScreen({
       toggleMutation.mutate(confirmUser.id_usuario);
     }
   }, [confirmUser, toggleMutation]);
-
-  const isSelf = useCallback(
-    (targetUser: AdminUser): boolean =>
-      currentUser?.id_usuario === targetUser.id_usuario,
-    [currentUser?.id_usuario],
-  );
 
   // ── Key extractor ──
   const keyExtractor = useCallback(

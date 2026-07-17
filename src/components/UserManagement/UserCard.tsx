@@ -43,7 +43,8 @@ export default function UserCard({
 
         <Pressable
           onPress={() => onRolePress(user)}
-          className="rounded-full px-3 py-1"
+          disabled={isSelf}
+          className={`rounded-full px-3 py-1 ${isSelf ? 'opacity-50' : ''}`}
           style={{ backgroundColor: getRoleBadgeBg(user.role) }}
         >
           <Text
@@ -88,14 +89,27 @@ export default function UserCard({
 
         <Pressable
           onPress={() => onRolePress(user)}
-          className="flex-row items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 dark:bg-gray-800"
+          disabled={isSelf}
+          className={`flex-row items-center gap-1.5 rounded-lg px-3 py-1.5 ${
+            isSelf
+              ? 'bg-gray-50 dark:bg-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800'
+          }`}
         >
           <MaterialCommunityIcons
             name="account-cog-outline"
             size={16}
-            color={colors.textSecondary}
+            color={isSelf ? colors.iconMuted : colors.textSecondary}
           />
-          <Text className="text-sm text-gray-600 dark:text-gray-400">Rol</Text>
+          <Text
+            className={`text-sm ${
+              isSelf
+                ? 'text-gray-300 dark:text-gray-600'
+                : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            Rol
+          </Text>
         </Pressable>
       </View>
     </View>
