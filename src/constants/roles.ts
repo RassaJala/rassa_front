@@ -15,7 +15,7 @@ export const STATUS_FILTERS = [
 ] as const;
 
 export const ROLE_OPTIONS = [
-  { label: 'Admin', value: 'admin', color: colors.error },
+  // Admin no está aquí — solo se asigna por backend (2 admins fijos)
   { label: 'Agricultor', value: 'farmer', color: colors.primary },
   { label: 'Vendedor', value: 'seller', color: colors.accent },
   { label: 'Cliente', value: 'buyer', color: colors.info },
