@@ -35,12 +35,13 @@ import type {
 } from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
-const BuyerTab = createBottomTabNavigator<any>();
-const FarmerTab = createBottomTabNavigator<any>();
-const SellerTab = createBottomTabNavigator<any>();
-const BuyerStack = createNativeStackNavigator<any>();
-const FarmerStack = createNativeStackNavigator<any>();
+const BuyerTab = createBottomTabNavigator();
+const FarmerTab = createBottomTabNavigator();
+const SellerTab = createBottomTabNavigator();
+const BuyerStack = createNativeStackNavigator();
+const FarmerStack = createNativeStackNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
+
 
 function AuthStack() {
   return (
