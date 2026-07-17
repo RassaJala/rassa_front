@@ -10,7 +10,8 @@ export const ROLE_LABEL_MAP: Record<string, string> = {
   buyer: 'Comprador',
 };
 
-export function getRoleLabel(role: string): string {
+export function getRoleLabel(role?: string): string {
+  if (!role) return 'Desconocido';
   return ROLE_LABEL_MAP[role] ?? role;
 }
 
@@ -18,5 +19,4 @@ export function getGenderLabel(val: string): string {
   if (val === 'M') return 'Masculino';
   if (val === 'F') return 'Femenino';
   return 'Otro';
-}
 }

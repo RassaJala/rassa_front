@@ -63,15 +63,6 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-type NavigationProp = NativeStackNavigationProp<
-  AdminStackParamList,
-  'AdminPanel'
->;
-
-interface Props {
-  readonly navigation: NavigationProp;
-}
-
 export default function AdminPanelScreen({
   navigation,
 }: Props): React.JSX.Element {
