@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,27 +14,16 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
 
-import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
 import LogoutButton from '@/components/LogoutButton';
+import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
-import { useCatalogs } from '@/hooks/useCatalogs';
+import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import api from '@/services/api';
-import type { AdminStackParamList, RegisterRole } from '@/types';
+import type { AdminStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiError';
-import { getGenderLabel, getRoleLabel } from '@/utils/labels';
-import {
-  cleanAddress,
-  cleanName,
-  cleanPhoneNumber,
-  formatPhoneNumber,
-  validateBirthdate,
-  validateEmail,
-  validatePassword,
-  validatePhone,
-} from '@/utils/validation';
-
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { getRoleLabel } from '@/utils/labels';
+import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
 const menuItems = [
   {
@@ -61,83 +49,14 @@ interface Props {
   readonly navigation: NavigationProp;
 }
 
-function validateRegistrationForm(
-  email: string,
-  password: string | undefined,
-  telefono: string,
-  nombre: string,
-  apellidoPaterno: string,
-  fechaNacimiento: string,
-  domicilio: string,
-  localidadId: number | null,
-): string | null {
-  const rawTelefono = cleanPhoneNumber(telefono);
-
-  if (email.trim()) {
-    const emailErr = validateEmail(email);
-    if (emailErr) return emailErr;
-  }
-
-  if (password) {
-    const passErr = validatePassword(password);
-    if (passErr) return passErr;
-  }
-
-  if (rawTelefono) {
-    const phoneErr = validatePhone(rawTelefono);
-    if (phoneErr) return phoneErr;
-  }
-
-  if (fechaNacimiento.trim()) {
-    const birthdateErr = validateBirthdate(
-      fechaNacimiento,
-      'El usuario debe ser mayor de 18 años.',
-    );
-    if (birthdateErr) return birthdateErr;
-  }
-
-  if (
-    !email.trim() ||
-    (password !== undefined && !password) ||
-    !rawTelefono ||
-    !nombre.trim() ||
-    !apellidoPaterno.trim() ||
-    !fechaNacimiento.trim() ||
-    !domicilio.trim() ||
-    localidadId === null
-  ) {
-    return 'Por favor, completa todos los campos obligatorios.';
-  }
-
-  const birthdateErr = validateBirthdate(
-    fechaNacimiento,
-    'Debes ser mayor de 18 años para registrarte.',
-  );
-  if (birthdateErr) return birthdateErr;
-
-  return null;
-}
-
 export default function AdminPanelScreen({
   navigation,
 }: Props): React.JSX.Element {
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
-  // Form States
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [role, setRole] = useState<RegisterRole>('farmer');
-  const [nombre, setNombre] = useState('');
-  const [apellidoPaterno, setApellidoPaterno] = useState('');
-  const [apellidoMaterno, setApellidoMaterno] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState('');
-  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>('M');
-  const [domicilio, setDomicilio] = useState('');
-
-  // Catalog Hook
-  const catalog = useCatalogs();
+  // Form State Hook
+  const form = useRegistrationForm({ initialRole: 'farmer' });
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,17 +82,17 @@ export default function AdminPanelScreen({
       return;
     }
 
-    // Use extracted validation function
-    const validationError = validateRegistrationForm(
-      email,
-      password,
-      telefono,
-      nombre,
-      apellidoPaterno,
-      fechaNacimiento,
-      domicilio,
-      catalog.localidadId,
-    );
+    const validationError = validateRegistrationForm({
+      email: form.email,
+      password: form.password,
+      telefono: form.telefono,
+      nombre: form.nombre,
+      apellidoPaterno: form.apellidoPaterno,
+      fechaNacimiento: form.fechaNacimiento,
+      domicilio: form.domicilio,
+      localidadId: form.catalog.localidadId,
+      customAgeMsg: 'El usuario debe ser mayor de 18 años.',
+    });
 
     if (validationError) {
       setErrorMessage(validationError);
@@ -184,17 +103,17 @@ export default function AdminPanelScreen({
 
     try {
       const payload = {
-        email: email.trim(),
-        password,
-        telefono: cleanPhoneNumber(telefono),
-        role,
-        nombre: nombre.trim(),
-        apellido_paterno: apellidoPaterno.trim(),
-        apellido_materno: apellidoMaterno.trim() || null,
-        fecha_nacimiento: fechaNacimiento,
-        sexo,
-        domicilio: domicilio.trim(),
-        fk_localidad: catalog.localidadId,
+        email: form.email.trim(),
+        password: form.password,
+        telefono: cleanPhoneNumber(form.telefono),
+        role: form.role,
+        nombre: form.nombre.trim(),
+        apellido_paterno: form.apellidoPaterno.trim(),
+        apellido_materno: form.apellidoMaterno.trim() || null,
+        fecha_nacimiento: form.fechaNacimiento,
+        sexo: form.sexo,
+        domicilio: form.domicilio.trim(),
+        fk_localidad: form.catalog.localidadId,
       };
 
       // Call register API directly (ignoring returned tokens to maintain Admin session)
@@ -202,11 +121,11 @@ export default function AdminPanelScreen({
 
       if (isMounted.current) {
         setSuccessMessage(
-          `Usuario (${getRoleLabel(role)}) registrado exitosamente.`,
+          `Usuario (${getRoleLabel(form.role)}) registrado exitosamente.`,
         );
 
         // Reset form
-        resetForm();
+        form.resetForm();
       }
     } catch (error) {
       if (isMounted.current) {
@@ -232,28 +151,12 @@ export default function AdminPanelScreen({
     }
   }
 
-  function resetForm() {
-    setEmail('');
-    setPassword('');
-    setTelefono('');
-    setNombre('');
-    setApellidoPaterno('');
-    setApellidoMaterno('');
-    setFechaNacimiento('');
-    setSexo('M');
-    setDomicilio('');
-    catalog.setLocalidadId(null);
-    catalog.setLocalidadNombre('');
-    catalog.setSelectedMunicipioId(null);
-    catalog.setSelectedMunicipioNombre('');
-  }
-
   if (!showForm) {
     return (
       <View className="flex-1 bg-gray-50 dark:bg-gray-950">
         {/* Header */}
         <View className="bg-brand-green-forest px-4 pb-6 pt-12">
-          <Text className="text-2xl font-bold text-white">Panel Admin</Text>
+          <Text className="text-2xl font-bold text-white">Panel de Admin</Text>
           <Text className="mt-1 text-sm text-white/80">
             Administración del sistema
           </Text>
@@ -268,7 +171,7 @@ export default function AdminPanelScreen({
             <Text className="mr-4 text-3xl">👤</Text>
             <View className="flex-1">
               <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
-                Registrar Usuario
+                Agregar usuario
               </Text>
               <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                 Agregar un nuevo usuario al sistema
@@ -339,16 +242,16 @@ export default function AdminPanelScreen({
           {(['buyer', 'farmer', 'seller'] as const).map((r) => (
             <TouchableOpacity
               key={r}
-              onPress={() => setRole(r)}
+              onPress={() => form.setRole(r)}
               className={`flex-1 rounded-lg border py-2.5 ${
-                role === r
+                form.role === r
                   ? 'border-brand-red-coral bg-brand-red-coral/5 dark:bg-brand-red-coral/10'
                   : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
               }`}
             >
               <Text
                 className={`text-center font-medium ${
-                  role === r
+                  form.role === r
                     ? 'text-brand-red-coral'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
@@ -359,151 +262,10 @@ export default function AdminPanelScreen({
           ))}
         </View>
 
-        {/* Form Fields */}
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Correo electrónico *
-        </Text>
-        <TextInput
-          autoCapitalize="none"
-          keyboardType="email-address"
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="ejemplo@correo.com"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={email}
-          onChangeText={setEmail}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Contraseña *
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="••••••••"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Nombre *
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="Nombre(s)"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={nombre}
-          onChangeText={(val) => setNombre(cleanName(val))}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Apellido Paterno *
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="Apellido Paterno"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={apellidoPaterno}
-          onChangeText={(val) => setApellidoPaterno(cleanName(val))}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Apellido Materno
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="Apellido Materno"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={apellidoMaterno}
-          onChangeText={(val) => setApellidoMaterno(cleanName(val))}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Teléfono *
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="xxx-xxx-xx-xx"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          keyboardType="phone-pad"
-          value={telefono}
-          onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
-        />
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Fecha de Nacimiento *
-        </Text>
-        <TouchableOpacity
-          testID="birthdate-pressable"
-          onPress={() => setIsDatePickerVisible(true)}
-        >
-          <View pointerEvents="none">
-            <TextInput
-              className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="AAAA-MM-DD"
-              placeholderTextColor={PLACEHOLDER_COLOR}
-              value={fechaNacimiento}
-              showSoftInputOnFocus={false}
-              onChangeText={setFechaNacimiento}
-            />
-          </View>
-        </TouchableOpacity>
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Género *
-        </Text>
-        <View className="mb-3 flex-row space-x-2">
-          {(['M', 'F', 'O'] as const).map((g) => (
-            <TouchableOpacity
-              key={g}
-              onPress={() => setSexo(g)}
-              className={`flex-1 rounded-lg border py-2.5 ${
-                sexo === g
-                  ? 'border-brand-red-coral bg-red-50/10'
-                  : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
-              }`}
-            >
-              <Text
-                className={`text-center font-medium ${
-                  sexo === g
-                    ? 'text-brand-red-coral'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {getGenderLabel(g)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text className="mb-1 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Dirección *
-        </Text>
-        <TextInput
-          className="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-brand-ink dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-          placeholder="Calle, número, colonia"
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          value={domicilio}
-          onChangeText={(val) => setDomicilio(cleanAddress(val))}
-        />
-
-        {/* Catalog Selectors */}
-        <CatalogSelector
-          selectedMunicipioId={catalog.selectedMunicipioId}
-          selectedMunicipioNombre={catalog.selectedMunicipioNombre}
-          onSelectMunicipio={catalog.handleSelectMunicipio}
-          localidadId={catalog.localidadId}
-          localidadNombre={catalog.localidadNombre}
-          onSelectLocalidad={catalog.handleSelectLocalidad}
-          municipios={catalog.municipios}
-          localidades={catalog.localidades}
-          isLoadingMunicipios={catalog.isLoadingMunicipios}
-          isLoadingLocalidades={catalog.isLoadingLocalidades}
-          errorMunicipios={catalog.errorMunicipios}
-          errorLocalidades={catalog.errorLocalidades}
-          refetchMunicipios={catalog.refetchMunicipios}
-          refetchLocalidades={catalog.refetchLocalidades}
+        <RegistrationFormFields
+          form={form}
           setErrorMessage={setErrorMessage}
+          onOpenDatePicker={() => setIsDatePickerVisible(true)}
         />
 
         {successMessage ? (
@@ -536,8 +298,8 @@ export default function AdminPanelScreen({
       <DatePickerModal
         visible={isDatePickerVisible}
         onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={setFechaNacimiento}
-        initialDate={fechaNacimiento}
+        onSelectDate={form.setFechaNacimiento}
+        initialDate={form.fechaNacimiento}
       />
     </ScrollView>
   );

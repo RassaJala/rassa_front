@@ -713,4 +713,149 @@ describe('AuthContext', () => {
       );
     });
   });
+
+  // ── parseAuthError status code branches ──────────────────
+
+  it('parsea error con status 429 (límite de peticiones)', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    const axiosError = new Error('Too many requests') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = { status: 429 };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'Límite de peticiones excedido. Inténtalo más tarde.',
+      );
+    });
+  });
+
+  it('parsea error con status 502, 503 o 504 (servidor no disponible)', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    const axiosError = new Error('Bad Gateway') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = { status: 502 };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'El servidor no está disponible temporalmente. Inténtalo más tarde.',
+      );
+    });
+  });
+
+  it('parsea error con status 500 (error interno)', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    const axiosError = new Error('Internal Server Error') as any;
+    axiosError.isAxiosError = true;
+    axiosError.response = { status: 500 };
+    axiosError.config = { url: '/token/' };
+    (api.post as jest.Mock).mockRejectedValueOnce(axiosError);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('login-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'Error interno del servidor. Inténtalo más tarde.',
+      );
+    });
+  });
+
+  // ── Register double submit and missing tokens ───────────
+
+  it('previene doble submit en register', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    let resolveRegister: (value: any) => void = () => {};
+    const registerPromise = new Promise((resolve) => {
+      resolveRegister = resolve;
+    });
+    (api.post as jest.Mock).mockReturnValueOnce(registerPromise);
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    expect(getByTestId('error-message').props.children).toBe(
+      'Ya hay un registro en curso. Por favor, espera.',
+    );
+
+    await act(async () => {
+      resolveRegister({
+        data: {
+          data: {
+            ...DEFAULT_BACKEND_USER,
+            access: 'reg_access',
+            refresh: 'reg_refresh',
+          },
+        },
+      });
+    });
+  });
+
+  it('register falla si la respuesta de API no incluye tokens', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+    (api.post as jest.Mock).mockResolvedValueOnce({
+      data: {
+        data: {
+          ...DEFAULT_BACKEND_USER,
+        },
+      },
+    });
+
+    const { getByTestId } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(getByTestId('register-btn'));
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('error-message').props.children).toBe(
+        'La respuesta del backend no incluyó los tokens.',
+      );
+    });
+  });
 });

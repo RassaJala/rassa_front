@@ -2,6 +2,25 @@
 import type { AxiosError } from 'axios';
 import axios from 'axios';
 
+function parseHtmlOrStringError(data: string, status?: number): string {
+  const trimmed = data.trim();
+
+  if (
+    trimmed.startsWith('<!DOCTYPE') ||
+    trimmed.startsWith('<html') ||
+    trimmed.includes('Traceback (most recent call last)')
+  ) {
+    if (__DEV__) {
+      console.warn(
+        '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
+        status,
+      );
+    }
+    return 'Error interno del servidor. Revisa los logs del backend.';
+  }
+  return trimmed;
+}
+
 /**
  * Extract a readable error message from an API error response.
  * @param error - The caught error (unknown type)
@@ -19,24 +38,10 @@ export function extractApiError(error: unknown, fieldKeys: string[]): string {
 
   // ── HTML error page (e.g. Django DEBUG=True 500 page) ──────
   if (typeof data === 'string') {
-    const trimmed = data.trim();
-
-    if (
-      trimmed.startsWith('<!DOCTYPE') ||
-      trimmed.startsWith('<html') ||
-      trimmed.includes('Traceback (most recent call last)')
-    ) {
-      if (__DEV__) {
-        console.warn(
-          '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
-          axiosErr.response?.status,
-        );
-      }
-      return 'Error interno del servidor. Revisa los logs del backend.';
-    }
-    return trimmed;
+    return parseHtmlOrStringError(data, axiosErr.response?.status);
   }
 
+  if (typeof data.detail === 'string') return data.detail;
   if (typeof data.message === 'string') return data.message;
 
   for (const key of fieldKeys) {

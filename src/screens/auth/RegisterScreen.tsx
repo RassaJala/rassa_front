@@ -7,28 +7,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 
-import CatalogSelector from '@/components/CatalogSelector';
 import DatePickerModal from '@/components/DatePickerModal';
+import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
-import { useCatalogs } from '@/hooks/useCatalogs';
+import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useAuth } from '@/store/AuthContext';
 import type { RegisterRole } from '@/types';
-import {
-  cleanAddress,
-  cleanName,
-  cleanPhoneNumber,
-  formatPhoneNumber,
-  validateBirthdate,
-  validateEmail,
-  validatePassword,
-  validatePhone,
-} from '@/utils/validation';
+import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+
+const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
@@ -36,20 +29,8 @@ export default function RegisterScreen(): React.JSX.Element {
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
-  // Form States
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const role: RegisterRole = 'buyer';
-  const [nombre, setNombre] = useState('');
-  const [apellidoPaterno, setApellidoPaterno] = useState('');
-  const [apellidoMaterno, setApellidoMaterno] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState('');
-  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>('M');
-  const [domicilio, setDomicilio] = useState('');
-
-  // Catalog Hook
-  const catalog = useCatalogs();
+  // Form State Hook
+  const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,45 +54,19 @@ export default function RegisterScreen(): React.JSX.Element {
     }
 
     // Validations
-    const rawTelefono = cleanPhoneNumber(telefono);
-    if (
-      !email.trim() ||
-      !password ||
-      !rawTelefono ||
-      !nombre.trim() ||
-      !apellidoPaterno.trim() ||
-      !fechaNacimiento.trim() ||
-      !domicilio.trim() ||
-      catalog.localidadId === null
-    ) {
-      setErrorMessage('Por favor, completa todos los campos obligatorios.');
-      return;
-    }
+    const validationError = validateRegistrationForm({
+      email: form.email,
+      password: form.password,
+      telefono: form.telefono,
+      nombre: form.nombre,
+      apellidoPaterno: form.apellidoPaterno,
+      fechaNacimiento: form.fechaNacimiento,
+      domicilio: form.domicilio,
+      localidadId: form.catalog.localidadId,
+    });
 
-    const emailErr = validateEmail(email);
-    if (emailErr) {
-      setErrorMessage(emailErr);
-      return;
-    }
-
-    const passErr = validatePassword(password);
-    if (passErr) {
-      setErrorMessage(passErr);
-      return;
-    }
-
-    const phoneErr = validatePhone(rawTelefono);
-    if (phoneErr) {
-      setErrorMessage(phoneErr);
-      return;
-    }
-
-    const birthdateErr = validateBirthdate(
-      fechaNacimiento,
-      'Debes ser mayor de 18 años para registrarte.',
-    );
-    if (birthdateErr) {
-      setErrorMessage(birthdateErr);
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
@@ -119,17 +74,17 @@ export default function RegisterScreen(): React.JSX.Element {
 
     try {
       const payload = {
-        email: email.trim(),
-        password,
-        telefono: rawTelefono,
-        role,
-        nombre: nombre.trim(),
-        apellido_paterno: apellidoPaterno.trim(),
-        apellido_materno: apellidoMaterno.trim() || null,
-        fecha_nacimiento: fechaNacimiento,
-        sexo,
-        domicilio: domicilio.trim(),
-        fk_localidad: catalog.localidadId,
+        email: form.email.trim(),
+        password: form.password,
+        telefono: cleanPhoneNumber(form.telefono),
+        role: DEFAULT_REGISTER_ROLE,
+        nombre: form.nombre.trim(),
+        apellido_paterno: form.apellidoPaterno.trim(),
+        apellido_materno: form.apellidoMaterno.trim() || null,
+        fecha_nacimiento: form.fechaNacimiento,
+        sexo: form.sexo,
+        domicilio: form.domicilio.trim(),
+        fk_localidad: form.catalog.localidadId as number,
       };
 
       await register(payload);
@@ -162,121 +117,10 @@ export default function RegisterScreen(): React.JSX.Element {
           Completa los siguientes datos para registrarte.
         </Text>
 
-        {/* Account Info */}
-        <TextInput
-          mode="outlined"
-          label="Correo electrónico *"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="ejemplo@correo.com"
-          value={email}
-          onChangeText={setEmail}
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Contraseña (mínimo 6 caracteres) *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        {/* Personal Details */}
-        <TextInput
-          mode="outlined"
-          label="Nombre *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="Nombre(s)"
-          value={nombre}
-          onChangeText={(val) => setNombre(cleanName(val))}
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Apellido Paterno *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="Apellido Paterno"
-          value={apellidoPaterno}
-          onChangeText={(val) => setApellidoPaterno(cleanName(val))}
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Apellido Materno"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="Apellido Materno"
-          value={apellidoMaterno}
-          onChangeText={(val) => setApellidoMaterno(cleanName(val))}
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Teléfono *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="10 dígitos"
-          keyboardType="phone-pad"
-          value={telefono}
-          onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
-        />
-
-        <TouchableOpacity
-          testID="birthdate-pressable"
-          onPress={() => setIsDatePickerVisible(true)}
-        >
-          <TextInput
-            mode="outlined"
-            label="Fecha de Nacimiento *"
-            className="mb-4 bg-white dark:bg-gray-900"
-            placeholder="AAAA-MM-DD"
-            value={fechaNacimiento}
-            showSoftInputOnFocus={false}
-            onChangeText={setFechaNacimiento}
-          />
-        </TouchableOpacity>
-
-        <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Género *
-        </Text>
-        <SegmentedButtons
-          value={sexo}
-          onValueChange={setSexo}
-          buttons={[
-            { value: 'M', label: 'Masculino' },
-            { value: 'F', label: 'Femenino' },
-            { value: 'O', label: 'Otro' },
-          ]}
-          style={styles.segmentedButtons}
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Dirección *"
-          className="mb-4 bg-white dark:bg-gray-900"
-          placeholder="Calle, número, colonia"
-          value={domicilio}
-          onChangeText={(val) => setDomicilio(cleanAddress(val))}
-        />
-
-        {/* Catalog Selectors & Modals */}
-        <CatalogSelector
-          selectedMunicipioId={catalog.selectedMunicipioId}
-          selectedMunicipioNombre={catalog.selectedMunicipioNombre}
-          onSelectMunicipio={catalog.handleSelectMunicipio}
-          localidadId={catalog.localidadId}
-          localidadNombre={catalog.localidadNombre}
-          onSelectLocalidad={catalog.handleSelectLocalidad}
-          municipios={catalog.municipios}
-          localidades={catalog.localidades}
-          isLoadingMunicipios={catalog.isLoadingMunicipios}
-          isLoadingLocalidades={catalog.isLoadingLocalidades}
-          errorMunicipios={catalog.errorMunicipios}
-          errorLocalidades={catalog.errorLocalidades}
-          refetchMunicipios={catalog.refetchMunicipios}
-          refetchLocalidades={catalog.refetchLocalidades}
+        <RegistrationFormFields
+          form={form}
           setErrorMessage={setErrorMessage}
+          onOpenDatePicker={() => setIsDatePickerVisible(true)}
         />
 
         {errorMessage ? (
@@ -305,8 +149,8 @@ export default function RegisterScreen(): React.JSX.Element {
       <DatePickerModal
         visible={isDatePickerVisible}
         onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={setFechaNacimiento}
-        initialDate={fechaNacimiento}
+        onSelectDate={form.setFechaNacimiento}
+        initialDate={form.fechaNacimiento}
       />
     </ScrollView>
   );
@@ -318,8 +162,5 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 6,
-  },
-  segmentedButtons: {
-    marginBottom: 16,
   },
 });

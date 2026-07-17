@@ -134,7 +134,9 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Guardar Cambios'));
       await waitFor(() => {
         expect(
-          getByText('El teléfono debe tener exactamente 10 dígitos.'),
+          getByText(
+            'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).',
+          ),
         ).toBeTruthy();
       });
     });
@@ -328,6 +330,7 @@ describe('ProfileScreen', () => {
 
     it('shows 401 error for wrong old password', async () => {
       mockAuth.changePassword.mockRejectedValueOnce({
+        isAxiosError: true,
         response: { status: 401, data: { detail: 'Unauthorized' } },
       });
       const { getByText, getByTestId } = renderScreen();
@@ -382,9 +385,8 @@ describe('ProfileScreen', () => {
   });
 
   describe('cleanup on unmount', () => {
-    it('clears logout timeout on unmount', () => {
-      const { unmount } = renderScreen();
-      const { getByText, getByTestId } = renderScreen();
+    it('clears logout timeout on unmount', async () => {
+      const { unmount, getByText, getByTestId } = renderScreen();
       fireEvent.press(getByText('Seguridad'));
       fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
       fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
@@ -393,9 +395,13 @@ describe('ProfileScreen', () => {
         'newpassword1',
       );
       fireEvent.press(getByTestId('change-password-button'));
+
+      await waitFor(() => {
+        expect(mockAuth.changePassword).toHaveBeenCalled();
+      });
+
       unmount();
-      // If no error thrown, cleanup works
-      expect(true).toBe(true);
+      expect(mockAuth.logout).toHaveBeenCalled();
     });
   });
 });

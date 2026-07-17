@@ -38,4 +38,23 @@ jest.mock('react-native/Libraries/EventEmitter/NativeEventEmitter', () => {
   }));
 });
 
+// Mock react-native-paper Portal to avoid PortalHost AggregateError in Jest tests
+jest.mock('react-native-paper', () => {
+  const RealModule = jest.requireActual('react-native-paper');
+  return {
+    ...RealModule,
+    Portal: ({ children }: any) => children,
+  };
+});
+
+// Mock react-native-safe-area-context to avoid safe area provider errors in Jest tests
+jest.mock('react-native-safe-area-context', () => {
+  const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  return {
+    SafeAreaProvider: ({ children }: any) => children,
+    SafeAreaView: ({ children }: any) => children,
+    useSafeAreaInsets: () => inset,
+  };
+});
+
 export {};

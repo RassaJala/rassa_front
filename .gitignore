@@ -49,3 +49,6 @@ Thumbs.db
 
 # AI agent tools
 .atl/
+
+# Local review files
+REVISION_PR11.md

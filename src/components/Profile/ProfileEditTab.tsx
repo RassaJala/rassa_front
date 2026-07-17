@@ -149,8 +149,8 @@ export default function ProfileEditTab({
         selectedMunicipioId={location.selectedMunicipioId}
         selectedMunicipioNombre={location.selectedMunicipioNombre}
         onSelectMunicipio={location.handleSelectMunicipio}
-        localidadId={location.localidadId}
         localidadNombre={location.localidadNombre}
+        localidadId={location.localidadId}
         onSelectLocalidad={location.handleSelectLocalidad}
         municipios={location.municipios}
         localidades={location.localidades}

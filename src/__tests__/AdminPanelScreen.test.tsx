@@ -151,11 +151,13 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(getByPlaceholderText('xxx-xxx-xx-xx'), '5551234');
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '5551234');
     fireEvent.press(getByText('Agregar usuario'));
     await waitFor(() => {
       expect(
-        getByText('El teléfono debe tener exactamente 10 dígitos.'),
+        getByText(
+          'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).',
+        ),
       ).toBeTruthy();
     });
   });
@@ -168,10 +170,7 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(
-      getByPlaceholderText('xxx-xxx-xx-xx'),
-      '555-123-45-67',
-    );
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '555-123-45-67');
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), 'invalid-date');
     fireEvent.press(getByText('Agregar usuario'));
     await waitFor(() => {
@@ -192,10 +191,7 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(
-      getByPlaceholderText('xxx-xxx-xx-xx'),
-      '555-123-45-67',
-    );
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '555-123-45-67');
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), recentDate);
     fireEvent.press(getByText('Agregar usuario'));
     await waitFor(() => {
@@ -214,10 +210,7 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(
-      getByPlaceholderText('xxx-xxx-xx-xx'),
-      '555-123-45-67',
-    );
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '555-123-45-67');
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
     fireEvent.changeText(
@@ -249,6 +242,7 @@ describe('AdminPanelScreen', () => {
 
   it('shows error message on API failure', async () => {
     mockApiPost.mockRejectedValueOnce({
+      isAxiosError: true,
       response: { status: 400, data: { detail: 'Email ya registrado' } },
     });
 
@@ -262,10 +256,7 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(
-      getByPlaceholderText('xxx-xxx-xx-xx'),
-      '555-123-45-67',
-    );
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '555-123-45-67');
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
     fireEvent.changeText(
@@ -301,10 +292,7 @@ describe('AdminPanelScreen', () => {
       'test@example.com',
     );
     fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
-    fireEvent.changeText(
-      getByPlaceholderText('xxx-xxx-xx-xx'),
-      '555-123-45-67',
-    );
+    fireEvent.changeText(getByPlaceholderText('10 dígitos'), '555-123-45-67');
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), eighteenYearsAgo);
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'AdminName');
     fireEvent.changeText(

@@ -135,7 +135,7 @@ describe('useCatalogs', () => {
 
     await waitFor(() => {
       expect(getByTestId('error-municipios').props.children).toBe(
-        'Network error',
+        'Error al cargar datos. Toca Reintentar.',
       );
     });
   });
@@ -150,7 +150,7 @@ describe('useCatalogs', () => {
 
     await waitFor(() => {
       expect(getByTestId('error-localidades').props.children).toBe(
-        'Localidades error',
+        'Error al cargar datos. Toca Reintentar.',
       );
     });
   });

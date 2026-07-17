@@ -101,8 +101,12 @@ export function useCatalogs(
     localidadNombre,
     isLoadingMunicipios,
     isLoadingLocalidades,
-    errorMunicipios: errorMunicipios?.message || null,
-    errorLocalidades: errorLocalidades?.message || null,
+    errorMunicipios: errorMunicipios
+      ? 'Error al cargar datos. Toca Reintentar.'
+      : null,
+    errorLocalidades: errorLocalidades
+      ? 'Error al cargar datos. Toca Reintentar.'
+      : null,
     refetchMunicipios,
     refetchLocalidades,
     handleSelectMunicipio,

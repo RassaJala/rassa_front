@@ -69,7 +69,7 @@ export function validatePhone(phone: string): string | null {
     return 'Por favor, completa todos los campos obligatorios.';
   }
   if (cleaned.length !== 10 && cleaned.length !== 12) {
-    return 'El teléfono debe tener exactamente 10 dígitos.';
+    return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
   }
   return null;
 }
@@ -87,5 +87,67 @@ export function validateBirthdate(
   if (!isAdult(dateStr)) {
     return customMsg || 'Debes ser mayor de 18 años.';
   }
+  return null;
+}
+
+export function validateRegistrationForm({
+  email,
+  password,
+  telefono,
+  nombre,
+  apellidoPaterno,
+  fechaNacimiento,
+  domicilio,
+  localidadId,
+  customAgeMsg,
+}: {
+  readonly email: string;
+  readonly password?: string;
+  readonly telefono: string;
+  readonly nombre: string;
+  readonly apellidoPaterno: string;
+  readonly fechaNacimiento: string;
+  readonly domicilio: string;
+  readonly localidadId: number | null;
+  readonly customAgeMsg?: string;
+}): string | null {
+  const rawTelefono = cleanPhoneNumber(telefono);
+
+  if (email.trim()) {
+    const emailErr = validateEmail(email);
+    if (emailErr) return emailErr;
+  }
+
+  if (password !== undefined && password) {
+    const passErr = validatePassword(password);
+    if (passErr) return passErr;
+  }
+
+  if (rawTelefono) {
+    const phoneErr = validatePhone(rawTelefono);
+    if (phoneErr) return phoneErr;
+  }
+
+  if (fechaNacimiento.trim()) {
+    const birthdateErr = validateBirthdate(
+      fechaNacimiento,
+      customAgeMsg || 'Debes ser mayor de 18 años para registrarte.',
+    );
+    if (birthdateErr) return birthdateErr;
+  }
+
+  if (
+    !email.trim() ||
+    (password !== undefined && !password) ||
+    !rawTelefono ||
+    !nombre.trim() ||
+    !apellidoPaterno.trim() ||
+    !fechaNacimiento.trim() ||
+    !domicilio.trim() ||
+    localidadId === null
+  ) {
+    return 'Por favor, completa todos los campos obligatorios.';
+  }
+
   return null;
 }
