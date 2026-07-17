@@ -11,6 +11,8 @@ import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
+import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
+import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -153,6 +155,8 @@ function AdminScreens() {
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+      <AdminStack.Screen name="MunicipioList" component={MunicipioListScreen} />
+      <AdminStack.Screen name="LocalidadList" component={LocalidadListScreen} />
       <AdminStack.Screen
         name="Notificaciones"
         component={NotificationsScreen}

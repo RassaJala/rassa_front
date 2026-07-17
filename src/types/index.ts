@@ -58,12 +58,14 @@ export interface ChangePasswordPayload {
 export interface Municipio {
   id_municipio: number;
   nombre: string;
+  estado: boolean;
 }
 
 export interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
+  estado: boolean;
 }
 
 export interface Product {
@@ -125,6 +127,8 @@ export type AdminStackParamList = {
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
+  MunicipioList: undefined;
+  LocalidadList: undefined;
   Notificaciones: undefined;
 };
 

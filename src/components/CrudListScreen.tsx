@@ -81,7 +81,8 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
 
 // ── Navigation type ────────────────────────────────────────
 
-type CrudScreenName = 'CategoryList' | 'UnitList';
+type CrudScreenName =
+  'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
 
 interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: CrudConfig<T>;

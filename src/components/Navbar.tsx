@@ -20,6 +20,8 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
     { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
     { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
+    { label: 'Municipios', screen: 'MunicipioList', icon: 'city' },
+    { label: 'Localidades', screen: 'LocalidadList', icon: 'map-marker' },
     { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   buyer: [
