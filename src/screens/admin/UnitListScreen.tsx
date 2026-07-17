@@ -45,6 +45,7 @@ const unitConfig = {
   toastDeleted: (name: string) => `Se eliminó la unidad "${name}"`,
   toastActivated: (name: string) => `Se activó la unidad "${name}"`,
   toastDeactivated: (name: string) => `Se desactivó la unidad "${name}"`,
+  searchFields: ['nombre', 'abreviatura'] as const,
   statusLabels: { active: 'Activo', inactive: 'Inactivo' },
   trashScreenName: 'UnitTrash' as const,
   validate: (formValues: Record<string, string>) => {

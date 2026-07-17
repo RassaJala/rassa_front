@@ -191,7 +191,17 @@ function createReactNativeRules() {
     },
     languageOptions: {
       globals: {
-        ...globals.browser,
+        console: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        __DEV__: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
       },
     },
     rules: {

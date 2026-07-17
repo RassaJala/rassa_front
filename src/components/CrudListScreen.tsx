@@ -70,6 +70,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     },
   ) => React.JSX.Element;
   readonly validate: (formValues: Record<string, string>) => string | null;
+  readonly searchFields?: readonly string[];
   readonly extraDuplicateCheck?: (
     formValues: Record<string, string>,
     items: T[] | undefined,
@@ -93,7 +94,64 @@ interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
 // ── Default list item renderer ─────────────────────────────
 
 const inputUnderlineStyle = { display: 'none' as const };
-const filterLabels = { todos: 'Todos', activos: 'Activos', inactivos: 'Inactivos' } as const;
+
+// ── Search / Filter constants ──────────────────────────────────
+type StatusFilterValue = 'todos' | 'activos' | 'inactivos';
+const STATUS_FILTERS: readonly StatusFilterValue[] = [
+  'todos',
+  'activos',
+  'inactivos',
+];
+const FILTER_LABELS: Record<StatusFilterValue, string> = {
+  todos: 'Todos',
+  activos: 'Activos',
+  inactivos: 'Inactivos',
+};
+
+/**
+ * Pure filter function — runs each item through search + status checks.
+ * Invalid items are caught, logged, and excluded instead of crashing the list.
+ */
+function filterItems<T extends { nombre: string; estado: boolean }>(
+  items: T[] | undefined,
+  search: string,
+  statusFilter: StatusFilterValue,
+  searchFieldNames: readonly string[],
+): T[] {
+  const normalizedSearch = search.toLowerCase().trim();
+
+  return (items ?? []).filter((item) => {
+    try {
+      const matchesSearch =
+        !normalizedSearch ||
+        searchFieldNames.some((fieldName) => {
+          const value = (item as Record<string, unknown>)[fieldName];
+          return String(value ?? '').toLowerCase().includes(normalizedSearch);
+        });
+
+      let matchesStatus: boolean;
+      if (statusFilter === 'todos') {
+        matchesStatus = true;
+      } else if (statusFilter === 'activos') {
+        matchesStatus = item.estado === true;
+      } else {
+        matchesStatus = item.estado === false;
+      }
+
+      if (typeof item.estado !== 'boolean') {
+        console.warn(
+          'CrudListScreen: estado is not boolean, unexpected:',
+          item,
+        );
+      }
+
+      return matchesSearch && matchesStatus;
+    } catch (error) {
+      console.warn('CrudListScreen: error filtering item, excluding it:', item, error);
+      return false;
+    }
+  });
+}
 
 function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
   item: T,
@@ -228,9 +286,7 @@ export default function CrudListScreen<
   // ── Search / Filter state ──────────────────────────────────
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermDebounced, setSearchTermDebounced] = useState('');
-  const [statusFilter, setStatusFilter] = useState<
-    'todos' | 'activos' | 'inactivos'
-  >('todos');
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('todos');
 
   // ── Delete dialog state ────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
@@ -242,25 +298,16 @@ export default function CrudListScreen<
   }, [searchTerm]);
 
   // ── Filtered items ──────────────────────────────────────────
-  const filteredItems = useMemo(() => {
-    return (items ?? []).filter((item) => {
-      const search = searchTermDebounced.toLowerCase().trim();
-      const matchesSearch =
-        !search ||
-        item.nombre.toLowerCase().includes(search) ||
-        (config.fields[1] != null
-          ? String(
-              (item as Record<string, unknown>)[config.fields[1].name] ?? '',
-            )
-              .toLowerCase()
-              .includes(search)
-          : false);
-      const matchesStatus =
-        statusFilter === 'todos' ||
-        (statusFilter === 'activos' ? item.estado : !item.estado);
-      return matchesSearch && matchesStatus;
-    });
-  }, [items, searchTermDebounced, statusFilter, config.fields]);
+  const searchFieldNames = useMemo(
+    () =>
+      config.searchFields ??
+      (config.fields[0] ? [config.fields[0].name] : ['nombre']),
+    [config.searchFields, config.fields],
+  );
+  const filteredItems = useMemo(
+    () => filterItems(items, searchTermDebounced, statusFilter, searchFieldNames),
+    [items, searchTermDebounced, statusFilter, searchFieldNames],
+  );
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
@@ -536,8 +583,7 @@ export default function CrudListScreen<
   }
 
   const isEmpty = !items || items.length === 0;
-  const hasItems = items && items.length > 0;
-  const noSearchResults = hasItems && filteredItems.length === 0;
+  const noSearchResults = !isEmpty && filteredItems.length === 0;
   const trashScreen = config.trashScreenName;
 
   // ── Body: empty, no-results, or list ──────────────────────
@@ -568,7 +614,7 @@ export default function CrudListScreen<
             color={colors.iconMuted}
           />
           <Text className="mt-4 text-center text-lg text-gray-500 dark:text-gray-400">
-            No se encontraron resultados para "{searchTermDebounced}".
+            No se encontraron resultados para "{searchTermDebounced.trim()}".
           </Text>
         </View>
       );
@@ -661,7 +707,13 @@ export default function CrudListScreen<
           left={<PaperInput.Icon icon="magnify" />}
           right={
             searchTerm ? (
-              <PaperInput.Icon icon="close" onPress={() => setSearchTerm('')} />
+              <PaperInput.Icon
+                icon="close"
+                onPress={() => {
+                  setSearchTerm('');
+                  setSearchTermDebounced('');
+                }}
+              />
             ) : null
           }
           className="rounded-xl bg-white dark:bg-gray-900"
@@ -671,7 +723,7 @@ export default function CrudListScreen<
 
       {/* ── Filter chips ──────────────────────────────────────── */}
       <View className="flex-row gap-2 px-4 pb-2">
-        {(['todos', 'activos', 'inactivos'] as const).map((filter) => (
+        {STATUS_FILTERS.map((filter) => (
           <Pressable
             key={filter}
             onPress={() => setStatusFilter(filter)}
@@ -688,7 +740,7 @@ export default function CrudListScreen<
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              {filterLabels[filter]}
+              {FILTER_LABELS[filter]}
             </Text>
           </Pressable>
         ))}

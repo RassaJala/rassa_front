@@ -46,6 +46,7 @@ const categoryConfig = {
   toastDeleted: (name: string) => `Se eliminó la categoría "${name}"`,
   toastActivated: (name: string) => `Se activó la categoría "${name}"`,
   toastDeactivated: (name: string) => `Se desactivó la categoría "${name}"`,
+  searchFields: ['nombre', 'descripcion'] as const,
   statusLabels: { active: 'Activo', inactive: 'Inactivo' },
   trashScreenName: 'CategoryTrash' as const,
   validate: (formValues: Record<string, string>) => {
