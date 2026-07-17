@@ -1,6 +1,9 @@
+/* globals require -- React Native module resolution */
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   Text,
   TextInput,
@@ -84,6 +87,25 @@ export default function LoginScreen(): React.JSX.Element {
 
   return (
     <View className="flex-1 items-center justify-center bg-gray-50 px-6 py-10 dark:bg-gray-950">
+      {isSubmitting ? (
+        <View className="absolute inset-0 z-50 items-center justify-center bg-brand-green-forest">
+          <Image
+            source={require('../../../assets/icon.png') as number}
+            className="mb-6 h-32 w-32"
+            resizeMode="contain"
+          />
+          <Text className="text-4xl font-bold text-white dark:text-gray-100">
+            RASSA JALA
+          </Text>
+          <Text className="mt-3 text-center text-white dark:text-gray-100">
+            Conectando productores y compradores.
+          </Text>
+          <ActivityIndicator size="large" color="white" className="mt-8" />
+          <Text className="mt-3 text-white dark:text-gray-100">
+            Iniciando sesión...
+          </Text>
+        </View>
+      ) : null}
       {isLoaded ? (
         <Pressable
           className="absolute right-4 top-12 rounded-full bg-gray-200 p-3 dark:bg-gray-700"

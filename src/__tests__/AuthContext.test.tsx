@@ -463,7 +463,7 @@ describe('AuthContext', () => {
 
   // ── Login: isLoading ──────────────────────────────────
 
-  it('login: isLoading es true mientras se procesa', async () => {
+  it('login: isLoading no cambia mientras se procesa', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
 
     let resolvePost: (value: any) => void = () => {};
@@ -481,12 +481,14 @@ describe('AuthContext', () => {
 
     await waitForLoading(getByTestId);
 
+    expect(getByTestId('loading-status').props.children).toBe('Listo');
+
     await act(async () => {
       fireEvent.press(getByTestId('login-btn'));
     });
 
     await waitFor(() => {
-      expect(getByTestId('loading-status').props.children).toBe('Cargando');
+      expect(getByTestId('loading-status').props.children).toBe('Listo');
     });
 
     await act(async () => {

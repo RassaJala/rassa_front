@@ -279,8 +279,6 @@ export function AuthProvider({
         return;
       }
 
-      setState((prev) => ({ ...prev, isLoading: true }));
-
       try {
         const { data } = await api.post<LoginResponse>(AUTH_LOGIN_ENDPOINT, {
           email,
