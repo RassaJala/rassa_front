@@ -92,6 +92,9 @@ interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
 
 // ── Default list item renderer ─────────────────────────────
 
+const inputUnderlineStyle = { display: 'none' as const };
+const filterLabels = { todos: 'Todos', activos: 'Activos', inactivos: 'Inactivos' } as const;
+
 function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
   item: T,
   _getSecondValue: (item: T) => string | null,
@@ -128,13 +131,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           ) : null}
         </View>
 
-        <View
-          className={`ml-3 self-start rounded-full px-2.5 py-0.5 ${
-            item.estado
-              ? 'bg-gray-100 dark:bg-gray-800'
-              : 'bg-gray-100 dark:bg-gray-800'
-          }`}
-        >
+        <View className="ml-3 self-start rounded-full bg-gray-100 px-2.5 py-0.5 dark:bg-gray-800">
           <Text
             className={`text-xs font-medium ${
               item.estado
@@ -543,6 +540,81 @@ export default function CrudListScreen<
   const noSearchResults = hasItems && filteredItems.length === 0;
   const trashScreen = config.trashScreenName;
 
+  // ── Body: empty, no-results, or list ──────────────────────
+  const renderBody = (): React.JSX.Element => {
+    if (isEmpty) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <MaterialCommunityIcons
+            name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
+            size={64}
+            color={colors.iconMuted}
+          />
+          <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
+            {config.emptyText}
+          </Text>
+          <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
+            {config.emptyDescription}
+          </Text>
+        </View>
+      );
+    }
+    if (noSearchResults) {
+      return (
+        <View className="flex-1 items-center justify-center px-6">
+          <MaterialCommunityIcons
+            name="file-search-outline"
+            size={64}
+            color={colors.iconMuted}
+          />
+          <Text className="mt-4 text-center text-lg text-gray-500 dark:text-gray-400">
+            No se encontraron resultados para "{searchTermDebounced}".
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <FlatList
+        data={filteredItems}
+        keyExtractor={(item) => String(config.getId(item))}
+        contentContainerClassName="p-4 pb-24 gap-3"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+            tintColor={colors.brandRedCoral}
+          />
+        }
+        renderItem={({ item }) =>
+          config.renderListItem
+            ? config.renderListItem(item, {
+                onEdit: () => openEditModal(item),
+                onToggleStatus: () => handleToggleStatus(item),
+                onDelete: () => setDeleteTarget(item),
+              })
+            : defaultRenderListItem(
+                item,
+                (i) => {
+                  const second = config.fields[1];
+                  if (!second) return null;
+                  const val = (i as Record<string, unknown>)[second.name];
+                  return val != null ? String(val) : null;
+                },
+                config,
+                {
+                  onEdit: () => openEditModal(item),
+                  onToggleStatus: () => handleToggleStatus(item),
+                  onDelete: () => setDeleteTarget(item),
+                },
+              )
+        }
+        ItemSeparatorComponent={() => (
+          <View className="h-px bg-gray-200 dark:bg-gray-800" />
+        )}
+      />
+    );
+  };
+
   // ── Render ─────────────────────────────────────────────────
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-950">
@@ -593,7 +665,7 @@ export default function CrudListScreen<
             ) : null
           }
           className="rounded-xl bg-white dark:bg-gray-900"
-          underlineStyle={{ display: 'none' }}
+          underlineStyle={inputUnderlineStyle}
         />
       </View>
 
@@ -616,82 +688,13 @@ export default function CrudListScreen<
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              {filter === 'todos'
-                ? 'Todos'
-                : filter === 'activos'
-                  ? 'Activos'
-                  : 'Inactivos'}
+              {filterLabels[filter]}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      {/* Empty state */}
-      {isEmpty ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <MaterialCommunityIcons
-            name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
-            size={64}
-            color={colors.iconMuted}
-          />
-          <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
-            {config.emptyText}
-          </Text>
-          <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
-            {config.emptyDescription}
-          </Text>
-        </View>
-      ) : noSearchResults ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <MaterialCommunityIcons
-            name="file-search-outline"
-            size={64}
-            color={colors.iconMuted}
-          />
-          <Text className="mt-4 text-center text-lg text-gray-500 dark:text-gray-400">
-            No se encontraron resultados para "{searchTermDebounced}".
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredItems}
-          keyExtractor={(item) => String(config.getId(item))}
-          contentContainerClassName="p-4 pb-24 gap-3"
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={() => void refetch()}
-              tintColor={colors.brandRedCoral}
-            />
-          }
-          renderItem={({ item }) =>
-            config.renderListItem
-              ? config.renderListItem(item, {
-                  onEdit: () => openEditModal(item),
-                  onToggleStatus: () => handleToggleStatus(item),
-                  onDelete: () => setDeleteTarget(item),
-                })
-              : defaultRenderListItem(
-                  item,
-                  (i) => {
-                    const second = config.fields[1];
-                    if (!second) return null;
-                    const val = (i as Record<string, unknown>)[second.name];
-                    return val != null ? String(val) : null;
-                  },
-                  config,
-                  {
-                    onEdit: () => openEditModal(item),
-                    onToggleStatus: () => handleToggleStatus(item),
-                    onDelete: () => setDeleteTarget(item),
-                  },
-                )
-          }
-          ItemSeparatorComponent={() => (
-            <View className="h-px bg-gray-200 dark:bg-gray-800" />
-          )}
-        />
-      )}
+      {renderBody()}
 
       {/* ── FAB ─────────────────────────────────────────────── */}
       <FAB
