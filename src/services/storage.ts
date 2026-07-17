@@ -16,7 +16,6 @@ export async function getItemAsync(key: string): Promise<string | null> {
       // ponytail: sessionStorage over localStorage — tokens die with the tab,
       // reducing the XSS window. Real XSS mitigation requires httpOnly cookies
       // served from the backend + CSP.
-      // eslint-disable-next-line no-undef -- web only
       return window.sessionStorage.getItem(key);
     } catch {
       return null;
@@ -28,7 +27,6 @@ export async function getItemAsync(key: string): Promise<string | null> {
 export async function setItemAsync(key: string, value: string): Promise<void> {
   if (isWeb()) {
     try {
-      // eslint-disable-next-line no-undef -- web only
       window.sessionStorage.setItem(key, value);
     } catch {
       // Silently ignore storage errors; upstream handles auth failures
@@ -41,7 +39,6 @@ export async function setItemAsync(key: string, value: string): Promise<void> {
 export async function deleteItemAsync(key: string): Promise<void> {
   if (isWeb()) {
     try {
-      // eslint-disable-next-line no-undef -- web only
       window.sessionStorage.removeItem(key);
     } catch {
       // Silently ignore storage errors

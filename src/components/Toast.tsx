@@ -1,4 +1,3 @@
-/* global setTimeout, clearTimeout -- RN timer functions not in ESLint env */
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 

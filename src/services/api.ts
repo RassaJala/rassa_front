@@ -89,7 +89,6 @@ async function refreshTokens(): Promise<string> {
         refresh: refreshToken,
       }),
       new Promise<never>((_resolve, reject) =>
-        // eslint-disable-next-line no-undef -- global in RN/Node
         setTimeout(
           () => reject(new Error('Refresh token request timed out')),
           REFRESH_TIMEOUT_MS,

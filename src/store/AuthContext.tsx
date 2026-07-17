@@ -1,4 +1,3 @@
-/* globals console -- Allow console methods for logging */
 import type { ReactNode } from 'react';
 import React, {
   createContext,
@@ -172,7 +171,6 @@ export function AuthProvider({
       }
       // Transient error — one retry after 1s delay (C2)
       try {
-        // eslint-disable-next-line no-undef -- setTimeout is global in RN
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const { data: retryBody } = await api.get<{ data: BackendUser }>(
           AUTH_PROFILE_ENDPOINT,
