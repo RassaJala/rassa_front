@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
@@ -14,8 +16,13 @@ const REFRESH_TIMEOUT_MS = 8_000;
 const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 
 function resolveBaseURL(): string {
-  // eslint-disable-next-line no-undef -- process is injected by expo
-  const configured = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+  // On web, always use localhost (browser runs on the same machine as the server).
+  // On native, respect EXPO_PUBLIC_API_URL so physical devices can reach the backend.
+  const configured =
+    Platform.OS === 'web'
+      ? 'http://localhost:8000'
+      : // eslint-disable-next-line no-undef -- process is injected by expo
+        (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;

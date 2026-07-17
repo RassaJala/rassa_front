@@ -44,8 +44,7 @@ export default function AddProductScreen({
   } = useProductForm(productoId);
 
   const pickImage = async (): Promise<void> => {
-    const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         'Permiso requerido',
@@ -69,12 +68,17 @@ export default function AddProductScreen({
   const onSubmit = () => {
     handleSubmit(
       () => {
-        Alert.alert('Éxito', `Producto ${isEditing ? 'actualizado' : 'creado'} correctamente.`, [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
+        Alert.alert(
+          'Éxito',
+          `Producto ${isEditing ? 'actualizado' : 'creado'} correctamente.`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
       },
       () => {
-        Alert.alert('Error', `No se pudo ${isEditing ? 'actualizar' : 'crear'} el producto.`);
+        Alert.alert(
+          'Error',
+          `No se pudo ${isEditing ? 'actualizar' : 'crear'} el producto.`,
+        );
       },
     );
   };

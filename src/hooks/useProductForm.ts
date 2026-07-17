@@ -121,10 +121,7 @@ export function useProductForm(productoId?: number): UseProductFormResult {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = (
-    onSuccess: () => void,
-    onError: () => void,
-  ) => {
+  const handleSubmit = (onSuccess: () => void, onError: () => void) => {
     const validationErrors = validateForm(form);
 
     if (Object.keys(validationErrors).length > 0) {

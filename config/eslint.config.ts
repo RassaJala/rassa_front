@@ -45,6 +45,10 @@ function createIgnoresConfig() {
       'config/prettier.config.mjs',
       '**/*.js',
       '**/*.mjs',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'jest.setup.ts',
     ],
   });
 }
