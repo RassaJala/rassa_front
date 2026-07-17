@@ -16,11 +16,24 @@ export function cleanPhoneNumber(val: string): string {
 
 export function formatPhoneNumber(val: string): string {
   const cleaned = cleanPhoneNumber(val);
-  if (cleaned.length <= 3) return cleaned;
-  if (cleaned.length <= 6) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
-  if (cleaned.length <= 8)
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6, 8)}-${cleaned.slice(8)}`;
+  const hasPlus = val.trim().startsWith('+');
+  if (cleaned.length === 0) {
+    return hasPlus ? '+' : '';
+  }
+
+  if (cleaned.length <= 3) {
+    return hasPlus ? `+${cleaned}` : cleaned;
+  }
+  if (cleaned.length <= 6) {
+    const formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    return hasPlus ? `+${formatted}` : formatted;
+  }
+  if (cleaned.length <= 8) {
+    const formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    return hasPlus ? `+${formatted}` : formatted;
+  }
+  const formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6, 8)}-${cleaned.slice(8)}`;
+  return hasPlus ? `+${formatted}` : formatted;
 }
 
 export function cleanAddress(val: string): string {
@@ -33,7 +46,6 @@ export function isAdult(birthDate: string): boolean {
   const year = parseInt(parts[0] || '0', 10);
   const month = parseInt(parts[1] || '0', 10) - 1;
   const day = parseInt(parts[2] || '0', 10);
-
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - month;

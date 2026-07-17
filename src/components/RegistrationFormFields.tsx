@@ -92,12 +92,15 @@ export default function RegistrationFormFields({
       <TextInput
         mode="outlined"
         label="Teléfono *"
-        className="mb-4 bg-white dark:bg-gray-900"
+        className="mb-1 bg-white dark:bg-gray-900"
         placeholder="10 dígitos"
         keyboardType="phone-pad"
         value={telefono}
         onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
       />
+      <Text className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+        Para números extranjeros inicia con + (ej. +1...)
+      </Text>
 
       <TouchableOpacity testID="birthdate-pressable" onPress={onOpenDatePicker}>
         <View pointerEvents="none">
