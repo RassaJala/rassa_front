@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 
 interface EmptyStateProps {
   hasFilters: boolean;
@@ -12,14 +12,31 @@ interface EmptyStateProps {
 export default function EmptyState({
   hasFilters,
 }: EmptyStateProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const muted = colorScheme === 'dark' ? '#9DA89D' : '#5E6B5E';
+
   return (
-    <View className="items-center justify-center px-8 py-20">
+    <View
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 32,
+        paddingVertical: 80,
+      }}
+    >
       <MaterialCommunityIcons
         name="account-search-outline"
         size={64}
-        color={colors.iconMuted}
+        color={muted}
       />
-      <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
+      <Text
+        style={{
+          marginTop: 16,
+          textAlign: 'center',
+          fontSize: 15,
+          color: muted,
+        }}
+      >
         {hasFilters
           ? 'No se encontraron usuarios con esos filtros.'
           : 'No hay usuarios registrados.'}

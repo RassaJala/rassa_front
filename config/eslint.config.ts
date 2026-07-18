@@ -48,6 +48,8 @@ function createIgnoresConfig() {
       '**/*.test.ts',
       '**/*.test.tsx',
       'jest.setup.ts',
+      'web/**',
+      'packages/**',
     ],
   });
 }

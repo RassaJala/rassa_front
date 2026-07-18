@@ -3,8 +3,8 @@ import { Pressable, Switch, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from '@/constants/colors';
 import { ROLE_COLOR_MAP } from '@/constants/roles';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminUser } from '@/types/userManagement';
 import { getRoleLabel } from '@/utils/labels';
 import { getFullName, getRoleBadgeBg } from '@/utils/userManagement';
@@ -16,25 +16,69 @@ interface UserCardProps {
   onRolePress: (user: AdminUser) => void;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- UI component with theme-driven inline styles
 export default function UserCard({
   user,
   isSelf,
   onTogglePress,
   onRolePress,
 }: UserCardProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const amberBg = isDark ? 'rgba(212,160,32,0.2)' : '#FEF3C7';
+  const amberFg = isDark ? '#F2A900' : '#D97706';
+  const isActive = user.estado;
+  const bgDisabled = isDark ? 'rgba(255,255,255,0.05)' : '#F9FAFB';
+  const bgEnabled = isDark ? 'rgba(255,255,255,0.08)' : '#F3F4F6';
+  const textDisabled = isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB';
+  const roleBtnBg = isSelf ? bgDisabled : bgEnabled;
+  const roleBtnTextColor = isSelf ? textDisabled : muted;
+  const thumbColor = isSelf ? muted : isActive ? brand : muted;
+  const showTuBadge = isSelf;
+  const roleBadgeOpacity = isSelf ? 0.5 : 1;
+  const stateText = isActive ? 'Activo' : 'Inactivo';
+
   return (
-    <View className="mx-4 mb-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+    <View
+      style={{
+        backgroundColor: surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: border,
+        padding: 16,
+      }}
+    >
       {/* Top row: name + role badge */}
-      <View className="mb-3 flex-row items-center justify-between">
-        <View className="mr-2 flex-1">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <View style={{ flex: 1, marginRight: 8 }}>
           <Text
-            className="text-base font-semibold text-brand-ink dark:text-gray-100"
+            style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: fg,
+            }}
             numberOfLines={1}
           >
             {getFullName(user)}
           </Text>
           <Text
-            className="text-sm text-gray-500 dark:text-gray-400"
+            style={{
+              fontSize: 13,
+              color: muted,
+              marginTop: 2,
+            }}
             numberOfLines={1}
           >
             {user.email}
@@ -44,12 +88,20 @@ export default function UserCard({
         <Pressable
           onPress={() => onRolePress(user)}
           disabled={isSelf}
-          className={`rounded-full px-3 py-1 ${isSelf ? 'opacity-50' : ''}`}
-          style={{ backgroundColor: getRoleBadgeBg(user.role) }}
+          style={{
+            backgroundColor: getRoleBadgeBg(user.role),
+            borderRadius: 999,
+            paddingHorizontal: 12,
+            paddingVertical: 4,
+            opacity: roleBadgeOpacity,
+          }}
         >
           <Text
-            className="text-xs font-semibold"
-            style={{ color: ROLE_COLOR_MAP[user.role] ?? '#6b7280' }}
+            style={{
+              fontSize: 12,
+              fontWeight: '600',
+              color: ROLE_COLOR_MAP[user.role] ?? muted,
+            }}
           >
             {getRoleLabel(user.role)}
           </Text>
@@ -57,30 +109,48 @@ export default function UserCard({
       </View>
 
       {/* Bottom row: toggle + change role button */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Switch
-            value={user.estado}
+            value={isActive}
             onValueChange={() => onTogglePress(user)}
             disabled={isSelf}
             trackColor={{
-              false: colors.border,
-              true: colors.success,
+              false: border,
+              true: brand,
             }}
-            thumbColor={
-              isSelf
-                ? colors.iconMuted
-                : user.estado
-                  ? colors.primary
-                  : colors.iconMuted
-            }
+            thumbColor={thumbColor}
           />
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
-            {user.estado ? 'Activo' : 'Inactivo'}
+          <Text
+            style={{
+              fontSize: 14,
+              color: muted,
+            }}
+          >
+            {stateText}
           </Text>
-          {isSelf ? (
-            <View className="rounded bg-amber-100 px-1.5 py-0.5 dark:bg-amber-900">
-              <Text className="text-xs text-amber-700 dark:text-amber-300">
+          {showTuBadge ? (
+            <View
+              style={{
+                backgroundColor: amberBg,
+                borderRadius: 4,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: amberFg,
+                  fontWeight: '600',
+                }}
+              >
                 tú
               </Text>
             </View>
@@ -90,23 +160,26 @@ export default function UserCard({
         <Pressable
           onPress={() => onRolePress(user)}
           disabled={isSelf}
-          className={`flex-row items-center gap-1.5 rounded-lg px-3 py-1.5 ${
-            isSelf
-              ? 'bg-gray-50 dark:bg-gray-900'
-              : 'bg-gray-100 dark:bg-gray-800'
-          }`}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: roleBtnBg,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+          }}
         >
           <MaterialCommunityIcons
             name="account-cog-outline"
             size={16}
-            color={isSelf ? colors.iconMuted : colors.textSecondary}
+            color={roleBtnTextColor}
           />
           <Text
-            className={`text-sm ${
-              isSelf
-                ? 'text-gray-300 dark:text-gray-600'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
+            style={{
+              fontSize: 14,
+              color: roleBtnTextColor,
+            }}
           >
             Rol
           </Text>

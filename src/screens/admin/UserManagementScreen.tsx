@@ -12,7 +12,6 @@ import {
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
@@ -21,17 +20,22 @@ import EmptyState from '@/components/UserManagement/EmptyState';
 import FilterBar from '@/components/UserManagement/FilterBar';
 import RoleDialog from '@/components/UserManagement/RoleDialog';
 import UserCard from '@/components/UserManagement/UserCard';
-import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
-import type { AdminStackParamList, ApiResponse } from '@/types';
+import { useTheme } from '@/store/ThemeContext';
+import type { ApiResponse } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
 
-type Props = NativeStackScreenProps<AdminStackParamList, 'UserManagement'>;
+export default function UserManagementScreen(): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const inputBg = isDark ? '#263028' : '#F5F7F0';
 
-export default function UserManagementScreen({
-  navigation,
-}: Props): React.JSX.Element {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const netInfo = useNetInfo();
@@ -248,13 +252,28 @@ export default function UserManagementScreen({
   // ── Error state ──
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+        }}
+      >
         <MaterialCommunityIcons
           name="alert-circle-outline"
           size={48}
-          color={colors.iconMuted}
+          color={muted}
         />
-        <Text className="mt-3 text-center text-base text-gray-500 dark:text-gray-400">
+        <Text
+          style={{
+            marginTop: 12,
+            textAlign: 'center',
+            fontSize: 15,
+            color: muted,
+          }}
+        >
           {!netInfo.isConnected
             ? 'Sin conexión a Internet. Verifica tu conexión.'
             : 'Error al cargar usuarios.'}
@@ -265,49 +284,75 @@ export default function UserManagementScreen({
 
   // ── Main render ──
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View style={{ flex: 1, backgroundColor: bg }}>
       {/* ═══ Header ═══ */}
-      <View className="bg-brand-green-forest px-4 pb-5 pt-14">
-        <View className="flex-row items-center gap-3">
-          <Pressable
-            onPress={() => navigation.goBack()}
-            className="h-9 w-9 items-center justify-center rounded-full bg-white/20"
+      <View
+        style={{
+          paddingTop: 60,
+          paddingHorizontal: 20,
+          paddingBottom: 4,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
           >
-            <MaterialCommunityIcons
-              name="arrow-left"
-              size={22}
-              color={colors.iconWhite}
-            />
-          </Pressable>
-          <Text className="text-xl font-bold text-white">
-            Gestión de Usuarios
+            Usuarios
           </Text>
         </View>
       </View>
 
       {/* ═══ Search bar ═══ */}
-      <View className="px-4 pb-2 pt-3">
-        <View className="flex-row items-center rounded-xl border border-gray-300 bg-white px-3 dark:border-gray-600 dark:bg-gray-900">
-          <MaterialCommunityIcons
-            name="magnify"
-            size={20}
-            color={colors.iconMuted}
-          />
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: inputBg,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: border,
+            paddingHorizontal: 14,
+            height: 46,
+          }}
+        >
+          <MaterialCommunityIcons name="magnify" size={20} color={muted} />
           <TextInput
-            className="ml-2 flex-1 py-2.5 text-base text-brand-ink dark:text-gray-100"
+            style={{
+              flex: 1,
+              marginLeft: 8,
+              fontSize: 15,
+              color: fg,
+              paddingVertical: 0,
+            }}
             placeholder="Buscar por nombre o correo..."
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={muted}
             value={search}
             onChangeText={setSearch}
             autoCapitalize="none"
             autoCorrect={false}
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} className="p-1">
+            <Pressable
+              onPress={() => setSearch('')}
+              style={{ padding: 4 }}
+              hitSlop={6}
+            >
               <MaterialCommunityIcons
                 name="close-circle"
                 size={18}
-                color={colors.iconMuted}
+                color={muted}
               />
             </Pressable>
           )}
@@ -324,11 +369,9 @@ export default function UserManagementScreen({
 
       {/* ═══ User list ═══ */}
       {isLoading ? (
-        <ActivityIndicator
-          size="large"
-          color={colors.primary}
-          className="pb-20 pt-20"
-        />
+        <View style={{ flex: 1, alignItems: 'center', paddingTop: 60 }}>
+          <ActivityIndicator size="large" color={brand} />
+        </View>
       ) : (
         <FlatList
           data={users}
@@ -340,15 +383,17 @@ export default function UserManagementScreen({
             />
           }
           contentContainerStyle={{
-            paddingTop: 8,
+            padding: 20,
             paddingBottom: 40,
             flexGrow: 1,
+            gap: 10,
           }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor={colors.primary}
+              tintColor={brand}
+              colors={[brand]}
             />
           }
           showsVerticalScrollIndicator={false}

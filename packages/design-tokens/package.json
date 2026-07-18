@@ -1,0 +1,20 @@
+{
+  "name": "@rassa/design-tokens",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --noEmit && tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "26.0.1",
+    "typescript": "~5.9.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,51 @@
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[ErrorBoundary]', error, errorInfo);
+  }
+
+  override render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-4 dark:bg-gray-950">
+          <h1 className="text-2xl font-bold text-brand-ink dark:text-gray-100">
+            Algo salió mal
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Ocurrió un error inesperado. Intentá de nuevo.
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="rounded-lg bg-brand-red-coral px-6 py-2 text-white transition-colors hover:bg-red-600"
+          >
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

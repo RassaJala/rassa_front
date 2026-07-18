@@ -21,7 +21,7 @@ const categoryTrashConfig = {
   entityNamePlural: 'Categorías',
   getId: (item: Category) => item.id_categoria,
   getSecondValue: (item: Category) => item.descripcion,
-  headerTitle: 'Categorías inactivas',
+  headerTitle: 'Categorías',
   emptyText: 'No hay categorías en la papelera',
   emptyDescription: 'Las categorías desactivadas aparecerán aquí.',
   loadingErrorText: 'Error al cargar la papelera de categorías.',
