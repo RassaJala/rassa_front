@@ -1,300 +1,255 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  Animated,
+  Dimensions,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { Button } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as Sentry from '@sentry/react-native';
 
-import DatePickerModal from '@/components/DatePickerModal';
-import RegistrationFormFields from '@/components/RegistrationFormFields';
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
-import { useRegistrationForm } from '@/hooks/useRegistrationForm';
-import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
-import { extractApiError } from '@/utils/apiError';
-import { getRoleLabel } from '@/utils/labels';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import { getAdminStats } from '@/services/mock/dashboard';
 
-const menuItems = [
-  {
-    key: 'CategoryList',
-    label: 'Categorías',
-    icon: '📂',
-    description: 'Administrar categorías de productos',
-  },
-  {
-    key: 'UnitList',
-    label: 'Unidades de Medida',
-    icon: '📏',
-    description: 'Administrar unidades (kg, pz, lt...)',
-  },
-];
-
-type NavigationProp = NativeStackNavigationProp<
-  AdminStackParamList,
-  'AdminPanel'
->;
+type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
 interface Props {
-  readonly navigation: NavigationProp;
+  readonly navigation: Nav;
 }
 
-export default function AdminPanelScreen({
-  navigation,
-}: Props): React.JSX.Element {
-  const netInfo = useNetInfo();
-  const isMounted = useRef(true);
+const DRAWER_WIDTH = 0.55;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-  // Form State Hook
-  const form = useRegistrationForm({ initialRole: 'farmer' });
+export default function AdminPanelScreen({ navigation: _navigation }: Props): React.JSX.Element {
+  const { colorScheme, toggleColorScheme } = useTheme();
+  const { user, logout } = useAuth();
+  const isDark = colorScheme === 'dark';
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const stats = getAdminStats();
 
-  // UI States
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const sidebarBorder = isDark ? '#353D35' : '#E8ECE4';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
+  const coral = '#DE393A';
+  const pumpkin = '#F2A900';
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+  const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const d = new Date();
+  const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
 
-  async function handleAddUser() {
-    if (isSubmitting) return;
-    setErrorMessage(null);
-    setSuccessMessage(null);
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+    Animated.timing(slideAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  }, [slideAnim]);
 
-    if (netInfo.isConnected === false) {
-      setErrorMessage('Sin conexión a Internet.');
-      return;
-    }
-
-    const validationError = validateRegistrationForm({
-      email: form.email,
-      password: form.password,
-      telefono: form.telefono,
-      nombre: form.nombre,
-      apellidoPaterno: form.apellidoPaterno,
-      fechaNacimiento: form.fechaNacimiento,
-      domicilio: form.domicilio,
-      localidadId: form.catalog.localidadId,
-      customAgeMsg: 'El usuario debe ser mayor de 18 años.',
+  const closeDrawer = useCallback(() => {
+    Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => {
+      setDrawerOpen(false);
     });
+  }, [slideAnim]);
 
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
+  const drawerTranslate = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [SCREEN_WIDTH * DRAWER_WIDTH, 0],
+  });
 
-    setIsSubmitting(true);
+  const overlayOpacity = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.35],
+  });
 
-    try {
-      const payload = {
-        email: form.email.trim(),
-        password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
-        role: form.role,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
-        sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId,
-      };
-
-      // Call register API directly (ignoring returned tokens to maintain Admin session)
-      await api.post('/auth/register/', payload);
-
-      if (isMounted.current) {
-        setSuccessMessage(
-          `Usuario (${getRoleLabel(form.role)}) registrado exitosamente.`,
-        );
-
-        // Reset form
-        form.resetForm();
-      }
-    } catch (error) {
-      if (isMounted.current) {
-        const msg = extractApiError(error, [
-          'email',
-          'password',
-          'telefono',
-          'nombre',
-          'apellido_paterno',
-          'apellido_materno',
-          'fecha_nacimiento',
-          'sexo',
-          'domicilio',
-          'fk_localidad',
-        ]);
-        setErrorMessage(msg);
-      }
-      Sentry.captureException(error);
-    } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
-    }
-  }
-
-  if (!showForm) {
-    return (
-      <View className="flex-1 bg-gray-50 p-4 dark:bg-gray-950">
-        <View className="flex-1 gap-3">
-          <Pressable
-            onPress={() => setShowForm(true)}
-            className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
-          >
-            <Text className="mr-4 text-3xl">👤</Text>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
-                Agregar usuario
-              </Text>
-              <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                Agregar un nuevo usuario al sistema
-              </Text>
-            </View>
-            <Text className="text-xl text-gray-300">→</Text>
-          </Pressable>
-
-          {menuItems.map((item) => (
-            <Pressable
-              key={item.key}
-              onPress={() =>
-                navigation.navigate(item.key as 'CategoryList' | 'UnitList')
-              }
-              className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
-            >
-              <Text className="mr-4 text-3xl">{item.icon}</Text>
-              <View className="flex-1">
-                <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
-                  {item.label}
-                </Text>
-                <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                  {item.description}
-                </Text>
-              </View>
-              <Text className="text-xl text-gray-300">→</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    );
-  }
+  // ponytail: custom right-side drawer, full drawer-nav if admin grows
+  const menuItems = [
+    {
+      icon: 'account-circle-outline',
+      label: 'Perfil',
+      desc: 'Tu información personal',
+      color: fg,
+      action: closeDrawer,
+    },
+    {
+      icon: isDark ? 'weather-sunny' : 'weather-night',
+      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
+      desc: 'Alternar apariencia',
+      color: fg,
+      action: toggleColorScheme,
+    },
+    {
+      icon: 'cog-outline',
+      label: 'Configuración',
+      desc: 'Preferencias del sistema',
+      color: fg,
+      action: closeDrawer,
+    },
+    {
+      icon: 'logout',
+      label: 'Cerrar sesión',
+      desc: '',
+      color: coral,
+      action: () => { closeDrawer(); void logout(); },
+    },
+  ];
 
   return (
-    <ScrollView
-      className="flex-1 bg-gray-50 px-6 py-8 dark:bg-gray-950"
-      contentContainerStyle={styles.scrollContent}
-    >
-      <View className="mb-6 flex-row items-center justify-between">
-        <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
-          Registrar Usuario
-        </Text>
-        <TouchableOpacity
-          onPress={() => {
-            setShowForm(false);
-            setSuccessMessage(null);
-            setErrorMessage(null);
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      {/* ═══ CONTENIDO PRINCIPAL ═══ */}
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+            {/* ═══ HEADER ═══ */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted }}>
+                  {today}
+                </Text>
+                <Text style={{ fontSize: 32, fontWeight: '700', letterSpacing: -0.3, color: fg }}>
+                  Panel
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  style={({ pressed }) => ({
+                    width: 48, height: 48, borderRadius: 24,
+                    backgroundColor: surface, borderWidth: 1, borderColor: border,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <MaterialCommunityIcons name="bell-outline" size={24} color={fg} />
+                </Pressable>
+                <Pressable
+                  onPress={openDrawer}
+                  style={({ pressed }) => ({
+                    width: 48, height: 48, borderRadius: 24,
+                    backgroundColor: surface, borderWidth: 1, borderColor: border,
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <MaterialCommunityIcons name="account-circle" size={24} color={fg} />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* ═══ STATS ═══ */}
+            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}>
+              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: accentBg, marginBottom: 10 }}>
+                  <MaterialCommunityIcons name="package-variant" size={24} color={brand} />
+                </View>
+                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: brand }}>{stats.totalProducts.toLocaleString()}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Productos</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: coralBg, marginBottom: 10 }}>
+                  <MaterialCommunityIcons name="account-group" size={24} color={coral} />
+                </View>
+                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: coral }}>{stats.totalUsers.toLocaleString()}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Usuarios</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pumpkinBg, marginBottom: 10 }}>
+                  <MaterialCommunityIcons name="clipboard-list" size={24} color={pumpkin} />
+                </View>
+                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: pumpkin }}>{stats.totalOrders.toLocaleString()}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Pedidos</Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* ═══ OVERLAY (solo oscurece el panel de atrás) ═══ */}
+      {drawerOpen && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            right: 0,
+            opacity: overlayOpacity,
+            backgroundColor: '#000',
           }}
-          className="rounded-lg border border-gray-200 bg-white px-3.5 py-1.5 dark:border-gray-800 dark:bg-gray-900"
         >
-          <Text className="font-medium text-gray-500 dark:text-gray-400">
-            Volver
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
+        </Animated.View>
+      )}
 
-      <View className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        {/* Role Toggle */}
-        <Text className="mb-2 text-sm font-medium text-brand-ink dark:text-gray-300">
-          Rol del usuario
-        </Text>
-        <View className="mb-4 flex-row space-x-2">
-          {(['buyer', 'farmer', 'seller'] as const).map((r) => (
-            <TouchableOpacity
-              key={r}
-              onPress={() => form.setRole(r)}
-              className={`flex-1 rounded-lg border py-2.5 ${
-                form.role === r
-                  ? 'border-brand-red-coral bg-brand-red-coral/5 dark:bg-brand-red-coral/10'
-                  : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950'
-              }`}
-            >
-              <Text
-                className={`text-center font-medium ${
-                  form.role === r
-                    ? 'text-brand-red-coral'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {getRoleLabel(r)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      {/* ═══ DRAWER desde la derecha ═══ */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: `${DRAWER_WIDTH * 100}%`,
+          backgroundColor: isDark ? '#1A211B' : '#FFFFFF',
+          transform: [{ translateX: drawerTranslate }],
+          borderLeftWidth: 1,
+          borderLeftColor: sidebarBorder,
+          // ponytail: elevation shadow via border, no shadow props
+        }}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Header — perfil del usuario */}
+          <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24, marginBottom: 20, borderBottomWidth: 1, borderBottomColor: sidebarBorder }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <MaterialCommunityIcons name="account-circle" size={40} color={brand} />
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: fg, letterSpacing: -0.2 }}>{user?.nombre ?? 'Administrador'}</Text>
+            <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>{user?.email ?? 'admin@rassa.com'}</Text>
+          </View>
 
-        <RegistrationFormFields
-          form={form}
-          setErrorMessage={setErrorMessage}
-          onOpenDatePicker={() => setIsDatePickerVisible(true)}
-        />
+          {/* Items del menú */}
+          <View style={{ paddingHorizontal: 16, gap: 6 }}>
+            {menuItems.map((item, i) => {
+              const isLast = i === menuItems.length - 1;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={item.action}
+                  style={({ pressed }) => ({
+                    backgroundColor: isLast
+                      ? (isDark ? 'rgba(222,57,58,0.1)' : 'rgba(222,57,58,0.07)')
+                      : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'),
+                    borderRadius: 16,
+                    borderWidth: isLast ? 1 : 0,
+                    borderColor: isLast ? (isDark ? 'rgba(222,57,58,0.25)' : 'rgba(222,57,58,0.15)') : 'transparent',
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, minHeight: 56 }}>
+                    <MaterialCommunityIcons name={item.icon as any} size={28} color={item.color} />
+                    <Text style={{ fontSize: 20, fontWeight: '600', color: item.color, letterSpacing: -0.15, flexShrink: 1 }}>{item.label}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        {successMessage ? (
-          <Text className="mb-4 text-center text-sm font-medium text-brand-green-forest">
-            {successMessage}
-          </Text>
-        ) : null}
-
-        {errorMessage ? (
-          <Text className="mb-4 text-center text-sm font-medium text-red-500">
-            {errorMessage}
-          </Text>
-        ) : null}
-
-        <Button
-          mode="contained"
-          disabled={isSubmitting}
-          onPress={() => void handleAddUser()}
-          buttonColor={BRAND_RED_CORAL}
-          className="rounded-lg"
-          contentStyle={styles.buttonContent}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            'Agregar usuario'
-          )}
-        </Button>
-      </View>
-      <DatePickerModal
-        visible={isDatePickerVisible}
-        onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={form.setFechaNacimiento}
-        initialDate={form.fechaNacimiento}
-      />
-    </ScrollView>
+          {/* Espacio inferior */}
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  buttonContent: {
-    paddingVertical: 6,
-  },
-});

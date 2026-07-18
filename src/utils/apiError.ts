@@ -52,3 +52,70 @@ export function extractApiError(error: unknown, fieldKeys: string[]): string {
 
   return 'Error del servidor. Intenta de nuevo.';
 }
+
+/**
+ * Extract per-field errors from an API error response.
+ * Returns an object mapping field names to error strings, plus a general error.
+ */
+export function extractFieldErrors(
+  error: unknown,
+  fieldKeys: string[],
+): { fields: Record<string, string>; general: string | null } {
+  const fields: Record<string, string> = {};
+  let general: string | null = null;
+
+  if (!axios.isAxiosError(error)) {
+    general = error instanceof Error ? error.message : 'Error desconocido.';
+    return { fields, general };
+  }
+
+  const axiosErr = error as AxiosError<Record<string, unknown> | string>;
+  const data = axiosErr.response?.data;
+  const status = axiosErr.response?.status;
+
+  if (!data) {
+    general = 'Error del servidor. Intenta de nuevo.';
+    return { fields, general };
+  }
+
+  if (typeof data === 'string') {
+    general = parseHtmlOrStringError(data, status);
+    return { fields, general };
+  }
+
+  // Detail/message level error
+  if (typeof data.detail === 'string') {
+    general = data.detail;
+    return { fields, general };
+  }
+  if (typeof data.message === 'string') {
+    general = data.message;
+    return { fields, general };
+  }
+
+  // Check for field-level errors
+  let foundField = false;
+  for (const key of fieldKeys) {
+    const value = data[key];
+    if (Array.isArray(value) && value.length > 0) {
+      fields[key] = String(value[0]);
+      foundField = true;
+    } else if (typeof value === 'string') {
+      fields[key] = value;
+      foundField = true;
+    }
+  }
+
+  if (!foundField) {
+    // Try to find any first error
+    for (const [k, v] of Object.entries(data)) {
+      if (Array.isArray(v) && v.length > 0) {
+        general = `${k}: ${String(v[0])}`;
+        return { fields, general };
+      }
+    }
+    general = 'Error del servidor. Intenta de nuevo.';
+  }
+
+  return { fields, general };
+}

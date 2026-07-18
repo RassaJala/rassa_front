@@ -1,62 +1,63 @@
-# Rassa — Mobile App
+# RASSA-JALA
 
-App mobile para e-commerce donde agricultores venden sus productos directamente. Construida con Expo (React Native).
+E-commerce donde agricultores venden sus productos directamente. App **móvil** (Expo React Native) + **web** (React + Vite).
 
 ## Stack
 
-- **Expo SDK 54** (React Native)
-- **React Navigation** (navegación)
-- **TanStack Query** (server state)
+### Móvil (React Native / Expo)
+- **Expo SDK 54** (React Native 0.81)
+- **React Navigation 7** (Stack + Bottom Tabs)
+- **TanStack Query 5** (server state)
 - **Axios** (HTTP client)
 - **NativeWind** (Tailwind para RN)
 - **React Native Paper** (UI components)
 
+### Web (React + Vite)
+- **React 18** + **Vite**
+- **React Router DOM 6**
+- **TanStack Query 5**
+- **Axios** (HTTP client)
+- **CSS custom** (sin librería de componentes)
+
 ## Requisitos
 
 - Node.js 18 o superior
-- Expo Go (instalada en tu celular)
 - [Bun](https://bun.sh) (package manager)
+- Expo Go (para mobile) o un navegador (para web)
 
 ## Instalación
 
 ```bash
-# 1. Clonar el repo (si no lo hiciste)
 git clone <repo-url>
 cd Rassa
-
-# 2. Instalar dependencias
 bun install
-```
-
-### ⚠️ Notas de Instalación y Hooks Locales (Lefthook)
-
-El proyecto utiliza nuevas dependencias nativas (`@react-native-community/datetimepicker`, `@react-native-community/netinfo`, `react-native-reanimated` y `react-native-worklets-core`) e integra **Lefthook** para validaciones previas al commit.
-
-Si experimentás errores durante la instalación (por ejemplo, si no tenés `bun` o `bunx` instalados globalmente en tu sistema de manera nativa), podés instalar y compilar el árbol de dependencias usando `npm` ignorando temporalmente los scripts de ciclo de vida:
-
-```bash
-npm install --legacy-peer-deps --ignore-scripts
-```
-
-Si los Git hooks locales te impiden realizar commits debido a la falta de Bun en tu PATH, podés confirmarlos omitiendo las validaciones:
-
-```bash
-git commit -m "tu mensaje" --no-verify
 ```
 
 ## Ejecutar
 
 ```bash
-# Iniciar servidor de desarrollo
-bun run start
+# ── Móvil (Expo) ──
+bun run start          # Inicia Metro bundler, escaneá QR con Expo Go
 
-# Web
-bun run web
+# ── Web (Vite) ──
+bun run dev:web        # Inicia servidor de desarrollo en http://localhost:5173
+# o
+cd web && bun run dev  # Mismo resultado
+
+# ── TypeScript check (ambos proyectos) ──
+bun run typecheck
 ```
 
-Escaneá el QR con **Expo Go** en tu celular para ver la app al instante.
+### Móvil
+Escaneá el QR con **Expo Go** en tu celular. También podés apretar `a` para emulador Android o `i` para iOS simulator (solo Mac).
 
-> Si querés correr en un emulador Android, apretá `a` en la terminal. Para iOS simulador, `i` (solo Mac).
+### Web
+Abrí `http://localhost:5173` en el navegador. Las rutas disponibles son:
+- `/login` — Inicio de sesión
+- `/register` — Registro
+- `/admin` — Panel de administración (dashboard, productos, categorías, unidades)
+- `/agricultor/*` — Panel de agricultor
+- `/vendedor/*` — Panel de vendedor
 
 ## Configuración
 
@@ -66,47 +67,55 @@ Crear un archivo `.env` en la raíz:
 EXPO_PUBLIC_API_URL=http://localhost:8000/api
 ```
 
-Si estás probando desde un celular físico, cambiá `localhost` por la IP de tu máquina:
+Para mobile desde celular físico, usar la IP de tu máquina:
 
 ```env
 EXPO_PUBLIC_API_URL=http://192.168.x.x:8000/api
 ```
 
-## Estructura
+## Estructura del proyecto
 
 ```
 Rassa/
-├── index.js                     # Entry point (registerRootComponent)
-├── App.tsx                      # Root component
-├── src/
-│   ├── navigation/              # Navegación por rol
+├── App.tsx                     # Entry point móvil
+├── src/                        # Código fuente móvil
+│   ├── components/             # Componentes compartidos (CrudListScreen, TrashListScreen)
+│   ├── navigation/             # React Navigation stacks + tabs
 │   ├── screens/
-│   │   ├── auth/                # Login / Register
-│   │   ├── buyer/               # Pantallas de comprador
-│   │   ├── farmer/              # Pantallas de agricultor
-│   │   ├── admin/               # Panel admin
-│   │   └── common/              # Splash, etc.
-│   ├── components/ui/           # Componentes reutilizables
-│   ├── services/api.ts          # Axios instance con JWT
-│   ├── store/AuthContext.tsx    # Estado de autenticación
-│   ├── hooks/                   # Custom hooks
-│   ├── types/                   # Tipos compartidos
-│   └── constants/               # Colores, temas
-├── babel.config.js              # Babel (NativeWind)
-├── metro.config.js              # Metro bundler (NativeWind)
-├── tailwind.config.js           # Tailwind CSS
-├── tsconfig.json                # TypeScript
-├── bunfig.toml                  # Bun config
-├── package.json
-└── app.json
+│   │   ├── admin/              # Panel, productos, categorías, unidades
+│   │   ├── auth/               # Login, Register
+│   │   ├── buyer/              # Pantallas de comprador
+│   │   ├── farmer/             # Pantallas de agricultor
+│   │   ├── seller/             # Pantallas de vendedor
+│   │   └── common/             # Splash, carrito, notificaciones, perfil
+│   ├── services/               # API, almacenamiento
+│   ├── store/                  # AuthContext, ThemeContext
+│   ├── types/                  # Tipos TypeScript
+│   └── utils/                  # Utilidades (apiError, etc.)
+├── web/                        # Código fuente web
+│   └── src/
+│       ├── components/layout/  # Sidebar, Topbar, DashboardLayout, AuthLayout
+│       ├── components/ui/      # Button, Input, Badge, Card
+│       ├── routes/             # Páginas (auth, admin, farmer, seller)
+│       └── providers/          # Auth, Theme, Query
+├── packages/                   # Paquetes compartidos (diseño, API)
+├── ARCHITECTURE.md             # Documentación de arquitectura
+└── README.md
 ```
 
 ## Comandos útiles
 
 ```bash
-# TypeScript check
-bun run typecheck
-
-# Limpiar caché de Expo
-bunx expo start -c
+bun run typecheck     # TypeScript check (móvil + web)
+bun run start         # Servidor Expo (móvil)
+bun run dev:web       # Servidor Vite (web)
+cd web && bun run dev # Alternativa para web
 ```
+
+## Convenciones
+
+- **Commits**: conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
+- **Branch naming**: `feature/`, `fix/`, `redesign-` seguido de descripción
+- **Tipado**: estricto con `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`
+- **Estilos**: inline styles con variables del theme (sin utility classes)
+- **Ver archivo `ARCHITECTURE.md`** para detalles de arquitectura y patrones de diseño
