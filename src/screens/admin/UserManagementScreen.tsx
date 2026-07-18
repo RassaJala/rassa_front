@@ -97,10 +97,6 @@ export default function UserManagementScreen(): React.JSX.Element {
         `/admin/usuarios/${queryString}`,
       );
 
-      // Handle three response shapes:
-      // 1) { data: { results: [...] } } — paginated _ok envelope
-      // 2) { data: [...] } — non-paginated _ok envelope
-      // 3) [...] — raw array (fallback)
       const body = response.data;
 
       if (Array.isArray(body)) {
@@ -108,14 +104,17 @@ export default function UserManagementScreen(): React.JSX.Element {
       }
 
       if (body && typeof body === 'object' && 'data' in body) {
-        const payload = (body as ApiResponse<{ results?: AdminUser[] }>).data;
-        // Unwrap paginated envelope if present
-        if (payload && typeof payload === 'object' && 'results' in payload) {
-          return payload.results as AdminUser[];
-        }
-        // Non-paginated: data is the array directly
-        if (Array.isArray(payload)) {
-          return payload;
+        const payload: unknown = body.data;
+
+        if (payload && typeof payload === 'object') {
+          // Paginated: { results: [...] }
+          if ('results' in payload) {
+            return (payload as { results: AdminUser[] }).results;
+          }
+          // Non-paginated: data is the array directly
+          if (Array.isArray(payload)) {
+            return payload as AdminUser[];
+          }
         }
       }
 
@@ -125,10 +124,10 @@ export default function UserManagementScreen(): React.JSX.Element {
   });
 
   const errorMessage =
-    (queryError as { response?: { data?: { detail?: string } } })?.response?.data
-      ?.detail
-    ?? (queryError as Error)?.message
-    ?? 'Error al cargar usuarios';
+    (queryError as { response?: { data?: { detail?: string } } })?.response
+      ?.data?.detail ??
+    (queryError as Error)?.message ??
+    'Error al cargar usuarios';
 
   // ── Toggle estado mutation ──
   const toggleMutation = useMutation({
@@ -318,11 +317,7 @@ export default function UserManagementScreen(): React.JSX.Element {
             borderColor: border,
           }}
         >
-          <MaterialCommunityIcons
-            name="refresh"
-            size={18}
-            color={brand}
-          />
+          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
           <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
             Reintentar
           </Text>
