@@ -97,7 +97,10 @@ export default function UserManagementScreen(): React.JSX.Element {
         `/admin/usuarios/${queryString}`,
       );
 
-      // Handle both { data: [...] } and direct [...] responses
+      // Handle three response shapes:
+      // 1) { data: { results: [...] } } — paginated _ok envelope
+      // 2) { data: [...] } — non-paginated _ok envelope
+      // 3) [...] — raw array (fallback)
       const body = response.data;
 
       if (Array.isArray(body)) {
@@ -105,7 +108,15 @@ export default function UserManagementScreen(): React.JSX.Element {
       }
 
       if (body && typeof body === 'object' && 'data' in body) {
-        return (body as ApiResponse<AdminUser[]>).data;
+        const payload = (body as ApiResponse<{ results?: AdminUser[] }>).data;
+        // Unwrap paginated envelope if present
+        if (payload && typeof payload === 'object' && 'results' in payload) {
+          return payload.results as AdminUser[];
+        }
+        // Non-paginated: data is the array directly
+        if (Array.isArray(payload)) {
+          return payload;
+        }
       }
 
       throw new Error('Formato de respuesta inesperado');
