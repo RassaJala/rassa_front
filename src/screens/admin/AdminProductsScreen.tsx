@@ -47,10 +47,10 @@ const transparentBg = 'transparent';
 const trashBg = 'rgba(242,169,0,0.1)';
 
 function CategoryPickerModal({
-  visible, categories, selected, onSelect, onClose, surface, fg, accentBg, _muted, _border,
+  visible, categories, selected, onSelect, onClose, surface, fg, accentBg,
 }: {
   visible: boolean; categories: string[]; selected: string; onSelect: (c: string) => void; onClose: () => void;
-  surface: string; fg: string; accentBg: string; _muted: string; _border: string;
+  surface: string; fg: string; accentBg: string;
 }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -70,10 +70,10 @@ function CategoryPickerModal({
 }
 
 function ToggleConfirmModal({
-  target, onConfirm, onClose, surface, fg, muted, iconWhite, errorColor, border, iconBg, _isDark,
+  target, onConfirm, onClose, surface, fg, muted, iconWhite, errorColor, border, iconBg,
 }: {
-  target: Product | null; onConfirm: (t: Product) => void; onClose: () => void;
-  surface: string; fg: string; muted: string; iconWhite: string; errorColor: string; border: string; iconBg: string; _isDark: boolean;
+  target: Product | null; onConfirm: (product: Product) => void; onClose: () => void;
+  surface: string; fg: string; muted: string; iconWhite: string; errorColor: string; border: string; iconBg: string;
 }) {
   return (
     <Modal visible={target !== null} transparent animationType="slide" onRequestClose={onClose}>
@@ -416,14 +416,14 @@ export default function AdminProductsScreen(): React.JSX.Element {
         selected={formValues.category}
         onSelect={(cat) => setFormValues((p) => ({ ...p, category: cat }))}
         onClose={() => setShowPicker(false)}
-        surface={surface} fg={fg} _muted={muted} accentBg={accentBg} _border={border}
+        surface={surface} fg={fg} accentBg={accentBg}
       />
 
       <ToggleConfirmModal
         target={toggleTarget}
         onConfirm={toggleStatus}
         onClose={() => setToggleTarget(null)}
-        surface={surface} fg={fg} muted={muted} iconWhite={iconWhite} errorColor={errorColor} border={border} iconBg={iconBg} _isDark={isDark}
+        surface={surface} fg={fg} muted={muted} iconWhite={iconWhite} errorColor={errorColor} border={border} iconBg={iconBg}
       />
 
       <DeleteConfirmModal
