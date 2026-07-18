@@ -44,7 +44,7 @@ function MunicipioListItem({
         borderWidth: 1,
         borderColor: colors.border,
         padding: 16,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
         shadowRadius: 2,
@@ -62,8 +62,8 @@ function MunicipioListItem({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: item.estado
-              ? 'rgba(74,138,99,0.1)'
-              : 'rgba(0,0,0,0.03)',
+              ? colors.activeGreenBg
+              : colors.inactiveGrayBg,
           }}
         >
           <MaterialCommunityIcons
@@ -93,8 +93,8 @@ function MunicipioListItem({
               style={{
                 borderRadius: 999,
                 backgroundColor: item.estado
-                  ? 'rgba(74,138,99,0.1)'
-                  : 'rgba(0,0,0,0.03)',
+                  ? colors.activeGreenBg
+                  : colors.inactiveGrayBg,
                 paddingHorizontal: 8,
                 paddingVertical: 2,
               }}

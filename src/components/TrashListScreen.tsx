@@ -15,8 +15,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
-import api from '@/services/api';
 import { colors } from '@/constants/colors';
+import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
@@ -55,6 +55,32 @@ interface TrashListScreenProps<T extends { nombre: string; estado: boolean }> {
   >;
 }
 
+// ── Helper API fetcher ─────────────────────────────────────
+
+async function fetchTrashItems<T extends { nombre: string; estado: boolean }>(
+  endpoint: string,
+  queryParams?: Record<string, string>,
+): Promise<T[]> {
+  const baseUri = `${endpoint}trash/`;
+  const url = queryParams
+    ? `${baseUri}?${new URLSearchParams(queryParams).toString()}`
+    : baseUri;
+  const { data } = await api.get<
+    T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+  >(url);
+
+  if (Array.isArray(data)) return data;
+  if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+    if (Array.isArray(data.data)) return data.data;
+    const inner = data.data as { results?: T[] };
+    if (Array.isArray(inner.results)) return inner.results;
+  }
+  if ('results' in data && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
+// ── Component ──────────────────────────────────────────────
+
 export default function TrashListScreen<
   T extends { nombre: string; estado: boolean },
 >({ config, navigation }: TrashListScreenProps<T>): React.JSX.Element | null {
@@ -84,28 +110,7 @@ export default function TrashListScreen<
     queryKey: config.queryParams
       ? [...config.queryKey, 'trash', JSON.stringify(config.queryParams)]
       : [...config.queryKey, 'trash'],
-    queryFn: async () => {
-      const baseUri = `${config.endpoint}trash/`;
-      const url = config.queryParams
-        ? `${baseUri}?${new URLSearchParams(config.queryParams).toString()}`
-        : baseUri;
-      const { data } = await api.get<
-        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(url);
-
-      if (Array.isArray(data)) return data;
-      if (
-        'data' in data &&
-        typeof data.data === 'object' &&
-        data.data !== null
-      ) {
-        if (Array.isArray(data.data)) return data.data;
-        const inner = data.data as { results?: T[] };
-        if (Array.isArray(inner.results)) return inner.results;
-      }
-      if ('results' in data && Array.isArray(data.results)) return data.results;
-      return [];
-    },
+    queryFn: () => fetchTrashItems<T>(config.endpoint, config.queryParams),
     staleTime: 10_000,
     retry: 2,
   });

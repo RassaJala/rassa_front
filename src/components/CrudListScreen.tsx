@@ -246,6 +246,30 @@ function fieldValueFor<T extends { nombre: string; estado: boolean }>(
   return '';
 }
 
+// ── Helper API fetcher ─────────────────────────────────────
+
+async function fetchCrudItems<T>(
+  endpoint: string,
+  queryParams?: Record<string, string>,
+): Promise<T[]> {
+  const url = queryParams
+    ? `${endpoint}?${new URLSearchParams(queryParams).toString()}`
+    : endpoint;
+  const { data } = await api.get<
+    T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+  >(url);
+
+  if (Array.isArray(data)) return data;
+  if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+    if (Array.isArray(data.data)) return data.data;
+    const inner = data.data as { results?: T[] };
+    if (Array.isArray(inner.results)) return inner.results;
+  }
+  if ('results' in data && Array.isArray(data.results)) return data.results;
+
+  return [];
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export default function CrudListScreen<
@@ -281,28 +305,7 @@ export default function CrudListScreen<
     queryKey: config.queryParams
       ? [...config.queryKey, JSON.stringify(config.queryParams)]
       : [...config.queryKey],
-    queryFn: async () => {
-      const url = config.queryParams
-        ? `${config.endpoint}?${new URLSearchParams(config.queryParams).toString()}`
-        : config.endpoint;
-      const { data } = await api.get<
-        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(url);
-
-      if (Array.isArray(data)) return data;
-      if (
-        'data' in data &&
-        typeof data.data === 'object' &&
-        data.data !== null
-      ) {
-        if (Array.isArray(data.data)) return data.data;
-        const inner = data.data as { results?: T[] };
-        if (Array.isArray(inner.results)) return inner.results;
-      }
-      if ('results' in data && Array.isArray(data.results)) return data.results;
-
-      return [];
-    },
+    queryFn: () => fetchCrudItems<T>(config.endpoint, config.queryParams),
     staleTime: 30_000,
     retry: 2,
   });
