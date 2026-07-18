@@ -75,13 +75,17 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     items: T[] | undefined,
     editingItem: T | null,
   ) => string | null;
-  readonly trashScreenName?: 'CategoryTrash' | 'UnitTrash';
+  readonly queryParams?: Record<string, string>;
+  readonly trashScreenName?:
+    'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
+  readonly trashScreenParams?: Record<string, unknown>;
   readonly comingSoon?: boolean;
 }
 
 // ── Navigation type ────────────────────────────────────────
 
-type CrudScreenName = 'CategoryList' | 'UnitList';
+type CrudScreenName =
+  'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
 
 interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: CrudConfig<T>;
@@ -206,11 +210,16 @@ export default function CrudListScreen<
     refetch,
     isRefetching,
   } = useQuery<T[]>({
-    queryKey: [...config.queryKey],
+    queryKey: config.queryParams
+      ? [...config.queryKey, JSON.stringify(config.queryParams)]
+      : [...config.queryKey],
     queryFn: async () => {
+      const url = config.queryParams
+        ? `${config.endpoint}?${new URLSearchParams(config.queryParams).toString()}`
+        : config.endpoint;
       const { data } = await api.get<
         T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(config.endpoint);
+      >(url);
 
       if (Array.isArray(data)) return data;
       if (
@@ -218,6 +227,7 @@ export default function CrudListScreen<
         typeof data.data === 'object' &&
         data.data !== null
       ) {
+        if (Array.isArray(data.data)) return data.data;
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }
@@ -263,7 +273,10 @@ export default function CrudListScreen<
   // ── Mutations ──────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const { data } = await api.post<ApiResponse<T>>(config.endpoint, payload);
+      const url = config.queryParams
+        ? `${config.endpoint}?${new URLSearchParams(config.queryParams).toString()}`
+        : config.endpoint;
+      const { data } = await api.post<ApiResponse<T>>(url, payload);
 
       return data;
     },
@@ -559,7 +572,12 @@ export default function CrudListScreen<
           </Text>
           {trashScreen ? (
             <Pressable
-              onPress={() => navigation.navigate(trashScreen)}
+              onPress={() =>
+                navigation.navigate(
+                  trashScreen,
+                  config.trashScreenParams as never,
+                )
+              }
               className="ml-auto h-11 w-11 items-center justify-center rounded-full active:opacity-80"
               hitSlop={12}
             >

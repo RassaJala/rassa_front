@@ -37,6 +37,12 @@ const menuItems = [
     icon: '📏',
     description: 'Administrar unidades (kg, pz, lt...)',
   },
+  {
+    key: 'MunicipioList',
+    label: 'Municipios',
+    icon: '🗺️',
+    description: 'Administrar municipios y sus localidades',
+  },
 ];
 
 type NavigationProp = NativeStackNavigationProp<
@@ -174,7 +180,9 @@ export default function AdminPanelScreen({
             <Pressable
               key={item.key}
               onPress={() =>
-                navigation.navigate(item.key as 'CategoryList' | 'UnitList')
+                navigation.navigate(
+                  item.key as 'CategoryList' | 'UnitList' | 'MunicipioList',
+                )
               }
               className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
             >

@@ -35,12 +35,15 @@ interface TrashConfig<T extends { nombre: string; estado: boolean }> {
   readonly toastRestored: (name: string) => string;
   readonly toastPermanentDeleted: (name: string) => string;
   readonly permanentConfirmText: (item: T) => string;
-  readonly listScreen: 'CategoryList' | 'UnitList';
+  readonly queryParams?: Record<string, string>;
+  readonly listScreen:
+    'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
 }
 
 // ── Navigation type ────────────────────────────────────────
 
-type TrashScreenName = 'CategoryTrash' | 'UnitTrash';
+type TrashScreenName =
+  'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
 
 interface TrashListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: TrashConfig<T>;
@@ -66,11 +69,17 @@ export default function TrashListScreen<
     refetch,
     isRefetching,
   } = useQuery<T[]>({
-    queryKey: [...config.queryKey, 'trash'],
+    queryKey: config.queryParams
+      ? [...config.queryKey, 'trash', JSON.stringify(config.queryParams)]
+      : [...config.queryKey, 'trash'],
     queryFn: async () => {
+      const baseUri = `${config.endpoint}trash/`;
+      const url = config.queryParams
+        ? `${baseUri}?${new URLSearchParams(config.queryParams).toString()}`
+        : baseUri;
       const { data } = await api.get<
         T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(`${config.endpoint}trash/`);
+      >(url);
 
       if (Array.isArray(data)) return data;
       if (
@@ -78,6 +87,7 @@ export default function TrashListScreen<
         typeof data.data === 'object' &&
         data.data !== null
       ) {
+        if (Array.isArray(data.data)) return data.data;
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }
@@ -312,7 +322,9 @@ export default function TrashListScreen<
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => navigation.navigate(config.listScreen)}
+                  onPress={() =>
+                    navigation.navigate(config.listScreen as never)
+                  }
                   className="flex-row items-center gap-1 rounded-md px-2 py-1"
                   hitSlop={8}
                 >
