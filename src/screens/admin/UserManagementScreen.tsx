@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNetInfo } from '@react-native-community/netinfo';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
@@ -38,7 +37,6 @@ export default function UserManagementScreen(): React.JSX.Element {
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
-  const netInfo = useNetInfo();
 
   // ── Search & filter state ──
   const [search, setSearch] = useState('');
@@ -89,19 +87,37 @@ export default function UserManagementScreen(): React.JSX.Element {
     data: users,
     isLoading,
     isError,
+    error: queryError,
     refetch,
     isRefetching,
   } = useQuery<AdminUser[]>({
     queryKey: ['admin-users', debouncedSearch, roleFilter, statusFilter],
-    enabled: netInfo.isConnected ?? true,
     queryFn: async () => {
-      const { data: response } = await api.get<ApiResponse<AdminUser[]>>(
+      const response = await api.get<AdminUser[] | ApiResponse<AdminUser[]>>(
         `/admin/usuarios/${queryString}`,
       );
 
-      return response.data;
+      // Handle both { data: [...] } and direct [...] responses
+      const body = response.data;
+
+      if (Array.isArray(body)) {
+        return body;
+      }
+
+      if (body && typeof body === 'object' && 'data' in body) {
+        return (body as ApiResponse<AdminUser[]>).data;
+      }
+
+      throw new Error('Formato de respuesta inesperado');
     },
+    retry: 1,
   });
+
+  const errorMessage =
+    (queryError as { response?: { data?: { detail?: string } } })?.response?.data
+      ?.detail
+    ?? (queryError as Error)?.message
+    ?? 'Error al cargar usuarios';
 
   // ── Toggle estado mutation ──
   const toggleMutation = useMutation({
@@ -269,15 +285,37 @@ export default function UserManagementScreen(): React.JSX.Element {
         <Text
           style={{
             marginTop: 12,
+            marginBottom: 8,
             textAlign: 'center',
             fontSize: 15,
             color: muted,
           }}
         >
-          {!netInfo.isConnected
-            ? 'Sin conexión a Internet. Verifica tu conexión.'
-            : 'Error al cargar usuarios.'}
+          {errorMessage}
         </Text>
+        <Pressable
+          onPress={() => void refetch()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 8,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: border,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="refresh"
+            size={18}
+            color={brand}
+          />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+            Reintentar
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -374,7 +412,7 @@ export default function UserManagementScreen(): React.JSX.Element {
         </View>
       ) : (
         <FlatList
-          data={users}
+          data={users ?? []}
           renderItem={renderUser}
           keyExtractor={keyExtractor}
           ListEmptyComponent={
