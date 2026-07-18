@@ -1,6 +1,5 @@
 // packages/api/src/client.web.ts
 
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 

@@ -6,7 +6,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-import * as Storage from '../src/services/storage';
+import * as Storage from '../../../src/services/storage';
 
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
