@@ -2,21 +2,23 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
-import { colors } from '@/constants/colors';
 import api from '@/services/api';
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
 
 // ── Configuration ──────────────────────────────────────────
@@ -53,12 +55,22 @@ interface TrashListScreenProps<T extends { nombre: string; estado: boolean }> {
   >;
 }
 
-// ── Component ──────────────────────────────────────────────
-
 export default function TrashListScreen<
   T extends { nombre: string; estado: boolean },
 >({ config, navigation }: TrashListScreenProps<T>): React.JSX.Element | null {
   const { user } = useAuth();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const iconWhite = '#FFFFFF';
+  const errorColor = '#DE393A';
+  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
   const queryClient = useQueryClient();
 
   // ── List data ──────────────────────────────────────────────
@@ -92,7 +104,6 @@ export default function TrashListScreen<
         if (Array.isArray(inner.results)) return inner.results;
       }
       if ('results' in data && Array.isArray(data.results)) return data.results;
-
       return [];
     },
     staleTime: 10_000,
@@ -103,7 +114,7 @@ export default function TrashListScreen<
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
-  // ── Permanent delete dialog state ──────────────────────────
+  // ── Permanent delete state ─────────────────────────────────
   const [permanentTarget, setPermanentTarget] = useState<T | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────
@@ -120,7 +131,7 @@ export default function TrashListScreen<
       queryKey: [...config.queryKey, 'trash'],
     });
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- config is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config.queryKey is stable from parent
   }, [queryClient]);
 
   // ── Mutations ──────────────────────────────────────────────
@@ -129,7 +140,6 @@ export default function TrashListScreen<
       const { data } = await api.post<ApiResponse<T>>(
         `${config.endpoint}${id}/restore/`,
       );
-
       return data;
     },
   });
@@ -143,13 +153,24 @@ export default function TrashListScreen<
   // ── Role guard ──────────────────────────────────────────────
   if (user?.role !== 'admin') {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <MaterialCommunityIcons
-          name="lock-outline"
-          size={48}
-          color={colors.iconMuted}
-        />
-        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
           No tienes permisos para acceder a esta sección.
         </Text>
       </View>
@@ -159,8 +180,15 @@ export default function TrashListScreen<
   // ── Loading ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <ActivityIndicator size="large" color={colors.brandRedCoral} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+        }}
+      >
+        <ActivityIndicator size="large" color={brand} />
       </View>
     );
   }
@@ -168,26 +196,49 @@ export default function TrashListScreen<
   // ── Error ──────────────────────────────────────────────────
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
         <MaterialCommunityIcons
           name="alert-circle-outline"
           size={48}
-          color={colors.textSecondary}
+          color={muted}
         />
-        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
           {config.loadingErrorText}
         </Text>
-        <Pressable
+        <TouchableOpacity
           onPress={() => void refetch()}
-          className="mt-4 flex-row items-center gap-2 rounded-lg bg-brand-red-coral px-6 py-3"
+          activeOpacity={0.8}
+          style={{
+            marginTop: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: brand,
+            borderRadius: 12,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+          }}
         >
-          <MaterialCommunityIcons
-            name="refresh"
-            size={18}
-            color={colors.iconWhite}
-          />
-          <Text className="font-semibold text-white">Reintentar</Text>
-        </Pressable>
+          <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
+          <Text style={{ fontWeight: '600', color: iconWhite }}>
+            Reintentar
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -196,44 +247,75 @@ export default function TrashListScreen<
 
   // ── Render ─────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
-      <View className="bg-brand-green-forest px-4 pb-5 pt-14 shadow-sm">
-        <View className="flex-row items-center">
-          <Pressable
-            onPress={() => navigation.goBack()}
-            className="mr-3 h-11 w-11 items-center justify-center rounded-full active:opacity-80"
-            hitSlop={12}
+      <View style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {navigation.canGoBack() ? (
+            <Pressable
+              onPress={() => navigation.goBack()}
+              hitSlop={8}
+              style={{ marginRight: 4 }}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={28} color={fg} />
+            </Pressable>
+          ) : null}
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
           >
-            <MaterialCommunityIcons
-              name="arrow-left"
-              size={24}
-              color={colors.iconWhite}
-            />
-          </Pressable>
-          <View className="flex-1">
-            <Text className="text-2xl font-bold tracking-tight text-white">
-              Papelera
-            </Text>
-            <Text className="mt-0.5 text-sm text-white/80">
-              {config.headerTitle}
-            </Text>
-          </View>
+            {config.headerTitle}
+          </Text>
         </View>
+        <Text
+          style={{
+            fontSize: 16,
+            color: muted,
+            marginTop: 2,
+            marginLeft: navigation.canGoBack() ? 36 : 0,
+          }}
+        >
+          Papelera
+        </Text>
       </View>
 
-      {/* Empty state */}
       {isEmpty ? (
-        <View className="flex-1 items-center justify-center px-6">
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
           <MaterialCommunityIcons
             name="delete-restore"
             size={64}
-            color={colors.iconMuted}
+            color={muted}
           />
-          <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
+          <Text
+            style={{
+              marginTop: 16,
+              textAlign: 'center',
+              fontSize: 20,
+              fontWeight: '700',
+              color: muted,
+            }}
+          >
             {config.emptyText}
           </Text>
-          <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
+          <Text
+            style={{
+              marginTop: 4,
+              textAlign: 'center',
+              fontSize: 14,
+              color: muted,
+            }}
+          >
             {config.emptyDescription}
           </Text>
         </View>
@@ -241,12 +323,12 @@ export default function TrashListScreen<
         <FlatList
           data={items}
           keyExtractor={(item) => String(config.getId(item))}
-          contentContainerClassName="p-4 pb-24 gap-3"
+          contentContainerStyle={{ padding: 20, paddingBottom: 32, gap: 10 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor={colors.brandRedCoral}
+              tintColor={brand}
             />
           }
           renderItem={({ item }) => (
@@ -346,53 +428,73 @@ export default function TrashListScreen<
         />
       )}
 
-      {/* ── Permanent delete confirmation ─────────────────────── */}
-      <Portal>
-        <Dialog
-          visible={permanentTarget !== null}
-          onDismiss={() => setPermanentTarget(null)}
+      {/* Permanent delete bottom sheet */}
+      <Modal
+        visible={permanentTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPermanentTarget(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: modalOverlay }}
+          onPress={() => setPermanentTarget(null)}
+        />
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
         >
-          <Dialog.Title className="text-xl font-bold text-brand-ink dark:text-gray-100">
-            Eliminar permanentemente
-          </Dialog.Title>
-
-          <Dialog.Content>
-            <View className="mb-4 items-center">
-              <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-                <MaterialCommunityIcons
-                  name="delete-forever"
-                  size={28}
-                  color={colors.error}
-                />
-              </View>
-              <Text className="text-base leading-6 text-gray-700 dark:text-gray-300">
-                {permanentTarget
-                  ? config.permanentConfirmText(permanentTarget)
-                  : ''}
-              </Text>
-            </View>
-            <View className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-              <Text className="text-sm leading-5 text-red-600 dark:text-red-400">
-                Esta acción no se puede deshacer. El registro se eliminará de la
-                base de datos permanentemente.
-              </Text>
-            </View>
-          </Dialog.Content>
-
-          <Dialog.Actions>
-            <Button
-              onPress={() => setPermanentTarget(null)}
-              textColor={colors.textSecondary}
-              compact
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: errorBg,
+                marginBottom: 12,
+              }}
             >
-              Cancelar
-            </Button>
-            <Button
+              <MaterialCommunityIcons
+                name="delete-forever"
+                size={26}
+                color={errorColor}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: fg,
+                textAlign: 'center',
+              }}
+            >
+              {permanentTarget
+                ? config.permanentConfirmText(permanentTarget)
+                : ''}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
+              Esta acción no se puede deshacer.
+            </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
               onPress={() => {
                 if (!permanentTarget) return;
                 const id = config.getId(permanentTarget);
                 const name = permanentTarget.nombre;
-
                 permanentMutation.mutate(id, {
                   onSuccess: () => {
                     invalidate();
@@ -408,19 +510,50 @@ export default function TrashListScreen<
                   },
                 });
               }}
-              mode="contained"
-              buttonColor={colors.error}
-              loading={permanentMutation.isPending}
               disabled={permanentMutation.isPending}
-              compact
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: errorColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: permanentMutation.isPending ? 0.6 : 1,
+              }}
             >
-              Eliminar permanentemente
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+              {permanentMutation.isPending ? (
+                <ActivityIndicator size={16} color={iconWhite} />
+              ) : null}
+              <Text
+                style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
+              >
+                Eliminar permanentemente
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setPermanentTarget(null)}
+              disabled={permanentMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
-      {/* ── Toast notifications ─────────────────────────────── */}
+      {/* Toast */}
       <Toast
         visible={toastMessage !== null}
         message={toastMessage ?? ''}

@@ -30,6 +30,10 @@ const categoryConfig = {
       multiline: true,
       numberOfLines: 3,
     },
+    {
+      name: 'productos_count',
+      label: '#Productos',
+    },
   ] as const,
   errorFieldKeys: ['nombre', 'descripcion', 'detail'] as const,
   emptyIcon: 'folder-open-outline',

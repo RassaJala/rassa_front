@@ -37,9 +37,35 @@ function MunicipioListItem({
   navigation,
 }: MunicipioItemProps): React.JSX.Element {
   return (
-    <View className="rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
-      <View className="flex-row items-start">
-        <View className="mr-3 mt-0.5 h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+      }}
+    >
+      {/* Top row: Icon + Info */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {/* Icono de Estado */}
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: item.estado
+              ? 'rgba(74,138,99,0.1)'
+              : 'rgba(0,0,0,0.03)',
+          }}
+        >
           <MaterialCommunityIcons
             name={item.estado ? 'check-circle-outline' : 'circle-outline'}
             size={20}
@@ -47,26 +73,61 @@ function MunicipioListItem({
           />
         </View>
 
-        <View className="flex-1">
-          <Text className="text-lg font-medium text-brand-ink dark:text-gray-100">
+        {/* Info */}
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{ fontSize: 16, fontWeight: '600', color: colors.text }}
+            numberOfLines={1}
+          >
             {item.nombre}
           </Text>
-          <View className="mt-2 self-start rounded-full bg-gray-100 px-2.5 py-0.5 dark:bg-gray-800">
-            <Text
-              className={`text-xs font-medium ${
-                item.estado
-                  ? 'text-brand-green-forest'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 2,
+            }}
+          >
+            <View
+              style={{
+                borderRadius: 999,
+                backgroundColor: item.estado
+                  ? 'rgba(74,138,99,0.1)'
+                  : 'rgba(0,0,0,0.03)',
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+              }}
             >
-              {item.estado ? 'Activo' : 'Inactivo'}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  color: item.estado
+                    ? colors.brandGreenForest
+                    : colors.iconMuted,
+                }}
+              >
+                {item.estado ? 'Activo' : 'Inactivo'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
 
-      <View className="mt-3 flex-row items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-800">
-        {/* "Ver localidades" — unique to Municipio */}
+      {/* Bottom row: Ver localidades (Left) + CRUD Actions (Right) */}
+      <View
+        style={{
+          marginTop: 12,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* "Ver localidades" (botón con texto) */}
         <Pressable
           onPress={() =>
             navigation.navigate('LocalidadList', {
@@ -74,63 +135,93 @@ function MunicipioListItem({
               municipioNombre: item.nombre,
             })
           }
-          className="flex-row items-center gap-1 rounded-md px-2 py-1"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingVertical: 6,
+            paddingHorizontal: 8,
+          }}
           hitSlop={8}
         >
           <MaterialCommunityIcons
             name="map-marker-outline"
-            size={14}
+            size={16}
             color={colors.brandGreenForest}
           />
-          <Text className="text-xs font-medium text-brand-green-forest">
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: colors.brandGreenForest,
+            }}
+          >
             Ver localidades
           </Text>
         </Pressable>
 
-        <View className="flex-row items-center gap-4">
+        {/* CRUD Actions: 36x36 buttons */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Pressable
             onPress={actions.onEdit}
-            className="flex-row items-center gap-1 rounded-md px-2 py-1"
-            hitSlop={8}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            hitSlop={6}
           >
             <MaterialCommunityIcons
               name="pencil-outline"
-              size={14}
-              color={colors.brandRedCoral}
+              size={16}
+              color={colors.brandGreenForest}
             />
-            <Text className="text-xs font-medium text-brand-red-coral">
-              Editar
-            </Text>
           </Pressable>
 
           <Pressable
             onPress={actions.onToggleStatus}
-            className="flex-row items-center gap-1 rounded-md px-2 py-1"
-            hitSlop={8}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            hitSlop={6}
           >
             <MaterialCommunityIcons
               name={
-                item.estado ? 'close-circle-outline' : 'check-circle-outline'
+                item.estado ? 'pause-circle-outline' : 'play-circle-outline'
               }
-              size={14}
-              color={colors.textSecondary}
+              size={16}
+              color={colors.iconMuted}
             />
-            <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {item.estado ? 'Desactivar' : 'Activar'}
-            </Text>
           </Pressable>
 
           <Pressable
             onPress={actions.onDelete}
-            className="flex-row items-center gap-1 rounded-md px-2 py-1"
-            hitSlop={8}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            hitSlop={6}
           >
             <MaterialCommunityIcons
               name="trash-can-outline"
-              size={14}
+              size={16}
               color={colors.error}
             />
-            <Text className="text-xs font-medium text-red-500">Eliminar</Text>
           </Pressable>
         </View>
       </View>
