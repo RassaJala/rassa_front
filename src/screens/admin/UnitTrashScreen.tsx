@@ -21,7 +21,7 @@ const unitTrashConfig = {
   entityNamePlural: 'Unites de Medida',
   getId: (item: Unit) => item.id_unidad,
   getSecondValue: (item: Unit) => item.abreviatura,
-  headerTitle: 'Unites inactivas',
+  headerTitle: 'Unidades de Medida',
   emptyText: 'No hay unidades en la papelera',
   emptyDescription: 'Las unidades desactivadas aparecerán aquí.',
   loadingErrorText: 'Error al cargar la papelera de unidades.',
