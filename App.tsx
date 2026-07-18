@@ -1,3 +1,4 @@
+import '~/styles/global.css';
 import React from 'react';
 import {
   MD3DarkTheme,
@@ -17,7 +18,7 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
-import '~/styles/global.css';
+import { colors } from '~/constants/colors';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';

@@ -185,3 +185,10 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const base = baseURL.replace(/\/api\/?$/, '');
+  return `${base}${path}`;
+}
