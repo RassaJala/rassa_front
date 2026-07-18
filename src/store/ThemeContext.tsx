@@ -81,13 +81,10 @@ export function ThemeProvider({
     void Storage.setItemAsync(THEME_STORAGE_KEY, next);
   }, [resolvedScheme]);
 
-  const setThemePreference = useCallback(
-    (pref: ThemePreference) => {
-      setPreference(pref);
-      void Storage.setItemAsync(THEME_STORAGE_KEY, pref);
-    },
-    [],
-  );
+  const setThemePreference = useCallback((pref: ThemePreference) => {
+    setPreference(pref);
+    void Storage.setItemAsync(THEME_STORAGE_KEY, pref);
+  }, []);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

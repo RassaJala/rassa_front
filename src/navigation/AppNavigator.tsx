@@ -74,7 +74,11 @@ function AdminTabs() {
         options={{
           tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-outline" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="home-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -84,7 +88,11 @@ function AdminTabs() {
         options={{
           tabBarLabel: 'Productos',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="package-variant" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="package-variant"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -94,7 +102,11 @@ function AdminTabs() {
         options={{
           tabBarLabel: 'Categorías',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="folder-multiple-outline" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="folder-multiple-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -111,12 +123,18 @@ function AdminTabs() {
       <AdminTab.Screen
         name="CategoryTrash"
         component={CategoryTrashScreen}
-        options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none', width: 0, height: 0 } }}
+        options={{
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none', width: 0, height: 0 },
+        }}
       />
       <AdminTab.Screen
         name="UnitTrash"
         component={UnitTrashScreen}
-        options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none', width: 0, height: 0 } }}
+        options={{
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none', width: 0, height: 0 },
+        }}
       />
     </AdminTab.Navigator>
   );

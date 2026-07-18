@@ -9,7 +9,13 @@ export default function AdminDashboardScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
   const surface = isDark ? '#111827' : '#FFFFFF';
   const borderColor = isDark ? '#374151' : 'transparent';
-  const card = { backgroundColor: surface, borderRadius: 12, padding: 16, borderWidth: isDark ? 1 : 0, borderColor };
+  const card = {
+    backgroundColor: surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: isDark ? 1 : 0,
+    borderColor,
+  };
 
   return (
     <View className="flex-1 bg-gray-50 px-4 py-6 dark:bg-gray-950">

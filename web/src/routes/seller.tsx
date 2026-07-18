@@ -28,23 +28,93 @@ interface SellerOrderRow {
 // --- Mock Data ---
 
 const sampleSales: SaleRow[] = [
-  { id: 1, producto: 'Tomate orgánico', cantidad: 5, total: '$750', fecha: '15/07/2026', estado: 'Completada' },
-  { id: 2, producto: 'Lechuga hidropónica', cantidad: 10, total: '$1.000', fecha: '14/07/2026', estado: 'Pendiente' },
-  { id: 3, producto: 'Pimiento morrón', cantidad: 3, total: '$255', fecha: '12/07/2026', estado: 'Cancelada' },
-  { id: 4, producto: 'Zanahoria baby', cantidad: 8, total: '$520', fecha: '10/07/2026', estado: 'Completada' },
-  { id: 5, producto: 'Cebolla colorada', cantidad: 12, total: '$480', fecha: '08/07/2026', estado: 'Completada' },
+  {
+    id: 1,
+    producto: 'Tomate orgánico',
+    cantidad: 5,
+    total: '$750',
+    fecha: '15/07/2026',
+    estado: 'Completada',
+  },
+  {
+    id: 2,
+    producto: 'Lechuga hidropónica',
+    cantidad: 10,
+    total: '$1.000',
+    fecha: '14/07/2026',
+    estado: 'Pendiente',
+  },
+  {
+    id: 3,
+    producto: 'Pimiento morrón',
+    cantidad: 3,
+    total: '$255',
+    fecha: '12/07/2026',
+    estado: 'Cancelada',
+  },
+  {
+    id: 4,
+    producto: 'Zanahoria baby',
+    cantidad: 8,
+    total: '$520',
+    fecha: '10/07/2026',
+    estado: 'Completada',
+  },
+  {
+    id: 5,
+    producto: 'Cebolla colorada',
+    cantidad: 12,
+    total: '$480',
+    fecha: '08/07/2026',
+    estado: 'Completada',
+  },
 ];
 
 const sampleSellerOrders: SellerOrderRow[] = [
-  { id: 1, comprador: 'María García', producto: 'Tomate orgánico', cantidad: 3, total: '$450', fecha: '16/07/2026', estado: 'Pendiente' },
-  { id: 2, comprador: 'Carlos López', producto: 'Lechuga hidropónica', cantidad: 5, total: '$500', fecha: '15/07/2026', estado: 'En camino' },
-  { id: 3, comprador: 'Ana Martínez', producto: 'Zanahoria baby', cantidad: 8, total: '$520', fecha: '14/07/2026', estado: 'Entregado' },
-  { id: 4, comprador: 'Juan Pérez', producto: 'Pimiento morrón', cantidad: 2, total: '$170', fecha: '13/07/2026', estado: 'Entregado' },
+  {
+    id: 1,
+    comprador: 'María García',
+    producto: 'Tomate orgánico',
+    cantidad: 3,
+    total: '$450',
+    fecha: '16/07/2026',
+    estado: 'Pendiente',
+  },
+  {
+    id: 2,
+    comprador: 'Carlos López',
+    producto: 'Lechuga hidropónica',
+    cantidad: 5,
+    total: '$500',
+    fecha: '15/07/2026',
+    estado: 'En camino',
+  },
+  {
+    id: 3,
+    comprador: 'Ana Martínez',
+    producto: 'Zanahoria baby',
+    cantidad: 8,
+    total: '$520',
+    fecha: '14/07/2026',
+    estado: 'Entregado',
+  },
+  {
+    id: 4,
+    comprador: 'Juan Pérez',
+    producto: 'Pimiento morrón',
+    cantidad: 2,
+    total: '$170',
+    fecha: '13/07/2026',
+    estado: 'Entregado',
+  },
 ];
 
 // --- Columns ---
 
-const saleStatusVariant: Record<SaleRow['estado'], 'success' | 'warning' | 'error'> = {
+const saleStatusVariant: Record<
+  SaleRow['estado'],
+  'success' | 'warning' | 'error'
+> = {
   Completada: 'success',
   Pendiente: 'warning',
   Cancelada: 'error',
@@ -64,14 +134,15 @@ const saleColumns: Column<SaleRow>[] = [
     key: 'estado',
     label: 'Estado',
     render: (s) => (
-      <Badge variant={saleStatusVariant[s.estado]}>
-        {s.estado}
-      </Badge>
+      <Badge variant={saleStatusVariant[s.estado]}>{s.estado}</Badge>
     ),
   },
 ];
 
-const sellerOrderStatusVariant: Record<SellerOrderRow['estado'], 'success' | 'warning' | 'error'> = {
+const sellerOrderStatusVariant: Record<
+  SellerOrderRow['estado'],
+  'success' | 'warning' | 'error'
+> = {
   Pendiente: 'warning',
   'En camino': 'default',
   Entregado: 'success',
@@ -92,9 +163,7 @@ const sellerOrderColumns: Column<SellerOrderRow>[] = [
     key: 'estado',
     label: 'Estado',
     render: (o) => (
-      <Badge variant={sellerOrderStatusVariant[o.estado]}>
-        {o.estado}
-      </Badge>
+      <Badge variant={sellerOrderStatusVariant[o.estado]}>{o.estado}</Badge>
     ),
   },
 ];
@@ -106,9 +175,7 @@ export function SellerSales() {
     <>
       <PageHeader
         title="Mis Ventas"
-        action={
-          <Button variant="primary">Nueva venta</Button>
-        }
+        action={<Button variant="primary">Nueva venta</Button>}
       />
       <DataTable
         data={sampleSales}

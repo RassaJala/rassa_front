@@ -23,7 +23,8 @@ function getBreakpoints(width: number): Breakpoints {
 
 export function useMediaQuery(): Breakpoints {
   const [bp, setBp] = useState<Breakpoints>(() => {
-    if (Platform.OS !== 'web') return { mobile: true, tablet: false, desktop: false };
+    if (Platform.OS !== 'web')
+      return { mobile: true, tablet: false, desktop: false };
     return getBreakpoints(window.innerWidth);
   });
 

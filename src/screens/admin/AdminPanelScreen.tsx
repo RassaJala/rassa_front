@@ -25,7 +25,9 @@ interface Props {
 const DRAWER_WIDTH = 0.55;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export default function AdminPanelScreen({ navigation: _navigation }: Props): React.JSX.Element {
+export default function AdminPanelScreen({
+  navigation: _navigation,
+}: Props): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
   const isDark = colorScheme === 'dark';
@@ -48,18 +50,47 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
   const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
   const overlayBg = '#000';
 
-  const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const days = [
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+  ];
+  const months = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
   const d = new Date();
   const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
 
   const openDrawer = useCallback(() => {
     setDrawerOpen(true);
-    Animated.timing(slideAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
   }, [slideAnim]);
 
   const closeDrawer = useCallback(() => {
-    Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
       setDrawerOpen(false);
     });
   }, [slideAnim]);
@@ -110,7 +141,10 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
       label: 'Cerrar sesión',
       desc: '',
       color: coral,
-      action: () => { closeDrawer(); void logout(); },
+      action: () => {
+        closeDrawer();
+        void logout();
+      },
     },
   ];
 
@@ -125,62 +159,238 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
         >
           <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
             {/* ═══ HEADER ═══ */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}
+            >
               <View>
-                <Text style={{ fontSize: 14, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    letterSpacing: 0.06,
+                    textTransform: 'uppercase',
+                    color: muted,
+                  }}
+                >
                   {today}
                 </Text>
-                <Text style={{ fontSize: 32, fontWeight: '700', letterSpacing: -0.3, color: fg }}>
+                <Text
+                  style={{
+                    fontSize: 32,
+                    fontWeight: '700',
+                    letterSpacing: -0.3,
+                    color: fg,
+                  }}
+                >
                   Panel
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Pressable
                   style={({ pressed }) => ({
-                    width: 48, height: 48, borderRadius: 24,
-                    backgroundColor: surface, borderWidth: 1, borderColor: border,
-                    alignItems: 'center', justifyContent: 'center',
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: surface,
+                    borderWidth: 1,
+                    borderColor: border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
-                  <MaterialCommunityIcons name="bell-outline" size={24} color={fg} />
+                  <MaterialCommunityIcons
+                    name="bell-outline"
+                    size={24}
+                    color={fg}
+                  />
                 </Pressable>
                 <Pressable
                   onPress={openDrawer}
                   style={({ pressed }) => ({
-                    width: 48, height: 48, borderRadius: 24,
-                    backgroundColor: surface, borderWidth: 1, borderColor: border,
-                    alignItems: 'center', justifyContent: 'center',
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: surface,
+                    borderWidth: 1,
+                    borderColor: border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
-                  <MaterialCommunityIcons name="account-circle" size={24} color={fg} />
+                  <MaterialCommunityIcons
+                    name="account-circle"
+                    size={24}
+                    color={fg}
+                  />
                 </Pressable>
               </View>
             </View>
 
             {/* ═══ STATS ═══ */}
-            <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}>
-              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: accentBg, marginBottom: 10 }}>
-                  <MaterialCommunityIcons name="package-variant" size={24} color={brand} />
+            <View
+              style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  backgroundColor: surface,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: border,
+                  paddingVertical: 18,
+                  paddingHorizontal: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: accentBg,
+                    marginBottom: 10,
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="package-variant"
+                    size={24}
+                    color={brand}
+                  />
                 </View>
-                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: brand }}>{stats.totalProducts.toLocaleString()}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Productos</Text>
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: '700',
+                    letterSpacing: -0.2,
+                    color: brand,
+                  }}
+                >
+                  {stats.totalProducts.toLocaleString()}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    letterSpacing: 0.06,
+                    textTransform: 'uppercase',
+                    color: muted,
+                    marginTop: 4,
+                  }}
+                >
+                  Productos
+                </Text>
               </View>
-              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: coralBg, marginBottom: 10 }}>
-                  <MaterialCommunityIcons name="account-group" size={24} color={coral} />
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  backgroundColor: surface,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: border,
+                  paddingVertical: 18,
+                  paddingHorizontal: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: coralBg,
+                    marginBottom: 10,
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="account-group"
+                    size={24}
+                    color={coral}
+                  />
                 </View>
-                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: coral }}>{stats.totalUsers.toLocaleString()}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Usuarios</Text>
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: '700',
+                    letterSpacing: -0.2,
+                    color: coral,
+                  }}
+                >
+                  {stats.totalUsers.toLocaleString()}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    letterSpacing: 0.06,
+                    textTransform: 'uppercase',
+                    color: muted,
+                    marginTop: 4,
+                  }}
+                >
+                  Usuarios
+                </Text>
               </View>
-              <View style={{ flex: 1, alignItems: 'center', backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, paddingVertical: 18, paddingHorizontal: 10 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: pumpkinBg, marginBottom: 10 }}>
-                  <MaterialCommunityIcons name="clipboard-list" size={24} color={pumpkin} />
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  backgroundColor: surface,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: border,
+                  paddingVertical: 18,
+                  paddingHorizontal: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: pumpkinBg,
+                    marginBottom: 10,
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="clipboard-list"
+                    size={24}
+                    color={pumpkin}
+                  />
                 </View>
-                <Text style={{ fontSize: 22, fontWeight: '700', letterSpacing: -0.2, color: pumpkin }}>{stats.totalOrders.toLocaleString()}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '600', letterSpacing: 0.06, textTransform: 'uppercase', color: muted, marginTop: 4 }}>Pedidos</Text>
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: '700',
+                    letterSpacing: -0.2,
+                    color: pumpkin,
+                  }}
+                >
+                  {stats.totalOrders.toLocaleString()}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    letterSpacing: 0.06,
+                    textTransform: 'uppercase',
+                    color: muted,
+                    marginTop: 4,
+                  }}
+                >
+                  Pedidos
+                </Text>
               </View>
             </View>
           </View>
@@ -221,12 +431,47 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header — perfil del usuario */}
-          <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 24, marginBottom: 20, borderBottomWidth: 1, borderBottomColor: sidebarBorder }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <MaterialCommunityIcons name="account-circle" size={40} color={brand} />
+          <View
+            style={{
+              alignItems: 'center',
+              paddingTop: 60,
+              paddingHorizontal: 20,
+              paddingBottom: 24,
+              marginBottom: 20,
+              borderBottomWidth: 1,
+              borderBottomColor: sidebarBorder,
+            }}
+          >
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: accentBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="account-circle"
+                size={40}
+                color={brand}
+              />
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: fg, letterSpacing: -0.2 }}>{user?.nombre ?? 'Administrador'}</Text>
-            <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>{user?.email ?? 'admin@rassa.com'}</Text>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: '700',
+                color: fg,
+                letterSpacing: -0.2,
+              }}
+            >
+              {user?.nombre ?? 'Administrador'}
+            </Text>
+            <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>
+              {user?.email ?? 'admin@rassa.com'}
+            </Text>
           </View>
 
           {/* Items del menú */}
@@ -239,17 +484,50 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? (isDark ? 'rgba(222,57,58,0.1)' : 'rgba(222,57,58,0.07)')
-                      : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'),
+                      ? isDark
+                        ? 'rgba(222,57,58,0.1)'
+                        : 'rgba(222,57,58,0.07)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.03)',
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
-                    borderColor: isLast ? (isDark ? 'rgba(222,57,58,0.25)' : 'rgba(222,57,58,0.15)') : 'transparent',
+                    borderColor: isLast
+                      ? isDark
+                        ? 'rgba(222,57,58,0.25)'
+                        : 'rgba(222,57,58,0.15)'
+                      : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, minHeight: 56 }}>
-                    <MaterialCommunityIcons name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap} size={28} color={item.color} />
-                    <Text style={{ fontSize: 20, fontWeight: '600', color: item.color, letterSpacing: -0.15, flexShrink: 1 }}>{item.label}</Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      minHeight: 56,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={
+                        item.icon as keyof typeof MaterialCommunityIcons.glyphMap
+                      }
+                      size={28}
+                      color={item.color}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        fontWeight: '600',
+                        color: item.color,
+                        letterSpacing: -0.15,
+                        flexShrink: 1,
+                      }}
+                    >
+                      {item.label}
+                    </Text>
                   </View>
                 </Pressable>
               );

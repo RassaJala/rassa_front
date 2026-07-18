@@ -17,7 +17,17 @@ interface Props {
   readonly navigation: NavigationProp;
 }
 
-function UnitListItem({ item, actions }: { item: Unit; actions: { onEdit: () => void; onToggleStatus: () => void; onDelete: () => void } }) {
+function UnitListItem({
+  item,
+  actions,
+}: {
+  item: Unit;
+  actions: {
+    onEdit: () => void;
+    onToggleStatus: () => void;
+    onDelete: () => void;
+  };
+}) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? '#263028' : '#FFFFFF';
@@ -30,22 +40,100 @@ function UnitListItem({ item, actions }: { item: Unit; actions: { onEdit: () => 
   const description = item.abreviatura || 'Sin abreviatura';
 
   return (
-    <View style={{ backgroundColor: surface, borderRadius: 16, borderWidth: 1, borderColor: border, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: accentBg }}>
-        <MaterialCommunityIcons name={item.estado ? 'check-circle-outline' : 'circle-outline'} size={20} color={item.estado ? brand : muted} />
+    <View
+      style={{
+        backgroundColor: surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: border,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: accentBg,
+        }}
+      >
+        <MaterialCommunityIcons
+          name={item.estado ? 'check-circle-outline' : 'circle-outline'}
+          size={20}
+          color={item.estado ? brand : muted}
+        />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: fg }} numberOfLines={1}>{item.nombre}</Text>
-        <Text style={{ fontSize: 13, color: muted, marginTop: 2 }} numberOfLines={1}>{description}</Text>
+        <Text
+          style={{ fontSize: 16, fontWeight: '600', color: fg }}
+          numberOfLines={1}
+        >
+          {item.nombre}
+        </Text>
+        <Text
+          style={{ fontSize: 13, color: muted, marginTop: 2 }}
+          numberOfLines={1}
+        >
+          {description}
+        </Text>
       </View>
-      <Pressable onPress={actions.onEdit} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
+      <Pressable
+        onPress={actions.onEdit}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
         <MaterialCommunityIcons name="pencil-outline" size={16} color={brand} />
       </Pressable>
-      <Pressable onPress={actions.onToggleStatus} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'} size={16} color={muted} />
+      <Pressable
+        onPress={actions.onToggleStatus}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'}
+          size={16}
+          color={muted}
+        />
       </Pressable>
-      <Pressable onPress={actions.onDelete} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name="trash-can-outline" size={16} color={errorColor} />
+      <Pressable
+        onPress={actions.onDelete}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name="trash-can-outline"
+          size={16}
+          color={errorColor}
+        />
       </Pressable>
     </View>
   );

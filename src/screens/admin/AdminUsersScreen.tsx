@@ -3,11 +3,41 @@ import { ScrollView, Text, View } from 'react-native';
 
 export default function AdminUsersScreen(): React.JSX.Element {
   const users = [
-    { id: 1, name: 'Carlos Rodríguez', email: 'carlos@ejemplo.com', role: 'Agricultor', status: 'Activo' },
-    { id: 2, name: 'María García', email: 'maria@ejemplo.com', role: 'Comprador', status: 'Activo' },
-    { id: 3, name: 'Juan Pérez', email: 'juan@ejemplo.com', role: 'Vendedor', status: 'Activo' },
-    { id: 4, name: 'Ana López', email: 'ana@ejemplo.com', role: 'Agricultor', status: 'Inactivo' },
-    { id: 5, name: 'Luis Martínez', email: 'luis@ejemplo.com', role: 'Comprador', status: 'Activo' },
+    {
+      id: 1,
+      name: 'Carlos Rodríguez',
+      email: 'carlos@ejemplo.com',
+      role: 'Agricultor',
+      status: 'Activo',
+    },
+    {
+      id: 2,
+      name: 'María García',
+      email: 'maria@ejemplo.com',
+      role: 'Comprador',
+      status: 'Activo',
+    },
+    {
+      id: 3,
+      name: 'Juan Pérez',
+      email: 'juan@ejemplo.com',
+      role: 'Vendedor',
+      status: 'Activo',
+    },
+    {
+      id: 4,
+      name: 'Ana López',
+      email: 'ana@ejemplo.com',
+      role: 'Agricultor',
+      status: 'Inactivo',
+    },
+    {
+      id: 5,
+      name: 'Luis Martínez',
+      email: 'luis@ejemplo.com',
+      role: 'Comprador',
+      status: 'Activo',
+    },
   ];
 
   const getRoleBadgeClass = (role: string) => {
@@ -81,7 +111,9 @@ export default function AdminUsersScreen(): React.JSX.Element {
         </View>
 
         <View className="mt-6 flex items-center justify-center space-x-2">
-          <Text className="text-sm text-gray-500 dark:text-gray-400">Página 1 de 1</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            Página 1 de 1
+          </Text>
         </View>
       </ScrollView>
     </View>

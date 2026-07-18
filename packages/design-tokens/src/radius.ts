@@ -10,9 +10,9 @@
  */
 
 export const radius = {
-  'lg': '8px',      // Botones, inputs
-  'xl': '12px',     // Cards, modales
-  'full': '9999px', // Badges, chips
+  lg: '8px', // Botones, inputs
+  xl: '12px', // Cards, modales
+  full: '9999px', // Badges, chips
 } as const;
 
 /**

@@ -14,13 +14,13 @@
  */
 
 export const fontSizes = {
-  '3xl': '30px',  // Título grande
-  '2xl': '24px',  // Título pantalla
-  'xl': '20px',   // Título sección
-  'lg': '18px',   // Subtítulo
-  'base': '16px', // Cuerpo (normal)
-  'sm': '14px',   // Cuerpo chico
-  'xs': '12px',   // Etiqueta/caption
+  '3xl': '30px', // Título grande
+  '2xl': '24px', // Título pantalla
+  xl: '20px', // Título sección
+  lg: '18px', // Subtítulo
+  base: '16px', // Cuerpo (normal)
+  sm: '14px', // Cuerpo chico
+  xs: '12px', // Etiqueta/caption
 } as const;
 
 /**
@@ -39,16 +39,17 @@ export const fontWeights = {
  */
 export const fontFamilies = {
   sans: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  'sans-condensed': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  'sans-condensed':
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 } as const;
 
 /**
  * Configuración de tamaño de línea del DESIGN.md.
  */
 export const lineHeights = {
-  tight: 1.2,    // Títulos
-  normal: 1.5,   // Cuerpo
-  relaxed: 1.6,  // Metadatos
+  tight: 1.2, // Títulos
+  normal: 1.5, // Cuerpo
+  relaxed: 1.6, // Metadatos
 } as const;
 
 /**

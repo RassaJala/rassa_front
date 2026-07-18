@@ -37,6 +37,7 @@ rassa/
 ## Stack tecnológico
 
 ### Móvil (React Native / Expo)
+
 - **Framework**: Expo SDK 54 + React Native 0.81
 - **Navegación**: React Navigation 7 (NativeStack + BottomTabs)
 - **Estado servidor**: TanStack Query 5
@@ -45,6 +46,7 @@ rassa/
 - **HTTP**: Axios con interceptor JWT
 
 ### Web (React + Vite)
+
 - **Framework**: React 18 + Vite
 - **Navegación**: React Router DOM 6
 - **Estado servidor**: TanStack Query 5
@@ -54,21 +56,23 @@ rassa/
 
 ## Roles de usuario
 
-| Rol | Ruta web | Tab en móvil |
-|-----|----------|-------------|
-| admin | /admin/* | Panel, Productos, Categorías, Unidades |
-| agricultor | /agricultor/* | Mis Productos, Agregar |
-| vendedor | /vendedor/* | Ventas, Pedidos |
-| comprador | (solo móvil) | Inicio, Carrito, Notificaciones |
+| Rol        | Ruta web      | Tab en móvil                           |
+| ---------- | ------------- | -------------------------------------- |
+| admin      | /admin/*      | Panel, Productos, Categorías, Unidades |
+| agricultor | /agricultor/* | Mis Productos, Agregar                 |
+| vendedor   | /vendedor/*   | Ventas, Pedidos                        |
+| comprador  | (solo móvil)  | Inicio, Carrito, Notificaciones        |
 
 ## Patrones de diseño
 
 ### Tema (claro/oscuro)
+
 - **Móvil**: `ThemeContext` con `useColorScheme` de React Native (sigue al OS automáticamente)
 - **Web**: `ThemeProvider` con `prefers-color-scheme` + localStorage
 - Ambos usan la misma paleta: verde brand (#24563C), coral (#DE393A), surface, bg, fg, muted
 
 ### CRUD (móvil)
+
 - `CrudListScreen` es un componente genérico reutilizable
 - Usa **segmented control** (Lista/Nuevo) en vez de FAB + diálogos
 - Formulario inline (no modal)
@@ -76,6 +80,7 @@ rassa/
 - Errores por campo con borde rojo en inputs
 
 ### CRUD (web)
+
 - Cada página (Productos, Categorías, Unidades) es independiente con estado local
 - Mismo patrón de tabs: 📋 Lista / ➕ Agregar
 - Tabla con cabecera, buscador, badges de estado
@@ -83,6 +88,7 @@ rassa/
 - Botones de acción: ⏸ toggle, ✏️ editar, 🗑️ eliminar
 
 ## Reglas de estilo
+
 - Sin `className` de NativeWind en el móvil (usar inline styles con theme)
 - Sin Tailwind utility classes en la web (usar inline styles con theme)
 - Colores definidos como constantes dentro de cada componente

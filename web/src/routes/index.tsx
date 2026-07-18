@@ -41,7 +41,10 @@ export function AppRouter() {
               <Routes>
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
-                <Route path="*" element={<Navigate to="/agricultor/productos" replace />} />
+                <Route
+                  path="*"
+                  element={<Navigate to="/agricultor/productos" replace />}
+                />
               </Routes>
             </DashboardLayout>
           }
@@ -57,7 +60,10 @@ export function AppRouter() {
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<SellerOrders />} />
-                <Route path="*" element={<Navigate to="/vendedor/ventas" replace />} />
+                <Route
+                  path="*"
+                  element={<Navigate to="/vendedor/ventas" replace />}
+                />
               </Routes>
             </DashboardLayout>
           }

@@ -12,7 +12,10 @@ axiosRetry(api, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
-    return error.config?.method === 'get' && axiosRetry.isNetworkOrIdempotentRequestError(error);
+    return (
+      error.config?.method === 'get' &&
+      axiosRetry.isNetworkOrIdempotentRequestError(error)
+    );
   },
 });
 
@@ -27,7 +30,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+    if (
+      error.response?.status === 401 &&
+      window.location.pathname !== '/login'
+    ) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

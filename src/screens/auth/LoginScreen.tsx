@@ -90,14 +90,32 @@ function Sky({ c }: { c: typeof light }) {
 
 // ── Tree ───────────────────────────────────────────────────────────────
 
-function Tree({ left, bottom, bw, bh, color }: { left: number; bottom: number; bw: number; bh: number; color: string }) {
+function Tree({
+  left,
+  bottom,
+  bw,
+  bh,
+  color,
+}: {
+  left: number;
+  bottom: number;
+  bw: number;
+  bh: number;
+  color: string;
+}) {
   return (
     <View
       style={{
-        position: 'absolute', bottom, left,
-        width: 0, height: 0,
-        borderLeftWidth: bw, borderRightWidth: bw, borderBottomWidth: bh,
-        borderLeftColor: transparentBg, borderRightColor: transparentBg,
+        position: 'absolute',
+        bottom,
+        left,
+        width: 0,
+        height: 0,
+        borderLeftWidth: bw,
+        borderRightWidth: bw,
+        borderBottomWidth: bh,
+        borderLeftColor: transparentBg,
+        borderRightColor: transparentBg,
         borderBottomColor: color,
       }}
     />
@@ -111,27 +129,66 @@ function Scene({ isDark }: { isDark: boolean }) {
   const c = isDark ? dark : light;
 
   useEffect(() => {
-    Animated.timing(fade, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
   }, [fade]);
 
   return (
-    <Animated.View style={{ opacity: fade, height: 310, position: 'relative', overflow: 'hidden' }}>
+    <Animated.View
+      style={{
+        opacity: fade,
+        height: 310,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <Sky c={c} />
 
       {/* Celestial */}
       <View
         style={{
-          position: 'absolute', top: 20, right: 30,
-          width: 52, height: 52, borderRadius: 26,
+          position: 'absolute',
+          top: 20,
+          right: 30,
+          width: 52,
+          height: 52,
+          borderRadius: 26,
           backgroundColor: c.sun,
-          shadowColor: c.sun, shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.35, shadowRadius: 28, elevation: 6,
+          shadowColor: c.sun,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 6,
         }}
       />
 
       {/* Birds */}
-      <Text style={{ position: 'absolute', top: 40, left: 80, fontSize: 14, color: c.bird }}>⌣</Text>
-      <Text style={{ position: 'absolute', top: 55, left: 104, fontSize: 10, color: c.bird }}>⌣</Text>
+      <Text
+        style={{
+          position: 'absolute',
+          top: 40,
+          left: 80,
+          fontSize: 14,
+          color: c.bird,
+        }}
+      >
+        ⌣
+      </Text>
+      <Text
+        style={{
+          position: 'absolute',
+          top: 55,
+          left: 104,
+          fontSize: 10,
+          color: c.bird,
+        }}
+      >
+        ⌣
+      </Text>
 
       {/* Trees — 3 big, above the extended hills */}
       <Tree left={50} bottom={185} bw={20} bh={68} color={c.tree} />
@@ -139,28 +196,48 @@ function Scene({ isDark }: { isDark: boolean }) {
       <Tree left={300} bottom={165} bw={22} bh={74} color={c.tree} />
 
       {/* Hills — extend well below, card sits on top */}
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 280 }}>
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 280,
+        }}
+      >
         <View
           style={{
-            position: 'absolute', bottom: 0, left: -50,
-            width: 350, height: 220,
-            borderTopLeftRadius: 350, borderTopRightRadius: 350,
+            position: 'absolute',
+            bottom: 0,
+            left: -50,
+            width: 350,
+            height: 220,
+            borderTopLeftRadius: 350,
+            borderTopRightRadius: 350,
             backgroundColor: c.hill1,
           }}
         />
         <View
           style={{
-            position: 'absolute', bottom: 0, left: 80,
-            width: 400, height: 190,
-            borderTopLeftRadius: 400, borderTopRightRadius: 400,
+            position: 'absolute',
+            bottom: 0,
+            left: 80,
+            width: 400,
+            height: 190,
+            borderTopLeftRadius: 400,
+            borderTopRightRadius: 400,
             backgroundColor: c.hill2,
           }}
         />
         <View
           style={{
-            position: 'absolute', bottom: 0, left: 220,
-            width: 240, height: 160,
-            borderTopLeftRadius: 300, borderTopRightRadius: 300,
+            position: 'absolute',
+            bottom: 0,
+            left: 220,
+            width: 240,
+            height: 160,
+            borderTopLeftRadius: 300,
+            borderTopRightRadius: 300,
             backgroundColor: c.hill3,
           }}
         />
@@ -169,16 +246,31 @@ function Scene({ isDark }: { isDark: boolean }) {
       {/* Brand pill */}
       <View
         style={{
-          position: 'absolute', top: 80, alignSelf: 'center',
-          flexDirection: 'row', alignItems: 'center',
-          paddingVertical: 8, paddingHorizontal: 18,
-          borderRadius: 99, borderWidth: 1,
+          position: 'absolute',
+          top: 80,
+          alignSelf: 'center',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 8,
+          paddingHorizontal: 18,
+          borderRadius: 99,
+          borderWidth: 1,
           backgroundColor: scenePillBg,
           borderColor: scenePillBorder,
         }}
       >
         <MaterialCommunityIcons name="sprout" size={20} color={scenePillText} />
-        <Text style={{ color: scenePillText, fontSize: 15, fontWeight: '600', marginLeft: 8, letterSpacing: 1 }}>RASSA-JALA</Text>
+        <Text
+          style={{
+            color: scenePillText,
+            fontSize: 15,
+            fontWeight: '600',
+            marginLeft: 8,
+            letterSpacing: 1,
+          }}
+        >
+          RASSA-JALA
+        </Text>
       </View>
     </Animated.View>
   );
@@ -187,8 +279,19 @@ function Scene({ isDark }: { isDark: boolean }) {
 // ── MD3 Field ──────────────────────────────────────────────────────────
 
 function Md3Field({
-  icon, label, value, onChangeText, secureTextEntry,
-  autoComplete, keyboardType, isDark, showPwToggle, showPw, onTogglePw, error, autoCapitalize,
+  icon,
+  label,
+  value,
+  onChangeText,
+  secureTextEntry,
+  autoComplete,
+  keyboardType,
+  isDark,
+  showPwToggle,
+  showPw,
+  onTogglePw,
+  error,
+  autoCapitalize,
 }: {
   icon: string;
   label: string;
@@ -210,8 +313,12 @@ function Md3Field({
   const iconColor = error ? c.coral : c.muted;
   let borderClr = c.border;
   let labelColor = c.muted;
-  if (error) { borderClr = c.coral; labelColor = c.coral; }
-  else if (focused) { borderClr = c.brand; }
+  if (error) {
+    borderClr = c.coral;
+    labelColor = c.coral;
+  } else if (focused) {
+    borderClr = c.brand;
+  }
   if (!error && float) labelColor = c.brand;
   const topPos = float ? 8 : 22;
   const fontSizeLbl = float ? 14 : 18;
@@ -221,12 +328,30 @@ function Md3Field({
   const textInputPr = showPwToggle ? 56 : 20;
   const pwIconName = showPw ? 'eye-off' : 'eye';
   const pwToggle = showPwToggle ? (
-    <Pressable onPress={onTogglePw} style={{ position: 'absolute', right: 4, top: 12, padding: 10, zIndex: 2 }} hitSlop={4}>
+    <Pressable
+      onPress={onTogglePw}
+      style={{
+        position: 'absolute',
+        right: 4,
+        top: 12,
+        padding: 10,
+        zIndex: 2,
+      }}
+      hitSlop={4}
+    >
       <MaterialCommunityIcons name={pwIconName} size={24} color={c.muted} />
     </Pressable>
   ) : null;
   const errorMsg = error ? (
-    <Text style={{ fontSize: 14, color: c.coral, paddingHorizontal: 16, paddingTop: 4, letterSpacing: 0.02 }}>
+    <Text
+      style={{
+        fontSize: 14,
+        color: c.coral,
+        paddingHorizontal: 16,
+        paddingTop: 4,
+        letterSpacing: 0.02,
+      }}
+    >
       {error}
     </Text>
   ) : null;
@@ -235,22 +360,32 @@ function Md3Field({
     <View>
       <View
         style={{
-          borderRadius: 6, position: 'relative', justifyContent: 'center', minHeight: 64,
+          borderRadius: 6,
+          position: 'relative',
+          justifyContent: 'center',
+          minHeight: 64,
           borderWidth: containerBorderWidth,
           borderColor: borderClr,
           backgroundColor: c.inputBg,
         }}
       >
         <View style={{ position: 'absolute', left: 16, top: 22, zIndex: 2 }}>
-          <MaterialCommunityIcons name={icon as keyof typeof MaterialCommunityIcons.glyphMap} size={22} color={iconColor} />
+          <MaterialCommunityIcons
+            name={icon as keyof typeof MaterialCommunityIcons.glyphMap}
+            size={22}
+            color={iconColor}
+          />
         </View>
 
         <Text
           style={{
-            position: 'absolute', left: 50, top: topPos,
+            position: 'absolute',
+            left: 50,
+            top: topPos,
             fontSize: fontSizeLbl,
             color: labelColor,
-            fontWeight: '400', zIndex: 2,
+            fontWeight: '400',
+            zIndex: 2,
           }}
         >
           {label}
@@ -258,10 +393,15 @@ function Md3Field({
 
         <TextInput
           style={{
-            fontSize: 20, margin: 0, zIndex: 1, backgroundColor: transparentBg,
+            fontSize: 20,
+            margin: 0,
+            zIndex: 1,
+            backgroundColor: transparentBg,
             color: c.fg,
-            paddingLeft: 50, paddingRight: textInputPr,
-            paddingTop: inputPt, paddingBottom: inputPb,
+            paddingLeft: 50,
+            paddingRight: textInputPr,
+            paddingTop: inputPt,
+            paddingBottom: inputPb,
           }}
           value={value}
           onChangeText={onChangeText}
@@ -295,15 +435,28 @@ export default function LoginScreen(): React.JSX.Element {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
 
   const cardOpacity = useRef(new Animated.Value(0)).current;
   const cardY = useRef(new Animated.Value(24)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(cardOpacity, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(cardY, { toValue: 0, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(cardOpacity, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardY, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
     ]).start();
   }, [cardOpacity, cardY]);
 
@@ -311,22 +464,39 @@ export default function LoginScreen(): React.JSX.Element {
     if (loading) return;
     const errs: { email?: string; password?: string } = {};
     if (!email.trim()) errs.email = 'Ingresá tu correo electrónico';
-    else if (!EMAIL_RE.test(email.trim())) errs.email = 'El correo no tiene formato válido';
+    else if (!EMAIL_RE.test(email.trim()))
+      errs.email = 'El correo no tiene formato válido';
     if (!password) errs.password = 'Ingresá tu contraseña';
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setError(null);
     setLoading(true);
-    try { await login(email.trim(), password); }
-    catch (e) { setError(getLoginErrorMessage(e)); }
-    finally { setLoading(false); }
+    try {
+      await login(email.trim(), password);
+    } catch (e) {
+      setError(getLoginErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   }, [email, password, loading, login]);
 
-  const clearErr = (f: 'email' | 'password') => setFieldErrors((p) => { const n = { ...p }; delete n[f]; return n; });
+  const clearErr = (f: 'email' | 'password') =>
+    setFieldErrors((p) => {
+      const n = { ...p };
+      delete n[f];
+      return n;
+    });
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: c.bg }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: c.bg }}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ height: StatusBar.currentHeight ?? 28 }} />
 
         <Scene isDark={isDark} />
@@ -355,12 +525,24 @@ export default function LoginScreen(): React.JSX.Element {
             paddingVertical: 24,
             paddingHorizontal: 20,
             ...Platform.select({
-              ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 14 },
+              ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.06,
+                shadowRadius: 14,
+              },
               android: { elevation: 3 },
             }),
           }}
         >
-          <Text style={{ fontSize: 26, fontWeight: '600', color: c.fg, marginBottom: 4 }}>
+          <Text
+            style={{
+              fontSize: 26,
+              fontWeight: '600',
+              color: c.fg,
+              marginBottom: 4,
+            }}
+          >
             Bienvenido
           </Text>
           <Text style={{ fontSize: 16, color: c.muted, marginBottom: 24 }}>
@@ -369,24 +551,53 @@ export default function LoginScreen(): React.JSX.Element {
 
           <View style={{ marginBottom: 16 }}>
             <Md3Field
-              icon="email-outline" label="Correo electrónico"
-              value={email} onChangeText={(v) => { setEmail(v); clearErr('email'); }}
-              autoComplete="email" keyboardType="email-address" autoCapitalize="none"
-              isDark={isDark} error={fieldErrors.email}
+              icon="email-outline"
+              label="Correo electrónico"
+              value={email}
+              onChangeText={(v) => {
+                setEmail(v);
+                clearErr('email');
+              }}
+              autoComplete="email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              isDark={isDark}
+              error={fieldErrors.email}
             />
           </View>
 
           <View style={{ marginBottom: 8 }}>
             <Md3Field
-              icon="lock-outline" label="Contraseña"
-              value={password} onChangeText={(v) => { setPassword(v); clearErr('password'); }}
-              secureTextEntry={!showPw} autoComplete="password"
-              isDark={isDark} showPwToggle showPw={showPw} onTogglePw={() => setShowPw((p) => !p)}
+              icon="lock-outline"
+              label="Contraseña"
+              value={password}
+              onChangeText={(v) => {
+                setPassword(v);
+                clearErr('password');
+              }}
+              secureTextEntry={!showPw}
+              autoComplete="password"
+              isDark={isDark}
+              showPwToggle
+              showPw={showPw}
+              onTogglePw={() => setShowPw((p) => !p)}
               error={fieldErrors.password}
             />
           </View>
 
-          {error ? <Text style={{ color: c.coral, fontSize: 15, textAlign: 'center', marginTop: 12, marginBottom: 8 }}>{error}</Text> : null}
+          {error ? (
+            <Text
+              style={{
+                color: c.coral,
+                fontSize: 15,
+                textAlign: 'center',
+                marginTop: 12,
+                marginBottom: 8,
+              }}
+            >
+              {error}
+            </Text>
+          ) : null}
 
           <View style={{ marginTop: 16 }}>
             <Pressable
@@ -412,7 +623,14 @@ export default function LoginScreen(): React.JSX.Element {
                 }),
               }}
             >
-              <Text style={{ color: loginBtnText, fontSize: 20, fontWeight: '700', letterSpacing: 0.5 }}>
+              <Text
+                style={{
+                  color: loginBtnText,
+                  fontSize: 20,
+                  fontWeight: '700',
+                  letterSpacing: 0.5,
+                }}
+              >
                 {loading ? 'INGRESANDO…' : 'INICIAR SESIÓN'}
               </Text>
             </Pressable>

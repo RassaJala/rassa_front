@@ -56,41 +56,127 @@ interface TrashListScreenProps<T extends { nombre: string; estado: boolean }> {
 function trashListItem<T extends { nombre: string; estado: boolean }>(
   item: T,
   config: TrashConfig<T>,
-  actions: { readonly onRestore: () => void; readonly onPermanentDelete: () => void },
-  colors: { surface: string; border: string; fg: string; muted: string; brand: string; iconWhite: string; errorColor: string },
+  actions: {
+    readonly onRestore: () => void;
+    readonly onPermanentDelete: () => void;
+  },
+  colors: {
+    surface: string;
+    border: string;
+    fg: string;
+    muted: string;
+    brand: string;
+    iconWhite: string;
+    errorColor: string;
+  },
   chipVars: { bg: string; text: string },
 ): React.JSX.Element {
-
   return (
-    <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
       {/* Icono inactivo */}
-      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: chipVars.bg }}>
-        <MaterialCommunityIcons name="delete-restore" size={20} color={chipVars.text} />
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: chipVars.bg,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="delete-restore"
+          size={20}
+          color={chipVars.text}
+        />
       </View>
 
       {/* Info */}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.fg }} numberOfLines={1}>
+        <Text
+          style={{ fontSize: 16, fontWeight: '600', color: colors.fg }}
+          numberOfLines={1}
+        >
           {item.nombre}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 2,
+          }}
+        >
           {config.getSecondValue(item) ? (
-            <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
+            <Text
+              style={{ fontSize: 13, color: colors.muted }}
+              numberOfLines={1}
+            >
               {config.getSecondValue(item)}
             </Text>
           ) : null}
-          <View style={{ borderRadius: 999, backgroundColor: chipVars.bg, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: chipVars.text }}>Inactivo</Text>
+          <View
+            style={{
+              borderRadius: 999,
+              backgroundColor: chipVars.bg,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+            }}
+          >
+            <Text
+              style={{ fontSize: 11, fontWeight: '600', color: chipVars.text }}
+            >
+              Inactivo
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Acciones icon-only */}
-      <Pressable onPress={actions.onRestore} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
+      <Pressable
+        onPress={actions.onRestore}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
         <MaterialCommunityIcons name="restore" size={16} color={colors.brand} />
       </Pressable>
-      <Pressable onPress={actions.onPermanentDelete} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name="delete-forever" size={16} color={colors.errorColor} />
+      <Pressable
+        onPress={actions.onPermanentDelete}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name="delete-forever"
+          size={16}
+          color={colors.errorColor}
+        />
       </Pressable>
     </View>
   );
@@ -100,7 +186,10 @@ function trashListItem<T extends { nombre: string; estado: boolean }>(
 
 export default function TrashListScreen<
   T extends { nombre: string; estado: boolean },
->({ config, navigation: _navigation }: TrashListScreenProps<T>): React.JSX.Element | null {
+>({
+  config,
+  navigation: _navigation,
+}: TrashListScreenProps<T>): React.JSX.Element | null {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -128,9 +217,15 @@ export default function TrashListScreen<
   } = useQuery<T[]>({
     queryKey: [...config.queryKey, 'trash'],
     queryFn: async () => {
-      const { data } = await api.get<T[] | { results: T[] } | ApiResponse<{ results: T[] }>>(`${config.endpoint}trash/`);
+      const { data } = await api.get<
+        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+      >(`${config.endpoint}trash/`);
       if (Array.isArray(data)) return data;
-      if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }
@@ -149,13 +244,18 @@ export default function TrashListScreen<
   const [permanentTarget, setPermanentTarget] = useState<T | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────
-  const toast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-  }, []);
+  const toast = useCallback(
+    (message: string, type: 'success' | 'error' = 'success') => {
+      setToastMessage(message);
+      setToastType(type);
+    },
+    [],
+  );
 
   const invalidate = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: [...config.queryKey, 'trash'] });
+    void queryClient.invalidateQueries({
+      queryKey: [...config.queryKey, 'trash'],
+    });
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- config.queryKey is stable from parent
   }, [queryClient]);
@@ -163,7 +263,9 @@ export default function TrashListScreen<
   // ── Mutations ──────────────────────────────────────────────
   const restoreMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { data } = await api.post<ApiResponse<T>>(`${config.endpoint}${id}/restore/`);
+      const { data } = await api.post<ApiResponse<T>>(
+        `${config.endpoint}${id}/restore/`,
+      );
       return data;
     },
   });
@@ -177,9 +279,26 @@ export default function TrashListScreen<
   // ── Role guard ──────────────────────────────────────────────
   if (user?.role !== 'admin') {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
         <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>No tienes permisos para acceder a esta sección.</Text>
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
+          No tienes permisos para acceder a esta sección.
+        </Text>
       </View>
     );
   }
@@ -187,7 +306,14 @@ export default function TrashListScreen<
   // ── Loading ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -196,13 +322,48 @@ export default function TrashListScreen<
   // ── Error ──────────────────────────────────────────────────
   if (isError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>{config.loadingErrorText}</Text>
-        <TouchableOpacity onPress={() => void refetch()} activeOpacity={0.8}
-          style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={48}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
+          {config.loadingErrorText}
+        </Text>
+        <TouchableOpacity
+          onPress={() => void refetch()}
+          activeOpacity={0.8}
+          style={{
+            marginTop: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: brand,
+            borderRadius: 12,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+          }}
+        >
           <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
-          <Text style={{ fontWeight: '600', color: iconWhite }}>Reintentar</Text>
+          <Text style={{ fontWeight: '600', color: iconWhite }}>
+            Reintentar
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -215,81 +376,233 @@ export default function TrashListScreen<
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
       <View style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.02, color: fg }}>{config.headerTitle}</Text>
-        <Text style={{ fontSize: 16, color: muted, marginTop: 2 }}>Papelera</Text>
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: '700',
+            letterSpacing: -0.02,
+            color: fg,
+          }}
+        >
+          {config.headerTitle}
+        </Text>
+        <Text style={{ fontSize: 16, color: muted, marginTop: 2 }}>
+          Papelera
+        </Text>
       </View>
 
       {isEmpty ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <MaterialCommunityIcons name="delete-restore" size={64} color={muted} />
-          <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 20, fontWeight: '700', color: muted }}>{config.emptyText}</Text>
-          <Text style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}>{config.emptyDescription}</Text>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="delete-restore"
+            size={64}
+            color={muted}
+          />
+          <Text
+            style={{
+              marginTop: 16,
+              textAlign: 'center',
+              fontSize: 20,
+              fontWeight: '700',
+              color: muted,
+            }}
+          >
+            {config.emptyText}
+          </Text>
+          <Text
+            style={{
+              marginTop: 4,
+              textAlign: 'center',
+              fontSize: 14,
+              color: muted,
+            }}
+          >
+            {config.emptyDescription}
+          </Text>
         </View>
       ) : (
         <FlatList
           data={items}
           keyExtractor={(item) => String(config.getId(item))}
           contentContainerStyle={{ padding: 20, paddingBottom: 32, gap: 10 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={brand} />}
-          renderItem={({ item }) => trashListItem(
-            item,
-            config,
-            {
-              onRestore: () => {
-                const id = config.getId(item);
-                const name = item.nombre;
-                restoreMutation.mutate(id, {
-                  onSuccess: () => { invalidate(); toast(config.toastRestored(name)); },
-                  onError: () => toast(`Error al restaurar ${config.entityName} "${name}".`, 'error'),
-                });
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => void refetch()}
+              tintColor={brand}
+            />
+          }
+          renderItem={({ item }) =>
+            trashListItem(
+              item,
+              config,
+              {
+                onRestore: () => {
+                  const id = config.getId(item);
+                  const name = item.nombre;
+                  restoreMutation.mutate(id, {
+                    onSuccess: () => {
+                      invalidate();
+                      toast(config.toastRestored(name));
+                    },
+                    onError: () =>
+                      toast(
+                        `Error al restaurar ${config.entityName} "${name}".`,
+                        'error',
+                      ),
+                  });
+                },
+                onPermanentDelete: () => setPermanentTarget(item),
               },
-              onPermanentDelete: () => setPermanentTarget(item),
-            },
-            { surface, border, fg, muted, brand, iconWhite, errorColor },
-            { bg: chipBg, text: chipText },
-          )}
+              { surface, border, fg, muted, brand, iconWhite, errorColor },
+              { bg: chipBg, text: chipText },
+            )
+          }
         />
       )}
 
       {/* Permanent delete bottom sheet */}
-      <Modal visible={permanentTarget !== null} transparent animationType="slide" onRequestClose={() => setPermanentTarget(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setPermanentTarget(null)} />
-        <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
+      <Modal
+        visible={permanentTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPermanentTarget(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: modalOverlay }}
+          onPress={() => setPermanentTarget(null)}
+        />
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
+        >
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
-              <MaterialCommunityIcons name="delete-forever" size={26} color={errorColor} />
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: errorBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="delete-forever"
+                size={26}
+                color={errorColor}
+              />
             </View>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>
-              {permanentTarget ? config.permanentConfirmText(permanentTarget) : ''}
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: fg,
+                textAlign: 'center',
+              }}
+            >
+              {permanentTarget
+                ? config.permanentConfirmText(permanentTarget)
+                : ''}
             </Text>
-            <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>
+            <Text
+              style={{
+                fontSize: 14,
+                color: muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
               Esta acción no se puede deshacer.
             </Text>
           </View>
           <View style={{ gap: 10 }}>
-            <TouchableOpacity onPress={() => {
-              if (!permanentTarget) return;
-              const id = config.getId(permanentTarget);
-              const name = permanentTarget.nombre;
-              permanentMutation.mutate(id, {
-                onSuccess: () => { invalidate(); setPermanentTarget(null); toast(config.toastPermanentDeleted(name)); },
-                onError: () => { setPermanentTarget(null); toast(`Error al eliminar permanentemente ${config.entityName} "${name}".`, 'error'); },
-              });
-            }} disabled={permanentMutation.isPending} activeOpacity={0.8}
-              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: permanentMutation.isPending ? 0.6 : 1 }}>
-              {permanentMutation.isPending ? <ActivityIndicator size={16} color={iconWhite} /> : null}
-              <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar permanentemente</Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (!permanentTarget) return;
+                const id = config.getId(permanentTarget);
+                const name = permanentTarget.nombre;
+                permanentMutation.mutate(id, {
+                  onSuccess: () => {
+                    invalidate();
+                    setPermanentTarget(null);
+                    toast(config.toastPermanentDeleted(name));
+                  },
+                  onError: () => {
+                    setPermanentTarget(null);
+                    toast(
+                      `Error al eliminar permanentemente ${config.entityName} "${name}".`,
+                      'error',
+                    );
+                  },
+                });
+              }}
+              disabled={permanentMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: errorColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: permanentMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {permanentMutation.isPending ? (
+                <ActivityIndicator size={16} color={iconWhite} />
+              ) : null}
+              <Text
+                style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
+              >
+                Eliminar permanentemente
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setPermanentTarget(null)} disabled={permanentMutation.isPending} activeOpacity={0.8}
-              style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+            <TouchableOpacity
+              onPress={() => setPermanentTarget(null)}
+              disabled={permanentMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
       {/* Toast */}
-      <Toast visible={toastMessage !== null} message={toastMessage ?? ''} type={toastType} onDismiss={() => { setToastMessage(null); setToastType('success'); }} />
+      <Toast
+        visible={toastMessage !== null}
+        message={toastMessage ?? ''}
+        type={toastType}
+        onDismiss={() => {
+          setToastMessage(null);
+          setToastType('success');
+        }}
+      />
     </View>
   );
 }

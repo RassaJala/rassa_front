@@ -27,18 +27,81 @@ interface OrderRow {
 // --- Mock Data ---
 
 const sampleProducts: ProductRow[] = [
-  { id: 1, nombre: 'Tomate orgánico', precio: '$150 / kg', stock: 45, categoria: 'Verduras', estado: 'Activo' },
-  { id: 2, nombre: 'Lechuga hidropónica', precio: '$100 / unit', stock: 120, categoria: 'Verduras', estado: 'Activo' },
-  { id: 3, nombre: 'Pimiento morrón', precio: '$85 / kg', stock: 60, categoria: 'Verduras', estado: 'Inactivo' },
-  { id: 4, nombre: 'Zanahoria baby', precio: '$65 / kg', stock: 200, categoria: 'Tubérculos', estado: 'Activo' },
-  { id: 5, nombre: 'Cebolla colorada', precio: '$40 / kg', stock: 0, categoria: 'Tubérculos', estado: 'Inactivo' },
+  {
+    id: 1,
+    nombre: 'Tomate orgánico',
+    precio: '$150 / kg',
+    stock: 45,
+    categoria: 'Verduras',
+    estado: 'Activo',
+  },
+  {
+    id: 2,
+    nombre: 'Lechuga hidropónica',
+    precio: '$100 / unit',
+    stock: 120,
+    categoria: 'Verduras',
+    estado: 'Activo',
+  },
+  {
+    id: 3,
+    nombre: 'Pimiento morrón',
+    precio: '$85 / kg',
+    stock: 60,
+    categoria: 'Verduras',
+    estado: 'Inactivo',
+  },
+  {
+    id: 4,
+    nombre: 'Zanahoria baby',
+    precio: '$65 / kg',
+    stock: 200,
+    categoria: 'Tubérculos',
+    estado: 'Activo',
+  },
+  {
+    id: 5,
+    nombre: 'Cebolla colorada',
+    precio: '$40 / kg',
+    stock: 0,
+    categoria: 'Tubérculos',
+    estado: 'Inactivo',
+  },
 ];
 
 const sampleOrders: OrderRow[] = [
-  { id: 1, producto: 'Tomate orgánico', cantidad: 5, total: '$750', fecha: '15/07/2026', estado: 'Completado' },
-  { id: 2, producto: 'Lechuga hidropónica', cantidad: 10, total: '$1.000', fecha: '14/07/2026', estado: 'Pendiente' },
-  { id: 3, producto: 'Pimiento morrón', cantidad: 3, total: '$255', fecha: '12/07/2026', estado: 'Cancelado' },
-  { id: 4, producto: 'Zanahoria baby', cantidad: 8, total: '$520', fecha: '10/07/2026', estado: 'Completado' },
+  {
+    id: 1,
+    producto: 'Tomate orgánico',
+    cantidad: 5,
+    total: '$750',
+    fecha: '15/07/2026',
+    estado: 'Completado',
+  },
+  {
+    id: 2,
+    producto: 'Lechuga hidropónica',
+    cantidad: 10,
+    total: '$1.000',
+    fecha: '14/07/2026',
+    estado: 'Pendiente',
+  },
+  {
+    id: 3,
+    producto: 'Pimiento morrón',
+    cantidad: 3,
+    total: '$255',
+    fecha: '12/07/2026',
+    estado: 'Cancelado',
+  },
+  {
+    id: 4,
+    producto: 'Zanahoria baby',
+    cantidad: 8,
+    total: '$520',
+    fecha: '10/07/2026',
+    estado: 'Completado',
+  },
 ];
 
 // --- Columns ---
@@ -64,7 +127,10 @@ const productColumns: Column<ProductRow>[] = [
   },
 ];
 
-const orderStatusVariant: Record<OrderRow['estado'], 'success' | 'warning' | 'error'> = {
+const orderStatusVariant: Record<
+  OrderRow['estado'],
+  'success' | 'warning' | 'error'
+> = {
   Completado: 'success',
   Pendiente: 'warning',
   Cancelado: 'error',
@@ -84,9 +150,7 @@ const orderColumns: Column<OrderRow>[] = [
     key: 'estado',
     label: 'Estado',
     render: (o) => (
-      <Badge variant={orderStatusVariant[o.estado]}>
-        {o.estado}
-      </Badge>
+      <Badge variant={orderStatusVariant[o.estado]}>{o.estado}</Badge>
     ),
   },
 ];

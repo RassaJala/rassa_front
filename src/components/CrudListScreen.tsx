@@ -101,7 +101,15 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
     readonly onToggleStatus: () => void;
     readonly onDelete: () => void;
   },
-  colors: { surface: string; border: string; fg: string; muted: string; brand: string; iconWhite: string; errorColor: string },
+  colors: {
+    surface: string;
+    border: string;
+    fg: string;
+    muted: string;
+    brand: string;
+    iconWhite: string;
+    errorColor: string;
+  },
   isDark: boolean,
 ): React.JSX.Element {
   const secondField = config.fields[1];
@@ -109,9 +117,29 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
   const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
 
   return (
-    <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
       {/* Icono */}
-      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: accentBg }}>
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: accentBg,
+        }}
+      >
         <MaterialCommunityIcons
           name={item.estado ? 'check-circle-outline' : 'circle-outline'}
           size={20}
@@ -121,25 +149,79 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
 
       {/* Info */}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: colors.fg }} numberOfLines={1}>
+        <Text
+          style={{ fontSize: 16, fontWeight: '600', color: colors.fg }}
+          numberOfLines={1}
+        >
           {item.nombre}
         </Text>
         {secondValue ? (
-          <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }} numberOfLines={1}>
+          <Text
+            style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}
+            numberOfLines={1}
+          >
             {secondValue}
           </Text>
         ) : null}
       </View>
 
       {/* Acciones — icon buttons 36×36 tipo iOS */}
-      <Pressable onPress={actions.onEdit} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name="pencil-outline" size={16} color={colors.brand} />
+      <Pressable
+        onPress={actions.onEdit}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name="pencil-outline"
+          size={16}
+          color={colors.brand}
+        />
       </Pressable>
-      <Pressable onPress={actions.onToggleStatus} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'} size={16} color={colors.muted} />
+      <Pressable
+        onPress={actions.onToggleStatus}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'}
+          size={16}
+          color={colors.muted}
+        />
       </Pressable>
-      <Pressable onPress={actions.onDelete} style={{ width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }} hitSlop={6}>
-        <MaterialCommunityIcons name="trash-can-outline" size={16} color={colors.errorColor} />
+      <Pressable
+        onPress={actions.onDelete}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        hitSlop={6}
+      >
+        <MaterialCommunityIcons
+          name="trash-can-outline"
+          size={16}
+          color={colors.errorColor}
+        />
       </Pressable>
     </View>
   );
@@ -219,9 +301,15 @@ export default function CrudListScreen<
   const { data: trashItems } = useQuery<T[]>({
     queryKey: [...config.queryKey, 'trash'],
     queryFn: async () => {
-      const { data } = await api.get<T[] | { results: T[] } | ApiResponse<{ results: T[] }>>(`${config.endpoint}trash/`);
+      const { data } = await api.get<
+        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+      >(`${config.endpoint}trash/`);
       if (Array.isArray(data)) return data;
-      if ('data' in data && typeof data.data === 'object' && data.data !== null) {
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
         const inner = data.data as { results?: T[] };
         if (Array.isArray(inner.results)) return inner.results;
       }
@@ -238,7 +326,10 @@ export default function CrudListScreen<
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
-  const [formErrors, setFormErrors] = useState<{ fields: Record<string, string>; general: string | null }>({ fields: {}, general: null });
+  const [formErrors, setFormErrors] = useState<{
+    fields: Record<string, string>;
+    general: string | null;
+  }>({ fields: {}, general: null });
 
   // ── Toast state ────────────────────────────────────────────
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -316,17 +407,22 @@ export default function CrudListScreen<
     setTab('form');
   }, [config.fields]);
 
-  const startEdit = useCallback((item: T) => {
-    const initial: Record<string, string> = {};
-    for (const field of config.fields) {
-      initial[field.name] =
-        field.name === 'nombre' ? item.nombre : fieldValueFor(field.name, item);
-    }
-    setEditingItem(item);
-    setFormValues(initial);
-    setFormErrors({ fields: {}, general: null });
-    setTab('form');
-  }, [config.fields]);
+  const startEdit = useCallback(
+    (item: T) => {
+      const initial: Record<string, string> = {};
+      for (const field of config.fields) {
+        initial[field.name] =
+          field.name === 'nombre'
+            ? item.nombre
+            : fieldValueFor(field.name, item);
+      }
+      setEditingItem(item);
+      setFormValues(initial);
+      setFormErrors({ fields: {}, general: null });
+      setTab('form');
+    },
+    [config.fields],
+  );
 
   const switchToList = useCallback(() => {
     setTab('list');
@@ -359,7 +455,10 @@ export default function CrudListScreen<
     );
 
     if (isDuplicate) {
-      setFormErrors({ fields: {}, general: `Ya existe ${config.entityName} con el nombre "${trimmedName}".` });
+      setFormErrors({
+        fields: {},
+        general: `Ya existe ${config.entityName} con el nombre "${trimmedName}".`,
+      });
 
       return;
     }
@@ -452,9 +551,24 @@ export default function CrudListScreen<
 
   function renderGuardView() {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
         <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
           No tienes permisos para acceder a esta sección.
         </Text>
       </View>
@@ -463,12 +577,39 @@ export default function CrudListScreen<
 
   function renderComingSoonView() {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons name="wrench-clock-outline" size={64} color={muted} />
-        <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 24, fontWeight: '700', color: muted }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="wrench-clock-outline"
+          size={64}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 24,
+            fontWeight: '700',
+            color: muted,
+          }}
+        >
           Funcionalidad en desarrollo
         </Text>
-        <Text style={{ marginTop: 8, textAlign: 'center', fontSize: 14, color: muted }}>
+        <Text
+          style={{
+            marginTop: 8,
+            textAlign: 'center',
+            fontSize: 14,
+            color: muted,
+          }}
+        >
           Esta sección estará disponible próximamente.
         </Text>
       </View>
@@ -477,7 +618,14 @@ export default function CrudListScreen<
 
   function renderLoadingView() {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -485,19 +633,49 @@ export default function CrudListScreen<
 
   function renderErrorView() {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={48}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: muted,
+          }}
+        >
           {netInfo.isConnected === false
             ? 'Sin conexión a Internet. Verifica tu conexión.'
             : config.loadingErrorText}
         </Text>
         <Pressable
           onPress={() => void refetch()}
-          style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
+          style={{
+            marginTop: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: brand,
+            borderRadius: 12,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+          }}
         >
           <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
-          <Text style={{ fontWeight: '600', color: iconWhite }}>Reintentar</Text>
+          <Text style={{ fontWeight: '600', color: iconWhite }}>
+            Reintentar
+          </Text>
         </Pressable>
       </View>
     );
@@ -508,10 +686,40 @@ export default function CrudListScreen<
 
     if (empty) {
       return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <MaterialCommunityIcons name={config.emptyIcon as 'folder-open-outline' | 'ruler'} size={64} color={muted} />
-          <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 20, fontWeight: '700', color: muted }}>{config.emptyText}</Text>
-          <Text style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}>{config.emptyDescription}</Text>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
+          <MaterialCommunityIcons
+            name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
+            size={64}
+            color={muted}
+          />
+          <Text
+            style={{
+              marginTop: 16,
+              textAlign: 'center',
+              fontSize: 20,
+              fontWeight: '700',
+              color: muted,
+            }}
+          >
+            {config.emptyText}
+          </Text>
+          <Text
+            style={{
+              marginTop: 4,
+              textAlign: 'center',
+              fontSize: 14,
+              color: muted,
+            }}
+          >
+            {config.emptyDescription}
+          </Text>
         </View>
       );
     }
@@ -521,11 +729,37 @@ export default function CrudListScreen<
         data={items}
         keyExtractor={(item) => String(config.getId(item))}
         contentContainerStyle={{ padding: 20, paddingBottom: 8, gap: 10 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={brand} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+            tintColor={brand}
+          />
+        }
         renderItem={({ item }) =>
           config.renderListItem
-            ? config.renderListItem(item, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) })
-            : defaultRenderListItem(item, (i) => { const second = config.fields[1]; if (!second) return null; const val = (i as Record<string, unknown>)[second.name]; return val != null ? String(val) : null; }, config, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) }, { surface, border, fg, muted, brand, iconWhite, errorColor }, isDark)
+            ? config.renderListItem(item, {
+                onEdit: () => startEdit(item),
+                onToggleStatus: () => setToggleTarget(item),
+                onDelete: () => setDeleteTarget(item),
+              })
+            : defaultRenderListItem(
+                item,
+                (i) => {
+                  const second = config.fields[1];
+                  if (!second) return null;
+                  const val = (i as Record<string, unknown>)[second.name];
+                  return val != null ? String(val) : null;
+                },
+                config,
+                {
+                  onEdit: () => startEdit(item),
+                  onToggleStatus: () => setToggleTarget(item),
+                  onDelete: () => setDeleteTarget(item),
+                },
+                { surface, border, fg, muted, brand, iconWhite, errorColor },
+                isDark,
+              )
         }
         ListFooterComponent={null}
       />
@@ -534,16 +768,46 @@ export default function CrudListScreen<
 
   function renderFormTab() {
     return (
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{ padding: 20, gap: 18 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
-            {editingItem ? `Editar ${config.entityName}` : `Nueva ${config.entityName}`}
+            {editingItem
+              ? `Editar ${config.entityName}`
+              : `Nueva ${config.entityName}`}
           </Text>
 
           {formErrors.general ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: errorBg, borderRadius: 12, padding: 12 }}>
-              <MaterialCommunityIcons name="alert-circle" size={18} color={errorColor} />
-              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: errorColor }}>{formErrors.general}</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 8,
+                backgroundColor: errorBg,
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle"
+                size={18}
+                color={errorColor}
+              />
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: 14,
+                  lineHeight: 20,
+                  color: errorColor,
+                }}
+              >
+                {formErrors.general}
+              </Text>
             </View>
           ) : null}
 
@@ -551,33 +815,104 @@ export default function CrudListScreen<
             const fieldErr = formErrors.fields[field.name];
             return (
               <View key={field.name} style={{ gap: 6 }}>
-                <Text style={{ fontSize: 12, fontWeight: '600', letterSpacing: 0.08, textTransform: 'uppercase', color: muted }}>{field.label}</Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    letterSpacing: 0.08,
+                    textTransform: 'uppercase',
+                    color: muted,
+                  }}
+                >
+                  {field.label}
+                </Text>
                 <TextInput
                   value={formValues[field.name] ?? ''}
-                  onChangeText={(text) => { setFormValues((prev) => ({ ...prev, [field.name]: text })); setFormErrors((prev) => ({ ...prev, fields: { ...prev.fields, [field.name]: '' }, general: null })); }}
+                  onChangeText={(text) => {
+                    setFormValues((prev) => ({ ...prev, [field.name]: text }));
+                    setFormErrors((prev) => ({
+                      ...prev,
+                      fields: { ...prev.fields, [field.name]: '' },
+                      general: null,
+                    }));
+                  }}
                   placeholder={field.placeholder}
                   placeholderTextColor={muted}
                   multiline={field.multiline}
-                  numberOfLines={field.multiline ? (field.numberOfLines ?? 3) : 1}
-                  style={{ borderWidth: 1.5, borderColor: fieldErr ? errorColor : border, borderRadius: 12, backgroundColor: surface, color: fg, fontSize: 15, paddingHorizontal: 14, height: field.multiline ? 80 : 46, paddingTop: field.multiline ? 12 : 0, textAlignVertical: field.multiline ? 'top' : 'center' }}
+                  numberOfLines={
+                    field.multiline ? (field.numberOfLines ?? 3) : 1
+                  }
+                  style={{
+                    borderWidth: 1.5,
+                    borderColor: fieldErr ? errorColor : border,
+                    borderRadius: 12,
+                    backgroundColor: surface,
+                    color: fg,
+                    fontSize: 15,
+                    paddingHorizontal: 14,
+                    height: field.multiline ? 80 : 46,
+                    paddingTop: field.multiline ? 12 : 0,
+                    textAlignVertical: field.multiline ? 'top' : 'center',
+                  }}
                 />
                 {fieldErr ? (
-                  <Text style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}>{fieldErr}</Text>
+                  <Text
+                    style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}
+                  >
+                    {fieldErr}
+                  </Text>
                 ) : null}
               </View>
             );
           })}
         </ScrollView>
 
-        <View style={{ padding: 20, gap: 10, borderTopWidth: 1, borderTopColor: border }}>
-          <TouchableOpacity onPress={handleSave} disabled={isSaving} activeOpacity={0.8}
-            style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving ? 0.6 : 1 }}>
-            {isSaving ? <ActivityIndicator size={16} color={iconWhite} /> : null}
-            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Guardar</Text>
+        <View
+          style={{
+            padding: 20,
+            gap: 10,
+            borderTopWidth: 1,
+            borderTopColor: border,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={isSaving}
+            activeOpacity={0.8}
+            style={{
+              height: 50,
+              borderRadius: 14,
+              backgroundColor: errorColor,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+              opacity: isSaving ? 0.6 : 1,
+            }}
+          >
+            {isSaving ? (
+              <ActivityIndicator size={16} color={iconWhite} />
+            ) : null}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+              Guardar
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={switchToList} disabled={isSaving} activeOpacity={0.8}
-            style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+          <TouchableOpacity
+            onPress={switchToList}
+            disabled={isSaving}
+            activeOpacity={0.8}
+            style={{
+              height: 44,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+              Cancelar
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -590,95 +925,347 @@ export default function CrudListScreen<
 
     return (
       <View style={{ flex: 1, backgroundColor: bg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.02, color: fg }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingTop: 60,
+            paddingBottom: 4,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
+          >
             {config.headerTitle}
           </Text>
           {trashScreen && hasTrash ? (
-            <Pressable onPress={() => navigation.navigate(trashScreen)} hitSlop={8}>
-              <MaterialCommunityIcons name="delete-restore" size={24} color={muted} />
+            <Pressable
+              onPress={() => navigation.navigate(trashScreen)}
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons
+                name="delete-restore"
+                size={24}
+                color={muted}
+              />
             </Pressable>
           ) : null}
         </View>
 
-        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-          <View style={{ flexDirection: 'row', backgroundColor: segmentedBg, borderRadius: 10, padding: 3 }}>
-            <TouchableOpacity onPress={() => { if (!isFormActive) return; switchToList(); }}
-              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? transparent : surface, alignItems: 'center' }} activeOpacity={0.7}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? muted : fg, letterSpacing: 0.01 }}>📋 Lista</Text>
+        <View
+          style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: segmentedBg,
+              borderRadius: 10,
+              padding: 3,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                if (!isFormActive) return;
+                switchToList();
+              }}
+              style={{
+                flex: 1,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: isFormActive ? transparent : surface,
+                alignItems: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: isFormActive ? muted : fg,
+                  letterSpacing: 0.01,
+                }}
+              >
+                📋 Lista
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { if (isFormActive) return; startNew(); }}
-              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? surface : transparent, alignItems: 'center' }} activeOpacity={0.7}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? fg : muted, letterSpacing: 0.01 }}>➕ Nuevo</Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (isFormActive) return;
+                startNew();
+              }}
+              style={{
+                flex: 1,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: isFormActive ? surface : transparent,
+                alignItems: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: isFormActive ? fg : muted,
+                  letterSpacing: 0.01,
+                }}
+              >
+                ➕ Nuevo
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {!isFormActive ? renderListTab() : renderFormTab()}
 
-        <Modal visible={toggleTarget !== null} transparent animationType="slide" onRequestClose={() => setToggleTarget(null)}>
-          <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setToggleTarget(null)} />
-          <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
+        <Modal
+          visible={toggleTarget !== null}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setToggleTarget(null)}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: modalOverlay }}
+            onPress={() => setToggleTarget(null)}
+          />
+          <View
+            style={{
+              backgroundColor: surface,
+              borderRadius: 24,
+              padding: 24,
+              paddingBottom: 34,
+              marginTop: 'auto',
+            }}
+          >
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
-                <MaterialCommunityIcons name={toggleTarget?.estado ? 'pause-circle-outline' : 'play-circle-outline'} size={26} color={errorColor} />
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: errorBg,
+                  marginBottom: 12,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name={
+                    toggleTarget?.estado
+                      ? 'pause-circle-outline'
+                      : 'play-circle-outline'
+                  }
+                  size={26}
+                  color={errorColor}
+                />
               </View>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>
-                {toggleTarget?.estado ? `Desactivar "${toggleTarget?.nombre}"?` : `Activar "${toggleTarget?.nombre}"?`}
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '700',
+                  color: fg,
+                  textAlign: 'center',
+                }}
+              >
+                {toggleTarget?.estado
+                  ? `Desactivar "${toggleTarget?.nombre}"?`
+                  : `Activar "${toggleTarget?.nombre}"?`}
               </Text>
-              <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>
-                {toggleTarget?.estado ? 'El elemento se moverá a la papelera.' : 'El elemento volverá a estar activo.'}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: muted,
+                  marginTop: 6,
+                  textAlign: 'center',
+                }}
+              >
+                {toggleTarget?.estado
+                  ? 'El elemento se moverá a la papelera.'
+                  : 'El elemento volverá a estar activo.'}
               </Text>
             </View>
             <View style={{ gap: 10 }}>
-              <TouchableOpacity onPress={() => { if (toggleTarget) handleToggleStatus(toggleTarget); setToggleTarget(null); }} activeOpacity={0.8}
-                style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (toggleTarget) handleToggleStatus(toggleTarget);
+                  setToggleTarget(null);
+                }}
+                activeOpacity={0.8}
+                style={{
+                  height: 50,
+                  borderRadius: 14,
+                  backgroundColor: errorColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text
+                  style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
+                >
                   {toggleTarget?.estado ? 'Desactivar' : 'Activar'}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setToggleTarget(null)} activeOpacity={0.8}
-                style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+              <TouchableOpacity
+                onPress={() => setToggleTarget(null)}
+                activeOpacity={0.8}
+                style={{
+                  height: 44,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
 
-        <Modal visible={deleteTarget !== null} transparent animationType="slide" onRequestClose={() => setDeleteTarget(null)}>
-          <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setDeleteTarget(null)} />
-          <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
+        <Modal
+          visible={deleteTarget !== null}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setDeleteTarget(null)}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: modalOverlay }}
+            onPress={() => setDeleteTarget(null)}
+          />
+          <View
+            style={{
+              backgroundColor: surface,
+              borderRadius: 24,
+              padding: 24,
+              paddingBottom: 34,
+              marginTop: 'auto',
+            }}
+          >
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
-                <MaterialCommunityIcons name="trash-can-outline" size={26} color={errorColor} />
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: errorBg,
+                  marginBottom: 12,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={26}
+                  color={errorColor}
+                />
               </View>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>{deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}</Text>
-              <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>Esta acción no se puede deshacer.</Text>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '700',
+                  color: fg,
+                  textAlign: 'center',
+                }}
+              >
+                {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: muted,
+                  marginTop: 6,
+                  textAlign: 'center',
+                }}
+              >
+                Esta acción no se puede deshacer.
+              </Text>
             </View>
 
             <View style={{ gap: 10 }}>
-              <TouchableOpacity onPress={() => {
-                if (!deleteTarget) return;
-                const id = config.getId(deleteTarget);
-                const name = deleteTarget.nombre;
-                deleteMutation.mutate(id, {
-                  onSuccess: () => { void queryClient.invalidateQueries({ queryKey: [...config.queryKey] }); setDeleteTarget(null); toast(config.toastDeleted(name)); },
-                  onError: () => { toast(`Error al eliminar ${config.entityName} "${name}".`, 'error'); setDeleteTarget(null); },
-                });
-              }} disabled={isSaving || deleteMutation.isPending} activeOpacity={0.8}
-                style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving || deleteMutation.isPending ? 0.6 : 1 }}>
-                {(isSaving || deleteMutation.isPending) ? <ActivityIndicator size={16} color={iconWhite} /> : null}
-                <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (!deleteTarget) return;
+                  const id = config.getId(deleteTarget);
+                  const name = deleteTarget.nombre;
+                  deleteMutation.mutate(id, {
+                    onSuccess: () => {
+                      void queryClient.invalidateQueries({
+                        queryKey: [...config.queryKey],
+                      });
+                      setDeleteTarget(null);
+                      toast(config.toastDeleted(name));
+                    },
+                    onError: () => {
+                      toast(
+                        `Error al eliminar ${config.entityName} "${name}".`,
+                        'error',
+                      );
+                      setDeleteTarget(null);
+                    },
+                  });
+                }}
+                disabled={isSaving || deleteMutation.isPending}
+                activeOpacity={0.8}
+                style={{
+                  height: 50,
+                  borderRadius: 14,
+                  backgroundColor: errorColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 6,
+                  opacity: isSaving || deleteMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {isSaving || deleteMutation.isPending ? (
+                  <ActivityIndicator size={16} color={iconWhite} />
+                ) : null}
+                <Text
+                  style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
+                >
+                  Eliminar
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setDeleteTarget(null)} disabled={deleteMutation.isPending} activeOpacity={0.8}
-                style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+              <TouchableOpacity
+                onPress={() => setDeleteTarget(null)}
+                disabled={deleteMutation.isPending}
+                activeOpacity={0.8}
+                style={{
+                  height: 44,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
 
-        <Toast visible={toastMessage !== null} message={toastMessage ?? ''} type={toastType} onDismiss={() => { setToastMessage(null); setToastType('success'); }} />
+        <Toast
+          visible={toastMessage !== null}
+          message={toastMessage ?? ''}
+          type={toastType}
+          onDismiss={() => {
+            setToastMessage(null);
+            setToastType('success');
+          }}
+        />
       </View>
     );
   }

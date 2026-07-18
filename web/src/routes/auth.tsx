@@ -13,14 +13,12 @@ import type { Role, User } from '../types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function mapRegisterUser(
-  raw: Record<string, unknown>,
-): User {
+function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: (raw.role as string) as Role,
+    rol: raw.role as string as Role,
   };
 }
 
@@ -29,22 +27,33 @@ function mapMeUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: (raw.role as string) as Role,
+    rol: raw.role as string as Role,
   };
 }
 
 // ponytail: inline validation, add zod when forms grow beyond 2 pages
-function loginErrors(email: string, password: string): { email?: string; password?: string } {
+function loginErrors(
+  email: string,
+  password: string,
+): { email?: string; password?: string } {
   const errs: { email?: string; password?: string } = {};
   if (!email.trim()) errs.email = 'Ingresá tu correo electrónico';
-  else if (!EMAIL_RE.test(email.trim())) errs.email = 'El correo no tiene formato válido';
+  else if (!EMAIL_RE.test(email.trim()))
+    errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
-  else if (password.length < 6) errs.password = 'La contraseña debe tener al menos 6 caracteres';
+  else if (password.length < 6)
+    errs.password = 'La contraseña debe tener al menos 6 caracteres';
   return errs;
 }
 
 function registerErrors(
-  fields: { nombre: string; apellido: string; email: string; password: string; telefono: string },
+  fields: {
+    nombre: string;
+    apellido: string;
+    email: string;
+    password: string;
+    telefono: string;
+  },
   passwordConfirm: string,
 ): string | null {
   const { nombre, apellido, email, password, telefono } = fields;
@@ -52,7 +61,8 @@ function registerErrors(
     return 'Nombre, apellido, email y contraseña son obligatorios.';
   }
   if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (password.length < 8)
+    return 'La contraseña debe tener al menos 8 caracteres.';
   if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
   if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
@@ -74,7 +84,9 @@ export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -90,10 +102,10 @@ export function LoginScreen() {
     setLoading(true);
 
     try {
-      const { data: tokens } = await api.post<{ access: string; refresh: string }>(
-        '/token/',
-        { email: email.trim(), password },
-      );
+      const { data: tokens } = await api.post<{
+        access: string;
+        refresh: string;
+      }>('/token/', { email: email.trim(), password });
 
       localStorage.setItem('token', tokens.access);
 
@@ -109,7 +121,9 @@ export function LoginScreen() {
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', { replace: true });
+      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+        replace: true,
+      });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setGeneralError(err.message);
@@ -136,18 +150,55 @@ export function LoginScreen() {
 
   return (
     <AuthLayout title="Iniciar sesión">
-      <form className="flex flex-col gap-[18px]" onSubmit={handleSubmit} style={{}}>
+      <form
+        className="flex flex-col gap-[18px]"
+        onSubmit={handleSubmit}
+        style={{}}
+      >
         {/* Email field */}
         <div className="flex flex-col gap-[5px]">
-          <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5E6B5E' }}>
+          <label
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#5E6B5E',
+            }}
+          >
             Correo electrónico
           </label>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <span style={{ position: 'absolute', left: 14, fontSize: 16, opacity: 0.5, pointerEvents: 'none', zIndex: 1 }}>📧</span>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                left: 14,
+                fontSize: 16,
+                opacity: 0.5,
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            >
+              📧
+            </span>
             <input
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email)
+                  setErrors((p) => {
+                    const n = { ...p };
+                    delete n.email;
+                    return n;
+                  });
+              }}
               placeholder="tu@correo.com"
               autoComplete="email"
               inputMode="email"
@@ -158,24 +209,65 @@ export function LoginScreen() {
                 background: '#FFFFFF',
                 color: '#2D3328',
               }}
-              onFocus={(e) => { if (!errors.email) e.target.style.borderColor = brand; }}
-              onBlur={(e) => { if (!errors.email) e.target.style.borderColor = '#D6DAD4'; }}
+              onFocus={(e) => {
+                if (!errors.email) e.target.style.borderColor = brand;
+              }}
+              onBlur={(e) => {
+                if (!errors.email) e.target.style.borderColor = '#D6DAD4';
+              }}
             />
           </div>
-          {errors.email && <span style={{ fontSize: 12, color: errColor }}>{errors.email}</span>}
+          {errors.email && (
+            <span style={{ fontSize: 12, color: errColor }}>
+              {errors.email}
+            </span>
+          )}
         </div>
 
         {/* Password field */}
         <div className="flex flex-col gap-[5px]">
-          <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5E6B5E' }}>
+          <label
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#5E6B5E',
+            }}
+          >
             Contraseña
           </label>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <span style={{ position: 'absolute', left: 14, fontSize: 16, opacity: 0.5, pointerEvents: 'none', zIndex: 1 }}>🔒</span>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                left: 14,
+                fontSize: 16,
+                opacity: 0.5,
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            >
+              🔒
+            </span>
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password)
+                  setErrors((p) => {
+                    const n = { ...p };
+                    delete n.password;
+                    return n;
+                  });
+              }}
               placeholder="••••••••"
               autoComplete="current-password"
               required
@@ -186,28 +278,49 @@ export function LoginScreen() {
                 background: '#FFFFFF',
                 color: '#2D3328',
               }}
-              onFocus={(e) => { if (!errors.password) e.target.style.borderColor = brand; }}
-              onBlur={(e) => { if (!errors.password) e.target.style.borderColor = '#D6DAD4'; }}
+              onFocus={(e) => {
+                if (!errors.password) e.target.style.borderColor = brand;
+              }}
+              onBlur={(e) => {
+                if (!errors.password) e.target.style.borderColor = '#D6DAD4';
+              }}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               style={{
-                position: 'absolute', right: 6, background: 'none', border: 'none',
-                cursor: 'pointer', fontSize: 18, padding: 10, color: '#5E6B5E',
-                minWidth: 44, minHeight: 44, display: 'grid', placeItems: 'center',
+                position: 'absolute',
+                right: 6,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 18,
+                padding: 10,
+                color: '#5E6B5E',
+                minWidth: 44,
+                minHeight: 44,
+                display: 'grid',
+                placeItems: 'center',
               }}
-              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={
+                showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              }
             >
               {showPassword ? '🙈' : '👁'}
             </button>
           </div>
-          {errors.password && <span style={{ fontSize: 12, color: errColor }}>{errors.password}</span>}
+          {errors.password && (
+            <span style={{ fontSize: 12, color: errColor }}>
+              {errors.password}
+            </span>
+          )}
         </div>
 
         {/* General error */}
         {generalError && (
-          <p style={{ textAlign: 'center', fontSize: 14, color: errColor }}>{generalError}</p>
+          <p style={{ textAlign: 'center', fontSize: 14, color: errColor }}>
+            {generalError}
+          </p>
         )}
 
         {/* Submit */}
@@ -215,17 +328,38 @@ export function LoginScreen() {
           type="submit"
           disabled={loading}
           style={{
-            width: '100%', height: 54, border: 'none', borderRadius: 16,
-            background: loading ? `${coral}99` : coral, color: '#fff',
-            fontSize: 17, fontWeight: 600, fontFamily: 'inherit',
-            cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.01em',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            marginTop: 12, transition: 'background 0.15s, opacity 0.15s',
+            width: '100%',
+            height: 54,
+            border: 'none',
+            borderRadius: 16,
+            background: loading ? `${coral}99` : coral,
+            color: '#fff',
+            fontSize: 17,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            letterSpacing: '0.01em',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 12,
+            transition: 'background 0.15s, opacity 0.15s',
           }}
         >
           {loading ? (
             <>
-              <span style={{ width: 20, height: 20, border: '2.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  border: '2.5px solid rgba(255,255,255,0.3)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  animation: 'spin 0.6s linear infinite',
+                  display: 'inline-block',
+                }}
+              />
               <span style={{ display: 'none' }}>Iniciar sesión</span>
             </>
           ) : (
@@ -303,7 +437,9 @@ export function RegisterScreen() {
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', { replace: true });
+      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+        replace: true,
+      });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -323,47 +459,97 @@ export function RegisterScreen() {
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</label>
-            <input type="text" placeholder="Juan" autoComplete="given-name" value={nombre}
-              onChange={(e) => setNombre(e.target.value)} className={inputClass} />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Nombre
+            </label>
+            <input
+              type="text"
+              placeholder="Juan"
+              autoComplete="given-name"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className={inputClass}
+            />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido</label>
-            <input type="text" placeholder="Pérez" autoComplete="family-name" value={apellido}
-              onChange={(e) => setApellido(e.target.value)} className={inputClass} />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Apellido
+            </label>
+            <input
+              type="text"
+              placeholder="Pérez"
+              autoComplete="family-name"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
+              className={inputClass}
+            />
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-          <input type="email" placeholder="tu@email.com" autoComplete="email" value={email}
-            onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Email
+          </label>
+          <input
+            type="email"
+            placeholder="tu@email.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         <div className="relative">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
-            <input type={showPassword ? 'text' : 'password'} placeholder="Mínimo 8 caracteres"
-              autoComplete="new-password" value={password}
-              onChange={(e) => setPassword(e.target.value)} className={`${inputClass} w-full pr-10`} />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Contraseña
+            </label>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`${inputClass} w-full pr-10`}
+            />
           </div>
-          <button type="button"
+          <button
+            type="button"
             className="absolute right-3 top-[34px] text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-            onClick={() => setShowPassword((v) => !v)} tabIndex={-1}>
+            onClick={() => setShowPassword((v) => !v)}
+            tabIndex={-1}
+          >
             {showPassword ? 'Ocultar' : 'Mostrar'}
           </button>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar contraseña</label>
-          <input type="password" placeholder="Repetí la contraseña" autoComplete="new-password"
-            value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} className={inputClass} />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Confirmar contraseña
+          </label>
+          <input
+            type="password"
+            placeholder="Repetí la contraseña"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
-          <input type="tel" placeholder="11 1234-5678" autoComplete="tel" value={telefono}
-            onChange={(e) => setTelefono(e.target.value)} className={inputClass} />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Teléfono
+          </label>
+          <input
+            type="tel"
+            placeholder="11 1234-5678"
+            autoComplete="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -395,20 +581,33 @@ export function RegisterScreen() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Domicilio</label>
-          <input type="text" placeholder="Calle 123" autoComplete="street-address" value={domicilio}
-            onChange={(e) => setDomicilio(e.target.value)} className={inputClass} />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Domicilio
+          </label>
+          <input
+            type="text"
+            placeholder="Calle 123"
+            autoComplete="street-address"
+            value={domicilio}
+            onChange={(e) => setDomicilio(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Localidad (ID)</label>
-          <input type="number" placeholder="1" value={localidad}
-            onChange={(e) => setLocalidad(e.target.value)} className={inputClass} />
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Localidad (ID)
+          </label>
+          <input
+            type="number"
+            placeholder="1"
+            value={localidad}
+            onChange={(e) => setLocalidad(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
-        {error && (
-          <p className="text-center text-sm text-red-500">{error}</p>
-        )}
+        {error && <p className="text-center text-sm text-red-500">{error}</p>}
 
         <Button
           type="submit"

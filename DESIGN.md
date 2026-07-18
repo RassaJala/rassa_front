@@ -523,43 +523,49 @@ Esta sección documenta los patrones introducidos durante el rediseño del panel
 
 ### Paleta actualizada
 
-| Token | Light | Dark | Uso |
-|-------|-------|------|-----|
-| `--brand` | `#24563C` | `#4A8A63` | Verde principal, badges activos |
-| `--coral` | `#DE393A` | `#DE393A` | Botones primarios, acciones |
-| `--bg` | `#F5F7F0` | `#1A211B` | Fondo de pantalla |
-| `--surface` | `#FFFFFF` | `#263028` | Tarjetas, paneles, inputs |
-| `--fg` | `#2D3328` | `#E8EAE4` | Texto principal |
-| `--muted` | `#5E6B5E` | `#9DA89D` | Texto secundario |
-| `--border` | `#E2E6DF` | `#353D35` | Bordes |
+| Token       | Light     | Dark      | Uso                             |
+| ----------- | --------- | --------- | ------------------------------- |
+| `--brand`   | `#24563C` | `#4A8A63` | Verde principal, badges activos |
+| `--coral`   | `#DE393A` | `#DE393A` | Botones primarios, acciones     |
+| `--bg`      | `#F5F7F0` | `#1A211B` | Fondo de pantalla               |
+| `--surface` | `#FFFFFF` | `#263028` | Tarjetas, paneles, inputs       |
+| `--fg`      | `#2D3328` | `#E8EAE4` | Texto principal                 |
+| `--muted`   | `#5E6B5E` | `#9DA89D` | Texto secundario                |
+| `--border`  | `#E2E6DF` | `#353D35` | Bordes                          |
 
 ### Componentes del rediseño
 
 #### Tarjetas (Cards)
+
 - `border-radius: 16px`, `border: 1px solid`, `padding: 16px`
 - Sin sombra (el borde es suficiente)
 
 #### Botones de acción
+
 - **Icon buttons**: 36×36px (móvil) / 32×32px (web), `border-radius: 8-10px`, `border: 1px solid`
 - **Primario**: coral, `border-radius: 10-16px`
 - **Ghost**: `border: 1.5px solid`, sin fondo
 
 #### Inputs
+
 - `height: 44-46px`, `border: 1.5px solid`, `border-radius: 10-12px`
 - Focus: `border-color: var(--brand)`
 - Error: `border-color: var(--danger)`
 - Labels en uppercase 12-13px, `letter-spacing: 0.08em`
 
 #### Tabs (Segmented Control)
+
 - Fondo gris claro, `border-radius: 12px`, `padding: 3px`
 - Tab activo: fondo surface, texto fg
 - Tab inactivo: transparente, texto muted
 
 #### Modales
+
 - **Móvil**: Bottom sheet con slide desde abajo, `border-radius: 24px 24px 0 0`
 - **Web**: Modal centrado con `backdrop-filter: blur(4px)`, `border-radius: 20px`
 
 #### Tablas (web CRUD)
+
 - Cabecera con fondo `var(--bg)`, texto uppercase 11px
 - Filas con `border-bottom: 1px solid`
 - Hover sutil en filas

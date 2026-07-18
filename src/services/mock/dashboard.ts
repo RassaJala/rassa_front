@@ -75,30 +75,110 @@ export function getSellerStats(): SellerStats {
 
 export function getFarmerProducts(): ProductItem[] {
   return [
-    { id: 1, name: 'Tomates Premium', price: '$120/kg', stock: 150, status: 'active', category: 'Verduras', description: 'Tomates orgánicos de invernadero' },
-    { id: 2, name: 'Pimientos Orgánicos', price: '$85/kg', stock: 75, status: 'active', category: 'Verduras', description: 'Pimientos sin pesticidas' },
-    { id: 3, name: 'Zanahorias', price: '$45/kg', stock: 300, status: 'inactive', category: 'Verduras', description: 'Zanahorias baby' },
-    { id: 4, name: 'Lechugas Baby', price: '$60/kg', stock: 200, status: 'active', category: 'Verduras', description: 'Lechugas hidropónicas' },
-    { id: 5, name: 'Fresas', price: '$180/kg', stock: 40, status: 'active', category: 'Frutas', description: 'Fresas de temporada' },
+    {
+      id: 1,
+      name: 'Tomates Premium',
+      price: '$120/kg',
+      stock: 150,
+      status: 'active',
+      category: 'Verduras',
+      description: 'Tomates orgánicos de invernadero',
+    },
+    {
+      id: 2,
+      name: 'Pimientos Orgánicos',
+      price: '$85/kg',
+      stock: 75,
+      status: 'active',
+      category: 'Verduras',
+      description: 'Pimientos sin pesticidas',
+    },
+    {
+      id: 3,
+      name: 'Zanahorias',
+      price: '$45/kg',
+      stock: 300,
+      status: 'inactive',
+      category: 'Verduras',
+      description: 'Zanahorias baby',
+    },
+    {
+      id: 4,
+      name: 'Lechugas Baby',
+      price: '$60/kg',
+      stock: 200,
+      status: 'active',
+      category: 'Verduras',
+      description: 'Lechugas hidropónicas',
+    },
+    {
+      id: 5,
+      name: 'Fresas',
+      price: '$180/kg',
+      stock: 40,
+      status: 'active',
+      category: 'Frutas',
+      description: 'Fresas de temporada',
+    },
   ];
 }
 
 export function getRecentSales(): SaleItem[] {
   return [
-    { id: 1, product: 'Tomates Premium', quantity: '50 kg', total: 6000, date: 'Hoy, 14:30', status: 'Completado' },
-    { id: 2, product: 'Fresas', quantity: '20 kg', total: 3600, date: 'Ayer, 10:15', status: 'Pendiente' },
-    { id: 3, product: 'Lechugas Baby', quantity: '100 kg', total: 6000, date: '12/08, 16:00', status: 'Cancelado' },
-    { id: 4, product: 'Pimientos Orgánicos', quantity: '30 kg', total: 2550, date: '11/08, 09:45', status: 'Completado' },
+    {
+      id: 1,
+      product: 'Tomates Premium',
+      quantity: '50 kg',
+      total: 6000,
+      date: 'Hoy, 14:30',
+      status: 'Completado',
+    },
+    {
+      id: 2,
+      product: 'Fresas',
+      quantity: '20 kg',
+      total: 3600,
+      date: 'Ayer, 10:15',
+      status: 'Pendiente',
+    },
+    {
+      id: 3,
+      product: 'Lechugas Baby',
+      quantity: '100 kg',
+      total: 6000,
+      date: '12/08, 16:00',
+      status: 'Cancelado',
+    },
+    {
+      id: 4,
+      product: 'Pimientos Orgánicos',
+      quantity: '30 kg',
+      total: 2550,
+      date: '11/08, 09:45',
+      status: 'Completado',
+    },
   ];
 }
 
 export function getAllProducts(): ProductItem[] {
   const categories = ['Verduras', 'Frutas', 'Granos', 'Lácteos'];
   const productNames: Record<string, string[]> = {
-    Verduras: ['Tomates Orgánicos', 'Lechuga Fresca', 'Pimientos Rojos', 'Zanahorias Baby', 'Espinacas'],
+    Verduras: [
+      'Tomates Orgánicos',
+      'Lechuga Fresca',
+      'Pimientos Rojos',
+      'Zanahorias Baby',
+      'Espinacas',
+    ],
     Frutas: ['Fresas', 'Manzanas', 'Naranjas', 'Plátanos', 'Uvas'],
     Granos: ['Maíz Dulce', 'Frijol Negro', 'Arroz Integral', 'Trigo', 'Avena'],
-    Lácteos: ['Queso Fresco', 'Yogurt Natural', 'Leche Entera', 'Crema', 'Mantequilla'],
+    Lácteos: [
+      'Queso Fresco',
+      'Yogurt Natural',
+      'Leche Entera',
+      'Crema',
+      'Mantequilla',
+    ],
   };
 
   const products: ProductItem[] = [];

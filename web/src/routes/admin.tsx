@@ -36,28 +36,141 @@ interface AdminOrderRow {
 // --- Mock Data ---
 
 const sampleUsers: UserRow[] = [
-  { id: 1, name: 'María García', email: 'maria@rassa.com', rol: 'comprador', fechaRegistro: '10/01/2026', estado: 'Activo' },
-  { id: 2, name: 'Juan López', email: 'juan@rassa.com', rol: 'agricultor', fechaRegistro: '15/02/2026', estado: 'Activo' },
-  { id: 3, name: 'Ana Martínez', email: 'ana@rassa.com', rol: 'vendedor', fechaRegistro: '03/03/2026', estado: 'Activo' },
-  { id: 4, name: 'Carlos Ruiz', email: 'carlos@rassa.com', rol: 'admin', fechaRegistro: '01/01/2026', estado: 'Activo' },
-  { id: 5, name: 'Laura Díaz', email: 'laura@rassa.com', rol: 'comprador', fechaRegistro: '20/04/2026', estado: 'Inactivo' },
+  {
+    id: 1,
+    name: 'María García',
+    email: 'maria@rassa.com',
+    rol: 'comprador',
+    fechaRegistro: '10/01/2026',
+    estado: 'Activo',
+  },
+  {
+    id: 2,
+    name: 'Juan López',
+    email: 'juan@rassa.com',
+    rol: 'agricultor',
+    fechaRegistro: '15/02/2026',
+    estado: 'Activo',
+  },
+  {
+    id: 3,
+    name: 'Ana Martínez',
+    email: 'ana@rassa.com',
+    rol: 'vendedor',
+    fechaRegistro: '03/03/2026',
+    estado: 'Activo',
+  },
+  {
+    id: 4,
+    name: 'Carlos Ruiz',
+    email: 'carlos@rassa.com',
+    rol: 'admin',
+    fechaRegistro: '01/01/2026',
+    estado: 'Activo',
+  },
+  {
+    id: 5,
+    name: 'Laura Díaz',
+    email: 'laura@rassa.com',
+    rol: 'comprador',
+    fechaRegistro: '20/04/2026',
+    estado: 'Inactivo',
+  },
 ];
 
 const sampleAdminProducts: AdminProductRow[] = [
-  { id: 1, nombre: 'Tomate orgánico', precio: '$150 / kg', stock: 45, categoria: 'Verduras', agricultor: 'Juan López', estado: 'Activo' },
-  { id: 2, nombre: 'Lechuga hidropónica', precio: '$100 / unit', stock: 120, categoria: 'Verduras', agricultor: 'Pedro Gómez', estado: 'Activo' },
-  { id: 3, nombre: 'Pimiento morrón', precio: '$85 / kg', stock: 60, categoria: 'Verduras', agricultor: 'Juan López', estado: 'Activo' },
-  { id: 4, nombre: 'Zanahoria baby', precio: '$65 / kg', stock: 200, categoria: 'Tubérculos', agricultor: 'Elena Torres', estado: 'Activo' },
-  { id: 5, nombre: 'Cebolla colorada', precio: '$40 / kg', stock: 0, categoria: 'Tubérculos', agricultor: 'Pedro Gómez', estado: 'Inactivo' },
-  { id: 6, nombre: 'Miel artesanal', precio: '$500 / frasco', stock: 30, categoria: 'Apicultura', agricultor: 'Elena Torres', estado: 'Activo' },
+  {
+    id: 1,
+    nombre: 'Tomate orgánico',
+    precio: '$150 / kg',
+    stock: 45,
+    categoria: 'Verduras',
+    agricultor: 'Juan López',
+    estado: 'Activo',
+  },
+  {
+    id: 2,
+    nombre: 'Lechuga hidropónica',
+    precio: '$100 / unit',
+    stock: 120,
+    categoria: 'Verduras',
+    agricultor: 'Pedro Gómez',
+    estado: 'Activo',
+  },
+  {
+    id: 3,
+    nombre: 'Pimiento morrón',
+    precio: '$85 / kg',
+    stock: 60,
+    categoria: 'Verduras',
+    agricultor: 'Juan López',
+    estado: 'Activo',
+  },
+  {
+    id: 4,
+    nombre: 'Zanahoria baby',
+    precio: '$65 / kg',
+    stock: 200,
+    categoria: 'Tubérculos',
+    agricultor: 'Elena Torres',
+    estado: 'Activo',
+  },
+  {
+    id: 5,
+    nombre: 'Cebolla colorada',
+    precio: '$40 / kg',
+    stock: 0,
+    categoria: 'Tubérculos',
+    agricultor: 'Pedro Gómez',
+    estado: 'Inactivo',
+  },
+  {
+    id: 6,
+    nombre: 'Miel artesanal',
+    precio: '$500 / frasco',
+    stock: 30,
+    categoria: 'Apicultura',
+    agricultor: 'Elena Torres',
+    estado: 'Activo',
+  },
 ];
 
 const sampleAdminOrders: AdminOrderRow[] = [
-  { id: 1, comprador: 'María García', total: '$750', fecha: '15/07/2026', estado: 'Entregado' },
-  { id: 2, comprador: 'Laura Díaz', total: '$1.000', fecha: '14/07/2026', estado: 'Pendiente' },
-  { id: 3, comprador: 'María García', total: '$255', fecha: '12/07/2026', estado: 'Cancelado' },
-  { id: 4, comprador: 'Sofía Vargas', total: '$520', fecha: '10/07/2026', estado: 'En camino' },
-  { id: 5, comprador: 'Laura Díaz', total: '$480', fecha: '08/07/2026', estado: 'Entregado' },
+  {
+    id: 1,
+    comprador: 'María García',
+    total: '$750',
+    fecha: '15/07/2026',
+    estado: 'Entregado',
+  },
+  {
+    id: 2,
+    comprador: 'Laura Díaz',
+    total: '$1.000',
+    fecha: '14/07/2026',
+    estado: 'Pendiente',
+  },
+  {
+    id: 3,
+    comprador: 'María García',
+    total: '$255',
+    fecha: '12/07/2026',
+    estado: 'Cancelado',
+  },
+  {
+    id: 4,
+    comprador: 'Sofía Vargas',
+    total: '$520',
+    fecha: '10/07/2026',
+    estado: 'En camino',
+  },
+  {
+    id: 5,
+    comprador: 'Laura Díaz',
+    total: '$480',
+    fecha: '08/07/2026',
+    estado: 'Entregado',
+  },
 ];
 
 // --- Columns ---
@@ -75,11 +188,7 @@ const userColumns: Column<UserRow>[] = [
   {
     key: 'rol',
     label: 'Rol',
-    render: (u) => (
-      <Badge variant={roleVariant[u.rol]}>
-        {u.rol}
-      </Badge>
-    ),
+    render: (u) => <Badge variant={roleVariant[u.rol]}>{u.rol}</Badge>,
   },
   { key: 'fechaRegistro', label: 'Fecha registro', sortable: true },
   {
@@ -115,7 +224,10 @@ const adminProductColumns: Column<AdminProductRow>[] = [
   },
 ];
 
-const adminOrderStatusVariant: Record<AdminOrderRow['estado'], 'default' | 'success' | 'warning' | 'error'> = {
+const adminOrderStatusVariant: Record<
+  AdminOrderRow['estado'],
+  'default' | 'success' | 'warning' | 'error'
+> = {
   Pendiente: 'warning',
   'En camino': 'default',
   Entregado: 'success',
@@ -136,9 +248,7 @@ const adminOrderColumns: Column<AdminOrderRow>[] = [
     key: 'estado',
     label: 'Estado',
     render: (o) => (
-      <Badge variant={adminOrderStatusVariant[o.estado]}>
-        {o.estado}
-      </Badge>
+      <Badge variant={adminOrderStatusVariant[o.estado]}>{o.estado}</Badge>
     ),
   },
 ];
@@ -150,9 +260,7 @@ export function AdminUsers() {
     <>
       <PageHeader
         title="Usuarios"
-        action={
-          <Button variant="primary">Agregar usuario</Button>
-        }
+        action={<Button variant="primary">Agregar usuario</Button>}
       />
       <DataTable
         data={sampleUsers}
@@ -170,9 +278,7 @@ export function AdminProducts() {
     <>
       <PageHeader
         title="Productos"
-        action={
-          <Button variant="primary">Agregar producto</Button>
-        }
+        action={<Button variant="primary">Agregar producto</Button>}
       />
       <DataTable
         data={sampleAdminProducts}

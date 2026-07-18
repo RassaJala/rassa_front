@@ -5,6 +5,7 @@ E-commerce donde agricultores venden sus productos directamente. App **móvil** 
 ## Stack
 
 ### Móvil (React Native / Expo)
+
 - **Expo SDK 54** (React Native 0.81)
 - **React Navigation 7** (Stack + Bottom Tabs)
 - **TanStack Query 5** (server state)
@@ -13,6 +14,7 @@ E-commerce donde agricultores venden sus productos directamente. App **móvil** 
 - **React Native Paper** (UI components)
 
 ### Web (React + Vite)
+
 - **React 18** + **Vite**
 - **React Router DOM 6**
 - **TanStack Query 5**
@@ -49,10 +51,13 @@ bun run typecheck
 ```
 
 ### Móvil
+
 Escaneá el QR con **Expo Go** en tu celular. También podés apretar `a` para emulador Android o `i` para iOS simulator (solo Mac).
 
 ### Web
+
 Abrí `http://localhost:5173` en el navegador. Las rutas disponibles son:
+
 - `/login` — Inicio de sesión
 - `/register` — Registro
 - `/admin` — Panel de administración (dashboard, productos, categorías, unidades)

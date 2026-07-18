@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AuthContext } from '../hooks/useAuth';
 import type { AuthState, User } from '../types';
@@ -38,14 +33,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+    setState({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
   }, []);
 
   useEffect(() => {
     // ponytail: sync logout across tabs
     const handler = (e: StorageEvent) => {
       if (e.key === 'token' && !e.newValue) {
-        setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        setState({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       }
     };
     window.addEventListener('storage', handler);

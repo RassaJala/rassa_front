@@ -17,7 +17,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: bg }}>
       <Sidebar role={role} />
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <Topbar />
         <main style={{ flex: 1, padding: '28px 32px 40px', overflowY: 'auto' }}>
           {children}

@@ -52,12 +52,15 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 ${
-                    col.sortable ? 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300' : ''
+                    col.sortable
+                      ? 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300'
+                      : ''
                   }`}
                   onClick={() => {
                     if (!col.sortable) return;
                     setSort((prev) => {
-                      if (prev?.key !== col.key) return { key: col.key, direction: 'asc' };
+                      if (prev?.key !== col.key)
+                        return { key: col.key, direction: 'asc' };
                       return prev.direction === 'asc'
                         ? { key: col.key, direction: 'desc' }
                         : null;
@@ -90,9 +93,7 @@ export function DataTable<T>({
                       key={col.key}
                       className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 ${col.className ?? ''}`}
                     >
-                      {col.render
-                        ? col.render(item)
-                        : String(value ?? '')}
+                      {col.render ? col.render(item) : String(value ?? '')}
                     </td>
                   );
                 })}
@@ -112,15 +113,15 @@ export function DataTable<T>({
                 return (
                   <div
                     key={col.key}
-                    className={col.className?.includes('col-span-') ? col.className : ''}
+                    className={
+                      col.className?.includes('col-span-') ? col.className : ''
+                    }
                   >
                     <dt className="text-xs text-gray-500 dark:text-gray-400">
                       {col.label}
                     </dt>
                     <dd className="text-sm text-gray-900 dark:text-gray-100">
-                      {col.render
-                        ? col.render(item)
-                        : String(value ?? '')}
+                      {col.render ? col.render(item) : String(value ?? '')}
                     </dd>
                   </div>
                 );
