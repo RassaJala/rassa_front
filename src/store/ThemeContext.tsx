@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useColorScheme } from 'react-native';
 
 import { useColorScheme as useNativewindScheme } from 'nativewind';
 
@@ -30,8 +31,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({
   children,
 }: Readonly<{ children: ReactNode }>): React.JSX.Element {
-  const { colorScheme: systemScheme, setColorScheme: setNativewindScheme } =
-    useNativewindScheme();
+  const osScheme = useColorScheme(); // React Native — sigue al OS automáticamente
+  const { setColorScheme: setNativewindScheme } = useNativewindScheme();
 
   const [preference, setPreference] = useState<ThemePreference>('system');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -46,9 +47,6 @@ export function ThemeProvider({
 
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         setPreference(saved);
-        if (saved !== 'system') {
-          setNativewindScheme(saved);
-        }
       }
 
       setIsLoaded(true);
@@ -59,30 +57,34 @@ export function ThemeProvider({
     return () => {
       cancelled = true;
     };
-  }, [setNativewindScheme]);
+  }, []);
+
+  // Sincroniza NativeWind cuando cambia la preferencia o el OS
+  useEffect(() => {
+    if (preference === 'system') {
+      setNativewindScheme(osScheme ?? 'light');
+    } else {
+      setNativewindScheme(preference);
+    }
+  }, [preference, osScheme, setNativewindScheme]);
 
   const resolvedScheme: ResolvedScheme = useMemo(() => {
     if (preference === 'system') {
-      return (systemScheme as ResolvedScheme) ?? 'light';
+      return (osScheme as ResolvedScheme) ?? 'light';
     }
     return preference;
-  }, [preference, systemScheme]);
+  }, [preference, osScheme]);
 
   const toggleColorScheme = useCallback(() => {
     const next: ResolvedScheme = resolvedScheme === 'dark' ? 'light' : 'dark';
     setPreference(next);
-    setNativewindScheme(next);
     void Storage.setItemAsync(THEME_STORAGE_KEY, next);
-  }, [resolvedScheme, setNativewindScheme]);
+  }, [resolvedScheme]);
 
-  const setThemePreference = useCallback(
-    (pref: ThemePreference) => {
-      setPreference(pref);
-      setNativewindScheme(pref === 'system' ? 'system' : pref);
-      void Storage.setItemAsync(THEME_STORAGE_KEY, pref);
-    },
-    [setNativewindScheme],
-  );
+  const setThemePreference = useCallback((pref: ThemePreference) => {
+    setPreference(pref);
+    void Storage.setItemAsync(THEME_STORAGE_KEY, pref);
+  }, []);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
