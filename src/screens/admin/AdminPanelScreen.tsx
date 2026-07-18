@@ -7,14 +7,14 @@ import {
   Text,
   View,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { getAdminStats } from '@/services/mock/dashboard';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
-import { getAdminStats } from '@/services/mock/dashboard';
 
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
@@ -45,6 +45,8 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
   const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
   const coral = '#DE393A';
   const pumpkin = '#F2A900';
+  const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
+  const overlayBg = '#000';
 
   const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -72,8 +74,16 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
     outputRange: [0, 0.35],
   });
 
+  interface MenuItem {
+    icon: string;
+    label: string;
+    desc: string;
+    color: string;
+    action: () => void;
+  }
+
   // ponytail: custom right-side drawer, full drawer-nav if admin grows
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       icon: 'account-circle-outline',
       label: 'Perfil',
@@ -178,7 +188,7 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
       </View>
 
       {/* ═══ OVERLAY (solo oscurece el panel de atrás) ═══ */}
-      {drawerOpen && (
+      {drawerOpen ? (
         <Animated.View
           style={{
             position: 'absolute',
@@ -187,12 +197,12 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
             bottom: 0,
             right: 0,
             opacity: overlayOpacity,
-            backgroundColor: '#000',
+            backgroundColor: overlayBg,
           }}
         >
           <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
         </Animated.View>
-      )}
+      ) : null}
 
       {/* ═══ DRAWER desde la derecha ═══ */}
       <Animated.View
@@ -202,7 +212,7 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
           top: 0,
           bottom: 0,
           width: `${DRAWER_WIDTH * 100}%`,
-          backgroundColor: isDark ? '#1A211B' : '#FFFFFF',
+          backgroundColor: drawerBg,
           transform: [{ translateX: drawerTranslate }],
           borderLeftWidth: 1,
           borderLeftColor: sidebarBorder,
@@ -238,7 +248,7 @@ export default function AdminPanelScreen({ navigation: _navigation }: Props): Re
                   })}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, minHeight: 56 }}>
-                    <MaterialCommunityIcons name={item.icon as any} size={28} color={item.color} />
+                    <MaterialCommunityIcons name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap} size={28} color={item.color} />
                     <Text style={{ fontSize: 20, fontWeight: '600', color: item.color, letterSpacing: -0.15, flexShrink: 1 }}>{item.label}</Text>
                   </View>
                 </Pressable>

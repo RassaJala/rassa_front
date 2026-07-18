@@ -145,6 +145,21 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
   );
 }
 
+// ── Helpers ────────────────────────────────────────────────
+
+function fieldValueFor<T extends { nombre: string; estado: boolean }>(
+  name: string,
+  item: T,
+): string {
+  if (name === 'descripcion' && 'descripcion' in item) {
+    return String((item as Record<string, unknown>).descripcion ?? '');
+  }
+  if (name === 'abreviatura' && 'abreviatura' in item) {
+    return String((item as Record<string, unknown>).abreviatura ?? '');
+  }
+  return '';
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export default function CrudListScreen<
@@ -162,6 +177,10 @@ export default function CrudListScreen<
   const brand = isDark ? '#4A8A63' : '#24563C';
   const iconWhite = '#FFFFFF';
   const errorColor = '#DE393A';
+  const segmentedBg = isDark ? '#263028' : '#E8ECE4';
+  const transparent = 'transparent';
+  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const modalOverlay = 'rgba(0,0,0,0.4)';
   const netInfo = useNetInfo();
   const queryClient = useQueryClient();
 
@@ -245,7 +264,7 @@ export default function CrudListScreen<
     setEditingItem(null);
     setFormValues({});
     setFormErrors({ fields: {}, general: null });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config.queryKey is stable from parent
   }, [queryClient]);
 
   // ── Mutations ──────────────────────────────────────────────
@@ -295,17 +314,7 @@ export default function CrudListScreen<
     setFormValues(initial);
     setFormErrors({ fields: {}, general: null });
     setTab('form');
-  }, []);
-
-  function fieldValueFor(name: string, item: T): string {
-    if (name === 'descripcion' && 'descripcion' in item) {
-      return String((item as Record<string, unknown>).descripcion ?? '');
-    }
-    if (name === 'abreviatura' && 'abreviatura' in item) {
-      return String((item as Record<string, unknown>).abreviatura ?? '');
-    }
-    return '';
-  }
+  }, [config.fields]);
 
   const startEdit = useCallback((item: T) => {
     const initial: Record<string, string> = {};
@@ -317,7 +326,7 @@ export default function CrudListScreen<
     setFormValues(initial);
     setFormErrors({ fields: {}, general: null });
     setTab('form');
-  }, []);
+  }, [config.fields]);
 
   const switchToList = useCallback(() => {
     setTab('list');
@@ -328,7 +337,7 @@ export default function CrudListScreen<
     }
     setFormValues(empty);
     setFormErrors({ fields: {}, general: null });
-  }, []);
+  }, [config.fields]);
 
   const handleSave = useCallback(() => {
     // Per-field validation
@@ -441,15 +450,10 @@ export default function CrudListScreen<
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  // ── Role guard ──────────────────────────────────────────────
-  if (user?.role !== 'admin') {
+  function renderGuardView() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons
-          name="lock-outline"
-          size={48}
-          color={muted}
-        />
+        <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
         <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>
           No tienes permisos para acceder a esta sección.
         </Text>
@@ -457,15 +461,10 @@ export default function CrudListScreen<
     );
   }
 
-  // ── Coming soon placeholder ────────────────────────────────
-  if (config.comingSoon) {
+  function renderComingSoonView() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons
-          name="wrench-clock-outline"
-          size={64}
-          color={muted}
-        />
+        <MaterialCommunityIcons name="wrench-clock-outline" size={64} color={muted} />
         <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 24, fontWeight: '700', color: muted }}>
           Funcionalidad en desarrollo
         </Text>
@@ -476,8 +475,7 @@ export default function CrudListScreen<
     );
   }
 
-  // ── Loading ────────────────────────────────────────────────
-  if (isLoading) {
+  function renderLoadingView() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
         <ActivityIndicator size="large" color={brand} />
@@ -485,15 +483,10 @@ export default function CrudListScreen<
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────
-  if (isError) {
+  function renderErrorView() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={48}
-          color={muted}
-        />
+        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
         <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}>
           {netInfo.isConnected === false
             ? 'Sin conexión a Internet. Verifica tu conexión.'
@@ -503,193 +496,197 @@ export default function CrudListScreen<
           onPress={() => void refetch()}
           style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brand, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
         >
-          <MaterialCommunityIcons
-            name="refresh"
-            size={18}
-            color={iconWhite}
-          />
+          <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
           <Text style={{ fontWeight: '600', color: iconWhite }}>Reintentar</Text>
         </Pressable>
       </View>
     );
   }
 
-  const isEmpty = !items || items.length === 0;
-  const trashScreen = config.trashScreenName;
+  function renderListTab() {
+    const empty = !items || items.length === 0;
 
-  // ── Render ─────────────────────────────────────────────────
-  const isFormActive = tab === 'form';
-
-  return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Título + papelera */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.02, color: fg }}>
-          {config.headerTitle}
-        </Text>
-        {trashScreen && hasTrash ? (
-          <Pressable onPress={() => navigation.navigate(trashScreen)} hitSlop={8}>
-            <MaterialCommunityIcons name="delete-restore" size={24} color={muted} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {/* Segmented control */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
-        <View style={{ flexDirection: 'row', backgroundColor: isDark ? '#263028' : '#E8ECE4', borderRadius: 10, padding: 3 }}>
-          <TouchableOpacity onPress={() => { if (!isFormActive) return; switchToList(); }}
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? 'transparent' : surface, alignItems: 'center' }} activeOpacity={0.7}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? muted : fg, letterSpacing: 0.01 }}>📋 Lista</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => { if (isFormActive) return; startNew(); }}
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? surface : 'transparent', alignItems: 'center' }} activeOpacity={0.7}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? fg : muted, letterSpacing: 0.01 }}>➕ Nuevo</Text>
-          </TouchableOpacity>
+    if (empty) {
+      return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+          <MaterialCommunityIcons name={config.emptyIcon as 'folder-open-outline' | 'ruler'} size={64} color={muted} />
+          <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 20, fontWeight: '700', color: muted }}>{config.emptyText}</Text>
+          <Text style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}>{config.emptyDescription}</Text>
         </View>
-      </View>
+      );
+    }
 
-      {/* TAB: Lista */}
-      {!isFormActive ? (
-        <>
-          {isEmpty ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-              <MaterialCommunityIcons name={config.emptyIcon as 'folder-open-outline' | 'ruler'} size={64} color={muted} />
-              <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 20, fontWeight: '700', color: muted }}>{config.emptyText}</Text>
-              <Text style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}>{config.emptyDescription}</Text>
+    return (
+      <FlatList
+        data={items}
+        keyExtractor={(item) => String(config.getId(item))}
+        contentContainerStyle={{ padding: 20, paddingBottom: 8, gap: 10 }}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={brand} />}
+        renderItem={({ item }) =>
+          config.renderListItem
+            ? config.renderListItem(item, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) })
+            : defaultRenderListItem(item, (i) => { const second = config.fields[1]; if (!second) return null; const val = (i as Record<string, unknown>)[second.name]; return val != null ? String(val) : null; }, config, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) }, { surface, border, fg, muted, brand, iconWhite, errorColor }, isDark)
+        }
+        ListFooterComponent={null}
+      />
+    );
+  }
+
+  function renderFormTab() {
+    return (
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
+          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+            {editingItem ? `Editar ${config.entityName}` : `Nueva ${config.entityName}`}
+          </Text>
+
+          {formErrors.general ? (
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: errorBg, borderRadius: 12, padding: 12 }}>
+              <MaterialCommunityIcons name="alert-circle" size={18} color={errorColor} />
+              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: errorColor }}>{formErrors.general}</Text>
             </View>
-          ) : (
-            <FlatList
-              data={items}
-              keyExtractor={(item) => String(config.getId(item))}
-              contentContainerStyle={{ padding: 20, paddingBottom: 8, gap: 10 }}
-              refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={brand} />}
-              renderItem={({ item }) =>
-                config.renderListItem
-                  ? config.renderListItem(item, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) })
-                  : defaultRenderListItem(item, (i) => { const second = config.fields[1]; if (!second) return null; const val = (i as Record<string, unknown>)[second.name]; return val != null ? String(val) : null; }, config, { onEdit: () => startEdit(item), onToggleStatus: () => setToggleTarget(item), onDelete: () => setDeleteTarget(item) }, { surface, border, fg, muted, brand, iconWhite, errorColor }, isDark)
-              }
-              ListFooterComponent={null}
-            />
-          )}
-        </>
-      ) : (
-        /* TAB: Formulario inline */
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
-            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
-              {editingItem ? `Editar ${config.entityName}` : `Nueva ${config.entityName}`}
-            </Text>
+          ) : null}
 
-            {formErrors.general ? (
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: isDark ? '#3D2023' : '#FDEDEE', borderRadius: 12, padding: 12 }}>
-                <MaterialCommunityIcons name="alert-circle" size={18} color={errorColor} />
-                <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: errorColor }}>{formErrors.general}</Text>
+          {config.fields.map((field) => {
+            const fieldErr = formErrors.fields[field.name];
+            return (
+              <View key={field.name} style={{ gap: 6 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', letterSpacing: 0.08, textTransform: 'uppercase', color: muted }}>{field.label}</Text>
+                <TextInput
+                  value={formValues[field.name] ?? ''}
+                  onChangeText={(text) => { setFormValues((prev) => ({ ...prev, [field.name]: text })); setFormErrors((prev) => ({ ...prev, fields: { ...prev.fields, [field.name]: '' }, general: null })); }}
+                  placeholder={field.placeholder}
+                  placeholderTextColor={muted}
+                  multiline={field.multiline}
+                  numberOfLines={field.multiline ? (field.numberOfLines ?? 3) : 1}
+                  style={{ borderWidth: 1.5, borderColor: fieldErr ? errorColor : border, borderRadius: 12, backgroundColor: surface, color: fg, fontSize: 15, paddingHorizontal: 14, height: field.multiline ? 80 : 46, paddingTop: field.multiline ? 12 : 0, textAlignVertical: field.multiline ? 'top' : 'center' }}
+                />
+                {fieldErr ? (
+                  <Text style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}>{fieldErr}</Text>
+                ) : null}
               </View>
-            ) : null}
+            );
+          })}
+        </ScrollView>
 
-            {config.fields.map((field) => {
-              const fieldErr = formErrors.fields[field.name];
-              return (
-                <View key={field.name} style={{ gap: 6 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '600', letterSpacing: 0.08, textTransform: 'uppercase', color: muted }}>{field.label}</Text>
-                  <TextInput
-                    value={formValues[field.name] ?? ''}
-                    onChangeText={(text) => { setFormValues((prev) => ({ ...prev, [field.name]: text })); setFormErrors((prev) => ({ ...prev, fields: { ...prev.fields, [field.name]: '' }, general: null })); }}
-                    placeholder={field.placeholder}
-                    placeholderTextColor={muted}
-                    multiline={field.multiline}
-                    numberOfLines={field.multiline ? (field.numberOfLines ?? 3) : 1}
-                    style={{ borderWidth: 1.5, borderColor: fieldErr ? errorColor : border, borderRadius: 12, backgroundColor: surface, color: fg, fontSize: 15, paddingHorizontal: 14, height: field.multiline ? 80 : 46, paddingTop: field.multiline ? 12 : 0, textAlignVertical: field.multiline ? 'top' : 'center' }}
-                  />
-                  {fieldErr ? (
-                    <Text style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}>{fieldErr}</Text>
-                  ) : null}
-                </View>
-              );
-            })}
-          </ScrollView>
+        <View style={{ padding: 20, gap: 10, borderTopWidth: 1, borderTopColor: border }}>
+          <TouchableOpacity onPress={handleSave} disabled={isSaving} activeOpacity={0.8}
+            style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving ? 0.6 : 1 }}>
+            {isSaving ? <ActivityIndicator size={16} color={iconWhite} /> : null}
+            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Guardar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={switchToList} disabled={isSaving} activeOpacity={0.8}
+            style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
-          {/* Form actions */}
-          <View style={{ padding: 20, gap: 10, borderTopWidth: 1, borderTopColor: border }}>
-            <TouchableOpacity onPress={handleSave} disabled={isSaving} activeOpacity={0.8}
-              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving ? 0.6 : 1 }}>
-              {isSaving && <ActivityIndicator size={16} color={iconWhite} />}
-              <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Guardar</Text>
+  function renderContent() {
+    const trashScreen = config.trashScreenName;
+    const isFormActive = tab === 'form';
+
+    return (
+      <View style={{ flex: 1, backgroundColor: bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.02, color: fg }}>
+            {config.headerTitle}
+          </Text>
+          {trashScreen && hasTrash ? (
+            <Pressable onPress={() => navigation.navigate(trashScreen)} hitSlop={8}>
+              <MaterialCommunityIcons name="delete-restore" size={24} color={muted} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
+          <View style={{ flexDirection: 'row', backgroundColor: segmentedBg, borderRadius: 10, padding: 3 }}>
+            <TouchableOpacity onPress={() => { if (!isFormActive) return; switchToList(); }}
+              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? transparent : surface, alignItems: 'center' }} activeOpacity={0.7}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? muted : fg, letterSpacing: 0.01 }}>📋 Lista</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={switchToList} disabled={isSaving} activeOpacity={0.8}
-              style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+            <TouchableOpacity onPress={() => { if (isFormActive) return; startNew(); }}
+              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: isFormActive ? surface : transparent, alignItems: 'center' }} activeOpacity={0.7}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: isFormActive ? fg : muted, letterSpacing: 0.01 }}>➕ Nuevo</Text>
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      )}
+        </View>
 
-      {/* Toggle confirm bottom sheet */}
-      <Modal visible={toggleTarget !== null} transparent animationType="slide" onRequestClose={() => setToggleTarget(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setToggleTarget(null)} />
-        <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#3D2023' : '#FDEDEE', marginBottom: 12 }}>
-              <MaterialCommunityIcons name={toggleTarget?.estado ? 'pause-circle-outline' : 'play-circle-outline'} size={26} color={errorColor} />
-            </View>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>
-              {toggleTarget?.estado ? `Desactivar "${toggleTarget?.nombre}"?` : `Activar "${toggleTarget?.nombre}"?`}
-            </Text>
-            <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>
-              {toggleTarget?.estado ? 'El elemento se moverá a la papelera.' : 'El elemento volverá a estar activo.'}
-            </Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity onPress={() => { if (toggleTarget) handleToggleStatus(toggleTarget); setToggleTarget(null); }} activeOpacity={0.8}
-              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
-                {toggleTarget?.estado ? 'Desactivar' : 'Activar'}
+        {!isFormActive ? renderListTab() : renderFormTab()}
+
+        <Modal visible={toggleTarget !== null} transparent animationType="slide" onRequestClose={() => setToggleTarget(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setToggleTarget(null)} />
+          <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
+                <MaterialCommunityIcons name={toggleTarget?.estado ? 'pause-circle-outline' : 'play-circle-outline'} size={26} color={errorColor} />
+              </View>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>
+                {toggleTarget?.estado ? `Desactivar "${toggleTarget?.nombre}"?` : `Activar "${toggleTarget?.nombre}"?`}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setToggleTarget(null)} activeOpacity={0.8}
-              style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Delete bottom sheet */}
-      <Modal visible={deleteTarget !== null} transparent animationType="slide" onRequestClose={() => setDeleteTarget(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setDeleteTarget(null)} />
-        <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#3D2023' : '#FDEDEE', marginBottom: 12 }}>
-              <MaterialCommunityIcons name="trash-can-outline" size={26} color={errorColor} />
+              <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>
+                {toggleTarget?.estado ? 'El elemento se moverá a la papelera.' : 'El elemento volverá a estar activo.'}
+              </Text>
             </View>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>{deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}</Text>
-            <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>Esta acción no se puede deshacer.</Text>
+            <View style={{ gap: 10 }}>
+              <TouchableOpacity onPress={() => { if (toggleTarget) handleToggleStatus(toggleTarget); setToggleTarget(null); }} activeOpacity={0.8}
+                style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+                  {toggleTarget?.estado ? 'Desactivar' : 'Activar'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setToggleTarget(null)} activeOpacity={0.8}
+                style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        </Modal>
 
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity onPress={() => {
-              if (!deleteTarget) return;
-              const id = config.getId(deleteTarget);
-              const name = deleteTarget.nombre;
-              deleteMutation.mutate(id, {
-                onSuccess: () => { void queryClient.invalidateQueries({ queryKey: [...config.queryKey] }); setDeleteTarget(null); toast(config.toastDeleted(name)); },
-                onError: () => { toast(`Error al eliminar ${config.entityName} "${name}".`, 'error'); setDeleteTarget(null); },
-              });
-            }} disabled={isSaving || deleteMutation.isPending} activeOpacity={0.8}
-              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving || deleteMutation.isPending ? 0.6 : 1 }}>
-              {(isSaving || deleteMutation.isPending) && <ActivityIndicator size={16} color={iconWhite} />}
-              <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setDeleteTarget(null)} disabled={deleteMutation.isPending} activeOpacity={0.8}
-              style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
-            </TouchableOpacity>
+        <Modal visible={deleteTarget !== null} transparent animationType="slide" onRequestClose={() => setDeleteTarget(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setDeleteTarget(null)} />
+          <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
+                <MaterialCommunityIcons name="trash-can-outline" size={26} color={errorColor} />
+              </View>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>{deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}</Text>
+              <Text style={{ fontSize: 14, color: muted, marginTop: 6, textAlign: 'center' }}>Esta acción no se puede deshacer.</Text>
+            </View>
+
+            <View style={{ gap: 10 }}>
+              <TouchableOpacity onPress={() => {
+                if (!deleteTarget) return;
+                const id = config.getId(deleteTarget);
+                const name = deleteTarget.nombre;
+                deleteMutation.mutate(id, {
+                  onSuccess: () => { void queryClient.invalidateQueries({ queryKey: [...config.queryKey] }); setDeleteTarget(null); toast(config.toastDeleted(name)); },
+                  onError: () => { toast(`Error al eliminar ${config.entityName} "${name}".`, 'error'); setDeleteTarget(null); },
+                });
+              }} disabled={isSaving || deleteMutation.isPending} activeOpacity={0.8}
+                style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving || deleteMutation.isPending ? 0.6 : 1 }}>
+                {(isSaving || deleteMutation.isPending) ? <ActivityIndicator size={16} color={iconWhite} /> : null}
+                <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setDeleteTarget(null)} disabled={deleteMutation.isPending} activeOpacity={0.8}
+                style={{ height: 44, borderRadius: 14, borderWidth: 1.5, borderColor: border, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Toast */}
-      <Toast visible={toastMessage !== null} message={toastMessage ?? ''} type={toastType} onDismiss={() => { setToastMessage(null); setToastType('success'); }} />
-    </View>
-  );
+        <Toast visible={toastMessage !== null} message={toastMessage ?? ''} type={toastType} onDismiss={() => { setToastMessage(null); setToastType('success'); }} />
+      </View>
+    );
+  }
+
+  // ── Early returns ──
+  if (user?.role !== 'admin') return renderGuardView();
+  if (config.comingSoon) return renderComingSoonView();
+  if (isLoading) return renderLoadingView();
+  if (isError) return renderErrorView();
+  return renderContent();
 }

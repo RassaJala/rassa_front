@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import { useAuth } from '@/store/AuthContext';
@@ -63,7 +64,17 @@ const dark = {
 
 // ── Validation ─────────────────────────────────────────────────────────
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// ponytail: simple email check, no ReDoS vulnerability
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+
+// ── Color constants ────────────────────────────────────────────────────
+
+const transparentBg = 'transparent';
+const scenePillBg = 'rgba(0,0,0,0.2)';
+const scenePillBorder = 'rgba(255,255,255,0.25)';
+const scenePillText = '#FFFFFF';
+const loginBtnBorder = '#c03232';
+const loginBtnText = '#FFFFFF';
 
 // ── Sky bands ──────────────────────────────────────────────────────────
 
@@ -86,7 +97,7 @@ function Tree({ left, bottom, bw, bh, color }: { left: number; bottom: number; b
         position: 'absolute', bottom, left,
         width: 0, height: 0,
         borderLeftWidth: bw, borderRightWidth: bw, borderBottomWidth: bh,
-        borderLeftColor: 'transparent', borderRightColor: 'transparent',
+        borderLeftColor: transparentBg, borderRightColor: transparentBg,
         borderBottomColor: color,
       }}
     />
@@ -162,12 +173,12 @@ function Scene({ isDark }: { isDark: boolean }) {
           flexDirection: 'row', alignItems: 'center',
           paddingVertical: 8, paddingHorizontal: 18,
           borderRadius: 99, borderWidth: 1,
-          backgroundColor: 'rgba(0,0,0,0.2)',
-          borderColor: 'rgba(255,255,255,0.25)',
+          backgroundColor: scenePillBg,
+          borderColor: scenePillBorder,
         }}
       >
-        <MaterialCommunityIcons name="sprout" size={20} color="#FFFFFF" />
-        <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600', marginLeft: 8, letterSpacing: 1 }}>RASSA-JALA</Text>
+        <MaterialCommunityIcons name="sprout" size={20} color={scenePillText} />
+        <Text style={{ color: scenePillText, fontSize: 15, fontWeight: '600', marginLeft: 8, letterSpacing: 1 }}>RASSA-JALA</Text>
       </View>
     </Animated.View>
   );
@@ -196,26 +207,49 @@ function Md3Field({
   const [focused, setFocused] = useState(false);
   const float = focused || value.length > 0;
   const c = isDark ? dark : light;
+  const iconColor = error ? c.coral : c.muted;
+  let borderClr = c.border;
+  let labelColor = c.muted;
+  if (error) { borderClr = c.coral; labelColor = c.coral; }
+  else if (focused) { borderClr = c.brand; }
+  if (!error && float) labelColor = c.brand;
+  const topPos = float ? 8 : 22;
+  const fontSizeLbl = float ? 14 : 18;
+  const inputPt = float ? 24 : 16;
+  const inputPb = float ? 8 : 16;
+  const containerBorderWidth = focused ? 2 : 1.5;
+  const textInputPr = showPwToggle ? 56 : 20;
+  const pwIconName = showPw ? 'eye-off' : 'eye';
+  const pwToggle = showPwToggle ? (
+    <Pressable onPress={onTogglePw} style={{ position: 'absolute', right: 4, top: 12, padding: 10, zIndex: 2 }} hitSlop={4}>
+      <MaterialCommunityIcons name={pwIconName} size={24} color={c.muted} />
+    </Pressable>
+  ) : null;
+  const errorMsg = error ? (
+    <Text style={{ fontSize: 14, color: c.coral, paddingHorizontal: 16, paddingTop: 4, letterSpacing: 0.02 }}>
+      {error}
+    </Text>
+  ) : null;
 
   return (
     <View>
       <View
         style={{
           borderRadius: 6, position: 'relative', justifyContent: 'center', minHeight: 64,
-          borderWidth: focused ? 2 : 1.5,
-          borderColor: error ? c.coral : focused ? c.brand : isDark ? dark.border : light.border,
-          backgroundColor: isDark ? dark.inputBg : light.inputBg,
+          borderWidth: containerBorderWidth,
+          borderColor: borderClr,
+          backgroundColor: c.inputBg,
         }}
       >
         <View style={{ position: 'absolute', left: 16, top: 22, zIndex: 2 }}>
-          <MaterialCommunityIcons name={icon as any} size={22} color={error ? c.coral : isDark ? dark.muted : light.muted} />
+          <MaterialCommunityIcons name={icon as keyof typeof MaterialCommunityIcons.glyphMap} size={22} color={iconColor} />
         </View>
 
         <Text
           style={{
-            position: 'absolute', left: 50, top: float ? 8 : 22,
-            fontSize: float ? 14 : 18,
-            color: error ? c.coral : float ? c.brand : isDark ? dark.muted : light.muted,
+            position: 'absolute', left: 50, top: topPos,
+            fontSize: fontSizeLbl,
+            color: labelColor,
             fontWeight: '400', zIndex: 2,
           }}
         >
@@ -224,10 +258,10 @@ function Md3Field({
 
         <TextInput
           style={{
-            fontSize: 20, margin: 0, zIndex: 1, backgroundColor: 'transparent',
-            color: isDark ? dark.fg : light.fg,
-            paddingLeft: 50, paddingRight: showPwToggle ? 56 : 20,
-            paddingTop: float ? 24 : 16, paddingBottom: float ? 8 : 16,
+            fontSize: 20, margin: 0, zIndex: 1, backgroundColor: transparentBg,
+            color: c.fg,
+            paddingLeft: 50, paddingRight: textInputPr,
+            paddingTop: inputPt, paddingBottom: inputPb,
           }}
           value={value}
           onChangeText={onChangeText}
@@ -240,18 +274,10 @@ function Md3Field({
           placeholder=""
         />
 
-        {showPwToggle ? (
-          <Pressable onPress={onTogglePw} style={{ position: 'absolute', right: 4, top: 12, padding: 10, zIndex: 2 }} hitSlop={4}>
-            <MaterialCommunityIcons name={showPw ? 'eye-off' : 'eye'} size={24} color={isDark ? dark.muted : light.muted} />
-          </Pressable>
-        ) : null}
+        {pwToggle}
       </View>
 
-      {error ? (
-        <Text style={{ fontSize: 14, color: c.coral, paddingHorizontal: 16, paddingTop: 4, letterSpacing: 0.02 }}>
-          {error}
-        </Text>
-      ) : null}
+      {errorMsg}
     </View>
   );
 }
@@ -312,7 +338,7 @@ export default function LoginScreen(): React.JSX.Element {
               height: 80,
               borderTopLeftRadius: 300,
               borderTopRightRadius: 100,
-              backgroundColor: isDark ? dark.bg : light.bg,
+              backgroundColor: c.bg,
               marginHorizontal: -60,
             }}
           />
@@ -325,7 +351,7 @@ export default function LoginScreen(): React.JSX.Element {
             transform: [{ translateY: cardY }],
             marginHorizontal: 14,
             borderRadius: 24,
-            backgroundColor: isDark ? dark.cardBg : light.cardBg,
+            backgroundColor: c.cardBg,
             paddingVertical: 24,
             paddingHorizontal: 20,
             ...Platform.select({
@@ -334,10 +360,10 @@ export default function LoginScreen(): React.JSX.Element {
             }),
           }}
         >
-          <Text style={{ fontSize: 26, fontWeight: '600', color: isDark ? dark.fg : light.fg, marginBottom: 4 }}>
+          <Text style={{ fontSize: 26, fontWeight: '600', color: c.fg, marginBottom: 4 }}>
             Bienvenido
           </Text>
-          <Text style={{ fontSize: 16, color: isDark ? dark.muted : light.muted, marginBottom: 24 }}>
+          <Text style={{ fontSize: 16, color: c.muted, marginBottom: 24 }}>
             Del campo a tu mesa
           </Text>
 
@@ -374,7 +400,7 @@ export default function LoginScreen(): React.JSX.Element {
                 backgroundColor: c.coral,
                 opacity: loading ? 0.5 : 1,
                 borderWidth: 2,
-                borderColor: '#c03232',
+                borderColor: loginBtnBorder,
                 ...Platform.select({
                   ios: {
                     shadowColor: '#8B1A1A',
@@ -386,7 +412,7 @@ export default function LoginScreen(): React.JSX.Element {
                 }),
               }}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700', letterSpacing: 0.5 }}>
+              <Text style={{ color: loginBtnText, fontSize: 20, fontWeight: '700', letterSpacing: 0.5 }}>
                 {loading ? 'INGRESANDO…' : 'INICIAR SESIÓN'}
               </Text>
             </Pressable>

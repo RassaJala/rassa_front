@@ -5,10 +5,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
+/* global window -- declared because TS lib excludes dom in RN projects */
+
 export interface Breakpoints {
-  mobile: boolean;  // < 640px
-  tablet: boolean;  // 640px - 1023px
-  desktop: boolean; // >= 1024px
+  mobile: boolean;
+  tablet: boolean;
+  desktop: boolean;
 }
 
 function getBreakpoints(width: number): Breakpoints {
@@ -19,28 +21,20 @@ function getBreakpoints(width: number): Breakpoints {
   };
 }
 
-/**
- * Hook that returns current viewport breakpoints.
- *
- * On native (RN), defaults to mobile breakpoints since the app
- * is primarily mobile-first. On web, uses window.matchMedia.
- */
 export function useMediaQuery(): Breakpoints {
-  // Native platforms default to mobile
-  if (Platform.OS !== 'web') {
-    return { mobile: true, tablet: false, desktop: false };
-  }
-
-  const [bp, setBp] = useState<Breakpoints>(() =>
-    getBreakpoints(typeof window !== 'undefined' ? window.innerWidth : 640),
-  );
+  const [bp, setBp] = useState<Breakpoints>(() => {
+    if (Platform.OS !== 'web') return { mobile: true, tablet: false, desktop: false };
+    return getBreakpoints(window.innerWidth);
+  });
 
   const handleResize = useCallback(() => {
+    if (Platform.OS !== 'web' || !window) return;
     setBp(getBreakpoints(window.innerWidth));
   }, []);
 
   useEffect(() => {
-    // Use matchMedia for better performance
+    if (Platform.OS !== 'web' || !window) return;
+
     const mql = window.matchMedia('(min-width: 640px) and (max-width: 1023px)');
     const mqlDesktop = window.matchMedia('(min-width: 1024px)');
 

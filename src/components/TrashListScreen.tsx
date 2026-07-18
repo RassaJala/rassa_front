@@ -58,14 +58,14 @@ function trashListItem<T extends { nombre: string; estado: boolean }>(
   config: TrashConfig<T>,
   actions: { readonly onRestore: () => void; readonly onPermanentDelete: () => void },
   colors: { surface: string; border: string; fg: string; muted: string; brand: string; iconWhite: string; errorColor: string },
-  isDark: boolean,
+  chipVars: { bg: string; text: string },
 ): React.JSX.Element {
 
   return (
     <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
       {/* Icono inactivo */}
-      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.1)' }}>
-        <MaterialCommunityIcons name="delete-restore" size={20} color="#F2A900" />
+      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: chipVars.bg }}>
+        <MaterialCommunityIcons name="delete-restore" size={20} color={chipVars.text} />
       </View>
 
       {/* Info */}
@@ -79,8 +79,8 @@ function trashListItem<T extends { nombre: string; estado: boolean }>(
               {config.getSecondValue(item)}
             </Text>
           ) : null}
-          <View style={{ borderRadius: 999, backgroundColor: isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.1)', paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: '#F2A900' }}>Inactivo</Text>
+          <View style={{ borderRadius: 999, backgroundColor: chipVars.bg, paddingHorizontal: 8, paddingVertical: 2 }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: chipVars.text }}>Inactivo</Text>
           </View>
         </View>
       </View>
@@ -112,6 +112,10 @@ export default function TrashListScreen<
   const brand = isDark ? '#4A8A63' : '#24563C';
   const iconWhite = '#FFFFFF';
   const errorColor = '#DE393A';
+  const chipBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.1)';
+  const chipText = '#F2A900';
+  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
   const queryClient = useQueryClient();
 
   // ── List data ──────────────────────────────────────────────
@@ -153,6 +157,7 @@ export default function TrashListScreen<
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey, 'trash'] });
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- config.queryKey is stable from parent
   }, [queryClient]);
 
   // ── Mutations ──────────────────────────────────────────────
@@ -241,17 +246,17 @@ export default function TrashListScreen<
               onPermanentDelete: () => setPermanentTarget(item),
             },
             { surface, border, fg, muted, brand, iconWhite, errorColor },
-            isDark,
+            { bg: chipBg, text: chipText },
           )}
         />
       )}
 
       {/* Permanent delete bottom sheet */}
       <Modal visible={permanentTarget !== null} transparent animationType="slide" onRequestClose={() => setPermanentTarget(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setPermanentTarget(null)} />
+        <Pressable style={{ flex: 1, backgroundColor: modalOverlay }} onPress={() => setPermanentTarget(null)} />
         <View style={{ backgroundColor: surface, borderRadius: 24, padding: 24, paddingBottom: 34, marginTop: 'auto' }}>
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? '#3D2023' : '#FDEDEE', marginBottom: 12 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: errorBg, marginBottom: 12 }}>
               <MaterialCommunityIcons name="delete-forever" size={26} color={errorColor} />
             </View>
             <Text style={{ fontSize: 17, fontWeight: '700', color: fg, textAlign: 'center' }}>
@@ -272,7 +277,7 @@ export default function TrashListScreen<
               });
             }} disabled={permanentMutation.isPending} activeOpacity={0.8}
               style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: permanentMutation.isPending ? 0.6 : 1 }}>
-              {permanentMutation.isPending && <ActivityIndicator size={16} color={iconWhite} />}
+              {permanentMutation.isPending ? <ActivityIndicator size={16} color={iconWhite} /> : null}
               <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar permanentemente</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setPermanentTarget(null)} disabled={permanentMutation.isPending} activeOpacity={0.8}

@@ -104,7 +104,9 @@ export function getAllProducts(): ProductItem[] {
   const products: ProductItem[] = [];
   let id = 1;
   for (const cat of categories) {
-    for (const name of productNames[cat]!) {
+    const names = productNames[cat];
+    if (!names) continue;
+    for (const name of names) {
       const price = Math.floor(Math.random() * 200 + 30);
       products.push({
         id: id++,
