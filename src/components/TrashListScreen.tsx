@@ -68,11 +68,22 @@ export default function TrashListScreen<
   } = useQuery<T[]>({
     queryKey: [...config.queryKey, 'trash'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<{ results: T[] }>>(
-        `${config.endpoint}trash/`,
-      );
+      const { data } = await api.get<
+        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+      >(`${config.endpoint}trash/`);
 
-      return data.data.results;
+      if (Array.isArray(data)) return data;
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
+        const inner = data.data as { results?: T[] };
+        if (Array.isArray(inner.results)) return inner.results;
+      }
+      if ('results' in data && Array.isArray(data.results)) return data.results;
+
+      return [];
     },
     staleTime: 10_000,
     retry: 2,

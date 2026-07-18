@@ -76,6 +76,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     editingItem: T | null,
   ) => string | null;
   readonly trashScreenName?: 'CategoryTrash' | 'UnitTrash';
+  readonly comingSoon?: boolean;
 }
 
 // ── Navigation type ────────────────────────────────────────
@@ -125,13 +126,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
               {secondValue}
             </Text>
           ) : null}
-          <View
-            className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${
-              item.estado
-                ? 'bg-gray-100 dark:bg-gray-800'
-                : 'bg-gray-100 dark:bg-gray-800'
-            }`}
-          >
+          <View className="mt-2 self-start rounded-full bg-gray-100 px-2.5 py-0.5 dark:bg-gray-800">
             <Text
               className={`text-xs font-medium ${
                 item.estado
@@ -213,11 +208,22 @@ export default function CrudListScreen<
   } = useQuery<T[]>({
     queryKey: [...config.queryKey],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<{ results: T[] }>>(
-        config.endpoint,
-      );
+      const { data } = await api.get<
+        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
+      >(config.endpoint);
 
-      return data.data.results;
+      if (Array.isArray(data)) return data;
+      if (
+        'data' in data &&
+        typeof data.data === 'object' &&
+        data.data !== null
+      ) {
+        const inner = data.data as { results?: T[] };
+        if (Array.isArray(inner.results)) return inner.results;
+      }
+      if ('results' in data && Array.isArray(data.results)) return data.results;
+
+      return [];
     },
     staleTime: 30_000,
     retry: 2,
@@ -466,6 +472,25 @@ export default function CrudListScreen<
         />
         <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
           No tienes permisos para acceder a esta sección.
+        </Text>
+      </View>
+    );
+  }
+
+  // ── Coming soon placeholder ────────────────────────────────
+  if (config.comingSoon) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
+        <MaterialCommunityIcons
+          name="wrench-clock-outline"
+          size={64}
+          color={colors.iconMuted}
+        />
+        <Text className="mt-4 text-center text-2xl font-bold text-gray-500 dark:text-gray-400">
+          Funcionalidad en desarrollo
+        </Text>
+        <Text className="mt-2 text-center text-sm text-gray-400 dark:text-gray-500">
+          Esta sección estará disponible próximamente.
         </Text>
       </View>
     );
