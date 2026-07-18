@@ -2,6 +2,8 @@
 import React from 'react';
 import { PaperProvider } from 'react-native-paper';
 
+import { Switch } from 'react-native';
+
 import { fireEvent, render } from '@testing-library/react-native';
 
 import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
@@ -18,14 +20,10 @@ import { getFullName, getRoleBadgeBg } from '@/utils/userManagement';
 const mockUser: AdminUser = {
   id_usuario: 1,
   email: 'juan@example.com',
-  telefono: '555-0100',
   role: 'farmer',
   nombre: 'Juan',
   apellido_paterno: 'Pérez',
   apellido_materno: 'García',
-  fecha_nacimiento: '1990-01-01',
-  genero: 'M',
-  direccion: 'Calle 1',
   localidad: 1,
   localidad_nombre: 'Ciudad',
   estado: true,
@@ -323,10 +321,10 @@ describe('UserCard', () => {
     expect(onRolePress).toHaveBeenCalledWith(mockUser);
   });
 
-  it('llama onTogglePress al presionar el switch', () => {
+  it('llama onTogglePress al cambiar el Switch', () => {
     const onTogglePress = jest.fn();
 
-    const { getByText } = render(
+    const { UNSAFE_getByType } = render(
       <UserCard
         user={mockUser}
         isSelf={false}
@@ -335,9 +333,23 @@ describe('UserCard', () => {
       />,
     );
 
-    // Press the status text to find the toggle
-    fireEvent.press(getByText('Activo'));
-    // The Switch onValueChange is triggered by press on the status area
+    fireEvent(UNSAFE_getByType(Switch), 'onValueChange', false);
+    expect(onTogglePress).toHaveBeenCalledWith(mockUser);
+  });
+
+  it('no llama onTogglePress cuando isSelf es true', () => {
+    const onTogglePress = jest.fn();
+
+    render(
+      <UserCard
+        user={mockUser}
+        isSelf
+        onTogglePress={onTogglePress}
+        onRolePress={jest.fn()}
+      />,
+    );
+
+    expect(onTogglePress).not.toHaveBeenCalled();
   });
 });
 

@@ -145,6 +145,7 @@ export default function UserManagementScreen({
           ?.detail ?? 'Error al cambiar rol';
 
       showToast(detail, 'error');
+      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 
@@ -202,6 +203,12 @@ export default function UserManagementScreen({
     (targetUser: AdminUser) => {
       if (toggleMutation.isPending) return;
 
+      // Self-deactivation protection
+      if (isSelf(targetUser)) {
+        showToast('No puedes desactivar tu propia cuenta.', 'info');
+        return;
+      }
+
       // Deactivating → require confirmation
       if (targetUser.estado) {
         setConfirmUser(targetUser);
@@ -210,7 +217,7 @@ export default function UserManagementScreen({
         toggleMutation.mutate(targetUser.id_usuario);
       }
     },
-    [toggleMutation],
+    [toggleMutation, isSelf, showToast],
   );
 
   const confirmDeactivation = useCallback(() => {
