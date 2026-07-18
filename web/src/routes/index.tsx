@@ -33,7 +33,7 @@ export function AppRouter() {
       <Route path="/" element={<Navigate to="/agricultor" replace />} />
 
       {/* Agricultor */}
-      <Route element={<ProtectedRoute roles={['agricultor']} />}>
+      <Route element={<ProtectedRoute />}>
         <Route
           path="/agricultor/*"
           element={
@@ -49,7 +49,7 @@ export function AppRouter() {
       </Route>
 
       {/* Vendedor */}
-      <Route element={<ProtectedRoute roles={['vendedor']} />}>
+      <Route element={<ProtectedRoute />}>
         <Route
           path="/vendedor/*"
           element={
@@ -65,7 +65,7 @@ export function AppRouter() {
       </Route>
 
       {/* Admin */}
-      <Route element={<ProtectedRoute roles={['admin']} />}>
+      <Route element={<ProtectedRoute />}>
         <Route
           path="/admin/*"
           element={

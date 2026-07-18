@@ -34,6 +34,20 @@ function applyClass(mode: 'light' | 'dark') {
   document.documentElement.classList.toggle('dark', mode === 'dark');
 }
 
+// Sync on module load so the class is applied before React hydrates
+(function applyInitial() {
+  try {
+    const stored = localStorage.getItem('theme');
+    const dark =
+      stored === 'dark' ||
+      (stored !== 'light' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+  } catch {
+    // localStorage no disponible
+  }
+})();
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const stored = localStorage.getItem('theme');

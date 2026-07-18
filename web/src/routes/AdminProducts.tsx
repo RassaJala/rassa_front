@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
 
 interface Product {
@@ -12,7 +12,7 @@ interface Product {
   estado: boolean;
 }
 
-let nextId = 7;
+const nextId = useRef(7);
 
 const initialData: Product[] = [
   { id: 1, nombre: 'Aguacate Hass', categoria: 'Fruta', precio: 45, stock: 120, unidad: 'kg', descripcion: 'Aguacate Hass premium de Antioquia.', estado: true },
@@ -49,6 +49,8 @@ export function AdminProducts() {
   const [form, setForm] = useState({ nombre: '', categoria: '', precio: '', stock: '', unidad: 'kg', descripcion: '' });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Product | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const filtered = useMemo(
     () => items.filter((i) => i.nombre.toLowerCase().includes(search.toLowerCase())),
@@ -70,12 +72,14 @@ export function AdminProducts() {
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre.trim() || !form.categoria || !form.precio) return;
+    setSaving(true);
     if (editId) {
       setItems((prev) => prev.map((i) => (i.id === editId ? { ...i, nombre: form.nombre.trim(), categoria: form.categoria, precio: Number(form.precio), stock: Number(form.stock), unidad: form.unidad, descripcion: form.descripcion.trim() } : i)));
     } else {
-      setItems((prev) => [...prev, { id: nextId++, nombre: form.nombre.trim(), categoria: form.categoria, precio: Number(form.precio), stock: Number(form.stock), unidad: form.unidad, descripcion: form.descripcion.trim(), estado: true }]);
+      setItems((prev) => [...prev, { id: nextId.current++, nombre: form.nombre.trim(), categoria: form.categoria, precio: Number(form.precio), stock: Number(form.stock), unidad: form.unidad, descripcion: form.descripcion.trim(), estado: true }]);
     }
     setTab('list');
+    setSaving(false);
   }
 
   function toggleStatus(item: Product) {
@@ -120,9 +124,7 @@ export function AdminProducts() {
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>{items.length} productos</span>
             <input type="search" placeholder="Buscar producto…" value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ height: 36, border: `1.5px solid ${border}`, borderRadius: 8, padding: '0 12px', fontSize: 13, fontFamily: 'inherit', width: 220, background: bg, color: fg, outline: 'none' }}
-              onFocus={(e) => { e.target.style.borderColor = brand; }}
-              onBlur={(e) => { e.target.style.borderColor = border; }} />
+              style={{ height: 36, border: `1.5px solid ${border}`, borderRadius: 8, padding: '0 12px', fontSize: 13, fontFamily: 'inherit', width: 220, background: bg, color: fg, outline: 'none' }} />
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -197,12 +199,12 @@ export function AdminProducts() {
             <div className="full" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Nombre del producto</label>
               <input type="text" value={form.nombre} onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-                placeholder="ej. Aguacate Hass" required style={inputStyle(bg, border, brand, fg)}
-                onFocus={(e) => { e.target.style.borderColor = brand; }} onBlur={(e) => { e.target.style.borderColor = border; }} />
+                placeholder="ej. Aguacate Hass" required style={inputStyle(bg, border, brand, fg, focusedField === 'nombre')}
+                onFocus={() => setFocusedField('nombre')} onBlur={() => setFocusedField(null)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Categoría</label>
-              <select value={form.categoria} onChange={(e) => setForm((p) => ({ ...p, categoria: e.target.value }))} required style={{ ...inputStyle(bg, border, brand, fg), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}>
+              <select value={form.categoria} onChange={(e) => setForm((p) => ({ ...p, categoria: e.target.value }))} required style={{ ...inputStyle(bg, border, brand, fg, focusedField === 'categoria'), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}>
                 <option value="">Seleccionar…</option>
                 <option value="Verdura">Verdura</option>
                 <option value="Fruta">Fruta</option>
@@ -212,7 +214,7 @@ export function AdminProducts() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Unidad de venta</label>
-              <select value={form.unidad} onChange={(e) => setForm((p) => ({ ...p, unidad: e.target.value }))} style={{ ...inputStyle(bg, border, brand, fg), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}>
+              <select value={form.unidad} onChange={(e) => setForm((p) => ({ ...p, unidad: e.target.value }))} style={{ ...inputStyle(bg, border, brand, fg, focusedField === 'unidad'), appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}>
                 <option value="kg">Kilogramo (kg)</option>
                 <option value="unidad">Unidad</option>
                 <option value="lb">Libra (lb)</option>
@@ -220,25 +222,25 @@ export function AdminProducts() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Precio</label>
-              <input type="number" value={form.precio} onChange={(e) => setForm((p) => ({ ...p, precio: e.target.value }))} placeholder="0" min="0" step="0.01" required style={inputStyle(bg, border, brand, fg)}
-                onFocus={(e) => { e.target.style.borderColor = brand; }} onBlur={(e) => { e.target.style.borderColor = border; }} />
+              <input type="number" value={form.precio} onChange={(e) => setForm((p) => ({ ...p, precio: e.target.value }))} placeholder="0" min="0" step="0.01" required style={inputStyle(bg, border, brand, fg, focusedField === 'precio')}
+                onFocus={() => setFocusedField('precio')} onBlur={() => setFocusedField(null)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Stock disponible</label>
-              <input type="number" value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} placeholder="0" min="0" required style={inputStyle(bg, border, brand, fg)}
-                onFocus={(e) => { e.target.style.borderColor = brand; }} onBlur={(e) => { e.target.style.borderColor = border; }} />
+              <input type="number" value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} placeholder="0" min="0" required style={inputStyle(bg, border, brand, fg, focusedField === 'stock')}
+                onFocus={() => setFocusedField('stock')} onBlur={() => setFocusedField(null)} />
             </div>
             <div className="full" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Descripción</label>
               <textarea value={form.descripcion} onChange={(e) => setForm((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Describe el producto, origen, cualidades…"
-                style={{ ...inputStyle(bg, border, brand, fg), height: 90, padding: '12px 14px', resize: 'vertical' }}
-                onFocus={(e) => { e.target.style.borderColor = brand; }} onBlur={(e) => { e.target.style.borderColor = border; }} />
+                style={{ ...inputStyle(bg, border, brand, fg, focusedField === 'descripcion'), height: 90, padding: '12px 14px', resize: 'vertical' }}
+                onFocus={() => setFocusedField('descripcion')} onBlur={() => setFocusedField(null)} />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" disabled={saving} style={{ ...btnStyle, background: coral, color: '#fff', opacity: saving ? 0.6 : 1 }}>💾 Guardar producto</button>
+              <button type="button" onClick={() => setTab('list')} style={{ ...btnStyle, background: 'transparent', border: `1.5px solid ${border}`, color: fg }}>Cancelar</button>
             </div>
           </form>
-          <div style={{ display: 'flex', gap: 10, padding: '0 24px 24px' }}>
-            <button type="submit" onClick={handleSave} style={{ ...btnStyle, background: coral, color: '#fff' }}>💾 Guardar producto</button>
-            <button onClick={() => setTab('list')} style={{ ...btnStyle, background: 'transparent', border: `1.5px solid ${border}`, color: fg }}>Cancelar</button>
-          </div>
         </div>
       )}
 
@@ -263,9 +265,9 @@ export function AdminProducts() {
   );
 }
 
-function inputStyle(bg: string, border: string, _brand: string, fg: string): React.CSSProperties {
+function inputStyle(bg: string, border: string, brand: string, fg: string, focused?: boolean): React.CSSProperties {
   return {
-    width: '100%', height: 44, border: `1.5px solid ${border}`,
+    width: '100%', height: 44, border: `1.5px solid ${focused ? brand : border}`,
     borderRadius: 10, padding: '0 14px', fontSize: 15, fontFamily: 'inherit',
     background: bg, color: fg, outline: 'none', boxSizing: 'border-box' as const,
   };

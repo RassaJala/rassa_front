@@ -9,15 +9,19 @@ import { AuthContext } from '../hooks/useAuth';
 import type { AuthState, User } from '../types';
 
 function loadAuthState(): AuthState {
-  const token = localStorage.getItem('token');
-  const raw = localStorage.getItem('user');
-  if (token && raw) {
-    try {
-      const user = JSON.parse(raw) as User;
-      return { user, token, isAuthenticated: true, isLoading: false };
-    } catch {
-      localStorage.removeItem('user');
+  try {
+    const token = localStorage.getItem('token');
+    const raw = localStorage.getItem('user');
+    if (token && raw) {
+      try {
+        const user = JSON.parse(raw) as User;
+        return { user, token, isAuthenticated: true, isLoading: false };
+      } catch {
+        localStorage.removeItem('user');
+      }
     }
+  } catch {
+    // localStorage no disponible (private browsing, etc.)
   }
   return { user: null, token: null, isAuthenticated: false, isLoading: false };
 }

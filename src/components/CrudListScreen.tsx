@@ -673,11 +673,11 @@ export default function CrudListScreen<
               const name = deleteTarget.nombre;
               deleteMutation.mutate(id, {
                 onSuccess: () => { void queryClient.invalidateQueries({ queryKey: [...config.queryKey] }); setDeleteTarget(null); toast(config.toastDeleted(name)); },
-                onError: () => { updateMutation.mutate({ id, estado: false }, { onSuccess: () => { void queryClient.invalidateQueries({ queryKey: [...config.queryKey] }); toast(`Se desactivó ${config.entityName} "${name}"`); }, onError: () => toast(`Error al eliminar ${config.entityName} "${name}". Intenta de nuevo.`, 'error'), }); setDeleteTarget(null); },
+                onError: () => { toast(`Error al eliminar ${config.entityName} "${name}".`, 'error'); setDeleteTarget(null); },
               });
-            }} disabled={deleteMutation.isPending} activeOpacity={0.8}
-              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: deleteMutation.isPending ? 0.6 : 1 }}>
-              {deleteMutation.isPending && <ActivityIndicator size={16} color={iconWhite} />}
+            }} disabled={isSaving || deleteMutation.isPending} activeOpacity={0.8}
+              style={{ height: 50, borderRadius: 14, backgroundColor: errorColor, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, opacity: isSaving || deleteMutation.isPending ? 0.6 : 1 }}>
+              {(isSaving || deleteMutation.isPending) && <ActivityIndicator size={16} color={iconWhite} />}
               <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>Eliminar</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setDeleteTarget(null)} disabled={deleteMutation.isPending} activeOpacity={0.8}

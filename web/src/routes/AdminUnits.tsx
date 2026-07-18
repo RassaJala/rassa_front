@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
 
 interface Unit {
@@ -8,7 +8,7 @@ interface Unit {
   estado: boolean;
 }
 
-let nextId = 5;
+const nextId = useRef(5);
 
 const initialData: Unit[] = [
   { id: 1, nombre: 'Kilogramo', abreviatura: 'kg', estado: true },
@@ -34,6 +34,8 @@ export function AdminUnits() {
   const [form, setForm] = useState({ nombre: '', abreviatura: '' });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Unit | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const filtered = useMemo(
     () => items.filter((i) => i.nombre.toLowerCase().includes(search.toLowerCase()) || i.abreviatura.toLowerCase().includes(search.toLowerCase())),
@@ -55,12 +57,14 @@ export function AdminUnits() {
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre.trim() || !form.abreviatura.trim()) return;
+    setSaving(true);
     if (editId) {
       setItems((prev) => prev.map((i) => (i.id === editId ? { ...i, nombre: form.nombre.trim(), abreviatura: form.abreviatura.trim() } : i)));
     } else {
-      setItems((prev) => [...prev, { id: nextId++, nombre: form.nombre.trim(), abreviatura: form.abreviatura.trim(), estado: true }]);
+      setItems((prev) => [...prev, { id: nextId.current++, nombre: form.nombre.trim(), abreviatura: form.abreviatura.trim(), estado: true }]);
     }
     setTab('list');
+    setSaving(false);
   }
 
   function handleDelete() {
@@ -109,8 +113,7 @@ export function AdminUnits() {
             <input type="search" placeholder="Buscar unidad…" value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ height: 36, border: `1.5px solid ${border}`, borderRadius: 8, padding: '0 12px', fontSize: 13, fontFamily: 'inherit', width: 220, background: bg, color: fg, outline: 'none' }}
-              onFocus={(e) => { e.target.style.borderColor = brand; }}
-              onBlur={(e) => { e.target.style.borderColor = border; }} />
+               />
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -174,23 +177,21 @@ export function AdminUnits() {
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Nombre</label>
               <input type="text" value={form.nombre} onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
                 placeholder="ej. Kilogramo" required
-                style={{ width: '100%', height: 44, border: `1.5px solid ${border}`, borderRadius: 10, padding: '0 14px', fontSize: 15, fontFamily: 'inherit', background: bg, color: fg, outline: 'none' }}
-                onFocus={(e) => { e.target.style.borderColor = brand; }}
-                onBlur={(e) => { e.target.style.borderColor = border; }} />
+                style={{ width: '100%', height: 44, border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`, borderRadius: 10, padding: '0 14px', fontSize: 15, fontFamily: 'inherit', background: bg, color: fg, outline: 'none' }}
+                onFocus={() => setFocusedField('nombre')} onBlur={() => setFocusedField(null)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: muted }}>Abreviatura</label>
               <input type="text" value={form.abreviatura} onChange={(e) => setForm((p) => ({ ...p, abreviatura: e.target.value }))}
                 placeholder="ej. kg" required
-                style={{ width: '100%', height: 44, border: `1.5px solid ${border}`, borderRadius: 10, padding: '0 14px', fontSize: 15, fontFamily: 'inherit', background: bg, color: fg, outline: 'none' }}
-                onFocus={(e) => { e.target.style.borderColor = brand; }}
-                onBlur={(e) => { e.target.style.borderColor = border; }} />
+                style={{ width: '100%', height: 44, border: `1.5px solid ${focusedField === 'abreviatura' ? brand : border}`, borderRadius: 10, padding: '0 14px', fontSize: 15, fontFamily: 'inherit', background: bg, color: fg, outline: 'none' }}
+                onFocus={() => setFocusedField('abreviatura')} onBlur={() => setFocusedField(null)} />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" disabled={saving} style={{ ...btnStyle, background: coral, color: '#fff', opacity: saving ? 0.6 : 1 }}>💾 Guardar unidad</button>
+              <button type="button" onClick={() => setTab('list')} style={{ ...btnStyle, background: 'transparent', border: `1.5px solid ${border}`, color: fg }}>Cancelar</button>
             </div>
           </form>
-          <div style={{ display: 'flex', gap: 10, padding: '0 24px 24px' }}>
-            <button type="submit" onClick={handleSave} style={{ ...btnStyle, background: coral, color: '#fff' }}>💾 Guardar unidad</button>
-            <button onClick={() => setTab('list')} style={{ ...btnStyle, background: 'transparent', border: `1.5px solid ${border}`, color: fg }}>Cancelar</button>
-          </div>
         </div>
       )}
 
