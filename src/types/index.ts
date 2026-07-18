@@ -158,9 +158,6 @@ export type FarmerTabsParamList = {
 export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
-};
-
-export type FarmerStackParamList = {
   ProductList: undefined;
   ProductForm: { productoId?: number };
 };

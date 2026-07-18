@@ -19,7 +19,12 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { colors } from '@/constants/colors';
 import api, { mediaUrl } from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
-import type { ApiResponse, Category, FarmerStackParamList, Producto } from '@/types';
+import type {
+  ApiResponse,
+  Category,
+  FarmerStackParamList,
+  Producto,
+} from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
@@ -66,9 +71,8 @@ export default function ProductListScreen({
   } = useQuery<Producto[]>({
     queryKey: ['productos', searchText, selectedCategory],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
-        buildUrl(),
-      );
+      const { data } =
+        await api.get<ApiResponse<{ results: Producto[] }>>(buildUrl());
       return data.data.results;
     },
     staleTime: 30_000,
@@ -144,7 +148,7 @@ export default function ProductListScreen({
           <Text className="text-2xl font-bold tracking-tight text-white">
             Mis Productos
           </Text>
-          <Pressable 
+          <Pressable
             onPress={() => logout()}
             className="rounded-full bg-white/20 p-2 active:opacity-80"
             hitSlop={8}
@@ -162,7 +166,8 @@ export default function ProductListScreen({
           />
           <TextInput
             className="ml-2 flex-1 text-base text-brand-ink outline-none"
-            style={{ outlineStyle: 'none' } as any}
+            // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
+            style={{ outlineStyle: 'none' }}
             placeholder="Buscar producto..."
             placeholderTextColor={colors.iconMuted}
             value={searchText}
@@ -188,7 +193,10 @@ export default function ProductListScreen({
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
-            data={[{ id_categoria: 0, nombre: 'Todas', descripcion: '' }, ...categories]}
+            data={[
+              { id_categoria: 0, nombre: 'Todas', descripcion: '' },
+              ...categories,
+            ]}
             keyExtractor={(item) => String(item.id_categoria)}
             renderItem={({ item }) => {
               const isSelected =
@@ -203,17 +211,13 @@ export default function ProductListScreen({
                     )
                   }
                   className={`mr-2 rounded-full px-4 py-2 ${
-                    isSelected
-                      ? 'bg-brand-green-forest'
-                      : 'bg-gray-100'
+                    isSelected ? 'bg-brand-green-forest' : 'bg-gray-100'
                   }`}
                   hitSlop={8}
                 >
                   <Text
                     className={`text-sm font-medium ${
-                      isSelected
-                        ? 'text-white'
-                        : 'text-gray-600'
+                      isSelected ? 'text-white' : 'text-gray-600'
                     }`}
                   >
                     {item.nombre}
@@ -259,7 +263,7 @@ export default function ProductListScreen({
                   productoId: item.id_producto,
                 })
               }
-              className="rounded-xl bg-white p-4 shadow-sm border border-gray-100"
+              className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
             >
               <View className="flex-row items-center gap-3">
                 {renderImage(item.imagen_principal ?? item.imagen)}
@@ -295,9 +299,7 @@ export default function ProductListScreen({
               </View>
             </Pressable>
           )}
-          ItemSeparatorComponent={() => (
-            <View className="h-px bg-gray-100" />
-          )}
+          ItemSeparatorComponent={() => <View className="h-px bg-gray-100" />}
         />
       )}
 
@@ -309,7 +311,6 @@ export default function ProductListScreen({
         style={{ borderRadius: 100 }}
         onPress={() => navigation.navigate('ProductForm', {})}
       />
-
     </View>
   );
 }

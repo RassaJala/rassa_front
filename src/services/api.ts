@@ -18,11 +18,12 @@ const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 function resolveBaseURL(): string {
   // On web, always use localhost (browser runs on the same machine as the server).
   // On native, respect EXPO_PUBLIC_API_URL so physical devices can reach the backend.
+  // eslint-disable-next-line no-undef, @typescript-eslint/no-unsafe-assignment -- process is injected by expo
+  const envUrl: string | undefined = process.env.EXPO_PUBLIC_API_URL;
   const configured =
     Platform.OS === 'web'
       ? 'http://localhost:8000'
-      : // eslint-disable-next-line no-undef -- process is injected by expo
-        (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
+      : (envUrl ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;

@@ -10,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
 import { Button, Dialog, Portal } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
@@ -22,7 +21,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api, { mediaUrl } from '@/services/api';
-import * as Storage from '@/services/storage';
 import type {
   ApiResponse,
   Category,
@@ -99,16 +97,17 @@ export default function ProductFormScreen({
     staleTime: 60_000,
   });
 
-  const { data: existingProduct, isLoading: loadingProduct } = useQuery<Producto>({
-    queryKey: ['producto', productoId],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Producto>>(
-        `/productos/${productoId}/`,
-      );
-      return data.data;
-    },
-    enabled: isEditing,
-  });
+  const { data: existingProduct, isLoading: loadingProduct } =
+    useQuery<Producto>({
+      queryKey: ['producto', productoId],
+      queryFn: async () => {
+        const { data } = await api.get<ApiResponse<Producto>>(
+          `/productos/${productoId}/`,
+        );
+        return data.data;
+      },
+      enabled: isEditing,
+    });
 
   useEffect(() => {
     if (existingProduct) {
@@ -126,16 +125,19 @@ export default function ProductFormScreen({
             uri: mediaUrl(img.url) ?? img.url,
             base64: undefined,
             isPrimary: img.es_principal,
-          }))
+          })),
         );
       } else {
-        const fallbackImage = existingProduct.imagen_principal ?? existingProduct.imagen;
+        const fallbackImage =
+          existingProduct.imagen_principal ?? existingProduct.imagen;
         if (fallbackImage) {
-          setImages([{
-            uri: mediaUrl(fallbackImage) ?? fallbackImage,
-            isPrimary: true,
-            base64: undefined,
-          }]);
+          setImages([
+            {
+              uri: mediaUrl(fallbackImage) ?? fallbackImage,
+              isPrimary: true,
+              base64: undefined,
+            },
+          ]);
         }
       }
     }
@@ -171,11 +173,13 @@ export default function ProductFormScreen({
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      setImages([{
-        uri: asset.uri,
-        base64: asset.base64 ?? undefined,
-        isPrimary: true,
-      }]);
+      setImages([
+        {
+          uri: asset.uri,
+          base64: asset.base64 ?? undefined,
+          isPrimary: true,
+        },
+      ]);
     }
   }, []);
 
@@ -230,13 +234,21 @@ export default function ProductFormScreen({
     [],
   );
 
-  const deleteImage = useCallback(async (productId: number, imageId: number) => {
-    await api.delete(`/productos/${productId}/imagen/${imageId}/`);
-  }, []);
+  const deleteImage = useCallback(
+    async (productId: number, imageId: number) => {
+      await api.delete(`/productos/${productId}/imagen/${imageId}/`);
+    },
+    [],
+  );
 
-  const updateImagePrimary = useCallback(async (productId: number, imageId: number, isPrimary: boolean) => {
-    await api.patch(`/productos/${productId}/imagen/${imageId}/`, { es_principal: isPrimary });
-  }, []);
+  const updateImagePrimary = useCallback(
+    async (productId: number, imageId: number, isPrimary: boolean) => {
+      await api.patch(`/productos/${productId}/imagen/${imageId}/`, {
+        es_principal: isPrimary,
+      });
+    },
+    [],
+  );
 
   const handleSave = useCallback(async () => {
     const validationErrors = validate();
@@ -270,20 +282,29 @@ export default function ProductFormScreen({
         if (img.markedForDeletion && img.id) {
           await deleteImage(savedProduct.id_producto, img.id);
         } else if (!img.id && !img.markedForDeletion && img.base64) {
-          await uploadImage(savedProduct.id_producto, img.base64, img.isPrimary);
+          await uploadImage(
+            savedProduct.id_producto,
+            img.base64,
+            img.isPrimary,
+          );
         } else if (img.id && !img.markedForDeletion && img.isPrimary) {
           await updateImagePrimary(savedProduct.id_producto, img.id, true);
         }
       }
 
       await queryClient.invalidateQueries({ queryKey: ['productos'] });
-      setToastMessage(
-        isEditing ? 'Producto actualizado.' : 'Producto creado.',
-      );
+      setToastMessage(isEditing ? 'Producto actualizado.' : 'Producto creado.');
       setToastType('success');
       globalThis.setTimeout(() => navigation.goBack(), 800);
     } catch (error) {
-      setGeneralError(extractApiError(error, ['nombre_producto', 'precio', 'fk_categoria', 'detail']));
+      setGeneralError(
+        extractApiError(error, [
+          'nombre_producto',
+          'precio',
+          'fk_categoria',
+          'detail',
+        ]),
+      );
     }
   }, [
     validate,
@@ -322,7 +343,7 @@ export default function ProductFormScreen({
 
   return (
     <View className="flex-1 justify-center bg-black/50 py-4">
-      <View className="w-[50%] self-center max-h-[95%] overflow-hidden rounded-md bg-white shadow-xl">
+      <View className="max-h-[95%] w-[50%] self-center overflow-hidden rounded-md bg-white shadow-xl">
         {/* Header */}
         <View className="bg-brand-green-forest px-4 py-4 shadow-sm">
           <View className="flex-row items-center">
@@ -343,177 +364,219 @@ export default function ProductFormScreen({
           </View>
         </View>
 
-      <ScrollView
-        contentContainerClassName="p-4 pb-6 gap-4"
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* General error */}
-        {generalError ? (
-          <View className="flex-row items-start gap-2 rounded-lg bg-red-50 p-3">
-            <MaterialCommunityIcons
-              name="alert-circle"
-              size={18}
-              color={colors.error}
-            />
-            <Text className="flex-1 text-sm leading-5 text-red-600">
-              {generalError}
-            </Text>
-          </View>
-        ) : null}
+        <ScrollView
+          contentContainerClassName="p-4 pb-6 gap-4"
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* General error */}
+          {generalError ? (
+            <View className="flex-row items-start gap-2 rounded-lg bg-red-50 p-3">
+              <MaterialCommunityIcons
+                name="alert-circle"
+                size={18}
+                color={colors.error}
+              />
+              <Text className="flex-1 text-sm leading-5 text-red-600">
+                {generalError}
+              </Text>
+            </View>
+          ) : null}
 
-        {/* Image picker */}
-        <View>
-          <Text className="mb-2 ml-1 text-sm font-medium text-gray-700">
-            Foto del producto
-          </Text>
-          <View className="items-center">
-            {(() => {
-              const activeImage = images.find((img) => !img.markedForDeletion);
-              if (activeImage) {
-                const activeIndex = images.indexOf(activeImage);
-                return (
-                  <View className="relative">
-                    <Image
-                      source={{ uri: activeImage.uri }}
-                      className="h-48 w-48 rounded-md"
-                      resizeMode="cover"
-                    />
-                    <View className="absolute inset-x-0 bottom-0 flex-row justify-end rounded-b-md bg-black/50 px-2 py-1">
-                      <Pressable onPress={() => handleRemoveImage(activeIndex)} hitSlop={8}>
-                        <MaterialCommunityIcons name="delete-outline" size={20} color="white" />
-                      </Pressable>
-                    </View>
-                  </View>
+          {/* Image picker */}
+          <View>
+            <Text className="mb-2 ml-1 text-sm font-medium text-gray-700">
+              Foto del producto
+            </Text>
+            <View className="items-center">
+              {(() => {
+                const activeImage = images.find(
+                  (img) => !img.markedForDeletion,
                 );
-              }
-              return (
-                <Pressable
-                  onPress={() => void pickImage()}
-                  className="h-48 w-48 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-100 active:opacity-80"
-                >
-                  <MaterialCommunityIcons name="camera-plus-outline" size={32} color={colors.iconMuted} />
-                  <Text className="mt-1 px-2 text-center text-xs text-gray-500">Agregar imagen</Text>
-                </Pressable>
-              );
-            })()}
+                if (activeImage) {
+                  const activeIndex = images.indexOf(activeImage);
+                  return (
+                    <View className="relative">
+                      <Image
+                        source={{ uri: activeImage.uri }}
+                        className="h-48 w-48 rounded-md"
+                        resizeMode="cover"
+                      />
+                      <View className="absolute inset-x-0 bottom-0 flex-row justify-end rounded-b-md bg-black/50 px-2 py-1">
+                        <Pressable
+                          onPress={() => handleRemoveImage(activeIndex)}
+                          hitSlop={8}
+                        >
+                          <MaterialCommunityIcons
+                            name="delete-outline"
+                            size={20}
+                            color="white"
+                          />
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                }
+                return (
+                  <Pressable
+                    onPress={() => void pickImage()}
+                    className="h-48 w-48 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-100 active:opacity-80"
+                  >
+                    <MaterialCommunityIcons
+                      name="camera-plus-outline"
+                      size={32}
+                      color={colors.iconMuted}
+                    />
+                    <Text className="mt-1 px-2 text-center text-xs text-gray-500">
+                      Agregar imagen
+                    </Text>
+                  </Pressable>
+                );
+              })()}
+            </View>
           </View>
-        </View>
 
-        {/* Nombre */}
-        <View>
-          <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-            Nombre del producto <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
-            style={{ outlineStyle: 'none' } as any}
-            placeholder="Ej. Tomates frescos"
-            placeholderTextColor={colors.iconMuted}
-            cursorColor={colors.brandGreenForest}
-            value={nombreProducto}
-            onChangeText={(text) => {
-              setNombreProducto(text);
-              setErrors((prev) => {
-                const next = { ...prev };
-                delete next.nombre_producto;
-                return next;
-              });
-            }}
-          />
-          {errors.nombre_producto ? (
-            <Text className="mt-1 ml-1 text-xs text-red-500">
-              {errors.nombre_producto}
+          {/* Nombre */}
+          <View>
+            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+              Nombre del producto <Text className="text-red-500">*</Text>
             </Text>
-          ) : null}
-        </View>
+            <TextInput
+              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
+              style={{ outlineStyle: 'none' }}
+              placeholder="Ej. Tomates frescos"
+              placeholderTextColor={colors.iconMuted}
+              cursorColor={colors.brandGreenForest}
+              value={nombreProducto}
+              onChangeText={(text) => {
+                setNombreProducto(text);
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.nombre_producto;
+                  return next;
+                });
+              }}
+            />
+            {errors.nombre_producto ? (
+              <Text className="ml-1 mt-1 text-xs text-red-500">
+                {errors.nombre_producto}
+              </Text>
+            ) : null}
+          </View>
 
-        {/* Descripción */}
-        <View>
-          <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-            Descripción
-          </Text>
-          <TextInput
-            className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
-            style={{ outlineStyle: 'none' } as any}
-            placeholder="Ej. Detalles sobre tu producto..."
-          placeholderTextColor={colors.iconMuted}
-          cursorColor={colors.brandGreenForest}
-          value={descripcion}
-          onChangeText={setDescripcion}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-        </View>
-
-        {/* Precio */}
-        <View>
-          <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-            Precio <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
-            style={{ outlineStyle: 'none' } as any}
-            placeholder="0.00"
-            placeholderTextColor={colors.iconMuted}
-            cursorColor={colors.brandGreenForest}
-            value={precio}
-            onChangeText={(text) => {
-              setPrecio(text.replace(/[^.0-9]/g, ''));
-              setErrors((prev) => {
-                const next = { ...prev };
-                delete next.precio;
-                return next;
-              });
-            }}
-            keyboardType="decimal-pad"
-          />
-          {errors.precio ? (
-            <Text className="mt-1 ml-1 text-xs text-red-500">
-              {errors.precio}
+          {/* Descripción */}
+          <View>
+            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+              Descripción
             </Text>
-          ) : null}
-        </View>
+            <TextInput
+              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
+              style={{ outlineStyle: 'none' }}
+              placeholder="Ej. Detalles sobre tu producto..."
+              placeholderTextColor={colors.iconMuted}
+              cursorColor={colors.brandGreenForest}
+              value={descripcion}
+              onChangeText={setDescripcion}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
 
-        {/* Stock */}
-        <View>
-          <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-            Stock disponible
-          </Text>
-          <TextInput
-            className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
-            style={{ outlineStyle: 'none' } as any}
-            placeholder="0"
-            placeholderTextColor={colors.iconMuted}
-            cursorColor={colors.brandGreenForest}
-            value={stock}
-            onChangeText={(text) => setStock(text.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-          />
-        </View>
+          {/* Precio */}
+          <View>
+            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+              Precio <Text className="text-red-500">*</Text>
+            </Text>
+            <TextInput
+              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
+              style={{ outlineStyle: 'none' }}
+              placeholder="0.00"
+              placeholderTextColor={colors.iconMuted}
+              cursorColor={colors.brandGreenForest}
+              value={precio}
+              onChangeText={(text) => {
+                setPrecio(text.replace(/[^.0-9]/g, ''));
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.precio;
+                  return next;
+                });
+              }}
+              keyboardType="decimal-pad"
+            />
+            {errors.precio ? (
+              <Text className="ml-1 mt-1 text-xs text-red-500">
+                {errors.precio}
+              </Text>
+            ) : null}
+          </View>
 
-        {/* Perecedero */}
-        <View className="flex-row items-center justify-between rounded-md bg-white px-4 py-3 border border-gray-300">
-          <Text className="text-base text-brand-ink">
-            Producto perecedero
-          </Text>
-          <Switch
-            value={esPerecedero}
-            onValueChange={setEsPerecedero}
-            trackColor={{ true: colors.brandGreenForest }}
-          />
-        </View>
+          {/* Stock */}
+          <View>
+            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+              Stock disponible
+            </Text>
+            <TextInput
+              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
+              style={{ outlineStyle: 'none' }}
+              placeholder="0"
+              placeholderTextColor={colors.iconMuted}
+              cursorColor={colors.brandGreenForest}
+              value={stock}
+              onChangeText={(text) => setStock(text.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
+            />
+          </View>
 
-        {/* Categoría selector */}
-        <View>
+          {/* Perecedero */}
+          <View className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3">
+            <Text className="text-base text-brand-ink">
+              Producto perecedero
+            </Text>
+            <Switch
+              value={esPerecedero}
+              onValueChange={setEsPerecedero}
+              trackColor={{ true: colors.brandGreenForest }}
+            />
+          </View>
+
+          {/* Categoría selector */}
+          <View>
+            <Pressable
+              onPress={() => setCategoriaModalVisible(true)}
+              className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3"
+            >
+              <Text
+                className={`text-base ${selectedCategoryName ? 'text-brand-ink' : 'text-gray-400'}`}
+              >
+                {selectedCategoryName || 'Categoría *'}
+              </Text>
+              <MaterialCommunityIcons
+                name="chevron-down"
+                size={20}
+                color={colors.iconMuted}
+              />
+            </Pressable>
+            {errors.fk_categoria ? (
+              <Text className="ml-1 mt-1 text-xs text-red-500">
+                {errors.fk_categoria}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Unidad selector */}
           <Pressable
-            onPress={() => setCategoriaModalVisible(true)}
+            onPress={() => setUnidadModalVisible(true)}
             className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3"
           >
             <Text
-              className={`text-base ${selectedCategoryName ? 'text-brand-ink' : 'text-gray-400'}`}
+              className={`text-base ${selectedUnitName ? 'text-brand-ink' : 'text-gray-400'}`}
             >
-              {selectedCategoryName || 'Categoría *'}
+              {selectedUnitName || 'Unidad de medida'}
             </Text>
             <MaterialCommunityIcons
               name="chevron-down"
@@ -521,42 +584,19 @@ export default function ProductFormScreen({
               color={colors.iconMuted}
             />
           </Pressable>
-          {errors.fk_categoria ? (
-            <Text className="mt-1 ml-1 text-xs text-red-500">
-              {errors.fk_categoria}
-            </Text>
-          ) : null}
-        </View>
 
-        {/* Unidad selector */}
-        <Pressable
-          onPress={() => setUnidadModalVisible(true)}
-          className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3"
-        >
-          <Text
-            className={`text-base ${selectedUnitName ? 'text-brand-ink' : 'text-gray-400'}`}
+          {/* Save button */}
+          <Button
+            mode="contained"
+            buttonColor={colors.brandGreenForest}
+            onPress={handleSave}
+            loading={isSaving}
+            disabled={isSaving}
+            className="mt-2"
           >
-            {selectedUnitName || 'Unidad de medida'}
-          </Text>
-          <MaterialCommunityIcons
-            name="chevron-down"
-            size={20}
-            color={colors.iconMuted}
-          />
-        </Pressable>
-
-        {/* Save button */}
-        <Button
-          mode="contained"
-          buttonColor={colors.brandGreenForest}
-          onPress={handleSave}
-          loading={isSaving}
-          disabled={isSaving}
-          className="mt-2"
-        >
-          {isEditing ? 'Guardar cambios' : 'Crear producto'}
-        </Button>
-      </ScrollView>
+            {isEditing ? 'Guardar cambios' : 'Crear producto'}
+          </Button>
+        </ScrollView>
       </View>
 
       {/* Category modal */}
@@ -642,9 +682,7 @@ export default function ProductFormScreen({
                       : ''
                   }`}
                 >
-                  <Text className="text-base text-brand-ink">
-                    {item.tipo}
-                  </Text>
+                  <Text className="text-base text-brand-ink">{item.tipo}</Text>
                   {unidadId === item.id_unidad ? (
                     <MaterialCommunityIcons
                       name="check"

@@ -18,7 +18,6 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { colors } from '~/constants/colors';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';

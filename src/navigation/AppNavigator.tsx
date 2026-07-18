@@ -30,7 +30,11 @@ import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
-import type { AdminStackParamList, AuthStackParamList, FarmerStackParamList } from '@/types';
+import type {
+  AdminStackParamList,
+  AuthStackParamList,
+  FarmerStackParamList,
+} from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
@@ -81,9 +85,9 @@ function FarmerScreens() {
   return (
     <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
       <FarmerStack.Screen name="ProductList" component={ProductListScreen} />
-      <FarmerStack.Screen 
-        name="ProductForm" 
-        component={ProductFormScreen} 
+      <FarmerStack.Screen
+        name="ProductForm"
+        component={ProductFormScreen}
         options={{ presentation: 'transparentModal' }}
       />
     </FarmerStack.Navigator>
