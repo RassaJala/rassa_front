@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import CrudListScreen from '@/components/CrudListScreen';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Municipio } from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
@@ -31,24 +32,112 @@ interface MunicipioItemProps {
 
 // ── List item — extracted so the config object stays stable ──
 
+interface ItemTheme {
+  readonly surface: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly brand: string;
+  readonly errorColor: string;
+  readonly statusBg: string;
+  readonly statusColor: string;
+  readonly statusIcon: 'check-circle-outline' | 'circle-outline';
+  readonly statusLabel: 'Activo' | 'Inactivo';
+  readonly toggleIcon: 'pause-circle-outline' | 'play-circle-outline';
+  readonly shadowOpacity: number;
+  readonly elevation: number;
+}
+
+const LIGHT_THEME = {
+  surface: '#FFFFFF',
+  fg: '#2D3328',
+  muted: '#5E6B5E',
+  border: '#E2E6DF',
+  brand: '#24563C',
+  shadowOpacity: 0.05,
+  elevation: 2,
+  activeBg: 'rgba(36, 86, 60, 0.07)',
+  inactiveBg: 'rgba(0, 0, 0, 0.03)',
+} as const;
+
+const DARK_THEME = {
+  surface: '#263028',
+  fg: '#E8EAE4',
+  muted: '#9DA89D',
+  border: '#353D35',
+  brand: '#4A8A63',
+  shadowOpacity: 0,
+  elevation: 0,
+  activeBg: 'rgba(74, 138, 99, 0.12)',
+  inactiveBg: 'rgba(255, 255, 255, 0.03)',
+} as const;
+
+function getMunicipioItemTheme(
+  isDark: boolean,
+  isEstadoActive: boolean,
+): ItemTheme {
+  const theme = isDark ? DARK_THEME : LIGHT_THEME;
+  const statusBg = isEstadoActive ? theme.activeBg : theme.inactiveBg;
+  const statusColor = isEstadoActive ? theme.brand : theme.muted;
+  const statusIcon = isEstadoActive ? 'check-circle-outline' : 'circle-outline';
+  const statusLabel = isEstadoActive ? 'Activo' : 'Inactivo';
+  const toggleIcon = isEstadoActive
+    ? 'pause-circle-outline'
+    : 'play-circle-outline';
+
+  return {
+    surface: theme.surface,
+    fg: theme.fg,
+    muted: theme.muted,
+    border: theme.border,
+    brand: theme.brand,
+    errorColor: '#DE393A',
+    statusBg,
+    statusColor,
+    statusIcon,
+    statusLabel,
+    toggleIcon,
+    shadowOpacity: theme.shadowOpacity,
+    elevation: theme.elevation,
+  };
+}
+
 function MunicipioListItem({
   item,
   actions,
   navigation,
 }: MunicipioItemProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const {
+    surface,
+    fg,
+    muted,
+    border,
+    brand,
+    errorColor,
+    statusBg,
+    statusColor,
+    statusIcon,
+    statusLabel,
+    toggleIcon,
+    shadowOpacity,
+    elevation,
+  } = getMunicipioItemTheme(isDark, item.estado);
+
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
+        backgroundColor: surface,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: border,
         padding: 16,
         shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
+        shadowOpacity,
         shadowRadius: 2,
-        elevation: 2,
+        elevation,
       }}
     >
       {/* Top row: Icon + Info */}
@@ -61,22 +150,20 @@ function MunicipioListItem({
             borderRadius: 20,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: item.estado
-              ? colors.activeGreenBg
-              : colors.inactiveGrayBg,
+            backgroundColor: statusBg,
           }}
         >
           <MaterialCommunityIcons
-            name={item.estado ? 'check-circle-outline' : 'circle-outline'}
+            name={statusIcon}
             size={20}
-            color={item.estado ? colors.brandGreenForest : colors.iconMuted}
+            color={statusColor}
           />
         </View>
 
         {/* Info */}
         <View style={{ flex: 1 }}>
           <Text
-            style={{ fontSize: 16, fontWeight: '600', color: colors.text }}
+            style={{ fontSize: 16, fontWeight: '600', color: fg }}
             numberOfLines={1}
           >
             {item.nombre}
@@ -92,9 +179,7 @@ function MunicipioListItem({
             <View
               style={{
                 borderRadius: 999,
-                backgroundColor: item.estado
-                  ? colors.activeGreenBg
-                  : colors.inactiveGrayBg,
+                backgroundColor: statusBg,
                 paddingHorizontal: 8,
                 paddingVertical: 2,
               }}
@@ -103,12 +188,10 @@ function MunicipioListItem({
                 style={{
                   fontSize: 11,
                   fontWeight: '600',
-                  color: item.estado
-                    ? colors.brandGreenForest
-                    : colors.iconMuted,
+                  color: statusColor,
                 }}
               >
-                {item.estado ? 'Activo' : 'Inactivo'}
+                {statusLabel}
               </Text>
             </View>
           </View>
@@ -121,7 +204,7 @@ function MunicipioListItem({
           marginTop: 12,
           paddingTop: 12,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: border,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -147,13 +230,13 @@ function MunicipioListItem({
           <MaterialCommunityIcons
             name="map-marker-outline"
             size={16}
-            color={colors.brandGreenForest}
+            color={brand}
           />
           <Text
             style={{
               fontSize: 13,
               fontWeight: '600',
-              color: colors.brandGreenForest,
+              color: brand,
             }}
           >
             Ver localidades
@@ -169,7 +252,7 @@ function MunicipioListItem({
               height: 36,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -178,7 +261,7 @@ function MunicipioListItem({
             <MaterialCommunityIcons
               name="pencil-outline"
               size={16}
-              color={colors.brandGreenForest}
+              color={brand}
             />
           </Pressable>
 
@@ -189,19 +272,13 @@ function MunicipioListItem({
               height: 36,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
             hitSlop={6}
           >
-            <MaterialCommunityIcons
-              name={
-                item.estado ? 'pause-circle-outline' : 'play-circle-outline'
-              }
-              size={16}
-              color={colors.iconMuted}
-            />
+            <MaterialCommunityIcons name={toggleIcon} size={16} color={muted} />
           </Pressable>
 
           <Pressable
@@ -211,7 +288,7 @@ function MunicipioListItem({
               height: 36,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -220,7 +297,7 @@ function MunicipioListItem({
             <MaterialCommunityIcons
               name="trash-can-outline"
               size={16}
-              color={colors.error}
+              color={errorColor}
             />
           </Pressable>
         </View>
