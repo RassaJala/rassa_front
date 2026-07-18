@@ -171,24 +171,12 @@ export default function ProductFormScreen({
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      setImages((prev) => [
-        ...prev,
-        {
-          uri: asset.uri,
-          base64: asset.base64 ?? undefined,
-          isPrimary: prev.filter((img) => !img.markedForDeletion).length === 0,
-        },
-      ]);
+      setImages([{
+        uri: asset.uri,
+        base64: asset.base64 ?? undefined,
+        isPrimary: true,
+      }]);
     }
-  }, []);
-
-  const handleSetPrimaryImage = useCallback((indexToSet: number) => {
-    setImages((prev) =>
-      prev.map((img, index) => ({
-        ...img,
-        isPrimary: index === indexToSet,
-      }))
-    );
   }, []);
 
   const handleRemoveImage = useCallback((indexToRemove: number) => {
@@ -376,41 +364,39 @@ export default function ProductFormScreen({
         {/* Image picker */}
         <View>
           <Text className="mb-2 ml-1 text-sm font-medium text-gray-700">
-            Fotos del producto
+            Foto del producto
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 flex-grow justify-center">
-            {images
-              .map((img, index) => ({ img, index }))
-              .filter(({ img }) => !img.markedForDeletion)
-              .map(({ img, index }) => (
-                <View key={img.id ?? img.uri} className="relative">
-                  <Image
-                    source={{ uri: img.uri }}
-                    className="h-48 w-48 rounded-md"
-                    resizeMode="cover"
-                  />
-                  <View className="absolute inset-x-0 bottom-0 flex-row justify-between rounded-b-md bg-black/50 px-2 py-1">
-                    <Pressable onPress={() => handleSetPrimaryImage(index)} hitSlop={8}>
-                      <MaterialCommunityIcons
-                        name={img.isPrimary ? "star" : "star-outline"}
-                        size={20}
-                        color={img.isPrimary ? "#fbbf24" : "white"}
-                      />
-                    </Pressable>
-                    <Pressable onPress={() => handleRemoveImage(index)} hitSlop={8}>
-                      <MaterialCommunityIcons name="delete-outline" size={20} color="white" />
-                    </Pressable>
+          <View className="items-center">
+            {(() => {
+              const activeImage = images.find((img) => !img.markedForDeletion);
+              if (activeImage) {
+                const activeIndex = images.indexOf(activeImage);
+                return (
+                  <View className="relative">
+                    <Image
+                      source={{ uri: activeImage.uri }}
+                      className="h-48 w-48 rounded-md"
+                      resizeMode="cover"
+                    />
+                    <View className="absolute inset-x-0 bottom-0 flex-row justify-end rounded-b-md bg-black/50 px-2 py-1">
+                      <Pressable onPress={() => handleRemoveImage(activeIndex)} hitSlop={8}>
+                        <MaterialCommunityIcons name="delete-outline" size={20} color="white" />
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))}
-            <Pressable
-              onPress={() => void pickImage()}
-              className="h-48 w-48 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-100 active:opacity-80"
-            >
-              <MaterialCommunityIcons name="camera-plus-outline" size={32} color={colors.iconMuted} />
-              <Text className="mt-1 px-2 text-center text-xs text-gray-500">Agregar imagen</Text>
-            </Pressable>
-          </ScrollView>
+                );
+              }
+              return (
+                <Pressable
+                  onPress={() => void pickImage()}
+                  className="h-48 w-48 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-100 active:opacity-80"
+                >
+                  <MaterialCommunityIcons name="camera-plus-outline" size={32} color={colors.iconMuted} />
+                  <Text className="mt-1 px-2 text-center text-xs text-gray-500">Agregar imagen</Text>
+                </Pressable>
+              );
+            })()}
+          </View>
         </View>
 
         {/* Nombre */}
