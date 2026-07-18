@@ -12,8 +12,6 @@ interface Product {
   estado: boolean;
 }
 
-const nextId = useRef(7);
-
 const initialData: Product[] = [
   { id: 1, nombre: 'Aguacate Hass', categoria: 'Fruta', precio: 45, stock: 120, unidad: 'kg', descripcion: 'Aguacate Hass premium de Antioquia.', estado: true },
   { id: 2, nombre: 'Tomate orgánico', categoria: 'Verdura', precio: 32, stock: 85, unidad: 'kg', descripcion: 'Tomate chonto sin pesticidas.', estado: true },
@@ -51,6 +49,7 @@ export function AdminProducts() {
   const [delTarget, setDelTarget] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const nextId = useRef(7);
 
   const filtered = useMemo(
     () => items.filter((i) => i.nombre.toLowerCase().includes(search.toLowerCase())),
@@ -72,11 +71,14 @@ export function AdminProducts() {
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre.trim() || !form.categoria || !form.precio) return;
+    const precio = Number(form.precio);
+    const stock = Number(form.stock);
+    if (isNaN(precio) || isNaN(stock)) return;
     setSaving(true);
     if (editId) {
-      setItems((prev) => prev.map((i) => (i.id === editId ? { ...i, nombre: form.nombre.trim(), categoria: form.categoria, precio: Number(form.precio), stock: Number(form.stock), unidad: form.unidad, descripcion: form.descripcion.trim() } : i)));
+      setItems((prev) => prev.map((i) => (i.id === editId ? { ...i, nombre: form.nombre.trim(), categoria: form.categoria, precio, stock, unidad: form.unidad, descripcion: form.descripcion.trim() } : i)));
     } else {
-      setItems((prev) => [...prev, { id: nextId.current++, nombre: form.nombre.trim(), categoria: form.categoria, precio: Number(form.precio), stock: Number(form.stock), unidad: form.unidad, descripcion: form.descripcion.trim(), estado: true }]);
+      setItems((prev) => [...prev, { id: nextId.current++, nombre: form.nombre.trim(), categoria: form.categoria, precio, stock, unidad: form.unidad, descripcion: form.descripcion.trim(), estado: true }]);
     }
     setTab('list');
     setSaving(false);

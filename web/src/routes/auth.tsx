@@ -282,7 +282,7 @@ export function RegisterScreen() {
       sexo: sexo || null,
       domicilio: domicilio.trim() || null,
       fk_localidad: localidad ? Number(localidad) : null,
-      role: 'buyer',
+      role: 'comprador',
     };
 
     try {

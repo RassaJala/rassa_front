@@ -38,5 +38,5 @@ export const darkShadows = {
 /**
  * Helper para obtener sombra correcta basada en modo.
  */
-export const getShadow = (mode: 'light' | 'dark', level: keyof typeof shadows) => 
-  mode === 'dark' ? (shadows[level] in darkShadows ? darkShadows[shadows[level]] as string : shadows[shadows[level]] as string) : shadows[level];
+export const getShadow = (mode: 'light' | 'dark', level: keyof typeof shadows): string =>
+  mode === 'dark' && level in darkShadows ? darkShadows[level as keyof typeof darkShadows]! : shadows[level];

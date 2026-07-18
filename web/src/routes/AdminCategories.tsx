@@ -8,8 +8,6 @@ interface Category {
   estado: boolean;
 }
 
-const nextId = useRef(5);
-
 const initialData: Category[] = [
   { id: 1, nombre: 'Hortalizas', descripcion: 'Verduras y hortalizas frescas', estado: true },
   { id: 2, nombre: 'Frutas', descripcion: 'Frutas de temporada', estado: true },
@@ -36,6 +34,7 @@ export function AdminCategories() {
   const [delTarget, setDelTarget] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const nextId = useRef(5);
 
   const filtered = useMemo(
     () => items.filter((i) => i.nombre.toLowerCase().includes(search.toLowerCase())),

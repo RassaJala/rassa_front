@@ -30,7 +30,7 @@ export function AppRouter() {
       <Route path="/register" element={<RegisterScreen />} />
 
       {/* Redirect root to /agricultor (or /login if not auth) */}
-      <Route path="/" element={<Navigate to="/agricultor" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Agricultor */}
       <Route element={<ProtectedRoute />}>

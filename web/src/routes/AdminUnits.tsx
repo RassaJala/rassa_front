@@ -8,8 +8,6 @@ interface Unit {
   estado: boolean;
 }
 
-const nextId = useRef(5);
-
 const initialData: Unit[] = [
   { id: 1, nombre: 'Kilogramo', abreviatura: 'kg', estado: true },
   { id: 2, nombre: 'Unidad', abreviatura: 'pz', estado: true },
@@ -36,6 +34,7 @@ export function AdminUnits() {
   const [delTarget, setDelTarget] = useState<Unit | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const nextId = useRef(5);
 
   const filtered = useMemo(
     () => items.filter((i) => i.nombre.toLowerCase().includes(search.toLowerCase()) || i.abreviatura.toLowerCase().includes(search.toLowerCase())),
