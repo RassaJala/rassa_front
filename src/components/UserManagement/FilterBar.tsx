@@ -5,10 +5,10 @@ import { ROLE_FILTERS, STATUS_FILTERS } from '@/constants/roles';
 import { useTheme } from '@/store/ThemeContext';
 
 interface FilterBarProps {
-  roleFilter: string | null;
-  statusFilter: string | null;
-  onRoleFilterChange: (value: string | null) => void;
-  onStatusFilterChange: (value: string | null) => void;
+  roleFilter: string;
+  statusFilter: string;
+  onRoleFilterChange: (value: string) => void;
+  onStatusFilterChange: (value: string) => void;
 }
 
 export default function FilterBar({
@@ -19,27 +19,16 @@ export default function FilterBar({
 }: FilterBarProps): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? '#263028' : '#FFFFFF';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
   const brand = isDark ? '#4A8A63' : '#24563C';
-  const chipBg = isDark ? 'rgba(255,255,255,0.08)' : '#F3F4F6';
+  const chipBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
   const iconWhite = '#FFFFFF';
 
   return (
-    <View
-      style={{
-        marginHorizontal: 20,
-        marginBottom: 4,
-        backgroundColor: surface,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: border,
-        padding: 14,
-      }}
-    >
+    <View>
       {/* Rol filter */}
-      <View>
+      <View style={{ marginBottom: 8 }}>
         <Text
           style={{
             fontSize: 11,
@@ -47,45 +36,45 @@ export default function FilterBar({
             letterSpacing: 0.08,
             textTransform: 'uppercase',
             color: muted,
-            marginBottom: 8,
+            marginBottom: 6,
           }}
         >
           Rol
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {ROLE_FILTERS.map((opt) => (
-            <Pressable
-              key={String(opt.value)}
-              onPress={() => onRoleFilterChange(opt.value)}
-              style={{
-                backgroundColor: roleFilter === opt.value ? brand : chipBg,
-                borderRadius: 999,
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-              }}
-            >
-              <Text
+          {ROLE_FILTERS.map((opt) => {
+            const isSelected = opt.value === null
+              ? roleFilter === ''
+              : roleFilter === opt.value;
+
+            return (
+              <Pressable
+                key={String(opt.value)}
+                onPress={() => onRoleFilterChange(opt.value ?? '')}
                 style={{
-                  fontSize: 12,
-                  fontWeight: '500',
-                  color: roleFilter === opt.value ? iconWhite : muted,
+                  backgroundColor: isSelected ? brand : chipBg,
+                  borderRadius: 999,
+                  paddingHorizontal: 14,
+                  paddingVertical: 6,
                 }}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '500',
+                    color: isSelected ? iconWhite : muted,
+                  }}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
       {/* Divider */}
-      <View
-        style={{
-          height: 1,
-          backgroundColor: border,
-          marginVertical: 12,
-        }}
-      />
+      <View style={{ height: 1, backgroundColor: border, marginVertical: 12 }} />
 
       {/* Status filter */}
       <View>
@@ -96,34 +85,40 @@ export default function FilterBar({
             letterSpacing: 0.08,
             textTransform: 'uppercase',
             color: muted,
-            marginBottom: 8,
+            marginBottom: 6,
           }}
         >
           Estado
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {STATUS_FILTERS.map((opt) => (
-            <Pressable
-              key={String(opt.value)}
-              onPress={() => onStatusFilterChange(opt.value)}
-              style={{
-                backgroundColor: statusFilter === opt.value ? brand : chipBg,
-                borderRadius: 999,
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-              }}
-            >
-              <Text
+          {STATUS_FILTERS.map((opt) => {
+            const isSelected = opt.value === null
+              ? statusFilter === ''
+              : statusFilter === opt.value;
+
+            return (
+              <Pressable
+                key={String(opt.value)}
+                onPress={() => onStatusFilterChange(opt.value ?? '')}
                 style={{
-                  fontSize: 12,
-                  fontWeight: '500',
-                  color: statusFilter === opt.value ? iconWhite : muted,
+                  backgroundColor: isSelected ? brand : chipBg,
+                  borderRadius: 999,
+                  paddingHorizontal: 14,
+                  paddingVertical: 6,
                 }}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '500',
+                    color: isSelected ? iconWhite : muted,
+                  }}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     </View>

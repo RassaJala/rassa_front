@@ -122,8 +122,8 @@ describe('FilterBar', () => {
   it('renderiza los chips de rol', () => {
     const { getAllByText, getByText } = render(
       <FilterBar
-        roleFilter={null}
-        statusFilter={null}
+        roleFilter={''}
+        statusFilter={''}
         onRoleFilterChange={jest.fn()}
         onStatusFilterChange={jest.fn()}
       />,
@@ -138,8 +138,8 @@ describe('FilterBar', () => {
   it('renderiza los chips de estado', () => {
     const { getByText } = render(
       <FilterBar
-        roleFilter={null}
-        statusFilter={null}
+        roleFilter={''}
+        statusFilter={''}
         onRoleFilterChange={jest.fn()}
         onStatusFilterChange={jest.fn()}
       />,
@@ -154,8 +154,8 @@ describe('FilterBar', () => {
 
     const { getByText } = render(
       <FilterBar
-        roleFilter={null}
-        statusFilter={null}
+        roleFilter={''}
+        statusFilter={''}
         onRoleFilterChange={onRoleFilterChange}
         onStatusFilterChange={jest.fn()}
       />,
@@ -170,8 +170,8 @@ describe('FilterBar', () => {
 
     const { getByText } = render(
       <FilterBar
-        roleFilter={null}
-        statusFilter={null}
+        roleFilter={''}
+        statusFilter={''}
         onRoleFilterChange={jest.fn()}
         onStatusFilterChange={onStatusFilterChange}
       />,
@@ -496,5 +496,151 @@ describe('RoleDialog', () => {
 
     fireEvent.press(getByText('Cancelar'));
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── UserManagementScreen integration tests ──────────────
+// These test the full screen with mocked API calls
+
+jest.mock('@/services/api', () => ({
+  get: jest.fn().mockResolvedValue({ data: [] }),
+  patch: jest.fn().mockResolvedValue({ data: {} }),
+  post: jest.fn().mockResolvedValue({ data: {} }),
+  delete: jest.fn().mockResolvedValue({ data: {} }),
+  defaults: { baseURL: 'http://test/' },
+}));
+
+const mockMutate = jest.fn();
+const mockMutationState = {
+  mutate: mockMutate,
+  isPending: false,
+  isError: false,
+  isSuccess: false,
+  data: undefined,
+  error: null,
+  reset: jest.fn(),
+};
+
+jest.mock('@tanstack/react-query', () => {
+  const actual = jest.requireActual('@tanstack/react-query');
+
+  return {
+    ...actual,
+    useQuery: jest.fn(),
+    useMutation: jest.fn(() => mockMutationState),
+    useQueryClient: jest.fn(() => ({
+      invalidateQueries: jest.fn(),
+    })),
+  };
+});
+
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id_usuario: 1, email: 'admin@rassa.com', role: 'admin' },
+  })),
+}));
+
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: jest.fn(() => ({ colorScheme: 'light' })),
+}));
+
+import { useQuery } from '@tanstack/react-query';
+
+import UserManagementScreen from '@/screens/admin/UserManagementScreen';
+
+describe('UserManagementScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('no renderiza la lista mientras carga', () => {
+    (useQuery as jest.Mock).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+      isRefetching: false,
+    });
+
+    const { queryByText, getByText } = renderWithPaper(<UserManagementScreen />);
+
+    // Header is always visible
+    expect(getByText('Gestión de usuarios')).toBeTruthy();
+    // No user card content should appear during loading
+    expect(queryByText('@')).toBeNull();
+  });
+
+  it('muestra la lista de usuarios cuando la carga termina', () => {
+    const mockUsers: AdminUser[] = [
+      {
+        id_usuario: 1,
+        email: 'carlos@test.com',
+        role: 'admin',
+        nombre: 'Carlos',
+        apellido_paterno: 'Ruiz',
+        apellido_materno: null,
+        localidad: null,
+        localidad_nombre: null,
+        estado: true,
+        creado_en: '2024-01-01',
+      },
+      {
+        id_usuario: 2,
+        email: 'maria@test.com',
+        role: 'farmer',
+        nombre: 'María',
+        apellido_paterno: 'García',
+        apellido_materno: null,
+        localidad: null,
+        localidad_nombre: null,
+        estado: true,
+        creado_en: '2024-01-01',
+      },
+    ];
+
+    (useQuery as jest.Mock).mockReturnValue({
+      data: mockUsers,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+      isRefetching: false,
+    });
+
+    const { getByText } = renderWithPaper(<UserManagementScreen />);
+
+    expect(getByText('Carlos Ruiz')).toBeTruthy();
+    expect(getByText('maria@test.com')).toBeTruthy();
+  });
+
+  it('muestra empty state cuando no hay usuarios', () => {
+    (useQuery as jest.Mock).mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+      isRefetching: false,
+    });
+
+    const { getByText } = renderWithPaper(<UserManagementScreen />);
+
+    expect(getByText('No hay usuarios registrados.')).toBeTruthy();
+  });
+
+  it('muestra estado de error con botón de reintentar', () => {
+    (useQuery as jest.Mock).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { response: { data: { detail: 'Error de red' } } },
+      refetch: jest.fn(),
+      isRefetching: false,
+    });
+
+    const { getByText } = renderWithPaper(<UserManagementScreen />);
+
+    expect(getByText('Reintentar')).toBeTruthy();
   });
 });

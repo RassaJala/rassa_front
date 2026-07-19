@@ -4,6 +4,7 @@ import { Button, Dialog, Portal, RadioButton } from 'react-native-paper';
 
 import { colors } from '@/constants/colors';
 import { ROLE_OPTIONS } from '@/constants/roles';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminUser } from '@/types/userManagement';
 import { getFullName } from '@/utils/userManagement';
 
@@ -24,6 +25,11 @@ export default function RoleDialog({
   onSave,
   onDismiss,
 }: RoleDialogProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const gray500 = isDark ? '#9CA3AF' : '#6B7280';
+  const gray800 = isDark ? '#E5E7EB' : '#1F2937';
+
   return (
     <Portal>
       <Dialog visible={user !== null} onDismiss={onDismiss}>
@@ -32,9 +38,20 @@ export default function RoleDialog({
         <Dialog.Content>
           {user !== null && (
             <>
-              <Text className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              <Text
+                style={{
+                  marginBottom: 16,
+                  fontSize: 13,
+                  color: gray500,
+                }}
+              >
                 Usuario:{' '}
-                <Text className="font-medium text-gray-800 dark:text-gray-200">
+                <Text
+                  style={{
+                    fontWeight: '500',
+                    color: gray800,
+                  }}
+                >
                   {getFullName(user)}
                 </Text>
               </Text>
@@ -47,7 +64,11 @@ export default function RoleDialog({
                   <Pressable
                     key={opt.value}
                     onPress={() => onRoleChange(opt.value)}
-                    className="flex-row items-center py-1.5"
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 6,
+                    }}
                   >
                     <RadioButton
                       value={opt.value}
@@ -57,8 +78,12 @@ export default function RoleDialog({
                       }
                     />
                     <Text
-                      className="ml-2 text-base font-medium"
-                      style={{ color: opt.color }}
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 15,
+                        fontWeight: '500',
+                        color: opt.color,
+                      }}
                     >
                       {opt.label}
                     </Text>

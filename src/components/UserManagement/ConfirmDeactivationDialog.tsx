@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { Button, Dialog, Portal } from 'react-native-paper';
 
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminUser } from '@/types/userManagement';
 
 interface ConfirmDeactivationDialogProps {
@@ -20,6 +21,12 @@ export default function ConfirmDeactivationDialog({
   onConfirm,
   onDismiss,
 }: ConfirmDeactivationDialogProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const gray700 = isDark ? '#D1D5DB' : '#374151';
+  const red50 = isDark ? 'rgba(127,29,29,0.3)' : '#FEF2F2';
+  const red600 = isDark ? '#FCA5A5' : '#DC2626';
+
   return (
     <Portal>
       <Dialog visible={user !== null} onDismiss={onDismiss}>
@@ -28,15 +35,32 @@ export default function ConfirmDeactivationDialog({
         <Dialog.Content>
           {user !== null && (
             <>
-              <Text className="text-base text-gray-700 dark:text-gray-300">
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: gray700,
+                }}
+              >
                 {isSelf
                   ? 'No puedes desactivar tu propia cuenta.'
                   : `¿Estás seguro de desactivar a ${user.nombre}?\n\nEl usuario perderá acceso al sistema hasta que sea reactivado.`}
               </Text>
 
               {isSelf ? (
-                <View className="mt-3 rounded-lg bg-red-50 p-3 dark:bg-red-900/30">
-                  <Text className="text-sm text-red-600 dark:text-red-400">
+                <View
+                  style={{
+                    marginTop: 12,
+                    borderRadius: 8,
+                    backgroundColor: red50,
+                    padding: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: red600,
+                    }}
+                  >
                     Para desactivar tu cuenta necesitarías que otro
                     administrador lo haga.
                   </Text>
