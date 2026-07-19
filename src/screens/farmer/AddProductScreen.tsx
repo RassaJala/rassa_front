@@ -1,18 +1,54 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, View } from 'react-native';
 
-import LogoutButton from '@/components/LogoutButton';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 
 export default function AddProductScreen(): React.JSX.Element {
-  return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <Text variant="bodyLarge" className="text-gray-500 dark:text-gray-400">
-        Agregar producto — Próximamente
-      </Text>
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
 
-      <View className="mt-6">
-        <LogoutButton mode="contained" />
+  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <MaterialCommunityIcons
+          name="plus-circle-outline"
+          size={64}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 22,
+            fontWeight: '700',
+            color: fg,
+            letterSpacing: -0.3,
+          }}
+        >
+          Agregar Producto
+        </Text>
+        <Text
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: muted,
+            textAlign: 'center',
+          }}
+        >
+          Publica un nuevo producto agrícola.
+        </Text>
       </View>
     </View>
   );

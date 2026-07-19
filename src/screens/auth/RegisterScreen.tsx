@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { Button } from 'react-native-paper';
 
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
@@ -15,9 +14,10 @@ import * as Sentry from '@sentry/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
+import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type { RegisterRole } from '@/types';
 import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
@@ -27,12 +27,18 @@ export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
   const netInfo = useNetInfo();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
   const isMounted = useRef(true);
 
-  // Form State Hook
+  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
-  // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
@@ -53,7 +59,6 @@ export default function RegisterScreen(): React.JSX.Element {
       return;
     }
 
-    // Validations
     const validationError = validateRegistrationForm({
       email: form.email,
       password: form.password,
@@ -106,52 +111,116 @@ export default function RegisterScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50 px-4 py-4 dark:bg-gray-950"
+      style={{ flex: 1, backgroundColor: bg }}
       contentContainerStyle={styles.scrollContent}
     >
-      <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <Text className="mb-2 text-2xl font-bold text-brand-ink dark:text-gray-100">
-          Crear cuenta
-        </Text>
-        <Text className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-          Completa los siguientes datos para registrarte.
-        </Text>
-
-        <RegistrationFormFields
-          form={form}
-          setErrorMessage={setErrorMessage}
-          onOpenDatePicker={() => setIsDatePickerVisible(true)}
-        />
-
-        {errorMessage ? (
-          <Text className="mb-4 text-center text-sm text-red-600">
-            {errorMessage}
-          </Text>
-        ) : null}
-
-        <Button
-          mode="contained"
-          disabled={isSubmitting}
-          onPress={() => void handleRegister()}
-          buttonColor={BRAND_RED_CORAL}
-          className="rounded-lg"
-          contentStyle={styles.buttonContent}
+      <View style={{ padding: 16 }}>
+        <View
+          style={{
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: border,
+            backgroundColor: surface,
+            padding: 16,
+          }}
         >
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : 'Registrarse'}
-        </Button>
-
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mt-4">
-          <Text className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-            ¿Ya tienes cuenta? Inicia sesión
+          <Text
+            style={{
+              marginBottom: 4,
+              fontSize: 22,
+              fontWeight: '700',
+              color: fg,
+              letterSpacing: -0.3,
+            }}
+          >
+            Crear cuenta
           </Text>
-        </TouchableOpacity>
+          <Text
+            style={{
+              marginBottom: 24,
+              fontSize: 14,
+              color: muted,
+            }}
+          >
+            Completa los siguientes datos para registrarte.
+          </Text>
+
+          <RegistrationFormFields
+            form={form}
+            setErrorMessage={setErrorMessage}
+            onOpenDatePicker={() => setIsDatePickerVisible(true)}
+          />
+
+          {errorMessage ? (
+            <Text
+              style={{
+                marginBottom: 16,
+                textAlign: 'center',
+                fontSize: 13,
+                color: colors.brandRedCoral,
+              }}
+            >
+              {errorMessage}
+            </Text>
+          ) : null}
+
+          <Pressable
+            onPress={() => void handleRegister()}
+            disabled={isSubmitting}
+            style={{
+              backgroundColor: colors.brandRedCoral,
+              borderRadius: 16,
+              paddingVertical: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: isSubmitting ? 0.7 : 1,
+            }}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: colors.iconWhite,
+                }}
+              >
+                Registrarse
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: 16, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '500',
+                color: muted,
+              }}
+            >
+              ¿Ya tienes cuenta?{' '}
+              <Text
+                style={{
+                  color: isDark ? colors.admlBrandD : colors.admlBrandL,
+                  fontWeight: '600',
+                }}
+              >
+                Inicia sesión
+              </Text>
+            </Text>
+          </Pressable>
+        </View>
+        <DatePickerModal
+          visible={isDatePickerVisible}
+          onClose={() => setIsDatePickerVisible(false)}
+          onSelectDate={form.setFechaNacimiento}
+          initialDate={form.fechaNacimiento}
+        />
       </View>
-      <DatePickerModal
-        visible={isDatePickerVisible}
-        onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={form.setFechaNacimiento}
-        initialDate={form.fechaNacimiento}
-      />
     </ScrollView>
   );
 }
@@ -159,8 +228,5 @@ export default function RegisterScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
-  },
-  buttonContent: {
-    paddingVertical: 6,
   },
 });

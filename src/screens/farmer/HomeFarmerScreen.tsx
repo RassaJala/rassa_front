@@ -2,31 +2,31 @@ import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
-import { getSellerStats } from '@/services/mock/dashboard';
+import { getFarmerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
-import type { SellerTabsParamList } from '@/types';
+import type { FarmerStackParamList } from '@/types';
 
-type Nav = BottomTabNavigationProp<SellerTabsParamList, 'HomeSeller'>;
+type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerTabs'>;
 
 interface Props {
   readonly navigation: Nav;
 }
 
-export default function HomeSellerScreen({
+export default function HomeFarmerScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const stats = getSellerStats();
+  const stats = getFarmerStats();
 
   const handleProfilePress = () => {
-    navigation.navigate('Perfil');
+    navigation.getParent()?.navigate('Profile');
   };
 
   const bg = isDark ? '#1A211B' : '#F5F7F0';
@@ -69,8 +69,8 @@ export default function HomeSellerScreen({
 
   return (
     <ProfileDrawerProvider
-      defaultName="Vendedor"
-      defaultEmail="vendedor@rassa.com"
+      defaultName="Agricultor"
+      defaultEmail="agricultor@rassa.com"
       onProfilePress={handleProfilePress}
     >
       <View style={{ flex: 1, backgroundColor: bg }}>
@@ -81,6 +81,7 @@ export default function HomeSellerScreen({
             showsVerticalScrollIndicator={false}
           >
             <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+              {/* ═══ HEADER ═══ */}
               <View
                 style={{
                   flexDirection: 'row',
@@ -135,6 +136,7 @@ export default function HomeSellerScreen({
                 </View>
               </View>
 
+              {/* ═══ STATS ═══ */}
               <View
                 style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
               >
@@ -162,7 +164,7 @@ export default function HomeSellerScreen({
                     }}
                   >
                     <MaterialCommunityIcons
-                      name="cash"
+                      name="sprout"
                       size={24}
                       color={brand}
                     />
@@ -175,7 +177,7 @@ export default function HomeSellerScreen({
                       color: brand,
                     }}
                   >
-                    ${stats.salesToday.toLocaleString()}
+                    {stats.totalProducts.toLocaleString()}
                   </Text>
                   <Text
                     style={{
@@ -187,7 +189,7 @@ export default function HomeSellerScreen({
                       marginTop: 4,
                     }}
                   >
-                    Ventas Hoy
+                    Productos
                   </Text>
                 </View>
                 <View
@@ -214,7 +216,7 @@ export default function HomeSellerScreen({
                     }}
                   >
                     <MaterialCommunityIcons
-                      name="chart-line"
+                      name="clipboard-check"
                       size={24}
                       color={coral}
                     />
@@ -227,7 +229,7 @@ export default function HomeSellerScreen({
                       color: coral,
                     }}
                   >
-                    ${stats.salesWeek.toLocaleString()}
+                    {stats.ordersReceived.toLocaleString()}
                   </Text>
                   <Text
                     style={{
@@ -239,7 +241,7 @@ export default function HomeSellerScreen({
                       marginTop: 4,
                     }}
                   >
-                    Ventas Semana
+                    Pedidos
                   </Text>
                 </View>
                 <View
@@ -266,7 +268,7 @@ export default function HomeSellerScreen({
                     }}
                   >
                     <MaterialCommunityIcons
-                      name="calendar-month"
+                      name="cash"
                       size={24}
                       color={pumpkin}
                     />
@@ -279,7 +281,7 @@ export default function HomeSellerScreen({
                       color: pumpkin,
                     }}
                   >
-                    ${stats.salesMonth.toLocaleString()}
+                    ${stats.revenue.toLocaleString()}
                   </Text>
                   <Text
                     style={{
@@ -291,7 +293,7 @@ export default function HomeSellerScreen({
                       marginTop: 4,
                     }}
                   >
-                    Ventas Mes
+                    Ingresos
                   </Text>
                 </View>
               </View>

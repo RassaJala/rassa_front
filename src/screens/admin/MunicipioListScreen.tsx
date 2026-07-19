@@ -49,27 +49,27 @@ interface ItemTheme {
 }
 
 const LIGHT_THEME = {
-  surface: '#FFFFFF',
-  fg: '#2D3328',
-  muted: '#5E6B5E',
-  border: '#E2E6DF',
-  brand: '#24563C',
+  surface: colors.admSurfaceL,
+  fg: colors.admlFgL,
+  muted: colors.admlMutedL,
+  border: colors.admlBorderL,
+  brand: colors.admlBrandL,
   shadowOpacity: 0.05,
   elevation: 2,
-  activeBg: 'rgba(36, 86, 60, 0.07)',
-  inactiveBg: 'rgba(0, 0, 0, 0.03)',
+  activeBg: colors.admActiveBgL,
+  inactiveBg: colors.admInactiveBgL,
 } as const;
 
 const DARK_THEME = {
-  surface: '#263028',
-  fg: '#E8EAE4',
-  muted: '#9DA89D',
-  border: '#353D35',
-  brand: '#4A8A63',
+  surface: colors.admSurfaceD,
+  fg: colors.admlFgD,
+  muted: colors.admlMutedD,
+  border: colors.admlBorderD,
+  brand: colors.admlBrandD,
   shadowOpacity: 0,
   elevation: 0,
-  activeBg: 'rgba(74, 138, 99, 0.12)',
-  inactiveBg: 'rgba(255, 255, 255, 0.03)',
+  activeBg: colors.admActiveBgD,
+  inactiveBg: colors.admInactiveBgD,
 } as const;
 
 function getMunicipioItemTheme(
@@ -91,7 +91,7 @@ function getMunicipioItemTheme(
     muted: theme.muted,
     border: theme.border,
     brand: theme.brand,
-    errorColor: '#DE393A',
+    errorColor: colors.brandRedCoral,
     statusBg,
     statusColor,
     statusIcon,
