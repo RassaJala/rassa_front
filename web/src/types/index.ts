@@ -5,6 +5,16 @@ export interface User {
   email: string;
   nombre: string;
   rol: Role;
+  apellido_paterno?: string;
+  apellido_materno?: string;
+  telefono?: string;
+  fecha_nacimiento?: string;
+  genero?: string;
+  direccion?: string;
+  municipio_id?: number;
+  municipio_nombre?: string;
+  localidad?: number;
+  localidad_nombre?: string;
 }
 
 export interface AuthState {

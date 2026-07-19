@@ -27,6 +27,16 @@ function mapMeUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
+    apellido_paterno: raw.apellido_paterno as string | undefined,
+    apellido_materno: raw.apellido_materno as string | undefined,
+    telefono: raw.telefono as string | undefined,
+    fecha_nacimiento: raw.fecha_nacimiento as string | undefined,
+    genero: raw.genero as string | undefined,
+    direccion: raw.direccion as string | undefined,
+    municipio_id: raw.municipio_id as number | undefined,
+    municipio_nombre: raw.municipio_nombre as string | undefined,
+    localidad: raw.localidad as number | undefined,
+    localidad_nombre: raw.localidad_nombre as string | undefined,
     rol: raw.role as string as Role,
   };
 }

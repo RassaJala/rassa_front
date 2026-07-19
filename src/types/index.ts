@@ -21,6 +21,8 @@ export interface User {
   direccion: string;
   localidad: number;
   localidad_nombre?: string | null;
+  municipio_id?: number | null;
+  municipio_nombre?: string | null;
 }
 
 export type RegisterRole = 'buyer' | 'farmer' | 'seller';
@@ -121,6 +123,7 @@ export interface ApiResponse<T> {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  AdminProfile: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;

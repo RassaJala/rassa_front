@@ -11,6 +11,7 @@ import Navbar from '@/components/Navbar';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
+import AdminProfileScreen from '@/screens/admin/AdminProfileScreen';
 import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
@@ -246,6 +247,7 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
     </AdminStack.Navigator>
   );
 }

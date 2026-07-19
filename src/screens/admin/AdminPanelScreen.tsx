@@ -26,7 +26,7 @@ const DRAWER_WIDTH = 0.55;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function AdminPanelScreen({
-  navigation: _navigation,
+  navigation,
 }: Props): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
@@ -120,7 +120,10 @@ export default function AdminPanelScreen({
       label: 'Perfil',
       desc: 'Tu información personal',
       color: fg,
-      action: closeDrawer,
+      action: () => {
+        closeDrawer();
+        navigation.navigate('AdminProfile');
+      },
     },
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
