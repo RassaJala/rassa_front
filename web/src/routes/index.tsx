@@ -8,6 +8,8 @@ import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
+import { AdminMunicipios } from './AdminMunicipios';
+import { AdminLocalidades } from './AdminLocalidades';
 
 function NotFound() {
   return (
@@ -81,6 +83,8 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
+                <Route path="municipios" element={<AdminMunicipios />} />
+                <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
