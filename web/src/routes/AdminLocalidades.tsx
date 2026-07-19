@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
+import { getColors } from '../constants/colors';
 import api from '../services/api';
 
 interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
-  estado: boolean;
 }
 
 interface MunicipioOption {
@@ -14,24 +14,29 @@ interface MunicipioOption {
   nombre: string;
 }
 
+interface ApiListResponse<T> {
+  data: T[];
+  message?: string;
+}
+
+interface ApiSingleResponse<T> {
+  data: T;
+  message?: string;
+}
+
 export function AdminLocalidades() {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const c = getColors(resolved === 'dark');
+  const { fg, muted, border, surface, bg, brand, coral } = c;
 
   const [items, setItems] = useState<Localidad[]>([]);
   const [municipios, setMunicipios] = useState<MunicipioOption[]>([]);
+  const [selectedMunId, setSelectedMunId] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: '', municipio_id: 0 });
+  const [form, setForm] = useState({ nombre: '' });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Localidad | null>(null);
   const [saving, setSaving] = useState(false);
@@ -41,12 +46,13 @@ export function AdminLocalidades() {
     setLoading(true);
     setError(null);
     try {
-      const [locRes, munRes] = await Promise.all([
-        api.get<Localidad[]>('/localidades/'),
-        api.get<MunicipioOption[]>('/municipios/'),
-      ]);
-      setItems(locRes.data);
-      setMunicipios(munRes.data);
+      const munRes = await api.get<ApiListResponse<MunicipioOption>>('/municipios/');
+      const municipiosData = munRes.data.data;
+      setMunicipios(municipiosData);
+      if (municipiosData.length > 0 && selectedMunId === 0) {
+        const first = municipiosData[0];
+        if (first) setSelectedMunId(first.id_municipio);
+      }
     } catch {
       setError('Error al cargar datos');
     } finally {
@@ -57,6 +63,27 @@ export function AdminLocalidades() {
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  const fetchLocalidades = useCallback(async (municipioId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<ApiListResponse<Localidad>>(
+        `/localidades/?municipio_id=${municipioId}`,
+      );
+      setItems(res.data.data);
+    } catch {
+      setError('Error al cargar localidades');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedMunId > 0) {
+      void fetchLocalidades(selectedMunId);
+    }
+  }, [selectedMunId, fetchLocalidades]);
 
   const filtered = useMemo(
     () =>
@@ -72,31 +99,25 @@ export function AdminLocalidades() {
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: '', municipio_id: municipios[0]?.id_municipio ?? 0 });
+    setForm({ nombre: '' });
     setTab('form');
   }
 
   function startEdit(item: Localidad) {
     setEditId(item.id_localidad);
-    setForm({
-      nombre: item.nombre,
-      municipio_id: item.municipio_id,
-    });
+    setForm({ nombre: item.nombre });
     setTab('form');
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.municipio_id) return;
+    if (!form.nombre.trim()) return;
     setSaving(true);
     try {
       if (editId) {
-        const res = await api.patch<{ data: Localidad }>(
+        const res = await api.patch<ApiSingleResponse<Localidad>>(
           `/localidades/${editId}/`,
-          {
-            nombre: form.nombre.trim(),
-            municipio_id: form.municipio_id,
-          },
+          { nombre: form.nombre.trim() },
         );
         setItems((prev) =>
           prev.map((i) =>
@@ -104,11 +125,10 @@ export function AdminLocalidades() {
           ),
         );
       } else {
-        const res = await api.post<{ data: Localidad }>('/localidades/', {
-          nombre: form.nombre.trim(),
-          municipio_id: form.municipio_id,
-          estado: true,
-        });
+        const res = await api.post<ApiSingleResponse<Localidad>>(
+          `/localidades/?municipio_id=${selectedMunId}`,
+          { nombre: form.nombre.trim() },
+        );
         setItems((prev) => [...prev, res.data.data]);
       }
       setTab('list');
@@ -132,23 +152,6 @@ export function AdminLocalidades() {
     }
   }
 
-  async function toggleStatus(item: Localidad) {
-    const newStatus = !item.estado;
-    try {
-      const res = await api.patch<{ data: Localidad }>(
-        `/localidades/${item.id_localidad}/`,
-        { estado: newStatus },
-      );
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id_localidad === item.id_localidad ? res.data.data : i,
-        ),
-      );
-    } catch {
-      setError('Error al cambiar estado');
-    }
-  }
-
   const btnStyle = {
     height: 40,
     padding: '0 18px',
@@ -166,7 +169,6 @@ export function AdminLocalidades() {
 
   return (
     <div>
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -201,7 +203,6 @@ export function AdminLocalidades() {
         </button>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div
           style={{
@@ -234,7 +235,6 @@ export function AdminLocalidades() {
         </div>
       )}
 
-      {/* Tabs */}
       <div
         style={{
           display: 'flex',
@@ -284,224 +284,216 @@ export function AdminLocalidades() {
         </button>
       </div>
 
-      {/* TAB: List */}
+      {/* Municipio filter for list */}
       {tab === 'list' && (
-        <div
-          style={{
-            background: surface,
-            borderRadius: 16,
-            border: `1px solid ${border}`,
-            overflow: 'hidden',
-          }}
-        >
+        <>
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
+              gap: 10,
               alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: `1px solid ${border}`,
-              flexWrap: 'wrap',
-              gap: 8,
+              marginBottom: 16,
             }}
           >
-            <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {loading ? 'Cargando…' : `${items.length} localidades`}
-            </span>
-            <input
-              type="search"
-              placeholder="Buscar localidad…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+            <label
               style={{
-                height: 36,
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: muted,
+              }}
+            >
+              Municipio
+            </label>
+            <select
+              value={selectedMunId}
+              onChange={(e) => setSelectedMunId(Number(e.target.value))}
+              style={{
+                height: 40,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
                 padding: '0 12px',
-                fontSize: 13,
+                fontSize: 14,
                 fontFamily: 'inherit',
-                width: 220,
                 background: bg,
                 color: fg,
                 outline: 'none',
+                cursor: 'pointer',
+                minWidth: 200,
               }}
-            />
+            >
+              {municipios.map((m) => (
+                <option key={m.id_municipio} value={m.id_municipio}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['Nombre', 'Municipio', 'Estado', 'Acciones'].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        textAlign: 'left',
-                        fontSize: 11,
-                        color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        fontWeight: 600,
-                        padding: '12px 20px',
-                        background: bg,
-                        borderBottom: `1px solid ${border}`,
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+
+          <div
+            style={{
+              background: surface,
+              borderRadius: 16,
+              border: `1px solid ${border}`,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderBottom: `1px solid ${border}`,
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+                {loading ? 'Cargando…' : `${items.length} localidades`}
+              </span>
+              <input
+                type="search"
+                placeholder="Buscar localidad…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  height: 36,
+                  border: `1.5px solid ${border}`,
+                  borderRadius: 8,
+                  padding: '0 12px',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  width: 220,
+                  background: bg,
+                  color: fg,
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
                   <tr>
-                    <td
-                      colSpan={4}
-                      style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
-                        color: muted,
-                        fontSize: 14,
-                      }}
-                    >
-                      Cargando datos…
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
-                        color: muted,
-                        fontSize: 14,
-                      }}
-                    >
-                      {search ? 'Sin resultados' : 'No hay localidades'}
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((item) => (
-                    <tr key={item.id_localidad} style={{ background: surface }}>
-                      <td
+                    {['Nombre', 'Acciones'].map((h) => (
+                      <th
+                        key={h}
                         style={{
-                          padding: '14px 20px',
-                          fontSize: 14,
-                          borderBottom: `1px solid ${border}`,
-                          fontWeight: 600,
-                          color: fg,
-                        }}
-                      >
-                        {item.nombre}
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          fontSize: 14,
-                          borderBottom: `1px solid ${border}`,
+                          textAlign: 'left',
+                          fontSize: 11,
                           color: muted,
-                        }}
-                      >
-                        {getMunicipioNombre(item.municipio_id)}
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          fontWeight: 600,
+                          padding: '12px 20px',
+                          background: bg,
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            background: item.estado
-                              ? isDark
-                                ? 'rgba(74,138,99,0.15)'
-                                : 'rgba(36,86,60,0.07)'
-                              : isDark
-                                ? 'rgba(212,160,32,0.12)'
-                                : 'rgba(242,169,0,0.1)',
-                            color: item.estado ? brand : '#F2A900',
-                          }}
-                        >
-                          {item.estado ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
                       <td
+                        colSpan={2}
                         style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
+                          textAlign: 'center',
+                          padding: '48px 24px',
+                          color: muted,
+                          fontSize: 14,
                         }}
                       >
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            onClick={() => toggleStatus(item)}
-                            aria-label={item.estado ? 'Desactivar' : 'Activar'}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
-                            }}
-                          >
-                            {item.estado ? '⏸' : '▶️'}
-                          </button>
-                          <button
-                            onClick={() => startEdit(item)}
-                            aria-label="Editar"
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
-                            }}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => setDelTarget(item)}
-                            aria-label="Eliminar"
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
-                            }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
+                        Cargando datos…
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        style={{
+                          textAlign: 'center',
+                          padding: '48px 24px',
+                          color: muted,
+                          fontSize: 14,
+                        }}
+                      >
+                        {search ? 'Sin resultados' : 'No hay localidades'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((item) => (
+                      <tr key={item.id_localidad} style={{ background: surface }}>
+                        <td
+                          style={{
+                            padding: '14px 20px',
+                            fontSize: 14,
+                            borderBottom: `1px solid ${border}`,
+                            fontWeight: 600,
+                            color: fg,
+                          }}
+                        >
+                          {item.nombre}
+                        </td>
+                        <td
+                          style={{
+                            padding: '14px 20px',
+                            borderBottom: `1px solid ${border}`,
+                          }}
+                        >
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button
+                              onClick={() => startEdit(item)}
+                              aria-label="Editar"
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 8,
+                                border: `1px solid ${border}`,
+                                background: surface,
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                display: 'grid',
+                                placeItems: 'center',
+                                color: fg,
+                              }}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => setDelTarget(item)}
+                              aria-label="Eliminar"
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 8,
+                                border: `1px solid ${border}`,
+                                background: surface,
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                display: 'grid',
+                                placeItems: 'center',
+                                color: fg,
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
-      {/* TAB: Form */}
       {tab === 'form' && (
         <div
           style={{
@@ -590,39 +582,58 @@ export function AdminLocalidades() {
               >
                 Municipio
               </label>
-              <select
-                value={form.municipio_id}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    municipio_id: Number(e.target.value),
-                  }))
-                }
-                style={{
-                  width: '100%',
-                  height: 44,
-                  border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
-                  borderRadius: 10,
-                  padding: '0 14px',
-                  fontSize: 15,
-                  fontFamily: 'inherit',
-                  background: bg,
-                  color: fg,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-                onFocus={() => setFocusedField('municipio_id')}
-                onBlur={() => setFocusedField(null)}
-              >
-                {municipios.length === 0 && (
-                  <option value={0}>Cargando municipios…</option>
-                )}
-                {municipios.map((m) => (
-                  <option key={m.id_municipio} value={m.id_municipio}>
-                    {m.nombre}
-                  </option>
-                ))}
-              </select>
+              {editId ? (
+                <div
+                  style={{
+                    width: '100%',
+                    height: 44,
+                    border: `1.5px solid ${border}`,
+                    borderRadius: 10,
+                    padding: '0 14px',
+                    fontSize: 15,
+                    fontFamily: 'inherit',
+                    background: bg,
+                    color: muted,
+                    display: 'flex',
+                    alignItems: 'center',
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                  }}
+                >
+                  {getMunicipioNombre(
+                    items.find((i) => i.id_localidad === editId)
+                      ?.municipio_id ?? 0,
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={selectedMunId}
+                  onChange={(e) =>
+                    setSelectedMunId(Number(e.target.value))
+                  }
+                  style={{
+                    width: '100%',
+                    height: 44,
+                    border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
+                    borderRadius: 10,
+                    padding: '0 14px',
+                    fontSize: 15,
+                    fontFamily: 'inherit',
+                    background: bg,
+                    color: fg,
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                  onFocus={() => setFocusedField('municipio_id')}
+                  onBlur={() => setFocusedField(null)}
+                >
+                  {municipios.map((m) => (
+                    <option key={m.id_municipio} value={m.id_municipio}>
+                      {m.nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
@@ -654,7 +665,6 @@ export function AdminLocalidades() {
         </div>
       )}
 
-      {/* Delete modal */}
       {delTarget && (
         <div
           style={{

@@ -1,23 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
+import { getColors } from '../constants/colors';
 import api from '../services/api';
 
 interface Municipio {
   id_municipio: number;
   nombre: string;
-  estado: boolean;
+}
+
+interface ApiListResponse {
+  data: Municipio[];
+  message?: string;
+}
+
+interface ApiSingleResponse {
+  data: Municipio;
+  message?: string;
 }
 
 export function AdminMunicipios() {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const c = getColors(resolved === 'dark');
+  const { fg, muted, border, surface, bg, brand, coral } = c;
 
   const [items, setItems] = useState<Municipio[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +38,8 @@ export function AdminMunicipios() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<Municipio[]>('/municipios/');
-      setItems(res.data);
+      const res = await api.get<ApiListResponse>('/municipios/');
+      setItems(res.data.data);
     } catch {
       setError('Error al cargar municipios');
     } finally {
@@ -73,7 +77,7 @@ export function AdminMunicipios() {
     setSaving(true);
     try {
       if (editId) {
-        const res = await api.patch<{ data: Municipio }>(
+        const res = await api.patch<ApiSingleResponse>(
           `/municipios/${editId}/`,
           { nombre: form.nombre.trim() },
         );
@@ -83,9 +87,8 @@ export function AdminMunicipios() {
           ),
         );
       } else {
-        const res = await api.post<{ data: Municipio }>('/municipios/', {
+        const res = await api.post<ApiSingleResponse>('/municipios/', {
           nombre: form.nombre.trim(),
-          estado: true,
         });
         setItems((prev) => [...prev, res.data.data]);
       }
@@ -110,23 +113,6 @@ export function AdminMunicipios() {
     }
   }
 
-  async function toggleStatus(item: Municipio) {
-    const newStatus = !item.estado;
-    try {
-      const res = await api.patch<{ data: Municipio }>(
-        `/municipios/${item.id_municipio}/`,
-        { estado: newStatus },
-      );
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id_municipio === item.id_municipio ? res.data.data : i,
-        ),
-      );
-    } catch {
-      setError('Error al cambiar estado');
-    }
-  }
-
   const btnStyle = {
     height: 40,
     padding: '0 18px',
@@ -144,7 +130,6 @@ export function AdminMunicipios() {
 
   return (
     <div>
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -173,7 +158,6 @@ export function AdminMunicipios() {
         </button>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div
           style={{
@@ -206,7 +190,6 @@ export function AdminMunicipios() {
         </div>
       )}
 
-      {/* Tabs */}
       <div
         style={{
           display: 'flex',
@@ -255,7 +238,6 @@ export function AdminMunicipios() {
         </button>
       </div>
 
-      {/* TAB: List */}
       {tab === 'list' && (
         <div
           style={{
@@ -302,7 +284,7 @@ export function AdminMunicipios() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Nombre', 'Estado', 'Acciones'].map((h) => (
+                  {['Nombre', 'Acciones'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -326,7 +308,7 @@ export function AdminMunicipios() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={2}
                       style={{
                         textAlign: 'center',
                         padding: '48px 24px',
@@ -340,7 +322,7 @@ export function AdminMunicipios() {
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={2}
                       style={{
                         textAlign: 'center',
                         padding: '48px 24px',
@@ -371,50 +353,7 @@ export function AdminMunicipios() {
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            background: item.estado
-                              ? isDark
-                                ? 'rgba(74,138,99,0.15)'
-                                : 'rgba(36,86,60,0.07)'
-                              : isDark
-                                ? 'rgba(212,160,32,0.12)'
-                                : 'rgba(242,169,0,0.1)',
-                            color: item.estado ? brand : '#F2A900',
-                          }}
-                        >
-                          {item.estado ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            onClick={() => toggleStatus(item)}
-                            aria-label={item.estado ? 'Desactivar' : 'Activar'}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
-                            }}
-                          >
-                            {item.estado ? '⏸' : '▶️'}
-                          </button>
                           <button
                             onClick={() => startEdit(item)}
                             aria-label="Editar"
@@ -462,7 +401,6 @@ export function AdminMunicipios() {
         </div>
       )}
 
-      {/* TAB: Form */}
       {tab === 'form' && (
         <div
           style={{
@@ -563,7 +501,6 @@ export function AdminMunicipios() {
         </div>
       )}
 
-      {/* Delete modal */}
       {delTarget && (
         <div
           style={{

@@ -129,6 +129,16 @@ function AdminTabs() {
           ),
         }}
       />
+      <AdminTab.Screen
+        name="MunicipioList"
+        component={MunicipioListScreen}
+        options={{
+          tabBarLabel: 'Municipios',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="map-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </AdminTab.Navigator>
   );
 }

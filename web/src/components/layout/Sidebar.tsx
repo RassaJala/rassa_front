@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../providers/ThemeProvider';
+import { getColors } from '../../constants/colors';
 
 interface NavItem {
   key: string;
@@ -56,15 +57,15 @@ const roleNavMap: Record<string, NavItem[]> = {
 
 export function Sidebar({ role }: { role: string }) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const c = getColors(resolved === 'dark');
   const items = roleNavMap[role] ?? adminNav;
 
-  const sidebarBg = isDark ? '#161B17' : '#F5F7F0';
-  const borderColor = isDark ? '#2A332A' : '#D6DAD4';
-  const activeBg = isDark ? '#1C2D22' : '#E2F0E6';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
+  const sidebarBg = c.sidebarBg;
+  const borderColor = c.border;
+  const activeBg = c.activeBg;
+  const fg = c.fg;
+  const muted = c.muted;
+  const brand = c.brand;
 
   return (
     <aside
