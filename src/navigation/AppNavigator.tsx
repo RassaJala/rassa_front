@@ -25,6 +25,7 @@ import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 // Farmer screens
+import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
@@ -185,6 +186,7 @@ function BuyerNavigator() {
 function FarmerScreens() {
   return (
     <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
+      <FarmerStack.Screen name="FarmerHome" component={FarmerHomeScreen} />
       <FarmerStack.Screen name="ProductList" component={ProductListScreen} />
       <FarmerStack.Screen
         name="ProductForm"

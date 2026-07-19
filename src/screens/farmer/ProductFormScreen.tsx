@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -10,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Dialog, Portal } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
@@ -19,8 +21,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
-import { colors } from '@/constants/colors';
 import api, { mediaUrl } from '@/services/api';
+import { useTheme } from '@/store/ThemeContext';
 import type {
   ApiResponse,
   Category,
@@ -54,10 +56,31 @@ interface ProductImageState {
   markedForDeletion?: boolean | undefined;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function ProductFormScreen({
   navigation,
   route,
 }: Props): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+  const isSmallScreen = SCREEN_WIDTH < 600;
+
+  const isDark = colorScheme === 'dark';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const coral = '#DE393A';
+  const white = '#FFFFFF';
+  const black = '#000';
+  const backdropBg = 'rgba(0,0,0,0.5)';
+  const transparent = 'transparent';
+
   const { productoId } = route.params;
   const isEditing = Boolean(productoId);
   const queryClient = useQueryClient();
@@ -335,48 +358,60 @@ export default function ProductFormScreen({
 
   if (loadingProduct) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color={colors.brandGreenForest} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
+        <ActivityIndicator size="large" color={brand} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 justify-center bg-black/50 py-4">
-      <View className="max-h-[95%] w-[50%] self-center overflow-hidden rounded-md bg-white shadow-xl">
+    <View style={{ flex: 1, justifyContent: isSmallScreen ? 'flex-start' : 'center', backgroundColor: isSmallScreen ? bg : backdropBg, paddingVertical: isSmallScreen ? 0 : 16 }}>
+      <View style={isSmallScreen
+        ? { flex: 1, backgroundColor: bg }
+        : { maxHeight: '95%', width: '50%', alignSelf: 'center', overflow: 'hidden', borderRadius: 12, backgroundColor: bg, shadowColor: black, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 }
+      }>
         {/* Header */}
-        <View className="bg-brand-green-forest px-4 py-4 shadow-sm">
-          <View className="flex-row items-center">
+        <View style={{ backgroundColor: brand, paddingTop: isSmallScreen ? insets.top + 8 : 16, paddingBottom: 16, paddingHorizontal: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Pressable
               onPress={() => navigation.goBack()}
-              className="mr-3 h-10 w-10 items-center justify-center rounded-full active:opacity-80"
+              style={({ pressed }) => ({
+                marginRight: 12,
+                height: 40,
+                width: 40,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 20,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                opacity: pressed ? 0.8 : 1,
+              })}
               hitSlop={12}
             >
               <MaterialCommunityIcons
                 name="close"
                 size={24}
-                color={colors.iconWhite}
+                color={white}
               />
             </Pressable>
-            <Text className="text-xl font-bold tracking-tight text-white">
+            <Text style={{ fontSize: 20, fontWeight: '700', letterSpacing: -0.2, color: white }}>
               {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
             </Text>
           </View>
         </View>
 
         <ScrollView
-          contentContainerClassName="p-4 pb-6 gap-4"
+          contentContainerStyle={{ padding: 24, gap: 16 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* General error */}
           {generalError ? (
-            <View className="flex-row items-start gap-2 rounded-lg bg-red-50 p-3">
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 8, backgroundColor: coralBg, padding: 12 }}>
               <MaterialCommunityIcons
                 name="alert-circle"
                 size={18}
-                color={colors.error}
+                color={coral}
               />
-              <Text className="flex-1 text-sm leading-5 text-red-600">
+              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: coral }}>
                 {generalError}
               </Text>
             </View>
@@ -384,10 +419,10 @@ export default function ProductFormScreen({
 
           {/* Image picker */}
           <View>
-            <Text className="mb-2 ml-1 text-sm font-medium text-gray-700">
+            <Text style={{ marginBottom: 8, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Foto del producto
             </Text>
-            <View className="items-center">
+            <View style={{ alignItems: 'center' }}>
               {(() => {
                 const activeImage = images.find(
                   (img) => !img.markedForDeletion,
@@ -395,13 +430,13 @@ export default function ProductFormScreen({
                 if (activeImage) {
                   const activeIndex = images.indexOf(activeImage);
                   return (
-                    <View className="relative">
+                    <View style={{ position: 'relative' }}>
                       <Image
                         source={{ uri: activeImage.uri }}
-                        className="h-48 w-48 rounded-md"
+                        style={{ height: 192, width: 192, borderRadius: 12 }}
                         resizeMode="cover"
                       />
-                      <View className="absolute inset-x-0 bottom-0 flex-row justify-end rounded-b-md bg-black/50 px-2 py-1">
+                      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'flex-end', borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: backdropBg, paddingHorizontal: 8, paddingVertical: 4 }}>
                         <Pressable
                           onPress={() => handleRemoveImage(activeIndex)}
                           hitSlop={8}
@@ -409,7 +444,7 @@ export default function ProductFormScreen({
                           <MaterialCommunityIcons
                             name="delete-outline"
                             size={20}
-                            color="white"
+                            color={white}
                           />
                         </Pressable>
                       </View>
@@ -419,14 +454,25 @@ export default function ProductFormScreen({
                 return (
                   <Pressable
                     onPress={() => void pickImage()}
-                    className="h-48 w-48 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-100 active:opacity-80"
+                    style={({ pressed }) => ({
+                      height: 192,
+                      width: 192,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 12,
+                      borderWidth: 2,
+                      borderStyle: 'dashed',
+                      borderColor: border,
+                      backgroundColor: surface,
+                      opacity: pressed ? 0.8 : 1,
+                    })}
                   >
                     <MaterialCommunityIcons
                       name="camera-plus-outline"
                       size={32}
-                      color={colors.iconMuted}
+                      color={muted}
                     />
-                    <Text className="mt-1 px-2 text-center text-xs text-gray-500">
+                    <Text style={{ marginTop: 8, paddingHorizontal: 8, textAlign: 'center', fontSize: 12, color: muted }}>
                       Agregar imagen
                     </Text>
                   </Pressable>
@@ -437,16 +483,15 @@ export default function ProductFormScreen({
 
           {/* Nombre */}
           <View>
-            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-              Nombre del producto <Text className="text-red-500">*</Text>
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+              Nombre del producto <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
-              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ outlineStyle: 'none' }}
+              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
               placeholder="Ej. Tomates frescos"
-              placeholderTextColor={colors.iconMuted}
-              cursorColor={colors.brandGreenForest}
+              placeholderTextColor={muted}
+              cursorColor={brand}
               value={nombreProducto}
               onChangeText={(text) => {
                 setNombreProducto(text);
@@ -458,7 +503,7 @@ export default function ProductFormScreen({
               }}
             />
             {errors.nombre_producto ? (
-              <Text className="ml-1 mt-1 text-xs text-red-500">
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.nombre_producto}
               </Text>
             ) : null}
@@ -466,16 +511,15 @@ export default function ProductFormScreen({
 
           {/* Descripción */}
           <View>
-            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Descripción
             </Text>
             <TextInput
-              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ outlineStyle: 'none' }}
+              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
               placeholder="Ej. Detalles sobre tu producto..."
-              placeholderTextColor={colors.iconMuted}
-              cursorColor={colors.brandGreenForest}
+              placeholderTextColor={muted}
+              cursorColor={brand}
               value={descripcion}
               onChangeText={setDescripcion}
               multiline
@@ -486,16 +530,15 @@ export default function ProductFormScreen({
 
           {/* Precio */}
           <View>
-            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
-              Precio <Text className="text-red-500">*</Text>
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+              Precio <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
-              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ outlineStyle: 'none' }}
+              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
               placeholder="0.00"
-              placeholderTextColor={colors.iconMuted}
-              cursorColor={colors.brandGreenForest}
+              placeholderTextColor={muted}
+              cursorColor={brand}
               value={precio}
               onChangeText={(text) => {
                 setPrecio(text.replace(/[^.0-9]/g, ''));
@@ -508,7 +551,7 @@ export default function ProductFormScreen({
               keyboardType="decimal-pad"
             />
             {errors.precio ? (
-              <Text className="ml-1 mt-1 text-xs text-red-500">
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.precio}
               </Text>
             ) : null}
@@ -516,16 +559,15 @@ export default function ProductFormScreen({
 
           {/* Stock */}
           <View>
-            <Text className="mb-1 ml-1 text-sm font-medium text-gray-700">
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Stock disponible
             </Text>
             <TextInput
-              className="rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-brand-ink outline-none"
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ outlineStyle: 'none' }}
+              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
               placeholder="0"
-              placeholderTextColor={colors.iconMuted}
-              cursorColor={colors.brandGreenForest}
+              placeholderTextColor={muted}
+              cursorColor={brand}
               value={stock}
               onChangeText={(text) => setStock(text.replace(/[^0-9]/g, ''))}
               keyboardType="number-pad"
@@ -533,14 +575,14 @@ export default function ProductFormScreen({
           </View>
 
           {/* Perecedero */}
-          <View className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3">
-            <Text className="text-base text-brand-ink">
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}>
+            <Text style={{ fontSize: 16, color: fg }}>
               Producto perecedero
             </Text>
             <Switch
               value={esPerecedero}
               onValueChange={setEsPerecedero}
-              trackColor={{ true: colors.brandGreenForest }}
+              trackColor={{ true: brand, false: border }}
             />
           </View>
 
@@ -548,21 +590,21 @@ export default function ProductFormScreen({
           <View>
             <Pressable
               onPress={() => setCategoriaModalVisible(true)}
-              className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3"
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
             >
               <Text
-                className={`text-base ${selectedCategoryName ? 'text-brand-ink' : 'text-gray-400'}`}
+                style={{ fontSize: 16, color: selectedCategoryName ? fg : muted }}
               >
                 {selectedCategoryName || 'Categoría *'}
               </Text>
               <MaterialCommunityIcons
                 name="chevron-down"
                 size={20}
-                color={colors.iconMuted}
+                color={muted}
               />
             </Pressable>
             {errors.fk_categoria ? (
-              <Text className="ml-1 mt-1 text-xs text-red-500">
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.fk_categoria}
               </Text>
             ) : null}
@@ -571,28 +613,28 @@ export default function ProductFormScreen({
           {/* Unidad selector */}
           <Pressable
             onPress={() => setUnidadModalVisible(true)}
-            className="flex-row items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3"
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
           >
             <Text
-              className={`text-base ${selectedUnitName ? 'text-brand-ink' : 'text-gray-400'}`}
+              style={{ fontSize: 16, color: selectedUnitName ? fg : muted }}
             >
               {selectedUnitName || 'Unidad de medida'}
             </Text>
             <MaterialCommunityIcons
               name="chevron-down"
               size={20}
-              color={colors.iconMuted}
+              color={muted}
             />
           </Pressable>
 
           {/* Save button */}
           <Button
             mode="contained"
-            buttonColor={colors.brandGreenForest}
+            buttonColor={brand}
             onPress={handleSave}
             loading={isSaving}
             disabled={isSaving}
-            className="mt-2"
+            style={{ marginTop: 8, borderRadius: 8 }}
           >
             {isEditing ? 'Guardar cambios' : 'Crear producto'}
           </Button>
@@ -604,8 +646,9 @@ export default function ProductFormScreen({
         <Dialog
           visible={categoriaModalVisible}
           onDismiss={() => setCategoriaModalVisible(false)}
+          style={{ backgroundColor: bg }}
         >
-          <Dialog.Title className="text-xl font-bold text-brand-ink">
+          <Dialog.Title style={{ fontSize: 20, fontWeight: '700', color: fg }}>
             Seleccionar categoría
           </Dialog.Title>
           <Dialog.Content>
@@ -623,33 +666,29 @@ export default function ProductFormScreen({
                     });
                     setCategoriaModalVisible(false);
                   }}
-                  className={`flex-row items-center justify-between rounded-lg px-4 py-3 ${
-                    categoriaId === item.id_categoria
-                      ? 'bg-brand-green-forest/10'
-                      : ''
-                  }`}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: categoriaId === item.id_categoria ? accentBg : transparent }}
                 >
-                  <Text className="text-base text-brand-ink">
+                  <Text style={{ fontSize: 16, color: fg }}>
                     {item.nombre}
                   </Text>
                   {categoriaId === item.id_categoria ? (
                     <MaterialCommunityIcons
                       name="check"
                       size={20}
-                      color={colors.brandGreenForest}
+                      color={brand}
                     />
                   ) : null}
                 </Pressable>
               )}
               ItemSeparatorComponent={() => (
-                <View className="h-px bg-gray-100" />
+                <View style={{ height: 1, backgroundColor: border }} />
               )}
             />
           </Dialog.Content>
           <Dialog.Actions>
             <Button
               onPress={() => setCategoriaModalVisible(false)}
-              textColor={colors.textSecondary}
+              textColor={muted}
             >
               Cancelar
             </Button>
@@ -662,8 +701,9 @@ export default function ProductFormScreen({
         <Dialog
           visible={unidadModalVisible}
           onDismiss={() => setUnidadModalVisible(false)}
+          style={{ backgroundColor: bg }}
         >
-          <Dialog.Title className="text-xl font-bold text-brand-ink">
+          <Dialog.Title style={{ fontSize: 20, fontWeight: '700', color: fg }}>
             Seleccionar unidad
           </Dialog.Title>
           <Dialog.Content>
@@ -676,31 +716,27 @@ export default function ProductFormScreen({
                     setUnidadId(item.id_unidad);
                     setUnidadModalVisible(false);
                   }}
-                  className={`flex-row items-center justify-between rounded-lg px-4 py-3 ${
-                    unidadId === item.id_unidad
-                      ? 'bg-brand-green-forest/10'
-                      : ''
-                  }`}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: unidadId === item.id_unidad ? accentBg : transparent }}
                 >
-                  <Text className="text-base text-brand-ink">{item.tipo}</Text>
+                  <Text style={{ fontSize: 16, color: fg }}>{item.tipo}</Text>
                   {unidadId === item.id_unidad ? (
                     <MaterialCommunityIcons
                       name="check"
                       size={20}
-                      color={colors.brandGreenForest}
+                      color={brand}
                     />
                   ) : null}
                 </Pressable>
               )}
               ItemSeparatorComponent={() => (
-                <View className="h-px bg-gray-100" />
+                <View style={{ height: 1, backgroundColor: border }} />
               )}
             />
           </Dialog.Content>
           <Dialog.Actions>
             <Button
               onPress={() => setUnidadModalVisible(false)}
-              textColor={colors.textSecondary}
+              textColor={muted}
             >
               Cancelar
             </Button>

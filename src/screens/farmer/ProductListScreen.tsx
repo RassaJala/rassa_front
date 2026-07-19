@@ -1,6 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -9,16 +11,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { FAB } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import { colors } from '@/constants/colors';
 import api, { mediaUrl } from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type {
   ApiResponse,
   Category,
@@ -39,7 +41,94 @@ export default function ProductListScreen({
   navigation,
 }: Props): React.JSX.Element {
   const netInfo = useNetInfo();
-  const { logout } = useAuth();
+  const { colorScheme, toggleColorScheme } = useTheme();
+  const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  const isDark = colorScheme === 'dark';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
+  const coral = '#DE393A';
+  const pumpkin = '#F2A900';
+  const overlayBg = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)';
+  const drawerBg = isDark ? '#1F2720' : '#FFFFFF';
+  const sidebarBorder = isDark ? '#353D35' : '#E8EAE4';
+
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+  const DRAWER_WIDTH = 0.55;
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
+  }, [slideAnim]);
+
+  const closeDrawer = useCallback(() => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      setDrawerOpen(false);
+    });
+  }, [slideAnim]);
+
+  const drawerTranslate = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [SCREEN_WIDTH * DRAWER_WIDTH, 0],
+  });
+
+  const overlayOpacity = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.35],
+  });
+
+  const menuItems = [
+    {
+      icon: 'account-circle-outline',
+      label: 'Perfil',
+      desc: 'Tu información personal',
+      color: fg,
+      action: closeDrawer,
+    },
+    {
+      icon: isDark ? 'weather-sunny' : 'weather-night',
+      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
+      desc: 'Alternar apariencia',
+      color: fg,
+      action: toggleColorScheme,
+    },
+    {
+      icon: 'cog-outline',
+      label: 'Configuración',
+      desc: 'Preferencias del sistema',
+      color: fg,
+      action: closeDrawer,
+    },
+    {
+      icon: 'logout',
+      label: 'Cerrar sesión',
+      desc: '',
+      color: coral,
+      action: () => {
+        closeDrawer();
+        void logout();
+      },
+    },
+  ];
 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -86,17 +175,26 @@ export default function ProductListScreen({
       return (
         <Image
           source={{ uri: resolved }}
-          className="h-16 w-16 rounded-lg"
+          style={{ width: 64, height: 64, borderRadius: 12 }}
           resizeMode="cover"
         />
       );
     }
     return (
-      <View className="h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 12,
+          backgroundColor: accentBg,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <MaterialCommunityIcons
           name="image-outline"
           size={24}
-          color={colors.iconMuted}
+          color={brand}
         />
       </View>
     );
@@ -104,35 +202,53 @@ export default function ProductListScreen({
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color={colors.brandGreenForest} />
+      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={brand} />
       </View>
     );
   }
 
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={48}
-          color={colors.textSecondary}
-        />
-        <Text className="mt-4 text-center text-base text-gray-500">
+      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: coralBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={32}
+            color={coral}
+          />
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: fg, textAlign: 'center', marginBottom: 8 }}>
           {netInfo.isConnected === false
-            ? 'Sin conexión a Internet. Verifica tu conexión.'
-            : 'Error al cargar productos.'}
+            ? 'Sin conexión a Internet'
+            : 'Error al cargar productos'}
+        </Text>
+        <Text style={{ fontSize: 14, color: muted, textAlign: 'center', marginBottom: 24 }}>
+          {netInfo.isConnected === false
+            ? 'Verifica tu conexión y vuelve a intentarlo.'
+            : 'Ocurrió un problema inesperado. Intenta de nuevo más tarde.'}
         </Text>
         <Pressable
           onPress={() => void refetch()}
-          className="mt-4 flex-row items-center gap-2 rounded-lg bg-brand-green-forest px-6 py-3"
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
           <MaterialCommunityIcons
             name="refresh"
-            size={18}
-            color={colors.iconWhite}
+            size={20}
+            color={fg}
+            style={{ marginRight: 8 }}
           />
-          <Text className="font-semibold text-white">Reintentar</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>Reintentar</Text>
         </Pressable>
       </View>
     );
@@ -141,58 +257,90 @@ export default function ProductListScreen({
   const isEmpty = !products || products.length === 0;
 
   return (
-    <View className="flex-1 bg-white">
-      {/* Header */}
-      <View className="bg-brand-green-forest px-4 pb-4 pt-14 shadow-sm">
-        <View className="mb-4 flex-row items-center justify-between">
-          <Text className="text-2xl font-bold tracking-tight text-white">
-            Mis Productos
-          </Text>
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, minHeight: 48 }}>
           <Pressable
-            onPress={() => logout()}
-            className="rounded-full bg-white/20 p-2 active:opacity-80"
-            hitSlop={8}
+            onPress={() => navigation.goBack()}
+            style={({ pressed }) => ({
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: surface,
+              borderWidth: 1,
+              borderColor: border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.6 : 1,
+              zIndex: 1,
+            })}
           >
-            <MaterialCommunityIcons name="logout" size={22} color="white" />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
           </Pressable>
+          <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' }}>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: fg }}>Mis Productos</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10, zIndex: 1 }}>
+            <Pressable
+              style={({ pressed }) => ({
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: surface,
+                borderWidth: 1,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name="bell-outline" size={24} color={fg} />
+            </Pressable>
+            <Pressable
+              onPress={openDrawer}
+              style={({ pressed }) => ({
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: surface,
+                borderWidth: 1,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name="account-circle" size={24} color={fg} />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Search bar */}
-        <View className="flex-row items-center rounded-md bg-white px-3 py-3 shadow-sm">
-          <MaterialCommunityIcons
-            name="magnify"
-            size={22}
-            color={colors.iconMuted}
-          />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: surface, borderWidth: 1, borderColor: border, borderRadius: 16, paddingHorizontal: 16, height: 52 }}>
+          <MaterialCommunityIcons name="magnify" size={24} color={muted} />
           <TextInput
-            className="ml-2 flex-1 text-base text-brand-ink outline-none"
-            // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-            style={{ outlineStyle: 'none' }}
+            style={{ flex: 1, fontSize: 16, color: fg, marginLeft: 10, outlineStyle: 'none' } as any}
             placeholder="Buscar producto..."
-            placeholderTextColor={colors.iconMuted}
+            placeholderTextColor={muted}
             value={searchText}
             onChangeText={setSearchText}
             underlineColorAndroid="transparent"
-            cursorColor={colors.brandGreenForest}
+            cursorColor={brand}
           />
           {searchText ? (
             <Pressable onPress={() => setSearchText('')} hitSlop={8}>
-              <MaterialCommunityIcons
-                name="close-circle"
-                size={20}
-                color={colors.iconMuted}
-              />
+              <MaterialCommunityIcons name="close-circle" size={20} color={muted} />
             </Pressable>
           ) : null}
         </View>
       </View>
 
-      {/* Category chips */}
       {categories && categories.length > 0 ? (
-        <View className="border-b border-gray-100 bg-white px-4 py-3">
+        <View style={{ paddingBottom: 12 }}>
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
             data={[
               { id_categoria: 0, nombre: 'Todas', descripcion: '' },
               ...categories,
@@ -210,16 +358,17 @@ export default function ProductListScreen({
                       item.id_categoria === 0 ? null : item.id_categoria,
                     )
                   }
-                  className={`mr-2 rounded-full px-4 py-2 ${
-                    isSelected ? 'bg-brand-green-forest' : 'bg-gray-100'
-                  }`}
-                  hitSlop={8}
+                  style={({ pressed }) => ({
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    backgroundColor: isSelected ? brand : surface,
+                    borderWidth: 1,
+                    borderColor: isSelected ? brand : border,
+                    opacity: pressed ? 0.8 : 1,
+                  })}
                 >
-                  <Text
-                    className={`text-sm font-medium ${
-                      isSelected ? 'text-white' : 'text-gray-600'
-                    }`}
-                  >
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: isSelected ? '#FFFFFF' : fg }}>
                     {item.nombre}
                   </Text>
                 </Pressable>
@@ -229,31 +378,27 @@ export default function ProductListScreen({
         </View>
       ) : null}
 
-      {/* Product list */}
       {isEmpty ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <MaterialCommunityIcons
-            name="package-variant"
-            size={64}
-            color={colors.iconMuted}
-          />
-          <Text className="mt-4 text-center text-2xl font-bold text-gray-500">
-            No hay productos
-          </Text>
-          <Text className="mt-1 text-center text-sm text-gray-400">
-            Agrega un producto para comenzar.
-          </Text>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <MaterialCommunityIcons name="package-variant" size={40} color={brand} />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: fg, marginBottom: 8 }}>No hay productos</Text>
+          <Text style={{ fontSize: 15, color: muted, textAlign: 'center' }}>Agrega un producto para comenzar a vender.</Text>
         </View>
       ) : (
         <FlatList
           data={products}
           keyExtractor={(item) => String(item.id_producto)}
-          contentContainerClassName="p-4 pb-24 gap-3"
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor={colors.brandRedCoral}
+              tintColor={brand}
+              colors={[brand]}
             />
           }
           renderItem={({ item }) => (
@@ -263,54 +408,205 @@ export default function ProductListScreen({
                   productoId: item.id_producto,
                 })
               }
-              className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: surface,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: border,
+                padding: 12,
+                opacity: pressed ? 0.7 : 1,
+              })}
             >
-              <View className="flex-row items-center gap-3">
-                {renderImage(item.imagen_principal ?? item.imagen)}
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-brand-ink">
-                    {item.nombre_producto}
+              {renderImage(item.imagen_principal ?? item.imagen)}
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: fg, marginBottom: 4 }}>
+                  {item.nombre_producto}
+                </Text>
+                <Text style={{ fontSize: 13, color: muted, marginBottom: 8 }}>
+                  {item.categoria.nombre}
+                  {item.unidad ? ` · ${item.unidad.tipo}` : ''}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: brand }}>
+                    ${item.precio}
                   </Text>
-                  <Text className="mt-0.5 text-sm text-gray-500">
-                    {item.categoria.nombre}
-                    {item.unidad ? ` · ${item.unidad.tipo}` : ''}
+                  <Text style={{ fontSize: 13, color: muted }}>
+                    Stock: {item.stock}
                   </Text>
-                  <View className="mt-2 flex-row items-center gap-4">
-                    <Text className="text-sm font-bold text-brand-green-forest">
-                      ${item.precio}
-                    </Text>
-                    <Text className="text-xs text-gray-500">
-                      Stock: {item.stock}
-                    </Text>
-                    {item.es_perecedero ? (
-                      <View className="rounded-full bg-yellow-100 px-2 py-0.5">
-                        <Text className="text-xs font-medium text-yellow-700">
-                          Perecedero
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
+                  {item.es_perecedero ? (
+                    <View style={{ backgroundColor: pumpkinBg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: pumpkin }}>
+                        Perecedero
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={20}
-                  color={colors.iconMuted}
-                />
               </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={muted} />
             </Pressable>
           )}
-          ItemSeparatorComponent={() => <View className="h-px bg-gray-100" />}
         />
       )}
 
-      {/* FAB */}
-      <FAB
-        icon="plus"
-        color="white"
-        className="absolute bottom-6 right-4 rounded-full bg-brand-green-forest"
-        style={{ borderRadius: 100 }}
+      <Pressable
         onPress={() => navigation.navigate('ProductForm', {})}
-      />
+        style={({ pressed }) => ({
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: brand,
+          alignItems: 'center',
+          justifyContent: 'center',
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <MaterialCommunityIcons name="plus" size={30} color="#FFFFFF" />
+      </Pressable>
+
+      {/* OVERLAY */}
+      {drawerOpen ? (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            right: 0,
+            opacity: overlayOpacity,
+            backgroundColor: overlayBg,
+          }}
+        >
+          <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
+        </Animated.View>
+      ) : null}
+
+      {/* DRAWER */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: `${DRAWER_WIDTH * 100}%`,
+          backgroundColor: drawerBg,
+          transform: [{ translateX: drawerTranslate }],
+          borderLeftWidth: 1,
+          borderLeftColor: sidebarBorder,
+        }}
+      >
+        <View style={{ flex: 1, paddingTop: 60 }}>
+          <View
+            style={{
+              alignItems: 'center',
+              paddingHorizontal: 20,
+              paddingBottom: 24,
+              marginBottom: 20,
+              borderBottomWidth: 1,
+              borderBottomColor: sidebarBorder,
+            }}
+          >
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: accentBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="account-circle"
+                size={40}
+                color={brand}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: '700',
+                color: fg,
+                letterSpacing: -0.2,
+              }}
+            >
+              {user?.nombre ?? 'Agricultor'}
+            </Text>
+            <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>
+              {user?.email ?? ''}
+            </Text>
+          </View>
+
+          <View style={{ paddingHorizontal: 16, gap: 6 }}>
+            {menuItems.map((item, i) => {
+              const isLast = i === menuItems.length - 1;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={item.action}
+                  style={({ pressed }) => ({
+                    backgroundColor: isLast
+                      ? isDark
+                        ? 'rgba(222,57,58,0.1)'
+                        : 'rgba(222,57,58,0.07)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.03)',
+                    borderRadius: 16,
+                    borderWidth: isLast ? 1 : 0,
+                    borderColor: isLast
+                      ? isDark
+                        ? 'rgba(222,57,58,0.25)'
+                        : 'rgba(222,57,58,0.15)'
+                      : 'transparent',
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      minHeight: 56,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={
+                        item.icon as keyof typeof MaterialCommunityIcons.glyphMap
+                      }
+                      size={28}
+                      color={item.color}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        fontWeight: '600',
+                        color: item.color,
+                        letterSpacing: -0.15,
+                        flexShrink: 1,
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Animated.View>
     </View>
   );
 }
