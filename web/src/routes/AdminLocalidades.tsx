@@ -46,7 +46,8 @@ export function AdminLocalidades() {
     setLoading(true);
     setError(null);
     try {
-      const munRes = await api.get<ApiListResponse<MunicipioOption>>('/municipios/');
+      const munRes =
+        await api.get<ApiListResponse<MunicipioOption>>('/municipios/');
       const municipiosData = munRes.data.data;
       setMunicipios(municipiosData);
       if (municipiosData.length > 0 && selectedMunId === 0) {
@@ -120,9 +121,7 @@ export function AdminLocalidades() {
           { nombre: form.nombre.trim() },
         );
         setItems((prev) =>
-          prev.map((i) =>
-            i.id_localidad === editId ? res.data.data : i,
-          ),
+          prev.map((i) => (i.id_localidad === editId ? res.data.data : i)),
         );
       } else {
         const res = await api.post<ApiSingleResponse<Localidad>>(
@@ -427,7 +426,10 @@ export function AdminLocalidades() {
                     </tr>
                   ) : (
                     filtered.map((item) => (
-                      <tr key={item.id_localidad} style={{ background: surface }}>
+                      <tr
+                        key={item.id_localidad}
+                        style={{ background: surface }}
+                      >
                         <td
                           style={{
                             padding: '14px 20px',
@@ -608,9 +610,7 @@ export function AdminLocalidades() {
               ) : (
                 <select
                   value={selectedMunId}
-                  onChange={(e) =>
-                    setSelectedMunId(Number(e.target.value))
-                  }
+                  onChange={(e) => setSelectedMunId(Number(e.target.value))}
                   style={{
                     width: '100%',
                     height: 44,

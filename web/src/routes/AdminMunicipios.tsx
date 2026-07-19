@@ -82,9 +82,7 @@ export function AdminMunicipios() {
           { nombre: form.nombre.trim() },
         );
         setItems((prev) =>
-          prev.map((i) =>
-            i.id_municipio === editId ? res.data.data : i,
-          ),
+          prev.map((i) => (i.id_municipio === editId ? res.data.data : i)),
         );
       } else {
         const res = await api.post<ApiSingleResponse>('/municipios/', {

@@ -135,7 +135,11 @@ function AdminTabs() {
         options={{
           tabBarLabel: 'Municipios',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="map-outline" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="map-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
