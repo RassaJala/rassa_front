@@ -25,6 +25,7 @@ import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
 import { extractFieldErrors } from '@/utils/apiError';
+import { parseApiList } from '@/utils/apiResponse';
 
 // ── Configuration ──────────────────────────────────────────
 
@@ -255,19 +256,9 @@ async function fetchCrudItems<T>(
   const url = queryParams
     ? `${endpoint}?${new URLSearchParams(queryParams).toString()}`
     : endpoint;
-  const { data } = await api.get<
-    T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-  >(url);
+  const { data } = await api.get(url);
 
-  if (Array.isArray(data)) return data;
-  if ('data' in data && typeof data.data === 'object' && data.data !== null) {
-    if (Array.isArray(data.data)) return data.data;
-    const inner = data.data as { results?: T[] };
-    if (Array.isArray(inner.results)) return inner.results;
-  }
-  if ('results' in data && Array.isArray(data.results)) return data.results;
-
-  return [];
+  return parseApiList<T>(data);
 }
 
 // ── Component ──────────────────────────────────────────────

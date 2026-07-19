@@ -389,7 +389,6 @@ function AdminScreens() {
       <AdminStack.Screen name="UnitList" component={UnitListScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
-      <AdminStack.Screen name="MunicipioList" component={MunicipioListScreen} />
       <AdminStack.Screen
         name="MunicipioTrash"
         component={MunicipioTrashScreen}

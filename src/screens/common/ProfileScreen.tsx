@@ -382,7 +382,7 @@ export default function ProfileScreen(): React.JSX.Element {
             style={{
               marginTop: 8,
               borderRadius: 999,
-              backgroundColor: `rgba(222,57,58,0.1)`,
+              backgroundColor: colors.admCoralBgD,
               paddingHorizontal: 12,
               paddingVertical: 4,
             }}

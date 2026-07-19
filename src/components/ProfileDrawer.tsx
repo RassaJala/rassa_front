@@ -17,6 +17,7 @@ import {
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 
@@ -58,13 +59,13 @@ export function ProfileDrawerProvider({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E8ECE4';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const coral = '#DE393A';
-  const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+  const border = isDark ? colors.admlBorderD : colors.admSegBgL;
+  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const coral = colors.brandRedCoral;
+  const drawerBg = isDark ? colors.admlBgD : colors.surface;
   const overlayBg = '#000';
 
   const openDrawer = useCallback(() => {
@@ -231,11 +232,11 @@ export function ProfileDrawerProvider({
                     style={({ pressed }) => ({
                       backgroundColor: isLast
                         ? isDark
-                          ? 'rgba(222,57,58,0.1)'
-                          : 'rgba(222,57,58,0.07)'
+                          ? colors.admCoralBgD
+                          : colors.admCoralBgL
                         : isDark
-                          ? 'rgba(255,255,255,0.05)'
-                          : 'rgba(0,0,0,0.03)',
+                          ? colors.admInactiveBgD
+                          : colors.admInactiveBgL,
                       borderRadius: 16,
                       borderWidth: isLast ? 1 : 0,
                       borderColor: isLast
@@ -292,7 +293,7 @@ export function ProfileDrawerTrigger(): React.JSX.Element {
   const { openDrawer } = useDrawer();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
 
   return (
     <Pressable
@@ -301,9 +302,9 @@ export function ProfileDrawerTrigger(): React.JSX.Element {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: isDark ? '#263028' : '#FFFFFF',
+        backgroundColor: isDark ? colors.admSurfaceD : colors.surface,
         borderWidth: 1,
-        borderColor: isDark ? '#353D35' : '#E2E6DF',
+        borderColor: isDark ? colors.admlBorderD : colors.admlBorderL,
         alignItems: 'center',
         justifyContent: 'center',
         opacity: pressed ? 0.6 : 1,
