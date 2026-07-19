@@ -172,7 +172,7 @@ export default function ProfileScreen(): React.JSX.Element {
         catalog.setLocalidadNombre(user.localidad_nombre ?? '');
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user is the only meaningful dependency; catalog and setters are stable references
   }, [user]);
 
   async function handleUpdateProfile() {
