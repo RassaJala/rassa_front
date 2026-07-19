@@ -7,8 +7,8 @@ export function parseApiList<T>(data: unknown): T[] {
     const inner = (data as ApiResponse<T[] | { results: T[] }>).data;
     if (Array.isArray(inner)) return inner;
     if (typeof inner === 'object' && inner !== null && 'results' in inner) {
-      const results = (inner as { results: T[] }).results;
-      if (Array.isArray(results)) return results;
+      const resultData = (inner as Record<string, unknown>).results;
+      if (Array.isArray(resultData)) return resultData as T[];
     }
   }
 

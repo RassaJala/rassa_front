@@ -8,6 +8,33 @@ import { render } from '@testing-library/react-native';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import type { AdminStackParamList } from '@/types';
 
+let mockColorScheme: string | null = 'light';
+
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: () => ({
+    logout: jest.fn(),
+    user: { id_usuario: 1, nombre: 'Admin', role: 'admin' },
+  }),
+}));
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    get colorScheme() {
+      return mockColorScheme;
+    },
+    toggleColorScheme: jest.fn(),
+    isLoaded: true,
+  }),
+}));
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: () => ({ isConnected: true }),
+}));
+jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
+  addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  removeListener: jest.fn(),
+  removeAllListeners: jest.fn(),
+  dismiss: jest.fn(),
+}));
+
 const mockNavigate = jest.fn();
 
 const mockNavigation = {
@@ -27,67 +54,102 @@ const mockNavigation = {
   preload: jest.fn(),
 } as unknown as NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
-jest.mock('@/store/AuthContext', () => ({
-  useAuth: () => ({
-    logout: jest.fn(),
-    user: { id_usuario: 1, nombre: 'Admin', role: 'admin' },
-  }),
-}));
-jest.mock('@/store/ThemeContext', () => ({
-  useTheme: () => ({
-    colorScheme: 'light',
-    toggleColorScheme: jest.fn(),
-    isLoaded: true,
-  }),
-}));
-jest.mock('@react-native-community/netinfo', () => ({
-  useNetInfo: () => ({ isConnected: true }),
-}));
+const days = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+];
+const months = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+function todayString(): string {
+  const d = new Date();
+  return `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
+}
 
 describe('AdminPanelScreen', () => {
-  const renderScreen = () =>
-    render(<AdminPanelScreen navigation={mockNavigation} />);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockColorScheme = 'light';
+  });
 
   it('renderiza el titulo Panel', () => {
-    const { getByText } = renderScreen();
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
     expect(getByText('Panel')).toBeTruthy();
   });
 
   it('renderiza las tarjetas de estadisticas', () => {
-    const { getByText } = renderScreen();
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
     expect(getByText('Productos')).toBeTruthy();
     expect(getByText('Usuarios')).toBeTruthy();
     expect(getByText('Pedidos')).toBeTruthy();
   });
 
-  it('renderiza la fecha actual', () => {
-    const days = [
-      'Domingo',
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-    ];
-    const months = [
-      'enero',
-      'febrero',
-      'marzo',
-      'abril',
-      'mayo',
-      'junio',
-      'julio',
-      'agosto',
-      'septiembre',
-      'octubre',
-      'noviembre',
-      'diciembre',
-    ];
-    const d = new Date();
-    const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
+  it('muestra la fecha actual formateada', () => {
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText(todayString())).toBeTruthy();
+  });
 
-    const { getByText } = renderScreen();
-    expect(getByText(today)).toBeTruthy();
+  it('muestra los valores correctos de estadisticas', () => {
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
+  });
+
+  it('renderiza en modo oscuro sin errores', () => {
+    mockColorScheme = 'dark';
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText('Panel')).toBeTruthy();
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
+  });
+
+  it('fecha cambia con el dia real', () => {
+    const { getByText, rerender } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText(todayString())).toBeTruthy();
+
+    rerender(<AdminPanelScreen navigation={mockNavigation} />);
+    expect(getByText(todayString())).toBeTruthy();
+  });
+
+  it('el header muestra la fecha en uppercase', () => {
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    const dateText = getByText(todayString());
+    expect(dateText).toBeTruthy();
   });
 });

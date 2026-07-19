@@ -8,6 +8,7 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import { colors } from '@/constants/colors';
 import { getAdminStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
@@ -25,17 +26,17 @@ export default function AdminPanelScreen({
   const isDark = colorScheme === 'dark';
   const stats = getAdminStats();
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
-  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
-  const coral = '#DE393A';
-  const pumpkin = '#F2A900';
+  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
+  const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
+  const coral = colors.brandRedCoral;
+  const pumpkin = colors.accent;
 
   const days = [
     'Domingo',
@@ -109,6 +110,7 @@ export default function AdminPanelScreen({
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
+                    testID="notification-bell"
                     style={({ pressed }) => ({
                       width: 48,
                       height: 48,

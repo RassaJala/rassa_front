@@ -8,9 +8,9 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import { colors } from '@/constants/colors';
 import { getFarmerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
-import { colors } from '@/constants/colors';
 import type { FarmerStackParamList } from '@/types';
 
 type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerTabs'>;

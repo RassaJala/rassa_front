@@ -8,9 +8,9 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import { colors } from '@/constants/colors';
 import { getSellerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
-import { colors } from '@/constants/colors';
 import type { SellerTabsParamList } from '@/types';
 
 type Nav = BottomTabNavigationProp<SellerTabsParamList, 'HomeSeller'>;

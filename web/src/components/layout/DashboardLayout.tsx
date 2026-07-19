@@ -7,7 +7,7 @@ import { Topbar } from './Topbar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: Exclude<Role, 'comprador'>;
+  role: Exclude<Role, never>;
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
