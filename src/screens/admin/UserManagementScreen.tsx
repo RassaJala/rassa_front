@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -36,20 +42,29 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function getFullName(u: AdminUser): string {
-  return [u.nombre, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
+  return [u.nombre, u.apellido_paterno, u.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
 }
 
 // ── Multi-page fetch (like web) ──
-async function fetchAllPages(url: string, accumulated: AdminUser[]): Promise<AdminUser[]> {
+async function fetchAllPages(
+  url: string,
+  accumulated: AdminUser[],
+): Promise<AdminUser[]> {
   const response = await api.get<unknown>(url);
   const body = response.data;
   const payload: unknown =
-    body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)
+    body &&
+    typeof body === 'object' &&
+    'data' in (body as Record<string, unknown>)
       ? (body as Record<string, unknown>).data
       : body;
 
   const results: AdminUser[] =
-    payload && typeof payload === 'object' && 'results' in (payload as Record<string, unknown>)
+    payload &&
+    typeof payload === 'object' &&
+    'results' in (payload as Record<string, unknown>)
       ? (payload as { results: AdminUser[] }).results
       : Array.isArray(payload)
         ? (payload as AdminUser[])
@@ -58,7 +73,7 @@ async function fetchAllPages(url: string, accumulated: AdminUser[]): Promise<Adm
   const all = [...accumulated, ...results];
   const next: string | null =
     payload && typeof payload === 'object'
-      ? ((payload as Record<string, unknown>).next as string | null) ?? null
+      ? (((payload as Record<string, unknown>).next as string | null) ?? null)
       : null;
 
   if (next) return fetchAllPages(next, all);
@@ -200,7 +215,7 @@ export default function UserManagementScreen(): React.JSX.Element {
     onSuccess: (_data, { userId, role }) => {
       const u = users.find((x) => x.id_usuario === userId);
       const name = u ? getFullName(u) : `#${userId}`;
-      const oldRole = u ? ROLE_LABELS[u.role] ?? u.role : '?';
+      const oldRole = u ? (ROLE_LABELS[u.role] ?? u.role) : '?';
       const newRole = ROLE_LABELS[role] ?? role;
       void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       closeRoleModal();
@@ -339,13 +354,23 @@ export default function UserManagementScreen(): React.JSX.Element {
             opacity: safePage <= 1 ? 0.4 : 1,
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: safePage <= 1 ? muted : fg }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: safePage <= 1 ? muted : fg,
+            }}
+          >
             ← Anterior
           </Text>
         </Pressable>
 
         {/* Page numbers */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 4 }}
+        >
           {pages.map((p) => (
             <Pressable
               key={p}
@@ -388,7 +413,11 @@ export default function UserManagementScreen(): React.JSX.Element {
           }}
         >
           <Text
-            style={{ fontSize: 13, fontWeight: '600', color: safePage >= totalPages ? muted : fg }}
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: safePage >= totalPages ? muted : fg,
+            }}
           >
             Siguiente →
           </Text>
@@ -409,9 +438,19 @@ export default function UserManagementScreen(): React.JSX.Element {
           paddingHorizontal: 24,
         }}
       >
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={48}
+          color={muted}
+        />
         <Text
-          style={{ marginTop: 12, marginBottom: 8, textAlign: 'center', fontSize: 15, color: muted }}
+          style={{
+            marginTop: 12,
+            marginBottom: 8,
+            textAlign: 'center',
+            fontSize: 15,
+            color: muted,
+          }}
         >
           {errorMessage}
         </Text>
@@ -430,7 +469,9 @@ export default function UserManagementScreen(): React.JSX.Element {
           }}
         >
           <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>Reintentar</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+            Reintentar
+          </Text>
         </Pressable>
       </View>
     );
@@ -441,7 +482,14 @@ export default function UserManagementScreen(): React.JSX.Element {
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* ═══ Header ═══ */}
       <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 4 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.02, color: fg }}>
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: '700',
+            letterSpacing: -0.02,
+            color: fg,
+          }}
+        >
           Gestión de usuarios
         </Text>
       </View>
@@ -482,7 +530,11 @@ export default function UserManagementScreen(): React.JSX.Element {
                     marginBottom: 14,
                   }}
                 >
-                  <MaterialCommunityIcons name="magnify" size={20} color={muted} />
+                  <MaterialCommunityIcons
+                    name="magnify"
+                    size={20}
+                    color={muted}
+                  />
                   <TextInput
                     style={{
                       flex: 1,
@@ -499,8 +551,16 @@ export default function UserManagementScreen(): React.JSX.Element {
                     autoCorrect={false}
                   />
                   {search.length > 0 && (
-                    <Pressable onPress={() => setSearch('')} style={{ padding: 4 }} hitSlop={6}>
-                      <MaterialCommunityIcons name="close-circle" size={18} color={muted} />
+                    <Pressable
+                      onPress={() => setSearch('')}
+                      style={{ padding: 4 }}
+                      hitSlop={6}
+                    >
+                      <MaterialCommunityIcons
+                        name="close-circle"
+                        size={18}
+                        color={muted}
+                      />
                     </Pressable>
                   )}
                 </View>
@@ -515,15 +575,20 @@ export default function UserManagementScreen(): React.JSX.Element {
               </View>
 
               {/* Counter (like web) */}
-              <Text style={{ fontSize: 14, fontWeight: '600', color: fg, paddingBottom: 4 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: fg,
+                  paddingBottom: 4,
+                }}
+              >
                 {filtered.length} usuarios
               </Text>
             </View>
           }
           ListEmptyComponent={
-            <EmptyState
-              hasFilters={!!(search || roleFilter || statusFilter)}
-            />
+            <EmptyState hasFilters={!!(search || roleFilter || statusFilter)} />
           }
           ListFooterComponent={renderPaginator}
           contentContainerStyle={{

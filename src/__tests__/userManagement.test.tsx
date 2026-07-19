@@ -563,7 +563,9 @@ describe('UserManagementScreen', () => {
       isRefetching: false,
     });
 
-    const { queryByText, getByText } = renderWithPaper(<UserManagementScreen />);
+    const { queryByText, getByText } = renderWithPaper(
+      <UserManagementScreen />,
+    );
 
     // Header is always visible
     expect(getByText('Gestión de usuarios')).toBeTruthy();

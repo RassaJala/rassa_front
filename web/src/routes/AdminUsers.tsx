@@ -55,7 +55,9 @@ const ROLE_OPTIONS: { label: string; value: UserRole; color: string }[] = [
 ];
 
 function getFullName(u: User): string {
-  return [u.nombre, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
+  return [u.nombre, u.apellido_paterno, u.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
 }
 
 // ponytail: single fetch wrapper, no service layer for now
@@ -72,22 +74,34 @@ function mapUser(raw: Record<string, unknown>): User {
   };
 }
 
-async function fetchAllPages(url: string, accumulated: User[]): Promise<User[]> {
+async function fetchAllPages(
+  url: string,
+  accumulated: User[],
+): Promise<User[]> {
   const response = await api.get<unknown>(url);
   const body = response.data;
-  const payload = body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)
-    ? (body as Record<string, unknown>).data
-    : body;
+  const payload =
+    body &&
+    typeof body === 'object' &&
+    'data' in (body as Record<string, unknown>)
+      ? (body as Record<string, unknown>).data
+      : body;
 
-  const results: Record<string, unknown>[] = payload && typeof payload === 'object' && 'results' in (payload as Record<string, unknown>)
-    ? (payload as { results: Record<string, unknown>[] }).results
-    : Array.isArray(payload)
-      ? (payload as Record<string, unknown>[])
-      : [];
+  const results: Record<string, unknown>[] =
+    payload &&
+    typeof payload === 'object' &&
+    'results' in (payload as Record<string, unknown>)
+      ? (payload as { results: Record<string, unknown>[] }).results
+      : Array.isArray(payload)
+        ? (payload as Record<string, unknown>[])
+        : [];
 
   const page = results.map(mapUser);
   const all = [...accumulated, ...page];
-  const next = payload && typeof payload === 'object' ? (payload as Record<string, unknown>).next as string | null : null;
+  const next =
+    payload && typeof payload === 'object'
+      ? ((payload as Record<string, unknown>).next as string | null)
+      : null;
 
   if (next) return fetchAllPages(next, all);
   return all;
@@ -98,7 +112,9 @@ async function fetchUsers(): Promise<User[]> {
 }
 
 async function fetchCurrentUser(): Promise<User> {
-  const response = await api.get<{ data: Record<string, unknown> }>('/auth/me/');
+  const response = await api.get<{ data: Record<string, unknown> }>(
+    '/auth/me/',
+  );
   const raw = response.data.data;
   return {
     id: raw.id_usuario as number,
@@ -133,7 +149,15 @@ function RolePill({ role }: { role: UserRole }) {
 
 // ── Status badge ─────────────────────────────────────────
 
-function StatusBadge({ active, brand, isDark }: { active: boolean; brand: string; isDark: boolean }) {
+function StatusBadge({
+  active,
+  brand,
+  isDark,
+}: {
+  active: boolean;
+  brand: string;
+  isDark: boolean;
+}) {
   return (
     <span
       style={{
@@ -142,8 +166,12 @@ function StatusBadge({ active, brand, isDark }: { active: boolean; brand: string
         padding: '3px 10px',
         borderRadius: 6,
         background: active
-          ? isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)'
-          : isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.1)',
+          ? isDark
+            ? 'rgba(74,138,99,0.15)'
+            : 'rgba(36,86,60,0.07)'
+          : isDark
+            ? 'rgba(212,160,32,0.12)'
+            : 'rgba(242,169,0,0.1)',
         color: active ? brand : '#F2A900',
       }}
     >
@@ -167,7 +195,12 @@ export function AdminUsers() {
   const queryClient = useQueryClient();
 
   // ── Queries ──
-  const { data: users = [], isLoading, isError, refetch } = useQuery<User[]>({
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<User[]>({
     queryKey: ['admin-users'],
     queryFn: fetchUsers,
   });
@@ -189,7 +222,8 @@ export function AdminUsers() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const toggleMutation = useMutation({
-    mutationFn: (userId: number) => api.patch(`/admin/usuarios/${userId}/toggle-estado/`),
+    mutationFn: (userId: number) =>
+      api.patch(`/admin/usuarios/${userId}/toggle-estado/`),
     onSuccess: (_data, userId) => {
       const u = users.find((x) => x.id === userId);
       const name = u ? getFullName(u) : `#${userId}`;
@@ -201,7 +235,8 @@ export function AdminUsers() {
     },
     onError: (err: unknown) => {
       const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ??
         (err as Error)?.message ??
         'Error al cambiar estado';
       showToast(detail, 'error');
@@ -223,7 +258,8 @@ export function AdminUsers() {
     },
     onError: (err: unknown) => {
       const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ??
         (err as Error)?.message ??
         'Error al cambiar rol';
       showToast(detail, 'error');
@@ -247,7 +283,10 @@ export function AdminUsers() {
   const [deactTarget, setDeactTarget] = useState<User | null>(null);
 
   // ── Reset page when filters change ──
-  const prevFilterKey = useMemo(() => ({ search, roleFilter, statusFilter }), [search, roleFilter, statusFilter]);
+  const prevFilterKey = useMemo(
+    () => ({ search, roleFilter, statusFilter }),
+    [search, roleFilter, statusFilter],
+  );
   const filterKey = JSON.stringify(prevFilterKey);
   const prevKeyRef = useRef(filterKey);
   if (prevKeyRef.current !== filterKey) {
@@ -277,7 +316,10 @@ export function AdminUsers() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const paginated = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   // ── Handlers ──
 
@@ -318,7 +360,10 @@ export function AdminUsers() {
       return;
     }
     setErrorMessage('');
-    roleMutation.mutate({ userId: roleTarget.id, role: selectedRole as UserRole });
+    roleMutation.mutate({
+      userId: roleTarget.id,
+      role: selectedRole as UserRole,
+    });
     closeRoleModal();
   }
 
@@ -339,12 +384,23 @@ export function AdminUsers() {
   if (isError) {
     return (
       <div style={{ padding: 48, textAlign: 'center' }}>
-        <p style={{ color: muted, marginBottom: 12 }}>Error al cargar usuarios.</p>
-        <button onClick={() => refetch()} style={{
-          padding: '10px 20px', borderRadius: 8, border: 'none',
-          background: brand, color: '#fff', fontWeight: 600, fontSize: 14,
-          cursor: 'pointer', fontFamily: 'inherit',
-        }}>
+        <p style={{ color: muted, marginBottom: 12 }}>
+          Error al cargar usuarios.
+        </p>
+        <button
+          onClick={() => refetch()}
+          style={{
+            padding: '10px 20px',
+            borderRadius: 8,
+            border: 'none',
+            background: brand,
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
           Reintentar
         </button>
       </div>
@@ -395,7 +451,14 @@ export function AdminUsers() {
           gap: 12,
         }}
       >
-        <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: fg }}>
+        <h2
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            color: fg,
+          }}
+        >
           Gestión de usuarios
         </h2>
       </div>
@@ -447,7 +510,8 @@ export function AdminUsers() {
                   height: 32,
                   padding: '0 14px',
                   borderRadius: 999,
-                  background: roleFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
+                  background:
+                    roleFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
                   color: roleFilter === opt.value ? '#fff' : muted,
                   border: 'none',
                 }}
@@ -485,7 +549,8 @@ export function AdminUsers() {
                   height: 32,
                   padding: '0 14px',
                   borderRadius: 999,
-                  background: statusFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
+                  background:
+                    statusFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
                   color: statusFilter === opt.value ? '#fff' : muted,
                   border: 'none',
                 }}
@@ -589,7 +654,13 @@ export function AdminUsers() {
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                          }}
+                        >
                           <div
                             style={{
                               width: 36,
@@ -626,7 +697,9 @@ export function AdminUsers() {
                                     fontWeight: 600,
                                     padding: '1px 6px',
                                     borderRadius: 4,
-                                    background: isDark ? 'rgba(212,160,32,0.2)' : '#FEF3C7',
+                                    background: isDark
+                                      ? 'rgba(212,160,32,0.2)'
+                                      : '#FEF3C7',
                                     color: isDark ? '#F2A900' : '#D97706',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
@@ -663,7 +736,11 @@ export function AdminUsers() {
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <StatusBadge active={user.estado} brand={brand} isDark={isDark} />
+                        <StatusBadge
+                          active={user.estado}
+                          brand={brand}
+                          isDark={isDark}
+                        />
                       </td>
                       <td
                         style={{
@@ -834,7 +911,8 @@ export function AdminUsers() {
               Cambiar Rol
             </h3>
             <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
-              Usuario: <strong style={{ color: fg }}>{getFullName(roleTarget)}</strong>
+              Usuario:{' '}
+              <strong style={{ color: fg }}>{getFullName(roleTarget)}</strong>
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -847,7 +925,10 @@ export function AdminUsers() {
                     gap: 10,
                     padding: '10px 14px',
                     borderRadius: 10,
-                    background: selectedRole === opt.value ? `${opt.color}12` : 'transparent',
+                    background:
+                      selectedRole === opt.value
+                        ? `${opt.color}12`
+                        : 'transparent',
                     border: `1.5px solid ${selectedRole === opt.value ? opt.color : 'transparent'}`,
                     cursor: 'pointer',
                   }}
@@ -860,14 +941,23 @@ export function AdminUsers() {
                     onChange={() => setSelectedRole(opt.value)}
                     style={{ accentColor: opt.color }}
                   />
-                  <span style={{ fontSize: 15, fontWeight: 500, color: opt.color }}>
+                  <span
+                    style={{ fontSize: 15, fontWeight: 500, color: opt.color }}
+                  >
                     {opt.label}
                   </span>
                 </label>
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+                marginTop: 24,
+              }}
+            >
               <button
                 onClick={closeRoleModal}
                 style={{
@@ -951,7 +1041,9 @@ export function AdminUsers() {
             <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
               El usuario perderá acceso al sistema hasta que sea reactivado.
             </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+            >
               <button
                 onClick={() => setDeactTarget(null)}
                 style={{

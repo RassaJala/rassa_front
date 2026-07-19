@@ -43,9 +43,8 @@ export default function FilterBar({
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {ROLE_FILTERS.map((opt) => {
-            const isSelected = opt.value === null
-              ? roleFilter === ''
-              : roleFilter === opt.value;
+            const isSelected =
+              opt.value === null ? roleFilter === '' : roleFilter === opt.value;
 
             return (
               <Pressable
@@ -74,7 +73,9 @@ export default function FilterBar({
       </View>
 
       {/* Divider */}
-      <View style={{ height: 1, backgroundColor: border, marginVertical: 12 }} />
+      <View
+        style={{ height: 1, backgroundColor: border, marginVertical: 12 }}
+      />
 
       {/* Status filter */}
       <View>
@@ -92,9 +93,10 @@ export default function FilterBar({
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {STATUS_FILTERS.map((opt) => {
-            const isSelected = opt.value === null
-              ? statusFilter === ''
-              : statusFilter === opt.value;
+            const isSelected =
+              opt.value === null
+                ? statusFilter === ''
+                : statusFilter === opt.value;
 
             return (
               <Pressable
