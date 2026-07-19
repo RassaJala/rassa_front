@@ -1,4 +1,3 @@
-/* globals setTimeout, clearTimeout -- RN timer functions not in ESLint env */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -25,6 +24,9 @@ import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
+
+const TRANSPARENT = 'transparent';
+const WHITE = '#FFFFFF';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
@@ -354,14 +356,14 @@ export default function UserManagementScreen(): React.JSX.Element {
                 borderRadius: 8,
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: p === safePage ? brand : 'transparent',
+                backgroundColor: p === safePage ? brand : TRANSPARENT,
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
                   fontWeight: p === safePage ? '700' : '500',
-                  color: p === safePage ? '#FFFFFF' : fg,
+                  color: p === safePage ? WHITE : fg,
                 }}
               >
                 {p}
