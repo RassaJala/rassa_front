@@ -66,7 +66,7 @@ async function fetchTrashItems<T extends { nombre: string; estado: boolean }>(
   const url = queryParams
     ? `${baseUri}?${new URLSearchParams(queryParams).toString()}`
     : baseUri;
-  const { data } = await api.get(url);
+  const { data } = await api.get<T[]>(url);
 
   return parseApiList<T>(data);
 }

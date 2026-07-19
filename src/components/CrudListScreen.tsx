@@ -256,7 +256,7 @@ async function fetchCrudItems<T>(
   const url = queryParams
     ? `${endpoint}?${new URLSearchParams(queryParams).toString()}`
     : endpoint;
-  const { data } = await api.get(url);
+  const { data } = await api.get<T[]>(url);
 
   return parseApiList<T>(data);
 }
