@@ -1,18 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
+import api from '../services/api';
 
 interface Municipio {
-  id: number;
+  id_municipio: number;
   nombre: string;
   estado: boolean;
 }
-
-const initialData: Municipio[] = [
-  { id: 1, nombre: 'Tlaquepaque', estado: true },
-  { id: 2, nombre: 'Tonalá', estado: true },
-  { id: 3, nombre: 'Zapopan', estado: true },
-  { id: 4, nombre: 'El Salto', estado: false },
-];
 
 export function AdminMunicipios() {
   const { resolved } = useTheme();
@@ -25,7 +19,9 @@ export function AdminMunicipios() {
   const brand = isDark ? '#4A8A63' : '#24563C';
   const coral = '#DE393A';
 
-  const [items, setItems] = useState<Municipio[]>(initialData);
+  const [items, setItems] = useState<Municipio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: '' });
@@ -33,7 +29,23 @@ export function AdminMunicipios() {
   const [delTarget, setDelTarget] = useState<Municipio | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const nextId = useRef(5);
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<Municipio[]>('/municipios/');
+      setItems(res.data);
+    } catch {
+      setError('Error al cargar municipios');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchItems();
+  }, [fetchItems]);
 
   const filtered = useMemo(
     () =>
@@ -50,41 +62,69 @@ export function AdminMunicipios() {
   }
 
   function startEdit(item: Municipio) {
-    setEditId(item.id);
+    setEditId(item.id_municipio);
     setForm({ nombre: item.nombre });
     setTab('form');
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre.trim()) return;
     setSaving(true);
-    if (editId) {
+    try {
+      if (editId) {
+        const res = await api.patch<{ data: Municipio }>(
+          `/municipios/${editId}/`,
+          { nombre: form.nombre.trim() },
+        );
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id_municipio === editId ? res.data.data : i,
+          ),
+        );
+      } else {
+        const res = await api.post<{ data: Municipio }>('/municipios/', {
+          nombre: form.nombre.trim(),
+          estado: true,
+        });
+        setItems((prev) => [...prev, res.data.data]);
+      }
+      setTab('list');
+    } catch {
+      setError(editId ? 'Error al actualizar' : 'Error al crear');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!delTarget) return;
+    try {
+      await api.delete(`/municipios/${delTarget.id_municipio}/`);
+      setItems((prev) =>
+        prev.filter((i) => i.id_municipio !== delTarget.id_municipio),
+      );
+      setDelTarget(null);
+    } catch {
+      setError('Error al eliminar');
+    }
+  }
+
+  async function toggleStatus(item: Municipio) {
+    const newStatus = !item.estado;
+    try {
+      const res = await api.patch<{ data: Municipio }>(
+        `/municipios/${item.id_municipio}/`,
+        { estado: newStatus },
+      );
       setItems((prev) =>
         prev.map((i) =>
-          i.id === editId ? { ...i, nombre: form.nombre.trim() } : i,
+          i.id_municipio === item.id_municipio ? res.data.data : i,
         ),
       );
-    } else {
-      setItems((prev) => [
-        ...prev,
-        { id: nextId.current++, nombre: form.nombre.trim(), estado: true },
-      ]);
+    } catch {
+      setError('Error al cambiar estado');
     }
-    setTab('list');
-    setSaving(false);
-  }
-
-  function handleDelete() {
-    if (!delTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== delTarget.id));
-    setDelTarget(null);
-  }
-
-  function toggleStatus(item: Municipio) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, estado: !i.estado } : i)),
-    );
   }
 
   const btnStyle = {
@@ -133,6 +173,39 @@ export function AdminMunicipios() {
         </button>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div
+          style={{
+            background: 'rgba(222,57,58,0.1)',
+            border: '1px solid #DE393A',
+            borderRadius: 10,
+            padding: '10px 16px',
+            marginBottom: 16,
+            color: coral,
+            fontSize: 14,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: coral,
+              cursor: 'pointer',
+              fontSize: 16,
+              fontWeight: 700,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div
         style={{
@@ -164,6 +237,7 @@ export function AdminMunicipios() {
         </button>
         <button
           onClick={() => startNew()}
+          disabled={loading}
           style={{
             padding: '8px 20px',
             border: 'none',
@@ -171,7 +245,7 @@ export function AdminMunicipios() {
             fontSize: 14,
             fontWeight: 600,
             fontFamily: 'inherit',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             background: tab === 'form' ? surface : 'transparent',
             color: tab === 'form' ? fg : muted,
             boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
@@ -203,7 +277,7 @@ export function AdminMunicipios() {
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {items.length} municipios
+              {loading ? 'Cargando…' : `${items.length} municipios`}
             </span>
             <input
               type="search"
@@ -249,7 +323,7 @@ export function AdminMunicipios() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td
                       colSpan={3}
@@ -260,12 +334,26 @@ export function AdminMunicipios() {
                         fontSize: 14,
                       }}
                     >
-                      No hay municipios
+                      Cargando datos…
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      {search ? 'Sin resultados' : 'No hay municipios'}
                     </td>
                   </tr>
                 ) : (
                   filtered.map((item) => (
-                    <tr key={item.id} style={{ background: surface }}>
+                    <tr key={item.id_municipio} style={{ background: surface }}>
                       <td
                         style={{
                           padding: '14px 20px',

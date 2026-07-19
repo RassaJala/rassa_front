@@ -1,26 +1,18 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
+import api from '../services/api';
 
 interface Localidad {
-  id: number;
+  id_localidad: number;
   nombre: string;
-  municipioId: number;
+  municipio_id: number;
   estado: boolean;
 }
 
-const municipios = [
-  { id: 1, nombre: 'Tlaquepaque' },
-  { id: 2, nombre: 'Tonalá' },
-  { id: 3, nombre: 'Zapopan' },
-  { id: 4, nombre: 'El Salto' },
-];
-
-const initialData: Localidad[] = [
-  { id: 1, nombre: 'Centro', municipioId: 1, estado: true },
-  { id: 2, nombre: 'Toluquilla', municipioId: 1, estado: true },
-  { id: 3, nombre: 'Loma Dorada', municipioId: 2, estado: true },
-  { id: 4, nombre: 'Santa Fe', municipioId: 4, estado: false },
-];
+interface MunicipioOption {
+  id_municipio: number;
+  nombre: string;
+}
 
 export function AdminLocalidades() {
   const { resolved } = useTheme();
@@ -33,15 +25,38 @@ export function AdminLocalidades() {
   const brand = isDark ? '#4A8A63' : '#24563C';
   const coral = '#DE393A';
 
-  const [items, setItems] = useState<Localidad[]>(initialData);
+  const [items, setItems] = useState<Localidad[]>([]);
+  const [municipios, setMunicipios] = useState<MunicipioOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: '', municipioId: 1 });
+  const [form, setForm] = useState({ nombre: '', municipio_id: 0 });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Localidad | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const nextId = useRef(5);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [locRes, munRes] = await Promise.all([
+        api.get<Localidad[]>('/localidades/'),
+        api.get<MunicipioOption[]>('/municipios/'),
+      ]);
+      setItems(locRes.data);
+      setMunicipios(munRes.data);
+    } catch {
+      setError('Error al cargar datos');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   const filtered = useMemo(
     () =>
@@ -52,62 +67,86 @@ export function AdminLocalidades() {
   );
 
   function getMunicipioNombre(id: number) {
-    return municipios.find((m) => m.id === id)?.nombre ?? '—';
+    return municipios.find((m) => m.id_municipio === id)?.nombre ?? '—';
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: '', municipioId: municipios[0]?.id ?? 1 });
+    setForm({ nombre: '', municipio_id: municipios[0]?.id_municipio ?? 0 });
     setTab('form');
   }
 
   function startEdit(item: Localidad) {
-    setEditId(item.id);
-    setForm({ nombre: item.nombre, municipioId: item.municipioId });
+    setEditId(item.id_localidad);
+    setForm({
+      nombre: item.nombre,
+      municipio_id: item.municipio_id,
+    });
     setTab('form');
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.nombre.trim()) return;
+    if (!form.nombre.trim() || !form.municipio_id) return;
     setSaving(true);
-    if (editId) {
+    try {
+      if (editId) {
+        const res = await api.patch<{ data: Localidad }>(
+          `/localidades/${editId}/`,
+          {
+            nombre: form.nombre.trim(),
+            municipio_id: form.municipio_id,
+          },
+        );
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id_localidad === editId ? res.data.data : i,
+          ),
+        );
+      } else {
+        const res = await api.post<{ data: Localidad }>('/localidades/', {
+          nombre: form.nombre.trim(),
+          municipio_id: form.municipio_id,
+          estado: true,
+        });
+        setItems((prev) => [...prev, res.data.data]);
+      }
+      setTab('list');
+    } catch {
+      setError(editId ? 'Error al actualizar' : 'Error al crear');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!delTarget) return;
+    try {
+      await api.delete(`/localidades/${delTarget.id_localidad}/`);
+      setItems((prev) =>
+        prev.filter((i) => i.id_localidad !== delTarget.id_localidad),
+      );
+      setDelTarget(null);
+    } catch {
+      setError('Error al eliminar');
+    }
+  }
+
+  async function toggleStatus(item: Localidad) {
+    const newStatus = !item.estado;
+    try {
+      const res = await api.patch<{ data: Localidad }>(
+        `/localidades/${item.id_localidad}/`,
+        { estado: newStatus },
+      );
       setItems((prev) =>
         prev.map((i) =>
-          i.id === editId
-            ? {
-                ...i,
-                nombre: form.nombre.trim(),
-                municipioId: form.municipioId,
-              }
-            : i,
+          i.id_localidad === item.id_localidad ? res.data.data : i,
         ),
       );
-    } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: nextId.current++,
-          nombre: form.nombre.trim(),
-          municipioId: form.municipioId,
-          estado: true,
-        },
-      ]);
+    } catch {
+      setError('Error al cambiar estado');
     }
-    setTab('list');
-    setSaving(false);
-  }
-
-  function handleDelete() {
-    if (!delTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== delTarget.id));
-    setDelTarget(null);
-  }
-
-  function toggleStatus(item: Localidad) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, estado: !i.estado } : i)),
-    );
   }
 
   const btnStyle = {
@@ -150,11 +189,50 @@ export function AdminLocalidades() {
         </h2>
         <button
           onClick={startNew}
-          style={{ ...btnStyle, background: coral, color: '#fff' }}
+          disabled={municipios.length === 0}
+          style={{
+            ...btnStyle,
+            background: coral,
+            color: '#fff',
+            opacity: municipios.length === 0 ? 0.5 : 1,
+          }}
         >
           ＋ Nueva localidad
         </button>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div
+          style={{
+            background: 'rgba(222,57,58,0.1)',
+            border: '1px solid #DE393A',
+            borderRadius: 10,
+            padding: '10px 16px',
+            marginBottom: 16,
+            color: coral,
+            fontSize: 14,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: coral,
+              cursor: 'pointer',
+              fontSize: 16,
+              fontWeight: 700,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div
@@ -187,6 +265,7 @@ export function AdminLocalidades() {
         </button>
         <button
           onClick={() => startNew()}
+          disabled={loading || municipios.length === 0}
           style={{
             padding: '8px 20px',
             border: 'none',
@@ -194,7 +273,8 @@ export function AdminLocalidades() {
             fontSize: 14,
             fontWeight: 600,
             fontFamily: 'inherit',
-            cursor: 'pointer',
+            cursor:
+              loading || municipios.length === 0 ? 'not-allowed' : 'pointer',
             background: tab === 'form' ? surface : 'transparent',
             color: tab === 'form' ? fg : muted,
             boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
@@ -226,7 +306,7 @@ export function AdminLocalidades() {
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {items.length} localidades
+              {loading ? 'Cargando…' : `${items.length} localidades`}
             </span>
             <input
               type="search"
@@ -272,7 +352,7 @@ export function AdminLocalidades() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td
                       colSpan={4}
@@ -283,12 +363,26 @@ export function AdminLocalidades() {
                         fontSize: 14,
                       }}
                     >
-                      No hay localidades
+                      Cargando datos…
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      {search ? 'Sin resultados' : 'No hay localidades'}
                     </td>
                   </tr>
                 ) : (
                   filtered.map((item) => (
-                    <tr key={item.id} style={{ background: surface }}>
+                    <tr key={item.id_localidad} style={{ background: surface }}>
                       <td
                         style={{
                           padding: '14px 20px',
@@ -308,7 +402,7 @@ export function AdminLocalidades() {
                           color: muted,
                         }}
                       >
-                        {getMunicipioNombre(item.municipioId)}
+                        {getMunicipioNombre(item.municipio_id)}
                       </td>
                       <td
                         style={{
@@ -497,14 +591,17 @@ export function AdminLocalidades() {
                 Municipio
               </label>
               <select
-                value={form.municipioId}
+                value={form.municipio_id}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, municipioId: Number(e.target.value) }))
+                  setForm((p) => ({
+                    ...p,
+                    municipio_id: Number(e.target.value),
+                  }))
                 }
                 style={{
                   width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === 'municipio' ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
                   borderRadius: 10,
                   padding: '0 14px',
                   fontSize: 15,
@@ -514,11 +611,14 @@ export function AdminLocalidades() {
                   outline: 'none',
                   cursor: 'pointer',
                 }}
-                onFocus={() => setFocusedField('municipio')}
+                onFocus={() => setFocusedField('municipio_id')}
                 onBlur={() => setFocusedField(null)}
               >
+                {municipios.length === 0 && (
+                  <option value={0}>Cargando municipios…</option>
+                )}
                 {municipios.map((m) => (
-                  <option key={m.id} value={m.id}>
+                  <option key={m.id_municipio} value={m.id_municipio}>
                     {m.nombre}
                   </option>
                 ))}
@@ -527,12 +627,12 @@ export function AdminLocalidades() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || municipios.length === 0}
                 style={{
                   ...btnStyle,
                   background: coral,
                   color: '#fff',
-                  opacity: saving ? 0.6 : 1,
+                  opacity: saving || municipios.length === 0 ? 0.6 : 1,
                 }}
               >
                 💾 Guardar localidad
