@@ -1,4 +1,3 @@
-/* global __DEV__ -- RN dev-mode flag set by Metro bundler */
 import type { AxiosError } from 'axios';
 import axios from 'axios';
 
