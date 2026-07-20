@@ -57,7 +57,7 @@ interface ProductImageState {
   markedForDeletion?: boolean | undefined;
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
+// eslint-disable-next-line sonarjs/cognitive-complexity -- product form with image/upload/validation logic
 export default function ProductFormScreen({
   navigation,
   route,
@@ -79,6 +79,7 @@ export default function ProductFormScreen({
   const coral = "#DE393A";
   const white = "#FFFFFF";
   const black = "#000";
+  const separatorColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
   const backdropBg = "rgba(0,0,0,0.5)";
   const transparent = "transparent";
 
@@ -694,7 +695,7 @@ export default function ProductFormScreen({
               cursorColor={brand}
               value={precio}
               onChangeText={(text) => {
-                setPrecio(text.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1"));
+                setPrecio(text.replace(/[^.0-9]/g, "").replace(/(\..*)\./g, "$1"));
                 setErrors((prev) => {
                   const next = { ...prev };
                   delete next.precio;
@@ -924,7 +925,7 @@ export default function ProductFormScreen({
                   </Pressable>
                 );
               }}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", marginHorizontal: 20 }} />}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: separatorColor, marginHorizontal: 20 }} />}
             />
           </View>
         </View>

@@ -11,11 +11,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/services/api';
-
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse, FarmerStackParamList, Producto } from '@/types';
@@ -41,6 +39,7 @@ function useScreenWidth(): number {
   return width;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- farmer home with stats/grid/drawer logic
 export default function FarmerHomeScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -590,18 +589,18 @@ export default function FarmerHomeScreen({
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)'
-                      : isDark
+                        : 'rgba(222,57,58,0.07)')
+                      : (isDark
                         ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)',
+                        : 'rgba(0,0,0,0.03)'),
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)'
+                        : 'rgba(222,57,58,0.15)')
                       : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}

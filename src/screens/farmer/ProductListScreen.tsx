@@ -41,6 +41,7 @@ interface Props {
   readonly navigation: NavigationProp;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- product list with filters/drawer/search logic
 export default function ProductListScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -61,6 +62,7 @@ export default function ProductListScreen({
   const pumpkinBg = isDark ? "rgba(212,160,32,0.12)" : "rgba(242,169,0,0.07)";
   const coral = "#DE393A";
   const pumpkin = "#F2A900";
+  const selectedTextColor = "#FFFFFF";
   const overlayBg = isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)";
   const drawerBg = isDark ? "#1F2720" : "#FFFFFF";
   const sidebarBorder = isDark ? "#353D35" : "#E8EAE4";
@@ -439,15 +441,12 @@ export default function ProductListScreen({
         >
           <MaterialCommunityIcons name="magnify" size={24} color={muted} />
           <TextInput
-            style={
-              {
-                flex: 1,
-                fontSize: 16,
-                color: fg,
-                marginLeft: 10,
-                outlineStyle: "none",
-              } as any
-            }
+            style={{
+              flex: 1,
+              fontSize: 16,
+              color: fg,
+              marginLeft: 10,
+            }}
             placeholder="Buscar producto..."
             placeholderTextColor={muted}
             value={searchText}
@@ -506,7 +505,7 @@ export default function ProductListScreen({
                       style={{
                         fontSize: 13,
                         fontWeight: "600",
-                        color: selectedCategory === null ? "#FFFFFF" : fg,
+                        color: selectedCategory === null ? selectedTextColor : fg,
                       }}
                     >
                       Todas
@@ -535,7 +534,7 @@ export default function ProductListScreen({
                           style={{
                             fontSize: 13,
                             fontWeight: "600",
-                            color: isSelected ? "#FFFFFF" : fg,
+                            color: isSelected ? selectedTextColor : fg,
                           }}
                         >
                           {item.nombre}
@@ -780,18 +779,18 @@ export default function ProductListScreen({
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? "rgba(222,57,58,0.1)"
-                        : "rgba(222,57,58,0.07)"
-                      : isDark
+                        : "rgba(222,57,58,0.07)")
+                      : (isDark
                         ? "rgba(255,255,255,0.05)"
-                        : "rgba(0,0,0,0.03)",
+                        : "rgba(0,0,0,0.03)"),
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? "rgba(222,57,58,0.25)"
-                        : "rgba(222,57,58,0.15)"
+                        : "rgba(222,57,58,0.15)")
                       : "transparent",
                     opacity: pressed ? 0.7 : 1,
                   })}
