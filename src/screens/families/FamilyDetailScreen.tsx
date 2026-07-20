@@ -411,7 +411,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             padding: 20,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyBetween: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ flex: 1, fontSize: 20, fontWeight: '700', color: fg }}>
               {family.nombre_familia}
             </Text>
