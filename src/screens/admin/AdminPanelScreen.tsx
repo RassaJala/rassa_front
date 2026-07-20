@@ -26,7 +26,7 @@ const DRAWER_WIDTH = 0.55;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function AdminPanelScreen({
-  navigation: _navigation,
+  navigation,
 }: Props): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
@@ -120,7 +120,20 @@ export default function AdminPanelScreen({
       label: 'Perfil',
       desc: 'Tu información personal',
       color: fg,
-      action: closeDrawer,
+      action: () => {
+        closeDrawer();
+        navigation.navigate('Profile');
+      },
+    },
+    {
+      icon: 'account-group-outline',
+      label: 'Familias',
+      desc: 'Administrar grupos familiares',
+      color: fg,
+      action: () => {
+        closeDrawer();
+        navigation.navigate('FamilyList');
+      },
     },
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
@@ -484,18 +497,18 @@ export default function AdminPanelScreen({
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? (isDark
+                      ? isDark
                         ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)')
-                      : (isDark
+                        : 'rgba(222,57,58,0.07)'
+                      : isDark
                         ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)'),
+                        : 'rgba(0,0,0,0.03)',
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
-                      ? (isDark
+                      ? isDark
                         ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)')
+                        : 'rgba(222,57,58,0.15)'
                       : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}

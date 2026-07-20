@@ -111,8 +111,6 @@ export async function addFamilyMember(
   return normalizeMember(data);
 }
 
-export async function removeFamilyMember(
-  memberId: number,
-): Promise<void> {
+export async function removeFamilyMember(memberId: number): Promise<void> {
   await api.delete(`${MIEMBROS_URL}/${memberId}/`);
 }

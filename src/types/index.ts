@@ -161,6 +161,7 @@ export type AdminStackParamList = {
   FamilyList: undefined;
   FamilyDetail: { readonly familyId: number };
   FamilyForm: { readonly familyId?: number } | undefined;
+  Profile: undefined;
 };
 
 export type AuthStackParamList = {

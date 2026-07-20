@@ -14,15 +14,176 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
-import {
-  createFamily,
-  fetchFamily,
-  updateFamily,
-} from '@/services/families';
+import { createFamily, fetchFamily, updateFamily } from '@/services/families';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Family } from '@/types';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyForm'>;
+
+interface FormHeaderProps {
+  readonly isEditing: boolean;
+  readonly isDark: boolean;
+  readonly onBack: () => void;
+}
+
+function FormHeader({
+  isEditing,
+  isDark,
+  onBack,
+}: FormHeaderProps): React.JSX.Element {
+  return (
+    <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+      <Pressable
+        onPress={onBack}
+        className="mr-3 active:opacity-60"
+      >
+        <MaterialCommunityIcons
+          name="arrow-left"
+          size={24}
+          color={isDark ? colors.iconWhite : colors.iconDark}
+        />
+      </Pressable>
+      <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
+        {isEditing ? 'Editar familia' : 'Nueva familia'}
+      </Text>
+    </View>
+  );
+}
+
+function LoadingIndicator(): React.JSX.Element {
+  return (
+    <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <ActivityIndicator size="large" color={colors.brandRedCoral} />
+    </View>
+  );
+}
+
+interface FormFieldsProps {
+  readonly isDark: boolean;
+  readonly nombre: string;
+  readonly onChangeNombre: (val: string) => void;
+  readonly detalle: string;
+  readonly onChangeDetalle: (val: string) => void;
+  readonly fieldErrors: Record<string, string>;
+  readonly clearFieldError: (field: string) => void;
+  readonly serverError: string;
+  readonly isSaving: boolean;
+  readonly isEditing: boolean;
+  readonly onCancel: () => void;
+  readonly onSubmit: () => void;
+}
+
+function FormFields({
+  isDark,
+  nombre,
+  onChangeNombre,
+  detalle,
+  onChangeDetalle,
+  fieldErrors,
+  clearFieldError,
+  serverError,
+  isSaving,
+  isEditing,
+  onCancel,
+  onSubmit,
+}: FormFieldsProps): React.JSX.Element {
+  return (
+    <View
+      className={`rounded-2xl border p-5 ${
+        isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
+      }`}
+    >
+      {/* ── Nombre ──────────────────────────────────── */}
+      <Text className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Nombre de la familia *
+      </Text>
+      <TextInput
+        className={`rounded-xl border px-4 py-3 text-base ${
+          fieldErrors.nombre
+            ? 'border-brand-red-coral'
+            : (isDark
+              ? 'border-gray-700 bg-gray-800 text-white'
+              : 'border-gray-300 bg-gray-50 text-gray-900')
+        }`}
+        placeholder="Ej. Familia López"
+        placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+        value={nombre}
+        onChangeText={(text) => {
+          onChangeNombre(text);
+          if (fieldErrors.nombre) {
+            clearFieldError('nombre');
+          }
+        }}
+        editable={!isSaving}
+      />
+      {fieldErrors.nombre ? (
+        <Text className="mt-1 text-xs text-brand-red-coral">
+          {fieldErrors.nombre}
+        </Text>
+      ) : null}
+
+      {/* ── Detalle ─────────────────────────────────── */}
+      <Text className="mb-1.5 mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Detalle
+      </Text>
+      <TextInput
+        className={`rounded-xl border px-4 py-3 text-base ${
+          isDark
+            ? 'border-gray-700 bg-gray-800 text-white'
+            : 'border-gray-300 bg-gray-50 text-gray-900'
+        }`}
+        placeholder="Descripción opcional"
+        placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+        multiline
+        numberOfLines={3}
+        textAlignVertical="top"
+        value={detalle}
+        onChangeText={onChangeDetalle}
+        editable={!isSaving}
+      />
+
+      {/* ── Server error ────────────────────────────── */}
+      {serverError ? (
+        <View className="mt-3 flex-row items-center">
+          <MaterialCommunityIcons
+            name="alert-circle"
+            size={16}
+            color={colors.brandRedCoral}
+          />
+          <Text className="ml-1.5 text-sm text-brand-red-coral">
+            {serverError}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* ── Actions ─────────────────────────────────── */}
+      <View className="mt-6 flex-row justify-end gap-3">
+        <Pressable
+          className="rounded-xl bg-gray-200 px-5 py-2.5 dark:bg-gray-700"
+          onPress={onCancel}
+          disabled={isSaving}
+        >
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Cancelar
+          </Text>
+        </Pressable>
+        <Pressable
+          className="rounded-xl bg-brand-red-coral px-5 py-2.5"
+          onPress={onSubmit}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={colors.iconWhite} />
+          ) : (
+            <Text className="text-sm font-semibold text-white">
+              {isEditing ? 'Guardar cambios' : 'Crear familia'}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function FamilyFormScreen(): React.JSX.Element {
   const route = useRoute<Route>();
@@ -55,8 +216,10 @@ export default function FamilyFormScreen(): React.JSX.Element {
   }, [existingFamily]);
 
   const createMutation = useMutation({
-    mutationFn: (payload: { nombre_familia: string; detalle_familia?: string }) =>
-      createFamily(payload),
+    mutationFn: (payload: {
+      nombre_familia: string;
+      detalle_familia?: string;
+    }) => createFamily(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       navigation.goBack();
@@ -67,8 +230,10 @@ export default function FamilyFormScreen(): React.JSX.Element {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { nombre_familia: string; detalle_familia?: string }) =>
-      updateFamily(Number(familyId), payload),
+    mutationFn: (payload: {
+      nombre_familia: string;
+      detalle_familia?: string;
+    }) => updateFamily(Number(familyId), payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
@@ -79,26 +244,24 @@ export default function FamilyFormScreen(): React.JSX.Element {
     },
   });
 
-  const validate = (): boolean => {
-    const errors: Record<string, string> = {};
+  const handleSubmit = (): void => {
     const trimmedNombre = nombre.trim();
-
     if (!trimmedNombre) {
-      errors.nombre = 'El nombre es obligatorio.';
-    } else if (trimmedNombre.length < 3) {
-      errors.nombre = 'El nombre debe tener al menos 3 caracteres.';
+      setFieldErrors({ nombre: 'El nombre es obligatorio.' });
+      setServerError('');
+      return;
+    }
+    if (trimmedNombre.length < 3) {
+      setFieldErrors({ nombre: 'El nombre debe tener al menos 3 caracteres.' });
+      setServerError('');
+      return;
     }
 
-    setFieldErrors(errors);
+    setFieldErrors({});
     setServerError('');
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = (): void => {
-    if (!validate()) return;
 
     const payload = {
-      nombre_familia: nombre.trim(),
+      nombre_familia: trimmedNombre,
       ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
     };
 
@@ -112,113 +275,39 @@ export default function FamilyFormScreen(): React.JSX.Element {
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   if (isEditing && loadingFamily) {
-    return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <ActivityIndicator size="large" color={colors.brandRedCoral} />
-      </View>
-    );
+    return <LoadingIndicator />;
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 px-4 pt-4 dark:bg-gray-950">
-      <View
-        className={`rounded-2xl border p-5 ${
-          isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-        }`}
-      >
-        {/* ── Nombre ──────────────────────────────────── */}
-        <Text className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Nombre de la familia *
-        </Text>
-        <TextInput
-          className={`rounded-xl border px-4 py-3 text-base ${
-            fieldErrors.nombre
-              ? 'border-brand-red-coral'
-              : (isDark
-                ? 'border-gray-700 bg-gray-800 text-white'
-                : 'border-gray-300 bg-gray-50 text-gray-900')
-          }`}
-          placeholder="Ej. Familia López"
-          placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-          value={nombre}
-          onChangeText={(text) => {
-            setNombre(text);
-            if (fieldErrors.nombre) {
-              setFieldErrors((prev) => {
-                const next = { ...prev };
-                delete next.nombre;
-                return next;
-              });
-            }
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+      <FormHeader
+        isEditing={isEditing}
+        isDark={isDark}
+        onBack={() => navigation.goBack()}
+      />
+
+      <ScrollView className="flex-1 px-4 pt-4">
+        <FormFields
+          isDark={isDark}
+          nombre={nombre}
+          onChangeNombre={setNombre}
+          detalle={detalle}
+          onChangeDetalle={setDetalle}
+          fieldErrors={fieldErrors}
+          clearFieldError={(field) => {
+            setFieldErrors((prev) => {
+              const next = { ...prev };
+              delete next[field];
+              return next;
+            });
           }}
-          editable={!isSaving}
+          serverError={serverError}
+          isSaving={isSaving}
+          isEditing={isEditing}
+          onCancel={() => navigation.goBack()}
+          onSubmit={handleSubmit}
         />
-        {fieldErrors.nombre ? (
-          <Text className="mt-1 text-xs text-brand-red-coral">
-            {fieldErrors.nombre}
-          </Text>
-        ) : null}
-
-        {/* ── Detalle ─────────────────────────────────── */}
-        <Text className="mb-1.5 mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Detalle
-        </Text>
-        <TextInput
-          className={`rounded-xl border px-4 py-3 text-base ${
-            isDark
-              ? 'border-gray-700 bg-gray-800 text-white'
-              : 'border-gray-300 bg-gray-50 text-gray-900'
-          }`}
-          placeholder="Descripción opcional"
-          placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-          value={detalle}
-          onChangeText={setDetalle}
-          editable={!isSaving}
-        />
-
-        {/* ── Server error ────────────────────────────── */}
-        {serverError ? (
-          <View className="mt-3 flex-row items-center">
-            <MaterialCommunityIcons
-              name="alert-circle"
-              size={16}
-              color={colors.brandRedCoral}
-            />
-            <Text className="ml-1.5 text-sm text-brand-red-coral">
-              {serverError}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* ── Actions ─────────────────────────────────── */}
-        <View className="mt-6 flex-row justify-end gap-3">
-          <Pressable
-            className="rounded-xl bg-gray-200 px-5 py-2.5 dark:bg-gray-700"
-            onPress={() => navigation.goBack()}
-            disabled={isSaving}
-          >
-            <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Cancelar
-            </Text>
-          </Pressable>
-          <Pressable
-            className="rounded-xl bg-brand-green-forest px-5 py-2.5"
-            onPress={handleSubmit}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <ActivityIndicator size="small" color={colors.iconWhite} />
-            ) : (
-              <Text className="text-sm font-semibold text-white">
-                {isEditing ? 'Guardar cambios' : 'Crear familia'}
-              </Text>
-            )}
-          </Pressable>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

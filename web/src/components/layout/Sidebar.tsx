@@ -18,7 +18,9 @@ const adminNav: NavItem[] = [
     path: '/admin/categorias',
   },
   { key: 'units', label: 'Unidades', icon: '📏', path: '/admin/unidades' },
+  { key: 'families', label: 'Familias', icon: '👥', path: '/admin/familias' },
 ];
+
 
 const roleNavMap: Record<string, NavItem[]> = {
   admin: adminNav,

@@ -6,6 +6,8 @@ import { FarmerProducts, FarmerOrders } from './farmer';
 import { SellerOrders, SellerSales } from './seller';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
+import { AdminFamilies } from './AdminFamilies';
+import { AdminFamilyDetail } from './AdminFamilyDetail';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
 
@@ -81,6 +83,8 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
+                <Route path="familias" element={<AdminFamilies />} />
+                <Route path="familias/detalle" element={<AdminFamilyDetail />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>

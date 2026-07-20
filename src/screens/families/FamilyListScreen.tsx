@@ -85,6 +85,23 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+      {/* Header */}
+      <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          className="mr-3 active:opacity-60"
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={isDark ? colors.iconWhite : colors.iconDark}
+          />
+        </Pressable>
+        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
+          Familias
+        </Text>
+      </View>
+
       <ScrollView
         className="flex-1 px-4 pt-4"
         refreshControl={
@@ -154,12 +171,16 @@ export default function FamilyListScreen(): React.JSX.Element {
       </ScrollView>
 
       <Pressable
-        className="absolute bottom-6 right-6 rounded-full bg-brand-green-forest p-4 shadow-lg"
+        className="absolute bottom-6 right-6 rounded-full bg-brand-red-coral p-4 shadow-lg"
         onPress={() => {
           navigation.navigate('FamilyForm');
         }}
       >
-        <MaterialCommunityIcons name="plus" size={28} color={colors.iconWhite} />
+        <MaterialCommunityIcons
+          name="plus"
+          size={28}
+          color={colors.iconWhite}
+        />
       </Pressable>
     </View>
   );

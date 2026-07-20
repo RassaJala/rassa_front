@@ -31,6 +31,7 @@ import type {
   Family,
   FamilyMember,
 } from '@/types';
+import { extractApiError } from '@/utils/apiError';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyDetail'>;
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyDetail'>;
@@ -65,9 +66,9 @@ function MemberItem({
           color={
             isHead
               ? colors.brandGreenForest
-              : (isDark
+              : isDark
                 ? colors.textTertiary
-                : colors.textSecondary)
+                : colors.textSecondary
           }
         />
         <View className="ml-3 flex-1">
@@ -119,7 +120,7 @@ interface AddMemberModalProps {
   readonly isDark: boolean;
   readonly userId: string;
   readonly isPending: boolean;
-  readonly isError: boolean;
+  readonly errorMsg: string | null;
   readonly onChangeUserId: (value: string) => void;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
@@ -130,7 +131,7 @@ function AddMemberModal({
   isDark,
   userId,
   isPending,
-  isError,
+  errorMsg,
   onChangeUserId,
   onConfirm,
   onCancel,
@@ -164,9 +165,9 @@ function AddMemberModal({
           onChangeText={onChangeUserId}
         />
 
-        {isError ? (
+        {errorMsg ? (
           <Text className="mt-2 text-sm text-brand-red-coral">
-            Error al agregar miembro. Verifica el ID.
+            {errorMsg}
           </Text>
         ) : null}
 
@@ -180,7 +181,7 @@ function AddMemberModal({
             </Text>
           </Pressable>
           <Pressable
-            className="rounded-xl bg-brand-green-forest px-4 py-2.5"
+            className="rounded-xl bg-brand-red-coral px-4 py-2.5"
             onPress={onConfirm}
             disabled={isPending}
           >
@@ -262,6 +263,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     mutationFn: () => deleteFamily(familyId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
+      navigation.goBack();
     },
   });
 
@@ -308,9 +310,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           text: 'Remover',
           style: 'destructive',
           onPress: () =>
-            void removeMemberMutation.mutateAsync(
-              member.id_familia_usuario,
-            ),
+            void removeMemberMutation.mutateAsync(member.id_familia_usuario),
         },
       ],
     );
@@ -324,8 +324,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Asignar',
-          onPress: () =>
-            void assignHeadMutation.mutateAsync(member.fk_usuario),
+          onPress: () => void assignHeadMutation.mutateAsync(member.fk_usuario),
         },
       ],
     );
@@ -339,6 +338,23 @@ export default function FamilyDetailScreen(): React.JSX.Element {
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+      {/* Header */}
+      <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          className="mr-3 active:opacity-60"
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={isDark ? colors.iconWhite : colors.iconDark}
+          />
+        </Pressable>
+        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
+          {family.nombre_familia}
+        </Text>
+      </View>
+
       <ScrollView
         className="flex-1 px-4 pt-4"
         refreshControl={
@@ -415,7 +431,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             Miembros
           </Text>
           <Pressable
-            className="rounded-lg bg-brand-green-forest px-3 py-1.5"
+            className="rounded-lg bg-brand-red-coral px-3 py-1.5"
             onPress={() => setAddModalVisible(true)}
           >
             <Text className="text-sm font-semibold text-white">Agregar</Text>
@@ -452,12 +468,21 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         isDark={isDark}
         userId={userIdInput}
         isPending={addMemberMutation.isPending}
-        isError={addMemberMutation.isError}
+        errorMsg={
+          addMemberMutation.error
+            ? extractApiError(addMemberMutation.error, [
+                'fk_usuario',
+                'fk_familia',
+                'detail',
+              ])
+            : null
+        }
         onChangeUserId={setUserIdInput}
         onConfirm={handleAddMember}
         onCancel={() => {
           setAddModalVisible(false);
           setUserIdInput('');
+          addMemberMutation.reset();
         }}
       />
     </View>

@@ -252,6 +252,7 @@ function AdminScreens() {
       <AdminStack.Screen name="FamilyList" component={FamilyListScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
+      <AdminStack.Screen name="Profile" component={ProfileScreen} />
     </AdminStack.Navigator>
   );
 }
