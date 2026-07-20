@@ -188,3 +188,11 @@ export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
 };
+
+export interface SearchUserResult {
+  id_usuario: number;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+}

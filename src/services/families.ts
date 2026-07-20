@@ -1,9 +1,9 @@
-import type { Family, FamilyMember } from '@/types';
+import type { Family, FamilyMember, SearchUserResult } from '@/types';
 
 import api from './api';
 
-const FAMILIAS_URL = '/familias/grupos';
-const MIEMBROS_URL = '/familias/miembros';
+const FAMILIAS_URL = '/familias/grupos/';
+const MIEMBROS_URL = '/familias/miembros/';
 
 // ── Normalizers ─────────────────────────────────────────
 
@@ -44,7 +44,7 @@ export async function fetchFamilies(): Promise<Family[]> {
 
 export async function fetchFamily(id: number): Promise<Family> {
   const { data } = await api.get<Record<string, unknown>>(
-    `${FAMILIAS_URL}/${id}/`,
+    `${FAMILIAS_URL}${id}/`,
   );
   return normalizeFamily(data);
 }
@@ -65,14 +65,14 @@ export async function updateFamily(
   payload: { nombre_familia: string; detalle_familia?: string },
 ): Promise<Family> {
   const { data } = await api.patch<Record<string, unknown>>(
-    `${FAMILIAS_URL}/${id}/`,
+    `${FAMILIAS_URL}${id}/`,
     payload,
   );
   return normalizeFamily(data);
 }
 
 export async function deleteFamily(id: number): Promise<void> {
-  await api.delete(`${FAMILIAS_URL}/${id}/`);
+  await api.delete(`${FAMILIAS_URL}${id}/`);
 }
 
 // ── Family head assignment ─────────────────────────────
@@ -82,8 +82,8 @@ export async function assignFamilyHead(
   userId: number,
 ): Promise<Family> {
   const { data } = await api.post<Record<string, unknown>>(
-    `${FAMILIAS_URL}/${familyId}/asignar-jefe/`,
-    { fk_usuario: userId },
+    `${FAMILIAS_URL}${familyId}/asignar-jefe/`,
+    { fk_jefe_familia: userId },
   );
   return normalizeFamily(data);
 }
@@ -95,7 +95,7 @@ export async function fetchFamilyMembers(
 ): Promise<FamilyMember[]> {
   const { data } = await api.get<
     Record<string, unknown>[] | { results: Record<string, unknown>[] }
-  >(`${MIEMBROS_URL}/?fk_familia=${familyId}`);
+  >(`${MIEMBROS_URL}?fk_familia=${familyId}`);
   const list = Array.isArray(data) ? data : data.results;
   return list.map(normalizeMember);
 }
@@ -112,5 +112,12 @@ export async function addFamilyMember(
 }
 
 export async function removeFamilyMember(memberId: number): Promise<void> {
-  await api.delete(`${MIEMBROS_URL}/${memberId}/`);
+  await api.delete(`${MIEMBROS_URL}${memberId}/`);
+}
+
+export async function searchUsers(query: string): Promise<SearchUserResult[]> {
+  const { data } = await api.get<{ data: SearchUserResult[] }>(
+    `/auth/search-users/?q=${encodeURIComponent(query)}`,
+  );
+  return data.data;
 }
