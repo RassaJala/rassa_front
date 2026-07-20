@@ -53,59 +53,63 @@ function MemberItem({
   onAssignHead,
   onRemove,
 }: MemberItemProps): React.JSX.Element {
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const btnBg = isDark ? '#353D35' : '#F5F7F0';
+
   return (
     <View
-      className={`mb-2 flex-row items-center justify-between rounded-xl border p-3 ${
-        isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-      }`}
+      style={{
+        marginBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: border,
+        backgroundColor: surface,
+        padding: 12,
+      }}
     >
-      <View className="flex-1 flex-row items-center">
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
         <MaterialCommunityIcons
           name={isHead ? 'account-star' : 'account'}
           size={20}
-          color={
-            isHead
-              ? colors.brandGreenForest
-              : isDark
-                ? colors.textTertiary
-                : colors.textSecondary
-          }
+          color={isHead ? '#3A6D56' : muted}
         />
-        <View className="ml-3 flex-1">
-          <Text
-            className={`text-sm font-semibold ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}
-          >
+        <View style={{ marginLeft: 12, flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
             {member.usuario_nombre}
           </Text>
-          <Text className="text-xs text-gray-400 dark:text-gray-500">
+          <Text style={{ fontSize: 12, color: muted }}>
             {member.usuario_correo}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row gap-1">
+      <View style={{ flexDirection: 'row', gap: 4 }}>
         {!isHead ? (
           <Pressable
-            className="rounded-lg bg-gray-200 p-2 dark:bg-gray-700"
+            style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
             onPress={() => onAssignHead(member)}
           >
             <MaterialCommunityIcons
               name="account-star"
               size={16}
-              color={colors.brandGreenForest}
+              color="#3A6D56"
             />
           </Pressable>
         ) : null}
         <Pressable
-          className="rounded-lg bg-gray-200 p-2 dark:bg-gray-700"
+          style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
           onPress={() => onRemove(member)}
         >
           <MaterialCommunityIcons
             name="account-remove"
             size={16}
-            color={colors.brandRedCoral}
+            color="#DE393A"
           />
         </Pressable>
       </View>
@@ -336,27 +340,56 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     void addMemberMutation.mutateAsync(id);
   };
 
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const btnBg = isDark ? '#353D35' : '#F5F7F0';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const coral = '#DE393A';
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
-      <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: border,
+          backgroundColor: surface,
+        }}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
-          className="mr-3 active:opacity-60"
+          style={({ pressed }) => ({
+            marginRight: 12,
+            opacity: pressed ? 0.6 : 1,
+          })}
         >
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
-            color={isDark ? colors.iconWhite : colors.iconDark}
+            color={fg}
           />
         </Pressable>
-        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: '700',
+            color: fg,
+          }}
+        >
           {family.nombre_familia}
         </Text>
       </View>
 
       <ScrollView
-        className="flex-1 px-4 pt-4"
+        contentContainerStyle={{ padding: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -364,22 +397,27 @@ export default function FamilyDetailScreen(): React.JSX.Element {
               void refetchFamily();
               void refetchMembers();
             }}
+            tintColor={brand}
           />
         }
       >
         {/* ── Family info card ──────────────────────────── */}
         <View
-          className={`rounded-2xl border p-5 ${
-            isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-          }`}
+          style={{
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: border,
+            backgroundColor: surface,
+            padding: 20,
+          }}
         >
-          <View className="flex-row items-center justify-between">
-            <Text className="text-xl font-bold text-gray-900 dark:text-white">
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyBetween: 'space-between' }}>
+            <Text style={{ flex: 1, fontSize: 20, fontWeight: '700', color: fg }}>
               {family.nombre_familia}
             </Text>
-            <View className="flex-row gap-2">
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable
-                className="rounded-lg bg-gray-200 p-2 dark:bg-gray-700"
+                style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
                 onPress={() => {
                   navigation.navigate('FamilyForm', {
                     familyId,
@@ -389,49 +427,55 @@ export default function FamilyDetailScreen(): React.JSX.Element {
                 <MaterialCommunityIcons
                   name="pencil"
                   size={18}
-                  color={isDark ? colors.iconWhite : colors.iconDark}
+                  color={fg}
                 />
               </Pressable>
               <Pressable
-                className="rounded-lg bg-gray-200 p-2 dark:bg-gray-700"
+                style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
                 onPress={handleDelete}
               >
                 <MaterialCommunityIcons
                   name="trash-can-outline"
                   size={18}
-                  color={colors.brandRedCoral}
+                  color={coral}
                 />
               </Pressable>
             </View>
           </View>
 
           {family.jefe_nombre ? (
-            <View className="mt-3 flex-row items-center">
+            <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}>
               <MaterialCommunityIcons
                 name="account-star"
                 size={16}
-                color={colors.brandGreenForest}
+                color="#3A6D56"
               />
-              <Text className="ml-1.5 text-sm text-gray-600 dark:text-gray-300">
+              <Text style={{ marginLeft: 6, fontSize: 14, color: fg }}>
                 Jefe: {family.jefe_nombre}
               </Text>
             </View>
           ) : null}
 
           {family.detalle_familia ? (
-            <Text className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <Text style={{ marginTop: 8, fontSize: 14, color: muted }}>
               {family.detalle_familia}
             </Text>
           ) : null}
         </View>
 
         {/* ── Members section ───────────────────────────── */}
-        <View className="mt-6 flex-row items-center justify-between">
-          <Text className="text-lg font-bold text-gray-900 dark:text-white">
+        <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
             Miembros
           </Text>
           <Pressable
-            className="rounded-lg bg-brand-red-coral px-3 py-1.5"
+            style={({ pressed }) => ({
+              borderRadius: 8,
+              backgroundColor: coral,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              opacity: pressed ? 0.9 : 1,
+            })}
             onPress={() => setAddModalVisible(true)}
           >
             <Text className="text-sm font-semibold text-white">Agregar</Text>
@@ -439,13 +483,13 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         </View>
 
         {(members ?? []).length === 0 ? (
-          <View className="items-center pt-10">
+          <View style={{ alignItems: 'center', paddingTop: 40 }}>
             <MaterialCommunityIcons
               name="account-group-outline"
               size={48}
-              color={colors.iconMuted}
+              color={muted}
             />
-            <Text className="mt-3 text-sm text-gray-400 dark:text-gray-500">
+            <Text style={{ marginTop: 12, fontSize: 14, color: muted }}>
               No hay miembros en esta familia.
             </Text>
           </View>

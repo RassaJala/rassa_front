@@ -83,45 +83,89 @@ export default function FamilyListScreen(): React.JSX.Element {
     );
   }
 
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const coral = '#DE393A';
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
-      <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: border,
+          backgroundColor: surface,
+        }}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
-          className="mr-3 active:opacity-60"
+          style={({ pressed }) => ({
+            marginRight: 12,
+            opacity: pressed ? 0.6 : 1,
+          })}
         >
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
-            color={isDark ? colors.iconWhite : colors.iconDark}
+            color={fg}
           />
         </Pressable>
-        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: '700',
+            color: fg,
+          }}
+        >
           Familias
         </Text>
       </View>
 
       <ScrollView
-        className="flex-1 px-4 pt-4"
+        contentContainerStyle={{ padding: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => void refetch()}
+            tintColor={brand}
           />
         }
       >
         {(families ?? []).length === 0 ? (
-          <View className="items-center pt-20">
+          <View style={{ alignItems: 'center', paddingTop: 80 }}>
             <MaterialCommunityIcons
               name="account-group-outline"
               size={64}
-              color={colors.iconMuted}
+              color={muted}
             />
-            <Text className="mt-4 text-center text-lg font-semibold text-gray-400 dark:text-gray-500">
+            <Text
+              style={{
+                marginTop: 16,
+                textAlign: 'center',
+                fontSize: 18,
+                fontWeight: '600',
+                color: muted,
+              }}
+            >
               No hay familias registradas
             </Text>
-            <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
+            <Text
+              style={{
+                marginTop: 4,
+                textAlign: 'center',
+                fontSize: 14,
+                color: muted,
+              }}
+            >
               Crea una familia para comenzar.
             </Text>
           </View>
@@ -129,30 +173,34 @@ export default function FamilyListScreen(): React.JSX.Element {
           (families ?? []).map((family) => (
             <Pressable
               key={family.id_familia}
-              className={`mb-3 rounded-2xl border p-4 ${
-                isDark
-                  ? 'border-gray-800 bg-gray-900'
-                  : 'border-gray-200 bg-white'
-              }`}
+              style={({ pressed }) => ({
+                marginBottom: 12,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                padding: 16,
+                opacity: pressed ? 0.9 : 1,
+              })}
               onPress={() => {
                 navigation.navigate('FamilyDetail', {
                   familyId: family.id_familia,
                 });
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1">
-                  <Text className="text-base font-bold text-gray-900 dark:text-white">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: fg }}>
                     {family.nombre_familia}
                   </Text>
                   {family.jefe_nombre ? (
-                    <Text className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <Text style={{ marginTop: 4, fontSize: 14, color: muted }}>
                       Jefe: {family.jefe_nombre}
                     </Text>
                   ) : null}
                   {family.detalle_familia ? (
                     <Text
-                      className="mt-0.5 text-sm text-gray-400 dark:text-gray-500"
+                      style={{ marginTop: 2, fontSize: 13, color: muted }}
                       numberOfLines={1}
                     >
                       {family.detalle_familia}
@@ -162,7 +210,7 @@ export default function FamilyListScreen(): React.JSX.Element {
                 <MaterialCommunityIcons
                   name="chevron-right"
                   size={24}
-                  color={isDark ? colors.textTertiary : colors.textSecondary}
+                  color={muted}
                 />
               </View>
             </Pressable>
@@ -171,7 +219,20 @@ export default function FamilyListScreen(): React.JSX.Element {
       </ScrollView>
 
       <Pressable
-        className="absolute bottom-6 right-6 rounded-full bg-brand-red-coral p-4 shadow-lg"
+        style={({ pressed }) => ({
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          borderRadius: 999,
+          backgroundColor: coral,
+          padding: 16,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
+          elevation: 5,
+          opacity: pressed ? 0.9 : 1,
+        })}
         onPress={() => {
           navigation.navigate('FamilyForm');
         }}
@@ -179,7 +240,7 @@ export default function FamilyListScreen(): React.JSX.Element {
         <MaterialCommunityIcons
           name="plus"
           size={28}
-          color={colors.iconWhite}
+          color="#ffffff"
         />
       </Pressable>
     </View>

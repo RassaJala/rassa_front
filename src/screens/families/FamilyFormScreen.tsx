@@ -87,24 +87,38 @@ function FormFields({
   onCancel,
   onSubmit,
 }: FormFieldsProps): React.JSX.Element {
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const btnBg = isDark ? '#353D35' : '#F5F7F0';
+  const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
+  const coral = '#DE393A';
+
   return (
     <View
-      className={`rounded-2xl border p-5 ${
-        isDark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'
-      }`}
+      style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: border,
+        backgroundColor: surface,
+        padding: 20,
+      }}
     >
       {/* ── Nombre ──────────────────────────────────── */}
-      <Text className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <Text style={{ marginBottom: 6, fontSize: 14, fontWeight: '500', color: fg }}>
         Nombre de la familia *
       </Text>
       <TextInput
-        className={`rounded-xl border px-4 py-3 text-base ${
-          fieldErrors.nombre
-            ? 'border-brand-red-coral'
-            : (isDark
-              ? 'border-gray-700 bg-gray-800 text-white'
-              : 'border-gray-300 bg-gray-50 text-gray-900')
-        }`}
+        style={{
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: fieldErrors.nombre ? coral : border,
+          backgroundColor: textInputBg,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          fontSize: 16,
+          color: fg,
+        }}
         placeholder="Ej. Familia López"
         placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
         value={nombre}
@@ -117,26 +131,32 @@ function FormFields({
         editable={!isSaving}
       />
       {fieldErrors.nombre ? (
-        <Text className="mt-1 text-xs text-brand-red-coral">
+        <Text style={{ marginTop: 4, fontSize: 12, color: coral }}>
           {fieldErrors.nombre}
         </Text>
       ) : null}
 
       {/* ── Detalle ─────────────────────────────────── */}
-      <Text className="mb-1.5 mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <Text style={{ marginBottom: 6, marginTop: 16, fontSize: 14, fontWeight: '500', color: fg }}>
         Detalle
       </Text>
       <TextInput
-        className={`rounded-xl border px-4 py-3 text-base ${
-          isDark
-            ? 'border-gray-700 bg-gray-800 text-white'
-            : 'border-gray-300 bg-gray-50 text-gray-900'
-        }`}
+        style={{
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: border,
+          backgroundColor: textInputBg,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          fontSize: 16,
+          color: fg,
+          height: 80,
+          textAlignVertical: 'top',
+        }}
         placeholder="Descripción opcional"
         placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
         multiline
         numberOfLines={3}
-        textAlignVertical="top"
         value={detalle}
         onChangeText={onChangeDetalle}
         editable={!isSaving}
@@ -144,36 +164,48 @@ function FormFields({
 
       {/* ── Server error ────────────────────────────── */}
       {serverError ? (
-        <View className="mt-3 flex-row items-center">
+        <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons
             name="alert-circle"
             size={16}
-            color={colors.brandRedCoral}
+            color={coral}
           />
-          <Text className="ml-1.5 text-sm text-brand-red-coral">
+          <Text style={{ marginLeft: 6, fontSize: 14, color: coral }}>
             {serverError}
           </Text>
         </View>
       ) : null}
 
       {/* ── Actions ─────────────────────────────────── */}
-      <View className="mt-6 flex-row justify-end gap-3">
+      <View style={{ marginTop: 24, flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
         <Pressable
-          className="rounded-xl bg-gray-200 px-5 py-2.5 dark:bg-gray-700"
+          style={({ pressed }) => ({
+            borderRadius: 12,
+            backgroundColor: btnBg,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            opacity: pressed ? 0.9 : 1,
+          })}
           onPress={onCancel}
           disabled={isSaving}
         >
-          <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Text style={{ fontSize: 14, fontWeight: '500', color: fg }}>
             Cancelar
           </Text>
         </Pressable>
         <Pressable
-          className="rounded-xl bg-brand-red-coral px-5 py-2.5"
+          style={({ pressed }) => ({
+            borderRadius: 12,
+            backgroundColor: coral,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            opacity: pressed ? 0.9 : 1,
+          })}
           onPress={onSubmit}
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={colors.iconWhite} />
+            <ActivityIndicator size="small" color="#ffffff" />
           ) : (
             <Text className="text-sm font-semibold text-white">
               {isEditing ? 'Guardar cambios' : 'Crear familia'}
