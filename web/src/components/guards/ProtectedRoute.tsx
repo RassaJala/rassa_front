@@ -20,7 +20,12 @@ export function ProtectedRoute({ role }: { role?: Role } = {}) {
 
   if (role && user?.rol !== role) {
     // Redirect to their own dashboard
-    const fallback = user?.rol === 'admin' ? '/admin' : user?.rol === 'vendedor' ? '/vendedor/ventas' : '/agricultor/productos';
+    const fallback =
+      user?.rol === 'admin'
+        ? '/admin'
+        : user?.rol === 'vendedor'
+          ? '/vendedor/ventas'
+          : '/agricultor/productos';
     return <Navigate to={fallback} replace />;
   }
 

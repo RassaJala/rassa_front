@@ -56,13 +56,17 @@ export default function FarmerHomeScreen({
     queryKey: ['productos-count'],
     queryFn: async () => {
       // Pedimos los productos (idealmente el backend tendría un endpoint ligero para conteo, pero esto sirve por ahora)
-      const { data } = await api.get<ApiResponse<{ results: Producto[]; count?: number }>>('/productos/');
+      const { data } =
+        await api.get<ApiResponse<{ results: Producto[]; count?: number }>>(
+          '/productos/',
+        );
       return data.data;
     },
     staleTime: 30_000,
   });
 
-  const totalProducts = productsData?.count ?? productsData?.results?.length ?? 0;
+  const totalProducts =
+    productsData?.count ?? productsData?.results?.length ?? 0;
 
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const surface = isDark ? '#263028' : '#FFFFFF';
@@ -200,7 +204,9 @@ export default function FarmerHomeScreen({
                 alignItems: 'flex-start',
               }}
             >
-              <View style={{ flex: 1, flexShrink: 1, minWidth: 0, paddingRight: 8 }}>
+              <View
+                style={{ flex: 1, flexShrink: 1, minWidth: 0, paddingRight: 8 }}
+              >
                 <Text
                   style={{
                     fontSize: isCompact ? 12 : 14,
@@ -235,7 +241,9 @@ export default function FarmerHomeScreen({
                   Bienvenido, {user?.nombre ?? 'Agricultor'}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', flexShrink: 0, marginLeft: 8 }}>
+              <View
+                style={{ flexDirection: 'row', flexShrink: 0, marginLeft: 8 }}
+              >
                 <Pressable
                   onPress={openDrawer}
                   style={({ pressed }) => ({
@@ -589,18 +597,18 @@ export default function FarmerHomeScreen({
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? (isDark
+                      ? isDark
                         ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)')
-                      : (isDark
+                        : 'rgba(222,57,58,0.07)'
+                      : isDark
                         ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)'),
+                        : 'rgba(0,0,0,0.03)',
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
-                      ? (isDark
+                      ? isDark
                         ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)')
+                        : 'rgba(222,57,58,0.15)'
                       : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}

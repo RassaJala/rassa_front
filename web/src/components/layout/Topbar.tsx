@@ -28,8 +28,6 @@ export function Topbar({ role }: { role: Role }) {
         transition: 'background 0.4s, border-color 0.4s',
       }}
     >
-
-
       {/* Actions */}
       <div
         style={{
@@ -39,7 +37,6 @@ export function Topbar({ role }: { role: Role }) {
           marginLeft: 'auto',
         }}
       >
-
         {/* Notifications — hidden for agricultor */}
         {role !== 'agricultor' && (
           <button
@@ -72,7 +69,6 @@ export function Topbar({ role }: { role: Role }) {
             />
           </button>
         )}
-
 
         <button
           onClick={toggle}

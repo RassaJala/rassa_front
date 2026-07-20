@@ -3,8 +3,14 @@ import axiosRetry from 'axios-retry';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
 
-if (typeof window !== 'undefined' && window.location.protocol === 'http:' && !window.location.hostname.includes('localhost')) {
-  console.warn('[rassa] Running on HTTP outside localhost — tokens may be intercepted');
+if (
+  typeof window !== 'undefined' &&
+  window.location.protocol === 'http:' &&
+  !window.location.hostname.includes('localhost')
+) {
+  console.warn(
+    '[rassa] Running on HTTP outside localhost — tokens may be intercepted',
+  );
 }
 
 const api = axios.create({

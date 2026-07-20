@@ -189,8 +189,21 @@ export function Sidebar({ role }: { role: string }) {
           {user?.nombre?.slice(0, 2).toUpperCase() ?? '??'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: fg, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.nombre ?? 'Usuario'}</div>
-          <div style={{ fontSize: 12, color: muted }}>{roleLabel[user?.rol ?? ''] ?? user?.rol ?? ''}</div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: fg,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user?.nombre ?? 'Usuario'}
+          </div>
+          <div style={{ fontSize: 12, color: muted }}>
+            {roleLabel[user?.rol ?? ''] ?? user?.rol ?? ''}
+          </div>
         </div>
       </div>
     </aside>
