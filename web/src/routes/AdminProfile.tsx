@@ -318,6 +318,61 @@ export function AdminProfile() {
     }
   }
 
+  // --- Password change state ---
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+
+  function validatePasswordForm(): string | null {
+    if (!currentPassword) return 'La contraseña actual es obligatoria.';
+    if (!newPassword) return 'La nueva contraseña es obligatoria.';
+    if (newPassword.length < 8)
+      return 'La nueva contraseña debe tener al menos 8 caracteres.';
+    if (!confirmPassword) return 'La confirmación de contraseña es obligatoria.';
+    if (newPassword !== confirmPassword) return 'Las contraseñas no coinciden.';
+    return null;
+  }
+
+  async function handlePasswordChange() {
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    const validationError = validatePasswordForm();
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+
+    setPasswordSubmitting(true);
+    try {
+      await api.post('/auth/change-password/', {
+        old_password: currentPassword,
+        new_password: newPassword,
+      });
+      setPasswordSuccess('Contraseña actualizada exitosamente.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { detail?: string; old_password?: string[]; new_password?: string[] } } };
+        const detail =
+          axiosErr.response?.data?.detail ??
+          axiosErr.response?.data?.old_password?.[0] ??
+          axiosErr.response?.data?.new_password?.[0] ??
+          'Error al cambiar contraseña.';
+        setPasswordError(detail);
+      } else {
+        setPasswordError('Error al cambiar contraseña.');
+      }
+    } finally {
+      setPasswordSubmitting(false);
+    }
+  }
+
   // --- Derived data ---
   const fullName = profile
     ? `${profile.nombre}${profile.apellido_paterno ? ` ${profile.apellido_paterno}` : ''}${profile.apellido_materno ? ` ${profile.apellido_materno}` : ''}`
@@ -645,6 +700,72 @@ export function AdminProfile() {
             </div>
           )}
         </Card>
+
+        {/* --- Password Change Card --- */}
+        {editing && (
+          <Card className="space-y-4 p-6">
+            <h3 className="text-lg font-bold text-brand-ink dark:text-gray-100">
+              Cambiar Contraseña
+            </h3>
+
+            {passwordError && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600 dark:border-green-700 dark:bg-green-950 dark:text-green-400">
+                {passwordSuccess}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <Input
+                label="Contraseña Actual *"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setPasswordError(null);
+                }}
+                required
+              />
+              <Input
+                label="Nueva Contraseña (mínimo 8 caracteres) *"
+                type="password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordError(null);
+                }}
+                required
+              />
+              <Input
+                label="Confirmar Nueva Contraseña *"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordError(null);
+                }}
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="primary"
+                disabled={passwordSubmitting}
+                onClick={handlePasswordChange}
+              >
+                {passwordSubmitting
+                  ? 'Cambiando...'
+                  : 'Cambiar Contraseña'}
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
     </>
   );
