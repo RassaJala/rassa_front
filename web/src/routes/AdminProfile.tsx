@@ -331,7 +331,8 @@ export function AdminProfile() {
     if (!newPassword) return 'La nueva contraseña es obligatoria.';
     if (newPassword.length < 8)
       return 'La nueva contraseña debe tener al menos 8 caracteres.';
-    if (!confirmPassword) return 'La confirmación de contraseña es obligatoria.';
+    if (!confirmPassword)
+      return 'La confirmación de contraseña es obligatoria.';
     if (newPassword !== confirmPassword) return 'Las contraseñas no coinciden.';
     return null;
   }
@@ -358,7 +359,15 @@ export function AdminProfile() {
       setConfirmPassword('');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { detail?: string; old_password?: string[]; new_password?: string[] } } };
+        const axiosErr = err as {
+          response?: {
+            data?: {
+              detail?: string;
+              old_password?: string[];
+              new_password?: string[];
+            };
+          };
+        };
         const detail =
           axiosErr.response?.data?.detail ??
           axiosErr.response?.data?.old_password?.[0] ??
@@ -759,9 +768,7 @@ export function AdminProfile() {
                 disabled={passwordSubmitting}
                 onClick={handlePasswordChange}
               >
-                {passwordSubmitting
-                  ? 'Cambiando...'
-                  : 'Cambiar Contraseña'}
+                {passwordSubmitting ? 'Cambiando...' : 'Cambiar Contraseña'}
               </Button>
             </div>
           </Card>
