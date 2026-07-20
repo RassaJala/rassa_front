@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -74,6 +74,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     items: T[] | undefined,
     editingItem: T | null,
   ) => string | null;
+  readonly searchFields?: readonly string[];
   readonly trashScreenName?: 'CategoryTrash' | 'UnitTrash';
   readonly comingSoon?: boolean;
 }
@@ -242,6 +243,71 @@ function fieldValueFor<T extends { nombre: string; estado: boolean }>(
   return '';
 }
 
+// ── Search / Filter types and helpers ──────────────────────
+
+type StatusFilterValue = 'todos' | 'activos' | 'inactivos';
+const STATUS_FILTERS: readonly StatusFilterValue[] = [
+  'todos',
+  'activos',
+  'inactivos',
+];
+const FILTER_LABELS: Record<StatusFilterValue, string> = {
+  todos: 'Todos',
+  activos: 'Activos',
+  inactivos: 'Inactivos',
+};
+
+/**
+ * Pure filter function — runs each item through search + status checks.
+ * Invalid items are caught, logged, and excluded instead of crashing the list.
+ */
+function filterItems<T extends { nombre: string; estado: boolean }>(
+  items: T[] | undefined,
+  search: string,
+  statusFilter: StatusFilterValue,
+  searchFieldNames: readonly string[],
+): T[] {
+  const normalizedSearch = search.toLowerCase().trim();
+
+  return (items ?? []).filter((item) => {
+    try {
+      const matchesSearch =
+        !normalizedSearch ||
+        searchFieldNames.some((fieldName) => {
+          const value = (item as Record<string, unknown>)[fieldName];
+          return String(value ?? '')
+            .toLowerCase()
+            .includes(normalizedSearch);
+        });
+
+      let matchesStatus: boolean;
+      if (statusFilter === 'todos') {
+        matchesStatus = true;
+      } else if (statusFilter === 'activos') {
+        matchesStatus = item.estado === true;
+      } else {
+        matchesStatus = item.estado === false;
+      }
+
+      if (typeof item.estado !== 'boolean') {
+        console.warn(
+          'CrudListScreen: estado is not boolean, unexpected:',
+          item,
+        );
+      }
+
+      return matchesSearch && matchesStatus;
+    } catch (error) {
+      console.warn(
+        'CrudListScreen: error filtering item, excluding it:',
+        item,
+        error,
+      );
+      return false;
+    }
+  });
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export default function CrudListScreen<
@@ -335,10 +401,34 @@ export default function CrudListScreen<
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
+  // ── Search / Filter state ──────────────────────────────────
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermDebounced, setSearchTermDebounced] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('todos');
+
   // ── Delete sheet state ─────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
   // ── Toggle confirm state ────────────────────────────────────
   const [toggleTarget, setToggleTarget] = useState<T | null>(null);
+
+  // ── Debounce search term ────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchTermDebounced(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // ── Filtered items ──────────────────────────────────────────
+  const searchFieldNames = useMemo(
+    () =>
+      config.searchFields ??
+      (config.fields[0] ? [config.fields[0].name] : ['nombre']),
+    [config.searchFields, config.fields],
+  );
+  const filteredItems = useMemo(
+    () =>
+      filterItems(items, searchTermDebounced, statusFilter, searchFieldNames),
+    [items, searchTermDebounced, statusFilter, searchFieldNames],
+  );
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
@@ -683,6 +773,7 @@ export default function CrudListScreen<
 
   function renderListTab() {
     const empty = !items || items.length === 0;
+    const noSearchResults = !empty && filteredItems.length === 0;
 
     if (empty) {
       return (
@@ -725,44 +816,163 @@ export default function CrudListScreen<
     }
 
     return (
-      <FlatList
-        data={items}
-        keyExtractor={(item) => String(config.getId(item))}
-        contentContainerStyle={{ padding: 20, paddingBottom: 8, gap: 10 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => void refetch()}
-            tintColor={brand}
+      <View style={{ flex: 1 }}>
+        {/* ── Search bar ─────────────────────────────────────────── */}
+        <View
+          style={{ paddingHorizontal: 20, paddingBottom: 8, paddingTop: 4 }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: surface,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: border,
+              paddingHorizontal: 12,
+              height: 42,
+            }}
+          >
+            <MaterialCommunityIcons name="magnify" size={20} color={muted} />
+            <TextInput
+              placeholder={`Buscar ${config.entityNamePluralLower}...`}
+              placeholderTextColor={muted}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              style={{
+                flex: 1,
+                marginLeft: 8,
+                fontSize: 15,
+                color: fg,
+                paddingVertical: 0,
+              }}
+            />
+            {searchTerm ? (
+              <Pressable
+                onPress={() => {
+                  setSearchTerm('');
+                  setSearchTermDebounced('');
+                }}
+                hitSlop={8}
+              >
+                <MaterialCommunityIcons
+                  name="close-circle"
+                  size={18}
+                  color={muted}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
+        {/* ── Filter chips ──────────────────────────────────────── */}
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: 8,
+            paddingHorizontal: 20,
+            paddingBottom: 8,
+          }}
+        >
+          {STATUS_FILTERS.map((filter) => (
+            <Pressable
+              key={filter}
+              onPress={() => setStatusFilter(filter)}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 6,
+                borderRadius: 16,
+                backgroundColor: statusFilter === filter ? brand : segmentedBg,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: statusFilter === filter ? iconWhite : muted,
+                }}
+              >
+                {FILTER_LABELS[filter]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* ── List / No results ──────────────────────────────────── */}
+        {noSearchResults ? (
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 24,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="file-search-outline"
+              size={64}
+              color={muted}
+            />
+            <Text
+              style={{
+                marginTop: 16,
+                textAlign: 'center',
+                fontSize: 16,
+                color: muted,
+              }}
+            >
+              No se encontraron resultados para "{searchTermDebounced.trim()}".
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredItems}
+            keyExtractor={(item) => String(config.getId(item))}
+            contentContainerStyle={{ padding: 20, paddingBottom: 8, gap: 10 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={() => void refetch()}
+                tintColor={brand}
+              />
+            }
+            renderItem={({ item }) =>
+              config.renderListItem
+                ? config.renderListItem(item, {
+                    onEdit: () => startEdit(item),
+                    onToggleStatus: () => setToggleTarget(item),
+                    onDelete: () => setDeleteTarget(item),
+                  })
+                : defaultRenderListItem(
+                    item,
+                    (i) => {
+                      const second = config.fields[1];
+                      if (!second) return null;
+                      const val = (i as Record<string, unknown>)[second.name];
+                      return val != null ? String(val) : null;
+                    },
+                    config,
+                    {
+                      onEdit: () => startEdit(item),
+                      onToggleStatus: () => setToggleTarget(item),
+                      onDelete: () => setDeleteTarget(item),
+                    },
+                    {
+                      surface,
+                      border,
+                      fg,
+                      muted,
+                      brand,
+                      iconWhite,
+                      errorColor,
+                    },
+                    isDark,
+                  )
+            }
+            ListFooterComponent={null}
           />
-        }
-        renderItem={({ item }) =>
-          config.renderListItem
-            ? config.renderListItem(item, {
-                onEdit: () => startEdit(item),
-                onToggleStatus: () => setToggleTarget(item),
-                onDelete: () => setDeleteTarget(item),
-              })
-            : defaultRenderListItem(
-                item,
-                (i) => {
-                  const second = config.fields[1];
-                  if (!second) return null;
-                  const val = (i as Record<string, unknown>)[second.name];
-                  return val != null ? String(val) : null;
-                },
-                config,
-                {
-                  onEdit: () => startEdit(item),
-                  onToggleStatus: () => setToggleTarget(item),
-                  onDelete: () => setDeleteTarget(item),
-                },
-                { surface, border, fg, muted, brand, iconWhite, errorColor },
-                isDark,
-              )
-        }
-        ListFooterComponent={null}
-      />
+        )}
+      </View>
     );
   }
 

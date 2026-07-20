@@ -41,6 +41,9 @@ export function AdminCategories() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: '', descripcion: '' });
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'todos' | 'activos' | 'inactivos'
+  >('todos');
   const [delTarget, setDelTarget] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -48,10 +51,17 @@ export function AdminCategories() {
 
   const filtered = useMemo(
     () =>
-      items.filter((i) =>
-        i.nombre.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [items, search],
+      items.filter((i) => {
+        const matchesSearch =
+          !search ||
+          i.nombre.toLowerCase().includes(search.toLowerCase()) ||
+          i.descripcion.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus =
+          statusFilter === 'todos' ||
+          (statusFilter === 'activos' ? i.estado : !i.estado);
+        return matchesSearch && matchesStatus;
+      }),
+    [items, search, statusFilter],
   );
 
   function startNew() {
@@ -245,6 +255,38 @@ export function AdminCategories() {
                 outline: 'none',
               }}
             />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              padding: '8px 20px',
+              borderBottom: `1px solid ${border}`,
+            }}
+          >
+            {(['todos', 'activos', 'inactivos'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 12,
+                  border: 'none',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  background: statusFilter === f ? brand : 'transparent',
+                  color: statusFilter === f ? '#fff' : muted,
+                }}
+              >
+                {f === 'todos'
+                  ? 'Todos'
+                  : f === 'activos'
+                    ? 'Activos'
+                    : 'Inactivos'}
+              </button>
+            ))}
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
