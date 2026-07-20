@@ -24,6 +24,9 @@ import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
+import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
+import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
+import FamilyListScreen from '@/screens/families/FamilyListScreen';
 import AddProductScreen from '@/screens/farmer/AddProductScreen';
 import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
@@ -246,6 +249,9 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="FamilyList" component={FamilyListScreen} />
+      <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
+      <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
     </AdminStack.Navigator>
   );
 }

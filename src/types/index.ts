@@ -119,6 +119,38 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+// ── Familias ──────────────────────────────────────────────
+
+export interface Family {
+  id_familia: number;
+  fk_jefe_familia: number | null;
+  jefe_nombre: string | null;
+  nombre_familia: string;
+  nombre: string;
+  detalle_familia: string | null;
+  creado_en: string;
+  estado: boolean;
+}
+
+export interface FamilyMember {
+  id_familia_usuario: number;
+  fk_usuario: number;
+  usuario_nombre: string;
+  usuario_correo: string;
+  fk_familia: number;
+  estado: boolean;
+  creado_en: string;
+}
+
+export interface CreditLimit {
+  id_limite: number;
+  fk_usuario: number;
+  monto: string;
+  creado_en: string;
+}
+
+// ── Navigation param lists ────────────────────────────────
+
 export type AdminStackParamList = {
   AdminPanel: undefined;
   CategoryList: undefined;
@@ -126,6 +158,9 @@ export type AdminStackParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  FamilyList: undefined;
+  FamilyDetail: { readonly familyId: number };
+  FamilyForm: { readonly familyId?: number } | undefined;
 };
 
 export type AuthStackParamList = {
