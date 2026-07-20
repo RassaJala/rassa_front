@@ -21,8 +21,8 @@ function resolveBaseURL(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   const configured =
     Platform.OS === 'web'
-      ? envUrl ?? 'http://localhost:8000'
-      : envUrl ?? 'http://localhost:8000';
+      ? (envUrl ?? 'http://localhost:8000')
+      : (envUrl ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;

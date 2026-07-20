@@ -257,6 +257,25 @@ export default function AdminProfileScreen({
   }
 
   // ── Handle Change Password ──────────────────────────
+  function getPasswordErrorMsg(error: unknown): string {
+    if (!axios.isAxiosError(error) || !error.response?.data) {
+      return error instanceof Error
+        ? error.message
+        : 'Error al cambiar contraseña.';
+    }
+
+    const data = error.response.data as Record<string, unknown>;
+    if (typeof error.response.data === 'string') return error.response.data;
+
+    return (
+      data.old_password?.toString() ??
+      data.new_password?.toString() ??
+      data.detail?.toString() ??
+      data.message?.toString() ??
+      'La contraseña actual es incorrecta.'
+    );
+  }
+
   async function handleChangePassword() {
     if (isChangingPassword) return;
     setSuccessMessage(null);
@@ -295,28 +314,7 @@ export default function AdminProfileScreen({
       }
     } catch (error) {
       if (isMounted.current) {
-        // Try to get a more specific error from the backend
-        const msg =
-          axios.isAxiosError(error) && error.response?.data
-            ? typeof error.response.data === 'string'
-              ? error.response.data
-              : ((
-                  error.response.data as Record<string, unknown>
-                )?.old_password?.toString() ??
-                (
-                  error.response.data as Record<string, unknown>
-                )?.new_password?.toString() ??
-                (
-                  error.response.data as Record<string, unknown>
-                )?.detail?.toString() ??
-                (
-                  error.response.data as Record<string, unknown>
-                )?.message?.toString() ??
-                'La contraseña actual es incorrecta.')
-            : error instanceof Error
-              ? error.message
-              : 'Error al cambiar contraseña.';
-        setErrorMessage(msg);
+        setErrorMessage(getPasswordErrorMsg(error));
       }
     } finally {
       if (isMounted.current) {
