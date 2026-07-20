@@ -20,16 +20,19 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
     { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
     { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
+    { label: 'Chat', screen: 'ChatList', icon: 'chatbubble-outline' },
     { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   buyer: [
     { label: 'Home', screen: 'Home', icon: 'home' },
     { label: 'Carrito', screen: 'Carrito', icon: 'cart' },
+    { label: 'Chat', screen: 'ChatList', icon: 'chatbubble-outline' },
     { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   farmer: [
     { label: 'Home', screen: 'MyProducts', icon: 'leaf' },
     { label: 'Productos', screen: 'AddProduct', icon: 'plus-circle' },
+    { label: 'Chat', screen: 'ChatList', icon: 'chatbubble-outline' },
     { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   seller: [

@@ -8,6 +8,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import Navbar from '@/components/Navbar';
+import ChatListScreen from '@/features/chat/screens/ChatListScreen';
+import ChatScreen from '@/features/chat/screens/ChatScreen';
+import CreateGroupScreen from '@/features/chat/screens/CreateGroupScreen';
+import GroupDetailScreen from '@/features/chat/screens/GroupDetailScreen';
+import StartChatScreen from '@/features/chat/screens/StartChatScreen';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
@@ -136,6 +141,20 @@ function AdminTabs() {
           tabBarItemStyle: { display: 'none', width: 0, height: 0 },
         }}
       />
+      <AdminTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </AdminTab.Navigator>
   );
 }
@@ -164,6 +183,20 @@ function BuyerTabs() {
       />
       <BuyerTab.Screen name="Carrito" component={CarritoScreen} />
       <BuyerTab.Screen name="Notificaciones" component={NotificationsScreen} />
+      <BuyerTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </BuyerTab.Navigator>
   );
 }
@@ -174,6 +207,16 @@ function BuyerNavigator() {
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
+      <BuyerStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <BuyerStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
     </BuyerStack.Navigator>
   );
 }
@@ -197,6 +240,20 @@ function FarmerTabs() {
         options={{ title: 'Agregar' }}
       />
       <FarmerTab.Screen name="Notificaciones" component={NotificationsScreen} />
+      <FarmerTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </FarmerTab.Navigator>
   );
 }
@@ -206,6 +263,16 @@ function FarmerNavigator() {
     <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
       <FarmerStack.Screen name="FarmerTabs" component={FarmerTabs} />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} />
+      <FarmerStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <FarmerStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
     </FarmerStack.Navigator>
   );
 }
@@ -246,6 +313,26 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <AdminStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <AdminStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <AdminStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
+      />
     </AdminStack.Navigator>
   );
 }

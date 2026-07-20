@@ -121,6 +121,10 @@ export interface ApiResponse<T> {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  Chat: { conversationId: number; title: string };
+  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
+  CreateGroup: undefined;
+  StartChat: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;
@@ -135,20 +139,36 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
-  ProductDetail: undefined;
+  ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
   Profile: undefined;
+  ProductDetail: { productId: number; farmerId: number };
+  Chat: { conversationId: number; title: string };
+  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
 };
 
 export type FarmerTabsParamList = {
   MyProducts: undefined;
   AddProduct: undefined;
+  ChatList: undefined;
 };
 
 export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
+  Chat: { conversationId: number; title: string };
+  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
+};
+
+export type AdminTabsParamList = {
+  AdminPanel: undefined;
+  AdminProducts: undefined;
+  CategoryList: undefined;
+  UnitList: undefined;
+  CategoryTrash: undefined;
+  UnitTrash: undefined;
+  ChatList: undefined;
 };

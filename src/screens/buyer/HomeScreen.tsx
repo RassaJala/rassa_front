@@ -22,6 +22,19 @@ export default function HomeScreen(): React.JSX.Element {
           mode="outlined"
           textColor="#DE393A"
           className="rounded-lg border-brand-red-coral"
+          onPress={() =>
+            navigation.navigate('ProductDetail', {
+              productId: 1,
+              farmerId: 1,
+            })
+          }
+        >
+          Demo: Contactar agricultor
+        </Button>
+        <Button
+          mode="outlined"
+          textColor="#DE393A"
+          className="rounded-lg border-brand-red-coral"
           onPress={() => navigation.navigate('Profile')}
         >
           Mi Perfil
