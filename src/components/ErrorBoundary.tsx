@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+  override componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
     console.error('[ErrorBoundary]', error.message);
   }
 
