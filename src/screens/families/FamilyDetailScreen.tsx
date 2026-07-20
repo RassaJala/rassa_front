@@ -26,11 +26,7 @@ import {
   removeFamilyMember,
 } from '@/services/families';
 import { useTheme } from '@/store/ThemeContext';
-import type {
-  AdminStackParamList,
-  Family,
-  FamilyMember,
-} from '@/types';
+import type { AdminStackParamList, Family, FamilyMember } from '@/types';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyDetail'>;
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyDetail'>;
@@ -65,9 +61,9 @@ function MemberItem({
           color={
             isHead
               ? colors.brandGreenForest
-              : (isDark
+              : isDark
                 ? colors.textTertiary
-                : colors.textSecondary)
+                : colors.textSecondary
           }
         />
         <View className="ml-3 flex-1">
@@ -308,9 +304,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           text: 'Remover',
           style: 'destructive',
           onPress: () =>
-            void removeMemberMutation.mutateAsync(
-              member.id_familia_usuario,
-            ),
+            void removeMemberMutation.mutateAsync(member.id_familia_usuario),
         },
       ],
     );
@@ -324,8 +318,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Asignar',
-          onPress: () =>
-            void assignHeadMutation.mutateAsync(member.fk_usuario),
+          onPress: () => void assignHeadMutation.mutateAsync(member.fk_usuario),
         },
       ],
     );

@@ -14,11 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
-import {
-  createFamily,
-  fetchFamily,
-  updateFamily,
-} from '@/services/families';
+import { createFamily, fetchFamily, updateFamily } from '@/services/families';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Family } from '@/types';
 
@@ -55,8 +51,10 @@ export default function FamilyFormScreen(): React.JSX.Element {
   }, [existingFamily]);
 
   const createMutation = useMutation({
-    mutationFn: (payload: { nombre_familia: string; detalle_familia?: string }) =>
-      createFamily(payload),
+    mutationFn: (payload: {
+      nombre_familia: string;
+      detalle_familia?: string;
+    }) => createFamily(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       navigation.goBack();
@@ -67,8 +65,10 @@ export default function FamilyFormScreen(): React.JSX.Element {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { nombre_familia: string; detalle_familia?: string }) =>
-      updateFamily(Number(familyId), payload),
+    mutationFn: (payload: {
+      nombre_familia: string;
+      detalle_familia?: string;
+    }) => updateFamily(Number(familyId), payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
@@ -134,9 +134,9 @@ export default function FamilyFormScreen(): React.JSX.Element {
           className={`rounded-xl border px-4 py-3 text-base ${
             fieldErrors.nombre
               ? 'border-brand-red-coral'
-              : (isDark
+              : isDark
                 ? 'border-gray-700 bg-gray-800 text-white'
-                : 'border-gray-300 bg-gray-50 text-gray-900')
+                : 'border-gray-300 bg-gray-50 text-gray-900'
           }`}
           placeholder="Ej. Familia López"
           placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}

@@ -159,7 +159,11 @@ export default function FamilyListScreen(): React.JSX.Element {
           navigation.navigate('FamilyForm');
         }}
       >
-        <MaterialCommunityIcons name="plus" size={28} color={colors.iconWhite} />
+        <MaterialCommunityIcons
+          name="plus"
+          size={28}
+          color={colors.iconWhite}
+        />
       </Pressable>
     </View>
   );

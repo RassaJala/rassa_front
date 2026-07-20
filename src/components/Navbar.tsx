@@ -85,9 +85,9 @@ export default function Navbar(): React.JSX.Element {
                 color={
                   isActive
                     ? colors.brandGreenForest
-                    : (isDark
+                    : isDark
                       ? colors.textTertiary
-                      : colors.textSecondary)
+                      : colors.textSecondary
                 }
               />
 
