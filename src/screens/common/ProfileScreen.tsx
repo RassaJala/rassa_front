@@ -20,6 +20,7 @@ import { getRoleLabel } from '@/utils/labels';
 import {
   cleanPhoneNumber,
   formatPhoneNumber,
+  MIN_PASSWORD_LENGTH,
   validateBirthdate,
   validatePassword,
   validatePhone,
@@ -68,7 +69,7 @@ function validatePasswordChange(
 
   const newPassErr = validatePassword(newPass);
   if (newPassErr) {
-    return 'La nueva contraseña debe tener al menos 6 caracteres.';
+    return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   }
 
   if (newPass !== confirmPass) {

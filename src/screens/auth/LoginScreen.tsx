@@ -65,7 +65,7 @@ const dark = {
 // ── Validation ─────────────────────────────────────────────────────────
 
 // ponytail: simple email check, no ReDoS vulnerability
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
 // ── Color constants ────────────────────────────────────────────────────
 

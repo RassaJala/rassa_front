@@ -32,7 +32,9 @@ import {
   cleanName,
   cleanPhoneNumber,
   formatPhoneNumber,
+  MIN_PASSWORD_LENGTH,
   validateBirthdate,
+  validatePassword,
   validatePhone,
 } from '@/utils/validation';
 
@@ -82,11 +84,36 @@ function getProfileError(error: unknown): string {
       : 'Error al actualizar perfil.';
 }
 
+function validateAdminPasswordChange(
+  oldPass: string,
+  newPass: string,
+  confirmPass: string,
+): string | null {
+  if (!oldPass || !newPass || !confirmPass) {
+    return 'Por favor, completa todos los campos.';
+  }
+
+  const newPassErr = validatePassword(newPass);
+  if (newPassErr) {
+    return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  }
+
+  if (newPass !== confirmPass) {
+    return 'La confirmación de la contraseña no coincide.';
+  }
+
+  if (oldPass === newPass) {
+    return 'La nueva contraseña debe ser diferente a la actual.';
+  }
+
+  return null;
+}
+
 export default function AdminProfileScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
   const isDark = colorScheme === 'dark';
@@ -141,6 +168,13 @@ export default function AdminProfileScreen({
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [showMunicipioDialog, setShowMunicipioDialog] = useState(false);
   const [showLocalidadDialog, setShowLocalidadDialog] = useState(false);
+
+  // ── Change Password States ──────────────────────────
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -218,6 +252,75 @@ export default function AdminProfileScreen({
     } finally {
       if (isMounted.current) {
         setIsSubmitting(false);
+      }
+    }
+  }
+
+  // ── Handle Change Password ──────────────────────────
+  async function handleChangePassword() {
+    if (isChangingPassword) return;
+    setSuccessMessage(null);
+    setErrorMessage(null);
+
+    if (netInfo.isConnected === false) {
+      setErrorMessage('Sin conexión a Internet.');
+      return;
+    }
+
+    const validationError = validateAdminPasswordChange(
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    );
+
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      await changePassword({
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+
+      if (isMounted.current) {
+        setSuccessMessage('Contraseña cambiada exitosamente.');
+        setShowPasswordForm(false);
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error) {
+      if (isMounted.current) {
+        // Try to get a more specific error from the backend
+        const msg =
+          axios.isAxiosError(error) && error.response?.data
+            ? typeof error.response.data === 'string'
+              ? error.response.data
+              : ((
+                  error.response.data as Record<string, unknown>
+                )?.old_password?.toString() ??
+                (
+                  error.response.data as Record<string, unknown>
+                )?.new_password?.toString() ??
+                (
+                  error.response.data as Record<string, unknown>
+                )?.detail?.toString() ??
+                (
+                  error.response.data as Record<string, unknown>
+                )?.message?.toString() ??
+                'La contraseña actual es incorrecta.')
+            : error instanceof Error
+              ? error.message
+              : 'Error al cambiar contraseña.';
+        setErrorMessage(msg);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsChangingPassword(false);
       }
     }
   }
@@ -413,6 +516,8 @@ export default function AdminProfileScreen({
             fg={fg}
           />
         </View>
+
+        {renderPasswordSection()}
       </>
     );
   }
@@ -927,6 +1032,176 @@ export default function AdminProfileScreen({
           </View>
         </View>
       </>
+    );
+  }
+
+  // ── Change Password Section ─────────────────────────
+  function renderPasswordSection(): React.JSX.Element {
+    return (
+      <View
+        style={{
+          backgroundColor: surface,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: border,
+          padding: 20,
+          marginTop: 16,
+        }}
+      >
+        {/* Header */}
+        <Pressable
+          onPress={() => {
+            setShowPasswordForm((prev) => !prev);
+            setErrorMessage(null);
+            setSuccessMessage(null);
+          }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        >
+          <MaterialCommunityIcons name="lock-outline" size={22} color={brand} />
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '700',
+              color: fg,
+              letterSpacing: -0.15,
+              flex: 1,
+            }}
+          >
+            Cambiar Contraseña
+          </Text>
+          <MaterialCommunityIcons
+            name={showPasswordForm ? 'chevron-up' : 'chevron-down'}
+            size={22}
+            color={muted}
+          />
+        </Pressable>
+
+        {showPasswordForm ? (
+          <>
+            {/* Current Password */}
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: muted,
+                marginBottom: 4,
+                marginTop: 20,
+                textTransform: 'uppercase',
+                letterSpacing: 0.04,
+              }}
+            >
+              Contraseña Actual *
+            </Text>
+            <TextInput
+              mode="outlined"
+              placeholder="••••••••"
+              placeholderTextColor={placeholderColor}
+              secureTextEntry
+              value={oldPassword}
+              onChangeText={setOldPassword}
+              style={{ marginBottom: 14, backgroundColor: inputBg }}
+              theme={{
+                colors: {
+                  text: inputText,
+                  primary: brand,
+                  outline: border,
+                  placeholder: placeholderColor,
+                },
+              }}
+            />
+
+            {/* New Password */}
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: muted,
+                marginBottom: 4,
+                textTransform: 'uppercase',
+                letterSpacing: 0.04,
+              }}
+            >
+              Nueva Contraseña *
+            </Text>
+            <TextInput
+              mode="outlined"
+              placeholder="••••••••"
+              placeholderTextColor={placeholderColor}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+              style={{ marginBottom: 14, backgroundColor: inputBg }}
+              theme={{
+                colors: {
+                  text: inputText,
+                  primary: brand,
+                  outline: border,
+                  placeholder: placeholderColor,
+                },
+              }}
+            />
+
+            {/* Confirm Password */}
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: muted,
+                marginBottom: 4,
+                textTransform: 'uppercase',
+                letterSpacing: 0.04,
+              }}
+            >
+              Confirmar Nueva Contraseña *
+            </Text>
+            <TextInput
+              mode="outlined"
+              placeholder="••••••••"
+              placeholderTextColor={placeholderColor}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              style={{ marginBottom: 14, backgroundColor: inputBg }}
+              theme={{
+                colors: {
+                  text: inputText,
+                  primary: brand,
+                  outline: border,
+                  placeholder: placeholderColor,
+                },
+              }}
+            />
+
+            {/* Submit Button */}
+            <Pressable
+              onPress={handleChangePassword}
+              disabled={isChangingPassword}
+              style={({ pressed }) => ({
+                paddingVertical: 14,
+                borderRadius: 12,
+                backgroundColor: errorColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed || isChangingPassword ? 0.7 : 1,
+              })}
+            >
+              {isChangingPassword ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '700',
+                    color: white,
+                  }}
+                >
+                  Cambiar Contraseña
+                </Text>
+              )}
+            </Pressable>
+          </>
+        ) : null}
+      </View>
     );
   }
 
