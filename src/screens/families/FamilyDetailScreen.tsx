@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -61,7 +63,9 @@ function MemberItem({
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
-  const btnBg = isDark ? '#353D35' : '#F5F7F0';
+  const coral = '#DE393A';
+  const highlightColor = '#E46C38';
+  const accentBg = isDark ? '#353D35' : '#F5F7F0';
 
   return (
     <View
@@ -69,51 +73,82 @@ function MemberItem({
         marginBottom: 8,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        borderRadius: 12,
+        gap: 14,
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: border,
         backgroundColor: surface,
-        padding: 12,
+        padding: 16,
       }}
     >
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+      {/* Icono circular */}
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: accentBg,
+        }}
+      >
         <MaterialCommunityIcons
           name={isHead ? 'account-star' : 'account'}
           size={20}
-          color={isHead ? '#3A6D56' : muted}
+          color={isHead ? highlightColor : muted}
         />
-        <View style={{ marginLeft: 12, flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-            {member.usuario_nombre}
-          </Text>
-          <Text style={{ fontSize: 12, color: muted }}>
-            {member.usuario_correo}
-          </Text>
-        </View>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 4 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 15, fontWeight: '600', color: fg }} numberOfLines={1}>
+          {member.usuario_nombre}
+        </Text>
+        <Text style={{ fontSize: 12, color: muted, marginTop: 2 }} numberOfLines={1}>
+          {member.usuario_correo}
+        </Text>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 6 }}>
         {!isHead ? (
           <Pressable
-            style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
             onPress={() => onAssignHead(member)}
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: pressed ? (isDark ? '#353D35' : '#F5F7F0') : 'transparent',
+            })}
+            hitSlop={6}
           >
             <MaterialCommunityIcons
               name="account-star"
               size={16}
-              color="#3A6D56"
+              color={highlightColor}
             />
           </Pressable>
         ) : null}
         <Pressable
-          style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
           onPress={() => onRemove(member)}
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: border,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: pressed ? (isDark ? '#353D35' : '#F5F7F0') : 'transparent',
+          })}
+          hitSlop={6}
         >
           <MaterialCommunityIcons
             name="account-remove"
             size={16}
-            color="#DE393A"
+            color={coral}
           />
         </Pressable>
       </View>
@@ -151,6 +186,9 @@ function UserSuggestionsList({
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const pressedBg = isDark ? '#353D35' : '#F5F7F0';
 
+  const iconBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.08)';
+  const iconColor = isDark ? '#4A8A63' : '#24563C';
+
   return (
     <View
       style={{
@@ -164,28 +202,330 @@ function UserSuggestionsList({
       }}
     >
       <ScrollView nestedScrollEnabled>
-        {results.map((user) => (
-          <Pressable
-            key={user.id_usuario}
-            onPress={() => onSelect(user)}
-            style={({ pressed }) => ({
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-              borderBottomWidth: 1,
-              borderBottomColor: border,
-              backgroundColor: pressed ? pressedBg : 'transparent',
-            })}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-              {user.nombre} {user.apellido_paterno}
-            </Text>
-            <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-              {user.email} (ID: {user.id_usuario})
-            </Text>
-          </Pressable>
+        {results.map((user, index) => (
+          <View key={user.id_usuario}>
+            {index > 0 ? (
+              <View style={{ height: 1, backgroundColor: border }} />
+            ) : null}
+            <Pressable
+              onPress={() => onSelect(user)}
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? pressedBg : 'transparent',
+              })}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: iconBg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <MaterialCommunityIcons name="account" size={16} color={iconColor} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: fg }} numberOfLines={1}>
+                    {user.nombre} {user.apellido_paterno}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: muted, marginTop: 1 }} numberOfLines={1}>
+                    {user.email}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          </View>
         ))}
       </ScrollView>
     </View>
+  );
+}
+
+interface AddMemberModalContentProps extends AddMemberModalProps {
+  readonly query: string;
+  readonly results: SearchUserResult[];
+  readonly selectedUser: SearchUserResult | null;
+  readonly loading: boolean;
+  readonly onChangeText: (text: string) => void;
+  readonly onClear: () => void;
+  readonly onSelect: (user: SearchUserResult) => void;
+}
+
+interface ModalActionsProps {
+  readonly selectedUser: SearchUserResult | null;
+  readonly isPending: boolean;
+  readonly primaryColor: string;
+  readonly disabledBg: string;
+  readonly border: string;
+  readonly pressedBg: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly onConfirm: (userId: number) => void;
+  readonly onCancel: () => void;
+}
+
+function ModalActions({
+  selectedUser,
+  isPending,
+  primaryColor,
+  disabledBg,
+  border,
+  pressedBg,
+  fg,
+  muted,
+  onConfirm,
+  onCancel,
+}: ModalActionsProps): React.JSX.Element {
+  const handleConfirm = (): void => {
+    if (selectedUser) {
+      onConfirm(selectedUser.id_usuario);
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+      <Pressable
+        onPress={onCancel}
+        disabled={isPending}
+        style={({ pressed }) => ({
+          width: '47%',
+          height: 48,
+          borderRadius: 12,
+          borderWidth: 1.5,
+          borderColor: border,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: pressed ? pressedBg : 'transparent',
+        })}
+      >
+        <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+          Cancelar
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={handleConfirm}
+        disabled={!selectedUser || isPending}
+        style={({ pressed }) => ({
+          width: '47%',
+          height: 48,
+          borderRadius: 12,
+          backgroundColor: selectedUser ? primaryColor : disabledBg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          gap: 6,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        {isPending ? (
+          <ActivityIndicator size={16} color={selectedUser ? colors.iconWhite : fg} />
+        ) : null}
+        <Text style={{ fontSize: 15, fontWeight: '600', color: selectedUser ? colors.iconWhite : muted }}>
+          Agregar
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function AddMemberModalContent({
+  visible,
+  isDark,
+  isPending,
+  errorMsg,
+  query,
+  results,
+  selectedUser,
+  loading,
+  onChangeText,
+  onClear,
+  onSelect,
+  onConfirm,
+  onCancel,
+}: AddMemberModalContentProps): React.JSX.Element | null {
+  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const inputBg = isDark ? '#1A211B' : '#F9FAF6';
+  const primaryBg = isDark ? 'rgba(222,57,58,0.12)' : 'rgba(222,57,58,0.06)';
+  const primaryColor = colors.brandRedCoral;
+  const disabledBg = isDark ? '#353D35' : '#E2E6DF';
+  const pressedBg = isDark ? '#353D35' : '#F5F7F0';
+  const errorColor = '#DE393A';
+  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: modalOverlay }}
+          onPress={onCancel}
+        />
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+            borderTopWidth: 1,
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
+            borderColor: border,
+          }}
+        >
+          {/* Header */}
+          <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: primaryBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="account-plus"
+                size={26}
+                color={primaryColor}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: fg,
+                textAlign: 'center',
+              }}
+            >
+              Agregar miembro
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: muted,
+                marginTop: 4,
+                textAlign: 'center',
+              }}
+            >
+              Busca un usuario por su nombre o correo.
+            </Text>
+          </View>
+
+          {/* Search input */}
+          <View style={{ position: 'relative' }}>
+            <TextInput
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: inputBg,
+                paddingLeft: 16,
+                paddingRight: selectedUser ?? query ? 40 : 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: fg,
+              }}
+              placeholder="Nombre o correo..."
+              placeholderTextColor={muted}
+              value={query}
+              onChangeText={onChangeText}
+              editable={!isPending}
+            />
+            {selectedUser ?? query ? (
+              <Pressable
+                onPress={onClear}
+                style={{ position: 'absolute', right: 12, top: 14 }}
+              >
+                <MaterialCommunityIcons
+                  name="close-circle"
+                  size={20}
+                  color={muted}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+
+          {/* Suggestions */}
+          <UserSuggestionsList
+            results={results}
+            isDark={isDark}
+            onSelect={onSelect}
+          />
+
+          {loading ? (
+            <ActivityIndicator
+              size="small"
+              color={primaryColor}
+              style={{ marginTop: 8 }}
+            />
+          ) : null}
+
+          {/* Error */}
+          {errorMsg ? (
+            <View
+              style={{
+                marginTop: 10,
+                borderRadius: 10,
+                backgroundColor: errorBg,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={16}
+                color={errorColor}
+              />
+              <Text style={{ fontSize: 13, color: errorColor, flex: 1 }}>
+                {errorMsg}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Actions */}
+          <ModalActions
+            selectedUser={selectedUser}
+            isPending={isPending}
+            primaryColor={primaryColor}
+            disabledBg={disabledBg}
+            border={border}
+            pressedBg={pressedBg}
+            fg={fg}
+            muted={muted}
+            onConfirm={onConfirm}
+            onCancel={onCancel}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -213,7 +553,8 @@ function AddMemberModal({
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2 || selectedUser) {
+    const shouldSearch = trimmed.length >= 2 && !selectedUser;
+    if (!shouldSearch) {
       setResults([]);
       return;
     }
@@ -233,216 +574,41 @@ function AddMemberModal({
     return () => clearTimeout(delayDebounce);
   }, [query, selectedUser]);
 
-  const modalOverlay = 'rgba(0,0,0,0.4)';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const inputBg = isDark ? '#1A211B' : '#F9FAF6';
-  const primaryBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)';
-  const primaryColor = isDark ? '#4A8A63' : '#24563C';
-  const disabledBg = isDark ? '#353D35' : '#E2E6DF';
-  const pressedBg = isDark ? '#353D35' : '#F5F7F0';
-  const errorColor = '#DE393A';
-  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const handleClear = (): void => {
+    setQuery('');
+    setSelectedUser(null);
+    setResults([]);
+  };
+
+  const handleSelect = (user: SearchUserResult): void => {
+    setSelectedUser(user);
+    setQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
+    setResults([]);
+  };
+
+  const handleChangeText = (text: string): void => {
+    setQuery(text);
+    if (selectedUser) {
+      setSelectedUser(null);
+    }
+  };
 
   return (
-    <Modal
+    <AddMemberModalContent
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
-      <Pressable
-        style={{ flex: 1, backgroundColor: modalOverlay }}
-        onPress={onCancel}
-      />
-      <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 24,
-          padding: 24,
-          paddingBottom: 34,
-          marginTop: 'auto',
-          borderTopWidth: 1,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: border,
-        }}
-      >
-        {/* Header */}
-        <View style={{ alignItems: 'center', marginBottom: 20 }}>
-          <View
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: primaryBg,
-              marginBottom: 12,
-            }}
-          >
-            <MaterialCommunityIcons
-              name="account-plus"
-              size={26}
-              color={primaryColor}
-            />
-          </View>
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '700',
-              color: fg,
-              textAlign: 'center',
-            }}
-          >
-            Agregar miembro
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: muted,
-              marginTop: 4,
-              textAlign: 'center',
-            }}
-          >
-            Busca un usuario por su nombre o correo.
-          </Text>
-        </View>
-
-        {/* Search input */}
-        <View style={{ position: 'relative' }}>
-          <TextInput
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: border,
-              backgroundColor: inputBg,
-              paddingLeft: 16,
-              paddingRight: selectedUser ?? query ? 40 : 16,
-              paddingVertical: 12,
-              fontSize: 16,
-              color: fg,
-            }}
-            placeholder="Nombre o correo..."
-            placeholderTextColor={muted}
-            value={query}
-            onChangeText={(text) => {
-              setQuery(text);
-              if (selectedUser) setSelectedUser(null);
-            }}
-            editable={!isPending}
-          />
-          {selectedUser ?? query ? (
-            <Pressable
-              onPress={() => {
-                setQuery('');
-                setSelectedUser(null);
-                setResults([]);
-              }}
-              style={{ position: 'absolute', right: 12, top: 14 }}
-            >
-              <MaterialCommunityIcons
-                name="close-circle"
-                size={20}
-                color={muted}
-              />
-            </Pressable>
-          ) : null}
-        </View>
-
-        {/* Suggestions */}
-        <UserSuggestionsList
-          results={results}
-          isDark={isDark}
-          onSelect={(user) => {
-            setSelectedUser(user);
-            setQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
-            setResults([]);
-          }}
-        />
-
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={primaryColor}
-            style={{ marginTop: 8 }}
-          />
-        ) : null}
-
-        {/* Error */}
-        {errorMsg ? (
-          <View
-            style={{
-              marginTop: 10,
-              borderRadius: 10,
-              backgroundColor: errorBg,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <MaterialCommunityIcons
-              name="alert-circle-outline"
-              size={16}
-              color={errorColor}
-            />
-            <Text style={{ fontSize: 13, color: errorColor, flex: 1 }}>
-              {errorMsg}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Actions */}
-        <View style={{ gap: 10, marginTop: 20 }}>
-          <Pressable
-            onPress={() => {
-              if (selectedUser) {
-                onConfirm(selectedUser.id_usuario);
-              }
-            }}
-            disabled={!selectedUser || isPending}
-            style={({ pressed }) => ({
-              height: 50,
-              borderRadius: 14,
-              backgroundColor: selectedUser ? primaryColor : disabledBg,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-              opacity: pressed ? 0.8 : 1,
-            })}
-          >
-            {isPending ? (
-              <ActivityIndicator size={16} color={colors.iconWhite} />
-            ) : null}
-            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.iconWhite }}>
-              Agregar
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={onCancel}
-            disabled={isPending}
-            style={({ pressed }) => ({
-              height: 44,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: pressed ? pressedBg : 'transparent',
-            })}
-          >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
-              Cancelar
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
+      isDark={isDark}
+      isPending={isPending}
+      errorMsg={errorMsg}
+      query={query}
+      results={results}
+      selectedUser={selectedUser}
+      loading={loading}
+      onChangeText={handleChangeText}
+      onClear={handleClear}
+      onSelect={handleSelect}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }
 
@@ -863,7 +1029,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
               <MaterialCommunityIcons
                 name="account-star"
                 size={16}
-                color="#3A6D56"
+                color="#E46C38"
               />
               <Text style={{ marginLeft: 6, fontSize: 14, color: fg }}>
                 Jefe: {family.jefe_nombre}
@@ -886,14 +1052,14 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           <Pressable
             style={({ pressed }) => ({
               borderRadius: 8,
-              backgroundColor: coral,
+              backgroundColor: colors.brandRedCoral,
               paddingHorizontal: 12,
               paddingVertical: 6,
               opacity: pressed ? 0.9 : 1,
             })}
             onPress={() => setAddModalVisible(true)}
           >
-            <Text className="text-sm font-semibold text-white">Agregar</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>Agregar</Text>
           </Pressable>
         </View>
 

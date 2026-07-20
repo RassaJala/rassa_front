@@ -31,21 +31,50 @@ function FormHeader({
   isDark,
   onBack,
 }: FormHeaderProps): React.JSX.Element {
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+
   return (
-    <View className="flex-row items-center border-b border-gray-200 bg-white px-5 pb-4 pt-[60px] dark:border-gray-800 dark:bg-gray-900">
+    <View
+      style={{
+        paddingHorizontal: 20,
+        paddingTop: 60,
+        paddingBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
       <Pressable
         onPress={onBack}
-        className="mr-3 active:opacity-60"
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.6 : 1,
+        })}
+        hitSlop={8}
       >
         <MaterialCommunityIcons
           name="arrow-left"
           size={24}
-          color={isDark ? colors.iconWhite : colors.iconDark}
+          color={fg}
         />
       </Pressable>
-      <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
-        {isEditing ? 'Editar familia' : 'Nueva familia'}
-      </Text>
+      <View>
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: '700',
+            letterSpacing: -0.02,
+            color: fg,
+          }}
+        >
+          {isEditing ? 'Editar familia' : 'Nueva familia'}
+        </Text>
+        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+          {isEditing
+            ? 'Modifica los datos de la familia'
+            : 'Completa los datos de la nueva familia'}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -92,7 +121,7 @@ function FormFields({
   const border = isDark ? '#353D35' : '#E2E6DF';
   const btnBg = isDark ? '#353D35' : '#F5F7F0';
   const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
-  const coral = '#DE393A';
+  const errorColor = '#DE393A';
 
   return (
     <View
@@ -112,7 +141,7 @@ function FormFields({
         style={{
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: fieldErrors.nombre ? coral : border,
+          borderColor: fieldErrors.nombre ? errorColor : border,
           backgroundColor: textInputBg,
           paddingHorizontal: 16,
           paddingVertical: 12,
@@ -131,7 +160,7 @@ function FormFields({
         editable={!isSaving}
       />
       {fieldErrors.nombre ? (
-        <Text style={{ marginTop: 4, fontSize: 12, color: coral }}>
+        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
           {fieldErrors.nombre}
         </Text>
       ) : null}
@@ -168,49 +197,53 @@ function FormFields({
           <MaterialCommunityIcons
             name="alert-circle"
             size={16}
-            color={coral}
+            color={errorColor}
           />
-          <Text style={{ marginLeft: 6, fontSize: 14, color: coral }}>
+          <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
             {serverError}
           </Text>
         </View>
       ) : null}
 
       {/* ── Actions ─────────────────────────────────── */}
-      <View style={{ marginTop: 24, flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+      <View style={{ marginTop: 24, gap: 10 }}>
         <Pressable
           style={({ pressed }) => ({
-            borderRadius: 12,
-            backgroundColor: btnBg,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            opacity: pressed ? 0.9 : 1,
-          })}
-          onPress={onCancel}
-          disabled={isSaving}
-        >
-          <Text style={{ fontSize: 14, fontWeight: '500', color: fg }}>
-            Cancelar
-          </Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => ({
-            borderRadius: 12,
-            backgroundColor: coral,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            opacity: pressed ? 0.9 : 1,
+            borderRadius: 14,
+            backgroundColor: colors.brandRedCoral,
+            height: 50,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 6,
+            opacity: pressed ? 0.85 : 1,
           })}
           onPress={onSubmit}
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <Text className="text-sm font-semibold text-white">
-              {isEditing ? 'Guardar cambios' : 'Crear familia'}
-            </Text>
-          )}
+            <ActivityIndicator size={16} color={colors.iconWhite} />
+          ) : null}
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.iconWhite }}>
+            {isEditing ? 'Guardar cambios' : 'Crear familia'}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => ({
+            borderRadius: 14,
+            height: 44,
+            borderWidth: 1.5,
+            borderColor: border,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: pressed ? btnBg : 'transparent',
+          })}
+          onPress={onCancel}
+          disabled={isSaving}
+        >
+          <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+            Cancelar
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -310,15 +343,21 @@ export default function FamilyFormScreen(): React.JSX.Element {
     return <LoadingIndicator />;
   }
 
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View style={{ flex: 1, backgroundColor: bg }}>
       <FormHeader
         isEditing={isEditing}
         isDark={isDark}
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView className="flex-1 px-4 pt-4">
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20, gap: 0 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <FormFields
           isDark={isDark}
           nombre={nombre}

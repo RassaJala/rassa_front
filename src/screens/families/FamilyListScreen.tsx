@@ -1,10 +1,11 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -21,11 +22,229 @@ import type { AdminStackParamList, Family } from '@/types';
 
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyList'>;
 
+// ── Family card ───────────────────────────────────────────
+
+interface FamilyCardProps {
+  readonly family: Family;
+  readonly isDark: boolean;
+  readonly onPress: () => void;
+}
+
+function FamilyCard({
+  family,
+  isDark,
+  onPress,
+}: FamilyCardProps): React.JSX.Element {
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const accentBg = isDark ? '#353D35' : '#F5F7F0';
+  const highlightColor = '#E46C38';
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        backgroundColor: surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: border,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
+      {/* Ícono circular neutro */}
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: accentBg,
+        }}
+      >
+        <MaterialCommunityIcons name="account-group" size={22} color={muted} />
+      </View>
+
+      {/* Info */}
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{ fontSize: 16, fontWeight: '600', color: fg }}
+          numberOfLines={1}
+        >
+          {family.nombre_familia}
+        </Text>
+        {family.jefe_nombre ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              marginTop: 3,
+            }}
+          >
+            <MaterialCommunityIcons name="star" size={12} color={highlightColor} />
+            <Text style={{ fontSize: 13, color: highlightColor, fontWeight: '500' }}>
+              {family.jefe_nombre}
+            </Text>
+          </View>
+        ) : (
+          <Text style={{ fontSize: 13, color: muted, marginTop: 3 }}>
+            Sin jefe asignado
+          </Text>
+        )}
+        {family.detalle_familia ? (
+          <Text
+            style={{ fontSize: 12, color: muted, marginTop: 2 }}
+            numberOfLines={1}
+          >
+            {family.detalle_familia}
+          </Text>
+        ) : null}
+      </View>
+
+      {/* Chevron */}
+      <MaterialCommunityIcons name="chevron-right" size={22} color={muted} />
+    </TouchableOpacity>
+  );
+}
+
+// ── Sub-states ────────────────────────────────────────────
+
+interface StateViewProps {
+  readonly bg: string;
+  readonly muted: string;
+}
+
+function UnauthorizedView({ bg, muted }: StateViewProps): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: bg,
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
+      <Text
+        style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}
+      >
+        No tienes permisos para acceder a esta sección.
+      </Text>
+    </View>
+  );
+}
+
+function LoadingView({ bg, brand }: { bg: string; brand: string }): React.JSX.Element {
+  return (
+    <View
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}
+    >
+      <ActivityIndicator size="large" color={brand} />
+    </View>
+  );
+}
+
+interface ErrorViewProps extends StateViewProps {
+  readonly brand: string;
+  readonly onRefetch: () => void;
+}
+
+function ErrorView({ bg, muted, brand, onRefetch }: ErrorViewProps): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: bg,
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={48}
+        color={muted}
+      />
+      <Text
+        style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}
+      >
+        Error al cargar las familias.
+      </Text>
+      <Pressable
+        onPress={onRefetch}
+        style={{
+          marginTop: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: brand,
+          borderRadius: 12,
+          paddingHorizontal: 24,
+          paddingVertical: 12,
+        }}
+      >
+        <MaterialCommunityIcons name="refresh" size={18} color={colors.iconWhite} />
+        <Text style={{ fontWeight: '600', color: colors.iconWhite }}>Reintentar</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function EmptyView({ muted }: { muted: string }): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="account-group-outline"
+        size={64}
+        color={muted}
+      />
+      <Text
+        style={{
+          marginTop: 16,
+          textAlign: 'center',
+          fontSize: 20,
+          fontWeight: '700',
+          color: muted,
+        }}
+      >
+        No hay familias
+      </Text>
+      <Text
+        style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}
+      >
+        Crea una familia para comenzar.
+      </Text>
+    </View>
+  );
+}
+
+// ── Screen ────────────────────────────────────────────────
+
 export default function FamilyListScreen(): React.JSX.Element {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const navigation = useNavigation<Nav>();
   const isDark = colorScheme === 'dark';
+
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const brand = isDark ? '#4A8A63' : '#24563C';
 
   const {
     data: families,
@@ -40,208 +259,92 @@ export default function FamilyListScreen(): React.JSX.Element {
   });
 
   if (user?.role !== 'admin') {
-    return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <MaterialCommunityIcons
-          name="lock-outline"
-          size={48}
-          color={colors.iconMuted}
-        />
-        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
-          No tienes permisos para acceder a esta sección.
-        </Text>
-      </View>
-    );
+    return <UnauthorizedView bg={bg} muted={muted} />;
   }
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <ActivityIndicator size="large" color={colors.brandRedCoral} />
-      </View>
-    );
+    return <LoadingView bg={bg} brand={brand} />;
   }
 
   if (isError) {
-    return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6 dark:bg-gray-950">
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={48}
-          color={colors.brandRedCoral}
-        />
-        <Text className="mt-4 text-center text-base text-gray-500 dark:text-gray-400">
-          Error al cargar las familias.
-        </Text>
-        <Pressable
-          className="mt-4 rounded-xl bg-brand-green-forest px-6 py-3"
-          onPress={() => void refetch()}
-        >
-          <Text className="font-semibold text-white">Reintentar</Text>
-        </Pressable>
-      </View>
-    );
+    return <ErrorView bg={bg} muted={muted} brand={brand} onRefetch={() => void refetch()} />;
   }
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const isEmpty = !families || families.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Header */}
+      {/* Header — igual que CrudListScreen */}
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
           paddingHorizontal: 20,
           paddingTop: 60,
-          paddingBottom: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: border,
-          backgroundColor: surface,
+          paddingBottom: 4,
         }}
       >
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => ({
-            marginRight: 12,
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={24}
-            color={fg}
-          />
-        </Pressable>
         <Text
           style={{
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: '700',
+            letterSpacing: -0.02,
             color: fg,
           }}
         >
           Familias
         </Text>
+        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+          {(families ?? []).length}{' '}
+          {(families ?? []).length === 1 ? 'familia registrada' : 'familias registradas'}
+        </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={{ padding: 16 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => void refetch()}
-            tintColor={brand}
-          />
-        }
-      >
-        {(families ?? []).length === 0 ? (
-          <View style={{ alignItems: 'center', paddingTop: 80 }}>
-            <MaterialCommunityIcons
-              name="account-group-outline"
-              size={64}
-              color={muted}
+      {isEmpty ? (
+        <EmptyView muted={muted} />
+      ) : (
+        <FlatList
+          data={families}
+          keyExtractor={(item) => String(item.id_familia)}
+          contentContainerStyle={{ padding: 20, paddingBottom: 100, gap: 10 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => void refetch()}
+              tintColor={brand}
             />
-            <Text
-              style={{
-                marginTop: 16,
-                textAlign: 'center',
-                fontSize: 18,
-                fontWeight: '600',
-                color: muted,
-              }}
-            >
-              No hay familias registradas
-            </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                textAlign: 'center',
-                fontSize: 14,
-                color: muted,
-              }}
-            >
-              Crea una familia para comenzar.
-            </Text>
-          </View>
-        ) : (
-          (families ?? []).map((family) => (
-            <Pressable
-              key={family.id_familia}
-              style={({ pressed }) => ({
-                marginBottom: 12,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: border,
-                backgroundColor: surface,
-                padding: 16,
-                opacity: pressed ? 0.9 : 1,
-              })}
-              onPress={() => {
+          }
+          renderItem={({ item }) => (
+            <FamilyCard
+              family={item}
+              isDark={isDark}
+              onPress={() =>
                 navigation.navigate('FamilyDetail', {
-                  familyId: family.id_familia,
-                });
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: fg }}>
-                    {family.nombre_familia}
-                  </Text>
-                  {family.jefe_nombre ? (
-                    <Text style={{ marginTop: 4, fontSize: 14, color: muted }}>
-                      Jefe: {family.jefe_nombre}
-                    </Text>
-                  ) : null}
-                  {family.detalle_familia ? (
-                    <Text
-                      style={{ marginTop: 2, fontSize: 13, color: muted }}
-                      numberOfLines={1}
-                    >
-                      {family.detalle_familia}
-                    </Text>
-                  ) : null}
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={muted}
-                />
-              </View>
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
+                  familyId: item.id_familia,
+                })
+              }
+            />
+          )}
+        />
+      )}
 
+      {/* FAB Coral — igual que el resto de la app */}
       <Pressable
         style={({ pressed }) => ({
           position: 'absolute',
-          bottom: 24,
+          bottom: 28,
           right: 24,
           borderRadius: 999,
-          backgroundColor: coral,
+          backgroundColor: colors.brandRedCoral,
           padding: 16,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 6,
-          elevation: 5,
-          opacity: pressed ? 0.9 : 1,
+          shadowOpacity: 0.2,
+          shadowRadius: 8,
+          elevation: 6,
+          opacity: pressed ? 0.85 : 1,
         })}
-        onPress={() => {
-          navigation.navigate('FamilyForm');
-        }}
+        onPress={() => navigation.navigate('FamilyForm')}
       >
-        <MaterialCommunityIcons
-          name="plus"
-          size={28}
-          color="#ffffff"
-        />
+        <MaterialCommunityIcons name="plus" size={28} color={colors.iconWhite} />
       </Pressable>
     </View>
   );
