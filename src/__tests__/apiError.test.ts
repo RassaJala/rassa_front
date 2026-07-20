@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test file for apiError utility */
 import { extractApiError } from '@/utils/apiError';
 
+// Mock __DEV__ for tests
+(global as any).__DEV__ = true;
+
 describe('extractApiError', () => {
   it('devuelve mensaje de un Error normal', () => {
     const result = extractApiError(new Error('Algo salió mal'), []);

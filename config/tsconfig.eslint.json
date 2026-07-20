@@ -23,6 +23,7 @@
     "prettier.config.mjs",
     "../babel.config.js",
     "../metro.config.js",
-    "../tailwind.config.js"
+    "../tailwind.config.js",
+    "../jest.setup.ts"
   ]
 }

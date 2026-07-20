@@ -38,7 +38,12 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts",
+    "src/types/global.d.ts"
+  ],
   "exclude": [
     "node_modules",
     "babel.config.js",
@@ -46,6 +51,8 @@
     "config/eslint.config.ts",
     "config/commitlint.config.ts",
     "config/lint-staged.config.ts",
-    "config/prettier.config.mjs"
+    "config/prettier.config.mjs",
+    "web",
+    "packages"
   ]
 }
