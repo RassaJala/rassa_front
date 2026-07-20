@@ -1,36 +1,40 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   FlatList,
   Image,
+  Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNetInfo } from '@react-native-community/netinfo';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNetInfo } from "@react-native-community/netinfo";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import api, { mediaUrl } from '@/services/api';
-import { useAuth } from '@/store/AuthContext';
-import { useTheme } from '@/store/ThemeContext';
+import Toast from "@/components/Toast";
+import api, { mediaUrl } from "@/services/api";
+import { useAuth } from "@/store/AuthContext";
+import { useTheme } from "@/store/ThemeContext";
 import type {
   ApiResponse,
   Category,
   FarmerStackParamList,
   Producto,
-} from '@/types';
+} from "@/types";
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
-  'ProductList'
+  "ProductList"
 >;
 
 interface Props {
@@ -45,23 +49,23 @@ export default function ProductListScreen({
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
-  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
-  const coral = '#DE393A';
-  const pumpkin = '#F2A900';
-  const overlayBg = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)';
-  const drawerBg = isDark ? '#1F2720' : '#FFFFFF';
-  const sidebarBorder = isDark ? '#353D35' : '#E8EAE4';
+  const isDark = colorScheme === "dark";
+  const bg = isDark ? "#1A211B" : "#F5F7F0";
+  const surface = isDark ? "#263028" : "#FFFFFF";
+  const fg = isDark ? "#E8EAE4" : "#2D3328";
+  const muted = isDark ? "#9DA89D" : "#5E6B5E";
+  const border = isDark ? "#353D35" : "#E2E6DF";
+  const brand = isDark ? "#4A8A63" : "#24563C";
+  const accentBg = isDark ? "rgba(74,138,99,0.12)" : "rgba(36,86,60,0.07)";
+  const coralBg = isDark ? "rgba(232,74,74,0.12)" : "rgba(222,57,58,0.07)";
+  const pumpkinBg = isDark ? "rgba(212,160,32,0.12)" : "rgba(242,169,0,0.07)";
+  const coral = "#DE393A";
+  const pumpkin = "#F2A900";
+  const overlayBg = isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)";
+  const drawerBg = isDark ? "#1F2720" : "#FFFFFF";
+  const sidebarBorder = isDark ? "#353D35" : "#E8EAE4";
 
-  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+  const { width: SCREEN_WIDTH } = Dimensions.get("window");
   const DRAWER_WIDTH = 0.55;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -98,30 +102,30 @@ export default function ProductListScreen({
 
   const menuItems = [
     {
-      icon: 'account-circle-outline',
-      label: 'Perfil',
-      desc: 'Tu información personal',
+      icon: "account-circle-outline",
+      label: "Perfil",
+      desc: "Tu información personal",
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: isDark ? 'weather-sunny' : 'weather-night',
-      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
-      desc: 'Alternar apariencia',
+      icon: isDark ? "weather-sunny" : "weather-night",
+      label: `Tema ${isDark ? "claro" : "oscuro"}`,
+      desc: "Alternar apariencia",
       color: fg,
       action: toggleColorScheme,
     },
     {
-      icon: 'cog-outline',
-      label: 'Configuración',
-      desc: 'Preferencias del sistema',
+      icon: "cog-outline",
+      label: "Configuración",
+      desc: "Preferencias del sistema",
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: 'logout',
-      label: 'Cerrar sesión',
-      desc: '',
+      icon: "logout",
+      label: "Cerrar sesión",
+      desc: "",
       color: coral,
       action: () => {
         closeDrawer();
@@ -130,13 +134,53 @@ export default function ProductListScreen({
     },
   ];
 
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
+  const queryClient = useQueryClient();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/productos/${id}/`);
+    },
+    onSuccess: () => {
+      setToastMessage("Producto eliminado.");
+      setToastType("success");
+      void queryClient.invalidateQueries({ queryKey: ["productos"] });
+    },
+    onError: () => {
+      setToastMessage("Error al eliminar producto.");
+      setToastType("error");
+    },
+  });
+
+  const confirmDelete = useCallback(
+    (producto: Producto) => {
+      const msg = `Se eliminará "${producto.nombre_producto}". Esta acción no se puede deshacer.`;
+      if (Platform.OS === "web") {
+        if (window.confirm(`¿Eliminar producto?\n${msg}`)) {
+          deleteMutation.mutate(producto.id_producto);
+        }
+        return;
+      }
+      Alert.alert("¿Eliminar producto?", msg, [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => deleteMutation.mutate(producto.id_producto),
+        },
+      ]);
+    },
+    [deleteMutation]
+  );
+
   const { data: categories } = useQuery<Category[]>({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
+      const { data } = await api.get<ApiResponse<Category[]>>("/categorias/");
       return data.data;
     },
     staleTime: 60_000,
@@ -144,11 +188,11 @@ export default function ProductListScreen({
 
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams();
-    if (searchText) params.set('nombre', searchText);
-    if (selectedCategory) params.set('categoria', String(selectedCategory));
+    if (searchText) params.set("nombre", searchText);
+    if (selectedCategory) params.set("categoria", String(selectedCategory));
     const qs = params.toString();
 
-    return qs ? `/productos/?${qs}` : '/productos/';
+    return qs ? `/productos/?${qs}` : "/productos/";
   }, [searchText, selectedCategory]);
 
   const {
@@ -158,7 +202,7 @@ export default function ProductListScreen({
     refetch,
     isRefetching,
   } = useQuery<Producto[]>({
-    queryKey: ['productos', searchText, selectedCategory],
+    queryKey: ["productos", searchText, selectedCategory],
     queryFn: async () => {
       const { data } =
         await api.get<ApiResponse<{ results: Producto[] }>>(buildUrl());
@@ -171,38 +215,42 @@ export default function ProductListScreen({
 
   const renderImage = (uri: string | null) => {
     const resolved = mediaUrl(uri);
-    if (resolved) {
-      return (
-        <Image
-          source={{ uri: resolved }}
-          style={{ width: 64, height: 64, borderRadius: 12 }}
-          resizeMode="cover"
-        />
-      );
-    }
     return (
       <View
         style={{
-          width: 64,
-          height: 64,
+          width: 100,
+          height: 100,
           borderRadius: 12,
+          overflow: "hidden",
           backgroundColor: accentBg,
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
         }}
       >
-        <MaterialCommunityIcons
-          name="image-outline"
-          size={24}
-          color={brand}
-        />
+        {resolved ? (
+          <Image
+            source={{ uri: resolved }}
+            style={{ width: 100, height: 100 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <MaterialCommunityIcons name="image-outline" size={24} color={brand} />
+        )}
       </View>
     );
   };
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -210,29 +258,62 @@ export default function ProductListScreen({
 
   if (isError) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: coralBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <View
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: coralBg,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 16,
+          }}
+        >
           <MaterialCommunityIcons
             name="alert-circle-outline"
             size={32}
             color={coral}
           />
         </View>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: fg, textAlign: 'center', marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "700",
+            color: fg,
+            textAlign: "center",
+            marginBottom: 8,
+          }}
+        >
           {netInfo.isConnected === false
-            ? 'Sin conexión a Internet'
-            : 'Error al cargar productos'}
+            ? "Sin conexión a Internet"
+            : "Error al cargar productos"}
         </Text>
-        <Text style={{ fontSize: 14, color: muted, textAlign: 'center', marginBottom: 24 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            color: muted,
+            textAlign: "center",
+            marginBottom: 24,
+          }}
+        >
           {netInfo.isConnected === false
-            ? 'Verifica tu conexión y vuelve a intentarlo.'
-            : 'Ocurrió un problema inesperado. Intenta de nuevo más tarde.'}
+            ? "Verifica tu conexión y vuelve a intentarlo."
+            : "Ocurrió un problema inesperado. Intenta de nuevo más tarde."}
         </Text>
         <Pressable
           onPress={() => void refetch()}
           style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: "row",
+            alignItems: "center",
             backgroundColor: surface,
             borderWidth: 1,
             borderColor: border,
@@ -248,7 +329,9 @@ export default function ProductListScreen({
             color={fg}
             style={{ marginRight: 8 }}
           />
-          <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>Reintentar</Text>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: fg }}>
+            Reintentar
+          </Text>
         </Pressable>
       </View>
     );
@@ -258,8 +341,22 @@ export default function ProductListScreen({
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 16 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, minHeight: 48 }}>
+      <View
+        style={{
+          paddingTop: insets.top + 12,
+          paddingHorizontal: 20,
+          paddingBottom: 16,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+            minHeight: 48,
+          }}
+        >
           <Pressable
             onPress={() => navigation.goBack()}
             style={({ pressed }) => ({
@@ -269,56 +366,88 @@ export default function ProductListScreen({
               backgroundColor: surface,
               borderWidth: 1,
               borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               opacity: pressed ? 0.6 : 1,
               zIndex: 1,
             })}
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
           </Pressable>
-          <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' }}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: fg }}>Mis Productos</Text>
+          <View
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              alignItems: "center",
+            }}
+            pointerEvents="none"
+          >
+            <Text style={{ fontSize: 20, fontWeight: "700", color: fg }}>
+              Mis Productos
+            </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 10, zIndex: 1 }}>
+          <View style={{ flexDirection: "row", gap: 14, zIndex: 1 }}>
             <Pressable
+              onPress={() => navigation.navigate("ProductForm", {})}
               style={({ pressed }) => ({
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                backgroundColor: surface,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: pressed ? 0.6 : 1,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: brand,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.8 : 1,
               })}
             >
-              <MaterialCommunityIcons name="bell-outline" size={24} color={fg} />
+              <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
             </Pressable>
             <Pressable
               onPress={openDrawer}
               style={({ pressed }) => ({
-                width: 48,
-                height: 48,
-                borderRadius: 24,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
                 backgroundColor: surface,
                 borderWidth: 1,
                 borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: "center",
+                justifyContent: "center",
                 opacity: pressed ? 0.6 : 1,
               })}
             >
-              <MaterialCommunityIcons name="account-circle" size={24} color={fg} />
+              <MaterialCommunityIcons
+                name="account-circle"
+                size={28}
+                color={fg}
+              />
             </Pressable>
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: surface, borderWidth: 1, borderColor: border, borderRadius: 16, paddingHorizontal: 16, height: 52 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
+            borderRadius: 16,
+            paddingHorizontal: 16,
+            height: 52,
+          }}
+        >
           <MaterialCommunityIcons name="magnify" size={24} color={muted} />
           <TextInput
-            style={{ flex: 1, fontSize: 16, color: fg, marginLeft: 10, outlineStyle: 'none' } as any}
+            style={
+              {
+                flex: 1,
+                fontSize: 16,
+                color: fg,
+                marginLeft: 10,
+                outlineStyle: "none",
+              } as any
+            }
             placeholder="Buscar producto..."
             placeholderTextColor={muted}
             value={searchText}
@@ -327,64 +456,139 @@ export default function ProductListScreen({
             cursorColor={brand}
           />
           {searchText ? (
-            <Pressable onPress={() => setSearchText('')} hitSlop={8}>
-              <MaterialCommunityIcons name="close-circle" size={20} color={muted} />
+            <Pressable onPress={() => setSearchText("")} hitSlop={8}>
+              <MaterialCommunityIcons
+                name="close-circle"
+                size={20}
+                color={muted}
+              />
             </Pressable>
           ) : null}
         </View>
       </View>
 
       {categories && categories.length > 0 ? (
-        <View style={{ paddingBottom: 12 }}>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20 }}
-            ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
-            data={[
-              { id_categoria: 0, nombre: 'Todas', descripcion: '' },
-              ...categories,
-            ]}
-            keyExtractor={(item) => String(item.id_categoria)}
-            renderItem={({ item }) => {
-              const isSelected =
-                item.id_categoria === 0
-                  ? selectedCategory === null
-                  : selectedCategory === item.id_categoria;
-              return (
-                <Pressable
-                  onPress={() =>
-                    setSelectedCategory(
-                      item.id_categoria === 0 ? null : item.id_categoria,
-                    )
-                  }
-                  style={({ pressed }) => ({
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 20,
-                    backgroundColor: isSelected ? brand : surface,
-                    borderWidth: 1,
-                    borderColor: isSelected ? brand : border,
-                    opacity: pressed ? 0.8 : 1,
-                  })}
-                >
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: isSelected ? '#FFFFFF' : fg }}>
-                    {item.nombre}
-                  </Text>
-                </Pressable>
-              );
+        <View style={{ paddingBottom: 14, paddingHorizontal: 20 }}>
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: border,
+              borderRadius: 16,
+              backgroundColor: surface,
             }}
-          />
+          >
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 10,
+                paddingVertical: 10,
+                alignItems: "center",
+              }}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <Pressable
+                  onPress={() => setSelectedCategory(null)}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                >
+                  <View
+                    style={{
+                      paddingHorizontal: 18,
+                      paddingVertical: 12,
+                      borderRadius: 20,
+                      backgroundColor: selectedCategory === null ? brand : surface,
+                      borderWidth: 1.5,
+                      borderColor: selectedCategory === null ? brand : border,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: selectedCategory === null ? "#FFFFFF" : fg,
+                      }}
+                    >
+                      Todas
+                    </Text>
+                  </View>
+                </Pressable>
+                {categories.map((item) => {
+                  const isSelected = selectedCategory === item.id_categoria;
+                  return (
+                    <Pressable
+                      key={String(item.id_categoria)}
+                      onPress={() => setSelectedCategory(item.id_categoria)}
+                      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                    >
+                      <View
+                        style={{
+                          paddingHorizontal: 18,
+                          paddingVertical: 12,
+                          borderRadius: 20,
+                          backgroundColor: isSelected ? brand : surface,
+                          borderWidth: 1.5,
+                          borderColor: isSelected ? brand : border,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: "600",
+                            color: isSelected ? "#FFFFFF" : fg,
+                          }}
+                        >
+                          {item.nombre}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
         </View>
       ) : null}
 
       {isEmpty ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-            <MaterialCommunityIcons name="package-variant" size={40} color={brand} />
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: accentBg,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="package-variant"
+              size={40}
+              color={brand}
+            />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: fg, marginBottom: 8 }}>No hay productos</Text>
-          <Text style={{ fontSize: 15, color: muted, textAlign: 'center' }}>Agrega un producto para comenzar a vender.</Text>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: fg,
+              marginBottom: 8,
+            }}
+          >
+            No hay productos
+          </Text>
+          <Text style={{ fontSize: 15, color: muted, textAlign: "center" }}>
+            Agrega un producto para comenzar a vender.
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -402,88 +606,107 @@ export default function ProductListScreen({
             />
           }
           renderItem={({ item }) => (
-            <Pressable
-              onPress={() =>
-                navigation.navigate('ProductForm', {
-                  productoId: item.id_producto,
-                })
-              }
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
                 backgroundColor: surface,
                 borderRadius: 16,
                 borderWidth: 1,
                 borderColor: border,
                 padding: 12,
-                opacity: pressed ? 0.7 : 1,
-              })}
+              }}
             >
               {renderImage(item.imagen_principal ?? item.imagen)}
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: fg, marginBottom: 4 }}>
+              <View style={{ flex: 1, marginLeft: 12, minWidth: 0 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: fg,
+                    marginBottom: 4,
+                    flexShrink: 1,
+                  }}
+                  numberOfLines={2}
+                >
                   {item.nombre_producto}
                 </Text>
-                <Text style={{ fontSize: 13, color: muted, marginBottom: 8 }}>
-                  {item.categoria.nombre}
-                  {item.unidad ? ` · ${item.unidad.tipo}` : ''}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: brand }}>
-                    ${item.precio}
+
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                  <Text style={{ fontSize: 13, color: muted }} numberOfLines={1}>
+                    {item.categoria?.nombre}
+                    {item.unidad ? ` · ${item.unidad.tipo}` : ""}
                   </Text>
-                  <Text style={{ fontSize: 13, color: muted }}>
-                    Stock: {item.stock}
-                  </Text>
+                  <View style={{
+                      backgroundColor: item.estado ? (isDark ? "rgba(74,138,99,0.2)" : "#E8F5E9") : (isDark ? "rgba(255,255,255,0.1)" : "#F5F5F5"),
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 12
+                  }}>
+                      <Text style={{
+                          fontSize: 11,
+                          fontWeight: "600",
+                          color: item.estado ? (isDark ? "#4ade80" : brand) : muted
+                      }}>{item.estado ? "Activo" : "Inactivo"}</Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: brand }}>${item.precio}</Text>
+                  <Text style={{ fontSize: 14, color: fg }}>· Stock: {item.stock}</Text>
                   {item.es_perecedero ? (
                     <View style={{ backgroundColor: pumpkinBg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: pumpkin }}>
-                        Perecedero
-                      </Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: pumpkin }}>Perecedero</Text>
                     </View>
                   ) : null}
                 </View>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={muted} />
-            </Pressable>
+
+              <View style={{ flexDirection: "column", gap: 8, marginLeft: 12 }}>
+                <Pressable
+                  onPress={() => navigation.navigate("ProductForm", { productoId: item.id_producto })}
+                  style={({ pressed }) => ({
+                    width: 40, height: 40, borderRadius: 10,
+                    borderWidth: 1, borderColor: border,
+                    backgroundColor: surface,
+                    alignItems: "center", justifyContent: "center",
+                    opacity: pressed ? 0.7 : 1
+                  })}
+                >
+                  <MaterialCommunityIcons name="pencil" size={20} color={fg} />
+                </Pressable>
+                <Pressable
+                  onPress={() => confirmDelete(item)}
+                  style={({ pressed }) => ({
+                    width: 40, height: 40, borderRadius: 10,
+                    borderWidth: 1, borderColor: border,
+                    backgroundColor: surface,
+                    alignItems: "center", justifyContent: "center",
+                    opacity: pressed ? 0.7 : 1
+                  })}
+                >
+                  <MaterialCommunityIcons name="trash-can-outline" size={20} color={coral} />
+                </Pressable>
+              </View>
+            </View>
           )}
         />
       )}
 
-      <Pressable
-        onPress={() => navigation.navigate('ProductForm', {})}
-        style={({ pressed }) => ({
-          position: 'absolute',
-          bottom: 24,
-          right: 24,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: brand,
-          alignItems: 'center',
-          justifyContent: 'center',
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <MaterialCommunityIcons name="plus" size={30} color="#FFFFFF" />
-      </Pressable>
+
 
       {/* OVERLAY */}
       {drawerOpen ? (
         <Animated.View
           style={{
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             top: 0,
             bottom: 0,
             right: 0,
             opacity: overlayOpacity,
             backgroundColor: overlayBg,
+            zIndex: 10,
           }}
         >
           <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
@@ -493,7 +716,7 @@ export default function ProductListScreen({
       {/* DRAWER */}
       <Animated.View
         style={{
-          position: 'absolute',
+          position: "absolute",
           right: 0,
           top: 0,
           bottom: 0,
@@ -502,12 +725,13 @@ export default function ProductListScreen({
           transform: [{ translateX: drawerTranslate }],
           borderLeftWidth: 1,
           borderLeftColor: sidebarBorder,
+          zIndex: 11,
         }}
       >
         <View style={{ flex: 1, paddingTop: 60 }}>
           <View
             style={{
-              alignItems: 'center',
+              alignItems: "center",
               paddingHorizontal: 20,
               paddingBottom: 24,
               marginBottom: 20,
@@ -521,8 +745,8 @@ export default function ProductListScreen({
                 height: 64,
                 borderRadius: 32,
                 backgroundColor: accentBg,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: "center",
+                justifyContent: "center",
                 marginBottom: 12,
               }}
             >
@@ -535,15 +759,15 @@ export default function ProductListScreen({
             <Text
               style={{
                 fontSize: 24,
-                fontWeight: '700',
+                fontWeight: "700",
                 color: fg,
                 letterSpacing: -0.2,
               }}
             >
-              {user?.nombre ?? 'Agricultor'}
+              {user?.nombre ?? "Agricultor"}
             </Text>
             <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>
-              {user?.email ?? ''}
+              {user?.email ?? ""}
             </Text>
           </View>
 
@@ -557,25 +781,25 @@ export default function ProductListScreen({
                   style={({ pressed }) => ({
                     backgroundColor: isLast
                       ? isDark
-                        ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)'
+                        ? "rgba(222,57,58,0.1)"
+                        : "rgba(222,57,58,0.07)"
                       : isDark
-                        ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)',
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.03)",
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
                       ? isDark
-                        ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)'
-                      : 'transparent',
+                        ? "rgba(222,57,58,0.25)"
+                        : "rgba(222,57,58,0.15)"
+                      : "transparent",
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
                   <View
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
+                      flexDirection: "row",
+                      alignItems: "center",
                       gap: 12,
                       paddingVertical: 12,
                       paddingHorizontal: 16,
@@ -592,7 +816,7 @@ export default function ProductListScreen({
                     <Text
                       style={{
                         fontSize: 20,
-                        fontWeight: '600',
+                        fontWeight: "600",
                         color: item.color,
                         letterSpacing: -0.15,
                         flexShrink: 1,
@@ -607,6 +831,13 @@ export default function ProductListScreen({
           </View>
         </View>
       </Animated.View>
+
+      <Toast
+        message={toastMessage ?? ""}
+        visible={!!toastMessage}
+        onDismiss={() => setToastMessage(null)}
+        type={toastType}
+      />
     </View>
   );
 }

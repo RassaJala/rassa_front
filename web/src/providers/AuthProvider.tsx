@@ -5,18 +5,18 @@ import type { AuthState, User } from '../types';
 
 function loadAuthState(): AuthState {
   try {
-    const token = localStorage.getItem('token');
-    const raw = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const raw = sessionStorage.getItem('user');
     if (token && raw) {
       try {
         const user = JSON.parse(raw) as User;
         return { user, token, isAuthenticated: true, isLoading: false };
       } catch {
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
       }
     }
   } catch {
-    // localStorage no disponible (private browsing, etc.)
+    // sessionStorage no disponible (private browsing, etc.)
   }
   return { user: null, token: null, isAuthenticated: false, isLoading: false };
 }
@@ -25,14 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(loadAuthState);
 
   const login = useCallback((token: string, user: User) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
     setState({ user, token, isAuthenticated: true, isLoading: false });
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setState({
       user: null,
       token: null,

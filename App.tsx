@@ -9,7 +9,6 @@ import {
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
 import {
   QueryCache,
   QueryClient,
@@ -31,12 +30,7 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error: Error) => {
-      Sentry.captureException(error, {
-        extra: {
-          message: error.message,
-          stack: error.stack,
-        },
-      });
+      console.error('[QueryCache]', error.message);
     },
   }),
 });

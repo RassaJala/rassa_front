@@ -61,8 +61,8 @@ function registerErrors(
     return 'Nombre, apellido, email y contraseña son obligatorios.';
   }
   if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8)
-    return 'La contraseña debe tener al menos 8 caracteres.';
+  if (password.length < 6)
+    return 'La contraseña debe tener al menos 6 caracteres.';
   if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
   if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
@@ -107,7 +107,7 @@ export function LoginScreen() {
         refresh: string;
       }>('/token/', { email: email.trim(), password });
 
-      localStorage.setItem('token', tokens.access);
+      sessionStorage.setItem('token', tokens.access);
 
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',

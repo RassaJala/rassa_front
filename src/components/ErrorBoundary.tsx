@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card } from 'react-native-paper';
 
-import * as Sentry from '@sentry/react-native';
-
 interface Props {
   readonly children: React.ReactNode;
   readonly fallback?: React.ReactNode;
@@ -25,11 +23,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    Sentry.captureException(error, {
-      extra: {
-        componentStack: errorInfo.componentStack,
-      },
-    });
+    console.error('[ErrorBoundary]', error.message);
   }
 
   handleRetry = (): void => {

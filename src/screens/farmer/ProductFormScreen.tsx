@@ -1,40 +1,41 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   Switch,
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Dialog, Portal } from 'react-native-paper';
+} from "react-native";
+import { Button } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import Toast from '@/components/Toast';
-import api, { mediaUrl } from '@/services/api';
-import { useTheme } from '@/store/ThemeContext';
+import Toast from "@/components/Toast";
+import api, { mediaUrl } from "@/services/api";
+import { useTheme } from "@/store/ThemeContext";
 import type {
   ApiResponse,
   Category,
   FarmerStackParamList,
   Producto,
   Unidad,
-} from '@/types';
-import { extractApiError } from '@/utils/apiError';
+} from "@/types";
+import { extractApiError } from "@/utils/apiError";
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
-  'ProductForm'
+  "ProductForm"
 >;
 
 interface Props {
@@ -63,32 +64,32 @@ export default function ProductFormScreen({
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+  const { width: SCREEN_WIDTH } = Dimensions.get("window");
   const isSmallScreen = SCREEN_WIDTH < 600;
 
-  const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
-  const coral = '#DE393A';
-  const white = '#FFFFFF';
-  const black = '#000';
-  const backdropBg = 'rgba(0,0,0,0.5)';
-  const transparent = 'transparent';
+  const isDark = colorScheme === "dark";
+  const bg = isDark ? "#1A211B" : "#F5F7F0";
+  const surface = isDark ? "#263028" : "#FFFFFF";
+  const fg = isDark ? "#E8EAE4" : "#2D3328";
+  const muted = isDark ? "#9DA89D" : "#5E6B5E";
+  const border = isDark ? "#353D35" : "#E2E6DF";
+  const brand = isDark ? "#4A8A63" : "#24563C";
+  const accentBg = isDark ? "rgba(74,138,99,0.12)" : "rgba(36,86,60,0.07)";
+  const coralBg = isDark ? "rgba(232,74,74,0.12)" : "rgba(222,57,58,0.07)";
+  const coral = "#DE393A";
+  const white = "#FFFFFF";
+  const black = "#000";
+  const backdropBg = "rgba(0,0,0,0.5)";
+  const transparent = "transparent";
 
   const { productoId } = route.params;
   const isEditing = Boolean(productoId);
   const queryClient = useQueryClient();
 
-  const [nombreProducto, setNombreProducto] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [precio, setPrecio] = useState('');
-  const [stock, setStock] = useState('0');
+  const [nombreProducto, setNombreProducto] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [precio, setPrecio] = useState("");
+  const [stock, setStock] = useState("0");
   const [esPerecedero, setEsPerecedero] = useState(false);
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [unidadId, setUnidadId] = useState<number | null>(null);
@@ -100,21 +101,28 @@ export default function ProductFormScreen({
   const [unidadModalVisible, setUnidadModalVisible] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const setTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (setTimeoutRef.current) clearTimeout(setTimeoutRef.current);
+    };
+  }, []);
 
   const { data: categories } = useQuery<Category[]>({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
+      const { data } = await api.get<ApiResponse<Category[]>>("/categorias/");
       return data.data;
     },
     staleTime: 60_000,
   });
 
   const { data: units } = useQuery<Unidad[]>({
-    queryKey: ['units'],
+    queryKey: ["units"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
+      const { data } = await api.get<ApiResponse<Unidad[]>>("/unidades/");
       return data.data;
     },
     staleTime: 60_000,
@@ -122,7 +130,7 @@ export default function ProductFormScreen({
 
   const { data: existingProduct, isLoading: loadingProduct } =
     useQuery<Producto>({
-      queryKey: ['producto', productoId],
+      queryKey: ["producto", productoId],
       queryFn: async () => {
         const { data } = await api.get<ApiResponse<Producto>>(
           `/productos/${productoId}/`,
@@ -135,11 +143,11 @@ export default function ProductFormScreen({
   useEffect(() => {
     if (existingProduct) {
       setNombreProducto(existingProduct.nombre_producto);
-      setDescripcion(existingProduct.descripcion ?? '');
+      setDescripcion(existingProduct.descripcion ?? "");
       setPrecio(existingProduct.precio);
       setStock(String(existingProduct.stock));
       setEsPerecedero(existingProduct.es_perecedero);
-      setCategoriaId(existingProduct.categoria.id_categoria);
+      setCategoriaId(existingProduct.categoria?.id_categoria);
       setUnidadId(existingProduct.unidad?.id_unidad ?? null);
       if (existingProduct.imagenes && existingProduct.imagenes.length > 0) {
         setImages(
@@ -169,27 +177,27 @@ export default function ProductFormScreen({
   const validate = useCallback((): FormErrors => {
     const newErrors: FormErrors = {};
     if (!nombreProducto.trim()) {
-      newErrors.nombre_producto = 'El nombre es obligatorio.';
+      newErrors.nombre_producto = "El nombre es obligatorio.";
     }
     const precioNum = parseFloat(precio);
     if (!precio || isNaN(precioNum) || precioNum <= 0) {
-      newErrors.precio = 'El precio debe ser mayor a 0.';
+      newErrors.precio = "El precio debe ser mayor a 0.";
     }
     if (!categoriaId) {
-      newErrors.fk_categoria = 'Seleccioná una categoría.';
+      newErrors.fk_categoria = "Seleccioná una categoría.";
     }
     return newErrors;
   }, [nombreProducto, precio, categoriaId]);
 
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      setToastMessage('Se necesita permiso para acceder a la galería.');
-      setToastType('error');
+    if (status !== "granted") {
+      setToastMessage("Se necesita permiso para acceder a la galería.");
+      setToastType("error");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.8,
       base64: true,
@@ -230,7 +238,7 @@ export default function ProductFormScreen({
   const createMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
       const { data } = await api.post<ApiResponse<Producto>>(
-        '/productos/',
+        "/productos/",
         payload,
       );
       return data.data;
@@ -302,30 +310,34 @@ export default function ProductFormScreen({
       }
 
       for (const img of images) {
-        if (img.markedForDeletion && img.id) {
-          await deleteImage(savedProduct.id_producto, img.id);
-        } else if (!img.id && !img.markedForDeletion && img.base64) {
-          await uploadImage(
-            savedProduct.id_producto,
-            img.base64,
-            img.isPrimary,
-          );
-        } else if (img.id && !img.markedForDeletion && img.isPrimary) {
-          await updateImagePrimary(savedProduct.id_producto, img.id, true);
+        try {
+          if (img.markedForDeletion && img.id) {
+            await deleteImage(savedProduct.id_producto, img.id);
+          } else if (!img.id && !img.markedForDeletion && img.base64) {
+            await uploadImage(
+              savedProduct.id_producto,
+              img.base64,
+              img.isPrimary,
+            );
+          } else if (img.id && !img.markedForDeletion && img.isPrimary) {
+            await updateImagePrimary(savedProduct.id_producto, img.id, true);
+          }
+        } catch (imgError) {
+          console.warn("Image operation failed, continuing:", imgError);
         }
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['productos'] });
-      setToastMessage(isEditing ? 'Producto actualizado.' : 'Producto creado.');
-      setToastType('success');
-      globalThis.setTimeout(() => navigation.goBack(), 800);
+      await queryClient.invalidateQueries({ queryKey: ["productos"] });
+      setToastMessage(isEditing ? "Producto actualizado." : "Producto creado.");
+      setToastType("success");
+      setTimeoutRef.current = globalThis.setTimeout(() => navigation.goBack(), 800);
     } catch (error) {
       setGeneralError(
         extractApiError(error, [
-          'nombre_producto',
-          'precio',
-          'fk_categoria',
-          'detail',
+          "nombre_producto",
+          "precio",
+          "fk_categoria",
+          "detail",
         ]),
       );
     }
@@ -352,49 +364,88 @@ export default function ProductFormScreen({
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const selectedCategoryName =
-    categories?.find((c) => c.id_categoria === categoriaId)?.nombre ?? '';
+    categories?.find((c) => c.id_categoria === categoriaId)?.nombre ?? "";
   const selectedUnitName =
-    units?.find((u) => u.id_unidad === unidadId)?.tipo ?? '';
+    units?.find((u) => u.id_unidad === unidadId)?.tipo ?? "";
 
   if (loadingProduct) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: bg,
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: isSmallScreen ? 'flex-start' : 'center', backgroundColor: isSmallScreen ? bg : backdropBg, paddingVertical: isSmallScreen ? 0 : 16 }}>
-      <View style={isSmallScreen
-        ? { flex: 1, backgroundColor: bg }
-        : { maxHeight: '95%', width: '50%', alignSelf: 'center', overflow: 'hidden', borderRadius: 12, backgroundColor: bg, shadowColor: black, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 }
-      }>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: isSmallScreen ? "flex-start" : "center",
+        backgroundColor: isSmallScreen ? bg : backdropBg,
+        paddingVertical: isSmallScreen ? 0 : 16,
+      }}
+    >
+      <View
+        style={
+          isSmallScreen
+            ? { flex: 1, backgroundColor: bg }
+            : {
+                maxHeight: "95%",
+                width: "50%",
+                alignSelf: "center",
+                overflow: "hidden",
+                borderRadius: 12,
+                backgroundColor: bg,
+                shadowColor: black,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                elevation: 10,
+              }
+        }
+      >
         {/* Header */}
-        <View style={{ backgroundColor: brand, paddingTop: isSmallScreen ? insets.top + 8 : 16, paddingBottom: 16, paddingHorizontal: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View
+          style={{
+            backgroundColor: brand,
+            paddingTop: isSmallScreen ? insets.top + 8 : 16,
+            paddingBottom: 16,
+            paddingHorizontal: 16,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Pressable
               onPress={() => navigation.goBack()}
               style={({ pressed }) => ({
                 marginRight: 12,
                 height: 40,
                 width: 40,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: "center",
+                justifyContent: "center",
                 borderRadius: 20,
-                backgroundColor: 'rgba(255,255,255,0.15)',
+                backgroundColor: "rgba(255,255,255,0.15)",
                 opacity: pressed ? 0.8 : 1,
               })}
               hitSlop={12}
             >
-              <MaterialCommunityIcons
-                name="close"
-                size={24}
-                color={white}
-              />
+              <MaterialCommunityIcons name="close" size={24} color={white} />
             </Pressable>
-            <Text style={{ fontSize: 20, fontWeight: '700', letterSpacing: -0.2, color: white }}>
-              {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "700",
+                letterSpacing: -0.2,
+                color: white,
+              }}
+            >
+              {isEditing ? "Editar Producto" : "Nuevo Producto"}
             </Text>
           </View>
         </View>
@@ -405,13 +456,24 @@ export default function ProductFormScreen({
         >
           {/* General error */}
           {generalError ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 8, backgroundColor: coralBg, padding: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 8,
+                borderRadius: 8,
+                backgroundColor: coralBg,
+                padding: 12,
+              }}
+            >
               <MaterialCommunityIcons
                 name="alert-circle"
                 size={18}
                 color={coral}
               />
-              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: coral }}>
+              <Text
+                style={{ flex: 1, fontSize: 14, lineHeight: 20, color: coral }}
+              >
                 {generalError}
               </Text>
             </View>
@@ -419,10 +481,18 @@ export default function ProductFormScreen({
 
           {/* Image picker */}
           <View>
-            <Text style={{ marginBottom: 8, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text
+              style={{
+                marginBottom: 8,
+                marginLeft: 4,
+                fontSize: 14,
+                fontWeight: "600",
+                color: fg,
+              }}
+            >
               Foto del producto
             </Text>
-            <View style={{ alignItems: 'center' }}>
+            <View style={{ alignItems: "center" }}>
               {(() => {
                 const activeImage = images.find(
                   (img) => !img.markedForDeletion,
@@ -430,13 +500,27 @@ export default function ProductFormScreen({
                 if (activeImage) {
                   const activeIndex = images.indexOf(activeImage);
                   return (
-                    <View style={{ position: 'relative' }}>
+                    <View style={{ position: "relative" }}>
                       <Image
                         source={{ uri: activeImage.uri }}
                         style={{ height: 192, width: 192, borderRadius: 12 }}
                         resizeMode="cover"
                       />
-                      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'flex-end', borderBottomLeftRadius: 12, borderBottomRightRadius: 12, backgroundColor: backdropBg, paddingHorizontal: 8, paddingVertical: 4 }}>
+                      <View
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          flexDirection: "row",
+                          justifyContent: "flex-end",
+                          borderBottomLeftRadius: 12,
+                          borderBottomRightRadius: 12,
+                          backgroundColor: backdropBg,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                        }}
+                      >
                         <Pressable
                           onPress={() => handleRemoveImage(activeIndex)}
                           hitSlop={8}
@@ -457,11 +541,11 @@ export default function ProductFormScreen({
                     style={({ pressed }) => ({
                       height: 192,
                       width: 192,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      alignItems: "center",
+                      justifyContent: "center",
                       borderRadius: 12,
                       borderWidth: 2,
-                      borderStyle: 'dashed',
+                      borderStyle: "dashed",
                       borderColor: border,
                       backgroundColor: surface,
                       opacity: pressed ? 0.8 : 1,
@@ -472,7 +556,15 @@ export default function ProductFormScreen({
                       size={32}
                       color={muted}
                     />
-                    <Text style={{ marginTop: 8, paddingHorizontal: 8, textAlign: 'center', fontSize: 12, color: muted }}>
+                    <Text
+                      style={{
+                        marginTop: 8,
+                        paddingHorizontal: 8,
+                        textAlign: "center",
+                        fontSize: 12,
+                        color: muted,
+                      }}
+                    >
                       Agregar imagen
                     </Text>
                   </Pressable>
@@ -483,12 +575,30 @@ export default function ProductFormScreen({
 
           {/* Nombre */}
           <View>
-            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text
+              style={{
+                marginBottom: 4,
+                marginLeft: 4,
+                fontSize: 14,
+                fontWeight: "600",
+                color: fg,
+              }}
+            >
               Nombre del producto <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: fg,
+                outlineStyle: "none",
+              }}
               placeholder="Ej. Tomates frescos"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -503,7 +613,14 @@ export default function ProductFormScreen({
               }}
             />
             {errors.nombre_producto ? (
-              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
+              <Text
+                style={{
+                  marginLeft: 4,
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: coral,
+                }}
+              >
                 {errors.nombre_producto}
               </Text>
             ) : null}
@@ -511,12 +628,30 @@ export default function ProductFormScreen({
 
           {/* Descripción */}
           <View>
-            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text
+              style={{
+                marginBottom: 4,
+                marginLeft: 4,
+                fontSize: 14,
+                fontWeight: "600",
+                color: fg,
+              }}
+            >
               Descripción
             </Text>
             <TextInput
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: fg,
+                outlineStyle: "none",
+              }}
               placeholder="Ej. Detalles sobre tu producto..."
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -530,18 +665,36 @@ export default function ProductFormScreen({
 
           {/* Precio */}
           <View>
-            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text
+              style={{
+                marginBottom: 4,
+                marginLeft: 4,
+                fontSize: 14,
+                fontWeight: "600",
+                color: fg,
+              }}
+            >
               Precio <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: fg,
+                outlineStyle: "none",
+              }}
               placeholder="0.00"
               placeholderTextColor={muted}
               cursorColor={brand}
               value={precio}
               onChangeText={(text) => {
-                setPrecio(text.replace(/[^.0-9]/g, ''));
+                setPrecio(text.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1"));
                 setErrors((prev) => {
                   const next = { ...prev };
                   delete next.precio;
@@ -551,7 +704,14 @@ export default function ProductFormScreen({
               keyboardType="decimal-pad"
             />
             {errors.precio ? (
-              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
+              <Text
+                style={{
+                  marginLeft: 4,
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: coral,
+                }}
+              >
                 {errors.precio}
               </Text>
             ) : null}
@@ -559,26 +719,54 @@ export default function ProductFormScreen({
 
           {/* Stock */}
           <View>
-            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text
+              style={{
+                marginBottom: 4,
+                marginLeft: 4,
+                fontSize: 14,
+                fontWeight: "600",
+                color: fg,
+              }}
+            >
               Stock disponible
             </Text>
             <TextInput
               // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
-              style={{ borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: fg, outlineStyle: 'none' }}
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                fontSize: 16,
+                color: fg,
+                outlineStyle: "none",
+              }}
               placeholder="0"
               placeholderTextColor={muted}
               cursorColor={brand}
               value={stock}
-              onChangeText={(text) => setStock(text.replace(/[^0-9]/g, ''))}
+              onChangeText={(text) => setStock(text.replace(/[^0-9]/g, ""))}
               keyboardType="number-pad"
             />
           </View>
 
           {/* Perecedero */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}>
-            <Text style={{ fontSize: 16, color: fg }}>
-              Producto perecedero
-            </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: border,
+              backgroundColor: surface,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+            }}
+          >
+            <Text style={{ fontSize: 16, color: fg }}>Producto perecedero</Text>
             <Switch
               value={esPerecedero}
               onValueChange={setEsPerecedero}
@@ -590,12 +778,25 @@ export default function ProductFormScreen({
           <View>
             <Pressable
               onPress={() => setCategoriaModalVisible(true)}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+              }}
             >
               <Text
-                style={{ fontSize: 16, color: selectedCategoryName ? fg : muted }}
+                style={{
+                  fontSize: 16,
+                  color: selectedCategoryName ? fg : muted,
+                }}
               >
-                {selectedCategoryName || 'Categoría *'}
+                {selectedCategoryName || "Categoría *"}
               </Text>
               <MaterialCommunityIcons
                 name="chevron-down"
@@ -604,7 +805,14 @@ export default function ProductFormScreen({
               />
             </Pressable>
             {errors.fk_categoria ? (
-              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
+              <Text
+                style={{
+                  marginLeft: 4,
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: coral,
+                }}
+              >
                 {errors.fk_categoria}
               </Text>
             ) : null}
@@ -613,12 +821,22 @@ export default function ProductFormScreen({
           {/* Unidad selector */}
           <Pressable
             onPress={() => setUnidadModalVisible(true)}
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: border,
+              backgroundColor: surface,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+            }}
           >
             <Text
               style={{ fontSize: 16, color: selectedUnitName ? fg : muted }}
             >
-              {selectedUnitName || 'Unidad de medida'}
+              {selectedUnitName || "Unidad de medida"}
             </Text>
             <MaterialCommunityIcons
               name="chevron-down"
@@ -636,122 +854,155 @@ export default function ProductFormScreen({
             disabled={isSaving}
             style={{ marginTop: 8, borderRadius: 8 }}
           >
-            {isEditing ? 'Guardar cambios' : 'Crear producto'}
+            {isEditing ? "Guardar cambios" : "Crear producto"}
           </Button>
         </ScrollView>
       </View>
 
       {/* Category modal */}
-      <Portal>
-        <Dialog
-          visible={categoriaModalVisible}
-          onDismiss={() => setCategoriaModalVisible(false)}
-          style={{ backgroundColor: bg }}
-        >
-          <Dialog.Title style={{ fontSize: 20, fontWeight: '700', color: fg }}>
-            Seleccionar categoría
-          </Dialog.Title>
-          <Dialog.Content>
+      <Modal
+        visible={categoriaModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setCategoriaModalVisible(false)}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: backdropBg }}>
+          <View
+            style={{
+              backgroundColor: bg,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              maxHeight: "70%",
+              paddingBottom: insets.bottom,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700", color: fg }}>
+                Seleccionar categoría
+              </Text>
+              <Pressable onPress={() => setCategoriaModalVisible(false)} hitSlop={8}>
+                <MaterialCommunityIcons name="close" size={24} color={muted} />
+              </Pressable>
+            </View>
+            <View style={{ height: 1, backgroundColor: border, marginHorizontal: 20 }} />
             <FlatList
               data={categories}
               keyExtractor={(item) => String(item.id_categoria)}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    setCategoriaId(item.id_categoria);
-                    setErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.fk_categoria;
-                      return next;
-                    });
-                    setCategoriaModalVisible(false);
-                  }}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: categoriaId === item.id_categoria ? accentBg : transparent }}
-                >
-                  <Text style={{ fontSize: 16, color: fg }}>
-                    {item.nombre}
-                  </Text>
-                  {categoriaId === item.id_categoria ? (
-                    <MaterialCommunityIcons
-                      name="check"
-                      size={20}
-                      color={brand}
-                    />
-                  ) : null}
-                </Pressable>
-              )}
-              ItemSeparatorComponent={() => (
-                <View style={{ height: 1, backgroundColor: border }} />
-              )}
+              contentContainerStyle={{ paddingTop: 12, paddingBottom: 8 }}
+              renderItem={({ item }) => {
+                const isSelected = categoriaId === item.id_categoria;
+                return (
+                  <Pressable
+                    key={item.id_categoria}
+                    onPress={() => {
+                      setCategoriaId(item.id_categoria);
+                      setErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.fk_categoria;
+                        return next;
+                      });
+                      setCategoriaModalVisible(false);
+                    }}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginHorizontal: 12,
+                      paddingHorizontal: 20,
+                      paddingVertical: 16,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? accentBg : transparent,
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ fontSize: 16, fontWeight: isSelected ? "600" : "400", color: isSelected ? brand : fg }}>
+                      {item.nombre}
+                    </Text>
+                    {isSelected ? (
+                      <MaterialCommunityIcons name="check" size={20} color={brand} />
+                    ) : null}
+                  </Pressable>
+                );
+              }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", marginHorizontal: 20 }} />}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={() => setCategoriaModalVisible(false)}
-              textColor={muted}
-            >
-              Cancelar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+          </View>
+        </View>
+      </Modal>
 
       {/* Unit modal */}
-      <Portal>
-        <Dialog
-          visible={unidadModalVisible}
-          onDismiss={() => setUnidadModalVisible(false)}
-          style={{ backgroundColor: bg }}
-        >
-          <Dialog.Title style={{ fontSize: 20, fontWeight: '700', color: fg }}>
-            Seleccionar unidad
-          </Dialog.Title>
-          <Dialog.Content>
+      <Modal
+        visible={unidadModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setUnidadModalVisible(false)}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: backdropBg }}>
+          <View
+            style={{
+              backgroundColor: bg,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              maxHeight: "70%",
+              paddingBottom: insets.bottom,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: "700", color: fg }}>
+                Seleccionar unidad
+              </Text>
+              <Pressable onPress={() => setUnidadModalVisible(false)} hitSlop={8}>
+                <MaterialCommunityIcons name="close" size={24} color={muted} />
+              </Pressable>
+            </View>
+            <View style={{ height: 1, backgroundColor: border, marginHorizontal: 20 }} />
             <FlatList
               data={units}
               keyExtractor={(item) => String(item.id_unidad)}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    setUnidadId(item.id_unidad);
-                    setUnidadModalVisible(false);
-                  }}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: unidadId === item.id_unidad ? accentBg : transparent }}
-                >
-                  <Text style={{ fontSize: 16, color: fg }}>{item.tipo}</Text>
-                  {unidadId === item.id_unidad ? (
-                    <MaterialCommunityIcons
-                      name="check"
-                      size={20}
-                      color={brand}
-                    />
-                  ) : null}
-                </Pressable>
-              )}
-              ItemSeparatorComponent={() => (
-                <View style={{ height: 1, backgroundColor: border }} />
-              )}
+              contentContainerStyle={{ paddingTop: 12, paddingBottom: 8 }}
+              renderItem={({ item }) => {
+                const isSelected = unidadId === item.id_unidad;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      setUnidadId(item.id_unidad);
+                      setUnidadModalVisible(false);
+                    }}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginHorizontal: 12,
+                      paddingHorizontal: 20,
+                      paddingVertical: 16,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? accentBg : transparent,
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <Text style={{ fontSize: 16, fontWeight: isSelected ? "600" : "400", color: isSelected ? brand : fg }}>
+                      {item.tipo}
+                    </Text>
+                    {isSelected ? (
+                      <MaterialCommunityIcons name="check" size={20} color={brand} />
+                    ) : null}
+                  </Pressable>
+                );
+              }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: border, marginHorizontal: 20 }} />}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={() => setUnidadModalVisible(false)}
-              textColor={muted}
-            >
-              Cancelar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+          </View>
+        </View>
+      </Modal>
 
       {/* Toast */}
       <Toast
         visible={toastMessage !== null}
-        message={toastMessage ?? ''}
+        message={toastMessage ?? ""}
         type={toastType}
         onDismiss={() => {
           setToastMessage(null);
-          setToastType('success');
+          setToastType("success");
         }}
       />
     </View>

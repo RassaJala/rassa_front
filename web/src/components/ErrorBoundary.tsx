@@ -23,7 +23,8 @@ export class ErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary]', error, errorInfo);
+    // ponytail: sanitize — only log message, not stack/user data
+    console.error('[ErrorBoundary]', error.message);
   }
 
   override render() {

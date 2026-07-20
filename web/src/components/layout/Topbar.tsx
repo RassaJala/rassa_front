@@ -1,7 +1,8 @@
+import type { Role } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../providers/ThemeProvider';
 
-export function Topbar() {
+export function Topbar({ role }: { role: Role }) {
   const { logout } = useAuth();
   const { resolved, toggle } = useTheme();
   const isDark = resolved === 'dark';
@@ -27,46 +28,7 @@ export function Topbar() {
         transition: 'background 0.4s, border-color 0.4s',
       }}
     >
-      {/* Search */}
-      <div style={{ flex: 1, maxWidth: 360, position: 'relative' }}>
-        <span
-          style={{
-            position: 'absolute',
-            left: 12,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: 15,
-            opacity: 0.5,
-            pointerEvents: 'none',
-          }}
-        >
-          🔍
-        </span>
-        <input
-          type="search"
-          placeholder="Buscar pedidos, productos, productores…"
-          aria-label="Buscar"
-          style={{
-            width: '100%',
-            height: 40,
-            border: `1.5px solid ${border}`,
-            borderRadius: 10,
-            padding: '0 14px 0 38px',
-            fontSize: 14,
-            fontFamily: 'inherit',
-            background: surface,
-            color: fg,
-            outline: 'none',
-            transition: 'border-color 0.15s',
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = brand;
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = border;
-          }}
-        />
-      </div>
+
 
       {/* Actions */}
       <div
@@ -77,38 +39,41 @@ export function Topbar() {
           marginLeft: 'auto',
         }}
       >
-        {/* Notifications */}
-        <button
-          aria-label="Notificaciones"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            border: `1px solid ${border}`,
-            background: surface,
-            fontSize: 16,
-            cursor: 'pointer',
-            display: 'grid',
-            placeItems: 'center',
-            color: fg,
-            position: 'relative',
-          }}
-        >
-          🔔
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#DE393A',
-              position: 'absolute',
-              top: 6,
-              right: 6,
-            }}
-          />
-        </button>
 
-        {/* Theme toggle */}
+        {/* Notifications — hidden for agricultor */}
+        {role !== 'agricultor' && (
+          <button
+            aria-label="Notificaciones"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: `1px solid ${border}`,
+              background: surface,
+              fontSize: 16,
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+              color: fg,
+              position: 'relative',
+            }}
+          >
+            🔔
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#DE393A',
+                position: 'absolute',
+                top: 6,
+                right: 6,
+              }}
+            />
+          </button>
+        )}
+
+
         <button
           onClick={toggle}
           aria-label={isDark ? 'Modo claro' : 'Modo oscuro'}

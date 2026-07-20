@@ -27,7 +27,19 @@ interface Props {
 }
 
 const DRAWER_WIDTH = 0.55;
-const SCREEN_WIDTH = Dimensions.get('window').width;
+
+function useScreenWidth(): number {
+  const [width, setWidth] = useState(() => Dimensions.get('window').width);
+
+  React.useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setWidth(window.width);
+    });
+    return () => subscription.remove();
+  }, []);
+
+  return width;
+}
 
 export default function FarmerHomeScreen({
   navigation,
@@ -36,6 +48,8 @@ export default function FarmerHomeScreen({
   const { user, logout } = useAuth();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
+  const screenWidth = useScreenWidth();
+  const isCompact = screenWidth < 400;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -113,7 +127,7 @@ export default function FarmerHomeScreen({
 
   const drawerTranslate = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [SCREEN_WIDTH * DRAWER_WIDTH, 0],
+    outputRange: [screenWidth * DRAWER_WIDTH, 0],
   });
 
   const overlayOpacity = slideAnim.interpolate({
@@ -168,10 +182,17 @@ export default function FarmerHomeScreen({
       <View style={{ flex: 1 }}>
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom, 24),
+          }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ flex: 1, paddingTop: insets.top + 16, paddingHorizontal: 20 }}>
+          <View
+            style={{
+              paddingTop: insets.top + 16,
+              paddingHorizontal: 20,
+            }}
+          >
             {/* HEADER */}
             <View
               style={{
@@ -180,21 +201,22 @@ export default function FarmerHomeScreen({
                 alignItems: 'flex-start',
               }}
             >
-              <View>
+              <View style={{ flex: 1, flexShrink: 1, minWidth: 0, paddingRight: 8 }}>
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: isCompact ? 12 : 14,
                     fontWeight: '600',
                     letterSpacing: 0.06,
                     textTransform: 'uppercase',
                     color: muted,
                   }}
+                  numberOfLines={2}
                 >
                   {today}
                 </Text>
                 <Text
                   style={{
-                    fontSize: 32,
+                    fontSize: isCompact ? 28 : 32,
                     fontWeight: '700',
                     letterSpacing: -0.3,
                     color: fg,
@@ -204,41 +226,23 @@ export default function FarmerHomeScreen({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 20,
+                    fontSize: isCompact ? 17 : 20,
                     fontWeight: '700',
                     color: muted,
                     marginTop: 4,
                   }}
+                  numberOfLines={2}
                 >
                   Bienvenido, {user?.nombre ?? 'Agricultor'}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable
-                  style={({ pressed }) => ({
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: surface,
-                    borderWidth: 1,
-                    borderColor: border,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: pressed ? 0.6 : 1,
-                  })}
-                >
-                  <MaterialCommunityIcons
-                    name="bell-outline"
-                    size={24}
-                    color={fg}
-                  />
-                </Pressable>
+              <View style={{ flexDirection: 'row', flexShrink: 0, marginLeft: 8 }}>
                 <Pressable
                   onPress={openDrawer}
                   style={({ pressed }) => ({
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
+                    width: 52,
+                    height: 52,
+                    borderRadius: 26,
                     backgroundColor: surface,
                     borderWidth: 1,
                     borderColor: border,
@@ -249,7 +253,7 @@ export default function FarmerHomeScreen({
                 >
                   <MaterialCommunityIcons
                     name="account-circle"
-                    size={24}
+                    size={28}
                     color={fg}
                   />
                 </Pressable>
@@ -258,18 +262,24 @@ export default function FarmerHomeScreen({
 
             {/* STATS */}
             <View
-              style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                paddingVertical: 24,
+                gap: isCompact ? 8 : 10,
+              }}
             >
               <View
                 style={{
                   flex: 1,
+                  minWidth: isCompact ? '45%' : 0,
                   alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: border,
-                  paddingVertical: 18,
-                  paddingHorizontal: 10,
+                  paddingVertical: isCompact ? 14 : 18,
+                  paddingHorizontal: isCompact ? 6 : 10,
                 }}
               >
                 <View
@@ -301,13 +311,17 @@ export default function FarmerHomeScreen({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: isCompact ? 11 : 13,
                     fontWeight: '600',
                     letterSpacing: 0.06,
                     textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
+                    textAlign: 'center',
                   }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
                   Productos
                 </Text>
@@ -315,13 +329,14 @@ export default function FarmerHomeScreen({
               <View
                 style={{
                   flex: 1,
+                  minWidth: isCompact ? '45%' : 0,
                   alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: border,
-                  paddingVertical: 18,
-                  paddingHorizontal: 10,
+                  paddingVertical: isCompact ? 14 : 18,
+                  paddingHorizontal: isCompact ? 6 : 10,
                 }}
               >
                 <View
@@ -353,13 +368,17 @@ export default function FarmerHomeScreen({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: isCompact ? 11 : 13,
                     fontWeight: '600',
                     letterSpacing: 0.06,
                     textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
+                    textAlign: 'center',
                   }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
                   Activos
                 </Text>
@@ -367,13 +386,14 @@ export default function FarmerHomeScreen({
               <View
                 style={{
                   flex: 1,
+                  minWidth: isCompact ? '45%' : 0,
                   alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: border,
-                  paddingVertical: 18,
-                  paddingHorizontal: 10,
+                  paddingVertical: isCompact ? 14 : 18,
+                  paddingHorizontal: isCompact ? 6 : 10,
                 }}
               >
                 <View
@@ -405,13 +425,17 @@ export default function FarmerHomeScreen({
                 </Text>
                 <Text
                   style={{
-                    fontSize: 13,
+                    fontSize: isCompact ? 11 : 13,
                     fontWeight: '600',
                     letterSpacing: 0.06,
                     textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
+                    textAlign: 'center',
                   }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
                   Pedidos
                 </Text>
@@ -419,20 +443,21 @@ export default function FarmerHomeScreen({
             </View>
 
             {/* QUICK ACTIONS */}
-            <View style={{ gap: 10 }}>
-              <Pressable
-                onPress={() => navigation.navigate('ProductList')}
-                style={({ pressed }) => ({
+            <Pressable
+              onPress={() => navigation.navigate('ProductList')}
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+            >
+              <View
+                style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   backgroundColor: surface,
-                  borderRadius: 16,
                   borderWidth: 1,
                   borderColor: border,
-                  paddingVertical: 16,
+                  borderRadius: 16,
                   paddingHorizontal: 16,
-                  opacity: pressed ? 0.7 : 1,
-                })}
+                  paddingVertical: 14,
+                }}
               >
                 <View
                   style={{
@@ -442,7 +467,6 @@ export default function FarmerHomeScreen({
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: accentBg,
-                    marginRight: 14,
                   }}
                 >
                   <MaterialCommunityIcons
@@ -451,13 +475,15 @@ export default function FarmerHomeScreen({
                     color={brand}
                   />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text
                     style={{
                       fontSize: 16,
                       fontWeight: '600',
                       color: fg,
+                      marginBottom: 2,
                     }}
+                    numberOfLines={1}
                   >
                     Mis Productos
                   </Text>
@@ -465,19 +491,15 @@ export default function FarmerHomeScreen({
                     style={{
                       fontSize: 13,
                       color: muted,
-                      marginTop: 2,
                     }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                   >
                     Ver y gestionar tu catálogo
                   </Text>
                 </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={22}
-                  color={muted}
-                />
-              </Pressable>
-            </View>
+              </View>
+            </Pressable>
           </View>
         </ScrollView>
       </View>
@@ -493,6 +515,7 @@ export default function FarmerHomeScreen({
             right: 0,
             opacity: overlayOpacity,
             backgroundColor: overlayBg,
+            zIndex: 10,
           }}
         >
           <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
@@ -511,6 +534,7 @@ export default function FarmerHomeScreen({
           transform: [{ translateX: drawerTranslate }],
           borderLeftWidth: 1,
           borderLeftColor: sidebarBorder,
+          zIndex: 11,
         }}
       >
         <ScrollView showsVerticalScrollIndicator={false}>
