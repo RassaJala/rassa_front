@@ -74,10 +74,17 @@ function mapUser(raw: Record<string, unknown>): User {
   };
 }
 
+const MAX_PAGES = 20;
+
 async function fetchAllPages(
   url: string,
   accumulated: User[],
+  depth: number = 0,
 ): Promise<User[]> {
+  if (depth >= MAX_PAGES) {
+    console.warn(`[AdminUsers] max pages (${MAX_PAGES}) reached, stopping fetch`);
+    return accumulated;
+  }
   const response = await api.get<unknown>(url);
   const body = response.data;
   const payload =
@@ -103,7 +110,7 @@ async function fetchAllPages(
       ? ((payload as Record<string, unknown>).next as string | null)
       : null;
 
-  if (next) return fetchAllPages(next, all);
+  if (next) return fetchAllPages(next, all, depth + 1);
   return all;
 }
 
@@ -225,6 +232,7 @@ export function AdminUsers() {
     mutationFn: (userId: number) =>
       api.patch(`/admin/usuarios/${userId}/toggle-estado/`),
     onSuccess: (_data, userId) => {
+      setDeactTarget(null);
       const u = users.find((x) => x.id === userId);
       const name = u ? getFullName(u) : `#${userId}`;
       const newState = u ? !u.estado : 'desconocido';
@@ -340,7 +348,6 @@ export function AdminUsers() {
     if (!deactTarget) return;
     setErrorMessage('');
     toggleMutation.mutate(deactTarget.id);
-    setDeactTarget(null);
   }
 
   function openRoleModal(user: User) {

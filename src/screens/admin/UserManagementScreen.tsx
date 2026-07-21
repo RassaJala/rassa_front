@@ -48,10 +48,17 @@ function getFullName(u: AdminUser): string {
 }
 
 // ── Multi-page fetch (like web) ──
+const MAX_PAGES = 20;
+
 async function fetchAllPages(
   url: string,
   accumulated: AdminUser[],
+  depth: number = 0,
 ): Promise<AdminUser[]> {
+  if (depth >= MAX_PAGES) {
+    console.warn(`[UserManagement] max pages (${MAX_PAGES}) reached, stopping fetch`);
+    return accumulated;
+  }
   const response = await api.get<unknown>(url);
   const body = response.data;
   const payload: unknown =
@@ -76,7 +83,7 @@ async function fetchAllPages(
       ? (((payload as Record<string, unknown>).next as string | null) ?? null)
       : null;
 
-  if (next) return fetchAllPages(next, all);
+  if (next) return fetchAllPages(next, all, depth + 1);
   return all;
 }
 
