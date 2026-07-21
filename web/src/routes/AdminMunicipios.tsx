@@ -262,14 +262,16 @@ export function AdminMunicipios() {
             cursor: 'pointer',
             background: tab === 'list' ? surface : 'transparent',
             color: tab === 'list' ? fg : muted,
-            boxShadow:
-              tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           📋 Lista
         </button>
         <button
-          onClick={() => { setTab('trash'); void fetchTrash(); }}
+          onClick={() => {
+            setTab('trash');
+            void fetchTrash();
+          }}
           style={{
             padding: '8px 20px',
             border: 'none',
@@ -611,7 +613,9 @@ export function AdminMunicipios() {
                       >
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button
-                            onClick={() => void restoreFromTrash(item.id_municipio)}
+                            onClick={() =>
+                              void restoreFromTrash(item.id_municipio)
+                            }
                             aria-label="Restaurar"
                             style={{
                               height: 32,
@@ -632,7 +636,9 @@ export function AdminMunicipios() {
                             ↩️ Restaurar
                           </button>
                           <button
-                            onClick={() => void permanentDelete(item.id_municipio)}
+                            onClick={() =>
+                              void permanentDelete(item.id_municipio)
+                            }
                             aria-label="Eliminar definitivamente"
                             style={{
                               height: 32,

@@ -89,7 +89,9 @@ export function AdminLocalidades() {
     setTrashLoading(true);
     setError(null);
     try {
-      const res = await api.get<ApiListResponse<Localidad>>('/localidades/trash/');
+      const res = await api.get<ApiListResponse<Localidad>>(
+        '/localidades/trash/',
+      );
       setTrashItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar papelera');
@@ -308,14 +310,16 @@ export function AdminLocalidades() {
             cursor: 'pointer',
             background: tab === 'list' ? surface : 'transparent',
             color: tab === 'list' ? fg : muted,
-            boxShadow:
-              tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           📋 Lista
         </button>
         <button
-          onClick={() => { setTab('trash'); void fetchTrash(); }}
+          onClick={() => {
+            setTab('trash');
+            void fetchTrash();
+          }}
           style={{
             padding: '8px 20px',
             border: 'none',
@@ -544,7 +548,9 @@ export function AdminLocalidades() {
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button
                               onClick={() => toggleStatus(item)}
-                              aria-label={item.estado ? 'Desactivar' : 'Activar'}
+                              aria-label={
+                                item.estado ? 'Desactivar' : 'Activar'
+                              }
                               style={{
                                 width: 32,
                                 height: 32,
@@ -688,10 +694,7 @@ export function AdminLocalidades() {
                   </tr>
                 ) : (
                   trashItems.map((item) => (
-                    <tr
-                      key={item.id_localidad}
-                      style={{ background: surface }}
-                    >
+                    <tr key={item.id_localidad} style={{ background: surface }}>
                       <td
                         style={{
                           padding: '14px 20px',
@@ -711,7 +714,9 @@ export function AdminLocalidades() {
                       >
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button
-                            onClick={() => void restoreFromTrash(item.id_localidad)}
+                            onClick={() =>
+                              void restoreFromTrash(item.id_localidad)
+                            }
                             aria-label="Restaurar"
                             style={{
                               height: 32,
@@ -732,7 +737,9 @@ export function AdminLocalidades() {
                             ↩️ Restaurar
                           </button>
                           <button
-                            onClick={() => void permanentDelete(item.id_localidad)}
+                            onClick={() =>
+                              void permanentDelete(item.id_localidad)
+                            }
                             aria-label="Eliminar definitivamente"
                             style={{
                               height: 32,

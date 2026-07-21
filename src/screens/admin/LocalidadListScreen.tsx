@@ -53,6 +53,7 @@ export default function LocalidadListScreen({
     statusLabels: { active: 'Activo', inactive: 'Inactivo' },
     trashScreenName: 'LocalidadTrash' as const,
     trashScreenParams: { municipioId, municipioNombre },
+    toggleEndpoint: 'estado/',
     validate: (formValues: Record<string, string>) => {
       if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
       return null;

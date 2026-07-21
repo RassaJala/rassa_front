@@ -336,6 +336,7 @@ function makeMunicipioConfig(navigation: NavigationProp) {
     toastDeactivated: (name: string) => `Se desactivó el municipio "${name}"`,
     statusLabels: { active: 'Activo', inactive: 'Inactivo' },
     trashScreenName: 'MunicipioTrash' as const,
+    toggleEndpoint: 'estado/',
     validate: (formValues: Record<string, string>) => {
       if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
       return null;

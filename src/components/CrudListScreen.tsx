@@ -79,6 +79,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
   readonly trashScreenName?:
     'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
   readonly trashScreenParams?: Record<string, unknown>;
+  readonly toggleEndpoint?: string;
   readonly comingSoon?: boolean;
 }
 
@@ -353,16 +354,15 @@ export default function CrudListScreen<
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: {
-      id: number;
-    } & Record<string, unknown>) => {
-      const { data } = await api.patch<ApiResponse<T>>(
-        `${config.endpoint}${id}/`,
-        payload,
-      );
+    mutationFn: async (
+      params: {
+        id: number;
+        url?: string;
+      } & Record<string, unknown>,
+    ) => {
+      const { id, url, ...payload } = params;
+      const patchUrl = url ?? `${config.endpoint}${id}/`;
+      const { data } = await api.patch<ApiResponse<T>>(patchUrl, payload);
 
       return data;
     },
@@ -500,11 +500,16 @@ export default function CrudListScreen<
       const newStatus = !item.estado;
       const action = newStatus ? 'activó' : 'desactivó';
       const name = item.nombre;
+      const id = config.getId(item);
+      const toggleUrl = config.toggleEndpoint
+        ? `${config.endpoint}${id}/${config.toggleEndpoint}`
+        : `${config.endpoint}${id}/`;
 
       updateMutation.mutate(
         {
-          id: config.getId(item),
+          id,
           estado: newStatus,
+          url: toggleUrl,
         },
         {
           onSuccess: () => {
