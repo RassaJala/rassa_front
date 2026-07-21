@@ -27,7 +27,7 @@ function mapMeUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    apellido_paterno: raw.apellido_paterno as string | undefined,
+    apellido_paterno: raw.apellido_paterno as string,
     apellido_materno: raw.apellido_materno as string | undefined,
     telefono: raw.telefono as string | undefined,
     fecha_nacimiento: raw.fecha_nacimiento as string | undefined,

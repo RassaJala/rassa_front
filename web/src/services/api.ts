@@ -27,12 +27,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const NO_REDIRECT_ON_401 = ['/auth/change-password/'];
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const requestUrl: string | undefined = error.config?.url;
     if (
       error.response?.status === 401 &&
-      window.location.pathname !== '/login'
+      window.location.pathname !== '/login' &&
+      requestUrl &&
+      !NO_REDIRECT_ON_401.some((prefix) => requestUrl.startsWith(prefix))
     ) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

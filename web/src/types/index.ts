@@ -5,7 +5,7 @@ export interface User {
   email: string;
   nombre: string;
   rol: Role;
-  apellido_paterno?: string;
+  apellido_paterno: string;
   apellido_materno?: string;
   telefono?: string;
   fecha_nacimiento?: string;
