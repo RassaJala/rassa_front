@@ -549,7 +549,14 @@ export function AdminFamilyDetail() {
               </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, position: 'relative' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 5,
+                position: 'relative',
+              }}
+            >
               <input
                 type="text"
                 placeholder="Nombre o correo..."
@@ -601,13 +608,17 @@ export function AdminFamilyDetail() {
                         borderBottom: `1px solid ${border}`,
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.background = isDark ? '#353D35' : '#F5F7F0';
+                        (e.currentTarget as HTMLDivElement).style.background =
+                          isDark ? '#353D35' : '#F5F7F0';
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                        (e.currentTarget as HTMLDivElement).style.background =
+                          'transparent';
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+                      <span
+                        style={{ fontSize: 14, fontWeight: 600, color: fg }}
+                      >
                         {user.nombre} {user.apellido_paterno}
                       </span>
                       <span style={{ fontSize: 12, color: muted }}>
