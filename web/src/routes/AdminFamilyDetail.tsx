@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
-import type { FamilyMember } from '../types';
+import type { FamilyMember, SearchUserResult } from '../types';
 import { extractApiError } from '../utils/apiError';
 
 export function AdminFamilyDetail() {
@@ -30,10 +30,16 @@ export function AdminFamilyDetail() {
 
   // Add member modal states
   const [modalVisible, setModalVisible] = useState(false);
-  const [userIdInput, setUserIdInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
+  const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
+    null,
+  );
+  const [searchLoading, setSearchLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filteredMembers = useMemo(() => {
     if (!memberSearch.trim()) return members;
@@ -100,11 +106,50 @@ export function AdminFamilyDetail() {
     }
   }
 
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2 || selectedUser) {
+      setSearchResults([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const { data } = await api.get<{ data: SearchUserResult[] }>(
+          `/auth/search-users/?q=${encodeURIComponent(trimmed)}`,
+        );
+        setSearchResults(data.data);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery, selectedUser]);
+
+  function handleSelectUser(user: SearchUserResult) {
+    setSelectedUser(user);
+    setSearchQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
+    setSearchResults([]);
+  }
+
+  function handleClearSearch() {
+    setSearchQuery('');
+    setSelectedUser(null);
+    setSearchResults([]);
+  }
+
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    const userIdNum = parseInt(userIdInput.trim(), 10);
-    if (isNaN(userIdNum)) {
-      setModalError('Ingresa un ID de usuario numérico válido.');
+    if (!selectedUser) {
+      setModalError('Seleccioná un usuario de la lista.');
       return;
     }
 
@@ -112,12 +157,12 @@ export function AdminFamilyDetail() {
     setModalError(null);
     try {
       await api.post('/familias/miembros/', {
-        fk_usuario: userIdNum,
+        fk_usuario: selectedUser.id_usuario,
         fk_familia: familyId,
       });
       await fetchFamilyAndMembers();
       setModalVisible(false);
-      setUserIdInput('');
+      handleClearSearch();
     } catch (err: unknown) {
       console.error(err);
       const apiErr = extractApiError(err, [
@@ -132,6 +177,13 @@ export function AdminFamilyDetail() {
   }
 
   async function handleRemoveMember(member: FamilyMember) {
+    if (jefeId === member.fk_usuario) {
+      setError(
+        'No puedes remover al jefe de familia. Primero asigna otro jefe.',
+      );
+      return;
+    }
+
     if (
       !window.confirm(
         `¿Seguro que quieres remover a ${member.usuario_nombre} de la familia?`,
@@ -153,7 +205,7 @@ export function AdminFamilyDetail() {
     setError(null);
     try {
       await api.post(`/familias/grupos/${familyId}/asignar-jefe/`, {
-        fk_usuario: member.fk_usuario,
+        fk_jefe_familia: member.fk_usuario,
       });
       await fetchFamilyAndMembers();
     } catch (err: unknown) {
@@ -467,7 +519,7 @@ export function AdminFamilyDetail() {
           }}
           onClick={() => {
             setModalVisible(false);
-            setUserIdInput('');
+            handleClearSearch();
           }}
         >
           <form
@@ -493,17 +545,19 @@ export function AdminFamilyDetail() {
                 Agregar integrante
               </h3>
               <p style={{ fontSize: 13, color: muted, margin: '4px 0 0 0' }}>
-                Ingresa el ID numérico del usuario para agregarlo a esta
-                familia.
+                Buscá un usuario por su nombre o correo.
               </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, position: 'relative' }}>
               <input
                 type="text"
-                placeholder="ID del usuario"
-                value={userIdInput}
-                onChange={(e) => setUserIdInput(e.target.value)}
+                placeholder="Nombre o correo..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (selectedUser) setSelectedUser(null);
+                }}
                 required
                 style={{
                   width: '100%',
@@ -518,6 +572,56 @@ export function AdminFamilyDetail() {
                   outline: 'none',
                 }}
               />
+              {searchResults.length > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 48,
+                    left: 0,
+                    right: 0,
+                    background: surface,
+                    border: `1px solid ${border}`,
+                    borderRadius: 10,
+                    maxHeight: 180,
+                    overflowY: 'auto',
+                    zIndex: 10,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id_usuario}
+                      onClick={() => handleSelectUser(user)}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        borderBottom: `1px solid ${border}`,
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.background = isDark ? '#353D35' : '#F5F7F0';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+                        {user.nombre} {user.apellido_paterno}
+                      </span>
+                      <span style={{ fontSize: 12, color: muted }}>
+                        {user.email}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchLoading && (
+                <span style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+                  Buscando...
+                </span>
+              )}
             </div>
 
             {modalError && (
@@ -549,7 +653,7 @@ export function AdminFamilyDetail() {
                 type="button"
                 onClick={() => {
                   setModalVisible(false);
-                  setUserIdInput('');
+                  handleClearSearch();
                 }}
                 style={{
                   height: 32,
@@ -567,7 +671,7 @@ export function AdminFamilyDetail() {
               </button>
               <button
                 type="submit"
-                disabled={modalLoading}
+                disabled={modalLoading || !selectedUser}
                 style={{
                   height: 32,
                   padding: '0 12px',
@@ -578,7 +682,7 @@ export function AdminFamilyDetail() {
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
-                  opacity: modalLoading ? 0.6 : 1,
+                  opacity: modalLoading || !selectedUser ? 0.6 : 1,
                 }}
               >
                 {modalLoading ? 'Agregando...' : 'Agregar'}

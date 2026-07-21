@@ -60,3 +60,11 @@ export interface FamilyMember {
   estado: boolean;
   creado_en: string;
 }
+
+export interface SearchUserResult {
+  id_usuario: number;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+}
