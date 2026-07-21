@@ -50,9 +50,15 @@ jest.mock('react-native-paper', () => {
 // Mock react-native-safe-area-context to avoid safe area provider errors in Jest tests
 jest.mock('react-native-safe-area-context', () => {
   const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires -- jest mock factory needs inline require
+  const { createContext } = require('react') as typeof import('react');
+  const SafeAreaInsetsContext = createContext(inset);
+
   return {
+    SafeAreaInsetsContext,
     SafeAreaProvider: ({ children }: any) => children,
     SafeAreaView: ({ children }: any) => children,
+    initialWindowMetrics: null,
     useSafeAreaInsets: () => inset,
   };
 });

@@ -5,13 +5,14 @@ export const colors = {
   accent: '#f59e0b',
   background: '#f9fafb',
   surface: '#ffffff',
-  text: '#111827',
-  textSecondary: '#6b7280',
-  textTertiary: '#9ca3af',
-  border: '#e5e7eb',
-  error: '#ef4444',
-  success: '#22c55e',
-  warning: '#f59e0b',
+  text: '#111827', // gray-900
+  textSecondary: '#6b7280', // gray-500
+  textTertiary: '#9ca3af', // gray-400
+  border: '#e5e7eb', // gray-200
+  error: '#ef4444', // red-500
+  success: '#22c55e', // green-500
+  warning: '#f59e0b', // amber-500
+  info: '#3b82f6', // blue-500
   placeholder: '#94a3b8',
   brand: {
     greenForest: '#3A6D56',

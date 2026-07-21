@@ -19,6 +19,7 @@ import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
@@ -130,6 +131,7 @@ function AdminTabs() {
         }}
       />
       <AdminTab.Screen
+      <AdminTab.Screen
         name="MunicipioList"
         component={MunicipioListScreen}
         options={{
@@ -137,6 +139,20 @@ function AdminTabs() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="map-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
+        name="UserManagement"
+        component={UserManagementScreen}
+        options={{
+          tabBarLabel: 'Usuarios',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-group-outline"
               size={size}
               color={color}
             />
