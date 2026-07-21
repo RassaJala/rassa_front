@@ -1,5 +1,5 @@
-import { Button } from '~/components/ui/Button';
-import { Input } from '~/components/ui/Input';
+import { useState } from 'react';
+import { useTheme } from '~/providers/ThemeProvider';
 import { LocationSelector } from '~/components/admin/LocationSelector';
 import type {
   FieldErrors,
@@ -23,17 +23,6 @@ function filterNameInput(value: string): string {
 function filterPhoneInput(value: string): string {
   return value.replace(FILTER_PHONE, '');
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const inputClass =
-  'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-brand-ink focus:border-brand-red-coral focus:outline-none focus:ring-1 focus:ring-brand-red-coral dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 w-full';
-const inputErrorClass =
-  'rounded-lg border border-red-500 bg-white px-3 py-2 text-sm text-brand-ink focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-red-700 dark:bg-gray-900 dark:text-gray-100 w-full';
-const selectClass = inputClass;
-const selectErrorClass = inputErrorClass;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -72,6 +61,31 @@ export function AdminProfileForm({
   onLoadMunicipios,
   onFetchLocalidades,
 }: AdminProfileFormProps) {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#2A332A' : '#D6DAD4';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const bg = isDark ? '#1A241C' : '#F5F6F3';
+  const coral = '#DE393A';
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const btnStyle = {
+    height: 40,
+    padding: '0 18px',
+    borderRadius: 10,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  } as const;
+
   const handleMunicipioChange = (id: number | null) => {
     onChange({ ...profile, municipio_id: id, localidad_id: null });
     onClearError('municipio_id');
@@ -84,29 +98,94 @@ export function AdminProfileForm({
     onClearError('localidad_id');
   };
 
+  function renderField(label: string, fieldName: string, input: React.ReactNode) {
+    const err = fieldErrors[fieldName as keyof FieldErrors];
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: muted,
+          }}
+        >
+          {label}
+        </label>
+        {input}
+        {err && (
+          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{err}</p>
+        )}
+      </div>
+    );
+  }
+
+  function inputStyle(fieldName: string) {
+    const err = fieldErrors[fieldName as keyof FieldErrors];
+    return {
+      width: '100%' as const,
+      height: 44,
+      border: `1.5px solid ${
+        err ? '#ef4444' : focusedField === fieldName ? coral : border
+      }`,
+      borderRadius: 10,
+      padding: '0 14px',
+      fontSize: 15,
+      fontFamily: 'inherit',
+      background: bg,
+      color: fg,
+      outline: 'none',
+      boxSizing: 'border-box' as const,
+    };
+  }
+
   return (
-    <form onSubmit={onSave} className="space-y-4">
-      <h3 className="text-lg font-bold text-brand-ink dark:text-gray-100">
+    <form
+      onSubmit={onSave}
+      style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+    >
+      <h3
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: fg,
+          margin: 0,
+        }}
+      >
         Editar Información
       </h3>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <Input
-            label="Nombre *"
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 18,
+        }}
+      >
+        {renderField(
+          'Nombre *',
+          'nombre',
+          <input
+            type="text"
             value={profile.nombre}
             maxLength={100}
             onChange={(e) => {
               onChange({ ...profile, nombre: filterNameInput(e.target.value) });
               onClearError('nombre');
             }}
-            error={fieldErrors.nombre}
+            style={inputStyle('nombre')}
+            onFocus={() => setFocusedField('nombre')}
+            onBlur={() => setFocusedField(null)}
             required
-          />
-        </div>
-        <div>
-          <Input
-            label="Apellido Paterno *"
+          />,
+        )}
+
+        {renderField(
+          'Apellido Paterno *',
+          'apellido_paterno',
+          <input
+            type="text"
             value={profile.apellido_paterno}
             maxLength={100}
             onChange={(e) => {
@@ -116,13 +195,18 @@ export function AdminProfileForm({
               });
               onClearError('apellido_paterno');
             }}
-            error={fieldErrors.apellido_paterno}
+            style={inputStyle('apellido_paterno')}
+            onFocus={() => setFocusedField('apellido_paterno')}
+            onBlur={() => setFocusedField(null)}
             required
-          />
-        </div>
-        <div>
-          <Input
-            label="Apellido Materno"
+          />,
+        )}
+
+        {renderField(
+          'Apellido Materno',
+          'apellido_materno',
+          <input
+            type="text"
             value={profile.apellido_materno}
             maxLength={100}
             onChange={(e) => {
@@ -132,12 +216,17 @@ export function AdminProfileForm({
               });
               onClearError('apellido_materno');
             }}
-            error={fieldErrors.apellido_materno}
-          />
-        </div>
-        <div>
-          <Input
-            label="Teléfono *"
+            style={inputStyle('apellido_materno')}
+            onFocus={() => setFocusedField('apellido_materno')}
+            onBlur={() => setFocusedField(null)}
+          />,
+        )}
+
+        {renderField(
+          'Teléfono *',
+          'telefono',
+          <input
+            type="text"
             value={profile.telefono}
             maxLength={15}
             onChange={(e) => {
@@ -147,34 +236,45 @@ export function AdminProfileForm({
               });
               onClearError('telefono');
             }}
-            error={fieldErrors.telefono}
+            style={inputStyle('telefono')}
+            onFocus={() => setFocusedField('telefono')}
+            onBlur={() => setFocusedField(null)}
             required
-          />
-        </div>
-        <div>
-          <Input
-            label="Fecha de Nacimiento *"
+          />,
+        )}
+
+        {renderField(
+          'Fecha de Nacimiento *',
+          'fecha_nacimiento',
+          <input
             type="date"
             value={profile.fecha_nacimiento}
             onChange={(e) => {
               onChange({ ...profile, fecha_nacimiento: e.target.value });
               onClearError('fecha_nacimiento');
             }}
-            error={fieldErrors.fecha_nacimiento}
+            style={inputStyle('fecha_nacimiento')}
+            onFocus={() => setFocusedField('fecha_nacimiento')}
+            onBlur={() => setFocusedField(null)}
             required
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Género *
-          </label>
+          />,
+        )}
+
+        {renderField(
+          'Género *',
+          'genero',
           <select
             value={profile.genero}
             onChange={(e) => {
               onChange({ ...profile, genero: e.target.value });
               onClearError('genero');
             }}
-            className={fieldErrors.genero ? selectErrorClass : selectClass}
+            style={{
+              ...inputStyle('genero'),
+              appearance: 'auto' as const,
+            }}
+            onFocus={() => setFocusedField('genero')}
+            onBlur={() => setFocusedField(null)}
             required
           >
             <option value="">Seleccionar...</option>
@@ -183,28 +283,38 @@ export function AdminProfileForm({
                 {opt.label}
               </option>
             ))}
-          </select>
-          {fieldErrors.genero && (
-            <p className="text-xs text-red-500">{fieldErrors.genero}</p>
+          </select>,
+        )}
+
+        <div style={{ gridColumn: '1 / -1' }}>
+          {renderField(
+            'Dirección *',
+            'direccion',
+            <input
+              type="text"
+              value={profile.direccion}
+              maxLength={255}
+              onChange={(e) => {
+                onChange({ ...profile, direccion: e.target.value });
+                onClearError('direccion');
+              }}
+              style={inputStyle('direccion')}
+              onFocus={() => setFocusedField('direccion')}
+              onBlur={() => setFocusedField(null)}
+              required
+            />,
           )}
-        </div>
-        <div className="sm:col-span-2">
-          <Input
-            label="Dirección *"
-            value={profile.direccion}
-            maxLength={255}
-            onChange={(e) => {
-              onChange({ ...profile, direccion: e.target.value });
-              onClearError('direccion');
-            }}
-            error={fieldErrors.direccion}
-            required
-          />
         </div>
       </div>
 
       {/* --- Municipio / Localidad --- */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 18,
+        }}
+      >
         <LocationSelector
           municipios={municipios}
           localidades={localidades}
@@ -220,13 +330,31 @@ export function AdminProfileForm({
         />
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" variant="primary" disabled={loading}>
+      <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...btnStyle,
+            background: coral,
+            color: '#fff',
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
           {loading ? 'Guardando...' : 'Guardar cambios'}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onCancel}>
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            ...btnStyle,
+            background: 'transparent',
+            border: `1.5px solid ${border}`,
+            color: fg,
+          }}
+        >
           Cancelar
-        </Button>
+        </button>
       </div>
     </form>
   );

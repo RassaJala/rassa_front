@@ -1,13 +1,10 @@
+import { useTheme } from '~/providers/ThemeProvider';
 import type { ProfileForm } from '~/components/admin/types';
 import { getGeneroLabel } from '~/components/admin/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const labelClass =
-  'text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider';
-const valueClass = 'text-sm font-medium text-brand-ink dark:text-gray-100';
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return 'No especificado';
@@ -20,10 +17,33 @@ function formatDate(iso: string | undefined): string {
 }
 
 function FieldRow({ label, value }: { label: string; value: string }) {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className={labelClass}>{label}</span>
-      <span className={valueClass}>{value}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: muted,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color: fg,
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -44,7 +64,13 @@ export function AdminProfileView({ profile }: AdminProfileViewProps) {
     : '';
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 20,
+      }}
+    >
       <FieldRow label="Nombre Completo" value={fullName} />
       <FieldRow
         label="Teléfono"

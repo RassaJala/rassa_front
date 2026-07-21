@@ -1,6 +1,5 @@
-import { Button } from '~/components/ui/Button';
-import { Card } from '~/components/ui/Card';
-import { Input } from '~/components/ui/Input';
+import { useState } from 'react';
+import { useTheme } from '~/providers/ThemeProvider';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -33,66 +32,163 @@ export function AdminChangePassword({
   onPasswordErrorClear,
   onSubmit,
 }: AdminChangePasswordProps) {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#2A332A' : '#D6DAD4';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const bg = isDark ? '#1A241C' : '#F5F6F3';
+  const coral = '#DE393A';
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const btnStyle = {
+    height: 40,
+    padding: '0 18px',
+    borderRadius: 10,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  } as const;
+
+  function inputStyle(fieldName: string) {
+    return {
+      width: '100%' as const,
+      height: 44,
+      border: `1.5px solid ${
+        focusedField === fieldName ? coral : border
+      }`,
+      borderRadius: 10,
+      padding: '0 14px',
+      fontSize: 15,
+      fontFamily: 'inherit',
+      background: bg,
+      color: fg,
+      outline: 'none',
+      boxSizing: 'border-box' as const,
+    };
+  }
+
+  function renderField(label: string, fieldName: string) {
+    const value =
+      fieldName === 'current'
+        ? currentPassword
+        : fieldName === 'new'
+          ? newPassword
+          : confirmPassword;
+    const onChange =
+      fieldName === 'current'
+        ? (v: string) => { onCurrentPasswordChange(v); onPasswordErrorClear(); }
+        : fieldName === 'new'
+          ? (v: string) => { onNewPasswordChange(v); onPasswordErrorClear(); }
+          : (v: string) => { onConfirmPasswordChange(v); onPasswordErrorClear(); };
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: muted,
+          }}
+        >
+          {label}
+        </label>
+        <input
+          type="password"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={inputStyle(fieldName)}
+          onFocus={() => setFocusedField(fieldName)}
+          onBlur={() => setFocusedField(null)}
+          required
+        />
+      </div>
+    );
+  }
+
   return (
-    <Card className="space-y-4 p-6">
-      <h3 className="text-lg font-bold text-brand-ink dark:text-gray-100">
+    <div
+      style={{
+        background: surface,
+        borderRadius: 16,
+        border: `1px solid ${border}`,
+        padding: 24,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 18,
+      }}
+    >
+      <h3
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: fg,
+          margin: 0,
+        }}
+      >
         Cambiar Contraseña
       </h3>
 
       {passwordError && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400">
+        <div
+          style={{
+            borderRadius: 10,
+            border: '1px solid #fca5a5',
+            background: isDark ? '#451a1a' : '#fef2f2',
+            padding: 12,
+            fontSize: 14,
+            color: isDark ? '#fca5a5' : '#dc2626',
+          }}
+        >
           {passwordError}
         </div>
       )}
 
       {passwordSuccess && (
-        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600 dark:border-green-700 dark:bg-green-950 dark:text-green-400">
+        <div
+          style={{
+            borderRadius: 10,
+            border: '1px solid #86efac',
+            background: isDark ? '#052e16' : '#f0fdf4',
+            padding: 12,
+            fontSize: 14,
+            color: isDark ? '#86efac' : '#16a34a',
+          }}
+        >
           {passwordSuccess}
         </div>
       )}
 
-      <div className="space-y-4">
-        <Input
-          label="Contraseña Actual *"
-          type="password"
-          value={currentPassword}
-          onChange={(e) => {
-            onCurrentPasswordChange(e.target.value);
-            onPasswordErrorClear();
-          }}
-          required
-        />
-        <Input
-          label="Nueva Contraseña (mínimo 8 caracteres) *"
-          type="password"
-          value={newPassword}
-          onChange={(e) => {
-            onNewPasswordChange(e.target.value);
-            onPasswordErrorClear();
-          }}
-          required
-        />
-        <Input
-          label="Confirmar Nueva Contraseña *"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => {
-            onConfirmPasswordChange(e.target.value);
-            onPasswordErrorClear();
-          }}
-          required
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {renderField('Contraseña Actual *', 'current')}
+        {renderField('Nueva Contraseña (mínimo 8 caracteres) *', 'new')}
+        {renderField('Confirmar Nueva Contraseña *', 'confirm')}
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <Button
-          variant="primary"
+      <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
+        <button
+          type="button"
           disabled={passwordSubmitting}
           onClick={onSubmit}
+          style={{
+            ...btnStyle,
+            background: coral,
+            color: '#fff',
+            opacity: passwordSubmitting ? 0.6 : 1,
+          }}
         >
           {passwordSubmitting ? 'Cambiando...' : 'Cambiar Contraseña'}
-        </Button>
+        </button>
       </div>
-    </Card>
+    </div>
   );
 }

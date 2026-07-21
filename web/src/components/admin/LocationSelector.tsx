@@ -1,17 +1,10 @@
+import { useState } from 'react';
+import { useTheme } from '~/providers/ThemeProvider';
 import type {
   FieldErrors,
   Localidad,
   Municipio,
 } from '~/components/admin/types';
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const selectClass =
-  'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-brand-ink focus:border-brand-red-coral focus:outline-none focus:ring-1 focus:ring-brand-red-coral dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 w-full';
-const selectErrorClass =
-  'rounded-lg border border-red-500 bg-white px-3 py-2 text-sm text-brand-ink focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-red-700 dark:bg-gray-900 dark:text-gray-100 w-full';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -44,25 +37,81 @@ export function LocationSelector({
   onLocalidadChange,
   onRetryMunicipios,
 }: LocationSelectorProps) {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#2A332A' : '#D6DAD4';
+  const bg = isDark ? '#1A241C' : '#F5F6F3';
+  const coral = '#DE393A';
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  function selectStyle(fieldName: string, hasError: boolean) {
+    return {
+      width: '100%' as const,
+      height: 44,
+      border: `1.5px solid ${
+        hasError ? '#ef4444' : focusedField === fieldName ? coral : border
+      }`,
+      borderRadius: 10,
+      padding: '0 14px',
+      fontSize: 15,
+      fontFamily: 'inherit',
+      background: bg,
+      color: fg,
+      outline: 'none',
+      boxSizing: 'border-box' as const,
+      cursor: 'pointer' as const,
+    };
+  }
+
   return (
     <>
       {catalogError && (
-        <div className="mb-2 rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
-          <p className="text-sm text-red-600 dark:text-red-400">
+        <div
+          style={{
+            gridColumn: '1 / -1',
+            borderRadius: 10,
+            border: '1px solid #fca5a5',
+            background: isDark ? '#451a1a' : '#fef2f2',
+            padding: 12,
+            fontSize: 14,
+          }}
+        >
+          <p style={{ margin: 0, color: isDark ? '#fca5a5' : '#dc2626' }}>
             {catalogError}
           </p>
           <button
             type="button"
             onClick={onRetryMunicipios}
-            className="mt-1 text-sm font-medium text-red-600 underline dark:text-red-400"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              marginTop: 4,
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              color: isDark ? '#fca5a5' : '#dc2626',
+              textDecoration: 'underline',
+            }}
           >
             Reintentar
           </button>
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: muted,
+          }}
+        >
           Municipio *
         </label>
         <select
@@ -71,8 +120,10 @@ export function LocationSelector({
             const id = e.target.value ? Number(e.target.value) : null;
             onMunicipioChange(id);
           }}
-          className={fieldErrors.municipio_id ? selectErrorClass : selectClass}
+          style={selectStyle('municipio', !!fieldErrors.municipio_id)}
           disabled={loadingMunicipios}
+          onFocus={() => setFocusedField('municipio')}
+          onBlur={() => setFocusedField(null)}
           required
         >
           <option value="">
@@ -85,12 +136,22 @@ export function LocationSelector({
           ))}
         </select>
         {fieldErrors.municipio_id && (
-          <p className="text-xs text-red-500">{fieldErrors.municipio_id}</p>
+          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>
+            {fieldErrors.municipio_id}
+          </p>
         )}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: muted,
+          }}
+        >
           Localidad *
         </label>
         <select
@@ -99,9 +160,11 @@ export function LocationSelector({
             const id = e.target.value ? Number(e.target.value) : null;
             onLocalidadChange(id);
           }}
-          className={fieldErrors.localidad_id ? selectErrorClass : selectClass}
-          required
+          style={selectStyle('localidad', !!fieldErrors.localidad_id)}
           disabled={!selectedMunicipioId || loadingLocalidades}
+          onFocus={() => setFocusedField('localidad')}
+          onBlur={() => setFocusedField(null)}
+          required
         >
           <option value="">
             {loadingLocalidades
@@ -117,7 +180,9 @@ export function LocationSelector({
           ))}
         </select>
         {fieldErrors.localidad_id && (
-          <p className="text-xs text-red-500">{fieldErrors.localidad_id}</p>
+          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>
+            {fieldErrors.localidad_id}
+          </p>
         )}
       </div>
     </>

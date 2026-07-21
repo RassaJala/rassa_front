@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { useTheme } from '~/providers/ThemeProvider';
 
 import { AdminChangePassword } from '~/components/admin/AdminChangePassword';
 import { AdminProfileForm } from '~/components/admin/AdminProfileForm';
 import { AdminProfileView } from '~/components/admin/AdminProfileView';
-import { Button } from '~/components/ui/Button';
-import { Card } from '~/components/ui/Card';
-import { PageHeader } from '~/components/layout/PageHeader';
 import type {
   FieldErrors,
   Localidad,
@@ -184,6 +182,32 @@ function validateForm(form: ProfileForm): FieldErrors {
 // ---------------------------------------------------------------------------
 
 export function AdminProfile() {
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#2A332A' : '#D6DAD4';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const bg = isDark ? '#1A241C' : '#F5F6F3';
+  const coral = '#DE393A';
+
+  const btnStyle = {
+    height: 40,
+    padding: '0 18px',
+    borderRadius: 10,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  } as const;
+
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
   // --- Profile state ---
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -423,104 +447,189 @@ export function AdminProfile() {
   // --- Loading ---
   if (fetching) {
     return (
-      <>
-        <PageHeader title="Mi Perfil" />
-        <div className="flex items-center justify-center py-20 text-gray-400">
+      <div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 20,
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              color: fg,
+            }}
+          >
+            Mi Perfil
+          </h2>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '80px 0',
+            color: muted,
+            fontSize: 14,
+          }}
+        >
           Cargando perfil...
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <PageHeader
-        title="Mi Perfil"
-        action={
-          !editing && profile ? (
-            <Button
-              variant="primary"
-              onClick={() => {
-                profileSnapshot.current = profile;
-                setEditing(true);
-              }}
-            >
-              Editar perfil
-            </Button>
-          ) : undefined
-        }
-      />
-
-      <div className="mx-auto max-w-2xl space-y-6">
-        {/* --- Profile Card --- */}
-        <Card className="space-y-6 p-6">
-          {error && (
-            <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-600 dark:border-green-700 dark:bg-green-950 dark:text-green-400">
-              {success}
-            </div>
-          )}
-
-          {editing && profile ? (
-            <>
-              <AdminProfileForm
-                profile={profile}
-                fieldErrors={fieldErrors}
-                municipios={municipios}
-                localidades={localidades}
-                loadingMunicipios={loadingMunicipios}
-                loadingLocalidades={loadingLocalidades}
-                catalogError={catalogError}
-                loading={loading}
-                onChange={(updated) => setProfile(updated)}
-                onClearError={(field) =>
-                  setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
-                }
-                onSave={handleSave}
-                onCancel={() => {
-                  setEditing(false);
-                  setError(null);
-                  setFieldErrors({});
-                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                  setProfile(structuredClone(profileSnapshot.current ?? null));
-                }}
-                onLoadMunicipios={loadMunicipios}
-                onFetchLocalidades={fetchLocalidades}
-              />
-
-              <AdminChangePassword
-                currentPassword={currentPassword}
-                newPassword={newPassword}
-                confirmPassword={confirmPassword}
-                passwordError={passwordError}
-                passwordSuccess={passwordSuccess}
-                passwordSubmitting={passwordSubmitting}
-                onCurrentPasswordChange={setCurrentPassword}
-                onNewPasswordChange={setNewPassword}
-                onConfirmPasswordChange={setConfirmPassword}
-                onPasswordErrorClear={() => setPasswordError(null)}
-                onSubmit={handlePasswordChange}
-              />
-            </>
-          ) : !profile ? (
-            <div className="flex flex-col items-center gap-4 py-10 text-center">
-              <p className="text-gray-500 dark:text-gray-400">
-                No se pudo cargar el perfil.
-              </p>
-              <Button variant="secondary" onClick={fetchProfile}>
-                Reintentar
-              </Button>
-            </div>
-          ) : (
-            <AdminProfileView profile={profile} />
-          )}
-        </Card>
+    <div>
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            color: fg,
+          }}
+        >
+          Mi Perfil
+        </h2>
+        {!editing && profile && (
+          <button
+            onClick={() => {
+              profileSnapshot.current = profile;
+              setEditing(true);
+            }}
+            style={{ ...btnStyle, background: coral, color: '#fff' }}
+          >
+            Editar perfil
+          </button>
+        )}
       </div>
-    </>
+
+      {/* Profile Card */}
+      <div
+        style={{
+          background: surface,
+          borderRadius: 16,
+          border: `1px solid ${border}`,
+          padding: 24,
+          maxWidth: 672,
+          margin: '0 auto',
+        }}
+      >
+        {error && (
+          <div
+            style={{
+              borderRadius: 10,
+              border: '1px solid #fca5a5',
+              background: isDark ? '#451a1a' : '#fef2f2',
+              padding: 12,
+              fontSize: 14,
+              color: isDark ? '#fca5a5' : '#dc2626',
+              marginBottom: 16,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              borderRadius: 10,
+              border: '1px solid #86efac',
+              background: isDark ? '#052e16' : '#f0fdf4',
+              padding: 12,
+              fontSize: 14,
+              color: isDark ? '#86efac' : '#16a34a',
+              marginBottom: 16,
+            }}
+          >
+            {success}
+          </div>
+        )}
+
+        {editing && profile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <AdminProfileForm
+              profile={profile}
+              fieldErrors={fieldErrors}
+              municipios={municipios}
+              localidades={localidades}
+              loadingMunicipios={loadingMunicipios}
+              loadingLocalidades={loadingLocalidades}
+              catalogError={catalogError}
+              loading={loading}
+              onChange={(updated) => setProfile(updated)}
+              onClearError={(field) =>
+                setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+              }
+              onSave={handleSave}
+              onCancel={() => {
+                setEditing(false);
+                setError(null);
+                setFieldErrors({});
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                setProfile(structuredClone(profileSnapshot.current ?? null));
+              }}
+              onLoadMunicipios={loadMunicipios}
+              onFetchLocalidades={fetchLocalidades}
+            />
+
+            <AdminChangePassword
+              currentPassword={currentPassword}
+              newPassword={newPassword}
+              confirmPassword={confirmPassword}
+              passwordError={passwordError}
+              passwordSuccess={passwordSuccess}
+              passwordSubmitting={passwordSubmitting}
+              onCurrentPasswordChange={setCurrentPassword}
+              onNewPasswordChange={setNewPassword}
+              onConfirmPasswordChange={setConfirmPassword}
+              onPasswordErrorClear={() => setPasswordError(null)}
+              onSubmit={handlePasswordChange}
+            />
+          </div>
+        ) : !profile ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+              padding: '40px 0',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ color: muted, fontSize: 14 }}>
+              No se pudo cargar el perfil.
+            </p>
+            <button
+              onClick={fetchProfile}
+              style={{ ...btnStyle, background: coral, color: '#fff' }}
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <AdminProfileView profile={profile} />
+        )}
+      </div>
+    </div>
   );
 }
