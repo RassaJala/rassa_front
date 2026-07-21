@@ -257,20 +257,35 @@ const FILTER_LABELS: Record<StatusFilterValue, string> = {
   inactivos: 'Inactivos',
 };
 
+interface FilterResult<T> {
+  readonly items: T[];
+  readonly excludedCount: number;
+}
+
 /**
  * Pure filter function — runs each item through search + status checks.
  * Invalid items are caught, logged, and excluded instead of crashing the list.
+ * Returns filtered items plus a count of items excluded by error.
  */
 function filterItems<T extends { nombre: string; estado: boolean }>(
   items: T[] | undefined,
   search: string,
   statusFilter: StatusFilterValue,
   searchFieldNames: readonly string[],
-): T[] {
+): FilterResult<T> {
   const normalizedSearch = search.toLowerCase().trim();
+  let excludedCount = 0;
 
-  return (items ?? []).filter((item) => {
+  const filtered = (items ?? []).filter((item) => {
     try {
+      // Validate estado before using it
+      if (typeof item.estado !== 'boolean') {
+        console.warn(
+          'CrudListScreen: estado is not boolean, unexpected:',
+          item,
+        );
+      }
+
       const matchesSearch =
         !normalizedSearch ||
         searchFieldNames.some((fieldName) => {
@@ -289,15 +304,9 @@ function filterItems<T extends { nombre: string; estado: boolean }>(
         matchesStatus = item.estado === false;
       }
 
-      if (typeof item.estado !== 'boolean') {
-        console.warn(
-          'CrudListScreen: estado is not boolean, unexpected:',
-          item,
-        );
-      }
-
       return matchesSearch && matchesStatus;
     } catch (error) {
+      excludedCount++;
       console.warn(
         'CrudListScreen: error filtering item, excluding it:',
         item,
@@ -306,6 +315,8 @@ function filterItems<T extends { nombre: string; estado: boolean }>(
       return false;
     }
   });
+
+  return { items: filtered, excludedCount };
 }
 
 // ── Component ──────────────────────────────────────────────
@@ -421,10 +432,13 @@ export default function CrudListScreen<
   const searchFieldNames = useMemo(
     () =>
       config.searchFields ??
-      (config.fields[0] ? [config.fields[0].name] : ['nombre']),
+      (config.fields[0] ? [config.fields[0].name] : ['nombre']), // ponytail: asume entity has nombre field
     [config.searchFields, config.fields],
   );
-  const filteredItems = useMemo(
+  const {
+    items: filteredItems,
+    excludedCount,
+  } = useMemo(
     () =>
       filterItems(items, searchTermDebounced, statusFilter, searchFieldNames),
     [items, searchTermDebounced, statusFilter, searchFieldNames],
@@ -898,6 +912,34 @@ export default function CrudListScreen<
           ))}
         </View>
 
+        {/* ── Filter error banner ────────────────────────────────── */}
+        {excludedCount > 0 ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginHorizontal: 20,
+              marginBottom: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 10,
+              backgroundColor: errorBg,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="alert-circle-outline"
+              size={18}
+              color={errorColor}
+            />
+            <Text style={{ fontSize: 13, color: errorColor, flex: 1 }}>
+              {excludedCount} elemento{excludedCount !== 1 ? 's' : ''} no
+              pudo{excludedCount === 1 ? '' : 'ieron'} procesarse debido a un
+              error.
+            </Text>
+          </View>
+        ) : null}
+
         {/* ── List / No results ──────────────────────────────────── */}
         {noSearchResults ? (
           <View
@@ -921,7 +963,9 @@ export default function CrudListScreen<
                 color: muted,
               }}
             >
-              No se encontraron resultados para "{searchTermDebounced.trim()}".
+              {searchTermDebounced.trim()
+                ? `No se encontraron resultados para "${searchTermDebounced.trim()}".`
+                : 'No se encontraron resultados con el filtro actual.'}
             </Text>
           </View>
         ) : (

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
 
 interface Unit {
@@ -31,6 +31,7 @@ export function AdminUnits() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: '', abreviatura: '' });
   const [search, setSearch] = useState('');
+  const [searchDebounced, setSearchDebounced] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     'todos' | 'activos' | 'inactivos'
   >('todos');
@@ -39,19 +40,32 @@ export function AdminUnits() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const nextId = useRef(5);
 
+  // ── Debounce search ──────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounced(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const FILTER_LABELS: Record<string, string> = {
+    todos: 'Todos',
+    activos: 'Activos',
+    inactivos: 'Inactivos',
+  };
+
   const filtered = useMemo(
     () =>
       items.filter((i) => {
+        const normalizedSearch = searchDebounced.toLowerCase().trim();
         const matchesSearch =
-          !search ||
-          i.nombre.toLowerCase().includes(search.toLowerCase()) ||
-          i.abreviatura.toLowerCase().includes(search.toLowerCase());
+          !normalizedSearch ||
+          String(i.nombre ?? '').toLowerCase().includes(normalizedSearch) ||
+          String(i.abreviatura ?? '').toLowerCase().includes(normalizedSearch);
         const matchesStatus =
           statusFilter === 'todos' ||
-          (statusFilter === 'activos' ? i.estado : !i.estado);
+          (statusFilter === 'activos' ? i.estado === true : i.estado === false);
         return matchesSearch && matchesStatus;
       }),
-    [items, search, statusFilter],
+    [items, searchDebounced, statusFilter],
   );
 
   function startNew() {
@@ -257,6 +271,7 @@ export function AdminUnits() {
             {(['todos', 'activos', 'inactivos'] as const).map((f) => (
               <button
                 key={f}
+                type="button"
                 onClick={() => setStatusFilter(f)}
                 style={{
                   padding: '4px 12px',
@@ -270,11 +285,7 @@ export function AdminUnits() {
                   color: statusFilter === f ? '#fff' : muted,
                 }}
               >
-                {f === 'todos'
-                  ? 'Todos'
-                  : f === 'activos'
-                    ? 'Activos'
-                    : 'Inactivos'}
+                {FILTER_LABELS[f]}
               </button>
             ))}
           </div>
@@ -434,6 +445,38 @@ export function AdminUnits() {
                 )}
               </tbody>
             </table>
+            {!items.length ? null : filtered.length === 0 ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '48px 20px',
+                  color: muted,
+                }}
+              >
+                <div style={{ fontSize: 48, marginBottom: 12 }}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                    <path d="M8 11h6" />
+                  </svg>
+                </div>
+                <p style={{ fontSize: 14, margin: 0 }}>
+                  {searchDebounced.trim()
+                    ? `No se encontraron resultados para "${searchDebounced.trim()}".`
+                    : 'No se encontraron resultados con el filtro actual.'}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
