@@ -131,7 +131,6 @@ function AdminTabs() {
         }}
       />
       <AdminTab.Screen
-      <AdminTab.Screen
         name="MunicipioList"
         component={MunicipioListScreen}
         options={{
