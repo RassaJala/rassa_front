@@ -282,6 +282,25 @@ export default function ProductFormScreen({
     [],
   );
 
+  const processImages = useCallback(
+    async (productId: number) => {
+      for (const img of images) {
+        try {
+          if (img.markedForDeletion && img.id) {
+            await deleteImage(productId, img.id);
+          } else if (!img.id && !img.markedForDeletion && img.base64) {
+            await uploadImage(productId, img.base64, img.isPrimary);
+          } else if (img.id && !img.markedForDeletion && img.isPrimary) {
+            await updateImagePrimary(productId, img.id, true);
+          }
+        } catch (imgError) {
+          console.warn('Image operation failed, continuing:', imgError);
+        }
+      }
+    },
+    [images, deleteImage, uploadImage, updateImagePrimary],
+  );
+
   const handleSave = useCallback(async () => {
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -303,31 +322,11 @@ export default function ProductFormScreen({
     };
 
     try {
-      let savedProduct: Producto;
-      if (isEditing) {
-        savedProduct = await updateMutation.mutateAsync(payload);
-      } else {
-        savedProduct = await createMutation.mutateAsync(payload);
-      }
+      const savedProduct = isEditing
+        ? await updateMutation.mutateAsync(payload)
+        : await createMutation.mutateAsync(payload);
 
-      for (const img of images) {
-        try {
-          if (img.markedForDeletion && img.id) {
-            await deleteImage(savedProduct.id_producto, img.id);
-          } else if (!img.id && !img.markedForDeletion && img.base64) {
-            await uploadImage(
-              savedProduct.id_producto,
-              img.base64,
-              img.isPrimary,
-            );
-          } else if (img.id && !img.markedForDeletion && img.isPrimary) {
-            await updateImagePrimary(savedProduct.id_producto, img.id, true);
-          }
-        } catch (imgError) {
-          console.warn('Image operation failed, continuing:', imgError);
-        }
-      }
-
+      await processImages(savedProduct.id_producto);
       await queryClient.invalidateQueries({ queryKey: ['productos'] });
       setToastMessage(isEditing ? 'Producto actualizado.' : 'Producto creado.');
       setToastType('success');
@@ -354,13 +353,10 @@ export default function ProductFormScreen({
     esPerecedero,
     categoriaId,
     unidadId,
-    images,
     isEditing,
     createMutation,
     updateMutation,
-    uploadImage,
-    deleteImage,
-    updateImagePrimary,
+    processImages,
     queryClient,
     navigation,
   ]);
