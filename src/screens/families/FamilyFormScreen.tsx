@@ -301,7 +301,7 @@ async function handleCreateFamily(
     throw new Error('Error al asignar el jefe de familia.');
   }
 
-  queryClient.invalidateQueries({ queryKey: ['families'] });
+  void queryClient.invalidateQueries({ queryKey: ['families'] });
   navigation.goBack();
 }
 
