@@ -69,10 +69,7 @@ export function AdminProfileView({ profile }: AdminProfileViewProps) {
         label="Fecha de Nacimiento"
         value={formatDate(profile?.fecha_nacimiento)}
       />
-      <FieldRow
-        label="Género"
-        value={getGeneroLabel(profile?.genero)}
-      />
+      <FieldRow label="Género" value={getGeneroLabel(profile?.genero)} />
       <FieldRow
         label="Dirección"
         value={profile?.direccion || 'No especificado'}

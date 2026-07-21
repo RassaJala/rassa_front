@@ -174,9 +174,8 @@ export function AdminProfile() {
     api
       .get<{ data: Municipio[] }>('/municipios/')
       .then((res) => setMunicipios(res.data.data ?? []))
-      .catch(
-        () =>
-          setCatalogError('Error al cargar municipios. Verifica tu conexión.'),
+      .catch(() =>
+        setCatalogError('Error al cargar municipios. Verifica tu conexión.'),
       );
   }, []);
 
@@ -185,30 +184,25 @@ export function AdminProfile() {
   }, [loadMunicipios]);
 
   // --- Fetch localidades for a given municipio ---
-  const fetchLocalidades = useCallback(
-    async (municipioId: number | null) => {
-      if (!municipioId) {
-        setLocalidades([]);
-        return;
-      }
-      setLoadingLocalidades(true);
-      setCatalogError(null);
-      try {
-        const res = await api.get<{ data: Localidad[] }>(
-          `/localidades/?municipio_id=${municipioId}`,
-        );
-        setLocalidades(res.data.data ?? []);
-      } catch {
-        setLocalidades([]);
-        setCatalogError(
-          'Error al cargar localidades. Verifica tu conexión.',
-        );
-      } finally {
-        setLoadingLocalidades(false);
-      }
-    },
-    [],
-  );
+  const fetchLocalidades = useCallback(async (municipioId: number | null) => {
+    if (!municipioId) {
+      setLocalidades([]);
+      return;
+    }
+    setLoadingLocalidades(true);
+    setCatalogError(null);
+    try {
+      const res = await api.get<{ data: Localidad[] }>(
+        `/localidades/?municipio_id=${municipioId}`,
+      );
+      setLocalidades(res.data.data ?? []);
+    } catch {
+      setLocalidades([]);
+      setCatalogError('Error al cargar localidades. Verifica tu conexión.');
+    } finally {
+      setLoadingLocalidades(false);
+    }
+  }, []);
 
   // --- Load localidades when entering edit mode ---
   useEffect(() => {

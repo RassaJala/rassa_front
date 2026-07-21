@@ -1,4 +1,8 @@
-import type { FieldErrors, Localidad, Municipio } from '~/components/admin/types';
+import type {
+  FieldErrors,
+  Localidad,
+  Municipio,
+} from '~/components/admin/types';
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -65,9 +69,7 @@ export function LocationSelector({
             const id = e.target.value ? Number(e.target.value) : null;
             onMunicipioChange(id);
           }}
-          className={
-            fieldErrors.municipio_id ? selectErrorClass : selectClass
-          }
+          className={fieldErrors.municipio_id ? selectErrorClass : selectClass}
           required
         >
           <option value="">Seleccionar...</option>
@@ -92,9 +94,7 @@ export function LocationSelector({
             const id = e.target.value ? Number(e.target.value) : null;
             onLocalidadChange(id);
           }}
-          className={
-            fieldErrors.localidad_id ? selectErrorClass : selectClass
-          }
+          className={fieldErrors.localidad_id ? selectErrorClass : selectClass}
           required
           disabled={!selectedMunicipioId || loadingLocalidades}
         >
