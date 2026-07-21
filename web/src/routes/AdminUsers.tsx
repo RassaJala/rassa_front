@@ -761,7 +761,7 @@ export function AdminUsers() {
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => toggleStatus(user)}
-                            disabled={isSelf}
+                            disabled={isSelf || toggleMutation.isPending}
                             aria-label={user.estado ? 'Desactivar' : 'Activar'}
                             style={{
                               width: 32,
@@ -769,19 +769,19 @@ export function AdminUsers() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: isSelf ? 'not-allowed' : 'pointer',
+                              cursor: isSelf || toggleMutation.isPending ? 'not-allowed' : 'pointer',
                               fontSize: 14,
                               display: 'grid',
                               placeItems: 'center',
-                              color: isSelf ? muted : fg,
-                              opacity: isSelf ? 0.5 : 1,
+                              color: isSelf || toggleMutation.isPending ? muted : fg,
+                              opacity: isSelf || toggleMutation.isPending ? 0.5 : 1,
                             }}
                           >
                             {user.estado ? '⏸' : '▶️'}
                           </button>
                           <button
                             onClick={() => openRoleModal(user)}
-                            disabled={isSelf}
+                            disabled={isSelf || roleMutation.isPending}
                             aria-label="Cambiar rol"
                             style={{
                               width: 32,
@@ -789,12 +789,12 @@ export function AdminUsers() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: isSelf ? 'not-allowed' : 'pointer',
+                              cursor: isSelf || roleMutation.isPending ? 'not-allowed' : 'pointer',
                               fontSize: 14,
                               display: 'grid',
                               placeItems: 'center',
-                              color: isSelf ? muted : brand,
-                              opacity: isSelf ? 0.5 : 1,
+                              color: isSelf || roleMutation.isPending ? muted : brand,
+                              opacity: isSelf || roleMutation.isPending ? 0.5 : 1,
                             }}
                           >
                             👤
