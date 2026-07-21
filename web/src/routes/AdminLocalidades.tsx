@@ -71,11 +71,7 @@ export function AdminLocalidades() {
       const res = await api.get<ApiListResponse<Localidad>>(
         `/localidades/?municipio_id=${municipioId}`,
       );
-      // TODO: cuando el backend agregue "estado" al serializer,
-      // quitar el .map() y usar res.data.data directamente
-      setItems(
-        (res.data.data ?? []).map((item) => ({ ...item, estado: true })),
-      );
+      setItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar localidades');
     } finally {
@@ -89,13 +85,12 @@ export function AdminLocalidades() {
     }
   }, [selectedMunId, fetchLocalidades]);
 
-  // TODO: Reemplazar con GET /api/localidades/trash/ cuando endpoint esté listo
   async function fetchTrash() {
     setTrashLoading(true);
     setError(null);
     try {
-      // Placeholder: endpoint aún no disponible
-      setTrashItems([]);
+      const res = await api.get<ApiListResponse<Localidad>>('/localidades/trash/');
+      setTrashItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar papelera');
     } finally {
@@ -103,20 +98,18 @@ export function AdminLocalidades() {
     }
   }
 
-  // TODO: Reemplazar con POST /api/localidades/{id}/restore/ cuando endpoint esté listo
   async function restoreFromTrash(id: number) {
     try {
-      // Placeholder
+      await api.post(`/localidades/${id}/restore/`);
       setTrashItems((prev) => prev.filter((l) => l.id_localidad !== id));
     } catch {
       setError('Error al restaurar localidad');
     }
   }
 
-  // TODO: Reemplazar con POST /api/localidades/{id}/permanent/ cuando endpoint esté listo
   async function permanentDelete(id: number) {
     try {
-      // Placeholder
+      await api.post(`/localidades/${id}/permanent/`);
       setTrashItems((prev) => prev.filter((l) => l.id_localidad !== id));
     } catch {
       setError('Error al eliminar localidad definitivamente');
@@ -168,10 +161,7 @@ export function AdminLocalidades() {
           `/localidades/?municipio_id=${selectedMunId}`,
           { nombre: form.nombre.trim() },
         );
-        setItems((prev) => [
-          ...prev,
-          { ...res.data.data as Localidad, estado: true },
-        ]);
+        setItems((prev) => [...prev, res.data.data as Localidad]);
       }
       setTab('list');
     } catch {

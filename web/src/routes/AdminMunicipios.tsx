@@ -38,11 +38,7 @@ export function AdminMunicipios() {
     setError(null);
     try {
       const res = await api.get<ApiListResponse>('/municipios/');
-      // TODO: cuando el backend agregue "estado" al serializer,
-      // quitar el .map() y usar res.data.data directamente
-      setItems(
-        (res.data.data ?? []).map((item) => ({ ...item, estado: true })),
-      );
+      setItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar municipios');
     } finally {
@@ -54,13 +50,12 @@ export function AdminMunicipios() {
     void fetchItems();
   }, [fetchItems]);
 
-  // TODO: Reemplazar con GET /api/municipios/trash/ cuando endpoint esté listo
   async function fetchTrash() {
     setTrashLoading(true);
     setError(null);
     try {
-      // Placeholder: endpoint aún no disponible
-      setTrashItems([]);
+      const res = await api.get<ApiListResponse>('/municipios/trash/');
+      setTrashItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar papelera');
     } finally {
@@ -68,20 +63,18 @@ export function AdminMunicipios() {
     }
   }
 
-  // TODO: Reemplazar con POST /api/municipios/{id}/restore/ cuando endpoint esté listo
   async function restoreFromTrash(id: number) {
     try {
-      // Placeholder
+      await api.post(`/municipios/${id}/restore/`);
       setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
     } catch {
       setError('Error al restaurar municipio');
     }
   }
 
-  // TODO: Reemplazar con POST /api/municipios/{id}/permanent/ cuando endpoint esté listo
   async function permanentDelete(id: number) {
     try {
-      // Placeholder
+      await api.post(`/municipios/${id}/permanent/`);
       setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
     } catch {
       setError('Error al eliminar municipio definitivamente');
@@ -128,10 +121,7 @@ export function AdminMunicipios() {
         const res = await api.post('/municipios/', {
           nombre: form.nombre.trim(),
         });
-        setItems((prev) => [
-          ...prev,
-          { ...res.data.data as Municipio, estado: true },
-        ]);
+        setItems((prev) => [...prev, res.data.data as Municipio]);
       }
       setTab('list');
     } catch {
