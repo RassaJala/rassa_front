@@ -358,7 +358,6 @@ function FormFields({
 }: FormFieldsProps): React.JSX.Element {
   const surface = isDark ? '#263028' : '#FFFFFF';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
   const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
   const errorColor = '#DE393A';
