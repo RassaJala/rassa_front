@@ -7,6 +7,7 @@ interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
+  estado: boolean;
 }
 
 interface MunicipioOption {
@@ -23,7 +24,7 @@ export function AdminLocalidades() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const c = getColors(isDark);
-  const { fg, muted, border, surface, bg, coral } = c;
+  const { fg, muted, border, surface, bg, brand, coral } = c;
 
   const [items, setItems] = useState<Localidad[]>([]);
   const [municipios, setMunicipios] = useState<MunicipioOption[]>([]);
@@ -68,7 +69,11 @@ export function AdminLocalidades() {
       const res = await api.get<ApiListResponse<Localidad>>(
         `/localidades/?municipio_id=${municipioId}`,
       );
-      setItems(res.data.data ?? []);
+      // TODO: cuando el backend agregue "estado" al serializer,
+      // quitar el .map() y usar res.data.data directamente
+      setItems(
+        (res.data.data ?? []).map((item) => ({ ...item, estado: true })),
+      );
     } catch {
       setError('Error al cargar localidades');
     } finally {
@@ -127,7 +132,10 @@ export function AdminLocalidades() {
           `/localidades/?municipio_id=${selectedMunId}`,
           { nombre: form.nombre.trim() },
         );
-        setItems((prev) => [...prev, res.data.data as Localidad]);
+        setItems((prev) => [
+          ...prev,
+          { ...res.data.data as Localidad, estado: true },
+        ]);
       }
       setTab('list');
     } catch {
@@ -147,6 +155,24 @@ export function AdminLocalidades() {
       setDelTarget(null);
     } catch {
       setError('Error al eliminar');
+    }
+  }
+
+  async function toggleStatus(item: Localidad) {
+    const nuevoEstado = !item.estado;
+    try {
+      await api.patch(`/localidades/${item.id_localidad}/estado/`, {
+        estado: nuevoEstado,
+      });
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id_localidad === item.id_localidad
+            ? { ...i, estado: nuevoEstado }
+            : i,
+        ),
+      );
+    } catch {
+      setError('Error al cambiar estado');
     }
   }
 
@@ -375,7 +401,7 @@ export function AdminLocalidades() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    {['Nombre', 'Acciones'].map((h) => (
+                    {['Nombre', 'Estado', 'Acciones'].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -399,7 +425,7 @@ export function AdminLocalidades() {
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={2}
+                        colSpan={3}
                         style={{
                           textAlign: 'center',
                           padding: '48px 24px',
@@ -413,7 +439,7 @@ export function AdminLocalidades() {
                   ) : filtered.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={2}
+                        colSpan={3}
                         style={{
                           textAlign: 'center',
                           padding: '48px 24px',
@@ -447,10 +473,35 @@ export function AdminLocalidades() {
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              padding: '3px 10px',
+                              borderRadius: 6,
+                              background: item.estado
+                                ? isDark
+                                  ? 'rgba(74,138,99,0.15)'
+                                  : 'rgba(36,86,60,0.07)'
+                                : isDark
+                                  ? 'rgba(212,160,32,0.12)'
+                                  : 'rgba(242,169,0,0.1)',
+                              color: item.estado ? brand : '#F2A900',
+                            }}
+                          >
+                            {item.estado ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: '14px 20px',
+                            borderBottom: `1px solid ${border}`,
+                          }}
+                        >
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button
-                              onClick={() => startEdit(item)}
-                              aria-label="Editar"
+                              onClick={() => toggleStatus(item)}
+                              aria-label={item.estado ? 'Desactivar' : 'Activar'}
                               style={{
                                 width: 32,
                                 height: 32,
@@ -464,26 +515,48 @@ export function AdminLocalidades() {
                                 color: fg,
                               }}
                             >
-                              ✏️
+                              {item.estado ? '⏸' : '▶️'}
                             </button>
-                            <button
-                              onClick={() => setDelTarget(item)}
-                              aria-label="Eliminar"
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                border: `1px solid ${border}`,
-                                background: surface,
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
-                                color: fg,
-                              }}
-                            >
-                              🗑️
-                            </button>
+                            {item.estado && (
+                              <button
+                                onClick={() => startEdit(item)}
+                                aria-label="Editar"
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  border: `1px solid ${border}`,
+                                  background: surface,
+                                  cursor: 'pointer',
+                                  fontSize: 14,
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  color: fg,
+                                }}
+                              >
+                                ✏️
+                              </button>
+                            )}
+                            {item.estado && (
+                              <button
+                                onClick={() => setDelTarget(item)}
+                                aria-label="Eliminar"
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  border: `1px solid ${border}`,
+                                  background: surface,
+                                  cursor: 'pointer',
+                                  fontSize: 14,
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  color: fg,
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -553,7 +626,7 @@ export function AdminLocalidades() {
                 style={{
                   width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === 'nombre' ? '#4a8a63' : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
                   borderRadius: 10,
                   padding: '0 14px',
                   fontSize: 15,
@@ -614,7 +687,7 @@ export function AdminLocalidades() {
                   style={{
                     width: '100%',
                     height: 44,
-                    border: `1.5px solid ${focusedField === 'municipio_id' ? '#4a8a63' : border}`,
+                    border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
                     borderRadius: 10,
                     padding: '0 14px',
                     fontSize: 15,
@@ -702,8 +775,7 @@ export function AdminLocalidades() {
               ¿Eliminar localidad?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a eliminar "{delTarget.nombre}". Esta acción no se puede
-              deshacer.
+              Vas a eliminar "{delTarget.nombre}". Se moverá a la papelera.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
@@ -740,7 +812,7 @@ export function AdminLocalidades() {
                   fontFamily: 'inherit',
                 }}
               >
-                Eliminar
+                Enviar a papelera
               </button>
             </div>
           </div>
