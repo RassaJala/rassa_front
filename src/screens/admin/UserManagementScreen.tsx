@@ -57,7 +57,9 @@ async function fetchAllPages(
   depth: number = 0,
 ): Promise<AdminUser[]> {
   if (depth >= MAX_PAGES) {
-    console.warn(`[UserManagement] max pages (${MAX_PAGES}) reached, stopping fetch`);
+    console.warn(
+      `[UserManagement] max pages (${MAX_PAGES}) reached, stopping fetch`,
+    );
     return accumulated;
   }
   const response = await api.get<unknown>(url);
