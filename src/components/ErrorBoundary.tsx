@@ -40,20 +40,20 @@ export default class ErrorBoundary extends Component<Props, State> {
             : String(event.reason);
         this.setState({ hasError: true, error: new Error(msg) });
       };
-      // eslint-disable-next-line no-undef
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
       window.addEventListener('error', this.errorHandler);
-      // eslint-disable-next-line no-undef
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
       window.addEventListener('unhandledrejection', this.rejectionHandler);
     }
   }
 
   override componentWillUnmount(): void {
     if (this.errorHandler) {
-      // eslint-disable-next-line no-undef
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
       window.removeEventListener('error', this.errorHandler);
     }
     if (this.rejectionHandler) {
-      // eslint-disable-next-line no-undef
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
       window.removeEventListener('unhandledrejection', this.rejectionHandler);
     }
   }
