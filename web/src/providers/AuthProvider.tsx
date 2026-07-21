@@ -53,7 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localidad: raw.localidad as number | undefined,
           localidad_nombre: raw.localidad_nombre as string | undefined,
         };
-        setState({ user, token: state.token, isAuthenticated: true, isLoading: false });
+        setState({
+          user,
+          token: state.token,
+          isAuthenticated: true,
+          isLoading: false,
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -63,11 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           sessionStorage.removeItem('refresh_token');
-          setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          setState({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         } else {
           // Error transitorio — dejamos el token, mostramos no autenticado
           // El interceptor de api.ts reintentará con refresh si es necesario
-          setState({ user: null, token: state.token, isAuthenticated: false, isLoading: false });
+          setState({
+            user: null,
+            token: state.token,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         }
       });
 

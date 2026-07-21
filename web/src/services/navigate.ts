@@ -1,4 +1,7 @@
-type NavigateFn = (path: string, options?: { state?: Record<string, unknown> }) => void;
+type NavigateFn = (
+  path: string,
+  options?: { state?: Record<string, unknown> },
+) => void;
 
 let navigateFn: NavigateFn | null = null;
 

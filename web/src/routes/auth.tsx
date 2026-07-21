@@ -118,7 +118,8 @@ export function LoginScreen() {
       }>('/token/', { email: email.trim(), password });
 
       localStorage.setItem('token', tokens.access);
-      if (tokens.refresh) sessionStorage.setItem('refresh_token', tokens.refresh);
+      if (tokens.refresh)
+        sessionStorage.setItem('refresh_token', tokens.refresh);
 
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',

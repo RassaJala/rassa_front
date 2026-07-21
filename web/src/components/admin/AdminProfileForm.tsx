@@ -98,7 +98,11 @@ export function AdminProfileForm({
     onClearError('localidad_id');
   };
 
-  function renderField(label: string, fieldName: string, input: React.ReactNode) {
+  function renderField(
+    label: string,
+    fieldName: string,
+    input: React.ReactNode,
+  ) {
     const err = fieldErrors[fieldName as keyof FieldErrors];
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

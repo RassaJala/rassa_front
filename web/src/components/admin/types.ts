@@ -31,7 +31,9 @@ export const generoOptions = [
 ] as const;
 
 export function getGeneroLabel(value: string | undefined): string {
-  return generoOptions.find((o) => o.value === value)?.label ?? 'No especificado';
+  return (
+    generoOptions.find((o) => o.value === value)?.label ?? 'No especificado'
+  );
 }
 
 export interface FieldErrors {

@@ -61,9 +61,7 @@ export function AdminChangePassword({
     return {
       width: '100%' as const,
       height: 44,
-      border: `1.5px solid ${
-        focusedField === fieldName ? coral : border
-      }`,
+      border: `1.5px solid ${focusedField === fieldName ? coral : border}`,
       borderRadius: 10,
       padding: '0 14px',
       fontSize: 15,
@@ -84,10 +82,19 @@ export function AdminChangePassword({
           : confirmPassword;
     const onChange =
       fieldName === 'current'
-        ? (v: string) => { onCurrentPasswordChange(v); onPasswordErrorClear(); }
+        ? (v: string) => {
+            onCurrentPasswordChange(v);
+            onPasswordErrorClear();
+          }
         : fieldName === 'new'
-          ? (v: string) => { onNewPasswordChange(v); onPasswordErrorClear(); }
-          : (v: string) => { onConfirmPasswordChange(v); onPasswordErrorClear(); };
+          ? (v: string) => {
+              onNewPasswordChange(v);
+              onPasswordErrorClear();
+            }
+          : (v: string) => {
+              onConfirmPasswordChange(v);
+              onPasswordErrorClear();
+            };
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

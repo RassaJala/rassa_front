@@ -123,9 +123,15 @@ function validateForm(form: ProfileForm): FieldErrors {
   }
 
   // --- Apellido Materno ---
-  if (form.apellido_materno.trim() && form.apellido_materno.length > MAX_APELLIDO) {
+  if (
+    form.apellido_materno.trim() &&
+    form.apellido_materno.length > MAX_APELLIDO
+  ) {
     errors.apellido_materno = `El apellido materno no puede exceder ${MAX_APELLIDO} caracteres.`;
-  } else if (form.apellido_materno.trim() && !NAME_REGEX.test(form.apellido_materno)) {
+  } else if (
+    form.apellido_materno.trim() &&
+    !NAME_REGEX.test(form.apellido_materno)
+  ) {
     errors.apellido_materno = 'El apellido solo puede contener letras.';
   }
 
@@ -313,7 +319,9 @@ export function AdminProfile() {
     setCatalogError(null);
     setLoadingMunicipios(true);
     try {
-      const res = await api.get<{ data: Municipio[] }>('/municipios/', { signal });
+      const res = await api.get<{ data: Municipio[] }>('/municipios/', {
+        signal,
+      });
       setMunicipios(res.data.data ?? []);
     } catch (err) {
       if (axios.isCancel(err)) return;
