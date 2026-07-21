@@ -361,47 +361,48 @@ export function AdminProfile() {
           )}
 
           {editing && profile ? (
-            <AdminProfileForm
-              profile={profile}
-              fieldErrors={fieldErrors}
-              municipios={municipios}
-              localidades={localidades}
-              loadingLocalidades={loadingLocalidades}
-              catalogError={catalogError}
-              loading={loading}
-              onChange={(updated) => setProfile(updated)}
-              onClearError={(field) =>
-                setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
-              }
-              onSave={handleSave}
-              onCancel={() => {
-                setEditing(false);
-                setError(null);
-                setFieldErrors({});
-                setProfile(structuredClone(profileSnapshot.current));
-              }}
-              onLoadMunicipios={loadMunicipios}
-              onFetchLocalidades={fetchLocalidades}
-            />
+            <>
+              <AdminProfileForm
+                profile={profile}
+                fieldErrors={fieldErrors}
+                municipios={municipios}
+                localidades={localidades}
+                loadingLocalidades={loadingLocalidades}
+                catalogError={catalogError}
+                loading={loading}
+                onChange={(updated) => setProfile(updated)}
+                onClearError={(field) =>
+                  setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+                }
+                onSave={handleSave}
+                onCancel={() => {
+                  setEditing(false);
+                  setError(null);
+                  setFieldErrors({});
+                  setProfile(structuredClone(profileSnapshot.current));
+                }}
+                onLoadMunicipios={loadMunicipios}
+                onFetchLocalidades={fetchLocalidades}
+              />
+
+              <AdminChangePassword
+                currentPassword={currentPassword}
+                newPassword={newPassword}
+                confirmPassword={confirmPassword}
+                passwordError={passwordError}
+                passwordSuccess={passwordSuccess}
+                passwordSubmitting={passwordSubmitting}
+                onCurrentPasswordChange={setCurrentPassword}
+                onNewPasswordChange={setNewPassword}
+                onConfirmPasswordChange={setConfirmPassword}
+                onPasswordErrorClear={() => setPasswordError(null)}
+                onSubmit={handlePasswordChange}
+              />
+            </>
           ) : (
             <AdminProfileView profile={profile} />
           )}
         </Card>
-
-        {/* --- Password Change Card --- */}
-        <AdminChangePassword
-          currentPassword={currentPassword}
-          newPassword={newPassword}
-          confirmPassword={confirmPassword}
-          passwordError={passwordError}
-          passwordSuccess={passwordSuccess}
-          passwordSubmitting={passwordSubmitting}
-          onCurrentPasswordChange={setCurrentPassword}
-          onNewPasswordChange={setNewPassword}
-          onConfirmPasswordChange={setConfirmPassword}
-          onPasswordErrorClear={() => setPasswordError(null)}
-          onSubmit={handlePasswordChange}
-        />
       </div>
     </>
   );
