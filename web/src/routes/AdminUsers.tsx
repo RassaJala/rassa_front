@@ -769,12 +769,17 @@ export function AdminUsers() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: isSelf || toggleMutation.isPending ? 'not-allowed' : 'pointer',
+                              cursor:
+                                isSelf || toggleMutation.isPending
+                                  ? 'not-allowed'
+                                  : 'pointer',
                               fontSize: 14,
                               display: 'grid',
                               placeItems: 'center',
-                              color: isSelf || toggleMutation.isPending ? muted : fg,
-                              opacity: isSelf || toggleMutation.isPending ? 0.5 : 1,
+                              color:
+                                isSelf || toggleMutation.isPending ? muted : fg,
+                              opacity:
+                                isSelf || toggleMutation.isPending ? 0.5 : 1,
                             }}
                           >
                             {user.estado ? '⏸' : '▶️'}
@@ -789,12 +794,19 @@ export function AdminUsers() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: isSelf || roleMutation.isPending ? 'not-allowed' : 'pointer',
+                              cursor:
+                                isSelf || roleMutation.isPending
+                                  ? 'not-allowed'
+                                  : 'pointer',
                               fontSize: 14,
                               display: 'grid',
                               placeItems: 'center',
-                              color: isSelf || roleMutation.isPending ? muted : brand,
-                              opacity: isSelf || roleMutation.isPending ? 0.5 : 1,
+                              color:
+                                isSelf || roleMutation.isPending
+                                  ? muted
+                                  : brand,
+                              opacity:
+                                isSelf || roleMutation.isPending ? 0.5 : 1,
                             }}
                           >
                             👤
