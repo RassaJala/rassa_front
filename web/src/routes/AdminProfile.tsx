@@ -64,7 +64,7 @@ function isAdult(birthDate: string): boolean {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) {
     return age - 1 >= 18;
   }
-  return age >= 16; // 16+ para perfil
+  return age >= 18; // Mayoría de edad en México (Código Civil Federal, Art. 646)
 }
 
 function validateForm(form: ProfileForm): FieldErrors {
@@ -209,6 +209,7 @@ export function AdminProfile() {
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [loadingLocalidades, setLoadingLocalidades] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
 
   // --- Fetch current profile ---
   const fetchProfile = useCallback(async () => {
@@ -246,12 +247,17 @@ export function AdminProfile() {
   }, [fetchProfile]);
 
   // --- Fetch municipios (once on mount) ---
-  useEffect(() => {
+  const loadMunicipios = useCallback(() => {
+    setCatalogError(null);
     api
       .get<{ data: Municipio[] }>('/municipios/')
       .then((res) => setMunicipios(res.data.data ?? []))
-      .catch(() => {});
+      .catch(() => setCatalogError('Error al cargar municipios. Verifica tu conexión.'));
   }, []);
+
+  useEffect(() => {
+    loadMunicipios();
+  }, [loadMunicipios]);
 
   // --- Fetch localidades for a given municipio ---
   const fetchLocalidades = useCallback(async (municipioId: number | null) => {
@@ -577,6 +583,18 @@ export function AdminProfile() {
 
               {/* --- Municipio / Localidad --- */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {catalogError && (
+                  <div className="mb-2 rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
+                    <p className="text-sm text-red-600 dark:text-red-400">{catalogError}</p>
+                    <button
+                      type="button"
+                      onClick={loadMunicipios}
+                      className="mt-1 text-sm font-medium text-red-600 underline dark:text-red-400"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Municipio *

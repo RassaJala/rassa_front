@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminRoute } from '../components/guards/AdminRoute';
 import { ProtectedRoute } from '../components/guards/ProtectedRoute';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { LoginScreen, RegisterScreen } from './auth';
@@ -72,7 +73,7 @@ export function AppRouter() {
       </Route>
 
       {/* Admin */}
-      <Route element={<ProtectedRoute />}>
+      <Route element={<AdminRoute />}>
         <Route
           path="/admin/*"
           element={
