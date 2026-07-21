@@ -1,5 +1,5 @@
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../providers/ThemeProvider';
+import { useAuth } from '~/hooks/useAuth';
+import { useTheme } from '~/providers/ThemeProvider';
 
 export function Topbar() {
   const { logout } = useAuth();

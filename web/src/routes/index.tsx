@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AdminRoute } from '../components/guards/AdminRoute';
-import { ProtectedRoute } from '../components/guards/ProtectedRoute';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { AdminRoute } from '~/components/guards/AdminRoute';
+import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
+import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen, RegisterScreen } from './auth';
 import { FarmerProducts, FarmerOrders } from './farmer';
 import { SellerOrders, SellerSales } from './seller';

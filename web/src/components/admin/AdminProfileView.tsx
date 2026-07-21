@@ -1,4 +1,5 @@
 import type { ProfileForm } from '~/components/admin/types';
+import { getGeneroLabel } from '~/components/admin/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -8,12 +9,6 @@ const labelClass =
   'text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider';
 const valueClass = 'text-sm font-medium text-brand-ink dark:text-gray-100';
 
-const generoOptions = [
-  { value: 'M', label: 'Masculino' },
-  { value: 'F', label: 'Femenino' },
-  { value: 'O', label: 'Otro' },
-];
-
 function formatDate(iso: string | undefined): string {
   if (!iso) return 'No especificado';
   try {
@@ -22,12 +17,6 @@ function formatDate(iso: string | undefined): string {
   } catch {
     return iso;
   }
-}
-
-function getGeneroLabel(value: string | undefined): string {
-  return (
-    generoOptions.find((o) => o.value === value)?.label ?? 'No especificado'
-  );
 }
 
 function FieldRow({ label, value }: { label: string; value: string }) {

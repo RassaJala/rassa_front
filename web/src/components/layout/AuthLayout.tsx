@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useTheme } from '../../providers/ThemeProvider';
+import { useTheme } from '~/providers/ThemeProvider';
 
 interface AuthLayoutProps {
   children: ReactNode;

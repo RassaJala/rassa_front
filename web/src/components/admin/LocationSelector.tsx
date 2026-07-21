@@ -22,6 +22,7 @@ interface LocationSelectorProps {
   localidades: Localidad[];
   selectedMunicipioId: number | null;
   selectedLocalidadId: number | null;
+  loadingMunicipios: boolean;
   loadingLocalidades: boolean;
   catalogError: string | null;
   fieldErrors: FieldErrors;
@@ -35,6 +36,7 @@ export function LocationSelector({
   localidades,
   selectedMunicipioId,
   selectedLocalidadId,
+  loadingMunicipios,
   loadingLocalidades,
   catalogError,
   fieldErrors,
@@ -70,9 +72,12 @@ export function LocationSelector({
             onMunicipioChange(id);
           }}
           className={fieldErrors.municipio_id ? selectErrorClass : selectClass}
+          disabled={loadingMunicipios}
           required
         >
-          <option value="">Seleccionar...</option>
+          <option value="">
+            {loadingMunicipios ? 'Cargando...' : 'Seleccionar...'}
+          </option>
           {municipios.map((m) => (
             <option key={m.id_municipio} value={m.id_municipio}>
               {m.nombre}

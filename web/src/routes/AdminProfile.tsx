@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 import { AdminChangePassword } from '~/components/admin/AdminChangePassword';
 import { AdminProfileForm } from '~/components/admin/AdminProfileForm';
@@ -21,19 +22,83 @@ import api from '~/services/api';
 const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const NAME_REGEX = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'-]+$/;
 const PHONE_ALLOWED = /^[\d\s\-()]+$/;
+const MAX_NOMBRE = 100;
+const MAX_APELLIDO = 100;
+const MAX_DIRECCION = 255;
+const MAX_TELEFONO = 15;
 
 function cleanPhoneNumber(val: string): string {
   return val.replace(/[\s\-()]+/g, '');
 }
 
+/** Normaliza fechas ISO del backend (2000-01-15T00:00:00Z → 2000-01-15) */
+function normalizeDate(val: string): string {
+  return val.split('T')[0] ?? val;
+}
+
+function str(val: unknown, fallback = ''): string {
+  return typeof val === 'string' ? val : fallback;
+}
+
+function num(val: unknown, fallback: number | null = null): number | null {
+  return typeof val === 'number' ? val : fallback;
+}
+
+function parseAxiosError(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const axiosErr = err as {
+      response?: { data?: { detail?: string } };
+    };
+    return axiosErr.response?.data?.detail ?? fallback;
+  }
+  return fallback;
+}
+
+function parsePasswordError(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const axiosErr = err as {
+      response?: {
+        data?: {
+          detail?: string;
+          old_password?: string[];
+          new_password?: string[];
+        };
+      };
+    };
+    return (
+      axiosErr.response?.data?.detail ??
+      axiosErr.response?.data?.old_password?.[0] ??
+      axiosErr.response?.data?.new_password?.[0] ??
+      'Error al cambiar contraseña.'
+    );
+  }
+  return 'Error al cambiar contraseña.';
+}
+
+function isRealDate(dateStr: string): boolean {
+  const parts = dateStr.split('-');
+  const year = parseInt(parts[0] ?? '0', 10);
+  const month = parseInt(parts[1] ?? '0', 10) - 1;
+  const day = parseInt(parts[2] ?? '0', 10);
+  const date = new Date(year, month, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month &&
+    date.getDate() === day
+  );
+}
+
 function isAdult(birthDate: string): boolean {
   if (!DATE_REGEX.test(birthDate)) return false;
-  const born = new Date(birthDate);
+  const parts = birthDate.split('-');
+  const year = parseInt(parts[0] || '0', 10);
+  const month = parseInt(parts[1] || '0', 10) - 1;
+  const day = parseInt(parts[2] || '0', 10);
   const today = new Date();
-  const age = today.getFullYear() - born.getFullYear();
-  const monthDiff = today.getMonth() - born.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) {
-    return age - 1 >= 18;
+  let age = today.getFullYear() - year;
+  const monthDiff = today.getMonth() - month;
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
+    age--;
   }
   return age >= 18; // Mayoría de edad en México (Código Civil Federal, Art. 646)
 }
@@ -44,6 +109,8 @@ function validateForm(form: ProfileForm): FieldErrors {
   // --- Nombre ---
   if (!form.nombre.trim()) {
     errors.nombre = 'El nombre es obligatorio.';
+  } else if (form.nombre.length > MAX_NOMBRE) {
+    errors.nombre = `El nombre no puede exceder ${MAX_NOMBRE} caracteres.`;
   } else if (!NAME_REGEX.test(form.nombre)) {
     errors.nombre = 'El nombre solo puede contener letras.';
   }
@@ -51,12 +118,16 @@ function validateForm(form: ProfileForm): FieldErrors {
   // --- Apellido Paterno ---
   if (!form.apellido_paterno.trim()) {
     errors.apellido_paterno = 'El apellido paterno es obligatorio.';
+  } else if (form.apellido_paterno.length > MAX_APELLIDO) {
+    errors.apellido_paterno = `El apellido paterno no puede exceder ${MAX_APELLIDO} caracteres.`;
   } else if (!NAME_REGEX.test(form.apellido_paterno)) {
     errors.apellido_paterno = 'El apellido solo puede contener letras.';
   }
 
   // --- Apellido Materno ---
-  if (form.apellido_materno.trim() && !NAME_REGEX.test(form.apellido_materno)) {
+  if (form.apellido_materno.trim() && form.apellido_materno.length > MAX_APELLIDO) {
+    errors.apellido_materno = `El apellido materno no puede exceder ${MAX_APELLIDO} caracteres.`;
+  } else if (form.apellido_materno.trim() && !NAME_REGEX.test(form.apellido_materno)) {
     errors.apellido_materno = 'El apellido solo puede contener letras.';
   }
 
@@ -77,6 +148,8 @@ function validateForm(form: ProfileForm): FieldErrors {
     errors.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
   } else if (!DATE_REGEX.test(form.fecha_nacimiento)) {
     errors.fecha_nacimiento = 'Formato inválido (AAAA-MM-DD).';
+  } else if (!isRealDate(form.fecha_nacimiento)) {
+    errors.fecha_nacimiento = 'Fecha inválida.';
   } else if (!isAdult(form.fecha_nacimiento)) {
     errors.fecha_nacimiento = 'Debes ser mayor de 18 años.';
   }
@@ -89,6 +162,8 @@ function validateForm(form: ProfileForm): FieldErrors {
   // --- Dirección ---
   if (!form.direccion.trim()) {
     errors.direccion = 'La dirección es obligatoria.';
+  } else if (form.direccion.length > MAX_DIRECCION) {
+    errors.direccion = `La dirección no puede exceder ${MAX_DIRECCION} caracteres.`;
   }
 
   // --- Municipio ---
@@ -129,36 +204,76 @@ export function AdminProfile() {
   // --- Catalog state ---
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
   const [loadingLocalidades, setLoadingLocalidades] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const profileSnapshot = useRef<ProfileForm | null>(null);
+  // Controllers para catálogos (municipios/localidades) — se abortan al re-llamar
+  const catalogRef = useRef<AbortController | null>(null);
+  // Controlador para el perfil — solo se aborta al desmontar
+  const profileRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      catalogRef.current?.abort();
+      profileRef.current?.abort();
+    };
+  }, []);
+
+  function catalogSignal(): AbortSignal {
+    catalogRef.current?.abort();
+    const controller = new AbortController();
+    catalogRef.current = controller;
+    return controller.signal;
+  }
+
+  function profileSignal(): AbortSignal {
+    profileRef.current?.abort();
+    const controller = new AbortController();
+    profileRef.current = controller;
+    return controller.signal;
+  }
 
   // --- Fetch current profile ---
   const fetchProfile = useCallback(async () => {
+    const signal = profileSignal();
     setFetching(true);
+    setError(null);
     try {
       const { data } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
+        { signal },
       );
       const raw = data.data;
-      const municipioId = (raw.municipio_id as number) ?? null;
-      const localidadId = (raw.localidad as number) ?? null;
       setProfile({
-        nombre: (raw.nombre as string) ?? '',
-        apellido_paterno: (raw.apellido_paterno as string) ?? '',
-        apellido_materno: (raw.apellido_materno as string) ?? '',
-        email: (raw.email as string) ?? '',
-        telefono: (raw.telefono as string) ?? '',
-        fecha_nacimiento: (raw.fecha_nacimiento as string) ?? '',
-        genero: (raw.genero as string) ?? '',
-        direccion: (raw.direccion as string) ?? '',
-        municipio_id: municipioId,
-        localidad_id: localidadId,
-        localidad_nombre: (raw.localidad_nombre as string) ?? '',
-        municipio_nombre: (raw.municipio_nombre as string) ?? '',
+        nombre: str(raw.nombre),
+        apellido_paterno: str(raw.apellido_paterno),
+        apellido_materno: str(raw.apellido_materno),
+        email: str(raw.email),
+        telefono: str(raw.telefono),
+        fecha_nacimiento: normalizeDate(str(raw.fecha_nacimiento)),
+        genero: str(raw.genero),
+        direccion: str(raw.direccion),
+        municipio_id: num(raw.municipio_id),
+        localidad_id: num(raw.localidad),
+        localidad_nombre: str(raw.localidad_nombre),
+        municipio_nombre: str(raw.municipio_nombre),
       });
-    } catch {
-      setError('Error al cargar perfil');
+    } catch (err) {
+      if (axios.isCancel(err)) return; // aborted
+      if (axios.isAxiosError(err)) {
+        if (!err.response) {
+          setError('Error de red — verifica tu conexión.');
+        } else if (err.response.status === 401) {
+          setError('Sesión expirada — inicia sesión de nuevo.');
+        } else if (err.response.status >= 500) {
+          setError('Error del servidor — intenta más tarde.');
+        } else {
+          setError('Error al cargar perfil');
+        }
+      } else {
+        setError('Error inesperado al cargar perfil');
+      }
     } finally {
       setFetching(false);
     }
@@ -169,14 +284,29 @@ export function AdminProfile() {
   }, [fetchProfile]);
 
   // --- Fetch municipios (once on mount) ---
-  const loadMunicipios = useCallback(() => {
+  const loadMunicipios = useCallback(async () => {
+    const signal = catalogSignal();
     setCatalogError(null);
-    api
-      .get<{ data: Municipio[] }>('/municipios/')
-      .then((res) => setMunicipios(res.data.data ?? []))
-      .catch(() =>
-        setCatalogError('Error al cargar municipios. Verifica tu conexión.'),
-      );
+    setLoadingMunicipios(true);
+    try {
+      const res = await api.get<{ data: Municipio[] }>('/municipios/', { signal });
+      setMunicipios(res.data.data ?? []);
+    } catch (err) {
+      if (axios.isCancel(err)) return;
+      if (axios.isAxiosError(err)) {
+        if (!err.response) {
+          setCatalogError('Error de red — verifica tu conexión.');
+        } else if (err.response.status >= 500) {
+          setCatalogError('Error del servidor — intenta más tarde.');
+        } else {
+          setCatalogError('Error al cargar municipios.');
+        }
+      } else {
+        setCatalogError('Error inesperado al cargar municipios.');
+      }
+    } finally {
+      setLoadingMunicipios(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -189,14 +319,17 @@ export function AdminProfile() {
       setLocalidades([]);
       return;
     }
+    const signal = catalogSignal();
     setLoadingLocalidades(true);
     setCatalogError(null);
     try {
       const res = await api.get<{ data: Localidad[] }>(
         `/localidades/?municipio_id=${municipioId}`,
+        { signal },
       );
       setLocalidades(res.data.data ?? []);
-    } catch {
+    } catch (err) {
+      if (axios.isCancel(err)) return;
       setLocalidades([]);
       setCatalogError('Error al cargar localidades. Verifica tu conexión.');
     } finally {
@@ -241,16 +374,7 @@ export function AdminProfile() {
       setEditing(false);
       setFieldErrors({});
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as {
-          response?: { data?: { detail?: string } };
-        };
-        setError(
-          axiosErr.response?.data?.detail ?? 'Error al actualizar perfil.',
-        );
-      } else {
-        setError('Error al actualizar perfil.');
-      }
+      setError(parseAxiosError(err, 'Error al actualizar perfil.'));
     } finally {
       setLoading(false);
     }
@@ -290,25 +414,7 @@ export function AdminProfile() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as {
-          response?: {
-            data?: {
-              detail?: string;
-              old_password?: string[];
-              new_password?: string[];
-            };
-          };
-        };
-        const detail =
-          axiosErr.response?.data?.detail ??
-          axiosErr.response?.data?.old_password?.[0] ??
-          axiosErr.response?.data?.new_password?.[0] ??
-          'Error al cambiar contraseña.';
-        setPasswordError(detail);
-      } else {
-        setPasswordError('Error al cambiar contraseña.');
-      }
+      setPasswordError(parsePasswordError(err));
     } finally {
       setPasswordSubmitting(false);
     }
@@ -331,7 +437,7 @@ export function AdminProfile() {
       <PageHeader
         title="Mi Perfil"
         action={
-          !editing ? (
+          !editing && profile ? (
             <Button
               variant="primary"
               onClick={() => {
@@ -367,6 +473,7 @@ export function AdminProfile() {
                 fieldErrors={fieldErrors}
                 municipios={municipios}
                 localidades={localidades}
+                loadingMunicipios={loadingMunicipios}
                 loadingLocalidades={loadingLocalidades}
                 catalogError={catalogError}
                 loading={loading}
@@ -379,7 +486,8 @@ export function AdminProfile() {
                   setEditing(false);
                   setError(null);
                   setFieldErrors({});
-                  setProfile(structuredClone(profileSnapshot.current));
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                  setProfile(structuredClone(profileSnapshot.current ?? null));
                 }}
                 onLoadMunicipios={loadMunicipios}
                 onFetchLocalidades={fetchLocalidades}
@@ -399,6 +507,15 @@ export function AdminProfile() {
                 onSubmit={handlePasswordChange}
               />
             </>
+          ) : !profile ? (
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                No se pudo cargar el perfil.
+              </p>
+              <Button variant="secondary" onClick={fetchProfile}>
+                Reintentar
+              </Button>
+            </div>
           ) : (
             <AdminProfileView profile={profile} />
           )}

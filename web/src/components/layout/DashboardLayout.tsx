@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { useTheme } from '../../providers/ThemeProvider';
-import type { Role } from '../../types';
+import { useTheme } from '~/providers/ThemeProvider';
+import type { Role } from '~/types';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 

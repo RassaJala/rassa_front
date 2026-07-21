@@ -7,6 +7,7 @@ import type {
   Municipio,
   ProfileForm,
 } from '~/components/admin/types';
+import { generoOptions } from '~/components/admin/types';
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -35,16 +36,6 @@ const selectClass = inputClass;
 const selectErrorClass = inputErrorClass;
 
 // ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const generoOptions = [
-  { value: 'M', label: 'Masculino' },
-  { value: 'F', label: 'Femenino' },
-  { value: 'O', label: 'Otro' },
-];
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -53,6 +44,7 @@ interface AdminProfileFormProps {
   fieldErrors: FieldErrors;
   municipios: Municipio[];
   localidades: Localidad[];
+  loadingMunicipios: boolean;
   loadingLocalidades: boolean;
   catalogError: string | null;
   loading: boolean;
@@ -69,6 +61,7 @@ export function AdminProfileForm({
   fieldErrors,
   municipios,
   localidades,
+  loadingMunicipios,
   loadingLocalidades,
   catalogError,
   loading,
@@ -102,6 +95,7 @@ export function AdminProfileForm({
           <Input
             label="Nombre *"
             value={profile.nombre}
+            maxLength={100}
             onChange={(e) => {
               onChange({ ...profile, nombre: filterNameInput(e.target.value) });
               onClearError('nombre');
@@ -114,6 +108,7 @@ export function AdminProfileForm({
           <Input
             label="Apellido Paterno *"
             value={profile.apellido_paterno}
+            maxLength={100}
             onChange={(e) => {
               onChange({
                 ...profile,
@@ -129,6 +124,7 @@ export function AdminProfileForm({
           <Input
             label="Apellido Materno"
             value={profile.apellido_materno}
+            maxLength={100}
             onChange={(e) => {
               onChange({
                 ...profile,
@@ -143,6 +139,7 @@ export function AdminProfileForm({
           <Input
             label="Teléfono *"
             value={profile.telefono}
+            maxLength={15}
             onChange={(e) => {
               onChange({
                 ...profile,
@@ -191,22 +188,18 @@ export function AdminProfileForm({
             <p className="text-xs text-red-500">{fieldErrors.genero}</p>
           )}
         </div>
-        <div className="flex flex-col gap-1 sm:col-span-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Dirección *
-          </label>
-          <input
+        <div className="sm:col-span-2">
+          <Input
+            label="Dirección *"
             value={profile.direccion}
+            maxLength={255}
             onChange={(e) => {
               onChange({ ...profile, direccion: e.target.value });
               onClearError('direccion');
             }}
-            className={fieldErrors.direccion ? inputErrorClass : inputClass}
+            error={fieldErrors.direccion}
             required
           />
-          {fieldErrors.direccion && (
-            <p className="text-xs text-red-500">{fieldErrors.direccion}</p>
-          )}
         </div>
       </div>
 
@@ -217,6 +210,7 @@ export function AdminProfileForm({
           localidades={localidades}
           selectedMunicipioId={profile.municipio_id}
           selectedLocalidadId={profile.localidad_id}
+          loadingMunicipios={loadingMunicipios}
           loadingLocalidades={loadingLocalidades}
           catalogError={catalogError}
           fieldErrors={fieldErrors}

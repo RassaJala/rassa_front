@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useTheme } from '../providers/ThemeProvider';
+import { useTheme } from '~/providers/ThemeProvider';
 
 interface Product {
   id: number;

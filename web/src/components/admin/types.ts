@@ -24,6 +24,16 @@ export interface ProfileForm {
   municipio_nombre: string;
 }
 
+export const generoOptions = [
+  { value: 'M', label: 'Masculino' },
+  { value: 'F', label: 'Femenino' },
+  { value: 'O', label: 'Otro' },
+] as const;
+
+export function getGeneroLabel(value: string | undefined): string {
+  return generoOptions.find((o) => o.value === value)?.label ?? 'No especificado';
+}
+
 export interface FieldErrors {
   nombre?: string;
   apellido_paterno?: string;

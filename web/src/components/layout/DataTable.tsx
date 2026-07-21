@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import type { Column, SortConfig, SortDirection } from '../../types';
+import type { Column, SortConfig, SortDirection } from '~/types';
 import { Card } from '../ui/Card';
 import { EmptyState } from '../ui/EmptyState';
 

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { AuthLayout } from '../components/layout/AuthLayout';
-import { Button } from '../components/ui/Button';
-import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
-import type { Role, User } from '../types';
+import { AuthLayout } from '~/components/layout/AuthLayout';
+import { Button } from '~/components/ui/Button';
+import { useAuth } from '~/hooks/useAuth';
+import api from '~/services/api';
+import type { Role, User } from '~/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -118,6 +118,7 @@ export function LoginScreen() {
       }>('/token/', { email: email.trim(), password });
 
       localStorage.setItem('token', tokens.access);
+      if (tokens.refresh) sessionStorage.setItem('refresh_token', tokens.refresh);
 
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
@@ -436,10 +437,12 @@ export function RegisterScreen() {
 
       const raw = body.data ?? body;
       const access = raw.access as string;
+      const refresh = raw.refresh as string | undefined;
       const user = mapRegisterUser(raw);
 
       if (!access) throw new Error('No se recibió el token de acceso.');
 
+      if (refresh) sessionStorage.setItem('refresh_token', refresh);
       login(access, user);
 
       const roleRoutes: Record<string, string> = {
