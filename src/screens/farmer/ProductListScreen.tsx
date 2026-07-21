@@ -221,7 +221,18 @@ export default function ProductListScreen({
   const renderImage = (uri: string | null) => {
     const resolved = mediaUrl(uri);
     return (
-      <View style={{ height: 100, width: 100, flexShrink: 0, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 12, backgroundColor: accentBg }}>
+      <View
+        style={{
+          height: 100,
+          width: 100,
+          flexShrink: 0,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: 12,
+          backgroundColor: accentBg,
+        }}
+      >
         {resolved ? (
           <Image
             source={{ uri: resolved }}
@@ -241,7 +252,14 @@ export default function ProductListScreen({
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: bg,
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -249,16 +267,53 @@ export default function ProductListScreen({
 
   if (isError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, backgroundColor: bg }}>
-        <View style={{ marginBottom: 16, height: 64, width: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 32, backgroundColor: coralBg }}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={32} color={coral} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          backgroundColor: bg,
+        }}
+      >
+        <View
+          style={{
+            marginBottom: 16,
+            height: 64,
+            width: 64,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 32,
+            backgroundColor: coralBg,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={32}
+            color={coral}
+          />
         </View>
-        <Text style={{ marginBottom: 8, textAlign: 'center', fontSize: 18, fontWeight: '700', color: fg }}>
+        <Text
+          style={{
+            marginBottom: 8,
+            textAlign: 'center',
+            fontSize: 18,
+            fontWeight: '700',
+            color: fg,
+          }}
+        >
           {netInfo.isConnected === false
             ? 'Sin conexión a Internet'
             : 'Error al cargar productos'}
         </Text>
-        <Text style={{ marginBottom: 24, textAlign: 'center', fontSize: 14, color: muted }}>
+        <Text
+          style={{
+            marginBottom: 24,
+            textAlign: 'center',
+            fontSize: 14,
+            color: muted,
+          }}
+        >
           {netInfo.isConnected === false
             ? 'Verifica tu conexión y vuelve a intentarlo.'
             : 'Ocurrió un problema inesperado. Intenta de nuevo más tarde.'}
@@ -367,7 +422,18 @@ export default function ProductListScreen({
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, borderColor: border, backgroundColor: surface, paddingHorizontal: 16, height: 52 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: border,
+            backgroundColor: surface,
+            paddingHorizontal: 16,
+            height: 52,
+          }}
+        >
           <MaterialCommunityIcons name="magnify" size={24} color={muted} />
           <TextInput
             style={{ marginLeft: 10, flex: 1, fontSize: 16, color: fg }}
@@ -392,7 +458,14 @@ export default function ProductListScreen({
 
       {categories && categories.length > 0 ? (
         <View style={{ paddingHorizontal: 20, paddingBottom: 14 }}>
-          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: border, backgroundColor: surface }}>
+          <View
+            style={{
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: border,
+              backgroundColor: surface,
+            }}
+          >
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -416,7 +489,8 @@ export default function ProductListScreen({
                       paddingHorizontal: 18,
                       paddingVertical: 12,
                       borderColor: selectedCategory === null ? brand : border,
-                      backgroundColor: selectedCategory === null ? brand : surface,
+                      backgroundColor:
+                        selectedCategory === null ? brand : surface,
                     }}
                   >
                     <Text
@@ -469,15 +543,40 @@ export default function ProductListScreen({
       ) : null}
 
       {isEmpty ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <View style={{ marginBottom: 20, height: 80, width: 80, alignItems: 'center', justifyContent: 'center', borderRadius: 40, backgroundColor: accentBg }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
+          <View
+            style={{
+              marginBottom: 20,
+              height: 80,
+              width: 80,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 40,
+              backgroundColor: accentBg,
+            }}
+          >
             <MaterialCommunityIcons
               name="package-variant"
               size={40}
               color={brand}
             />
           </View>
-          <Text style={{ marginBottom: 8, textAlign: 'center', fontSize: 20, fontWeight: '700', color: fg }}>
+          <Text
+            style={{
+              marginBottom: 8,
+              textAlign: 'center',
+              fontSize: 20,
+              fontWeight: '700',
+              color: fg,
+            }}
+          >
             No hay productos
           </Text>
           <Text style={{ textAlign: 'center', fontSize: 15, color: muted }}>
@@ -500,17 +599,40 @@ export default function ProductListScreen({
             />
           }
           renderItem={({ item }) => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, borderColor: border, backgroundColor: surface, padding: 12 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: border,
+                backgroundColor: surface,
+                padding: 12,
+              }}
+            >
               {renderImage(item.imagen_principal ?? item.imagen)}
               <View style={{ marginLeft: 12, minWidth: 0, flex: 1 }}>
                 <Text
-                  style={{ marginBottom: 4, fontSize: 16, fontWeight: '600', color: fg }}
+                  style={{
+                    marginBottom: 4,
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: fg,
+                  }}
                   numberOfLines={2}
                 >
                   {item.nombre_producto}
                 </Text>
 
-                <View style={{ marginBottom: 8, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{
+                    marginBottom: 8,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
                   <Text
                     style={{ fontSize: 13, color: muted }}
                     numberOfLines={1}
@@ -548,16 +670,38 @@ export default function ProductListScreen({
                   </View>
                 </View>
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: brand }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Text
+                    style={{ fontSize: 16, fontWeight: '700', color: brand }}
+                  >
                     ${item.precio}
                   </Text>
                   <Text style={{ fontSize: 14, color: fg }}>
                     · Stock: {item.stock}
                   </Text>
                   {item.es_perecedero ? (
-                    <View style={{ borderRadius: 10, backgroundColor: pumpkinBg, paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: pumpkin }}>
+                    <View
+                      style={{
+                        borderRadius: 10,
+                        backgroundColor: pumpkinBg,
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '600',
+                          color: pumpkin,
+                        }}
+                      >
                         Perecedero
                       </Text>
                     </View>
@@ -646,15 +790,41 @@ export default function ProductListScreen({
         }}
       >
         <View style={{ flex: 1, paddingTop: 60 }}>
-          <View style={{ alignItems: 'center', borderBottomWidth: 1, borderBottomColor: border, paddingHorizontal: 20, paddingBottom: 24, marginBottom: 20 }}>
-            <View style={{ marginBottom: 12, height: 64, width: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 32, backgroundColor: accentBg }}>
+          <View
+            style={{
+              alignItems: 'center',
+              borderBottomWidth: 1,
+              borderBottomColor: border,
+              paddingHorizontal: 20,
+              paddingBottom: 24,
+              marginBottom: 20,
+            }}
+          >
+            <View
+              style={{
+                marginBottom: 12,
+                height: 64,
+                width: 64,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 32,
+                backgroundColor: accentBg,
+              }}
+            >
               <MaterialCommunityIcons
                 name="account-circle"
                 size={40}
                 color={brand}
               />
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: fg, letterSpacing: -0.2 }}>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: '700',
+                color: fg,
+                letterSpacing: -0.2,
+              }}
+            >
               {user?.nombre ?? 'Agricultor'}
             </Text>
             <Text style={{ marginTop: 4, fontSize: 15, color: muted }}>

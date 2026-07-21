@@ -150,12 +150,12 @@ function ToggleConfirmModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <Pressable
-        className="flex-1 bg-black/40"
-        onPress={onClose}
-      />
-      <View className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900" style={{ marginTop: 'auto' }}>
-        <View className="items-center mb-4">
+      <Pressable className="flex-1 bg-black/40" onPress={onClose} />
+      <View
+        className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900"
+        style={{ marginTop: 'auto' }}
+      >
+        <View className="mb-4 items-center">
           <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
             <MaterialCommunityIcons
               name={
@@ -222,12 +222,12 @@ function DeleteConfirmModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <Pressable
-        className="flex-1 bg-black/40"
-        onPress={onClose}
-      />
-      <View className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900" style={{ marginTop: 'auto' }}>
-        <View className="items-center mb-4">
+      <Pressable className="flex-1 bg-black/40" onPress={onClose} />
+      <View
+        className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900"
+        style={{ marginTop: 'auto' }}
+      >
+        <View className="mb-4 items-center">
           <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
             <MaterialCommunityIcons
               name="trash-can-outline"
@@ -407,7 +407,9 @@ export default function AdminProductsScreen(): React.JSX.Element {
       <View className="flex-row items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
         <View
           className={`h-10 w-10 items-center justify-center rounded-full ${
-            isTrash ? 'bg-brand-orange/10' : 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
+            isTrash
+              ? 'bg-brand-orange/10'
+              : 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
           }`}
         >
           <MaterialCommunityIcons name={iconName} size={20} color={iconColor} />
@@ -498,7 +500,10 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
   function renderHeader() {
     return (
-      <View className="flex-row items-center justify-between px-5 pb-1" style={{ paddingTop: 60 }}>
+      <View
+        className="flex-row items-center justify-between px-5 pb-1"
+        style={{ paddingTop: 60 }}
+      >
         <Text className="text-[28px] font-bold tracking-tight text-brand-ink dark:text-gray-100">
           Productos
         </Text>
@@ -519,7 +524,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
     if (showTrash) return null;
     return (
       <View className="px-5 pb-4 pt-3">
-        <View className="flex-row rounded-[10px] p-[3px] bg-gray-100 dark:bg-gray-800">
+        <View className="flex-row rounded-[10px] bg-gray-100 p-[3px] dark:bg-gray-800">
           <TouchableOpacity
             onPress={() => {
               if (!isFormActive) return;
@@ -653,9 +658,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
             activeOpacity={0.8}
             className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
           >
-            <Text className="text-base font-semibold text-white">
-              Guardar
-            </Text>
+            <Text className="text-base font-semibold text-white">Guardar</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={switchToList}
