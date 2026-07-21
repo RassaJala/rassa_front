@@ -58,8 +58,12 @@ export function AdminUnits() {
         const normalizedSearch = searchDebounced.toLowerCase().trim();
         const matchesSearch =
           !normalizedSearch ||
-          String(i.nombre ?? '').toLowerCase().includes(normalizedSearch) ||
-          String(i.abreviatura ?? '').toLowerCase().includes(normalizedSearch);
+          String(i.nombre ?? '')
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          String(i.abreviatura ?? '')
+            .toLowerCase()
+            .includes(normalizedSearch);
         const matchesStatus =
           statusFilter === 'todos' ||
           (statusFilter === 'activos' ? i.estado === true : i.estado === false);

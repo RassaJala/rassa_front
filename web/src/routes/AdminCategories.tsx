@@ -68,8 +68,12 @@ export function AdminCategories() {
         const normalizedSearch = searchDebounced.toLowerCase().trim();
         const matchesSearch =
           !normalizedSearch ||
-          String(i.nombre ?? '').toLowerCase().includes(normalizedSearch) ||
-          String(i.descripcion ?? '').toLowerCase().includes(normalizedSearch);
+          String(i.nombre ?? '')
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          String(i.descripcion ?? '')
+            .toLowerCase()
+            .includes(normalizedSearch);
         const matchesStatus =
           statusFilter === 'todos' ||
           (statusFilter === 'activos' ? i.estado === true : i.estado === false);

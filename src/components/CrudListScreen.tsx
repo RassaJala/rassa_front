@@ -435,10 +435,7 @@ export default function CrudListScreen<
       (config.fields[0] ? [config.fields[0].name] : ['nombre']), // ponytail: asume entity has nombre field
     [config.searchFields, config.fields],
   );
-  const {
-    items: filteredItems,
-    excludedCount,
-  } = useMemo(
+  const { items: filteredItems, excludedCount } = useMemo(
     () =>
       filterItems(items, searchTermDebounced, statusFilter, searchFieldNames),
     [items, searchTermDebounced, statusFilter, searchFieldNames],
@@ -933,9 +930,8 @@ export default function CrudListScreen<
               color={errorColor}
             />
             <Text style={{ fontSize: 13, color: errorColor, flex: 1 }}>
-              {excludedCount} elemento{excludedCount !== 1 ? 's' : ''} no
-              pudo{excludedCount === 1 ? '' : 'ieron'} procesarse debido a un
-              error.
+              {excludedCount} elemento{excludedCount !== 1 ? 's' : ''} no pudo
+              {excludedCount === 1 ? '' : 'ieron'} procesarse debido a un error.
             </Text>
           </View>
         ) : null}

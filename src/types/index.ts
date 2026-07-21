@@ -121,6 +121,7 @@ export interface ApiResponse<T> {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  UserManagement: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;
