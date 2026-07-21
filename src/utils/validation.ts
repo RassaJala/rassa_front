@@ -7,11 +7,8 @@ export function cleanName(val: string): string {
 }
 
 export function cleanPhoneNumber(val: string): string {
-  const digits = val.replace(/\D/g, '');
-  if (val.trim().startsWith('+')) {
-    return digits.slice(0, 12);
-  }
-  return digits.slice(0, 10);
+  // Strip non-digit characters; preserve all digits — validation rejects invalid lengths
+  return val.replace(/\D/g, '');
 }
 
 export function formatPhoneNumber(val: string): string {

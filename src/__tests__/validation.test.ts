@@ -64,11 +64,11 @@ describe('validation utilities', () => {
   });
 
   describe('cleanPhoneNumber', () => {
-    it('extracts only digits up to 10', () => {
+    it('extracts only digits, no truncation', () => {
       expect(cleanPhoneNumber('555-123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('(555) 123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('+52 555 123 4567')).toBe('525551234567');
-      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567'); // max 10
+      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567890'); // no truncation
     });
 
     it('handles empty string', () => {

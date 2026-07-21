@@ -49,7 +49,7 @@ export interface UpdateProfilePayload {
   fecha_nacimiento: string;
   sexo: 'M' | 'F' | 'O';
   domicilio: string;
-  fk_localidad: number;
+  fk_localidad: number | null;
 }
 
 export interface ChangePasswordPayload {

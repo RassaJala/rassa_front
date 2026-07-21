@@ -207,7 +207,7 @@ export default function ProfileScreen(): React.JSX.Element {
         fecha_nacimiento: fechaNacimiento,
         sexo,
         domicilio: domicilio.trim(),
-        fk_localidad: catalog.localidadId ?? 0,
+        fk_localidad: catalog.localidadId ?? null,
       };
 
       await updateProfile(payload);

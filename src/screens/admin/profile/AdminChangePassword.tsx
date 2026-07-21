@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import axios from 'axios';
 
-import { useAuth } from '@/store/AuthContext';
+import { parseAuthError, useAuth } from '@/store/AuthContext';
 
 import { useProfileColors } from './profileColors';
 
@@ -32,25 +32,6 @@ function validateAdminPasswordChange(
   }
 
   return null;
-}
-
-function getPasswordErrorMsg(error: unknown): string {
-  if (!axios.isAxiosError(error) || !error.response?.data) {
-    return error instanceof Error
-      ? error.message
-      : 'Error al cambiar contraseña.';
-  }
-
-  const data = error.response.data as Record<string, unknown>;
-  if (typeof error.response.data === 'string') return error.response.data;
-
-  return (
-    data.old_password?.toString() ??
-    data.new_password?.toString() ??
-    data.detail?.toString() ??
-    data.message?.toString() ??
-    'La contraseña actual es incorrecta.'
-  );
 }
 
 export default function AdminChangePassword({
@@ -110,7 +91,13 @@ export default function AdminChangePassword({
         onPasswordChanged();
       }, 1500);
     } catch (error) {
-      setPasswordError(getPasswordErrorMsg(error));
+      if (axios.isAxiosError(error)) {
+        setPasswordError(parseAuthError(error, 'changePassword'));
+      } else if (error instanceof Error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordError('Error al cambiar contraseña.');
+      }
     } finally {
       setIsChanging(false);
     }

@@ -163,7 +163,7 @@ function extractErrorMessage(data: unknown): string | null {
   return null;
 }
 
-function parseAuthError(
+export function parseAuthError(
   axiosError: Readonly<AxiosError<Record<string, unknown>>>,
   context: 'login' | 'register' | 'updateProfile' | 'changePassword',
 ): string {
