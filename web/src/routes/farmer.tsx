@@ -101,7 +101,7 @@ function DeleteConfirm({
       onClick={onClose}
     >
       <div
-        className="w-[90%] max-w-[440px] p-7 rounded-[20px]"
+        className="w-[90%] max-w-[440px] rounded-[20px] p-7"
         style={{
           background: surface,
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
@@ -109,23 +109,23 @@ function DeleteConfirm({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold mb-2" style={{ color: fg }}>
+        <h3 className="mb-2 text-lg font-bold" style={{ color: fg }}>
           ¿Eliminar producto?
         </h3>
-        <p className="text-sm mb-5" style={{ color: muted }}>
+        <p className="mb-5 text-sm" style={{ color: muted }}>
           Se eliminará "{producto.nombre_producto}". Esta acción no se puede
           deshacer.
         </p>
         {error && (
-          <p className="text-[13px] mb-4" style={{ color: coral }}>
+          <p className="mb-4 text-[13px]" style={{ color: coral }}>
             {error}
           </p>
         )}
-        <div className="flex gap-2.5 justify-end">
+        <div className="flex justify-end gap-2.5">
           <button
             onClick={onClose}
             disabled={loading}
-            className="h-8 px-3 rounded-lg text-[13px] font-semibold cursor-pointer font-[inherit]"
+            className="h-8 cursor-pointer rounded-lg px-3 font-[inherit] text-[13px] font-semibold"
             style={{
               border: `1.5px solid ${inputBorder}`,
               background: 'transparent',
@@ -138,7 +138,7 @@ function DeleteConfirm({
           <button
             onClick={handleDelete}
             disabled={loading}
-            className="h-8 px-3 rounded-lg text-[13px] font-semibold cursor-pointer font-[inherit]"
+            className="h-8 cursor-pointer rounded-lg px-3 font-[inherit] text-[13px] font-semibold"
             style={{
               border: `1.5px solid ${coral}`,
               background: 'transparent',
@@ -220,7 +220,7 @@ export function FarmerProducts() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-7 right-7 z-[100] px-5 py-3 rounded-xl font-semibold text-sm text-white"
+          className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
           style={{ background: brand, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
         >
           ✓ {toast}
@@ -237,13 +237,13 @@ export function FarmerProducts() {
       />
 
       {/* Search + Filters */}
-      <div className="flex flex-col gap-3 mb-5">
+      <div className="mb-5 flex flex-col gap-3">
         <input
           type="search"
           placeholder="🔍  Buscar producto..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-[400px] h-11 rounded-[10px] px-3.5 text-[15px] font-[inherit] outline-none"
+          className="h-11 w-full max-w-[400px] rounded-[10px] px-3.5 font-[inherit] text-[15px] outline-none"
           style={{
             border: `1.5px solid ${border}`,
             background: surface,
@@ -252,7 +252,7 @@ export function FarmerProducts() {
         />
 
         {categories.length > 0 && (
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             {[{ id_categoria: 0, nombre: 'Todas' }, ...categories].map((c) => {
               const isActive =
                 c.id_categoria === 0
@@ -264,7 +264,7 @@ export function FarmerProducts() {
                   onClick={() =>
                     setSelectedCat(c.id_categoria === 0 ? null : c.id_categoria)
                   }
-                  className="px-3.5 py-1.5 rounded-[20px] text-[13px] font-semibold cursor-pointer font-[inherit]"
+                  className="cursor-pointer rounded-[20px] px-3.5 py-1.5 font-[inherit] text-[13px] font-semibold"
                   style={{
                     border: `1px solid ${isActive ? brand : border}`,
                     background: isActive ? brand : surface,
@@ -281,11 +281,11 @@ export function FarmerProducts() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="text-center py-12" style={{ color: muted }}>
+        <div className="py-12 text-center" style={{ color: muted }}>
           Cargando productos…
         </div>
       ) : isError ? (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="mb-3" style={{ color: coral }}>
             Error al cargar productos
           </p>
@@ -295,14 +295,14 @@ export function FarmerProducts() {
         </div>
       ) : products.length === 0 ? (
         <div
-          className="text-center py-16 rounded-2xl"
+          className="rounded-2xl py-16 text-center"
           style={{
             background: surface,
             border: `1px solid ${border}`,
           }}
         >
-          <p className="text-[40px] mb-3">📦</p>
-          <p className="text-lg font-bold mb-1.5" style={{ color: fg }}>
+          <p className="mb-3 text-[40px]">📦</p>
+          <p className="mb-1.5 text-lg font-bold" style={{ color: fg }}>
             No hay productos
           </p>
           <p className="text-sm" style={{ color: muted }}>
@@ -313,7 +313,7 @@ export function FarmerProducts() {
         <>
           {/* Desktop table */}
           <div
-            className="hidden md:block rounded-2xl overflow-hidden"
+            className="hidden overflow-hidden rounded-2xl md:block"
             style={{
               background: surface,
               border: `1px solid ${border}`,
@@ -327,17 +327,22 @@ export function FarmerProducts() {
                     background: bg,
                   }}
                 >
-                  {['Producto', 'Precio', 'Stock', 'Categoría', 'Estado', ''].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="py-3.5 px-[18px] text-left text-[13px] font-semibold uppercase tracking-[0.05em]"
-                        style={{ color: muted }}
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    'Producto',
+                    'Precio',
+                    'Stock',
+                    'Categoría',
+                    'Estado',
+                    '',
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-[18px] py-3.5 text-left text-[13px] font-semibold uppercase tracking-[0.05em]"
+                      style={{ color: muted }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -346,16 +351,18 @@ export function FarmerProducts() {
                     key={p.id_producto}
                     style={{ borderBottom: `1px solid ${border}` }}
                   >
-                    <td className="py-4 px-[18px]">
+                    <td className="px-[18px] py-4">
                       <div className="flex items-center gap-3.5">
                         <div
-                          className="w-20 h-20 rounded-xl overflow-hidden grid place-items-center shrink-0"
+                          className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl"
                           style={{ background: accentBg }}
                         >
                           {sharedMediaUrl(p.imagen_principal ?? p.imagen) ? (
                             <img
-                              src={sharedMediaUrl(p.imagen_principal ?? p.imagen)!}
-                              className="w-full h-full object-cover"
+                              src={sharedMediaUrl(
+                                p.imagen_principal ?? p.imagen,
+                              )!}
+                              className="h-full w-full object-cover"
                               alt={p.nombre_producto}
                             />
                           ) : (
@@ -363,11 +370,17 @@ export function FarmerProducts() {
                           )}
                         </div>
                         <div>
-                          <div className="text-base font-semibold" style={{ color: fg }}>
+                          <div
+                            className="text-base font-semibold"
+                            style={{ color: fg }}
+                          >
                             {p.nombre_producto}
                           </div>
                           {p.es_perecedero && (
-                            <span className="text-xs font-semibold" style={{ color: '#F2A900' }}>
+                            <span
+                              className="text-xs font-semibold"
+                              style={{ color: '#F2A900' }}
+                            >
                               Perecedero
                             </span>
                           )}
@@ -375,23 +388,29 @@ export function FarmerProducts() {
                       </div>
                     </td>
                     <td
-                      className="py-4 px-[18px] text-[15px] font-bold"
+                      className="px-[18px] py-4 text-[15px] font-bold"
                       style={{ color: brand }}
                     >
                       ${p.precio}
                     </td>
-                    <td className="py-4 px-[18px] text-[15px]" style={{ color: fg }}>
+                    <td
+                      className="px-[18px] py-4 text-[15px]"
+                      style={{ color: fg }}
+                    >
                       {p.stock}
                     </td>
-                    <td className="py-4 px-[18px] text-[15px]" style={{ color: fg }}>
+                    <td
+                      className="px-[18px] py-4 text-[15px]"
+                      style={{ color: fg }}
+                    >
                       {categoryName(p.categoria, categories)}
                     </td>
-                    <td className="py-4 px-[18px]">
+                    <td className="px-[18px] py-4">
                       <Badge variant={p.estado ? 'success' : 'default'}>
                         {p.estado ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </td>
-                    <td className="py-4 px-[18px]">
+                    <td className="px-[18px] py-4">
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => setFormTarget(p)}
@@ -420,31 +439,31 @@ export function FarmerProducts() {
             {products.map((p) => (
               <div
                 key={p.id_producto}
-                className="flex gap-3.5 items-center p-4 rounded-[14px]"
+                className="flex items-center gap-3.5 rounded-[14px] p-4"
                 style={{
                   background: surface,
                   border: `1px solid ${border}`,
                 }}
               >
                 <div
-                  className="w-20 h-20 rounded-xl overflow-hidden grid place-items-center shrink-0"
+                  className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl"
                   style={{ background: accentBg }}
                 >
                   {sharedMediaUrl(p.imagen_principal ?? p.imagen) ? (
                     <img
                       src={sharedMediaUrl(p.imagen_principal ?? p.imagen)!}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                       alt={p.nombre_producto}
                     />
                   ) : (
                     <span className="text-2xl">🌿</span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-base" style={{ color: fg }}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold" style={{ color: fg }}>
                     {p.nombre_producto}
                   </p>
-                  <div className="flex gap-1.5 items-center mb-0.5">
+                  <div className="mb-0.5 flex items-center gap-1.5">
                     <p className="text-sm" style={{ color: muted }}>
                       {categoryName(p.categoria, categories)}
                     </p>
@@ -463,7 +482,10 @@ export function FarmerProducts() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <button onClick={() => setFormTarget(p)} style={getActionBtnStyle(colors)}>
+                  <button
+                    onClick={() => setFormTarget(p)}
+                    style={getActionBtnStyle(colors)}
+                  >
                     ✏️
                   </button>
                   <button
@@ -535,8 +557,8 @@ export function FarmerOrders() {
           border: `1px solid ${border}`,
         }}
       >
-        <p className="text-[40px] mb-3">📦</p>
-        <p className="text-lg font-bold mb-1.5" style={{ color: fg }}>
+        <p className="mb-3 text-[40px]">📦</p>
+        <p className="mb-1.5 text-lg font-bold" style={{ color: fg }}>
           No hay pedidos
         </p>
         <p className="text-sm" style={{ color: muted }}>

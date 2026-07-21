@@ -94,9 +94,11 @@ function buildInitialForm(producto?: Producto): FormState {
 
 function validate(form: FormState): Record<string, string> {
   const errs: Record<string, string> = {};
-  if (!form.nombre_producto.trim()) errs.nombre_producto = 'El nombre es obligatorio.';
+  if (!form.nombre_producto.trim())
+    errs.nombre_producto = 'El nombre es obligatorio.';
   const p = parseFloat(form.precio);
-  if (!form.precio || isNaN(p) || p <= 0) errs.precio = 'El precio debe ser mayor a 0.';
+  if (!form.precio || isNaN(p) || p <= 0)
+    errs.precio = 'El precio debe ser mayor a 0.';
   if (!form.categoriaId) errs.categoriaId = 'Seleccioná una categoría.';
   if (form.stock && isNaN(parseInt(form.stock, 10)))
     errs.stock = 'El stock debe ser un número entero.';
@@ -202,7 +204,11 @@ export function ProductFormModal({
 
   // ponytail: confirmación al cerrar con cambios sin guardar (#31)
   const handleClose = useCallback(() => {
-    if (isDirty && !window.confirm('Tenés cambios sin guardar. ¿Cerrar de todas formas?')) return;
+    if (
+      isDirty &&
+      !window.confirm('Tenés cambios sin guardar. ¿Cerrar de todas formas?')
+    )
+      return;
     onClose();
   }, [isDirty, onClose]);
 
@@ -300,7 +306,7 @@ export function ProductFormModal({
       style={{ background: 'rgba(0,0,0,0.5)' }}
     >
       <div
-        className="flex flex-col w-full max-w-[520px] max-h-[92vh] overflow-hidden rounded-2xl"
+        className="flex max-h-[92vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl"
         style={{
           background: surface,
           boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
@@ -313,7 +319,7 @@ export function ProductFormModal({
         >
           <button
             onClick={handleClose}
-            className="grid place-items-center w-9 h-9 rounded-full border-none text-white text-lg cursor-pointer"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border-none text-lg text-white"
             style={{ background: 'rgba(255,255,255,0.15)' }}
           >
             ✕
@@ -339,7 +345,7 @@ export function ProductFormModal({
           )}
 
           {/* Imagen */}
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col items-center gap-2">
             <FormField label="Foto del producto" colors={colors}>
               <></>
             </FormField>
@@ -347,7 +353,7 @@ export function ProductFormModal({
               <div
                 onClick={() => fileRef.current?.click()}
                 title="Haz clic para subir o cambiar imagen"
-                className="grid place-items-center w-[140px] h-[140px] rounded-2xl cursor-pointer overflow-hidden shrink-0"
+                className="grid h-[140px] w-[140px] shrink-0 cursor-pointer place-items-center overflow-hidden rounded-2xl"
                 style={{
                   border: displayImage ? 'none' : `2px dashed ${border}`,
                   background: displayImage ? 'transparent' : accentBg,
@@ -356,7 +362,7 @@ export function ProductFormModal({
                 {displayImage ? (
                   <img
                     src={displayImage}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     alt="producto"
                   />
                 ) : (
@@ -367,7 +373,7 @@ export function ProductFormModal({
                 <button
                   onClick={handleRemoveImage}
                   title="Eliminar imagen"
-                  className="absolute -top-2 -right-2 grid place-items-center w-7 h-7 rounded-full border-none cursor-pointer text-sm text-white"
+                  className="absolute -right-2 -top-2 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-none text-sm text-white"
                   style={{
                     background: coral,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -443,14 +449,14 @@ export function ProductFormModal({
 
           {/* Perecedero */}
           <label
-            className="flex items-center gap-2.5 cursor-pointer px-3.5 py-2.5 rounded-lg"
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3.5 py-2.5"
             style={{ border: `1px solid ${border}`, background: surface }}
           >
             <input
               type="checkbox"
               checked={form.es_perecedero}
               onChange={(e) => set('es_perecedero', e.target.checked)}
-              className="w-4 h-4"
+              className="h-4 w-4"
               style={{ accentColor: brand }}
             />
             <span className="text-[15px]" style={{ color: fg }}>
@@ -460,13 +466,20 @@ export function ProductFormModal({
 
           {/* Categoría y Unidad */}
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Categoría *" error={errors.categoriaId} colors={colors}>
+            <FormField
+              label="Categoría *"
+              error={errors.categoriaId}
+              colors={colors}
+            >
               <FormSelect
                 colors={colors}
                 hasError={!!errors.categoriaId}
                 value={form.categoriaId ?? ''}
                 onChange={(e) =>
-                  set('categoriaId', e.target.value ? Number(e.target.value) : null)
+                  set(
+                    'categoriaId',
+                    e.target.value ? Number(e.target.value) : null,
+                  )
                 }
               >
                 <option value="">Seleccioná una categoría</option>
@@ -483,7 +496,10 @@ export function ProductFormModal({
                 colors={colors}
                 value={form.unidadId ?? ''}
                 onChange={(e) =>
-                  set('unidadId', e.target.value ? Number(e.target.value) : null)
+                  set(
+                    'unidadId',
+                    e.target.value ? Number(e.target.value) : null,
+                  )
                 }
               >
                 <option value="">Seleccioná una unidad</option>
@@ -499,7 +515,7 @@ export function ProductFormModal({
 
         {/* Footer */}
         <div
-          className="flex gap-2.5 justify-end px-6 py-4"
+          className="flex justify-end gap-2.5 px-6 py-4"
           style={{ borderTop: `1px solid ${border}` }}
         >
           <Button variant="secondary" onClick={handleClose} disabled={saving}>

@@ -12,7 +12,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     return (
       <textarea
         ref={ref}
-        className={`w-full resize-vertical rounded-lg border px-3.5 py-2.5 text-[15px] font-[inherit] outline-none box-border min-h-[72px] ${className}`}
+        className={`resize-vertical box-border min-h-[72px] w-full rounded-lg border px-3.5 py-2.5 font-[inherit] text-[15px] outline-none ${className}`}
         style={{
           borderColor: hasError ? colors.coral : colors.inputBorder,
           background: colors.surface,
