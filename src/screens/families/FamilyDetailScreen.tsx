@@ -10,6 +10,7 @@ import {
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -113,9 +114,9 @@ function MemberItem({
           <Pressable
             onPress={() => onAssignHead(member)}
             style={({ pressed }) => ({
-              width: 36,
-              height: 36,
-              borderRadius: 10,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
               borderWidth: 1,
               borderColor: border,
               alignItems: 'center',
@@ -134,9 +135,9 @@ function MemberItem({
         <Pressable
           onPress={() => onRemove(member)}
           style={({ pressed }) => ({
-            width: 36,
-            height: 36,
-            borderRadius: 10,
+            width: 32,
+            height: 32,
+            borderRadius: 8,
             borderWidth: 1,
             borderColor: border,
             alignItems: 'center',
@@ -268,7 +269,6 @@ interface ModalActionsProps {
   readonly primaryColor: string;
   readonly disabledBg: string;
   readonly border: string;
-  readonly pressedBg: string;
   readonly fg: string;
   readonly muted: string;
   readonly onConfirm: (userId: number) => void;
@@ -281,7 +281,6 @@ function ModalActions({
   primaryColor,
   disabledBg,
   border,
-  pressedBg,
   fg,
   muted,
   onConfirm,
@@ -295,46 +294,44 @@ function ModalActions({
 
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-      <Pressable
+      <TouchableOpacity
+        activeOpacity={0.7}
         onPress={onCancel}
         disabled={isPending}
-        style={({ pressed }) => ({
+        style={{
           width: '47%',
-          height: 48,
-          borderRadius: 12,
+          height: 40,
+          borderRadius: 10,
           borderWidth: 1.5,
           borderColor: border,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: pressed ? pressedBg : 'transparent',
-        })}
+        }}
       >
-        <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
           Cancelar
         </Text>
-      </Pressable>
-      <Pressable
+      </TouchableOpacity>
+      <TouchableOpacity
+        activeOpacity={0.8}
         onPress={handleConfirm}
         disabled={!selectedUser || isPending}
-        style={({ pressed }) => ({
+        style={{
           width: '47%',
-          height: 48,
-          borderRadius: 12,
+          height: 40,
+          borderRadius: 10,
           backgroundColor: selectedUser ? primaryColor : disabledBg,
           alignItems: 'center',
           justifyContent: 'center',
-          flexDirection: 'row',
-          gap: 6,
-          opacity: pressed ? 0.8 : 1,
-        })}
+        }}
       >
         {isPending ? (
           <ActivityIndicator size={16} color={selectedUser ? colors.iconWhite : fg} />
         ) : null}
-        <Text style={{ fontSize: 15, fontWeight: '600', color: selectedUser ? colors.iconWhite : muted }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: selectedUser ? colors.iconWhite : muted }}>
           Agregar
         </Text>
-      </Pressable>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -363,7 +360,6 @@ function AddMemberModalContent({
   const primaryBg = isDark ? 'rgba(222,57,58,0.12)' : 'rgba(222,57,58,0.06)';
   const primaryColor = colors.brandRedCoral;
   const disabledBg = isDark ? '#353D35' : '#E2E6DF';
-  const pressedBg = isDark ? '#353D35' : '#F5F7F0';
   const errorColor = '#DE393A';
   const errorBg = isDark ? '#3D2023' : '#FDEDEE';
 
@@ -517,7 +513,6 @@ function AddMemberModalContent({
             primaryColor={primaryColor}
             disabledBg={disabledBg}
             border={border}
-            pressedBg={pressedBg}
             fg={fg}
             muted={muted}
             onConfirm={onConfirm}
@@ -720,37 +715,37 @@ function ConfirmModal({
           ) : null}
         </View>
         <View style={{ gap: 10 }}>
-          <Pressable
+          <TouchableOpacity
+            activeOpacity={0.8}
             onPress={onConfirm}
-            style={({ pressed }) => ({
-              height: 50,
-              borderRadius: 14,
+            style={{
+              height: 42,
+              borderRadius: 10,
               backgroundColor: confirmBtnBg,
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: pressed ? 0.8 : 1,
-            })}
+            }}
           >
-            <Text className="text-sm font-semibold text-white">
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>
               {confirmText}
             </Text>
-          </Pressable>
-          <Pressable
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
             onPress={onCancel}
-            style={({ pressed }) => ({
-              height: 44,
-              borderRadius: 14,
+            style={{
+              height: 40,
+              borderRadius: 10,
               borderWidth: 1.5,
               borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: pressed ? 0.8 : 1,
-            })}
+            }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
               {cancelText}
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -1029,7 +1024,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
               <MaterialCommunityIcons
                 name="account-star"
                 size={16}
-                color="#E46C38"
+                color={colors.brandOrange}
               />
               <Text style={{ marginLeft: 6, fontSize: 14, color: fg }}>
                 Jefe: {family.jefe_nombre}
@@ -1049,18 +1044,18 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
             Miembros
           </Text>
-          <Pressable
-            style={({ pressed }) => ({
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={{
               borderRadius: 8,
               backgroundColor: colors.brandRedCoral,
               paddingHorizontal: 12,
               paddingVertical: 6,
-              opacity: pressed ? 0.9 : 1,
-            })}
+            }}
             onPress={() => setAddModalVisible(true)}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>Agregar</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
 
         {(members ?? []).length === 0 ? (

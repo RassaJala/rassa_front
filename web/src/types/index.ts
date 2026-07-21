@@ -60,4 +60,3 @@ export interface FamilyMember {
   estado: boolean;
   creado_en: string;
 }
-

@@ -274,28 +274,48 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Header — igual que CrudListScreen */}
       <View
         style={{
           paddingHorizontal: 20,
           paddingTop: 60,
           paddingBottom: 4,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        <Text
+        <View>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
+          >
+            Familias
+          </Text>
+          <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+            {(families ?? []).length}{' '}
+            {(families ?? []).length === 1 ? 'familia registrada' : 'familias registradas'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
           style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
+            borderRadius: 10,
+            backgroundColor: colors.brandRedCoral,
+            paddingHorizontal: 18,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
+          onPress={() => navigation.navigate('FamilyForm')}
         >
-          Familias
-        </Text>
-        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
-          {(families ?? []).length}{' '}
-          {(families ?? []).length === 1 ? 'familia registrada' : 'familias registradas'}
-        </Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>
+            Agregar
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {isEmpty ? (
@@ -326,26 +346,6 @@ export default function FamilyListScreen(): React.JSX.Element {
         />
       )}
 
-      {/* FAB Coral — igual que el resto de la app */}
-      <Pressable
-        style={({ pressed }) => ({
-          position: 'absolute',
-          bottom: 28,
-          right: 24,
-          borderRadius: 999,
-          backgroundColor: colors.brandRedCoral,
-          padding: 16,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.2,
-          shadowRadius: 8,
-          elevation: 6,
-          opacity: pressed ? 0.85 : 1,
-        })}
-        onPress={() => navigation.navigate('FamilyForm')}
-      >
-        <MaterialCommunityIcons name="plus" size={28} color={colors.iconWhite} />
-      </Pressable>
     </View>
   );
 }

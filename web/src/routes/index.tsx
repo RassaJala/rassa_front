@@ -84,7 +84,10 @@ export function AppRouter() {
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
                 <Route path="familias" element={<AdminFamilies />} />
-                <Route path="familias/detalle" element={<AdminFamilyDetail />} />
+                <Route
+                  path="familias/detalle"
+                  element={<AdminFamilyDetail />}
+                />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>

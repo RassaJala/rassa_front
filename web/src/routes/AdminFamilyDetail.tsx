@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
@@ -33,6 +33,17 @@ export function AdminFamilyDetail() {
   const [userIdInput, setUserIdInput] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return members;
+    const q = memberSearch.trim().toLowerCase();
+    return members.filter(
+      (m) =>
+        m.usuario_nombre.toLowerCase().includes(q) ||
+        m.usuario_correo.toLowerCase().includes(q),
+    );
+  }, [members, memberSearch]);
 
   useEffect(() => {
     if (!isNaN(familyId)) {
@@ -49,15 +60,18 @@ export function AdminFamilyDetail() {
       setError(null);
 
       // Fetch family detail to know the head of family
-      const familyRes = await api.get<{ fk_jefe_familia?: number | null; jefe_nombre?: string | null }>(
-        `/familias/grupos/${familyId}/`
-      );
+      const familyRes = await api.get<{
+        fk_jefe_familia?: number | null;
+        jefe_nombre?: string | null;
+      }>(`/familias/grupos/${familyId}/`);
       if (familyRes.data) {
         setJefeId(familyRes.data.fk_jefe_familia ?? null);
       }
 
       // Fetch members
-      const membersRes = await api.get(`/familias/miembros/?fk_familia=${familyId}`);
+      const membersRes = await api.get(
+        `/familias/miembros/?fk_familia=${familyId}`,
+      );
       const data = membersRes.data;
 
       if (Array.isArray(data)) {
@@ -66,7 +80,11 @@ export function AdminFamilyDetail() {
         const payload = (data as { data?: unknown }).data ?? data;
         if (Array.isArray(payload)) {
           setMembers(payload);
-        } else if (payload && typeof payload === 'object' && Array.isArray((payload as { results?: unknown }).results)) {
+        } else if (
+          payload &&
+          typeof payload === 'object' &&
+          Array.isArray((payload as { results?: unknown }).results)
+        ) {
           setMembers((payload as { results: FamilyMember[] }).results);
         } else {
           setMembers([]);
@@ -102,7 +120,11 @@ export function AdminFamilyDetail() {
       setUserIdInput('');
     } catch (err: unknown) {
       console.error(err);
-      const apiErr = extractApiError(err, ['fk_usuario', 'fk_familia', 'detail']);
+      const apiErr = extractApiError(err, [
+        'fk_usuario',
+        'fk_familia',
+        'detail',
+      ]);
       setModalError(apiErr || 'Error al agregar miembro.');
     } finally {
       setModalLoading(false);
@@ -110,7 +132,11 @@ export function AdminFamilyDetail() {
   }
 
   async function handleRemoveMember(member: FamilyMember) {
-    if (!window.confirm(`¿Seguro que quieres remover a ${member.usuario_nombre} de la familia?`)) {
+    if (
+      !window.confirm(
+        `¿Seguro que quieres remover a ${member.usuario_nombre} de la familia?`,
+      )
+    ) {
       return;
     }
     setError(null);
@@ -207,7 +233,9 @@ export function AdminFamilyDetail() {
           style={{
             padding: '12px 16px',
             borderRadius: 10,
-            background: isDark ? 'rgba(222,57,58,0.15)' : 'rgba(222,57,58,0.07)',
+            background: isDark
+              ? 'rgba(222,57,58,0.15)'
+              : 'rgba(222,57,58,0.07)',
             color: coral,
             fontSize: 14,
             marginBottom: 20,
@@ -229,20 +257,49 @@ export function AdminFamilyDetail() {
       >
         <div
           style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             padding: '16px 20px',
             borderBottom: `1px solid ${border}`,
-            fontWeight: 600,
-            fontSize: 14,
-            color: fg,
+            gap: 12,
+            flexWrap: 'wrap',
           }}
         >
-          {loading ? 'Cargando miembros...' : `${members.length} miembros registrados`}
+          <span style={{ fontWeight: 600, fontSize: 14, color: fg }}>
+            {loading
+              ? 'Cargando miembros...'
+              : `${filteredMembers.length} miembros`}
+          </span>
+          <input
+            type="search"
+            placeholder="Buscar miembro..."
+            value={memberSearch}
+            onChange={(e) => setMemberSearch(e.target.value)}
+            style={{
+              height: 36,
+              border: `1.5px solid ${border}`,
+              borderRadius: 8,
+              padding: '0 12px',
+              fontSize: 13,
+              fontFamily: 'inherit',
+              width: 220,
+              background: bg,
+              color: fg,
+              outline: 'none',
+            }}
+          />
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Nombre del Miembro', 'Correo Electrónico', 'Rol Familia', 'Acciones'].map((h) => (
+                {[
+                  'Nombre del Miembro',
+                  'Correo Electrónico',
+                  'Rol Familia',
+                  'Acciones',
+                ].map((h) => (
                   <th
                     key={h}
                     style={{
@@ -277,7 +334,7 @@ export function AdminFamilyDetail() {
                     Cargando miembros...
                   </td>
                 </tr>
-              ) : members.length === 0 ? (
+              ) : filteredMembers.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -288,14 +345,19 @@ export function AdminFamilyDetail() {
                       fontSize: 14,
                     }}
                   >
-                    No hay miembros en esta familia.
+                    {members.length === 0
+                      ? 'No hay miembros en esta familia.'
+                      : 'No se encontraron miembros.'}
                   </td>
                 </tr>
               ) : (
-                members.map((member) => {
+                filteredMembers.map((member) => {
                   const isHead = jefeId === member.fk_usuario;
                   return (
-                    <tr key={member.id_familia_usuario} style={{ background: surface }}>
+                    <tr
+                      key={member.id_familia_usuario}
+                      style={{ background: surface }}
+                    >
                       <td
                         style={{
                           padding: '14px 20px',
@@ -425,11 +487,14 @@ export function AdminFamilyDetail() {
             }}
           >
             <div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: fg, margin: 0 }}>
+              <h3
+                style={{ fontSize: 18, fontWeight: 700, color: fg, margin: 0 }}
+              >
                 Agregar integrante
               </h3>
               <p style={{ fontSize: 13, color: muted, margin: '4px 0 0 0' }}>
-                Ingresa el ID numérico del usuario para agregarlo a esta familia.
+                Ingresa el ID numérico del usuario para agregarlo a esta
+                familia.
               </p>
             </div>
 
@@ -460,7 +525,9 @@ export function AdminFamilyDetail() {
                 style={{
                   fontSize: 13,
                   color: coral,
-                  background: isDark ? 'rgba(222,57,58,0.15)' : 'rgba(222,57,58,0.07)',
+                  background: isDark
+                    ? 'rgba(222,57,58,0.15)'
+                    : 'rgba(222,57,58,0.07)',
                   padding: '8px 12px',
                   borderRadius: 8,
                   border: `1px solid ${isDark ? 'rgba(222,57,58,0.25)' : 'rgba(222,57,58,0.15)'}`,
@@ -470,7 +537,14 @@ export function AdminFamilyDetail() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+                marginTop: 8,
+              }}
+            >
               <button
                 type="button"
                 onClick={() => {

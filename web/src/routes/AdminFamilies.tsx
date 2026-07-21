@@ -29,9 +29,45 @@ export function AdminFamilies() {
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  const [jefeQuery, setJefeQuery] = useState('');
+  const [jefeResults, setJefeResults] = useState<any[]>([]);
+  const [selectedJefe, setSelectedJefe] = useState<any | null>(null);
+  const [searchingJefe, setSearchingJefe] = useState(false);
+
   useEffect(() => {
     fetchFamilies();
   }, []);
+
+  useEffect(() => {
+    const trimmed = jefeQuery.trim();
+    const shouldSearch = trimmed.length >= 2 && !selectedJefe;
+    if (!shouldSearch) {
+      setJefeResults([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setSearchingJefe(true);
+      try {
+        const { data } = await api.get(
+          `/auth/search-users/?q=${encodeURIComponent(trimmed)}`,
+        );
+        const payload = data.data ?? data;
+        if (Array.isArray(payload)) {
+          setJefeResults(payload);
+        } else {
+          setJefeResults([]);
+        }
+      } catch (err) {
+        console.error(err);
+        setJefeResults([]);
+      } finally {
+        setSearchingJefe(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [jefeQuery, selectedJefe]);
 
   async function fetchFamilies() {
     try {
@@ -44,7 +80,11 @@ export function AdminFamilies() {
         const payload = (data as { data?: unknown }).data ?? data;
         if (Array.isArray(payload)) {
           setItems(payload);
-        } else if (payload && typeof payload === 'object' && Array.isArray((payload as { results?: unknown }).results)) {
+        } else if (
+          payload &&
+          typeof payload === 'object' &&
+          Array.isArray((payload as { results?: unknown }).results)
+        ) {
           setItems((payload as { results: Family[] }).results);
         } else {
           setItems([]);
@@ -63,6 +103,9 @@ export function AdminFamilies() {
   function startNew() {
     setEditId(null);
     setForm({ nombre_familia: '', detalle_familia: '' });
+    setJefeQuery('');
+    setJefeResults([]);
+    setSelectedJefe(null);
     setTab('form');
   }
 
@@ -78,6 +121,10 @@ export function AdminFamilies() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre_familia.trim()) return;
+    if (!editId && !selectedJefe) {
+      setError('Debes seleccionar un jefe de familia.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -89,16 +136,46 @@ export function AdminFamilies() {
       if (editId) {
         await api.patch(`/familias/grupos/${editId}/`, payload);
       } else {
-        await api.post('/familias/grupos/', {
+        if (!selectedJefe) return;
+        const { data } = await api.post('/familias/grupos/', {
           ...payload,
           estado: true,
         });
+        const createdFamily = data.data ?? data;
+        const familyId = createdFamily.id_familia;
+
+        try {
+          await api.post('/familias/miembros/', {
+            fk_usuario: selectedJefe.id_usuario,
+            fk_familia: familyId,
+          });
+
+          await api.post(`/familias/grupos/${familyId}/asignar-jefe/`, {
+            fk_jefe_familia: selectedJefe.id_usuario,
+          });
+        } catch (err: unknown) {
+          try {
+            await api.delete(`/familias/grupos/${familyId}/`);
+          } catch (rollbackErr) {
+            console.error(
+              '[Rollback Error] Failed to delete empty family:',
+              rollbackErr,
+            );
+          }
+          throw err;
+        }
       }
       await fetchFamilies();
       setTab('list');
     } catch (err: unknown) {
       console.error(err);
-      const apiErr = extractApiError(err, ['nombre_familia', 'detail']);
+      const apiErr = extractApiError(err, [
+        'nombre_familia',
+        'fk_usuario',
+        'fk_jefe_familia',
+        'jefe',
+        'detail',
+      ]);
       setError(apiErr || 'Error al guardar la familia.');
     } finally {
       setSaving(false);
@@ -132,9 +209,11 @@ export function AdminFamilies() {
   }
 
   const filtered = useMemo(() => {
-    return items.filter((i) =>
-      i.nombre_familia.toLowerCase().includes(search.toLowerCase()) ||
-      (i.jefe_nombre && i.jefe_nombre.toLowerCase().includes(search.toLowerCase()))
+    return items.filter(
+      (i) =>
+        i.nombre_familia.toLowerCase().includes(search.toLowerCase()) ||
+        (i.jefe_nombre &&
+          i.jefe_nombre.toLowerCase().includes(search.toLowerCase())),
     );
   }, [items, search]);
 
@@ -155,33 +234,52 @@ export function AdminFamilies() {
 
   return (
     <div>
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <h2
+      {/* Navigation header */}
+      <div style={{ marginBottom: 20 }}>
+        <button
+          onClick={() => navigate('/admin')}
           style={{
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
-            color: fg,
+            background: 'transparent',
+            border: 'none',
+            color: brand,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: 0,
+            marginBottom: 8,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          Gestión de familias
-        </h2>
-        <button
-          onClick={startNew}
-          style={{ ...btnStyle, background: coral, color: '#fff' }}
-        >
-          ＋ Nueva familia
+          ⬅️ Volver al panel
         </button>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              color: fg,
+            }}
+          >
+            Gestión de familias
+          </h2>
+          <button
+            onClick={startNew}
+            style={{ ...btnStyle, background: coral, color: '#fff' }}
+          >
+            ＋ Nueva familia
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -237,7 +335,9 @@ export function AdminFamilies() {
           style={{
             padding: '12px 16px',
             borderRadius: 10,
-            background: isDark ? 'rgba(222,57,58,0.15)' : 'rgba(222,57,58,0.07)',
+            background: isDark
+              ? 'rgba(222,57,58,0.15)'
+              : 'rgba(222,57,58,0.07)',
             color: coral,
             fontSize: 14,
             marginBottom: 20,
@@ -295,7 +395,14 @@ export function AdminFamilies() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Nombre de Familia', 'Jefe de Familia', 'Detalle', 'Estado', 'Miembros', 'Acciones'].map((h) => (
+                  {[
+                    'Nombre de Familia',
+                    'Jefe de Familia',
+                    'Detalle',
+                    'Estado',
+                    'Miembros',
+                    'Acciones',
+                  ].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -414,7 +521,11 @@ export function AdminFamilies() {
                         }}
                       >
                         <button
-                          onClick={() => navigate(`/admin/familias/detalle?familyId=${item.id_familia}&familyName=${encodeURIComponent(item.nombre_familia)}`)}
+                          onClick={() =>
+                            navigate(
+                              `/admin/familias/detalle?familyId=${item.id_familia}&familyName=${encodeURIComponent(item.nombre_familia)}`,
+                            )
+                          }
                           style={{
                             background: 'transparent',
                             border: `1px solid ${border}`,
@@ -573,6 +684,143 @@ export function AdminFamilies() {
                 onBlur={() => setFocusedField(null)}
               />
             </div>
+            {!editId && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 5,
+                  position: 'relative',
+                }}
+              >
+                <label
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: muted,
+                  }}
+                >
+                  Jefe de familia *
+                </label>
+                <div
+                  style={{
+                    display: 'flex',
+                    position: 'relative',
+                    alignItems: 'center',
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={jefeQuery}
+                    onChange={(e) => {
+                      setJefeQuery(e.target.value);
+                      if (selectedJefe) setSelectedJefe(null);
+                    }}
+                    placeholder="Buscar por nombre o correo..."
+                    required={!selectedJefe}
+                    style={{
+                      width: '100%',
+                      height: 44,
+                      border: `1.5px solid ${focusedField === 'jefe' ? brand : border}`,
+                      borderRadius: 10,
+                      padding: '0 40px 0 14px',
+                      fontSize: 15,
+                      fontFamily: 'inherit',
+                      background: bg,
+                      color: fg,
+                      outline: 'none',
+                    }}
+                    onFocus={() => setFocusedField('jefe')}
+                    onBlur={() => setTimeout(() => setFocusedField(null), 200)}
+                  />
+                  {(selectedJefe || jefeQuery) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedJefe(null);
+                        setJefeQuery('');
+                        setJefeResults([]);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: 12,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 16,
+                        color: muted,
+                      }}
+                    >
+                      ❌
+                    </button>
+                  )}
+                </div>
+
+                {searchingJefe && (
+                  <div style={{ fontSize: 13, color: muted, marginTop: 4 }}>
+                    Buscando usuarios...
+                  </div>
+                )}
+
+                {jefeResults.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 50,
+                      background: surface,
+                      border: `1px solid ${border}`,
+                      borderRadius: 10,
+                      marginTop: 4,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {jefeResults.map((user) => (
+                      <div
+                        key={user.id_usuario}
+                        onClick={() => {
+                          setSelectedJefe(user);
+                          setJefeQuery(
+                            `${user.nombre} ${user.apellido_paterno} (${user.email})`,
+                          );
+                          setJefeResults([]);
+                        }}
+                        style={{
+                          padding: '10px 14px',
+                          cursor: 'pointer',
+                          borderBottom: `1px solid ${border}`,
+                          fontSize: 14,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = isDark
+                            ? '#353D35'
+                            : '#F5F7F0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        <span style={{ fontWeight: 600, color: fg }}>
+                          {user.nombre} {user.apellido_paterno}
+                        </span>
+                        <span style={{ fontSize: 12, color: muted }}>
+                          {user.email}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div
               style={{
                 display: 'flex',
@@ -682,8 +930,8 @@ export function AdminFamilies() {
               ¿Eliminar familia?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a eliminar "{delTarget.nombre_familia}". Esta acción no se puede
-              deshacer y podría desvincular a todos sus miembros.
+              Vas a eliminar "{delTarget.nombre_familia}". Esta acción no se
+              puede deshacer y podría desvincular a todos sus miembros.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}

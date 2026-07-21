@@ -21,7 +21,6 @@ const adminNav: NavItem[] = [
   { key: 'families', label: 'Familias', icon: '👥', path: '/admin/familias' },
 ];
 
-
 const roleNavMap: Record<string, NavItem[]> = {
   admin: adminNav,
   agricultor: [

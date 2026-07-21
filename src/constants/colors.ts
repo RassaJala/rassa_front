@@ -26,8 +26,12 @@ export const colors = {
     mountainMid: '#B2C2B2',
     mountainBot: '#A19FB6',
   },
+  brandPrimary: '#24563C', // redesign palette brand green (light)
+  brandPrimaryDark: '#4A8A63', // redesign palette brand green (dark)
   brandGreenForest: '#3A6D56',
   brandRedCoral: '#DE393A',
+  brandOrange: '#E46C38',
+  mutedDark: '#9DA89D', // redesign dark mode muted text
   iconDark: '#1D1D1D',
   brandInk: '#1f2937', // gray-800
   iconMuted: '#9ca3af', // gray-400
