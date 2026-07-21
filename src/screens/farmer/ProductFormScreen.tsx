@@ -80,6 +80,8 @@ export default function ProductFormScreen({
   const inputBorder = isDark ? '#4A5C4F' : '#D6DAD4';
   const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
   const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const overlay = 'rgba(0,0,0,0.5)';
+  const separatorColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
 
   const { productoId } = route.params;
   const isEditing = Boolean(productoId);
@@ -385,7 +387,7 @@ export default function ProductFormScreen({
         justifyContent: isSmallScreen ? 'flex-start' : 'center',
         backgroundColor: isSmallScreen
           ? bg
-          : 'rgba(0,0,0,0.5)',
+          : overlay,
         paddingVertical: isSmallScreen ? 0 : 16,
         zIndex: 1,
       }}
@@ -526,6 +528,7 @@ export default function ProductFormScreen({
               Nombre del producto <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
@@ -536,7 +539,7 @@ export default function ProductFormScreen({
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              } as any}
+              }}
               placeholder="Ej. Tomates frescos"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -563,6 +566,7 @@ export default function ProductFormScreen({
               Descripción
             </Text>
             <TextInput
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
@@ -573,7 +577,7 @@ export default function ProductFormScreen({
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              } as any}
+              }}
               placeholder="Ej. Detalles sobre tu producto..."
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -591,6 +595,7 @@ export default function ProductFormScreen({
               Precio <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
@@ -601,7 +606,7 @@ export default function ProductFormScreen({
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              } as any}
+              }}
               placeholder="0.00"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -631,6 +636,7 @@ export default function ProductFormScreen({
               Stock disponible
             </Text>
             <TextInput
+              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
@@ -641,7 +647,7 @@ export default function ProductFormScreen({
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              } as any}
+              }}
               placeholder="0"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -725,7 +731,7 @@ export default function ProductFormScreen({
         transparent
         onRequestClose={() => setCategoriaModalVisible(false)}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: overlay }}>
           <View
             style={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: bg, maxHeight: '70%', paddingBottom: insets.bottom }}
           >
@@ -791,7 +797,7 @@ export default function ProductFormScreen({
                 );
               }}
               ItemSeparatorComponent={() => (
-                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }} />
+                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: separatorColor }} />
               )}
             />
           </View>
@@ -805,7 +811,7 @@ export default function ProductFormScreen({
         transparent
         onRequestClose={() => setUnidadModalVisible(false)}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: overlay }}>
           <View
             style={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: bg, maxHeight: '70%', paddingBottom: insets.bottom }}
           >
@@ -865,7 +871,7 @@ export default function ProductFormScreen({
                 );
               }}
               ItemSeparatorComponent={() => (
-                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }} />
+                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: separatorColor }} />
               )}
             />
           </View>

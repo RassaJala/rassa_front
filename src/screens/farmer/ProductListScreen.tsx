@@ -65,6 +65,10 @@ export default function ProductListScreen({
   const border = isDark ? '#353D35' : '#E2E6DF';
   const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
   const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const white = '#FFFFFF';
+  const overlay = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)';
+  const pumpkinBg = isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)';
+  const pumpkin = '#F2A900';
 
   const { width: SCREEN_WIDTH } = Dimensions.get('window');
   const DRAWER_WIDTH = 0.55;
@@ -419,7 +423,7 @@ export default function ProductListScreen({
                       style={{
                         fontSize: 13,
                         fontWeight: '600',
-                        color: selectedCategory === null ? '#FFFFFF' : fg,
+                        color: selectedCategory === null ? white : fg,
                       }}
                     >
                       Todas
@@ -449,7 +453,7 @@ export default function ProductListScreen({
                           style={{
                             fontSize: 13,
                             fontWeight: '600',
-                            color: isSelected ? '#FFFFFF' : fg,
+                            color: isSelected ? white : fg,
                           }}
                         >
                           {item.nombre}
@@ -552,8 +556,8 @@ export default function ProductListScreen({
                     · Stock: {item.stock}
                   </Text>
                   {item.es_perecedero ? (
-                    <View style={{ borderRadius: 10, backgroundColor: isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)', paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#F2A900' }}>
+                    <View style={{ borderRadius: 10, backgroundColor: pumpkinBg, paddingHorizontal: 8, paddingVertical: 4 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: pumpkin }}>
                         Perecedero
                       </Text>
                     </View>
@@ -618,7 +622,7 @@ export default function ProductListScreen({
             bottom: 0,
             right: 0,
             opacity: overlayOpacity,
-            backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)',
+            backgroundColor: overlay,
             zIndex: 10,
           }}
         >
