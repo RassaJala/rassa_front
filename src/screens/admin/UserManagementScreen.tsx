@@ -1,3 +1,4 @@
+/* globals console -- RN metro bundler provides console */
 import React, {
   useCallback,
   useEffect,
