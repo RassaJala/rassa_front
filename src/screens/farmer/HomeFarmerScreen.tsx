@@ -8,7 +8,9 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { getFarmerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
@@ -40,33 +42,9 @@ export default function HomeFarmerScreen({
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
-  const pumpkin = '#F2A900';
+  const pumpkin = colors.accent;
 
-  const days = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
-  const months = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ];
-  const d = new Date();
-  const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
+  const { today } = useFormattedDate();
 
   return (
     <ProfileDrawerProvider
@@ -141,162 +119,36 @@ export default function HomeFarmerScreen({
               <View
                 style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
               >
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: accentBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="sprout"
-                      size={24}
-                      color={brand}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: brand,
-                    }}
-                  >
-                    {stats.totalProducts.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Productos
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: coralBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="clipboard-check"
-                      size={24}
-                      color={coral}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: coral,
-                    }}
-                  >
-                    {stats.ordersReceived.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Pedidos
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: pumpkinBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="cash"
-                      size={24}
-                      color={pumpkin}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: pumpkin,
-                    }}
-                  >
-                    ${stats.revenue.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Ingresos
-                  </Text>
-                </View>
+                <StatCard
+                  icon="sprout"
+                  value={stats.totalProducts.toLocaleString()}
+                  label="Productos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={accentBg}
+                  iconColor={brand}
+                />
+                <StatCard
+                  icon="clipboard-check"
+                  value={stats.ordersReceived.toLocaleString()}
+                  label="Pedidos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={coralBg}
+                  iconColor={coral}
+                />
+                <StatCard
+                  icon="cash"
+                  value={`$${stats.revenue.toLocaleString()}`}
+                  label="Ingresos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={pumpkinBg}
+                  iconColor={pumpkin}
+                />
               </View>
             </View>
           </ScrollView>

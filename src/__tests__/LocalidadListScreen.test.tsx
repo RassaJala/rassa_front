@@ -3,6 +3,7 @@ import React from 'react';
 
 import '@testing-library/jest-native/extend-expect';
 import { render } from '@testing-library/react-native';
+import { useQuery } from '@tanstack/react-query';
 
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
@@ -97,5 +98,29 @@ describe('LocalidadListScreen', () => {
         <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
       ),
     ).not.toThrow();
+  });
+
+  it('renderiza el header con el nombre del municipio', () => {
+    const { getByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    expect(getByText('Localidades (Test Municipio)')).toBeTruthy();
+  });
+
+  it('renderiza el estado vacio con la descripcion del municipio', () => {
+    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+    const { getByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    expect(getByText('No hay localidades')).toBeTruthy();
+    expect(
+      getByText('Agrega una localidad en Test Municipio para comenzar.'),
+    ).toBeTruthy();
   });
 });

@@ -152,4 +152,11 @@ describe('AdminPanelScreen', () => {
     const dateText = getByText(todayString());
     expect(dateText).toBeTruthy();
   });
+
+  it('renderiza el icono de notificaciones', () => {
+    const { getByTestId } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByTestId('notification-bell')).toBeTruthy();
+  });
 });

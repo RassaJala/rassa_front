@@ -453,16 +453,16 @@ export default function TrashListScreen<
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const iconWhite = '#FFFFFF';
-  const errorColor = '#DE393A';
+  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const iconWhite = colors.iconWhite;
+  const errorColor = colors.brandRedCoral;
   const modalOverlay = 'rgba(0,0,0,0.4)';
-  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const errorBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const queryClient = useQueryClient();
 
   // ── List data ──────────────────────────────────────────────

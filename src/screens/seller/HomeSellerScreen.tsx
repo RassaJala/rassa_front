@@ -8,7 +8,9 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { getSellerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
 import type { SellerTabsParamList } from '@/types';
@@ -40,33 +42,9 @@ export default function HomeSellerScreen({
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
-  const pumpkin = '#F2A900';
+  const pumpkin = colors.accent;
 
-  const days = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
-  const months = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ];
-  const d = new Date();
-  const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
+  const { today } = useFormattedDate();
 
   return (
     <ProfileDrawerProvider
@@ -139,162 +117,36 @@ export default function HomeSellerScreen({
               <View
                 style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
               >
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: accentBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="cash"
-                      size={24}
-                      color={brand}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: brand,
-                    }}
-                  >
-                    ${stats.salesToday.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Ventas Hoy
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: coralBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="chart-line"
-                      size={24}
-                      color={coral}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: coral,
-                    }}
-                  >
-                    ${stats.salesWeek.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Ventas Semana
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    paddingVertical: 18,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: pumpkinBg,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name="calendar-month"
-                      size={24}
-                      color={pumpkin}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: '700',
-                      letterSpacing: -0.2,
-                      color: pumpkin,
-                    }}
-                  >
-                    ${stats.salesMonth.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                      marginTop: 4,
-                    }}
-                  >
-                    Ventas Mes
-                  </Text>
-                </View>
+                <StatCard
+                  icon="cash"
+                  value={`$${stats.salesToday.toLocaleString()}`}
+                  label="Ventas Hoy"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={accentBg}
+                  iconColor={brand}
+                />
+                <StatCard
+                  icon="chart-line"
+                  value={`$${stats.salesWeek.toLocaleString()}`}
+                  label="Ventas Semana"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={coralBg}
+                  iconColor={coral}
+                />
+                <StatCard
+                  icon="calendar-month"
+                  value={`$${stats.salesMonth.toLocaleString()}`}
+                  label="Ventas Mes"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={pumpkinBg}
+                  iconColor={pumpkin}
+                />
               </View>
             </View>
           </ScrollView>

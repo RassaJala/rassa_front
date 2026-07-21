@@ -47,12 +47,7 @@ export function AdminLocalidades() {
     try {
       const munRes =
         await api.get<ApiListResponse<MunicipioOption>>('/municipios/');
-      const municipiosData = munRes.data.data;
-      setMunicipios(municipiosData);
-      if (municipiosData.length > 0 && selectedMunId === 0) {
-        const first = municipiosData[0];
-        if (first) setSelectedMunId(first.id_municipio);
-      }
+      setMunicipios(munRes.data.data);
     } catch {
       setError('Error al cargar datos');
     } finally {
@@ -63,6 +58,13 @@ export function AdminLocalidades() {
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (municipios.length > 0 && selectedMunId === 0) {
+      const first = municipios[0];
+      if (first) setSelectedMunId(first.id_municipio);
+    }
+  }, [municipios, selectedMunId]);
 
   const fetchLocalidades = useCallback(async (municipioId: number) => {
     setLoading(true);
