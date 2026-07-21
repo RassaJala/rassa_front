@@ -63,11 +63,7 @@ function FormHeader({
         })}
         hitSlop={8}
       >
-        <MaterialCommunityIcons
-          name="arrow-left"
-          size={24}
-          color={fg}
-        />
+        <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
       </Pressable>
       <View>
         <Text
@@ -123,8 +119,12 @@ function ActionsSection({
         onPress={onSubmit}
         disabled={isSaving}
       >
-        {isSaving ? <ActivityIndicator size={16} color={colors.iconWhite} /> : null}
-        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>
+        {isSaving ? (
+          <ActivityIndicator size={16} color={colors.iconWhite} />
+        ) : null}
+        <Text
+          style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
+        >
           {isEditing ? 'Guardar cambios' : 'Crear familia'}
         </Text>
       </TouchableOpacity>
@@ -141,7 +141,9 @@ function ActionsSection({
         onPress={onCancel}
         disabled={isSaving}
       >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>Cancelar</Text>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
+          Cancelar
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -181,7 +183,15 @@ function JefeSearchField({
 
   return (
     <>
-      <Text style={{ marginBottom: 6, marginTop: 16, fontSize: 14, fontWeight: '500', color: fg }}>
+      <Text
+        style={{
+          marginBottom: 6,
+          marginTop: 16,
+          fontSize: 14,
+          fontWeight: '500',
+          color: fg,
+        }}
+      >
         Jefe de familia *
       </Text>
       <View style={{ position: 'relative' }}>
@@ -192,7 +202,7 @@ function JefeSearchField({
             borderColor: fieldErrors.jefe ? errorColor : border,
             backgroundColor: textInputBg,
             paddingLeft: 16,
-            paddingRight: selectedJefe ?? jefeQuery ? 40 : 16,
+            paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
             paddingVertical: 12,
             fontSize: 16,
             color: fg,
@@ -208,18 +218,26 @@ function JefeSearchField({
           }}
           editable={!isSaving}
         />
-        {selectedJefe ?? jefeQuery ? (
+        {(selectedJefe ?? jefeQuery) ? (
           <Pressable
             onPress={onClearJefe}
             style={{ position: 'absolute', right: 12, top: 14 }}
           >
-            <MaterialCommunityIcons name="close-circle" size={20} color={muted} />
+            <MaterialCommunityIcons
+              name="close-circle"
+              size={20}
+              color={muted}
+            />
           </Pressable>
         ) : null}
       </View>
 
       {searchingJefe ? (
-        <ActivityIndicator size="small" color={colors.brandPrimary} style={{ marginTop: 8 }} />
+        <ActivityIndicator
+          size="small"
+          color={colors.brandPrimary}
+          style={{ marginTop: 8 }}
+        />
       ) : null}
 
       {jefeResults.length > 0 ? (
@@ -247,10 +265,16 @@ function JefeSearchField({
                   borderBottomColor: border,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: fg }} numberOfLines={1}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: '600', color: fg }}
+                  numberOfLines={1}
+                >
                   {user.nombre} {user.apellido_paterno}
                 </Text>
-                <Text style={{ fontSize: 12, color: muted, marginTop: 1 }} numberOfLines={1}>
+                <Text
+                  style={{ fontSize: 12, color: muted, marginTop: 1 }}
+                  numberOfLines={1}
+                >
                   {user.email}
                 </Text>
               </TouchableOpacity>
@@ -260,7 +284,9 @@ function JefeSearchField({
       ) : null}
 
       {fieldErrors.jefe ? (
-        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>{fieldErrors.jefe}</Text>
+        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
+          {fieldErrors.jefe}
+        </Text>
       ) : null}
     </>
   );
@@ -373,7 +399,9 @@ function FormFields({
       }}
     >
       {/* ── Nombre ──────────────────────────────────── */}
-      <Text style={{ marginBottom: 6, fontSize: 14, fontWeight: '500', color: fg }}>
+      <Text
+        style={{ marginBottom: 6, fontSize: 14, fontWeight: '500', color: fg }}
+      >
         Nombre de la familia *
       </Text>
       <TextInput
@@ -421,7 +449,15 @@ function FormFields({
       ) : null}
 
       {/* ── Detalle ─────────────────────────────────── */}
-      <Text style={{ marginBottom: 6, marginTop: 16, fontSize: 14, fontWeight: '500', color: fg }}>
+      <Text
+        style={{
+          marginBottom: 6,
+          marginTop: 16,
+          fontSize: 14,
+          fontWeight: '500',
+          color: fg,
+        }}
+      >
         Detalle
       </Text>
       <TextInput
@@ -448,9 +484,17 @@ function FormFields({
 
       {/* ── Server error ────────────────────────────── */}
       {serverError ? (
-        <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}>
-          <MaterialCommunityIcons name="alert-circle" size={16} color={errorColor} />
-          <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>{serverError}</Text>
+        <View
+          style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}
+        >
+          <MaterialCommunityIcons
+            name="alert-circle"
+            size={16}
+            color={errorColor}
+          />
+          <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
+            {serverError}
+          </Text>
         </View>
       ) : null}
 
@@ -489,7 +533,9 @@ export default function FamilyFormScreen(): React.JSX.Element {
 
   const [jefeQuery, setJefeQuery] = useState('');
   const [jefeResults, setJefeResults] = useState<SearchUserResult[]>([]);
-  const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(null);
+  const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(
+    null,
+  );
   const [searchingJefe, setSearchingJefe] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -581,7 +627,8 @@ export default function FamilyFormScreen(): React.JSX.Element {
         );
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al guardar la familia.';
+      const message =
+        err instanceof Error ? err.message : 'Error al guardar la familia.';
       setServerError(message);
     } finally {
       setSaving(false);

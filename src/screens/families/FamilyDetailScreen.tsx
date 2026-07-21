@@ -101,10 +101,16 @@ function MemberItem({
       </View>
 
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '600', color: fg }} numberOfLines={1}>
+        <Text
+          style={{ fontSize: 15, fontWeight: '600', color: fg }}
+          numberOfLines={1}
+        >
           {member.usuario_nombre}
         </Text>
-        <Text style={{ fontSize: 12, color: muted, marginTop: 2 }} numberOfLines={1}>
+        <Text
+          style={{ fontSize: 12, color: muted, marginTop: 2 }}
+          numberOfLines={1}
+        >
           {member.usuario_correo}
         </Text>
       </View>
@@ -121,7 +127,11 @@ function MemberItem({
               borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: pressed ? (isDark ? '#353D35' : '#F5F7F0') : 'transparent',
+              backgroundColor: pressed
+                ? isDark
+                  ? '#353D35'
+                  : '#F5F7F0'
+                : 'transparent',
             })}
             hitSlop={6}
           >
@@ -142,7 +152,11 @@ function MemberItem({
             borderColor: border,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: pressed ? (isDark ? '#353D35' : '#F5F7F0') : 'transparent',
+            backgroundColor: pressed
+              ? isDark
+                ? '#353D35'
+                : '#F5F7F0'
+              : 'transparent',
           })}
           hitSlop={6}
         >
@@ -234,13 +248,23 @@ function UserSuggestionsList({
                     flexShrink: 0,
                   }}
                 >
-                  <MaterialCommunityIcons name="account" size={16} color={iconColor} />
+                  <MaterialCommunityIcons
+                    name="account"
+                    size={16}
+                    color={iconColor}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: fg }} numberOfLines={1}>
+                  <Text
+                    style={{ fontSize: 14, fontWeight: '600', color: fg }}
+                    numberOfLines={1}
+                  >
                     {user.nombre} {user.apellido_paterno}
                   </Text>
-                  <Text style={{ fontSize: 12, color: muted, marginTop: 1 }} numberOfLines={1}>
+                  <Text
+                    style={{ fontSize: 12, color: muted, marginTop: 1 }}
+                    numberOfLines={1}
+                  >
                     {user.email}
                   </Text>
                 </View>
@@ -293,7 +317,14 @@ function ModalActions({
   };
 
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 20,
+      }}
+    >
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={onCancel}
@@ -326,9 +357,18 @@ function ModalActions({
         }}
       >
         {isPending ? (
-          <ActivityIndicator size={16} color={selectedUser ? colors.iconWhite : fg} />
+          <ActivityIndicator
+            size={16}
+            color={selectedUser ? colors.iconWhite : fg}
+          />
         ) : null}
-        <Text style={{ fontSize: 14, fontWeight: '600', color: selectedUser ? colors.iconWhite : muted }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: selectedUser ? colors.iconWhite : muted,
+          }}
+        >
           Agregar
         </Text>
       </TouchableOpacity>
@@ -441,7 +481,7 @@ function AddMemberModalContent({
                 borderColor: border,
                 backgroundColor: inputBg,
                 paddingLeft: 16,
-                paddingRight: selectedUser ?? query ? 40 : 16,
+                paddingRight: (selectedUser ?? query) ? 40 : 16,
                 paddingVertical: 12,
                 fontSize: 16,
                 color: fg,
@@ -452,7 +492,7 @@ function AddMemberModalContent({
               onChangeText={onChangeText}
               editable={!isPending}
             />
-            {selectedUser ?? query ? (
+            {(selectedUser ?? query) ? (
               <Pressable
                 onPress={onClear}
                 style={{ position: 'absolute', right: 12, top: 14 }}
@@ -534,7 +574,9 @@ function AddMemberModal({
 }: AddMemberModalProps): React.JSX.Element | null {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchUserResult[]>([]);
-  const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(null);
+  const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -726,7 +768,13 @@ function ConfirmModal({
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.iconWhite,
+              }}
+            >
               {confirmText}
             </Text>
           </TouchableOpacity>
@@ -850,7 +898,10 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     );
   }
 
-  const showToast = (message: string, type: 'success' | 'error' = 'success'): void => {
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' = 'success',
+  ): void => {
     setToastMessage(message);
     setToastType(type);
   };
@@ -947,11 +998,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             opacity: pressed ? 0.6 : 1,
           })}
         >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={24}
-            color={fg}
-          />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
         </Pressable>
         <Text
           style={{
@@ -987,8 +1034,16 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             padding: 20,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ flex: 1, fontSize: 20, fontWeight: '700', color: fg }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text
+              style={{ flex: 1, fontSize: 20, fontWeight: '700', color: fg }}
+            >
               {family.nombre_familia}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1000,11 +1055,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
                   });
                 }}
               >
-                <MaterialCommunityIcons
-                  name="pencil"
-                  size={18}
-                  color={fg}
-                />
+                <MaterialCommunityIcons name="pencil" size={18} color={fg} />
               </Pressable>
               <Pressable
                 style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
@@ -1020,7 +1071,13 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           </View>
 
           {family.jefe_nombre ? (
-            <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
               <MaterialCommunityIcons
                 name="account-star"
                 size={16}
@@ -1040,7 +1097,15 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         </View>
 
         {/* ── Members section ───────────────────────────── */}
-        <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <View
+          style={{
+            marginTop: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
+        >
           <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
             Miembros
           </Text>
@@ -1054,7 +1119,15 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             }}
             onPress={() => setAddModalVisible(true)}
           >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>Agregar</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.iconWhite,
+              }}
+            >
+              Agregar
+            </Text>
           </TouchableOpacity>
         </View>
 

@@ -88,8 +88,14 @@ function FamilyCard({
               marginTop: 3,
             }}
           >
-            <MaterialCommunityIcons name="star" size={12} color={highlightColor} />
-            <Text style={{ fontSize: 13, color: highlightColor, fontWeight: '500' }}>
+            <MaterialCommunityIcons
+              name="star"
+              size={12}
+              color={highlightColor}
+            />
+            <Text
+              style={{ fontSize: 13, color: highlightColor, fontWeight: '500' }}
+            >
               {family.jefe_nombre}
             </Text>
           </View>
@@ -134,7 +140,12 @@ function UnauthorizedView({ bg, muted }: StateViewProps): React.JSX.Element {
     >
       <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
       <Text
-        style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}
+        style={{
+          marginTop: 16,
+          textAlign: 'center',
+          fontSize: 16,
+          color: muted,
+        }}
       >
         No tienes permisos para acceder a esta sección.
       </Text>
@@ -142,10 +153,21 @@ function UnauthorizedView({ bg, muted }: StateViewProps): React.JSX.Element {
   );
 }
 
-function LoadingView({ bg, brand }: { bg: string; brand: string }): React.JSX.Element {
+function LoadingView({
+  bg,
+  brand,
+}: {
+  bg: string;
+  brand: string;
+}): React.JSX.Element {
   return (
     <View
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: bg,
+      }}
     >
       <ActivityIndicator size="large" color={brand} />
     </View>
@@ -157,7 +179,12 @@ interface ErrorViewProps extends StateViewProps {
   readonly onRefetch: () => void;
 }
 
-function ErrorView({ bg, muted, brand, onRefetch }: ErrorViewProps): React.JSX.Element {
+function ErrorView({
+  bg,
+  muted,
+  brand,
+  onRefetch,
+}: ErrorViewProps): React.JSX.Element {
   return (
     <View
       style={{
@@ -174,7 +201,12 @@ function ErrorView({ bg, muted, brand, onRefetch }: ErrorViewProps): React.JSX.E
         color={muted}
       />
       <Text
-        style={{ marginTop: 16, textAlign: 'center', fontSize: 16, color: muted }}
+        style={{
+          marginTop: 16,
+          textAlign: 'center',
+          fontSize: 16,
+          color: muted,
+        }}
       >
         Error al cargar las familias.
       </Text>
@@ -191,8 +223,14 @@ function ErrorView({ bg, muted, brand, onRefetch }: ErrorViewProps): React.JSX.E
           paddingVertical: 12,
         }}
       >
-        <MaterialCommunityIcons name="refresh" size={18} color={colors.iconWhite} />
-        <Text style={{ fontWeight: '600', color: colors.iconWhite }}>Reintentar</Text>
+        <MaterialCommunityIcons
+          name="refresh"
+          size={18}
+          color={colors.iconWhite}
+        />
+        <Text style={{ fontWeight: '600', color: colors.iconWhite }}>
+          Reintentar
+        </Text>
       </Pressable>
     </View>
   );
@@ -225,7 +263,12 @@ function EmptyView({ muted }: { muted: string }): React.JSX.Element {
         No hay familias
       </Text>
       <Text
-        style={{ marginTop: 4, textAlign: 'center', fontSize: 14, color: muted }}
+        style={{
+          marginTop: 4,
+          textAlign: 'center',
+          fontSize: 14,
+          color: muted,
+        }}
       >
         Crea una familia para comenzar.
       </Text>
@@ -267,7 +310,14 @@ export default function FamilyListScreen(): React.JSX.Element {
   }
 
   if (isError) {
-    return <ErrorView bg={bg} muted={muted} brand={brand} onRefetch={() => void refetch()} />;
+    return (
+      <ErrorView
+        bg={bg}
+        muted={muted}
+        brand={brand}
+        onRefetch={() => void refetch()}
+      />
+    );
   }
 
   const isEmpty = !families || families.length === 0;
@@ -297,7 +347,9 @@ export default function FamilyListScreen(): React.JSX.Element {
           </Text>
           <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
             {(families ?? []).length}{' '}
-            {(families ?? []).length === 1 ? 'familia registrada' : 'familias registradas'}
+            {(families ?? []).length === 1
+              ? 'familia registrada'
+              : 'familias registradas'}
           </Text>
         </View>
         <TouchableOpacity
@@ -312,7 +364,9 @@ export default function FamilyListScreen(): React.JSX.Element {
           }}
           onPress={() => navigation.navigate('FamilyForm')}
         >
-          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}>
+          <Text
+            style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
+          >
             Agregar
           </Text>
         </TouchableOpacity>
@@ -345,7 +399,6 @@ export default function FamilyListScreen(): React.JSX.Element {
           )}
         />
       )}
-
     </View>
   );
 }
