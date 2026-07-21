@@ -30,11 +30,7 @@ export default function AdminProfileScreen({
 
   // ── Render helpers ─────────────────────────────────────
   function renderViewMode(): React.JSX.Element {
-    return (
-      <AdminProfileView
-        user={user}
-      />
-    );
+    return <AdminProfileView user={user} />;
   }
 
   function renderEditForm(): React.JSX.Element {

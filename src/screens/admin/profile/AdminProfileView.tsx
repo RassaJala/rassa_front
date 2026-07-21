@@ -190,9 +190,7 @@ export default function AdminProfileView({
         />
         <InfoRow
           label="Género"
-          value={
-            user?.genero ? getGenderLabel(user.genero) : 'No especificado'
-          }
+          value={user?.genero ? getGenderLabel(user.genero) : 'No especificado'}
           icon="gender-male-female"
         />
         <View

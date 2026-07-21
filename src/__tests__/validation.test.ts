@@ -167,8 +167,8 @@ describe('validation utilities', () => {
   });
 
   describe('MIN_PASSWORD_LENGTH', () => {
-    it('is 6', () => {
-      expect(MIN_PASSWORD_LENGTH).toBe(6);
+    it('is 8', () => {
+      expect(MIN_PASSWORD_LENGTH).toBe(8);
     });
   });
 });

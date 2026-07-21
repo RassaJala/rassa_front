@@ -26,7 +26,7 @@ import {
   validatePhone,
 } from '@/utils/validation';
 
-type ActiveTab = 'ver' | 'editar' | 'password';
+type ActiveTab = 'ver' | 'editar';
 
 const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
 
@@ -351,7 +351,6 @@ export default function ProfileScreen(): React.JSX.Element {
         buttons={[
           { value: 'ver', label: 'Ver' },
           { value: 'editar', label: 'Editar' },
-          { value: 'password', label: 'Seguridad' },
         ]}
         style={styles.tabsButtons}
       />
@@ -377,29 +376,30 @@ export default function ProfileScreen(): React.JSX.Element {
       {activeTab === 'ver' && <ProfileViewTab user={user} />}
 
       {activeTab === 'editar' && (
-        <ProfileEditTab
-          isSubmitting={isSubmitting}
-          form={formFields}
-          location={locationFields}
-          callbacks={{
-            handleUpdateProfile,
-            setErrorMessage,
-            onOpenDatePicker: () => setIsDatePickerVisible(true),
-          }}
-        />
-      )}
-
-      {activeTab === 'password' && (
-        <ProfilePasswordTab
-          isSubmitting={isSubmitting}
-          oldPassword={oldPassword}
-          setOldPassword={setOldPassword}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-          handleChangePassword={handleChangePassword}
-        />
+        <>
+          <ProfileEditTab
+            isSubmitting={isSubmitting}
+            form={formFields}
+            location={locationFields}
+            callbacks={{
+              handleUpdateProfile,
+              setErrorMessage,
+              onOpenDatePicker: () => setIsDatePickerVisible(true),
+            }}
+          />
+          <View className="mt-4">
+            <ProfilePasswordTab
+              isSubmitting={isSubmitting}
+              oldPassword={oldPassword}
+              setOldPassword={setOldPassword}
+              newPassword={newPassword}
+              setNewPassword={setNewPassword}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={setConfirmPassword}
+              handleChangePassword={handleChangePassword}
+            />
+          </View>
+        </>
       )}
       <DatePickerModal
         visible={isDatePickerVisible}

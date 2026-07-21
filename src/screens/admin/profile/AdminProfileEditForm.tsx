@@ -284,11 +284,7 @@ export default function AdminProfileEditForm({
 
   // ── Change password section ─────────────────────────
   function renderChangePassword(): React.JSX.Element {
-    return (
-      <AdminChangePassword
-        onPasswordChanged={handlePasswordChanged}
-      />
-    );
+    return <AdminChangePassword onPasswordChanged={handlePasswordChanged} />;
   }
 
   // ── Municipio dialog ────────────────────────────────
@@ -787,7 +783,8 @@ export default function AdminProfileEditForm({
         >
           Localidad *
         </Text>
-        {locationFields.selectedMunicipioId && locationFields.errorLocalidades ? (
+        {locationFields.selectedMunicipioId &&
+        locationFields.errorLocalidades ? (
           <View
             style={{
               flexDirection: 'row',

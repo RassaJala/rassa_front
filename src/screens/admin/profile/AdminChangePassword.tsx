@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { TextInput } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
