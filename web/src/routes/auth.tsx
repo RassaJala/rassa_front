@@ -61,6 +61,8 @@ function loginErrors(
   else if (!EMAIL_RE.test(email.trim()))
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
+  else if (password.length < 6)
+    errs.password = 'La contraseña debe tener al menos 6 caracteres.';
   return errs;
 }
 

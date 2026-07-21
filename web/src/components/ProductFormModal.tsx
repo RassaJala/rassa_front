@@ -404,6 +404,7 @@ export function ProductFormModal({
 
           {/* Nombre */}
           <Input
+            colors={colors}
             label="Nombre del producto *"
             value={form.nombre_producto}
             onChange={(e) => set('nombre_producto', e.target.value)}
@@ -424,6 +425,7 @@ export function ProductFormModal({
           {/* Precio y Stock */}
           <div className="grid grid-cols-2 gap-3">
             <Input
+              colors={colors}
               label="Precio *"
               value={form.precio}
               onChange={(e) => {
@@ -436,6 +438,7 @@ export function ProductFormModal({
               error={errors.precio}
             />
             <Input
+              colors={colors}
               label="Stock"
               value={form.stock}
               onChange={(e) =>

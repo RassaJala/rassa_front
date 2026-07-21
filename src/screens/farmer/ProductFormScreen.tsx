@@ -68,20 +68,18 @@ export default function ProductFormScreen({
   const isSmallScreen = SCREEN_WIDTH < 600;
 
   const isDark = colorScheme === 'dark';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const coral = '#DE393A';
+  const white = '#FFFFFF';
+  const black = '#000';
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const surface = isDark ? '#263028' : '#FFFFFF';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
+  const inputBorder = isDark ? '#4A5C4F' : '#D6DAD4';
   const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
   const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
-  const coral = '#DE393A';
-  const white = '#FFFFFF';
-  const black = '#000';
-  const separatorColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const backdropBg = 'rgba(0,0,0,0.5)';
-  const transparent = 'transparent';
 
   const { productoId } = route.params;
   const isEditing = Boolean(productoId);
@@ -295,7 +293,7 @@ export default function ProductFormScreen({
       nombre_producto: nombreProducto.trim(),
       descripcion: descripcion.trim(),
       precio: parseFloat(precio),
-      stock: parseInt(stock, 10) || 0,
+      stock: Number.isFinite(parseInt(stock, 10)) ? parseInt(stock, 10) : 0,
       es_perecedero: esPerecedero,
       fk_categoria: categoriaId,
       fk_unidad: unidadId,
@@ -374,14 +372,7 @@ export default function ProductFormScreen({
 
   if (loadingProduct) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: bg,
-        }}
-      >
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -392,8 +383,11 @@ export default function ProductFormScreen({
       style={{
         flex: 1,
         justifyContent: isSmallScreen ? 'flex-start' : 'center',
-        backgroundColor: isSmallScreen ? bg : backdropBg,
+        backgroundColor: isSmallScreen
+          ? bg
+          : 'rgba(0,0,0,0.5)',
         paddingVertical: isSmallScreen ? 0 : 16,
+        zIndex: 1,
       }}
     >
       <View
@@ -406,12 +400,13 @@ export default function ProductFormScreen({
                 alignSelf: 'center',
                 overflow: 'hidden',
                 borderRadius: 12,
-                backgroundColor: bg,
+                backgroundColor: surface,
                 shadowColor: black,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.3,
                 shadowRadius: 10,
                 elevation: 10,
+                zIndex: 10,
               }
         }
       >
@@ -441,14 +436,7 @@ export default function ProductFormScreen({
             >
               <MaterialCommunityIcons name="close" size={24} color={white} />
             </Pressable>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: '700',
-                letterSpacing: -0.2,
-                color: white,
-              }}
-            >
+            <Text style={{ fontSize: 20, fontWeight: '700', color: white, letterSpacing: -0.2 }}>
               {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
             </Text>
           </View>
@@ -460,24 +448,9 @@ export default function ProductFormScreen({
         >
           {/* General error */}
           {generalError ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 8,
-                borderRadius: 8,
-                backgroundColor: coralBg,
-                padding: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="alert-circle"
-                size={18}
-                color={coral}
-              />
-              <Text
-                style={{ flex: 1, fontSize: 14, lineHeight: 20, color: coral }}
-              >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 8, backgroundColor: coralBg, padding: 12 }}>
+              <MaterialCommunityIcons name="alert-circle" size={18} color={coral} />
+              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: coral }}>
                 {generalError}
               </Text>
             </View>
@@ -485,18 +458,10 @@ export default function ProductFormScreen({
 
           {/* Image picker */}
           <View>
-            <Text
-              style={{
-                marginBottom: 8,
-                marginLeft: 4,
-                fontSize: 14,
-                fontWeight: '600',
-                color: fg,
-              }}
-            >
+            <Text style={{ marginBottom: 8, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Foto del producto
             </Text>
-            <View style={{ alignItems: 'center' }}>
+            <View className="items-center">
               {(() => {
                 const activeImage = images.find(
                   (img) => !img.markedForDeletion,
@@ -504,27 +469,13 @@ export default function ProductFormScreen({
                 if (activeImage) {
                   const activeIndex = images.indexOf(activeImage);
                   return (
-                    <View style={{ position: 'relative' }}>
+                    <View className="relative">
                       <Image
                         source={{ uri: activeImage.uri }}
-                        style={{ height: 192, width: 192, borderRadius: 12 }}
+                        className="h-48 w-48 rounded-xl"
                         resizeMode="cover"
                       />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          flexDirection: 'row',
-                          justifyContent: 'flex-end',
-                          borderBottomLeftRadius: 12,
-                          borderBottomRightRadius: 12,
-                          backgroundColor: backdropBg,
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                        }}
-                      >
+                      <View className="absolute bottom-0 right-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
                         <Pressable
                           onPress={() => handleRemoveImage(activeIndex)}
                           hitSlop={8}
@@ -550,7 +501,7 @@ export default function ProductFormScreen({
                       borderRadius: 12,
                       borderWidth: 2,
                       borderStyle: 'dashed',
-                      borderColor: border,
+                      borderColor: inputBorder,
                       backgroundColor: surface,
                       opacity: pressed ? 0.8 : 1,
                     })}
@@ -560,15 +511,7 @@ export default function ProductFormScreen({
                       size={32}
                       color={muted}
                     />
-                    <Text
-                      style={{
-                        marginTop: 8,
-                        paddingHorizontal: 8,
-                        textAlign: 'center',
-                        fontSize: 12,
-                        color: muted,
-                      }}
-                    >
+                    <Text style={{ marginTop: 8, paddingHorizontal: 8, textAlign: 'center', fontSize: 12, color: muted }}>
                       Agregar imagen
                     </Text>
                   </Pressable>
@@ -579,30 +522,21 @@ export default function ProductFormScreen({
 
           {/* Nombre */}
           <View>
-            <Text
-              style={{
-                marginBottom: 4,
-                marginLeft: 4,
-                fontSize: 14,
-                fontWeight: '600',
-                color: fg,
-              }}
-            >
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Nombre del producto <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
-              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: border,
+                borderColor: inputBorder,
                 backgroundColor: surface,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              }}
+              } as any}
               placeholder="Ej. Tomates frescos"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -617,14 +551,7 @@ export default function ProductFormScreen({
               }}
             />
             {errors.nombre_producto ? (
-              <Text
-                style={{
-                  marginLeft: 4,
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: coral,
-                }}
-              >
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.nombre_producto}
               </Text>
             ) : null}
@@ -632,30 +559,21 @@ export default function ProductFormScreen({
 
           {/* Descripción */}
           <View>
-            <Text
-              style={{
-                marginBottom: 4,
-                marginLeft: 4,
-                fontSize: 14,
-                fontWeight: '600',
-                color: fg,
-              }}
-            >
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Descripción
             </Text>
             <TextInput
-              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: border,
+                borderColor: inputBorder,
                 backgroundColor: surface,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              }}
+              } as any}
               placeholder="Ej. Detalles sobre tu producto..."
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -669,30 +587,21 @@ export default function ProductFormScreen({
 
           {/* Precio */}
           <View>
-            <Text
-              style={{
-                marginBottom: 4,
-                marginLeft: 4,
-                fontSize: 14,
-                fontWeight: '600',
-                color: fg,
-              }}
-            >
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Precio <Text style={{ color: coral }}>*</Text>
             </Text>
             <TextInput
-              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: border,
+                borderColor: inputBorder,
                 backgroundColor: surface,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              }}
+              } as any}
               placeholder="0.00"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -710,14 +619,7 @@ export default function ProductFormScreen({
               keyboardType="decimal-pad"
             />
             {errors.precio ? (
-              <Text
-                style={{
-                  marginLeft: 4,
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: coral,
-                }}
-              >
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.precio}
               </Text>
             ) : null}
@@ -725,30 +627,21 @@ export default function ProductFormScreen({
 
           {/* Stock */}
           <View>
-            <Text
-              style={{
-                marginBottom: 4,
-                marginLeft: 4,
-                fontSize: 14,
-                fontWeight: '600',
-                color: fg,
-              }}
-            >
+            <Text style={{ marginBottom: 4, marginLeft: 4, fontSize: 14, fontWeight: '600', color: fg }}>
               Stock disponible
             </Text>
             <TextInput
-              // @ts-expect-error -- outlineStyle is web-only CSS, absent from React Native types
               style={{
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: border,
+                borderColor: inputBorder,
                 backgroundColor: surface,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 fontSize: 16,
                 color: fg,
                 outlineStyle: 'none',
-              }}
+              } as any}
               placeholder="0"
               placeholderTextColor={muted}
               cursorColor={brand}
@@ -759,24 +652,14 @@ export default function ProductFormScreen({
           </View>
 
           {/* Perecedero */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: border,
-              backgroundColor: surface,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-            }}
-          >
-            <Text style={{ fontSize: 16, color: fg }}>Producto perecedero</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: inputBorder, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}>
+            <Text style={{ fontSize: 16, color: fg }}>
+              Producto perecedero
+            </Text>
             <Switch
               value={esPerecedero}
               onValueChange={setEsPerecedero}
-              trackColor={{ true: brand, false: border }}
+              trackColor={{ true: brand, false: isDark ? '#353D35' : '#E2E6DF' }}
             />
           </View>
 
@@ -784,23 +667,10 @@ export default function ProductFormScreen({
           <View>
             <Pressable
               onPress={() => setCategoriaModalVisible(true)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: border,
-                backgroundColor: surface,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-              }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: inputBorder, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
             >
               <Text
-                style={{
-                  fontSize: 16,
-                  color: selectedCategoryName ? fg : muted,
-                }}
+                style={{ fontSize: 16, color: selectedCategoryName ? fg : muted }}
               >
                 {selectedCategoryName || 'Categoría *'}
               </Text>
@@ -811,14 +681,7 @@ export default function ProductFormScreen({
               />
             </Pressable>
             {errors.fk_categoria ? (
-              <Text
-                style={{
-                  marginLeft: 4,
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: coral,
-                }}
-              >
+              <Text style={{ marginLeft: 4, marginTop: 4, fontSize: 12, color: coral }}>
                 {errors.fk_categoria}
               </Text>
             ) : null}
@@ -827,17 +690,7 @@ export default function ProductFormScreen({
           {/* Unidad selector */}
           <Pressable
             onPress={() => setUnidadModalVisible(true)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: border,
-              backgroundColor: surface,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-            }}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, borderWidth: 1, borderColor: inputBorder, backgroundColor: surface, paddingHorizontal: 16, paddingVertical: 12 }}
           >
             <Text
               style={{ fontSize: 16, color: selectedUnitName ? fg : muted }}
@@ -858,7 +711,7 @@ export default function ProductFormScreen({
             onPress={handleSave}
             loading={isSaving}
             disabled={isSaving}
-            style={{ marginTop: 8, borderRadius: 8 }}
+            className="mt-2 rounded-lg"
           >
             {isEditing ? 'Guardar cambios' : 'Crear producto'}
           </Button>
@@ -872,32 +725,11 @@ export default function ProductFormScreen({
         transparent
         onRequestClose={() => setCategoriaModalVisible(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-end',
-            backgroundColor: backdropBg,
-          }}
-        >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View
-            style={{
-              backgroundColor: bg,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              maxHeight: '70%',
-              paddingBottom: insets.bottom,
-            }}
+            style={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: bg, maxHeight: '70%', paddingBottom: insets.bottom }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: 20,
-                paddingTop: 20,
-                paddingBottom: 12,
-              }}
-            >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 12, paddingTop: 20 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
                 Seleccionar categoría
               </Text>
@@ -905,16 +737,14 @@ export default function ProductFormScreen({
                 onPress={() => setCategoriaModalVisible(false)}
                 hitSlop={8}
               >
-                <MaterialCommunityIcons name="close" size={24} color={muted} />
+                <MaterialCommunityIcons
+                  name="close"
+                  size={24}
+                  color={muted}
+                />
               </Pressable>
             </View>
-            <View
-              style={{
-                height: 1,
-                backgroundColor: border,
-                marginHorizontal: 20,
-              }}
-            />
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: border }} />
             <FlatList
               data={categories}
               keyExtractor={(item) => String(item.id_categoria)}
@@ -934,23 +764,19 @@ export default function ProductFormScreen({
                       setCategoriaModalVisible(false);
                     }}
                     style={({ pressed }) => ({
+                      marginHorizontal: 12,
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginHorizontal: 12,
+                      borderRadius: 12,
                       paddingHorizontal: 20,
                       paddingVertical: 16,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? accentBg : transparent,
+                      backgroundColor: isSelected ? accentBg : 'transparent',
                       opacity: pressed ? 0.6 : 1,
                     })}
                   >
                     <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: isSelected ? '600' : '400',
-                        color: isSelected ? brand : fg,
-                      }}
+                      style={{ fontSize: 16, fontWeight: isSelected ? '600' : '400', color: isSelected ? brand : fg }}
                     >
                       {item.nombre}
                     </Text>
@@ -965,13 +791,7 @@ export default function ProductFormScreen({
                 );
               }}
               ItemSeparatorComponent={() => (
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor: separatorColor,
-                    marginHorizontal: 20,
-                  }}
-                />
+                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }} />
               )}
             />
           </View>
@@ -985,32 +805,11 @@ export default function ProductFormScreen({
         transparent
         onRequestClose={() => setUnidadModalVisible(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-end',
-            backgroundColor: backdropBg,
-          }}
-        >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View
-            style={{
-              backgroundColor: bg,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              maxHeight: '70%',
-              paddingBottom: insets.bottom,
-            }}
+            style={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: bg, maxHeight: '70%', paddingBottom: insets.bottom }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: 20,
-                paddingTop: 20,
-                paddingBottom: 12,
-              }}
-            >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 12, paddingTop: 20 }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
                 Seleccionar unidad
               </Text>
@@ -1018,16 +817,14 @@ export default function ProductFormScreen({
                 onPress={() => setUnidadModalVisible(false)}
                 hitSlop={8}
               >
-                <MaterialCommunityIcons name="close" size={24} color={muted} />
+                <MaterialCommunityIcons
+                  name="close"
+                  size={24}
+                  color={muted}
+                />
               </Pressable>
             </View>
-            <View
-              style={{
-                height: 1,
-                backgroundColor: border,
-                marginHorizontal: 20,
-              }}
-            />
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: border }} />
             <FlatList
               data={units}
               keyExtractor={(item) => String(item.id_unidad)}
@@ -1041,23 +838,19 @@ export default function ProductFormScreen({
                       setUnidadModalVisible(false);
                     }}
                     style={({ pressed }) => ({
+                      marginHorizontal: 12,
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginHorizontal: 12,
+                      borderRadius: 12,
                       paddingHorizontal: 20,
                       paddingVertical: 16,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? accentBg : transparent,
+                      backgroundColor: isSelected ? accentBg : 'transparent',
                       opacity: pressed ? 0.6 : 1,
                     })}
                   >
                     <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: isSelected ? '600' : '400',
-                        color: isSelected ? brand : fg,
-                      }}
+                      style={{ fontSize: 16, fontWeight: isSelected ? '600' : '400', color: isSelected ? brand : fg }}
                     >
                       {item.tipo}
                     </Text>
@@ -1072,13 +865,7 @@ export default function ProductFormScreen({
                 );
               }}
               ItemSeparatorComponent={() => (
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor: border,
-                    marginHorizontal: 20,
-                  }}
-                />
+                <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }} />
               )}
             />
           </View>

@@ -77,28 +77,18 @@ const initialProducts: Product[] = [
   },
 ];
 
-const overlayBg = 'rgba(0,0,0,0.4)';
-const transparentBg = 'transparent';
-const trashBg = 'rgba(242,169,0,0.1)';
-
 function CategoryPickerModal({
   visible,
   categories,
   selected,
   onSelect,
   onClose,
-  surface,
-  fg,
-  accentBg,
 }: {
   visible: boolean;
   categories: string[];
   selected: string;
   onSelect: (c: string) => void;
   onClose: () => void;
-  surface: string;
-  fg: string;
-  accentBg: string;
 }) {
   return (
     <Modal
@@ -108,31 +98,11 @@ function CategoryPickerModal({
       onRequestClose={onClose}
     >
       <Pressable
-        style={{
-          flex: 1,
-          backgroundColor: overlayBg,
-          justifyContent: 'center',
-          padding: 40,
-        }}
+        className="flex-1 items-center justify-center bg-black/40 p-10"
         onPress={onClose}
       >
-        <View
-          style={{
-            backgroundColor: surface,
-            borderRadius: 20,
-            padding: 16,
-            gap: 4,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '700',
-              color: fg,
-              marginBottom: 8,
-              paddingHorizontal: 8,
-            }}
-          >
+        <View className="gap-1 rounded-2xl bg-white p-4 dark:bg-gray-900">
+          <Text className="mb-2 px-2 text-[17px] font-bold text-brand-ink dark:text-gray-100">
             Seleccionar categoría
           </Text>
           {categories.map((cat) => (
@@ -143,19 +113,16 @@ function CategoryPickerModal({
                 onClose();
               }}
               activeOpacity={0.7}
-              style={{
-                paddingVertical: 14,
-                paddingHorizontal: 8,
-                borderRadius: 12,
-                backgroundColor: selected === cat ? accentBg : transparentBg,
-              }}
+              className={`rounded-xl px-2 py-3.5 ${
+                selected === cat
+                  ? 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
+                  : 'bg-transparent'
+              }`}
             >
               <Text
-                style={{
-                  fontSize: 16,
-                  color: fg,
-                  fontWeight: selected === cat ? '600' : '400',
-                }}
+                className={`text-base text-brand-ink dark:text-gray-100 ${
+                  selected === cat ? 'font-semibold' : 'font-normal'
+                }`}
               >
                 {cat}
               </Text>
@@ -171,24 +138,10 @@ function ToggleConfirmModal({
   target,
   onConfirm,
   onClose,
-  surface,
-  fg,
-  muted,
-  iconWhite,
-  errorColor,
-  border,
-  iconBg,
 }: {
   target: Product | null;
   onConfirm: (product: Product) => void;
   onClose: () => void;
-  surface: string;
-  fg: string;
-  muted: string;
-  iconWhite: string;
-  errorColor: string;
-  border: string;
-  iconBg: string;
 }) {
   return (
     <Modal
@@ -198,95 +151,50 @@ function ToggleConfirmModal({
       onRequestClose={onClose}
     >
       <Pressable
-        style={{ flex: 1, backgroundColor: overlayBg }}
+        className="flex-1 bg-black/40"
         onPress={onClose}
       />
-      <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 24,
-          padding: 24,
-          paddingBottom: 34,
-          marginTop: 'auto',
-        }}
-      >
-        <View style={{ alignItems: 'center', marginBottom: 16 }}>
-          <View
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: iconBg,
-              marginBottom: 12,
-            }}
-          >
+      <View className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900" style={{ marginTop: 'auto' }}>
+        <View className="items-center mb-4">
+          <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
             <MaterialCommunityIcons
               name={
                 target?.estado ? 'pause-circle-outline' : 'play-circle-outline'
               }
               size={26}
-              color={errorColor}
+              color="#DE393A"
             />
           </View>
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '700',
-              color: fg,
-              textAlign: 'center',
-            }}
-          >
+          <Text className="text-center text-[17px] font-bold text-brand-ink dark:text-gray-100">
             {target?.estado
               ? `Desactivar "${target?.name}"?`
               : `Activar "${target?.name}"?`}
           </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: muted,
-              marginTop: 6,
-              textAlign: 'center',
-            }}
-          >
+          <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado
               ? 'El producto se moverá a la papelera.'
               : 'El producto volverá a estar activo.'}
           </Text>
         </View>
-        <View style={{ gap: 10 }}>
+        <View className="gap-2.5">
           <TouchableOpacity
             onPress={() => {
               if (target) onConfirm(target);
               onClose();
             }}
             activeOpacity={0.8}
-            style={{
-              height: 50,
-              borderRadius: 14,
-              backgroundColor: errorColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+            <Text className="text-base font-semibold text-white">
               {target?.estado ? 'Desactivar' : 'Activar'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onClose}
             activeOpacity={0.8}
-            style={{
-              height: 44,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -301,25 +209,11 @@ function DeleteConfirmModal({
   onPermanentDelete,
   onToggleStatus,
   onClose,
-  surface,
-  fg,
-  muted,
-  iconWhite,
-  errorColor,
-  border,
-  iconBg,
 }: {
   target: Product | null;
   onPermanentDelete: (t: Product) => void;
   onToggleStatus: (t: Product) => void;
   onClose: () => void;
-  surface: string;
-  fg: string;
-  muted: string;
-  iconWhite: string;
-  errorColor: string;
-  border: string;
-  iconBg: string;
 }) {
   return (
     <Modal
@@ -329,62 +223,30 @@ function DeleteConfirmModal({
       onRequestClose={onClose}
     >
       <Pressable
-        style={{ flex: 1, backgroundColor: overlayBg }}
+        className="flex-1 bg-black/40"
         onPress={onClose}
       />
-      <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 24,
-          padding: 24,
-          paddingBottom: 34,
-          marginTop: 'auto',
-        }}
-      >
-        <View style={{ alignItems: 'center', marginBottom: 16 }}>
-          <View
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: iconBg,
-              marginBottom: 12,
-            }}
-          >
+      <View className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900" style={{ marginTop: 'auto' }}>
+        <View className="items-center mb-4">
+          <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
             <MaterialCommunityIcons
               name="trash-can-outline"
               size={26}
-              color={errorColor}
+              color="#DE393A"
             />
           </View>
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '700',
-              color: fg,
-              textAlign: 'center',
-            }}
-          >
+          <Text className="text-center text-[17px] font-bold text-brand-ink dark:text-gray-100">
             {target?.estado === false
               ? `¿Eliminar permanentemente "${target?.name}"?`
               : `¿Desactivar "${target?.name}"?`}
           </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: muted,
-              marginTop: 6,
-              textAlign: 'center',
-            }}
-          >
+          <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado === false
               ? 'Esta acción no se puede deshacer.'
               : 'El producto se moverá a la papelera.'}
           </Text>
         </View>
-        <View style={{ gap: 10 }}>
+        <View className="gap-2.5">
           <TouchableOpacity
             onPress={() => {
               if (!target) return;
@@ -396,15 +258,9 @@ function DeleteConfirmModal({
               }
             }}
             activeOpacity={0.8}
-            style={{
-              height: 50,
-              borderRadius: 14,
-              backgroundColor: errorColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+            <Text className="text-base font-semibold text-white">
               {target?.estado === false
                 ? 'Eliminar permanentemente'
                 : 'Desactivar'}
@@ -413,16 +269,9 @@ function DeleteConfirmModal({
           <TouchableOpacity
             onPress={onClose}
             activeOpacity={0.8}
-            style={{
-              height: 44,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -435,17 +284,8 @@ function DeleteConfirmModal({
 export default function AdminProductsScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
   const brand = isDark ? '#4A8A63' : '#24563C';
-  const iconWhite = '#FFFFFF';
-  const errorColor = '#DE393A';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const iconBg = isDark ? '#3D2023' : '#FDEDEE';
-  const segBg = isDark ? '#263028' : '#E8ECE4';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [tab, setTab] = useState<'list' | 'form'>('list');
@@ -564,47 +404,31 @@ export default function AdminProductsScreen(): React.JSX.Element {
       : ('package-variant' as const);
     const iconColor = isTrash ? '#F2A900' : brand;
     return (
-      <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: border,
-          padding: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 14,
-        }}
-      >
+      <View className="flex-row items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
         <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: isTrash ? trashBg : accentBg,
-          }}
+          className={`h-10 w-10 items-center justify-center rounded-full ${
+            isTrash ? 'bg-brand-orange/10' : 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
+          }`}
         >
           <MaterialCommunityIcons name={iconName} size={20} color={iconColor} />
         </View>
 
-        <View style={{ flex: 1 }}>
+        <View className="flex-1">
           <Text
-            style={{ fontSize: 16, fontWeight: '600', color: fg }}
+            className="text-base font-semibold text-brand-ink dark:text-gray-100"
             numberOfLines={1}
           >
             {item.name}
           </Text>
           <Text
-            style={{ fontSize: 13, color: muted, marginTop: 2 }}
+            className="mt-0.5 text-[13px] text-gray-400 dark:text-gray-500"
             numberOfLines={1}
           >
             {item.category} · {item.stock}
           </Text>
         </View>
 
-        <Text style={{ fontSize: 16, fontWeight: '700', color: brand }}>
+        <Text className="text-base font-bold text-brand-green-forest dark:text-brand-green-forest">
           ${item.price}
         </Text>
 
@@ -612,36 +436,20 @@ export default function AdminProductsScreen(): React.JSX.Element {
           <>
             <Pressable
               onPress={() => restoreProduct(item)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
               hitSlop={6}
             >
               <MaterialCommunityIcons name="restore" size={16} color={brand} />
             </Pressable>
             <Pressable
               onPress={() => setDeleteTarget(item)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
               hitSlop={6}
             >
               <MaterialCommunityIcons
                 name="delete-forever"
                 size={16}
-                color={errorColor}
+                color="#DE393A"
               />
             </Pressable>
           </>
@@ -649,15 +457,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
           <>
             <Pressable
               onPress={() => startEdit(item)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
               hitSlop={6}
             >
               <MaterialCommunityIcons
@@ -668,15 +468,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
             </Pressable>
             <Pressable
               onPress={() => setToggleTarget(item)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
               hitSlop={6}
             >
               <MaterialCommunityIcons
@@ -689,21 +481,13 @@ export default function AdminProductsScreen(): React.JSX.Element {
             </Pressable>
             <Pressable
               onPress={() => setDeleteTarget(item)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
               hitSlop={6}
             >
               <MaterialCommunityIcons
                 name="trash-can-outline"
                 size={16}
-                color={errorColor}
+                color="#DE393A"
               />
             </Pressable>
           </>
@@ -714,24 +498,8 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
   function renderHeader() {
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingTop: 60,
-          paddingBottom: 4,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
-          }}
-        >
+      <View className="flex-row items-center justify-between px-5 pb-1" style={{ paddingTop: 60 }}>
+        <Text className="text-[28px] font-bold tracking-tight text-brand-ink dark:text-gray-100">
           Productos
         </Text>
         {!showTrash && inactiveProducts.length > 0 ? (
@@ -750,38 +518,24 @@ export default function AdminProductsScreen(): React.JSX.Element {
   function renderSegmentedControl() {
     if (showTrash) return null;
     return (
-      <View
-        style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: segBg,
-            borderRadius: 10,
-            padding: 3,
-          }}
-        >
+      <View className="px-5 pb-4 pt-3">
+        <View className="flex-row rounded-[10px] p-[3px] bg-gray-100 dark:bg-gray-800">
           <TouchableOpacity
             onPress={() => {
               if (!isFormActive) return;
               switchToList();
             }}
-            style={{
-              flex: 1,
-              paddingVertical: 8,
-              borderRadius: 8,
-              backgroundColor: isFormActive ? transparentBg : surface,
-              alignItems: 'center',
-            }}
+            className={`flex-1 items-center rounded-lg py-2 ${
+              isFormActive ? 'bg-transparent' : 'bg-white dark:bg-gray-900'
+            }`}
             activeOpacity={0.7}
           >
             <Text
-              style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: isFormActive ? muted : fg,
-                letterSpacing: 0.01,
-              }}
+              className={`text-[13px] font-semibold tracking-wide ${
+                isFormActive
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-brand-ink dark:text-gray-100'
+              }`}
             >
               📋 Lista
             </Text>
@@ -791,22 +545,17 @@ export default function AdminProductsScreen(): React.JSX.Element {
               if (isFormActive) return;
               startNew();
             }}
-            style={{
-              flex: 1,
-              paddingVertical: 8,
-              borderRadius: 8,
-              backgroundColor: isFormActive ? surface : transparentBg,
-              alignItems: 'center',
-            }}
+            className={`flex-1 items-center rounded-lg py-2 ${
+              isFormActive ? 'bg-white dark:bg-gray-900' : 'bg-transparent'
+            }`}
             activeOpacity={0.7}
           >
             <Text
-              style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: isFormActive ? fg : muted,
-                letterSpacing: 0.01,
-              }}
+              className={`text-[13px] font-semibold tracking-wide ${
+                isFormActive
+                  ? 'text-brand-ink dark:text-gray-100'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
             >
               ➕ Nuevo
             </Text>
@@ -820,26 +569,18 @@ export default function AdminProductsScreen(): React.JSX.Element {
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        className="flex-1"
       >
         <ScrollView
           contentContainerStyle={{ padding: 20, gap: 18 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+          <Text className="text-lg font-bold text-brand-ink dark:text-gray-100">
             {editingProduct ? 'Editar producto' : 'Nuevo producto'}
           </Text>
 
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: muted,
-              }}
-            >
+          <View className="gap-1.5">
+            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Nombre
             </Text>
             <TextInput
@@ -847,51 +588,26 @@ export default function AdminProductsScreen(): React.JSX.Element {
               onChangeText={(t) => setFormValues((p) => ({ ...p, name: t }))}
               placeholder="ej. Aguacate Hass"
               placeholderTextColor={muted}
-              style={{
-                borderWidth: 1.5,
-                borderColor: border,
-                borderRadius: 12,
-                backgroundColor: surface,
-                color: fg,
-                fontSize: 15,
-                paddingHorizontal: 14,
-                height: 46,
-              }}
+              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
 
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: muted,
-              }}
-            >
+          <View className="gap-1.5">
+            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Categoría
             </Text>
             <TouchableOpacity
               onPress={() => setShowPicker(true)}
               activeOpacity={0.7}
-              style={{
-                borderWidth: 1.5,
-                borderColor: border,
-                borderRadius: 12,
-                backgroundColor: surface,
-                paddingHorizontal: 14,
-                height: 46,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              className="flex-row items-center justify-between rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 dark:border-gray-700 dark:bg-gray-900"
+              style={{ height: 46 }}
             >
               <Text
-                style={{
-                  fontSize: 15,
-                  color: formValues.category ? fg : muted,
-                }}
+                className={`text-[15px] ${
+                  formValues.category
+                    ? 'text-brand-ink dark:text-gray-100'
+                    : 'text-gray-400 dark:text-gray-500'
+                }`}
               >
                 {formValues.category || 'Seleccionar…'}
               </Text>
@@ -903,16 +619,8 @@ export default function AdminProductsScreen(): React.JSX.Element {
             </TouchableOpacity>
           </View>
 
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: muted,
-              }}
-            >
+          <View className="gap-1.5">
+            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Precio
             </Text>
             <TextInput
@@ -921,29 +629,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
               placeholder="0.00"
               placeholderTextColor={muted}
               keyboardType="decimal-pad"
-              style={{
-                borderWidth: 1.5,
-                borderColor: border,
-                borderRadius: 12,
-                backgroundColor: surface,
-                color: fg,
-                fontSize: 15,
-                paddingHorizontal: 14,
-                height: 46,
-              }}
+              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
 
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: muted,
-              }}
-            >
+          <View className="gap-1.5">
+            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Stock
             </Text>
             <TextInput
@@ -951,56 +642,27 @@ export default function AdminProductsScreen(): React.JSX.Element {
               onChangeText={(t) => setFormValues((p) => ({ ...p, stock: t }))}
               placeholder="ej. 200 kg"
               placeholderTextColor={muted}
-              style={{
-                borderWidth: 1.5,
-                borderColor: border,
-                borderRadius: 12,
-                backgroundColor: surface,
-                color: fg,
-                fontSize: 15,
-                paddingHorizontal: 14,
-                height: 46,
-              }}
+              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
         </ScrollView>
 
-        <View
-          style={{
-            padding: 20,
-            gap: 10,
-            borderTopWidth: 1,
-            borderTopColor: border,
-          }}
-        >
+        <View className="gap-2.5 border-t border-gray-200 p-5 dark:border-gray-700">
           <TouchableOpacity
             onPress={handleSave}
             activeOpacity={0.8}
-            style={{
-              height: 50,
-              borderRadius: 14,
-              backgroundColor: errorColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
+            <Text className="text-base font-semibold text-white">
               Guardar
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={switchToList}
             activeOpacity={0.8}
-            style={{
-              height: 44,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -1011,38 +673,16 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
   function renderEmpty() {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 24,
-        }}
-      >
+      <View className="flex-1 items-center justify-center px-6">
         <MaterialCommunityIcons
           name={showTrash ? 'delete-restore' : 'package-variant'}
           size={64}
           color={muted}
         />
-        <Text
-          style={{
-            marginTop: 16,
-            textAlign: 'center',
-            fontSize: 20,
-            fontWeight: '700',
-            color: muted,
-          }}
-        >
+        <Text className="mt-4 text-center text-xl font-bold text-gray-400 dark:text-gray-500">
           {showTrash ? 'No hay productos en la papelera' : 'No hay productos'}
         </Text>
-        <Text
-          style={{
-            marginTop: 4,
-            textAlign: 'center',
-            fontSize: 14,
-            color: muted,
-          }}
-        >
+        <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
           {showTrash
             ? 'Los productos desactivados aparecerán aquí.'
             : 'Agregá un producto para comenzar.'}
@@ -1069,17 +709,10 @@ export default function AdminProductsScreen(): React.JSX.Element {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
       {renderHeader()}
       {showTrash ? (
-        <Text
-          style={{
-            fontSize: 16,
-            color: muted,
-            marginTop: 2,
-            paddingHorizontal: 20,
-          }}
-        >
+        <Text className="mt-0.5 px-5 text-base text-gray-400 dark:text-gray-500">
           Papelera
         </Text>
       ) : null}
@@ -1092,22 +725,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
         selected={formValues.category}
         onSelect={(cat) => setFormValues((p) => ({ ...p, category: cat }))}
         onClose={() => setShowPicker(false)}
-        surface={surface}
-        fg={fg}
-        accentBg={accentBg}
       />
 
       <ToggleConfirmModal
         target={toggleTarget}
         onConfirm={toggleStatus}
         onClose={() => setToggleTarget(null)}
-        surface={surface}
-        fg={fg}
-        muted={muted}
-        iconWhite={iconWhite}
-        errorColor={errorColor}
-        border={border}
-        iconBg={iconBg}
       />
 
       <DeleteConfirmModal
@@ -1115,13 +738,6 @@ export default function AdminProductsScreen(): React.JSX.Element {
         onPermanentDelete={permanentDelete}
         onToggleStatus={toggleStatus}
         onClose={() => setDeleteTarget(null)}
-        surface={surface}
-        fg={fg}
-        muted={muted}
-        iconWhite={iconWhite}
-        errorColor={errorColor}
-        border={border}
-        iconBg={iconBg}
       />
     </View>
   );
