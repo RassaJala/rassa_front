@@ -107,7 +107,7 @@ function validateForm(form: ProfileForm): FieldErrors {
   } else if (!DATE_REGEX.test(form.fecha_nacimiento)) {
     errors.fecha_nacimiento = 'Formato inválido (AAAA-MM-DD).';
   } else if (!isAdult(form.fecha_nacimiento)) {
-    errors.fecha_nacimiento = 'Debes ser mayor de 16 años.';
+    errors.fecha_nacimiento = 'Debes ser mayor de 18 años.';
   }
 
   // --- Género ---
@@ -266,6 +266,7 @@ export function AdminProfile() {
       return;
     }
     setLoadingLocalidades(true);
+    setCatalogError(null);
     try {
       const res = await api.get<{ data: Localidad[] }>(
         `/localidades/?municipio_id=${municipioId}`,
@@ -273,6 +274,7 @@ export function AdminProfile() {
       setLocalidades(res.data.data ?? []);
     } catch {
       setLocalidades([]);
+      setCatalogError('Error al cargar localidades. Verifica tu conexión.');
     } finally {
       setLoadingLocalidades(false);
     }
@@ -308,7 +310,7 @@ export function AdminProfile() {
         fecha_nacimiento: profile.fecha_nacimiento,
         sexo: profile.genero || null,
         domicilio: profile.direccion.trim(),
-        fk_localidad: profile.localidad_id ?? 0,
+        fk_localidad: profile.localidad_id ?? null,
       });
 
       await fetchProfile();
@@ -316,9 +318,12 @@ export function AdminProfile() {
       setEditing(false);
       setFieldErrors({});
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Error al actualizar perfil.';
-      setError(msg);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { detail?: string } } };
+        setError(axiosErr.response?.data?.detail ?? 'Error al actualizar perfil.');
+      } else {
+        setError('Error al actualizar perfil.');
+      }
     } finally {
       setLoading(false);
     }
