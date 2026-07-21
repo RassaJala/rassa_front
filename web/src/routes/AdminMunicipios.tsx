@@ -23,13 +23,15 @@ export function AdminMunicipios() {
   const [items, setItems] = useState<Municipio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre: '' });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Municipio | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [trashItems, setTrashItems] = useState<Municipio[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -51,6 +53,40 @@ export function AdminMunicipios() {
   useEffect(() => {
     void fetchItems();
   }, [fetchItems]);
+
+  // TODO: Reemplazar con GET /api/municipios/trash/ cuando endpoint esté listo
+  async function fetchTrash() {
+    setTrashLoading(true);
+    setError(null);
+    try {
+      // Placeholder: endpoint aún no disponible
+      setTrashItems([]);
+    } catch {
+      setError('Error al cargar papelera');
+    } finally {
+      setTrashLoading(false);
+    }
+  }
+
+  // TODO: Reemplazar con POST /api/municipios/{id}/restore/ cuando endpoint esté listo
+  async function restoreFromTrash(id: number) {
+    try {
+      // Placeholder
+      setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
+    } catch {
+      setError('Error al restaurar municipio');
+    }
+  }
+
+  // TODO: Reemplazar con POST /api/municipios/{id}/permanent/ cuando endpoint esté listo
+  async function permanentDelete(id: number) {
+    try {
+      // Placeholder
+      setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
+    } catch {
+      setError('Error al eliminar municipio definitivamente');
+    }
+  }
 
   const filtered = useMemo(
     () =>
@@ -241,6 +277,23 @@ export function AdminMunicipios() {
           }}
         >
           📋 Lista
+        </button>
+        <button
+          onClick={() => { setTab('trash'); void fetchTrash(); }}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'trash' ? surface : 'transparent',
+            color: tab === 'trash' ? fg : muted,
+            boxShadow: tab === 'trash' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          🗑️ Papelera
         </button>
         <button
           onClick={() => startNew()}
@@ -461,6 +514,154 @@ export function AdminMunicipios() {
                               🗑️
                             </button>
                           )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'trash' && (
+        <div
+          style={{
+            background: surface,
+            borderRadius: 16,
+            border: `1px solid ${border}`,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '16px 20px',
+              borderBottom: `1px solid ${border}`,
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+              {trashLoading
+                ? 'Cargando…'
+                : `${trashItems.length} municipios en papelera`}
+            </span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Nombre', 'Acciones'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: 'left',
+                        fontSize: 11,
+                        color: muted,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        fontWeight: 600,
+                        padding: '12px 20px',
+                        background: bg,
+                        borderBottom: `1px solid ${border}`,
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {trashLoading ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      Cargando datos…
+                    </td>
+                  </tr>
+                ) : trashItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      No hay municipios en la papelera
+                    </td>
+                  </tr>
+                ) : (
+                  trashItems.map((item) => (
+                    <tr key={item.id_municipio} style={{ background: surface }}>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          fontSize: 14,
+                          borderBottom: `1px solid ${border}`,
+                          fontWeight: 600,
+                          color: fg,
+                        }}
+                      >
+                        {item.nombre}
+                      </td>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            onClick={() => void restoreFromTrash(item.id_municipio)}
+                            aria-label="Restaurar"
+                            style={{
+                              height: 32,
+                              padding: '0 12px',
+                              borderRadius: 8,
+                              border: '1.5px solid #24563C',
+                              background: 'transparent',
+                              color: '#24563C',
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            ↩️ Restaurar
+                          </button>
+                          <button
+                            onClick={() => void permanentDelete(item.id_municipio)}
+                            aria-label="Eliminar definitivamente"
+                            style={{
+                              height: 32,
+                              padding: '0 12px',
+                              borderRadius: 8,
+                              border: '1.5px solid #DE393A',
+                              background: 'transparent',
+                              color: '#DE393A',
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            🗑️ Eliminar
+                          </button>
                         </div>
                       </td>
                     </tr>

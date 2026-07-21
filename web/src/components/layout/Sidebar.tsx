@@ -31,12 +31,6 @@ const adminNav: NavItem[] = [
     icon: '📍',
     path: '/admin/localidades',
   },
-  {
-    key: 'trash',
-    label: 'Papelera',
-    icon: '🗑️',
-    path: '/admin/papelera',
-  },
   { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
 ];
 
