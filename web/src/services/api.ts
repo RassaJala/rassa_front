@@ -2,7 +2,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 

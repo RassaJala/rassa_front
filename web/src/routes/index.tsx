@@ -10,6 +10,7 @@ import { AdminCategories } from './AdminCategories';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
 import { AdminProfile } from './AdminProfile';
+import { AdminUsers } from './AdminUsers';
 
 function NotFound() {
   return (
@@ -84,6 +85,7 @@ export function AppRouter() {
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
                 <Route path="perfil" element={<AdminProfile />} />
+                <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
