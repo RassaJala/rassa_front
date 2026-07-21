@@ -20,18 +20,23 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
     { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
     { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
+    { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   buyer: [
     { label: 'Home', screen: 'Home', icon: 'home' },
     { label: 'Carrito', screen: 'Carrito', icon: 'cart' },
+    { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   farmer: [
     { label: 'Home', screen: 'MyProducts', icon: 'leaf' },
     { label: 'Productos', screen: 'AddProduct', icon: 'plus-circle' },
+    { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
   seller: [
     { label: 'Home', screen: 'SellerHome', icon: 'storefront' },
+    { label: 'Perfil', screen: 'Perfil', icon: 'account' },
     { label: 'Ventas', screen: 'Sales', icon: 'cash' },
+    { label: 'Notificaciones', screen: 'Notificaciones', icon: 'bell' },
   ],
 };
 
@@ -46,39 +51,16 @@ export default function Navbar(): React.JSX.Element {
   const items = NAV_CONFIG[user?.role ?? 'buyer'];
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
-
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: border,
-        backgroundColor: bg,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-      }}
-    >
-      <Text
-        style={{
-          marginRight: 24,
-          fontSize: 18,
-          fontWeight: '700',
-          color: brand,
-          letterSpacing: -0.3,
-        }}
-      >
+    <View className="flex-row items-center border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+      <Text className="mr-6 text-lg font-bold text-brand-ink dark:text-white">
         RASSA
       </Text>
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ flex: 1 }}
+        className="flex-1"
       >
         {items.map((item) => {
           const isActive =
@@ -88,14 +70,7 @@ export default function Navbar(): React.JSX.Element {
           return (
             <Pressable
               key={item.screen}
-              style={{
-                marginRight: 4,
-                flexDirection: 'row',
-                alignItems: 'center',
-                borderRadius: 10,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-              }}
+              className="mr-1 flex-row items-center rounded-lg px-3 py-2"
               onPress={() => {
                 navigation.navigate(item.screen as never);
               }}
@@ -106,16 +81,21 @@ export default function Navbar(): React.JSX.Element {
               <MaterialCommunityIcons
                 name={item.icon as never}
                 size={18}
-                color={isActive ? brand : muted}
+                color={
+                  isActive
+                    ? colors.brandGreenForest
+                    : isDark
+                      ? colors.textTertiary
+                      : colors.textSecondary
+                }
               />
 
               <Text
-                style={{
-                  marginLeft: 6,
-                  fontSize: 14,
-                  fontWeight: '500',
-                  color: isActive ? brand : muted,
-                }}
+                className={`ml-1.5 text-sm font-medium ${
+                  isActive
+                    ? 'text-brand-green-forest'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
               >
                 {item.label}
               </Text>
@@ -126,12 +106,7 @@ export default function Navbar(): React.JSX.Element {
 
       {isLoaded ? (
         <Pressable
-          style={{
-            marginLeft: 8,
-            borderRadius: 999,
-            backgroundColor: isDark ? colors.admSegBgD : colors.admSegBgL,
-            padding: 10,
-          }}
+          className="ml-2 rounded-full bg-gray-200 p-2.5 dark:bg-gray-700"
           onPress={() => {
             toggleColorScheme();
           }}
@@ -148,14 +123,7 @@ export default function Navbar(): React.JSX.Element {
       ) : null}
 
       <Pressable
-        style={{
-          marginLeft: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          borderRadius: 10,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-        }}
+        className="ml-2 flex-row items-center rounded-lg px-3 py-2"
         onPress={() => void logout()}
         accessibilityLabel="Cerrar sesión"
         accessibilityRole="button"
@@ -167,14 +135,7 @@ export default function Navbar(): React.JSX.Element {
           color={colors.brandRedCoral}
         />
 
-        <Text
-          style={{
-            marginLeft: 6,
-            fontSize: 14,
-            fontWeight: '500',
-            color: colors.brandRedCoral,
-          }}
-        >
+        <Text className="ml-1.5 text-sm font-medium text-brand-red-coral">
           Salir
         </Text>
       </Pressable>

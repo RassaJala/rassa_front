@@ -157,7 +157,6 @@ export type BuyerStackParamList = {
 };
 
 export type FarmerTabsParamList = {
-  HomeFarmer: undefined;
   MyProducts: undefined;
   AddProduct: undefined;
 };
@@ -165,11 +164,4 @@ export type FarmerTabsParamList = {
 export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
-};
-
-export type SellerTabsParamList = {
-  HomeSeller: undefined;
-  Sales: undefined;
-  Notificaciones: undefined;
-  Perfil: undefined;
 };
