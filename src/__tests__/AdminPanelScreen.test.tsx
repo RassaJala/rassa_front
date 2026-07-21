@@ -159,4 +159,27 @@ describe('AdminPanelScreen', () => {
     );
     expect(getByTestId('notification-bell')).toBeTruthy();
   });
+
+  it('renderiza las tarjetas con colores diferentes por tipo', () => {
+    mockColorScheme = 'light';
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
+  });
+
+  it('aplica colores del tema oscuro en las tarjetas', () => {
+    mockColorScheme = 'dark';
+    const { getByText } = render(
+      <AdminPanelScreen navigation={mockNavigation} />,
+    );
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
+  });
 });

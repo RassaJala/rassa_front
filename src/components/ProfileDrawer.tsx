@@ -243,7 +243,7 @@ export function ProfileDrawerProvider({
                         ? isDark
                           ? 'rgba(222,57,58,0.25)'
                           : 'rgba(222,57,58,0.15)'
-                        : 'transparent',
+                        : colors.transparent,
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >

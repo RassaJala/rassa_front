@@ -33,6 +33,7 @@ export const colors = {
   brandInk: '#1f2937',
   iconMuted: '#9ca3af',
   iconWhite: '#ffffff',
+  transparent: 'transparent',
   shadow: '#000000',
   activeGreenBg: 'rgba(74, 138, 99, 0.1)',
   inactiveGrayBg: 'rgba(0, 0, 0, 0.03)',
