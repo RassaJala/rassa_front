@@ -473,6 +473,12 @@ export default function FamilyFormScreen(): React.JSX.Element {
         navigation.goBack();
       } else {
         // 3-step create: family → add member → assign head
+        if (!selectedJefe) {
+          setServerError('Debes seleccionar un jefe de familia.');
+          setSaving(false);
+          return;
+        }
+
         const payload = {
           nombre_familia: trimmedNombre,
           ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
