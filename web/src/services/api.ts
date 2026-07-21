@@ -15,6 +15,7 @@ if (
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -30,7 +31,7 @@ axiosRetry(api, {
 });
 
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('token');
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -42,10 +43,11 @@ api.interceptors.response.use(
   (error) => {
     if (
       error.response?.status === 401 &&
-      window.location.pathname !== '/login'
+      window.location.pathname !== '/login' &&
+      window.location.pathname !== '/register'
     ) {
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);

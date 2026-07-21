@@ -24,8 +24,9 @@ import { ThemeProvider } from '~/store/ThemeContext';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
+      retry: 1,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 30_000,
     },
   },
   queryCache: new QueryCache({

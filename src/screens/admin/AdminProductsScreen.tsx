@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -460,6 +460,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
   const [toggleTarget, setToggleTarget] = useState<Product | null>(null);
   const [showTrash, setShowTrash] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const savingRef = useRef(false);
 
   const categories = useMemo(
     () => [...new Set(products.map((p) => p.category))],
@@ -505,6 +506,8 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
   function handleSave() {
     if (!formValues.name.trim() || !formValues.price.trim()) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
 
     if (editingProduct) {
       setProducts((prev) =>
@@ -533,6 +536,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
         },
       ]);
     }
+    savingRef.current = false;
     switchToList();
   }
 

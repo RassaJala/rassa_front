@@ -78,6 +78,14 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// ── Auth expiry callback ──────────────────────────────────
+// Registered by AuthContext so the interceptor can force-logout the user.
+let onAuthExpired: (() => void) | null = null;
+
+export function registerAuthExpiredCallback(cb: () => void): void {
+  onAuthExpired = cb;
+}
+
 // ── Token refresh single-flight ───────────────────────────
 // Ensures concurrent 401s coalesce into a single refresh call.
 let refreshPromise: Promise<string> | null = null;
@@ -92,25 +100,27 @@ async function refreshTokens(): Promise<string> {
     const refreshToken = await Storage.getItemAsync(Storage.REFRESH_TOKEN_KEY);
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const res = await Promise.race([
-      api.post<{ access: string; refresh: string }>('/token/refresh/', {
-        refresh: refreshToken,
-      }),
-      new Promise<never>((_resolve, reject) =>
-        // eslint-disable-next-line no-undef -- global in RN/Node
-        setTimeout(
-          () => reject(new Error('Refresh token request timed out')),
-          REFRESH_TIMEOUT_MS,
-        ),
-      ),
-    ]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
 
-    const { access, refresh } = res.data;
-    await Promise.all([
-      Storage.setItemAsync(Storage.ACCESS_TOKEN_KEY, access),
-      Storage.setItemAsync(Storage.REFRESH_TOKEN_KEY, refresh),
-    ]);
-    return access;
+    try {
+      const res = await api.post<{ access: string; refresh: string }>(
+        '/token/refresh/',
+        { refresh: refreshToken },
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timeoutId);
+      const { access, refresh } = res.data;
+      await Promise.all([
+        Storage.setItemAsync(Storage.ACCESS_TOKEN_KEY, access),
+        Storage.setItemAsync(Storage.REFRESH_TOKEN_KEY, refresh),
+      ]);
+      return access;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   })();
 
   try {
@@ -153,12 +163,13 @@ api.interceptors.response.use(
       throw error;
     }
 
-    // Auth endpoints themselves (login, refresh) — clear tokens, no retry
+    // Auth endpoints themselves (login, refresh) — clear tokens, notify, no retry
     if (AUTH_ENDPOINTS.includes(originalRequest.url ?? '')) {
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
       ]);
+      onAuthExpired?.();
       throw error;
     }
 
@@ -169,11 +180,12 @@ api.interceptors.response.use(
     try {
       newAccessToken = await refreshTokens();
     } catch {
-      // Refresh itself failed — clear tokens and reject
+      // Refresh itself failed — clear tokens, notify AuthContext, and reject
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
       ]);
+      onAuthExpired?.();
       throw error;
     }
 
@@ -191,5 +203,7 @@ export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const base = baseURL.replace(/\/api\/?$/, '');
-  return `${base}${path}`;
+  // ponytail: sanitizar path para evitar traversal (#34)
+  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
+  return `${base}${clean}`;
 }

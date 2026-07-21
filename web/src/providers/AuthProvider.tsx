@@ -5,14 +5,14 @@ import type { AuthState, User } from '../types';
 
 function loadAuthState(): AuthState {
   try {
-    const token = sessionStorage.getItem('token');
-    const raw = sessionStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const raw = localStorage.getItem('user');
     if (token && raw) {
       try {
         const user = JSON.parse(raw) as User;
         return { user, token, isAuthenticated: true, isLoading: false };
       } catch {
-        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
       }
     }
   } catch {
@@ -25,14 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(loadAuthState);
 
   const login = useCallback((token: string, user: User) => {
-    sessionStorage.setItem('token', token);
-    sessionStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
     setState({ user, token, isAuthenticated: true, isLoading: false });
   }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setState({
       user: null,
       token: null,
