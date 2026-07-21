@@ -13,15 +13,11 @@ interface ApiListResponse {
   message?: string;
 }
 
-interface ApiSingleResponse {
-  data: Municipio;
-  message?: string;
-}
-
 export function AdminMunicipios() {
   const { resolved } = useTheme();
-  const c = getColors(resolved === 'dark');
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const isDark = resolved === 'dark';
+  const c = getColors(isDark);
+  const { fg, muted, border, surface, bg, coral } = c;
 
   const [items, setItems] = useState<Municipio[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +35,7 @@ export function AdminMunicipios() {
     setError(null);
     try {
       const res = await api.get<ApiListResponse>('/municipios/');
-      setItems(res.data.data);
+      setItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar municipios');
     } finally {
@@ -77,18 +73,21 @@ export function AdminMunicipios() {
     setSaving(true);
     try {
       if (editId) {
-        const res = await api.patch<ApiSingleResponse>(
-          `/municipios/${editId}/`,
-          { nombre: form.nombre.trim() },
-        );
-        setItems((prev) =>
-          prev.map((i) => (i.id_municipio === editId ? res.data.data : i)),
-        );
-      } else {
-        const res = await api.post<ApiSingleResponse>('/municipios/', {
+        await api.patch(`/municipios/${editId}/`, {
           nombre: form.nombre.trim(),
         });
-        setItems((prev) => [...prev, res.data.data]);
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id_municipio === editId
+              ? { ...i, nombre: form.nombre.trim() }
+              : i,
+          ),
+        );
+      } else {
+        const res = await api.post('/municipios/', {
+          nombre: form.nombre.trim(),
+        });
+        setItems((prev) => [...prev, res.data.data as Municipio]);
       }
       setTab('list');
     } catch {
@@ -211,10 +210,11 @@ export function AdminMunicipios() {
             cursor: 'pointer',
             background: tab === 'list' ? surface : 'transparent',
             color: tab === 'list' ? fg : muted,
-            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            boxShadow:
+              tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
-          📋 Lista de municipios
+          📋 Lista
         </button>
         <button
           onClick={() => startNew()}
@@ -257,7 +257,7 @@ export function AdminMunicipios() {
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {loading ? 'Cargando…' : `${items.length} municipios`}
+              {loading ? 'Cargando…' : `${filtered.length} municipios`}
             </span>
             <input
               type="search"
@@ -456,7 +456,7 @@ export function AdminMunicipios() {
                 style={{
                   width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre' ? '#4a8a63' : border}`,
                   borderRadius: 10,
                   padding: '0 14px',
                   fontSize: 15,

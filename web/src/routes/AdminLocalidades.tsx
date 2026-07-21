@@ -19,15 +19,11 @@ interface ApiListResponse<T> {
   message?: string;
 }
 
-interface ApiSingleResponse<T> {
-  data: T;
-  message?: string;
-}
-
 export function AdminLocalidades() {
   const { resolved } = useTheme();
-  const c = getColors(resolved === 'dark');
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const isDark = resolved === 'dark';
+  const c = getColors(isDark);
+  const { fg, muted, border, surface, bg, coral } = c;
 
   const [items, setItems] = useState<Localidad[]>([]);
   const [municipios, setMunicipios] = useState<MunicipioOption[]>([]);
@@ -72,7 +68,7 @@ export function AdminLocalidades() {
       const res = await api.get<ApiListResponse<Localidad>>(
         `/localidades/?municipio_id=${municipioId}`,
       );
-      setItems(res.data.data);
+      setItems(res.data.data ?? []);
     } catch {
       setError('Error al cargar localidades');
     } finally {
@@ -116,19 +112,22 @@ export function AdminLocalidades() {
     setSaving(true);
     try {
       if (editId) {
-        const res = await api.patch<ApiSingleResponse<Localidad>>(
-          `/localidades/${editId}/`,
-          { nombre: form.nombre.trim() },
-        );
+        await api.patch(`/localidades/${editId}/`, {
+          nombre: form.nombre.trim(),
+        });
         setItems((prev) =>
-          prev.map((i) => (i.id_localidad === editId ? res.data.data : i)),
+          prev.map((i) =>
+            i.id_localidad === editId
+              ? { ...i, nombre: form.nombre.trim() }
+              : i,
+          ),
         );
       } else {
-        const res = await api.post<ApiSingleResponse<Localidad>>(
+        const res = await api.post(
           `/localidades/?municipio_id=${selectedMunId}`,
           { nombre: form.nombre.trim() },
         );
-        setItems((prev) => [...prev, res.data.data]);
+        setItems((prev) => [...prev, res.data.data as Localidad]);
       }
       setTab('list');
     } catch {
@@ -257,10 +256,11 @@ export function AdminLocalidades() {
             cursor: 'pointer',
             background: tab === 'list' ? surface : 'transparent',
             color: tab === 'list' ? fg : muted,
-            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            boxShadow:
+              tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
-          📋 Lista de localidades
+          📋 Lista
         </button>
         <button
           onClick={() => startNew()}
@@ -350,7 +350,7 @@ export function AdminLocalidades() {
               }}
             >
               <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-                {loading ? 'Cargando…' : `${items.length} localidades`}
+                {loading ? 'Cargando…' : `${filtered.length} localidades`}
               </span>
               <input
                 type="search"
@@ -553,7 +553,7 @@ export function AdminLocalidades() {
                 style={{
                   width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre' ? '#4a8a63' : border}`,
                   borderRadius: 10,
                   padding: '0 14px',
                   fontSize: 15,
@@ -614,7 +614,7 @@ export function AdminLocalidades() {
                   style={{
                     width: '100%',
                     height: 44,
-                    border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
+                    border: `1.5px solid ${focusedField === 'municipio_id' ? '#4a8a63' : border}`,
                     borderRadius: 10,
                     padding: '0 14px',
                     fontSize: 15,
