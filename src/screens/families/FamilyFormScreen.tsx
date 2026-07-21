@@ -43,7 +43,7 @@ function FormHeader({
   onBack,
 }: FormHeaderProps): React.JSX.Element {
   const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const muted = isDark ? colors.mutedDark : '#5E6B5E';
 
   return (
     <View
@@ -175,11 +175,11 @@ function JefeSearchField({
   readonly isSaving: boolean;
 }): React.JSX.Element {
   const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const muted = isDark ? colors.mutedDark : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
   const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
-  const errorColor = '#DE393A';
-  const surface = isDark ? '#263028' : '#FFFFFF';
+  const errorColor = colors.brandRedCoral;
+  const surface = isDark ? '#263028' : colors.surface;
 
   return (
     <>
@@ -208,7 +208,9 @@ function JefeSearchField({
             color: fg,
           }}
           placeholder="Buscar por nombre o correo..."
-          placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+          placeholderTextColor={
+            isDark ? colors.textSecondary : colors.textTertiary
+          }
           value={jefeQuery}
           onChangeText={(text) => {
             onChangeJefeQuery(text);
@@ -382,11 +384,11 @@ function FormFields({
   onCancel,
   onSubmit,
 }: FormFieldsProps): React.JSX.Element {
-  const surface = isDark ? '#263028' : '#FFFFFF';
+  const surface = isDark ? '#263028' : colors.surface;
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const border = isDark ? '#353D35' : '#E2E6DF';
   const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
-  const errorColor = '#DE393A';
+  const errorColor = colors.brandRedCoral;
 
   return (
     <View
@@ -400,7 +402,12 @@ function FormFields({
     >
       {/* ── Nombre ──────────────────────────────────── */}
       <Text
-        style={{ marginBottom: 6, fontSize: 14, fontWeight: '500', color: fg }}
+        style={{
+          marginBottom: 6,
+          fontSize: 14,
+          fontWeight: '500',
+          color: fg,
+        }}
       >
         Nombre de la familia *
       </Text>
@@ -416,7 +423,9 @@ function FormFields({
           color: fg,
         }}
         placeholder="Ej. Familia López"
-        placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+        placeholderTextColor={
+          isDark ? colors.textSecondary : colors.textTertiary
+        }
         value={nombre}
         onChangeText={(text) => {
           onChangeNombre(text);
@@ -474,7 +483,9 @@ function FormFields({
           textAlignVertical: 'top',
         }}
         placeholder="Descripción opcional"
-        placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
+        placeholderTextColor={
+          isDark ? colors.textSecondary : colors.textTertiary
+        }
         multiline
         numberOfLines={3}
         value={detalle}
@@ -485,7 +496,11 @@ function FormFields({
       {/* ── Server error ────────────────────────────── */}
       {serverError ? (
         <View
-          style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center' }}
+          style={{
+            marginTop: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
         >
           <MaterialCommunityIcons
             name="alert-circle"
@@ -591,7 +606,9 @@ export default function FamilyFormScreen(): React.JSX.Element {
       return;
     }
     if (trimmedNombre.length < 3) {
-      setFieldErrors({ nombre: 'El nombre debe tener al menos 3 caracteres.' });
+      setFieldErrors({
+        nombre: 'El nombre debe tener al menos 3 caracteres.',
+      });
       setServerError('');
       return;
     }

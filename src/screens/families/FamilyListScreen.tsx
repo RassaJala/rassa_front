@@ -35,12 +35,11 @@ function FamilyCard({
   isDark,
   onPress,
 }: FamilyCardProps): React.JSX.Element {
-  const surface = isDark ? '#263028' : '#FFFFFF';
+  const surface = isDark ? '#263028' : colors.surface;
   const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const muted = isDark ? colors.mutedDark : '#5E6B5E';
   const border = isDark ? '#353D35' : '#E2E6DF';
   const accentBg = isDark ? '#353D35' : '#F5F7F0';
-  const highlightColor = '#E46C38';
 
   return (
     <TouchableOpacity
@@ -91,10 +90,14 @@ function FamilyCard({
             <MaterialCommunityIcons
               name="star"
               size={12}
-              color={highlightColor}
+              color={colors.brandOrange}
             />
             <Text
-              style={{ fontSize: 13, color: highlightColor, fontWeight: '500' }}
+              style={{
+                fontSize: 13,
+                color: colors.brandOrange,
+                fontWeight: '500',
+              }}
             >
               {family.jefe_nombre}
             </Text>
@@ -286,8 +289,8 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
+  const muted = isDark ? colors.mutedDark : '#5E6B5E';
+  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
 
   const {
     data: families,
