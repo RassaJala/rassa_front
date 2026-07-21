@@ -30,12 +30,12 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
     navigation.getParent()?.navigate('Profile');
   };
 
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;

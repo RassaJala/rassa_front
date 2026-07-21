@@ -12,12 +12,12 @@ export default function ProfileSellerScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>

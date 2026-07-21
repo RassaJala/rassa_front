@@ -47,9 +47,9 @@ export default function Navbar(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
 
   const bg = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
   return (
     <View

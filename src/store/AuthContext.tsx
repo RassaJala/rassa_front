@@ -375,14 +375,14 @@ export function AuthProvider({
 
           console.error('Login falló:', safe);
 
-          throw new Error(message);
+          throw new Error(message, { cause: error });
         }
 
         if (error instanceof Error) {
-          throw new Error(error.message);
+          throw new Error(error.message, { cause: error });
         }
 
-        throw new Error('Error desconocido de autenticación');
+        throw new Error('Error desconocido de autenticación', { cause: error });
       }
     },
     [fetchUserProfile],
@@ -456,7 +456,7 @@ export function AuthProvider({
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'register');
 
-        throw new Error(message);
+        throw new Error(message, { cause: error });
       }
       throw error;
     } finally {
@@ -482,7 +482,7 @@ export function AuthProvider({
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'updateProfile');
 
-        throw new Error(message);
+        throw new Error(message, { cause: error });
       }
       throw error;
     }
@@ -496,7 +496,7 @@ export function AuthProvider({
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'changePassword');
 
-        throw new Error(message);
+        throw new Error(message, { cause: error });
       }
       throw error;
     }

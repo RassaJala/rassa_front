@@ -57,9 +57,9 @@ function AdminTabs() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   return (
     <AdminTab.Navigator
@@ -175,9 +175,9 @@ function BuyerTabs() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   return (
     <BuyerTab.Navigator
@@ -249,9 +249,9 @@ function FarmerTabs() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   return (
     <FarmerTab.Navigator
@@ -329,9 +329,9 @@ function SellerTabs() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   return (
     <SellerTab.Navigator

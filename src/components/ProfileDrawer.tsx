@@ -59,13 +59,13 @@ export function ProfileDrawerProvider({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admSegBgL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admSegBgL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coral = colors.brandRedCoral;
-  const drawerBg = isDark ? colors.admlBgD : colors.surface;
+  const drawerBg = isDark ? colors.admBgD : colors.surface;
   const overlayBg = '#000';
 
   const openDrawer = useCallback(() => {
@@ -293,7 +293,7 @@ export function ProfileDrawerTrigger(): React.JSX.Element {
   const { openDrawer } = useDrawer();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
 
   return (
     <Pressable
@@ -304,7 +304,7 @@ export function ProfileDrawerTrigger(): React.JSX.Element {
         borderRadius: 24,
         backgroundColor: isDark ? colors.admSurfaceD : colors.surface,
         borderWidth: 1,
-        borderColor: isDark ? colors.admlBorderD : colors.admlBorderL,
+        borderColor: isDark ? colors.admBorderD : colors.admBorderL,
         alignItems: 'center',
         justifyContent: 'center',
         opacity: pressed ? 0.6 : 1,

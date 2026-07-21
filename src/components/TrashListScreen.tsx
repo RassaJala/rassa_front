@@ -453,12 +453,12 @@ export default function TrashListScreen<
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const iconWhite = colors.iconWhite;
   const errorColor = colors.brandRedCoral;
   const modalOverlay = 'rgba(0,0,0,0.4)';

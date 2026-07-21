@@ -32,10 +32,10 @@ function UnitListItem({
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const errorColor = colors.brandRedCoral;
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const description = item.abreviatura || 'Sin abreviatura';
