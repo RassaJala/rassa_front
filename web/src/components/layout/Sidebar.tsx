@@ -1,6 +1,14 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../providers/ThemeProvider';
-import { getColors } from '../../constants/colors';
+
+const roleLabel: Record<string, string> = {
+  admin: 'Administrador',
+  agricultor: 'Agricultor',
+  farmer: 'Agricultor',
+  vendedor: 'Vendedor',
+  comprador: 'Comprador',
+};
 
 interface NavItem {
   key: string;
@@ -19,20 +27,6 @@ const adminNav: NavItem[] = [
     path: '/admin/categorias',
   },
   { key: 'units', label: 'Unidades', icon: '📏', path: '/admin/unidades' },
-  {
-    key: 'municipios',
-    label: 'Municipios',
-    icon: '🏛️',
-    path: '/admin/municipios',
-  },
-  {
-    key: 'localidades',
-    label: 'Localidades',
-    icon: '📍',
-    path: '/admin/localidades',
-  },
-  { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
-  { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
 ];
 
 const roleNavMap: Record<string, NavItem[]> = {
@@ -50,52 +44,25 @@ const roleNavMap: Record<string, NavItem[]> = {
       icon: '📦',
       path: '/agricultor/pedidos',
     },
-    {
-      key: 'profile',
-      label: 'Mi Perfil',
-      icon: '👤',
-      path: '/agricultor/perfil',
-    },
   ],
   vendedor: [
     { key: 'sales', label: 'Ventas', icon: '📊', path: '/vendedor/ventas' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/vendedor/pedidos' },
-    {
-      key: 'profile',
-      label: 'Mi Perfil',
-      icon: '👤',
-      path: '/vendedor/perfil',
-    },
-  ],
-  cliente: [
-    { key: 'home', label: 'Inicio', icon: '🏠', path: '/cliente' },
-    { key: 'cart', label: 'Carrito', icon: '🛒', path: '/cliente/carrito' },
-    { key: 'orders', label: 'Pedidos', icon: '📦', path: '/cliente/pedidos' },
-    { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/cliente/perfil' },
   ],
 };
 
 export function Sidebar({ role }: { role: string }) {
+  const { user } = useAuth();
   const { resolved } = useTheme();
-  const c = getColors(resolved === 'dark');
+  const isDark = resolved === 'dark';
   const items = roleNavMap[role] ?? adminNav;
 
-  const sidebarBg = c.sidebarBg;
-  const borderColor = c.border;
-  const activeBg = c.activeBg;
-  const fg = c.fg;
-  const muted = c.muted;
-  const brand = c.brand;
-
-  const roleLabels: Record<
-    string,
-    { initials: string; label: string; subtitle: string }
-  > = {
-    admin: { initials: 'AD', label: 'Admin', subtitle: 'Administrador' },
-    agricultor: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
-    vendedor: { initials: 'VD', label: 'Vendedor', subtitle: 'Vendedor' },
-    cliente: { initials: 'CL', label: 'Cliente', subtitle: 'Cliente' },
-  };
+  const sidebarBg = isDark ? '#161B17' : '#F5F7F0';
+  const borderColor = isDark ? '#2A332A' : '#D6DAD4';
+  const activeBg = isDark ? '#1C2D22' : '#E2F0E6';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const brand = isDark ? '#4A8A63' : '#24563C';
 
   return (
     <aside
@@ -114,8 +81,8 @@ export function Sidebar({ role }: { role: string }) {
       }}
     >
       {/* Brand */}
-      <a
-        href="/admin"
+      <NavLink
+        to={items[0]?.path ?? '/'}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -150,7 +117,7 @@ export function Sidebar({ role }: { role: string }) {
         >
           RASSA-JALA
         </h1>
-      </a>
+      </NavLink>
 
       {/* Nav */}
       <nav
@@ -211,22 +178,31 @@ export function Sidebar({ role }: { role: string }) {
             width: 36,
             height: 36,
             borderRadius: 10,
-            background: brand,
+            background: '#24563C',
             color: '#fff',
             display: 'grid',
             placeItems: 'center',
-            fontWeight: 600,
-            fontSize: 14,
+            fontWeight: 700,
+            fontSize: 13,
           }}
         >
-          {roleLabels[role]?.initials ?? 'AD'}
+          {user?.nombre?.slice(0, 2).toUpperCase() ?? '??'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-            {roleLabels[role]?.label ?? 'Admin'}
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: fg,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user?.nombre ?? 'Usuario'}
           </div>
           <div style={{ fontSize: 12, color: muted }}>
-            {roleLabels[role]?.subtitle ?? 'Administrador'}
+            {roleLabel[user?.rol ?? ''] ?? user?.rol ?? ''}
           </div>
         </div>
       </div>

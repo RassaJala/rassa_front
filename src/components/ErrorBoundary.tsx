@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Button, Card } from 'react-native-paper';
-
-import * as Sentry from '@sentry/react-native';
 
 interface Props {
   readonly children: React.ReactNode;
@@ -15,6 +13,9 @@ interface State {
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
+  private errorHandler?: (event: ErrorEvent) => void;
+  private rejectionHandler?: (event: PromiseRejectionEvent) => void;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -24,12 +25,41 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    Sentry.captureException(error, {
-      extra: {
-        componentStack: errorInfo.componentStack,
-      },
-    });
+  override componentDidMount(): void {
+    // ponytail: captura errores async que componentDidCatch no alcanza
+    if (Platform.OS === 'web') {
+      this.errorHandler = (event: ErrorEvent) => {
+        event.preventDefault();
+        this.setState({ hasError: true, error: new Error(event.message) });
+      };
+      this.rejectionHandler = (event: PromiseRejectionEvent) => {
+        event.preventDefault();
+        const msg =
+          event.reason instanceof Error
+            ? event.reason.message
+            : String(event.reason);
+        this.setState({ hasError: true, error: new Error(msg) });
+      };
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
+      window.addEventListener('error', this.errorHandler);
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
+      window.addEventListener('unhandledrejection', this.rejectionHandler);
+    }
+  }
+
+  override componentWillUnmount(): void {
+    if (this.errorHandler) {
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
+      window.removeEventListener('error', this.errorHandler);
+    }
+    if (this.rejectionHandler) {
+      // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
+      window.removeEventListener('unhandledrejection', this.rejectionHandler);
+    }
+  }
+
+  override componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
+    console.error('[ErrorBoundary]', error.message);
   }
 
   handleRetry = (): void => {
