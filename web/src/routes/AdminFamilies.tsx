@@ -82,24 +82,35 @@ export function AdminFamilies() {
       setLoading(true);
       setError(null);
       const { data } = await api.get('/familias/grupos/');
+      let families: Family[] = [];
       if (Array.isArray(data)) {
-        setItems(data);
+        families = data as Family[];
       } else if (data && typeof data === 'object') {
         const payload = (data as { data?: unknown }).data ?? data;
         if (Array.isArray(payload)) {
-          setItems(payload);
+          families = payload as Family[];
         } else if (
           payload &&
           typeof payload === 'object' &&
           Array.isArray((payload as { results?: unknown }).results)
         ) {
-          setItems((payload as { results: Family[] }).results);
-        } else {
-          setItems([]);
+          families = (payload as { results: Family[] }).results;
         }
-      } else {
-        setItems([]);
       }
+
+      const orphans = families.filter(
+        (f) => f.estado && f.fk_jefe_familia == null,
+      );
+      if (orphans.length > 0) {
+        await Promise.allSettled(
+          orphans.map((f) =>
+            api.patch(`/familias/grupos/${f.id_familia}/`, { estado: false }),
+          ),
+        );
+        families = families.filter((f) => f.fk_jefe_familia != null);
+      }
+
+      setItems(families);
     } catch (err: unknown) {
       console.error(err);
       setError('Error al cargar las familias.');

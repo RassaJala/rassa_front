@@ -41,7 +41,21 @@ export async function fetchFamilies(): Promise<Family[]> {
     Record<string, unknown>[] | { results: Record<string, unknown>[] }
   >(FAMILIAS_URL);
   const list = Array.isArray(data) ? data : data.results;
-  return list.map(normalizeFamily);
+  const families = list.map(normalizeFamily);
+
+  const orphans = families.filter(
+    (f) => f.estado && f.fk_jefe_familia == null,
+  );
+  if (orphans.length > 0) {
+    await Promise.allSettled(
+      orphans.map((f) =>
+        api.patch(`${FAMILIAS_URL}${f.id_familia}/`, { estado: false }),
+      ),
+    );
+    return families.filter((f) => f.fk_jefe_familia != null);
+  }
+
+  return families;
 }
 
 export async function fetchFamily(id: number): Promise<Family> {
