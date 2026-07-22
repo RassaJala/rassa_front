@@ -1098,12 +1098,12 @@ export function AdminFamilies() {
                               setJefeQuery('');
                             }}
                             style={{
-                              background: brand,
+                              background: '#16a34a',
                               border: 'none',
                               borderRadius: 8,
-                              padding: '6px 14px',
+                              padding: '8px 16px',
                               fontSize: 13,
-                              color: '#fff',
+                              color: '#ffffff',
                               cursor: 'pointer',
                               fontWeight: 600,
                               display: 'inline-flex',
@@ -1298,8 +1298,8 @@ export function AdminFamilies() {
                   padding: '0 16px',
                   borderRadius: 8,
                   border: 'none',
-                  background: brand,
-                  color: '#fff',
+                  background: '#16a34a',
+                  color: '#ffffff',
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: selectedJefe && !saving ? 'pointer' : 'not-allowed',
