@@ -48,9 +48,7 @@ export async function fetchFamilies(): Promise<Family[]> {
   );
   if (orphans.length > 0) {
     await Promise.allSettled(
-      orphans.map((f) =>
-        api.patch(`${FAMILIAS_URL}${f.id_familia}/`, { estado: false }),
-      ),
+      orphans.map((f) => api.delete(`${FAMILIAS_URL}${f.id_familia}/`)),
     );
     return families.filter((f) => f.fk_jefe_familia != null);
   }

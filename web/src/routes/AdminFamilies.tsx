@@ -104,7 +104,7 @@ export function AdminFamilies() {
       if (orphans.length > 0) {
         await Promise.allSettled(
           orphans.map((f) =>
-            api.patch(`/familias/grupos/${f.id_familia}/`, { estado: false }),
+            api.delete(`/familias/grupos/${f.id_familia}/`),
           ),
         );
         families = families.filter((f) => f.fk_jefe_familia != null);
