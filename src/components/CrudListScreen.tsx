@@ -20,11 +20,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
+import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
 import { extractFieldErrors } from '@/utils/apiError';
+import { parseApiList } from '@/utils/apiResponse';
 
 // ── Configuration ──────────────────────────────────────────
 
@@ -74,13 +76,18 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
     items: T[] | undefined,
     editingItem: T | null,
   ) => string | null;
-  readonly trashScreenName?: 'CategoryTrash' | 'UnitTrash';
+  readonly queryParams?: Record<string, string>;
+  readonly trashScreenName?:
+    'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
+  readonly trashScreenParams?: Record<string, unknown>;
+  readonly toggleEndpoint?: string;
   readonly comingSoon?: boolean;
 }
 
 // ── Navigation type ────────────────────────────────────────
 
-type CrudScreenName = 'CategoryList' | 'UnitList';
+type CrudScreenName =
+  'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
 
 interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: CrudConfig<T>;
@@ -242,6 +249,20 @@ function fieldValueFor<T extends { nombre: string; estado: boolean }>(
   return '';
 }
 
+// ── Helper API fetcher ─────────────────────────────────────
+
+async function fetchCrudItems<T>(
+  endpoint: string,
+  queryParams?: Record<string, string>,
+): Promise<T[]> {
+  const url = queryParams
+    ? `${endpoint}?${new URLSearchParams(queryParams).toString()}`
+    : endpoint;
+  const { data } = await api.get<T[]>(url);
+
+  return parseApiList<T>(data);
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export default function CrudListScreen<
@@ -251,17 +272,17 @@ export default function CrudListScreen<
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const iconWhite = '#FFFFFF';
-  const errorColor = '#DE393A';
-  const segmentedBg = isDark ? '#263028' : '#E8ECE4';
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const iconWhite = colors.iconWhite;
+  const errorColor = colors.brandRedCoral;
+  const segmentedBg = isDark ? colors.admSegBgD : colors.admSegBgL;
   const transparent = 'transparent';
-  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const errorBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const modalOverlay = 'rgba(0,0,0,0.4)';
   const netInfo = useNetInfo();
   const queryClient = useQueryClient();
@@ -274,53 +295,13 @@ export default function CrudListScreen<
     refetch,
     isRefetching,
   } = useQuery<T[]>({
-    queryKey: [...config.queryKey],
-    queryFn: async () => {
-      const { data } = await api.get<
-        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(config.endpoint);
-
-      if (Array.isArray(data)) return data;
-      if (
-        'data' in data &&
-        typeof data.data === 'object' &&
-        data.data !== null
-      ) {
-        const inner = data.data as { results?: T[] };
-        if (Array.isArray(inner.results)) return inner.results;
-      }
-      if ('results' in data && Array.isArray(data.results)) return data.results;
-
-      return [];
-    },
+    queryKey: config.queryParams
+      ? [...config.queryKey, JSON.stringify(config.queryParams)]
+      : [...config.queryKey],
+    queryFn: () => fetchCrudItems<T>(config.endpoint, config.queryParams),
     staleTime: 30_000,
     retry: 2,
   });
-
-  // ── Trash count ────────────────────────────────────────────
-  const { data: trashItems } = useQuery<T[]>({
-    queryKey: [...config.queryKey, 'trash'],
-    queryFn: async () => {
-      const { data } = await api.get<
-        T[] | { results: T[] } | ApiResponse<{ results: T[] }>
-      >(`${config.endpoint}trash/`);
-      if (Array.isArray(data)) return data;
-      if (
-        'data' in data &&
-        typeof data.data === 'object' &&
-        data.data !== null
-      ) {
-        const inner = data.data as { results?: T[] };
-        if (Array.isArray(inner.results)) return inner.results;
-      }
-      if ('results' in data && Array.isArray(data.results)) return data.results;
-      return [];
-    },
-    staleTime: 30_000,
-    retry: 1,
-    enabled: !!config.trashScreenName,
-  });
-  const hasTrash = (trashItems?.length ?? 0) > 0;
 
   // ── Tab state ──────────────────────────────────────────────
   const [tab, setTab] = useState<'list' | 'form'>('list');
@@ -361,7 +342,10 @@ export default function CrudListScreen<
   // ── Mutations ──────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const { data } = await api.post<ApiResponse<T>>(config.endpoint, payload);
+      const url = config.queryParams
+        ? `${config.endpoint}?${new URLSearchParams(config.queryParams).toString()}`
+        : config.endpoint;
+      const { data } = await api.post<ApiResponse<T>>(url, payload);
 
       return data;
     },
@@ -371,16 +355,15 @@ export default function CrudListScreen<
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: {
-      id: number;
-    } & Record<string, unknown>) => {
-      const { data } = await api.patch<ApiResponse<T>>(
-        `${config.endpoint}${id}/`,
-        payload,
-      );
+    mutationFn: async (
+      params: {
+        id: number;
+        url?: string;
+      } & Record<string, unknown>,
+    ) => {
+      const { id, url, ...payload } = params;
+      const patchUrl = url ?? `${config.endpoint}${id}/`;
+      const { data } = await api.patch<ApiResponse<T>>(patchUrl, payload);
 
       return data;
     },
@@ -518,11 +501,16 @@ export default function CrudListScreen<
       const newStatus = !item.estado;
       const action = newStatus ? 'activó' : 'desactivó';
       const name = item.nombre;
+      const id = config.getId(item);
+      const toggleUrl = config.toggleEndpoint
+        ? `${config.endpoint}${id}/${config.toggleEndpoint}`
+        : `${config.endpoint}${id}/`;
 
       updateMutation.mutate(
         {
-          id: config.getId(item),
+          id,
           estado: newStatus,
+          url: toggleUrl,
         },
         {
           onSuccess: () => {
@@ -935,20 +923,41 @@ export default function CrudListScreen<
             paddingBottom: 4,
           }}
         >
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: '700',
-              letterSpacing: -0.02,
-              color: fg,
-            }}
-          >
-            {config.headerTitle}
-          </Text>
-          {trashScreen && hasTrash ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {navigation.canGoBack() ? (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                hitSlop={8}
+                style={{ marginRight: 4 }}
+              >
+                <MaterialCommunityIcons
+                  name="arrow-left"
+                  size={28}
+                  color={fg}
+                />
+              </Pressable>
+            ) : null}
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: '700',
+                letterSpacing: -0.02,
+                color: fg,
+              }}
+            >
+              {config.headerTitle}
+            </Text>
+          </View>
+          {trashScreen ? (
             <Pressable
-              onPress={() => navigation.navigate(trashScreen)}
-              hitSlop={8}
+              onPress={() =>
+                navigation.navigate(
+                  trashScreen,
+                  config.trashScreenParams as never,
+                )
+              }
+              className="ml-auto h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              hitSlop={12}
             >
               <MaterialCommunityIcons
                 name="delete-restore"
