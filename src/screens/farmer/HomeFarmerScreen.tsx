@@ -15,7 +15,7 @@ import { getFarmerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
 
-type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerHome'>;
+type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerTabs'>;
 
 interface Props {
   readonly navigation: Nav;

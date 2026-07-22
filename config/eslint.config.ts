@@ -86,9 +86,6 @@ function createTypeScriptRules() {
       'unused-imports': unusedImportsPlugin,
     },
     rules: {
-      // Desactivar no-undef para TS — TypeScript ya valida esto.
-      'no-undef': 'off',
-
       // SEGURIDAD DE TIPOS //
 
       // Prohibir el uso explícito de any.

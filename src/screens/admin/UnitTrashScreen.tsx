@@ -18,7 +18,7 @@ const unitTrashConfig = {
   queryKey: ['units'] as const,
   endpoint: '/unidades/',
   entityName: 'unidad',
-  entityNamePlural: 'Unites de Medida',
+  entityNamePlural: 'Unidades de Medida',
   getId: (item: Unit) => item.id_unidad,
   getSecondValue: (item: Unit) => item.abreviatura,
   headerTitle: 'Unidades de Medida',

@@ -25,7 +25,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           flexDirection: 'column',
         }}
       >
-        <Topbar role={role} />
+        <Topbar />
         <main style={{ flex: 1, padding: '28px 32px 40px', overflowY: 'auto' }}>
           {children}
         </main>
