@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Family } from '../types';
@@ -12,12 +12,13 @@ export function AdminFamilies() {
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
 
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const bg = isDark ? colors.iconDark : colors.background;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
+  const fg = t.fg;
+  const muted = t.muted;
+  const border = t.border;
+  const surface = t.surface;
+  const bg = t.bg;
+  const brand = t.brand;
   const coral = colors.brandRedCoral;
   const warning = {
     background: isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)',
@@ -262,24 +263,6 @@ export function AdminFamilies() {
     } catch (err: unknown) {
       console.error(err);
       setError('Error al eliminar la familia.');
-    }
-  }
-
-  async function toggleStatus(item: Family) {
-    setError(null);
-    try {
-      if (item.estado) {
-        await api.delete(`/familias/grupos/${item.id_familia}/`);
-      } else {
-        await api.patch(`/familias/grupos/${item.id_familia}/`, {
-          estado: true,
-        });
-      }
-      await fetchFamilies();
-      await fetchTrashFamilies();
-    } catch (err: unknown) {
-      console.error(err);
-      setError('Error al cambiar el estado de la familia.');
     }
   }
 
@@ -639,24 +622,6 @@ export function AdminFamilies() {
                         }}
                       >
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            onClick={() => toggleStatus(item)}
-                            aria-label={item.estado ? 'Desactivar' : 'Activar'}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
-                            }}
-                          >
-                            {item.estado ? '⏸' : '▶️'}
-                          </button>
                           <button
                             onClick={() => startEdit(item)}
                             aria-label="Editar"

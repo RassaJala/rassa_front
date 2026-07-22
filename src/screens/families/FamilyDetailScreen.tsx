@@ -565,7 +565,7 @@ function AddMemberModal({
 
   useEffect(() => {
     const trimmed = query.trim();
-    const shouldSearch = trimmed.length >= 2 && !selectedUser;
+    const shouldSearch = trimmed.length >= 3 && !selectedUser;
     if (!shouldSearch) {
       setResults([]);
       return;
