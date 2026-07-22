@@ -85,7 +85,7 @@ export async function fetchFamiliesTrash(): Promise<Family[]> {
   >(`${FAMILIAS_URL}trash/`);
   const list = Array.isArray(data)
     ? data
-    : ((data as { data?: Record<string, unknown>[] }).data ?? []);
+    : ((data as { results?: Record<string, unknown>[] }).results ?? []);
   return list.map(normalizeFamily);
 }
 

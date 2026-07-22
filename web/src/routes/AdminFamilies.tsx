@@ -111,7 +111,7 @@ export function AdminFamilies() {
   async function fetchTrashFamilies() {
     try {
       const { data } = await api.get('/familias/grupos/trash/');
-      const payload = (data as { data?: unknown }).data ?? data;
+      const payload = (data as { results?: unknown }).results ?? data;
       if (Array.isArray(payload)) {
         setTrashItems(payload as Family[]);
       } else {
