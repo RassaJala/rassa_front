@@ -10,31 +10,38 @@ import { useConversations } from '@/features/chat/hooks/useConversations';
 import api from '@/services/api';
 
 jest.mock('@/services/api');
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useIsFocused: () => true,
+}));
 
 const mockApiGet = api.get as jest.Mock;
 
 describe('useConversations', () => {
   const mockConversations = {
-    data: [
-      {
-        id_conversacion: 1,
-        tipo: false,
-        nombre: 'Chat 1',
-        ultimo_mensaje: 'Hola',
-        ultimo_mensaje_creado_en: '2026-01-01',
-        no_leidos: 2,
-        es_familia: false,
-      },
-      {
-        id_conversacion: 2,
-        tipo: false,
-        nombre: 'Chat 2',
-        ultimo_mensaje: 'Adios',
-        ultimo_mensaje_creado_en: '2026-01-02',
-        no_leidos: 0,
-        es_familia: false,
-      },
-    ],
+    data: {
+      ok: true,
+      data: [
+        {
+          id_conversacion: 1,
+          tipo: false,
+          nombre: 'Chat 1',
+          ultimo_mensaje: 'Hola',
+          ultimo_mensaje_creado_en: '2026-01-01',
+          no_leidos: 2,
+          es_familia: false,
+        },
+        {
+          id_conversacion: 2,
+          tipo: false,
+          nombre: 'Chat 2',
+          ultimo_mensaje: 'Adios',
+          ultimo_mensaje_creado_en: '2026-01-02',
+          no_leidos: 0,
+          es_familia: false,
+        },
+      ],
+    },
   };
 
   let queryClient: QueryClient;

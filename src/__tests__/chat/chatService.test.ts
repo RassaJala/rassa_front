@@ -20,6 +20,7 @@ describe('chat service', () => {
   it('getConversations unwraps _ok and maps fields', async () => {
     mockApi.get.mockResolvedValueOnce({
       data: {
+        ok: true,
         data: [
           {
             id_conversacion: 1,
@@ -109,10 +110,10 @@ describe('chat service', () => {
 
     const result = await sendMessage(payload);
 
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/chat/mensajes/enviar/',
-      payload,
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/chat/mensajes/enviar/', {
+      fk_conversacion: 1,
+      contenido: 'Hola',
+    });
     expect(result).toEqual({
       id: 10,
       conversacion: 1,
@@ -155,5 +156,13 @@ describe('chat service', () => {
     expect(mockApi.patch).toHaveBeenCalledWith('/chat/mensajes/10/leer/');
     expect(result.id).toBe(10);
     expect(result.leido).toBe(true);
+  });
+
+  it('throws when backend responds with ok: false', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { ok: false, message: 'Unauthorized' },
+    });
+
+    await expect(getConversations()).rejects.toThrow('Unauthorized');
   });
 });

@@ -10,6 +10,10 @@ import { useChatMessages } from '@/features/chat/hooks/useChatMessages';
 import api from '@/services/api';
 
 jest.mock('@/services/api');
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useIsFocused: () => true,
+}));
 
 const mockApiGet = api.get as jest.Mock;
 

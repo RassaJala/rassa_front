@@ -12,6 +12,9 @@ jest.mock('@/services/api');
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, nombre: 'Buyer' } }),
 }));
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light' }),
+}));
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
   return {
@@ -20,6 +23,7 @@ jest.mock('@react-navigation/native', () => {
       params: { productId: 10, farmerId: 5 },
     }),
     useNavigation: () => ({ navigate: jest.fn() }),
+    useIsFocused: () => true,
   };
 });
 

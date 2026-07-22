@@ -1,46 +1,155 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import type { NavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import LogoutButton from '@/components/LogoutButton';
+import {
+  ProfileDrawerProvider,
+  ProfileDrawerTrigger,
+} from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
+import { colors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
+import { getAllProducts } from '@/services/mock/dashboard';
+import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
 
-export default function HomeScreen(): React.JSX.Element {
-  const navigation = useNavigation<NavigationProp<BuyerStackParamList>>();
+type Nav = NativeStackNavigationProp<BuyerStackParamList, 'BuyerTabs'>;
+
+interface Props {
+  readonly navigation: Nav;
+}
+
+export default function HomeScreen({ navigation }: Props): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const allProducts = getAllProducts();
+
+  const handleProfilePress = () => {
+    navigation.getParent()?.navigate('Profile');
+  };
+
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
+  const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
+  const coral = colors.brandRedCoral;
+  const pumpkin = colors.accent;
+
+  const { today } = useFormattedDate();
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <Text variant="bodyLarge" className="text-gray-500 dark:text-gray-400">
-        Home (Buyer) - Coming soon
-      </Text>
+    <ProfileDrawerProvider
+      defaultName="Cliente"
+      defaultEmail="cliente@rassa.com"
+      onProfilePress={handleProfilePress}
+    >
+      <View style={{ flex: 1, backgroundColor: bg }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      letterSpacing: 0.06,
+                      textTransform: 'uppercase',
+                      color: muted,
+                    }}
+                  >
+                    {today}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: '700',
+                      letterSpacing: -0.3,
+                      color: fg,
+                    }}
+                  >
+                    Inicio
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable
+                    style={({ pressed }) => ({
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: surface,
+                      borderWidth: 1,
+                      borderColor: border,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <MaterialCommunityIcons
+                      name="bell-outline"
+                      size={24}
+                      color={fg}
+                    />
+                  </Pressable>
+                  <ProfileDrawerTrigger />
+                </View>
+              </View>
 
-      <View className="mt-6 w-full max-w-xs gap-3">
-        <Button
-          mode="outlined"
-          textColor="#DE393A"
-          className="rounded-lg border-brand-red-coral"
-          onPress={() =>
-            navigation.navigate('ProductDetail', {
-              productId: 1,
-              farmerId: 1,
-            })
-          }
-        >
-          Demo: Contactar agricultor
-        </Button>
-        <Button
-          mode="outlined"
-          textColor="#DE393A"
-          className="rounded-lg border-brand-red-coral"
-          onPress={() => navigation.navigate('Profile')}
-        >
-          Mi Perfil
-        </Button>
-        <LogoutButton mode="contained" />
+              <View
+                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
+              >
+                <StatCard
+                  icon="package-variant"
+                  value={allProducts.length.toLocaleString()}
+                  label="Productos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={accentBg}
+                  iconColor={brand}
+                />
+                <StatCard
+                  icon="heart-outline"
+                  value={8}
+                  label="Favoritos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={coralBg}
+                  iconColor={coral}
+                />
+                <StatCard
+                  icon="truck-outline"
+                  value={0}
+                  label="Pedidos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={pumpkinBg}
+                  iconColor={pumpkin}
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </View>
       </View>
-    </View>
+    </ProfileDrawerProvider>
   );
 }

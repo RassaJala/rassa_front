@@ -58,12 +58,14 @@ export interface ChangePasswordPayload {
 export interface Municipio {
   id_municipio: number;
   nombre: string;
+  estado: boolean;
 }
 
 export interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
+  estado: boolean;
 }
 
 export interface Product {
@@ -121,7 +123,13 @@ export interface ApiResponse<T> {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
-  Chat: { conversationId: number; title: string };
+  UserManagement: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean;
+  };
   GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
   CreateGroup: undefined;
   StartChat: undefined;
@@ -130,6 +138,16 @@ export type AdminStackParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  MunicipioList: undefined;
+  MunicipioTrash: undefined;
+  LocalidadList: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
+  LocalidadTrash: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
 };
 
 export type AuthStackParamList = {
@@ -146,11 +164,17 @@ export type BuyerStackParamList = {
   BuyerTabs: undefined;
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
-  Chat: { conversationId: number; title: string };
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean;
+  };
   GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
 };
 
 export type FarmerTabsParamList = {
+  HomeFarmer: undefined;
   MyProducts: undefined;
   AddProduct: undefined;
   ChatList: undefined;
@@ -159,7 +183,12 @@ export type FarmerTabsParamList = {
 export type FarmerStackParamList = {
   FarmerTabs: undefined;
   Profile: undefined;
-  Chat: { conversationId: number; title: string };
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean;
+  };
   GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
 };
 
@@ -171,4 +200,11 @@ export type AdminTabsParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
   ChatList: undefined;
+};
+
+export type SellerTabsParamList = {
+  HomeSeller: undefined;
+  Sales: undefined;
+  Notificaciones: undefined;
+  Perfil: undefined;
 };

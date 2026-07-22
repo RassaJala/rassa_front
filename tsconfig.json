@@ -14,6 +14,7 @@
     "exactOptionalPropertyTypes": true,
     // Métodos heredados deben declarar override explícito.
     "noImplicitOverride": true,
+    "jsx": "react-native",
     // Funciones con tipo de retorno deben retornar en todos los caminos.
     "noImplicitReturns": true,
     // Variables y parámetros no utilizados son error.

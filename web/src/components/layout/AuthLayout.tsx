@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTheme } from '../../providers/ThemeProvider';
+import { getColors } from '../../constants/colors';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -183,8 +184,8 @@ export function AuthLayout({ children, title }: AuthLayoutProps) {
       <main
         className="flex flex-1 items-center justify-center p-8 md:p-12"
         style={{
-          background: isDark ? '#1A211B' : '#FFFFFF',
-          color: isDark ? '#E8EAE4' : '#2D3328',
+          background: getColors(isDark).bg,
+          color: getColors(isDark).fg,
         }}
       >
         <div className="w-full max-w-[420px]">

@@ -59,7 +59,7 @@ describe('useSendMessageWithMedia', () => {
     jest.clearAllMocks();
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
+        queries: { retry: false, gcTime: Infinity },
         mutations: { retry: false },
       },
     });
@@ -130,6 +130,31 @@ describe('useSendMessageWithMedia', () => {
       expect.any(FormData),
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
+
+    const formData = mockApiPost.mock.calls[0]?.[1] as FormData;
+    const entries = Array.from(formData.entries());
+    expect(entries.some(([key]) => key === 'fk_conversacion')).toBe(true);
+    expect(entries.some(([key]) => key === 'conversacion')).toBe(false);
+  });
+
+  it('replaces optimistic id with server id on success', async () => {
+    mockApiPost.mockResolvedValue(backendMediaResponse);
+
+    const { getByTestId } = renderComponent();
+
+    await act(async () => {
+      getByTestId('send-media').props.onPress();
+    });
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<{
+        pages: { results: { id: number; contenido: string }[] }[];
+      }>(['messages', 1]);
+      const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
+      const msg = allMessages.find((m) => m.contenido === 'Check this');
+      expect(msg).toBeDefined();
+      expect(msg?.id).toBe(100);
+    });
   });
 
   it('rolls back on error', async () => {

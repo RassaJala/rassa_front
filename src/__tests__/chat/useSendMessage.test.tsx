@@ -62,7 +62,7 @@ describe('useSendMessage', () => {
     jest.clearAllMocks();
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, gcTime: 0 },
+        queries: { retry: false, gcTime: Infinity },
         mutations: { retry: false },
       },
     });
@@ -120,8 +120,28 @@ describe('useSendMessage', () => {
     });
 
     expect(mockApiPost).toHaveBeenCalledWith('/chat/mensajes/enviar/', {
-      conversacion: 1,
+      fk_conversacion: 1,
       contenido: 'Hello!',
+    });
+  });
+
+  it('replaces optimistic id with server id on success', async () => {
+    mockApiPost.mockResolvedValue(backendMessage(100, 'Hello!'));
+
+    const { getByTestId } = renderComponent();
+
+    await act(async () => {
+      getByTestId('send').props.onPress();
+    });
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<{
+        pages: { results: { id: number; contenido: string }[] }[];
+      }>(['messages', 1]);
+      const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
+      const hello = allMessages.find((m) => m.contenido === 'Hello!');
+      expect(hello).toBeDefined();
+      expect(hello?.id).toBe(100);
     });
   });
 
