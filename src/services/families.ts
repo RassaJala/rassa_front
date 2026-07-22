@@ -1,3 +1,5 @@
+/* globals console */
+
 import type { Family, FamilyMember, SearchUserResult } from '@/types';
 
 import api from './api';
@@ -155,7 +157,7 @@ export async function searchUsers(
       { data?: SearchUserResult[] } | SearchUserResult[]
     >(url);
     if (Array.isArray(data)) return data;
-    return (data as { data?: SearchUserResult[] }).data ?? [];
+    return (data).data ?? [];
   } catch (err) {
     console.error('searchUsers error:', err);
     return [];

@@ -390,7 +390,7 @@ function AddMemberModalContent({
         style={{ flex: 1 }}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+          style={{ flex: 1, backgroundColor: colors.overlayBg }}
           onPress={onCancel}
         />
         <View
@@ -668,7 +668,7 @@ function ConfirmModal({
       onRequestClose={onCancel}
     >
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+        style={{ flex: 1, backgroundColor: colors.overlayBg }}
         onPress={onCancel}
       />
       <View

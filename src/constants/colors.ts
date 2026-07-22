@@ -39,6 +39,8 @@ export const colors = {
   iconWhite: '#ffffff',
   transparent: 'transparent',
   shadow: '#000000',
+  overlayBg: 'rgba(0, 0, 0, 0.4)',
+  modalOverlayBg: 'rgba(0, 0, 0, 0.5)',
   activeGreenBg: 'rgba(74, 138, 99, 0.1)',
   inactiveGrayBg: 'rgba(0, 0, 0, 0.03)',
   // ── Redesign/Admin palette ──
@@ -66,7 +68,21 @@ export const colors = {
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
 };
 
-export function themeColors(isDark: boolean) {
+export interface ThemeColors {
+  readonly bg: string;
+  readonly surface: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly input: string;
+  readonly errorBg: string;
+  readonly accentBg: string;
+  readonly coralBg: string;
+  readonly brand: string;
+  readonly segBg: string;
+}
+
+export function themeColors(isDark: boolean): ThemeColors {
   return {
     bg: isDark ? '#1A211B' : '#F5F7F0',
     surface: isDark ? '#263028' : '#FFFFFF',
