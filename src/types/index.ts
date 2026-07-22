@@ -58,12 +58,14 @@ export interface ChangePasswordPayload {
 export interface Municipio {
   id_municipio: number;
   nombre: string;
+  estado: boolean;
 }
 
 export interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
+  estado: boolean;
 }
 
 export interface Producto {
@@ -128,11 +130,22 @@ export interface ApiResponse<T> {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  UserManagement: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  MunicipioList: undefined;
+  MunicipioTrash: undefined;
+  LocalidadList: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
+  LocalidadTrash: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
 };
 
 export type AuthStackParamList = {
@@ -151,6 +164,7 @@ export type BuyerStackParamList = {
 };
 
 export type FarmerTabsParamList = {
+  HomeFarmer: undefined;
   MyProducts: undefined;
   AddProduct: undefined;
 };
@@ -160,4 +174,11 @@ export type FarmerStackParamList = {
   Profile: undefined;
   ProductList: undefined;
   ProductForm: { productoId?: number };
+};
+
+export type SellerTabsParamList = {
+  HomeSeller: undefined;
+  Sales: undefined;
+  Notificaciones: undefined;
+  Perfil: undefined;
 };

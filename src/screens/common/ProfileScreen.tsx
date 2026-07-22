@@ -14,8 +14,10 @@ import type {
 import ProfileEditTab from '@/components/Profile/ProfileEditTab';
 import ProfilePasswordTab from '@/components/Profile/ProfilePasswordTab';
 import ProfileViewTab from '@/components/Profile/ProfileViewTab';
+import { colors } from '@/constants/colors';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import { getRoleLabel } from '@/utils/labels';
 import {
   cleanPhoneNumber,
@@ -94,12 +96,20 @@ function getPasswordChangeErrorMessage(error: unknown): string {
 
 export default function ProfileScreen(): React.JSX.Element {
   const { user, updateProfile, changePassword, logout } = useAuth();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('ver');
 
-  // Edit Profile States
   const [nombre, setNombre] = useState(user?.nombre ?? '');
   const [apellidoPaterno, setApellidoPaterno] = useState(
     user?.apellido_paterno ?? '',
@@ -118,7 +128,6 @@ export default function ProfileScreen(): React.JSX.Element {
   );
   const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
 
-  // Catalog Hook (Pass user's current values to initialize correctly)
   const catalog = useCatalogs(
     user?.localidad ?? null,
     user?.localidad ?? null,
@@ -126,13 +135,11 @@ export default function ProfileScreen(): React.JSX.Element {
     user?.localidad_nombre ?? '',
   );
 
-  // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
-  // Change Password States
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -151,7 +158,6 @@ export default function ProfileScreen(): React.JSX.Element {
     };
   }, [logout]);
 
-  // Sync state if user data loads late
   useEffect(() => {
     if (user) {
       setNombre(user.nombre ?? '');
@@ -166,10 +172,9 @@ export default function ProfileScreen(): React.JSX.Element {
         catalog.setLocalidadNombre(user.localidad_nombre ?? '');
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- catalog object reference changes on every render, including it would cause infinite rerender loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user is the only meaningful dependency; catalog and setters are stable references
   }, [user]);
 
-  // Handle Edit Profile Submission
   async function handleUpdateProfile() {
     if (isSubmitting) return;
     setSuccessMessage(null);
@@ -229,7 +234,6 @@ export default function ProfileScreen(): React.JSX.Element {
     }
   }
 
-  // Handle Change Password Submission
   async function handleChangePassword() {
     if (isSubmitting) return;
     setSuccessMessage(null);
@@ -308,104 +312,203 @@ export default function ProfileScreen(): React.JSX.Element {
     isLoadingLocalidades: catalog.isLoadingLocalidades,
     errorMunicipios: catalog.errorMunicipios,
     errorLocalidades: catalog.errorLocalidades,
-    refetchMunicipios: catalog.refetchMunicipios,
-    refetchLocalidades: catalog.refetchLocalidades,
+    refetchMunicipios: () => {
+      void catalog.refetchMunicipios();
+    },
+    refetchLocalidades: () => {
+      void catalog.refetchLocalidades();
+    },
     handleSelectMunicipio: catalog.handleSelectMunicipio,
     handleSelectLocalidad: catalog.handleSelectLocalidad,
   };
 
   return (
     <ScrollView
-      className="dark:bg-gray-955 flex-1 bg-gray-50 px-4 py-4"
+      style={{ flex: 1, backgroundColor: bg }}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Profile Header */}
-      <View className="mb-6 items-center rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-brand-red-coral">
-          <Text className="text-2xl font-bold text-white">
-            {user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'}
-          </Text>
-        </View>
-        <Text className="text-xl font-bold text-brand-ink dark:text-gray-100">
-          {user?.nombre} {user?.apellido_paterno}
-        </Text>
-        <Text className="text-sm text-gray-500 dark:text-gray-400">
-          {user?.email}
-        </Text>
-        <View className="mt-2 rounded-full bg-red-50 px-3 py-1 dark:bg-brand-red-coral/20">
-          <Text className="text-xs font-bold text-brand-red-coral">
-            {getRoleLabel(user?.role)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Tabs */}
-      <SegmentedButtons
-        value={activeTab}
-        onValueChange={(val) => {
-          setActiveTab(val);
-          setErrorMessage(null);
-          setSuccessMessage(null);
-        }}
-        buttons={[
-          { value: 'ver', label: 'Ver' },
-          { value: 'editar', label: 'Editar' },
-          { value: 'password', label: 'Seguridad' },
-        ]}
-        style={styles.tabsButtons}
-      />
-
-      {/* Feedback Messages */}
-      {successMessage ? (
-        <View className="mb-4 rounded-xl border border-brand-green-forest bg-brand-green-forest/10 p-4">
-          <Text className="text-center text-sm font-bold text-brand-green-forest">
-            {successMessage}
-          </Text>
-        </View>
-      ) : null}
-
-      {errorMessage ? (
-        <View className="dark:bg-red-955/20 mb-4 rounded-xl border border-red-300 bg-red-50 p-4 dark:border-red-900/50">
-          <Text className="text-center text-sm font-bold text-red-600 dark:text-red-400">
-            {errorMessage}
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Tab Contents */}
-      {activeTab === 'ver' && <ProfileViewTab user={user} />}
-
-      {activeTab === 'editar' && (
-        <ProfileEditTab
-          isSubmitting={isSubmitting}
-          form={formFields}
-          location={locationFields}
-          callbacks={{
-            handleUpdateProfile,
-            setErrorMessage,
-            onOpenDatePicker: () => setIsDatePickerVisible(true),
+      <View style={{ padding: 16 }}>
+        {/* Profile Header */}
+        <View
+          style={{
+            marginBottom: 24,
+            alignItems: 'center',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: border,
+            backgroundColor: surface,
+            padding: 16,
           }}
-        />
-      )}
+        >
+          <View
+            style={{
+              marginBottom: 12,
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: surface,
+              borderWidth: 2,
+              borderColor: colors.brandRedCoral,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: '700',
+                color: colors.brandRedCoral,
+              }}
+            >
+              {user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'}
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '700',
+              color: fg,
+              letterSpacing: -0.3,
+            }}
+          >
+            {user?.nombre} {user?.apellido_paterno}
+          </Text>
+          <Text
+            style={{
+              marginTop: 2,
+              fontSize: 14,
+              color: muted,
+            }}
+          >
+            {user?.email}
+          </Text>
+          <View
+            style={{
+              marginTop: 8,
+              borderRadius: 999,
+              backgroundColor: colors.admCoralBgD,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '700',
+                color: colors.brandRedCoral,
+              }}
+            >
+              {getRoleLabel(user?.role)}
+            </Text>
+          </View>
+        </View>
 
-      {activeTab === 'password' && (
-        <ProfilePasswordTab
-          isSubmitting={isSubmitting}
-          oldPassword={oldPassword}
-          setOldPassword={setOldPassword}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-          handleChangePassword={handleChangePassword}
+        {/* Tabs */}
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={(val) => {
+            setActiveTab(val);
+            setErrorMessage(null);
+            setSuccessMessage(null);
+          }}
+          buttons={[
+            { value: 'ver', label: 'Ver' },
+            { value: 'editar', label: 'Editar' },
+            { value: 'password', label: 'Seguridad' },
+          ]}
+          style={styles.tabsButtons}
         />
-      )}
-      <DatePickerModal
-        visible={isDatePickerVisible}
-        onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={setFechaNacimiento}
-        initialDate={fechaNacimiento}
-      />
+
+        {/* Feedback Messages */}
+        {successMessage ? (
+          <View
+            style={{
+              marginBottom: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: brand,
+              backgroundColor: isDark
+                ? colors.admActiveBgD
+                : colors.admActiveBgL,
+              padding: 16,
+            }}
+          >
+            <Text
+              style={{
+                textAlign: 'center',
+                fontSize: 14,
+                fontWeight: '700',
+                color: brand,
+              }}
+            >
+              {successMessage}
+            </Text>
+          </View>
+        ) : null}
+
+        {errorMessage ? (
+          <View
+            style={{
+              marginBottom: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.brandRedCoral,
+              backgroundColor: isDark ? colors.admCoralBgD : colors.admCoralBgL,
+              padding: 16,
+            }}
+          >
+            <Text
+              style={{
+                textAlign: 'center',
+                fontSize: 14,
+                fontWeight: '700',
+                color: colors.brandRedCoral,
+              }}
+            >
+              {errorMessage}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Tab Contents */}
+        {activeTab === 'ver' && <ProfileViewTab user={user} />}
+
+        {activeTab === 'editar' && (
+          <ProfileEditTab
+            isSubmitting={isSubmitting}
+            form={formFields}
+            location={locationFields}
+            callbacks={{
+              handleUpdateProfile: () => {
+                void handleUpdateProfile();
+              },
+              setErrorMessage,
+              onOpenDatePicker: () => setIsDatePickerVisible(true),
+            }}
+          />
+        )}
+
+        {activeTab === 'password' && (
+          <ProfilePasswordTab
+            isSubmitting={isSubmitting}
+            oldPassword={oldPassword}
+            setOldPassword={setOldPassword}
+            newPassword={newPassword}
+            setNewPassword={setNewPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            handleChangePassword={() => {
+              void handleChangePassword();
+            }}
+          />
+        )}
+        <DatePickerModal
+          visible={isDatePickerVisible}
+          onClose={() => setIsDatePickerVisible(false)}
+          onSelectDate={setFechaNacimiento}
+          initialDate={fechaNacimiento}
+        />
+      </View>
     </ScrollView>
   );
 }

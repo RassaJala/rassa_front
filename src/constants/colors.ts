@@ -1,9 +1,9 @@
 export const colors = {
-  primary: '#16a34a', // green-600
-  primaryDark: '#15803d', // green-700
-  primaryLight: '#22c55e', // green-500
-  accent: '#f59e0b', // amber-500
-  background: '#f9fafb', // gray-50
+  primary: '#16a34a',
+  primaryDark: '#15803d',
+  primaryLight: '#22c55e',
+  accent: '#f59e0b',
+  background: '#f9fafb',
   surface: '#ffffff',
   text: '#111827', // gray-900
   textSecondary: '#6b7280', // gray-500
@@ -12,6 +12,7 @@ export const colors = {
   error: '#ef4444', // red-500
   success: '#22c55e', // green-500
   warning: '#f59e0b', // amber-500
+  info: '#3b82f6', // blue-500
   placeholder: '#94a3b8',
   brand: {
     greenForest: '#3A6D56',
@@ -29,7 +30,34 @@ export const colors = {
   brandGreenForest: '#3A6D56',
   brandRedCoral: '#DE393A',
   iconDark: '#1D1D1D',
-  brandInk: '#1f2937', // gray-800
-  iconMuted: '#9ca3af', // gray-400
+  brandInk: '#1f2937',
+  iconMuted: '#9ca3af',
   iconWhite: '#ffffff',
+  transparent: 'transparent',
+  shadow: '#000000',
+  activeGreenBg: 'rgba(74, 138, 99, 0.1)',
+  inactiveGrayBg: 'rgba(0, 0, 0, 0.03)',
+  // ── Redesign/Admin palette ──
+  admSurfaceL: '#FFFFFF',
+  admSurfaceD: '#263028',
+  admFgL: '#2D3328',
+  admFgD: '#E8EAE4',
+  admMutedL: '#5E6B5E',
+  admMutedD: '#9DA89D',
+  admBorderL: '#E2E6DF',
+  admBorderD: '#353D35',
+  admBrandL: '#24563C',
+  admBrandD: '#4A8A63',
+  admBgL: '#F5F7F0',
+  admBgD: '#1A211B',
+  admActiveBgL: 'rgba(36, 86, 60, 0.07)',
+  admActiveBgD: 'rgba(74, 138, 99, 0.12)',
+  admInactiveBgL: 'rgba(0, 0, 0, 0.03)',
+  admInactiveBgD: 'rgba(255, 255, 255, 0.03)',
+  admSegBgL: '#E8ECE4',
+  admSegBgD: '#353D35',
+  admCoralBgL: 'rgba(222,57,58,0.07)',
+  admCoralBgD: 'rgba(232,74,74,0.12)',
+  admPumpkinBgL: 'rgba(242,169,0,0.07)',
+  admPumpkinBgD: 'rgba(212,160,32,0.12)',
 };

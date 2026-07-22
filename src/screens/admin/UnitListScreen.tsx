@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import CrudListScreen from '@/components/CrudListScreen';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Unit } from '@/types';
 
@@ -30,13 +31,13 @@ function UnitListItem({
 }) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const errorColor = '#DE393A';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const errorColor = colors.brandRedCoral;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const description = item.abreviatura || 'Sin abreviatura';
 
   return (

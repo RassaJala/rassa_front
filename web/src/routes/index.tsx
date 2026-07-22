@@ -8,6 +8,14 @@ import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
+import { AdminMunicipios } from './AdminMunicipios';
+import { AdminLocalidades } from './AdminLocalidades';
+import { AdminUsers } from './AdminUsers';
+import { BuyerHome } from './BuyerHome';
+import { BuyerCart } from './BuyerCart';
+import { BuyerOrders } from './BuyerOrders';
+import { ProfilePage } from './ProfilePage';
+import { useAuth } from '../hooks/useAuth';
 
 function NotFound() {
   return (
@@ -22,6 +30,31 @@ function NotFound() {
   );
 }
 
+function RootRedirect() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-red-coral dark:border-gray-700" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const routes: Record<string, string> = {
+    admin: '/admin',
+    agricultor: '/agricultor/productos',
+    vendedor: '/vendedor/ventas',
+    cliente: '/cliente',
+  };
+
+  return <Navigate to={routes[user.rol] ?? '/login'} replace />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -29,8 +62,8 @@ export function AppRouter() {
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/register" element={<RegisterScreen />} />
 
-      {/* Redirect root to /agricultor (or /login if not auth) */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Redirect root to role dashboard or login */}
+      <Route path="/" element={<RootRedirect />} />
 
       {/* Agricultor */}
       <Route element={<ProtectedRoute role="agricultor" />}>
@@ -41,6 +74,7 @@ export function AppRouter() {
               <Routes>
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
+                <Route path="perfil" element={<ProfilePage />} />
                 <Route
                   path="*"
                   element={<Navigate to="/agricultor/productos" replace />}
@@ -60,6 +94,7 @@ export function AppRouter() {
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<SellerOrders />} />
+                <Route path="perfil" element={<ProfilePage />} />
                 <Route
                   path="*"
                   element={<Navigate to="/vendedor/ventas" replace />}
@@ -81,7 +116,29 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
+                <Route path="municipios" element={<AdminMunicipios />} />
+                <Route path="localidades" element={<AdminLocalidades />} />
+                <Route path="usuarios" element={<AdminUsers />} />
+                <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
+              </Routes>
+            </DashboardLayout>
+          }
+        />
+      </Route>
+
+      {/* Cliente */}
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/cliente/*"
+          element={
+            <DashboardLayout role="cliente">
+              <Routes>
+                <Route index element={<BuyerHome />} />
+                <Route path="carrito" element={<BuyerCart />} />
+                <Route path="pedidos" element={<BuyerOrders />} />
+                <Route path="perfil" element={<ProfilePage />} />
+                <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
             </DashboardLayout>
           }

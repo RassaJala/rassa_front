@@ -140,8 +140,9 @@ export function LoginScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {
@@ -463,8 +464,9 @@ export function RegisterScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {
