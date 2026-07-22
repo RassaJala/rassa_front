@@ -408,6 +408,15 @@ function AdminScreens() {
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+      <AdminStack.Screen
+        name="MunicipioTrash"
+        component={MunicipioTrashScreen}
+      />
+      <AdminStack.Screen name="LocalidadList" component={LocalidadListScreen} />
+      <AdminStack.Screen
+        name="LocalidadTrash"
+        component={LocalidadTrashScreen}
+      />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />
     </AdminStack.Navigator>
   );

@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function AdminPanelScreen({
-  navigation,
+  navigation: _navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
