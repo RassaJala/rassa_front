@@ -158,6 +158,15 @@ export function AdminFamilies() {
     }
   }
 
+  function startNew() {
+    setEditId(null);
+    setForm({ nombre_familia: '', detalle_familia: '' });
+    setSelectedJefe(null);
+    setJefeQuery('');
+    setJefeResults([]);
+    setTab('form');
+  }
+
   function startEdit(item: Family) {
     setEditId(item.id_familia);
     setForm({
@@ -324,6 +333,12 @@ export function AdminFamilies() {
           >
             Gestión de familias
           </h2>
+          <button
+            onClick={startNew}
+            style={{ ...btnStyle, background: coral, color: '#fff' }}
+          >
+            ＋ Nueva familia
+          </button>
         </div>
       </div>
 
@@ -355,6 +370,23 @@ export function AdminFamilies() {
           }}
         >
           📋 Lista de familias
+        </button>
+        <button
+          onClick={() => startNew()}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'form' ? surface : 'transparent',
+            color: tab === 'form' ? fg : muted,
+            boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          ➕ Agregar familia
         </button>
         <button
           onClick={() => setTab('trash')}
