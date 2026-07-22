@@ -60,13 +60,13 @@ function MemberItem({
   onAssignHead,
   onRemove,
 }: MemberItemProps): React.JSX.Element {
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
   const coral = colors.brandRedCoral;
   const highlightColor = colors.brandOrange;
-  const accentBg = isDark ? colors.rassa.accentBgDark : colors.rassa.accentBg;
+  const accentBg = isDark ? colors.iconDark : colors.background;
 
   return (
     <View
@@ -127,11 +127,7 @@ function MemberItem({
               borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: pressed
-                ? isDark
-                  ? '#353D35'
-                  : '#F5F7F0'
-                : 'transparent',
+              backgroundColor: pressed ? accentBg : 'transparent',
             })}
             hitSlop={6}
           >
@@ -152,11 +148,7 @@ function MemberItem({
             borderColor: border,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: pressed
-              ? isDark
-                ? '#353D35'
-                : '#F5F7F0'
-              : 'transparent',
+            backgroundColor: pressed ? accentBg : 'transparent',
           })}
           hitSlop={6}
         >
@@ -195,11 +187,11 @@ function UserSuggestionsList({
 }: UserSuggestionsListProps): React.JSX.Element | null {
   if (results.length === 0) return null;
 
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const pressedBg = isDark ? colors.rassa.accentBgDark : colors.rassa.accentBg;
+  const border = isDark ? colors.brandInk : colors.border;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const pressedBg = isDark ? colors.iconDark : colors.background;
 
   const iconBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.08)';
   const iconColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
@@ -391,17 +383,17 @@ function AddMemberModalContent({
   onConfirm,
   onCancel,
 }: AddMemberModalContentProps): React.JSX.Element | null {
-  const modalOverlay = colors.rassa.overlay;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const inputBg = isDark ? colors.rassa.inputDark : colors.rassa.input;
+  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const border = isDark ? colors.brandInk : colors.border;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const inputBg = isDark ? colors.iconDark : colors.background;
   const primaryBg = isDark ? 'rgba(222,57,58,0.12)' : 'rgba(222,57,58,0.06)';
   const primaryColor = colors.brandRedCoral;
-  const disabledBg = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const disabledBg = isDark ? colors.brandInk : colors.border;
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? colors.rassa.errorBgDark : colors.rassa.errorBg;
+  const errorBg = isDark ? colors.brandInk : colors.background;
 
   return (
     <Modal
@@ -676,14 +668,14 @@ function ConfirmModal({
 }: ConfirmModalProps): React.JSX.Element | null {
   if (!visible) return null;
 
-  const modalOverlay = colors.rassa.overlay;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const border = isDark ? colors.brandInk : colors.border;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
 
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? colors.rassa.errorBgDark : colors.rassa.errorBg;
+  const errorBg = isDark ? colors.brandInk : colors.background;
   const primaryColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const primaryBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)';
 
@@ -967,12 +959,12 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     void addMemberMutation.mutateAsync(userId);
   };
 
-  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const btnBg = isDark ? colors.rassa.accentBgDark : colors.rassa.accentBg;
+  const bg = isDark ? colors.iconDark : colors.background;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const btnBg = isDark ? colors.iconDark : colors.background;
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const coral = colors.brandRedCoral;
 
