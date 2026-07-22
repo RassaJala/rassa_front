@@ -184,7 +184,10 @@ export function ProfileChangePassword({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {renderField('Contraseña Actual *', 'current')}
-        {renderField('Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *', 'new')}
+        {renderField(
+          'Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *',
+          'new',
+        )}
         {renderField('Confirmar Nueva Contraseña *', 'confirm')}
       </div>
 

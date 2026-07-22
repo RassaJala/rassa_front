@@ -240,26 +240,29 @@ export function ProfileComponent() {
             </button>
           </div>
         </div>
-      ) : !profile.editing && profile.profile && (
-        <div
-          style={{
-            maxWidth: 672,
-            margin: '16px auto 0',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => password.setShowPasswordSection(true)}
+      ) : (
+        !profile.editing &&
+        profile.profile && (
+          <div
             style={{
-              ...btnStyle,
-              background: 'transparent',
-              border: `1.5px solid ${border}`,
-              color: fg,
+              maxWidth: 672,
+              margin: '16px auto 0',
             }}
           >
-            Cambiar contraseña
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => password.setShowPasswordSection(true)}
+              style={{
+                ...btnStyle,
+                background: 'transparent',
+                border: `1.5px solid ${border}`,
+                color: fg,
+              }}
+            >
+              Cambiar contraseña
+            </button>
+          </div>
+        )
       )}
     </div>
   );
