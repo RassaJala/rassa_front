@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
@@ -56,7 +55,7 @@ export function ProfileDrawerProvider({
 }: ProfileDrawerProviderProps): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
-  const navigation = useNavigation();
+
   const isDark = colorScheme === 'dark';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -116,19 +115,7 @@ export function ProfileDrawerProvider({
         onProfilePress?.();
       },
     },
-    ...(user?.role === 'admin'
-      ? [
-          {
-            icon: 'account-group-outline',
-            label: 'Familias',
-            color: fg,
-            action: () => {
-              closeDrawer();
-              navigation.navigate('FamilyList' as never);
-            },
-          },
-        ]
-      : []),
+
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
       label: `Tema ${isDark ? 'claro' : 'oscuro'}`,

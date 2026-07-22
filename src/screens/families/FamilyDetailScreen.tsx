@@ -944,21 +944,32 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       {/* Header */}
       <View
         style={{
+          flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 20,
           paddingTop: 60,
-          paddingBottom: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: t.border,
-          backgroundColor: t.surface,
+          paddingBottom: 4,
         }}
       >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          hitSlop={8}
+          style={{ marginRight: 4 }}
+          accessibilityLabel="Regresar a la lista de familias"
+          accessibilityRole="button"
+        >
+          <MaterialCommunityIcons name="arrow-left" size={28} color={t.fg} />
+        </Pressable>
+
         <Text
           style={{
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: '700',
+            letterSpacing: -0.02,
             color: t.fg,
+            flex: 1,
           }}
+          numberOfLines={1}
         >
           {family.nombre_familia}
         </Text>

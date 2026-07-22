@@ -110,6 +110,20 @@ function AdminTabs() {
         }}
       />
       <AdminTab.Screen
+        name="FamilyList"
+        component={FamilyListScreen}
+        options={{
+          tabBarLabel: 'Familias',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-group-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
         name="CategoryList"
         component={CategoryListScreen}
         options={{
@@ -154,7 +168,7 @@ function AdminTabs() {
           tabBarLabel: 'Usuarios',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
-              name="account-group-outline"
+              name="account-multiple-outline"
               size={size}
               color={color}
             />
@@ -403,7 +417,6 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
-      <AdminStack.Screen name="FamilyList" component={FamilyListScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
