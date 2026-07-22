@@ -103,7 +103,6 @@ export async function deleteFamilyPermanent(id: number): Promise<void> {
   await api.post(`/familias/${id}/permanent/`);
 }
 
-
 // ── Family head assignment ─────────────────────────────
 
 export async function assignFamilyHead(

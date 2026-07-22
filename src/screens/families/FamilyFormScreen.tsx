@@ -42,8 +42,8 @@ function FormHeader({
   isDark,
   onBack,
 }: FormHeaderProps): React.JSX.Element {
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
 
   return (
     <View
@@ -99,8 +99,8 @@ function ActionsSection({
   readonly onCancel: () => void;
   readonly onSubmit: () => void;
 }): React.JSX.Element {
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const fg = isDark ? colors.background : colors.text;
+  const border = isDark ? colors.brandInk : colors.border;
 
   return (
     <View style={{ marginTop: 24, gap: 10 }}>
@@ -174,12 +174,12 @@ function JefeSearchField({
   readonly clearFieldError: (field: string) => void;
   readonly isSaving: boolean;
 }): React.JSX.Element {
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const textInputBg = isDark ? colors.rassa.inputDark : colors.rassa.input;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const textInputBg = isDark ? colors.iconDark : colors.background;
   const errorColor = colors.brandRedCoral;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
+  const surface = isDark ? colors.brandInk : colors.surface;
 
   return (
     <>
@@ -384,10 +384,10 @@ function FormFields({
   onCancel,
   onSubmit,
 }: FormFieldsProps): React.JSX.Element {
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const textInputBg = isDark ? colors.rassa.inputDark : colors.rassa.input;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const border = isDark ? colors.brandInk : colors.border;
+  const textInputBg = isDark ? colors.iconDark : colors.background;
   const errorColor = colors.brandRedCoral;
 
   return (
@@ -656,7 +656,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
     return <LoadingIndicator />;
   }
 
-  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
+  const bg = isDark ? colors.iconDark : colors.background;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>

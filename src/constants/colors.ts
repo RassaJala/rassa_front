@@ -37,27 +37,4 @@ export const colors = {
   brandInk: '#1f2937', // gray-800
   iconMuted: '#9ca3af', // gray-400
   iconWhite: '#ffffff',
-
-  // Rassa palette design tokens matching tailwind.config.js
-  rassa: {
-    bg: '#F5F7F0',
-    surface: '#FFFFFF',
-    fg: '#2D3328',
-    muted: '#5E6B5E',
-    border: '#E2E6DF',
-    input: '#F9FAF6',
-    bgDark: '#1A211B',
-    surfaceDark: '#263028',
-    fgDark: '#E8EAE4',
-    mutedDark: '#9DA89D',
-    borderDark: '#353D35',
-    inputDark: '#1A211B',
-    accentBg: '#F5F7F0',
-    accentBgDark: '#353D35',
-    brandDark: '#4A8A63',
-    error: '#DE393A',
-    errorBg: '#FDEDEE',
-    errorBgDark: '#3D2023',
-    overlay: 'rgba(0,0,0,0.4)',
-  },
 };
