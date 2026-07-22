@@ -9,7 +9,6 @@ import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
-import { AdminProfile } from './AdminProfile';
 import { AdminMunicipios } from './AdminMunicipios';
 import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
@@ -118,7 +117,7 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
-                <Route path="perfil" element={<AdminProfile />} />
+                <Route path="perfil" element={<ProfilePage />} />
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />

@@ -4,7 +4,7 @@ import type {
   FieldErrors,
   Localidad,
   Municipio,
-} from '~/components/admin/types';
+} from '~/components/profile/types';
 
 // ---------------------------------------------------------------------------
 // Component

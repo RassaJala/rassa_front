@@ -2,15 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useTheme } from '~/providers/ThemeProvider';
 
-import { AdminChangePassword } from '~/components/admin/AdminChangePassword';
-import { AdminProfileForm } from '~/components/admin/AdminProfileForm';
-import { AdminProfileView } from '~/components/admin/AdminProfileView';
+import { ProfileChangePassword } from '~/components/profile/ProfileChangePassword';
+import { ProfileForm } from '~/components/profile/ProfileForm';
+import { ProfileView } from '~/components/profile/ProfileView';
 import type {
   FieldErrors,
   Localidad,
   Municipio,
-  ProfileForm,
-} from '~/components/admin/types';
+  ProfileForm as ProfileFormType,
+} from '~/components/profile/types';
 import api from '~/services/api';
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,6 @@ const PHONE_ALLOWED = /^[\d\s\-()]+$/;
 const MAX_NOMBRE = 100;
 const MAX_APELLIDO = 100;
 const MAX_DIRECCION = 255;
-const MAX_TELEFONO = 15;
 
 function cleanPhoneNumber(val: string): string {
   return val.replace(/[\s\-()]+/g, '');
@@ -98,13 +97,12 @@ function isAdult(birthDate: string): boolean {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
     age--;
   }
-  return age >= 18; // Mayoría de edad en México (Código Civil Federal, Art. 646)
+  return age >= 18;
 }
 
-function validateForm(form: ProfileForm): FieldErrors {
+function validateForm(form: ProfileFormType): FieldErrors {
   const errors: FieldErrors = {};
 
-  // --- Nombre ---
   if (!form.nombre.trim()) {
     errors.nombre = 'El nombre es obligatorio.';
   } else if (form.nombre.length > MAX_NOMBRE) {
@@ -113,7 +111,6 @@ function validateForm(form: ProfileForm): FieldErrors {
     errors.nombre = 'El nombre solo puede contener letras.';
   }
 
-  // --- Apellido Paterno ---
   if (!form.apellido_paterno.trim()) {
     errors.apellido_paterno = 'El apellido paterno es obligatorio.';
   } else if (form.apellido_paterno.length > MAX_APELLIDO) {
@@ -122,7 +119,6 @@ function validateForm(form: ProfileForm): FieldErrors {
     errors.apellido_paterno = 'El apellido solo puede contener letras.';
   }
 
-  // --- Apellido Materno ---
   if (
     form.apellido_materno.trim() &&
     form.apellido_materno.length > MAX_APELLIDO
@@ -135,7 +131,6 @@ function validateForm(form: ProfileForm): FieldErrors {
     errors.apellido_materno = 'El apellido solo puede contener letras.';
   }
 
-  // --- Teléfono ---
   const rawTelefono = cleanPhoneNumber(form.telefono);
   if (!rawTelefono) {
     errors.telefono = 'El teléfono es obligatorio.';
@@ -147,7 +142,6 @@ function validateForm(form: ProfileForm): FieldErrors {
       'El teléfono debe tener 10 dígitos (nacional) o 12 (internacional).';
   }
 
-  // --- Fecha de Nacimiento ---
   if (!form.fecha_nacimiento.trim()) {
     errors.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
   } else if (!DATE_REGEX.test(form.fecha_nacimiento)) {
@@ -158,24 +152,20 @@ function validateForm(form: ProfileForm): FieldErrors {
     errors.fecha_nacimiento = 'Debes ser mayor de 18 años.';
   }
 
-  // --- Género ---
   if (!form.genero) {
     errors.genero = 'Selecciona un género.';
   }
 
-  // --- Dirección ---
   if (!form.direccion.trim()) {
     errors.direccion = 'La dirección es obligatoria.';
   } else if (form.direccion.length > MAX_DIRECCION) {
     errors.direccion = `La dirección no puede exceder ${MAX_DIRECCION} caracteres.`;
   }
 
-  // --- Municipio ---
   if (form.municipio_id === null) {
     errors.municipio_id = 'Selecciona un municipio.';
   }
 
-  // --- Localidad ---
   if (form.localidad_id === null) {
     errors.localidad_id = 'Selecciona una localidad.';
   }
@@ -187,14 +177,13 @@ function validateForm(form: ProfileForm): FieldErrors {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AdminProfile() {
+export function ProfileComponent() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#2A332A' : '#D6DAD4';
   const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A241C' : '#F5F6F3';
   const coral = '#DE393A';
 
   const btnStyle = {
@@ -212,13 +201,11 @@ export function AdminProfile() {
     gap: 6,
   } as const;
 
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-
   // --- Profile state ---
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [profile, setProfile] = useState<ProfileForm | null>(null);
+  const [profile, setProfile] = useState<ProfileFormType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState<string | null>(null);
@@ -237,10 +224,8 @@ export function AdminProfile() {
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
   const [loadingLocalidades, setLoadingLocalidades] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const profileSnapshot = useRef<ProfileForm | null>(null);
-  // Controllers para catálogos (municipios/localidades) — se abortan al re-llamar
+  const profileSnapshot = useRef<ProfileFormType | null>(null);
   const catalogRef = useRef<AbortController | null>(null);
-  // Controlador para el perfil — solo se aborta al desmontar
   const profileRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -290,7 +275,7 @@ export function AdminProfile() {
         municipio_nombre: str(raw.municipio_nombre),
       });
     } catch (err) {
-      if (axios.isCancel(err)) return; // aborted
+      if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
         if (!err.response) {
           setError('Error de red — verifica tu conexión.');
@@ -574,7 +559,7 @@ export function AdminProfile() {
 
         {editing && profile ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <AdminProfileForm
+            <ProfileForm
               profile={profile}
               fieldErrors={fieldErrors}
               municipios={municipios}
@@ -592,14 +577,13 @@ export function AdminProfile() {
                 setEditing(false);
                 setError(null);
                 setFieldErrors({});
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 setProfile(structuredClone(profileSnapshot.current ?? null));
               }}
               onLoadMunicipios={loadMunicipios}
               onFetchLocalidades={fetchLocalidades}
             />
 
-            <AdminChangePassword
+            <ProfileChangePassword
               currentPassword={currentPassword}
               newPassword={newPassword}
               confirmPassword={confirmPassword}
@@ -635,7 +619,7 @@ export function AdminProfile() {
             </button>
           </div>
         ) : (
-          <AdminProfileView profile={profile} />
+          <ProfileView profile={profile} />
         )}
       </div>
     </div>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
-import { LocationSelector } from '~/components/admin/LocationSelector';
+import { LocationSelector } from '~/components/profile/LocationSelector';
 import type {
   FieldErrors,
   Localidad,
   Municipio,
-  ProfileForm,
-} from '~/components/admin/types';
-import { generoOptions } from '~/components/admin/types';
+  ProfileForm as ProfileFormType,
+} from '~/components/profile/types';
+import { generoOptions } from '~/components/profile/types';
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -28,8 +28,8 @@ function filterPhoneInput(value: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-interface AdminProfileFormProps {
-  profile: ProfileForm;
+interface ProfileFormProps {
+  profile: ProfileFormType;
   fieldErrors: FieldErrors;
   municipios: Municipio[];
   localidades: Localidad[];
@@ -37,7 +37,7 @@ interface AdminProfileFormProps {
   loadingLocalidades: boolean;
   catalogError: string | null;
   loading: boolean;
-  onChange: (updated: ProfileForm) => void;
+  onChange: (updated: ProfileFormType) => void;
   onClearError: (field: keyof FieldErrors) => void;
   onSave: (e: React.FormEvent) => void;
   onCancel: () => void;
@@ -45,7 +45,7 @@ interface AdminProfileFormProps {
   onFetchLocalidades: (municipioId: number | null) => Promise<void>;
 }
 
-export function AdminProfileForm({
+export function ProfileForm({
   profile,
   fieldErrors,
   municipios,
@@ -60,13 +60,12 @@ export function AdminProfileForm({
   onCancel,
   onLoadMunicipios,
   onFetchLocalidades,
-}: AdminProfileFormProps) {
+}: ProfileFormProps) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
   const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
   const bg = isDark ? '#1A241C' : '#F5F6F3';
   const coral = '#DE393A';
   const [focusedField, setFocusedField] = useState<string | null>(null);

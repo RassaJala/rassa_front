@@ -5,7 +5,7 @@ import { useTheme } from '~/providers/ThemeProvider';
 // Component
 // ---------------------------------------------------------------------------
 
-interface AdminChangePasswordProps {
+interface ProfileChangePasswordProps {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
@@ -19,7 +19,7 @@ interface AdminChangePasswordProps {
   onSubmit: () => void;
 }
 
-export function AdminChangePassword({
+export function ProfileChangePassword({
   currentPassword,
   newPassword,
   confirmPassword,
@@ -31,7 +31,7 @@ export function AdminChangePassword({
   onConfirmPasswordChange,
   onPasswordErrorClear,
   onSubmit,
-}: AdminChangePasswordProps) {
+}: ProfileChangePasswordProps) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const fg = isDark ? '#E8EAE4' : '#2D3328';

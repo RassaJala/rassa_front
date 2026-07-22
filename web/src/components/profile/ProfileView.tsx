@@ -1,6 +1,6 @@
 import { useTheme } from '~/providers/ThemeProvider';
-import type { ProfileForm } from '~/components/admin/types';
-import { getGeneroLabel } from '~/components/admin/types';
+import type { ProfileForm } from '~/components/profile/types';
+import { getGeneroLabel } from '~/components/profile/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,11 +52,11 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 // Component
 // ---------------------------------------------------------------------------
 
-interface AdminProfileViewProps {
+interface ProfileViewProps {
   profile: ProfileForm | null;
 }
 
-export function AdminProfileView({ profile }: AdminProfileViewProps) {
+export function ProfileView({ profile }: ProfileViewProps) {
   const fullName = profile
     ? [profile.nombre, profile.apellido_paterno, profile.apellido_materno]
         .filter(Boolean)
