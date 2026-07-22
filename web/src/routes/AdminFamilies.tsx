@@ -292,24 +292,6 @@ export function AdminFamilies() {
     <div>
       {/* Navigation header */}
       <div style={{ marginBottom: 20 }}>
-        <button
-          onClick={() => navigate('/admin')}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: brand,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: 0,
-            marginBottom: 8,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          ⬅️ Volver al panel
-        </button>
         <div
           style={{
             display: 'flex',

@@ -944,7 +944,6 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       {/* Header */}
       <View
         style={{
-          flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 20,
           paddingTop: 60,
@@ -954,15 +953,6 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           backgroundColor: t.surface,
         }}
       >
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => ({
-            marginRight: 12,
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
-        </Pressable>
         <Text
           style={{
             fontSize: 22,
