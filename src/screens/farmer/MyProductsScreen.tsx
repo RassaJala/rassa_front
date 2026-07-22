@@ -1,32 +1,50 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Text, View } from 'react-native';
 
-import type { NavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import LogoutButton from '@/components/LogoutButton';
-import type { FarmerStackParamList } from '@/types';
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 
 export default function MyProductsScreen(): React.JSX.Element {
-  const navigation = useNavigation<NavigationProp<FarmerStackParamList>>();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <Text variant="bodyLarge" className="text-gray-500 dark:text-gray-400">
-        Mis productos (Agricultor) — Próximamente
-      </Text>
-
-      <View className="mt-6 w-full max-w-xs gap-3">
-        <Button
-          mode="outlined"
-          textColor="#DE393A"
-          className="rounded-lg border-brand-red-coral"
-          onPress={() => navigation.navigate('Profile')}
+    <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <MaterialCommunityIcons name="sprout-outline" size={64} color={muted} />
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 22,
+            fontWeight: '700',
+            color: fg,
+            letterSpacing: -0.3,
+          }}
         >
-          Mi Perfil
-        </Button>
-        <LogoutButton mode="contained" />
+          Mis Productos
+        </Text>
+        <Text
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: muted,
+            textAlign: 'center',
+          }}
+        >
+          Administra tus productos agrícolas publicados.
+        </Text>
       </View>
     </View>
   );

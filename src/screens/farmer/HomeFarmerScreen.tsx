@@ -11,20 +11,22 @@ import {
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
-import { getAllProducts } from '@/services/mock/dashboard';
+import { getFarmerStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
-import type { BuyerStackParamList } from '@/types';
+import type { FarmerStackParamList } from '@/types';
 
-type Nav = NativeStackNavigationProp<BuyerStackParamList, 'BuyerTabs'>;
+type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerTabs'>;
 
 interface Props {
   readonly navigation: Nav;
 }
 
-export default function HomeScreen({ navigation }: Props): React.JSX.Element {
+export default function HomeFarmerScreen({
+  navigation,
+}: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const allProducts = getAllProducts();
+  const stats = getFarmerStats();
 
   const handleProfilePress = () => {
     navigation.getParent()?.navigate('Profile');
@@ -46,8 +48,8 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
 
   return (
     <ProfileDrawerProvider
-      defaultName="Cliente"
-      defaultEmail="cliente@rassa.com"
+      defaultName="Agricultor"
+      defaultEmail="agricultor@rassa.com"
       onProfilePress={handleProfilePress}
     >
       <View style={{ flex: 1, backgroundColor: bg }}>
@@ -58,6 +60,7 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
             showsVerticalScrollIndicator={false}
           >
             <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+              {/* ═══ HEADER ═══ */}
               <View
                 style={{
                   flexDirection: 'row',
@@ -112,12 +115,13 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
                 </View>
               </View>
 
+              {/* ═══ STATS ═══ */}
               <View
                 style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
               >
                 <StatCard
-                  icon="package-variant"
-                  value={allProducts.length.toLocaleString()}
+                  icon="sprout"
+                  value={stats.totalProducts.toLocaleString()}
                   label="Productos"
                   surface={surface}
                   border={border}
@@ -126,9 +130,9 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
                   iconColor={brand}
                 />
                 <StatCard
-                  icon="heart-outline"
-                  value={8}
-                  label="Favoritos"
+                  icon="clipboard-check"
+                  value={stats.ordersReceived.toLocaleString()}
+                  label="Pedidos"
                   surface={surface}
                   border={border}
                   muted={muted}
@@ -136,9 +140,9 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
                   iconColor={coral}
                 />
                 <StatCard
-                  icon="truck-outline"
-                  value={0}
-                  label="Pedidos"
+                  icon="cash"
+                  value={`$${stats.revenue.toLocaleString()}`}
+                  label="Ingresos"
                   surface={surface}
                   border={border}
                   muted={muted}
