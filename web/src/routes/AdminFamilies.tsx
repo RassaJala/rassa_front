@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { colors } from '@/constants/colors';
-
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Family } from '../types';
@@ -13,15 +11,15 @@ export function AdminFamilies() {
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
 
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.surface;
-  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
-  const coral = colors.brandRedCoral;
-  const primaryGreen = colors.primary;
-  const iconWhite = colors.iconWhite;
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#2A332A' : '#D6DAD4';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const coral = '#DE393A';
+  const primaryGreen = '#16a34a';
+  const iconWhite = '#ffffff';
 
   const [items, setItems] = useState<Family[]>([]);
   const [trashItems, setTrashItems] = useState<Family[]>([]);
