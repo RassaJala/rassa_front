@@ -31,11 +31,11 @@ export default function RegisterScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
   const isMounted = useRef(true);
 
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
@@ -205,7 +205,7 @@ export default function RegisterScreen(): React.JSX.Element {
               ¿Ya tienes cuenta?{' '}
               <Text
                 style={{
-                  color: isDark ? colors.admlBrandD : colors.admlBrandL,
+                  color: isDark ? colors.admBrandD : colors.admBrandL,
                   fontWeight: '600',
                 }}
               >

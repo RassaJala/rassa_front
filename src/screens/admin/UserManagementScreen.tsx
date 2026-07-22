@@ -26,6 +26,7 @@ import EmptyState from '@/components/UserManagement/EmptyState';
 import FilterBar from '@/components/UserManagement/FilterBar';
 import RoleDialog from '@/components/UserManagement/RoleDialog';
 import UserCard from '@/components/UserManagement/UserCard';
+import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
@@ -93,13 +94,13 @@ async function fetchAllPages(
 export default function UserManagementScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const inputBg = isDark ? '#263028' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const inputBg = isDark ? colors.admSurfaceD : colors.admBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();

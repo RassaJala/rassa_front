@@ -10,9 +10,9 @@ export default function SalesScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>

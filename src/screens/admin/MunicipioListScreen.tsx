@@ -50,10 +50,10 @@ interface ItemTheme {
 
 const LIGHT_THEME = {
   surface: colors.admSurfaceL,
-  fg: colors.admlFgL,
-  muted: colors.admlMutedL,
-  border: colors.admlBorderL,
-  brand: colors.admlBrandL,
+  fg: colors.admFgL,
+  muted: colors.admMutedL,
+  border: colors.admBorderL,
+  brand: colors.admBrandL,
   shadowOpacity: 0.05,
   elevation: 2,
   activeBg: colors.admActiveBgL,
@@ -62,10 +62,10 @@ const LIGHT_THEME = {
 
 const DARK_THEME = {
   surface: colors.admSurfaceD,
-  fg: colors.admlFgD,
-  muted: colors.admlMutedD,
-  border: colors.admlBorderD,
-  brand: colors.admlBrandD,
+  fg: colors.admFgD,
+  muted: colors.admMutedD,
+  border: colors.admBorderD,
+  brand: colors.admBrandD,
   shadowOpacity: 0,
   elevation: 0,
   activeBg: colors.admActiveBgD,

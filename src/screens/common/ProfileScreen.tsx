@@ -101,12 +101,12 @@ export default function ProfileScreen(): React.JSX.Element {
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
-  const bg = isDark ? colors.admlBgD : colors.admlBgL;
+  const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admlFgD : colors.admlFgL;
-  const muted = isDark ? colors.admlMutedD : colors.admlMutedL;
-  const border = isDark ? colors.admlBorderD : colors.admlBorderL;
-  const brand = isDark ? colors.admlBrandD : colors.admlBrandL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('ver');
 
@@ -312,8 +312,12 @@ export default function ProfileScreen(): React.JSX.Element {
     isLoadingLocalidades: catalog.isLoadingLocalidades,
     errorMunicipios: catalog.errorMunicipios,
     errorLocalidades: catalog.errorLocalidades,
-    refetchMunicipios: catalog.refetchMunicipios,
-    refetchLocalidades: catalog.refetchLocalidades,
+    refetchMunicipios: () => {
+      void catalog.refetchMunicipios();
+    },
+    refetchLocalidades: () => {
+      void catalog.refetchLocalidades();
+    },
     handleSelectMunicipio: catalog.handleSelectMunicipio,
     handleSelectLocalidad: catalog.handleSelectLocalidad,
   };
@@ -475,7 +479,9 @@ export default function ProfileScreen(): React.JSX.Element {
             form={formFields}
             location={locationFields}
             callbacks={{
-              handleUpdateProfile,
+              handleUpdateProfile: () => {
+                void handleUpdateProfile();
+              },
               setErrorMessage,
               onOpenDatePicker: () => setIsDatePickerVisible(true),
             }}
@@ -491,7 +497,9 @@ export default function ProfileScreen(): React.JSX.Element {
             setNewPassword={setNewPassword}
             confirmPassword={confirmPassword}
             setConfirmPassword={setConfirmPassword}
-            handleChangePassword={handleChangePassword}
+            handleChangePassword={() => {
+              void handleChangePassword();
+            }}
           />
         )}
         <DatePickerModal
