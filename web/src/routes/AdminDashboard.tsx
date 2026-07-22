@@ -1,11 +1,14 @@
-import { useAppColors } from '../hooks/useAppColors';
+import { getColors } from '../constants/colors';
+import { useTheme } from '../providers/ThemeProvider';
 
 const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
-  const colors = useAppColors();
-  const { fg, muted, border, surface, brand, coral } = colors;
+  const { resolved } = useTheme();
+  const isDark = resolved === 'dark';
+  const c = getColors(isDark);
+  const { fg, muted, border, surface, brand, coral } = c;
 
   const days = [
     'Domingo',
@@ -404,7 +407,7 @@ export function AdminDashboard() {
                           placeItems: 'center',
                           fontSize: 13,
                           fontWeight: 600,
-                          background: isDark ? '#1C2D22' : '#E2F0E6',
+                          background: c.activeBg,
                           color: brand,
                         }}
                       >

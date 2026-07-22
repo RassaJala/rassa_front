@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
 // ── Animation constants ────────────────────────────────────
-const DISPLAY_DURATION = 4000;
+const DISPLAY_DURATION = 3000;
 const FADE_IN_DURATION = 250;
 const FADE_OUT_DURATION = 200;
 const SLIDE_DISTANCE = 50;

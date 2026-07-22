@@ -68,7 +68,7 @@ export function AppRouter() {
       <Route path="/" element={<RootRedirect />} />
 
       {/* Agricultor */}
-      <Route element={<ProtectedRoute role="agricultor" />}>
+      <Route element={<ProtectedRoute />}>
         <Route
           path="/agricultor/*"
           element={
@@ -88,7 +88,7 @@ export function AppRouter() {
       </Route>
 
       {/* Vendedor */}
-      <Route element={<ProtectedRoute role="vendedor" />}>
+      <Route element={<ProtectedRoute />}>
         <Route
           path="/vendedor/*"
           element={
@@ -122,7 +122,6 @@ export function AppRouter() {
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
-                <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
