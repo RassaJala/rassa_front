@@ -1092,50 +1092,48 @@ export function AdminFamilies() {
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => {
                               setRestoreTarget(item);
                               setSelectedJefe(null);
                               setJefeQuery('');
                             }}
+                            aria-label="Restaurar / Asignar Jefe"
                             title="Restaurar / Asignar Jefe"
                             style={{
+                              width: 32,
                               height: 32,
-                              padding: '0 12px',
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              color: brand,
-                              fontSize: 13,
-                              fontWeight: 600,
                               cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
+                              fontSize: 14,
+                              display: 'grid',
+                              placeItems: 'center',
+                              color: fg,
                             }}
                           >
-                            🔄 Restaurar
+                            🔄
                           </button>
                           <button
                             onClick={() => setPermDelTarget(item)}
+                            aria-label="Eliminar permanentemente"
                             title="Eliminar permanentemente"
                             style={{
+                              width: 32,
                               height: 32,
-                              padding: '0 12px',
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              color: coral,
-                              fontSize: 13,
-                              fontWeight: 600,
                               cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
+                              fontSize: 14,
+                              display: 'grid',
+                              placeItems: 'center',
+                              color: fg,
                             }}
                           >
-                            💥 Eliminar
+                            🗑️
                           </button>
                         </div>
                       </td>
