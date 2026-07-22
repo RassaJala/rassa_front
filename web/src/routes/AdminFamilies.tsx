@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { colors } from '../../src/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Family } from '../types';
@@ -10,13 +11,14 @@ export function AdminFamilies() {
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
 
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const bg = isDark ? colors.iconDark : colors.background;
+  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const coral = colors.brandRedCoral;
+  const primaryGreen = colors.primary;
 
   const [items, setItems] = useState<Family[]>([]);
   const [trashItems, setTrashItems] = useState<Family[]>([]);
@@ -1098,12 +1100,12 @@ export function AdminFamilies() {
                               setJefeQuery('');
                             }}
                             style={{
-                              background: '#16a34a',
+                              background: primaryGreen,
                               border: 'none',
                               borderRadius: 8,
                               padding: '8px 16px',
                               fontSize: 13,
-                              color: '#ffffff',
+                              color: colors.iconWhite,
                               cursor: 'pointer',
                               fontWeight: 600,
                               display: 'inline-flex',
@@ -1298,8 +1300,8 @@ export function AdminFamilies() {
                   padding: '0 16px',
                   borderRadius: 8,
                   border: 'none',
-                  background: '#16a34a',
-                  color: '#ffffff',
+                  background: primaryGreen,
+                  color: colors.iconWhite,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: selectedJefe && !saving ? 'pointer' : 'not-allowed',
@@ -1379,9 +1381,9 @@ export function AdminFamilies() {
                   height: 32,
                   padding: '0 12px',
                   borderRadius: 8,
-                  border: '1.5px solid #DE393A',
+                  border: `1.5px solid ${coral}`,
                   background: 'transparent',
-                  color: '#DE393A',
+                  color: coral,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
