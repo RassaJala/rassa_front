@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../providers/ThemeProvider';
+import { getColors } from '../../constants/colors';
 
 interface NavItem {
   key: string;
@@ -18,7 +19,20 @@ const adminNav: NavItem[] = [
     path: '/admin/categorias',
   },
   { key: 'units', label: 'Unidades', icon: '📏', path: '/admin/unidades' },
+  {
+    key: 'municipios',
+    label: 'Municipios',
+    icon: '🏛️',
+    path: '/admin/municipios',
+  },
+  {
+    key: 'localidades',
+    label: 'Localidades',
+    icon: '📍',
+    path: '/admin/localidades',
+  },
   { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
+  { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
 ];
 
 const roleNavMap: Record<string, NavItem[]> = {
@@ -36,24 +50,52 @@ const roleNavMap: Record<string, NavItem[]> = {
       icon: '📦',
       path: '/agricultor/pedidos',
     },
+    {
+      key: 'profile',
+      label: 'Mi Perfil',
+      icon: '👤',
+      path: '/agricultor/perfil',
+    },
   ],
   vendedor: [
     { key: 'sales', label: 'Ventas', icon: '📊', path: '/vendedor/ventas' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/vendedor/pedidos' },
+    {
+      key: 'profile',
+      label: 'Mi Perfil',
+      icon: '👤',
+      path: '/vendedor/perfil',
+    },
+  ],
+  cliente: [
+    { key: 'home', label: 'Inicio', icon: '🏠', path: '/cliente' },
+    { key: 'cart', label: 'Carrito', icon: '🛒', path: '/cliente/carrito' },
+    { key: 'orders', label: 'Pedidos', icon: '📦', path: '/cliente/pedidos' },
+    { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/cliente/perfil' },
   ],
 };
 
 export function Sidebar({ role }: { role: string }) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const c = getColors(resolved === 'dark');
   const items = roleNavMap[role] ?? adminNav;
 
-  const sidebarBg = isDark ? '#161B17' : '#F5F7F0';
-  const borderColor = isDark ? '#2A332A' : '#D6DAD4';
-  const activeBg = isDark ? '#1C2D22' : '#E2F0E6';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
+  const sidebarBg = c.sidebarBg;
+  const borderColor = c.border;
+  const activeBg = c.activeBg;
+  const fg = c.fg;
+  const muted = c.muted;
+  const brand = c.brand;
+
+  const roleLabels: Record<
+    string,
+    { initials: string; label: string; subtitle: string }
+  > = {
+    admin: { initials: 'AD', label: 'Admin', subtitle: 'Administrador' },
+    agricultor: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
+    vendedor: { initials: 'VD', label: 'Vendedor', subtitle: 'Vendedor' },
+    cliente: { initials: 'CL', label: 'Cliente', subtitle: 'Cliente' },
+  };
 
   return (
     <aside
@@ -169,7 +211,7 @@ export function Sidebar({ role }: { role: string }) {
             width: 36,
             height: 36,
             borderRadius: 10,
-            background: '#DE393A',
+            background: brand,
             color: '#fff',
             display: 'grid',
             placeItems: 'center',
@@ -177,11 +219,15 @@ export function Sidebar({ role }: { role: string }) {
             fontSize: 14,
           }}
         >
-          AD
+          {roleLabels[role]?.initials ?? 'AD'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>Admin</div>
-          <div style={{ fontSize: 12, color: muted }}>Administrador</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+            {roleLabels[role]?.label ?? 'Admin'}
+          </div>
+          <div style={{ fontSize: 12, color: muted }}>
+            {roleLabels[role]?.subtitle ?? 'Administrador'}
+          </div>
         </div>
       </div>
     </aside>

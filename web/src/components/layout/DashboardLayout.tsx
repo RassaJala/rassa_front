@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react';
 import { useTheme } from '../../providers/ThemeProvider';
+import { getColors } from '../../constants/colors';
 import type { Role } from '../../types';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  role: Exclude<Role, 'comprador'>;
+  role: Exclude<Role, never>;
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const { bg } = getColors(resolved === 'dark');
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: bg }}>

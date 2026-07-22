@@ -469,11 +469,10 @@ export default function AdminProductsScreen(): React.JSX.Element {
     useNavigation<BottomTabNavigationProp<AdminTabParamList>>();
 
   useEffect(() => {
-    const unsub = navigation.addListener('tabPress', () => {
+    return navigation.addListener('tabPress', () => {
       setShowTrash(false);
       setTab('list');
     });
-    return unsub;
   }, [navigation]);
 
   const activeProducts = products.filter((p) => p.estado);
