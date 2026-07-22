@@ -110,7 +110,7 @@ export function AdminFamilies() {
 
   async function fetchTrashFamilies() {
     try {
-      const { data } = await api.get('/familias/trash/');
+      const { data } = await api.get('/familias/grupos/trash/');
       const payload = (data as { data?: unknown }).data ?? data;
       if (Array.isArray(payload)) {
         setTrashItems(payload as Family[]);
@@ -128,7 +128,7 @@ export function AdminFamilies() {
     setError(null);
     setSaving(true);
     try {
-      await api.post(`/familias/${restoreTarget.id_familia}/restore/`, {
+      await api.post(`/familias/grupos/${restoreTarget.id_familia}/restore/`, {
         fk_jefe_familia: selectedJefe.id_usuario,
       });
       await fetchFamilies();
@@ -149,7 +149,7 @@ export function AdminFamilies() {
     if (!permDelTarget) return;
     setError(null);
     try {
-      await api.post(`/familias/${permDelTarget.id_familia}/permanent/`);
+      await api.post(`/familias/grupos/${permDelTarget.id_familia}/permanent/`);
       await fetchTrashFamilies();
       setPermDelTarget(null);
     } catch (err: unknown) {

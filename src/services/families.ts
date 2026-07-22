@@ -94,7 +94,7 @@ export async function restoreFamily(
   jefeUserId: number,
 ): Promise<Family> {
   const { data } = await api.post<Record<string, unknown>>(
-    `/familias/${id}/restore/`,
+    `${FAMILIAS_URL}${id}/restore/`,
     { fk_jefe_familia: jefeUserId },
   );
   const payload = (data.data as Record<string, unknown>) ?? data;
@@ -102,7 +102,7 @@ export async function restoreFamily(
 }
 
 export async function deleteFamilyPermanent(id: number): Promise<void> {
-  await api.post(`/familias/${id}/permanent/`);
+  await api.post(`${FAMILIAS_URL}${id}/permanent/`);
 }
 
 // ── Family head assignment ─────────────────────────────
