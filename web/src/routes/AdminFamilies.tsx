@@ -18,6 +18,7 @@ export function AdminFamilies() {
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const brand = isDark ? '#4A8A63' : '#24563C';
   const coral = '#DE393A';
+  const warning = '#F2A900';
   const primaryGreen = '#16a34a';
   const iconWhite = '#ffffff';
 
@@ -552,7 +553,7 @@ export function AdminFamilies() {
                               : isDark
                                 ? 'rgba(212,160,32,0.12)'
                                 : 'rgba(242,169,0,0.1)',
-                            color: item.estado ? brand : colors.warning,
+                            color: item.estado ? brand : warning,
                           }}
                         >
                           {item.estado ? 'Activo' : 'Inactivo'}
@@ -1078,7 +1079,7 @@ export function AdminFamilies() {
                             background: isDark
                               ? 'rgba(242,169,0,0.12)'
                               : 'rgba(242,169,0,0.1)',
-                            color: colors.warning,
+                            color: warning,
                           }}
                         >
                           En Papelera (Inactivo)
