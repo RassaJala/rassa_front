@@ -17,11 +17,11 @@ export function AdminFamilyDetail() {
   const familyName = searchParams.get('familyName') ?? 'Detalle de familia';
   const familyId = parseInt(familyIdStr, 10);
 
-  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
-  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
-  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
-  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
-  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const bg = isDark ? colors.iconDark : colors.background;
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const coral = colors.brandRedCoral;
 
@@ -288,12 +288,12 @@ export function AdminFamilyDetail() {
             padding: '12px 16px',
             borderRadius: 10,
             background: isDark
-              ? colors.rassa.brandRedCoralSubtleDark
-              : colors.rassa.brandRedCoralSubtle,
+              ? 'rgba(222,57,58,0.15)'
+              : 'rgba(222,57,58,0.07)',
             color: coral,
             fontSize: 14,
             marginBottom: 20,
-            border: `1px solid ${isDark ? colors.rassa.brandRedCoralSubtleDark : colors.rassa.brandRedCoralSubtle}`,
+            border: `1px solid ${coral}`,
           }}
         >
           ⚠️ {error}
@@ -447,8 +447,8 @@ export function AdminFamilyDetail() {
                             borderRadius: 6,
                             background: isHead
                               ? isDark
-                                ? colors.rassa.brandPrimarySubtleDark
-                                : colors.rassa.brandPrimarySubtle
+                                ? 'rgba(74,138,99,0.15)'
+                                : 'rgba(36,86,60,0.07)'
                               : border,
                             color: isHead ? brand : muted,
                           }}
@@ -512,7 +512,7 @@ export function AdminFamilyDetail() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: colors.rassa.overlay,
+            background: 'rgba(0,0,0,0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -643,11 +643,11 @@ export function AdminFamilyDetail() {
                   fontSize: 13,
                   color: coral,
                   background: isDark
-                    ? colors.rassa.brandRedCoralSubtleDark
-                    : colors.rassa.brandRedCoralSubtle,
+                    ? 'rgba(222,57,58,0.15)'
+                    : 'rgba(222,57,58,0.07)',
                   padding: '8px 12px',
                   borderRadius: 8,
-                  border: `1px solid ${isDark ? colors.rassa.brandRedCoralSubtleDark : colors.rassa.brandRedCoralSubtle}`,
+                  border: `1px solid ${coral}`,
                 }}
               >
                 ⚠️ {modalError}

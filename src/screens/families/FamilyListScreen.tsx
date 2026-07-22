@@ -361,9 +361,7 @@ export default function FamilyListScreen(): React.JSX.Element {
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
 
   const [showTrash, setShowTrash] = React.useState(false);
-  const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(
-    null,
-  );
+  const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(null);
   const [jefeQuery, setJefeQuery] = React.useState('');
   const [jefeResults, setJefeResults] = React.useState<SearchUserResult[]>([]);
   const [selectedJefe, setSelectedJefe] =
