@@ -35,11 +35,11 @@ function FamilyCard({
   isDark,
   onPress,
 }: FamilyCardProps): React.JSX.Element {
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const accentBg = isDark ? colors.iconDark : colors.background;
+  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
+  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
+  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const accentBg = isDark ? colors.rassa.accentBgDark : colors.rassa.accentBg;
 
   return (
     <TouchableOpacity
@@ -287,12 +287,12 @@ export default function FamilyListScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? colors.iconDark : colors.background;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
+  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
+  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
+  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const brand = isDark ? colors.rassa.brandDark : colors.brandPrimary;
 
   const [showTrash, setShowTrash] = React.useState(false);
 
