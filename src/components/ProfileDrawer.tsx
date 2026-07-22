@@ -116,15 +116,19 @@ export function ProfileDrawerProvider({
         onProfilePress?.();
       },
     },
-    {
-      icon: 'account-group-outline',
-      label: 'Familias',
-      color: fg,
-      action: () => {
-        closeDrawer();
-        navigation.navigate('FamilyList' as never);
-      },
-    },
+    ...(user?.role === 'admin'
+      ? [
+          {
+            icon: 'account-group-outline',
+            label: 'Familias',
+            color: fg,
+            action: () => {
+              closeDrawer();
+              navigation.navigate('FamilyList' as never);
+            },
+          },
+        ]
+      : []),
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
       label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
