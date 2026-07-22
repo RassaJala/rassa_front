@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
@@ -17,12 +17,13 @@ export function AdminFamilyDetail() {
   const familyName = searchParams.get('familyName') ?? 'Detalle de familia';
   const familyId = parseInt(familyIdStr, 10);
 
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const bg = isDark ? colors.iconDark : colors.background;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
+  const fg = t.fg;
+  const muted = t.muted;
+  const border = t.border;
+  const surface = t.surface;
+  const bg = t.bg;
+  const brand = t.brand;
   const coral = colors.brandRedCoral;
 
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -42,6 +43,9 @@ export function AdminFamilyDetail() {
   const [modalLoading, setModalLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Remove member confirmation modal
+  const [removeTarget, setRemoveTarget] = useState<FamilyMember | null>(null);
 
   const filteredMembers = useMemo(() => {
     if (!memberSearch.trim()) return members;
@@ -185,21 +189,20 @@ export function AdminFamilyDetail() {
       );
       return;
     }
+    setRemoveTarget(member);
+  }
 
-    if (
-      !window.confirm(
-        `¿Seguro que quieres remover a ${member.usuario_nombre} de la familia?`,
-      )
-    ) {
-      return;
-    }
+  async function confirmRemoveMember() {
+    if (!removeTarget) return;
     setError(null);
     try {
-      await api.delete(`/familias/miembros/${member.id_familia_usuario}/`);
+      await api.delete(`/familias/miembros/${removeTarget.id_familia_usuario}/`);
       await fetchFamilyAndMembers();
     } catch (err: unknown) {
       console.error(err);
       setError('Error al remover al miembro de la familia.');
+    } finally {
+      setRemoveTarget(null);
     }
   }
 
@@ -702,6 +705,89 @@ export function AdminFamilyDetail() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Remove member confirmation modal */}
+      {removeTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setRemoveTarget(null)}
+        >
+          <div
+            style={{
+              background: surface,
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 440,
+              width: '90%',
+              border: `1px solid ${border}`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: fg,
+                marginBottom: 8,
+              }}
+            >
+              ¿Remover miembro?
+            </h3>
+            <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
+              ¿Seguro que quieres remover a{' '}
+              <strong>{removeTarget.usuario_nombre}</strong> de la familia?
+            </p>
+            <div
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+            >
+              <button
+                onClick={() => setRemoveTarget(null)}
+                style={{
+                  height: 32,
+                  padding: '0 12px',
+                  borderRadius: 8,
+                  border: `1.5px solid ${border}`,
+                  background: 'transparent',
+                  color: fg,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmRemoveMember}
+                style={{
+                  height: 32,
+                  padding: '0 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: coral,
+                  color: colors.iconWhite,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Remover
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

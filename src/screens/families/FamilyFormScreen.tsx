@@ -550,7 +550,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
   // Debounced jefe search
   useEffect(() => {
     const trimmed = jefeQuery.trim();
-    const shouldSearch = trimmed.length >= 1 && !selectedJefe;
+    const shouldSearch = trimmed.length >= 3 && !selectedJefe;
     if (!shouldSearch) {
       setJefeResults([]);
       return;

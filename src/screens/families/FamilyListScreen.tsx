@@ -355,7 +355,7 @@ function useJefeSearch(
 
   React.useEffect(() => {
     const trimmed = jefeQuery.trim();
-    if (trimmed.length < 1 || selectedJefe) {
+    if (trimmed.length < 3 || selectedJefe) {
       setJefeResults([]);
       return;
     }
