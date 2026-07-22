@@ -268,9 +268,13 @@ export function AdminFamilies() {
   async function toggleStatus(item: Family) {
     setError(null);
     try {
-      await api.patch(`/familias/grupos/${item.id_familia}/`, {
-        estado: !item.estado,
-      });
+      if (item.estado) {
+        await api.delete(`/familias/grupos/${item.id_familia}/`);
+      } else {
+        await api.patch(`/familias/grupos/${item.id_familia}/`, {
+          estado: true,
+        });
+      }
       await fetchFamilies();
       await fetchTrashFamilies();
     } catch (err: unknown) {
