@@ -193,6 +193,7 @@ export type FarmerStackParamList = {
 export interface SearchUserResult {
   id_usuario: number;
   email: string;
+  correo?: string;
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string | null;

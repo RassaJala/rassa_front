@@ -12,11 +12,11 @@ export function AdminFamilies() {
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
 
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const bg = isDark ? colors.iconDark : colors.background;
+  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
+  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
+  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const coral = colors.brandRedCoral;
   const warning = colors.warning;
@@ -382,12 +382,12 @@ export function AdminFamilies() {
             padding: '12px 16px',
             borderRadius: 10,
             background: isDark
-              ? 'rgba(222,57,58,0.15)'
-              : 'rgba(222,57,58,0.07)',
+              ? colors.rassa.brandRedCoralSubtleDark
+              : colors.rassa.brandRedCoralSubtle,
             color: coral,
             fontSize: 14,
             marginBottom: 20,
-            border: `1px solid ${isDark ? 'rgba(222,57,58,0.25)' : 'rgba(222,57,58,0.15)'}`,
+            border: `1px solid ${isDark ? colors.rassa.brandRedCoralSubtleDark : colors.rassa.brandRedCoralSubtle}`,
           }}
         >
           ⚠️ {error}
@@ -549,8 +549,8 @@ export function AdminFamilies() {
                             borderRadius: 6,
                             background: item.estado
                               ? isDark
-                                ? 'rgba(74,138,99,0.15)'
-                                : 'rgba(36,86,60,0.07)'
+                                ? colors.rassa.brandPrimarySubtleDark
+                                : colors.rassa.brandPrimarySubtle
                               : isDark
                                 ? 'rgba(212,160,32,0.12)'
                                 : 'rgba(242,169,0,0.1)',
@@ -1152,7 +1152,7 @@ export function AdminFamilies() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
+            background: colors.rassa.overlay,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1327,7 +1327,7 @@ export function AdminFamilies() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
+            background: colors.rassa.overlay,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1410,7 +1410,7 @@ export function AdminFamilies() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
+            background: colors.rassa.overlay,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

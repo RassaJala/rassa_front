@@ -1,10 +1,13 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,10 +18,16 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
-import { fetchFamilies, fetchFamiliesTrash } from '@/services/families';
+import {
+  deleteFamilyPermanent,
+  fetchFamilies,
+  fetchFamiliesTrash,
+  restoreFamily,
+  searchUsers,
+} from '@/services/families';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { AdminStackParamList, Family } from '@/types';
+import type { AdminStackParamList, Family, SearchUserResult } from '@/types';
 
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyList'>;
 
@@ -352,6 +361,90 @@ export default function FamilyListScreen(): React.JSX.Element {
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
 
   const [showTrash, setShowTrash] = React.useState(false);
+  const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(
+    null,
+  );
+  const [jefeQuery, setJefeQuery] = React.useState('');
+  const [jefeResults, setJefeResults] = React.useState<SearchUserResult[]>([]);
+  const [selectedJefe, setSelectedJefe] =
+    React.useState<SearchUserResult | null>(null);
+  const [isSearchingJefe, setIsSearchingJefe] = React.useState(false);
+  const [isRestoring, setIsRestoring] = React.useState(false);
+
+  React.useEffect(() => {
+    const trimmed = jefeQuery.trim();
+    if (trimmed.length < 2 || selectedJefe) {
+      setJefeResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingJefe(true);
+      try {
+        const results = await searchUsers(trimmed);
+        setJefeResults(results ?? []);
+      } catch (err) {
+        console.error(err);
+        setJefeResults([]);
+      } finally {
+        setIsSearchingJefe(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [jefeQuery, selectedJefe]);
+
+  const handleOpenRestore = (family: Family) => {
+    setRestoreTarget(family);
+    setJefeQuery('');
+    setSelectedJefe(null);
+    setJefeResults([]);
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!restoreTarget || !selectedJefe) return;
+    setIsRestoring(true);
+    try {
+      await restoreFamily(restoreTarget.id_familia, selectedJefe.id_usuario);
+      void refetch();
+      void refetchTrash();
+      setRestoreTarget(null);
+    } catch (err) {
+      console.error(err);
+      Alert.alert(
+        'Error',
+        'No se pudo reactivar la familia. Verifica que el jefe seleccionado esté activo.',
+      );
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handlePromptPermanentDelete = (family: Family) => {
+    Alert.alert(
+      'Eliminar permanentemente',
+      `¿Estás seguro de eliminar permanentemente la familia "${family.nombre_familia}"? Esta acción es irreversible.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteFamilyPermanent(family.id_familia);
+              void refetchTrash();
+            } catch (err) {
+              console.error(err);
+              Alert.alert(
+                'Error',
+                'No se pudo eliminar permanentemente la familia.',
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const {
     data: families,
@@ -498,15 +591,228 @@ export default function FamilyListScreen(): React.JSX.Element {
               family={item}
               isDark={isDark}
               isTrash={showTrash}
-              onPress={() =>
-                navigation.navigate('FamilyDetail', {
-                  familyId: item.id_familia,
-                })
-              }
+              onPress={() => {
+                if (!showTrash) {
+                  navigation.navigate('FamilyDetail', {
+                    familyId: item.id_familia,
+                  });
+                }
+              }}
+              onRestore={() => handleOpenRestore(item)}
+              onPermanentDelete={() => handlePromptPermanentDelete(item)}
             />
           )}
         />
       )}
+
+      {/* Modal de Restauración (Requisito Jefe de Familia) */}
+      <Modal
+        visible={restoreTarget !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRestoreTarget(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: surface,
+              borderRadius: 20,
+              padding: 24,
+              width: '100%',
+              maxWidth: 400,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+              Reactivar Familia
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: muted,
+                marginTop: 4,
+                marginBottom: 16,
+              }}
+            >
+              Para reactivar "{restoreTarget?.nombre_familia}" es obligatorio
+              asignar un jefe de familia.
+            </Text>
+
+            {/* Buscador de Jefe */}
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: muted,
+                marginBottom: 6,
+                textTransform: 'uppercase',
+              }}
+            >
+              Buscar Jefe de Familia *
+            </Text>
+            <TextInput
+              placeholder="Nombre o correo del usuario..."
+              placeholderTextColor={muted}
+              value={jefeQuery}
+              onChangeText={(text) => {
+                setJefeQuery(text);
+                if (selectedJefe) setSelectedJefe(null);
+              }}
+              style={{
+                height: 42,
+                borderWidth: 1,
+                borderColor: border,
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                color: fg,
+                backgroundColor: bg,
+                fontSize: 14,
+              }}
+            />
+
+            {/* Usuario seleccionado */}
+            {selectedJefe ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 10,
+                  padding: 10,
+                  borderRadius: 10,
+                  backgroundColor: isDark
+                    ? 'rgba(74,138,99,0.15)'
+                    : 'rgba(36,86,60,0.08)',
+                  borderWidth: 1,
+                  borderColor: brand,
+                }}
+              >
+                <View>
+                  <Text
+                    style={{ fontSize: 14, fontWeight: '600', color: brand }}
+                  >
+                    {selectedJefe.nombre} {selectedJefe.apellido_paterno}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: muted }}>
+                    {selectedJefe.email ?? selectedJefe.correo}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedJefe(null)}>
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={20}
+                    color={colors.brandRedCoral}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            {/* Resultados de búsqueda */}
+            {isSearchingJefe ? (
+              <ActivityIndicator
+                size="small"
+                color={brand}
+                style={{ marginTop: 12 }}
+              />
+            ) : jefeResults.length > 0 && !selectedJefe ? (
+              <View
+                style={{
+                  maxHeight: 150,
+                  borderWidth: 1,
+                  borderColor: border,
+                  borderRadius: 10,
+                  marginTop: 8,
+                  overflow: 'hidden',
+                }}
+              >
+                <FlatList
+                  data={jefeResults}
+                  keyExtractor={(item) => String(item.id_usuario)}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={{
+                        padding: 10,
+                        borderBottomWidth: 1,
+                        borderBottomColor: border,
+                      }}
+                      onPress={() => setSelectedJefe(item)}
+                    >
+                      <Text
+                        style={{ fontSize: 13, fontWeight: '600', color: fg }}
+                      >
+                        {item.nombre} {item.apellido_paterno}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: muted }}>
+                        {item.email ?? item.correo}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            ) : null}
+
+            {/* Botones de Acción */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setRestoreTarget(null)}
+                style={{
+                  paddingHorizontal: 16,
+                  height: 38,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: border,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: fg }}>
+                  Cancelar
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                disabled={!selectedJefe || isRestoring}
+                onPress={() => void handleConfirmRestore()}
+                style={{
+                  paddingHorizontal: 18,
+                  height: 38,
+                  borderRadius: 10,
+                  backgroundColor: colors.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: selectedJefe && !isRestoring ? 1 : 0.5,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: colors.iconWhite,
+                  }}
+                >
+                  {isRestoring ? 'Reactivando...' : 'Reactivar Familia'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
