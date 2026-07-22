@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
-import { fetchFamilies } from '@/services/families';
+import { fetchFamilies, fetchFamiliesTrash } from '@/services/families';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Family } from '@/types';
@@ -35,11 +35,11 @@ function FamilyCard({
   isDark,
   onPress,
 }: FamilyCardProps): React.JSX.Element {
-  const surface = isDark ? '#263028' : colors.surface;
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const accentBg = isDark ? '#353D35' : '#F5F7F0';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const accentBg = isDark ? colors.iconDark : colors.background;
 
   return (
     <TouchableOpacity
@@ -287,10 +287,14 @@ export default function FamilyListScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
+  const bg = isDark ? colors.iconDark : colors.background;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+
+  const [showTrash, setShowTrash] = React.useState(false);
 
   const {
     data: families,
@@ -301,6 +305,15 @@ export default function FamilyListScreen(): React.JSX.Element {
   } = useQuery<Family[]>({
     queryKey: ['families'],
     queryFn: fetchFamilies,
+    staleTime: 30_000,
+  });
+
+  const {
+    data: trashFamilies,
+    refetch: refetchTrash,
+  } = useQuery<Family[]>({
+    queryKey: ['families', 'trash'],
+    queryFn: fetchFamiliesTrash,
     staleTime: 30_000,
   });
 
@@ -323,7 +336,8 @@ export default function FamilyListScreen(): React.JSX.Element {
     );
   }
 
-  const isEmpty = !families || families.length === 0;
+  const currentList = showTrash ? (trashFamilies ?? []) : (families ?? []);
+  const isEmpty = currentList.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -346,40 +360,73 @@ export default function FamilyListScreen(): React.JSX.Element {
               color: fg,
             }}
           >
-            Familias
+            {showTrash ? 'Papelera' : 'Familias'}
           </Text>
           <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
-            {(families ?? []).length}{' '}
-            {(families ?? []).length === 1
-              ? 'familia registrada'
-              : 'familias registradas'}
+            {currentList.length}{' '}
+            {showTrash
+              ? currentList.length === 1
+                ? 'familia inactiva'
+                : 'familias inactivas'
+              : currentList.length === 1
+                ? 'familia registrada'
+                : 'familias registradas'}
           </Text>
         </View>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={{
-            borderRadius: 10,
-            backgroundColor: colors.brandRedCoral,
-            paddingHorizontal: 18,
-            height: 40,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onPress={() => navigation.navigate('FamilyForm')}
-        >
-          <Text
-            style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* Botón de Papelera */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: border,
+              backgroundColor: surface,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => {
+              setShowTrash((prev) => !prev);
+              void refetchTrash();
+            }}
           >
-            Agregar
-          </Text>
-        </TouchableOpacity>
+            <MaterialCommunityIcons
+              name={showTrash ? 'account-group' : 'trash-can-outline'}
+              size={20}
+              color={showTrash ? colors.brandRedCoral : muted}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={{
+              borderRadius: 10,
+              backgroundColor: colors.brandRedCoral,
+              paddingHorizontal: 16,
+              height: 40,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => navigation.navigate('FamilyForm')}
+          >
+            <Text
+              style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
+            >
+              Agregar
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
 
       {isEmpty ? (
         <EmptyView muted={muted} />
       ) : (
         <FlatList
-          data={families}
+          data={currentList}
           keyExtractor={(item) => String(item.id_familia)}
           contentContainerStyle={{ padding: 20, paddingBottom: 100, gap: 10 }}
           refreshControl={

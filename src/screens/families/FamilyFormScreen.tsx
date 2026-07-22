@@ -42,8 +42,8 @@ function FormHeader({
   isDark,
   onBack,
 }: FormHeaderProps): React.JSX.Element {
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
 
   return (
     <View
@@ -99,8 +99,8 @@ function ActionsSection({
   readonly onCancel: () => void;
   readonly onSubmit: () => void;
 }): React.JSX.Element {
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const border = isDark ? '#353D35' : '#E2E6DF';
+  const fg = isDark ? colors.background : colors.text;
+  const border = isDark ? colors.brandInk : colors.border;
 
   return (
     <View style={{ marginTop: 24, gap: 10 }}>
@@ -174,12 +174,12 @@ function JefeSearchField({
   readonly clearFieldError: (field: string) => void;
   readonly isSaving: boolean;
 }): React.JSX.Element {
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
+  const textInputBg = isDark ? colors.iconDark : colors.background;
   const errorColor = colors.brandRedCoral;
-  const surface = isDark ? '#263028' : colors.surface;
+  const surface = isDark ? colors.brandInk : colors.surface;
 
   return (
     <>
@@ -384,10 +384,10 @@ function FormFields({
   onCancel,
   onSubmit,
 }: FormFieldsProps): React.JSX.Element {
-  const surface = isDark ? '#263028' : colors.surface;
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const textInputBg = isDark ? '#1A211B' : '#F9FAF6';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const border = isDark ? colors.brandInk : colors.border;
+  const textInputBg = isDark ? colors.iconDark : colors.background;
   const errorColor = colors.brandRedCoral;
 
   return (
@@ -656,7 +656,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
     return <LoadingIndicator />;
   }
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const bg = isDark ? colors.iconDark : colors.background;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>

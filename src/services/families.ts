@@ -75,6 +75,35 @@ export async function deleteFamily(id: number): Promise<void> {
   await api.delete(`${FAMILIAS_URL}${id}/`);
 }
 
+// ── Trash & Restore ────────────────────────────────────
+
+export async function fetchFamiliesTrash(): Promise<Family[]> {
+  const { data } = await api.get<
+    Record<string, unknown>[] | { data: Record<string, unknown>[] }
+  >('/familias/trash/');
+  const list = Array.isArray(data)
+    ? data
+    : ((data as { data?: Record<string, unknown>[] }).data ?? []);
+  return list.map(normalizeFamily);
+}
+
+export async function restoreFamily(
+  id: number,
+  jefeUserId: number,
+): Promise<Family> {
+  const { data } = await api.post<Record<string, unknown>>(
+    `/familias/${id}/restore/`,
+    { fk_jefe_familia: jefeUserId },
+  );
+  const payload = (data.data as Record<string, unknown>) ?? data;
+  return normalizeFamily(payload);
+}
+
+export async function deleteFamilyPermanent(id: number): Promise<void> {
+  await api.post(`/familias/${id}/permanent/`);
+}
+
+
 // ── Family head assignment ─────────────────────────────
 
 export async function assignFamilyHead(

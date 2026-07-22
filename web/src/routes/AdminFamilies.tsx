@@ -19,13 +19,16 @@ export function AdminFamilies() {
   const coral = '#DE393A';
 
   const [items, setItems] = useState<Family[]>([]);
+  const [trashItems, setTrashItems] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ nombre_familia: '', detalle_familia: '' });
   const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Family | null>(null);
+  const [permDelTarget, setPermDelTarget] = useState<Family | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Family | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -36,7 +39,9 @@ export function AdminFamilies() {
 
   useEffect(() => {
     fetchFamilies();
+    fetchTrashFamilies();
   }, []);
+
 
   useEffect(() => {
     const trimmed = jefeQuery.trim();
@@ -99,6 +104,57 @@ export function AdminFamilies() {
       setLoading(false);
     }
   }
+
+  async function fetchTrashFamilies() {
+    try {
+      const { data } = await api.get('/familias/trash/');
+      const payload = (data as { data?: unknown }).data ?? data;
+      if (Array.isArray(payload)) {
+        setTrashItems(payload as Family[]);
+      } else {
+        setTrashItems([]);
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setTrashItems([]);
+    }
+  }
+
+  async function handleRestoreFamily() {
+    if (!restoreTarget || !selectedJefe) return;
+    setError(null);
+    setSaving(true);
+    try {
+      await api.post(`/familias/${restoreTarget.id_familia}/restore/`, {
+        fk_jefe_familia: selectedJefe.id_usuario,
+      });
+      await fetchFamilies();
+      await fetchTrashFamilies();
+      setRestoreTarget(null);
+      setSelectedJefe(null);
+      setJefeQuery('');
+    } catch (err: unknown) {
+      console.error(err);
+      const apiErr = extractApiError(err, ['fk_jefe_familia', 'detail']);
+      setError(apiErr || 'Error al restaurar la familia.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handlePermanentDelete() {
+    if (!permDelTarget) return;
+    setError(null);
+    try {
+      await api.post(`/familias/${permDelTarget.id_familia}/permanent/`);
+      await fetchTrashFamilies();
+      setPermDelTarget(null);
+    } catch (err: unknown) {
+      console.error(err);
+      setError('Error al eliminar permanentemente la familia.');
+    }
+  }
+
 
   function startEdit(item: Family) {
     setEditId(item.id_familia);
@@ -179,6 +235,7 @@ export function AdminFamilies() {
     try {
       await api.delete(`/familias/grupos/${delTarget.id_familia}/`);
       await fetchFamilies();
+      await fetchTrashFamilies();
       setDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
@@ -193,6 +250,7 @@ export function AdminFamilies() {
         estado: !item.estado,
       });
       await fetchFamilies();
+      await fetchTrashFamilies();
     } catch (err: unknown) {
       console.error(err);
       setError('Error al cambiar el estado de la familia.');
@@ -296,7 +354,25 @@ export function AdminFamilies() {
         >
           📋 Lista de familias
         </button>
+        <button
+          onClick={() => setTab('trash')}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'trash' ? surface : 'transparent',
+            color: tab === 'trash' ? fg : muted,
+            boxShadow: tab === 'trash' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          🗑️ Papelera ({trashItems.length})
+        </button>
       </div>
+
 
       {error && (
         <div
@@ -860,7 +936,384 @@ export function AdminFamilies() {
         </div>
       )}
 
-      {/* Delete modal */}
+      {/* TAB: Trash (Papelera) */}
+      {tab === 'trash' && (
+        <div
+          style={{
+            background: surface,
+            borderRadius: 16,
+            border: `1px solid ${border}`,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '16px 24px',
+              borderBottom: `1px solid ${border}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
+              🗑️ Papelera de familias (vacías)
+            </span>
+            <span style={{ fontSize: 13, color: muted }}>
+              Para reactivar una familia es obligatorio asignarle un jefe.
+            </span>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                textAlign: 'left',
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    background: isDark ? '#1A211B' : '#F5F7F0',
+                    borderBottom: `1px solid ${border}`,
+                  }}
+                >
+                  <th
+                    style={{
+                      padding: '12px 20px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: muted,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Nombre de la familia
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px 20px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: muted,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Detalle
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px 20px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: muted,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Estado
+                  </th>
+                  <th
+                    style={{
+                      padding: '12px 20px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: muted,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {trashItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      style={{
+                        padding: '40px 20px',
+                        textAlign: 'center',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      No hay familias en la papelera.
+                    </td>
+                  </tr>
+                ) : (
+                  trashItems.map((item) => (
+                    <tr key={item.id_familia} style={{ background: surface }}>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          fontSize: 14,
+                          borderBottom: `1px solid ${border}`,
+                          fontWeight: 600,
+                          color: fg,
+                        }}
+                      >
+                        {item.nombre_familia}
+                      </td>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          fontSize: 14,
+                          borderBottom: `1px solid ${border}`,
+                          color: muted,
+                        }}
+                      >
+                        {item.detalle_familia ?? '-'}
+                      </td>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: '3px 10px',
+                            borderRadius: 6,
+                            background: isDark
+                              ? 'rgba(242,169,0,0.12)'
+                              : 'rgba(242,169,0,0.1)',
+                            color: '#F2A900',
+                          }}
+                        >
+                          En Papelera (Inactivo)
+                        </span>
+                      </td>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            onClick={() => {
+                              setRestoreTarget(item);
+                              setSelectedJefe(null);
+                              setJefeQuery('');
+                            }}
+                            style={{
+                              background: brand,
+                              border: 'none',
+                              borderRadius: 8,
+                              padding: '6px 14px',
+                              fontSize: 13,
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            🔄 Restaurar / Asignar Jefe
+                          </button>
+                          <button
+                            onClick={() => setPermDelTarget(item)}
+                            style={{
+                              background: 'transparent',
+                              border: `1px solid ${coral}`,
+                              borderRadius: 8,
+                              padding: '6px 12px',
+                              fontSize: 13,
+                              color: coral,
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                          >
+                            💥 Eliminar permanente
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Restore modal (requiere jefe) */}
+      {restoreTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setRestoreTarget(null)}
+        >
+          <div
+            style={{
+              background: surface,
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 480,
+              width: '90%',
+              border: `1px solid ${border}`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: fg,
+                marginBottom: 8,
+              }}
+            >
+              🔄 Restaurar "{restoreTarget.nombre_familia}"
+            </h3>
+            <p style={{ fontSize: 14, color: muted, marginBottom: 16 }}>
+              Para reactivar esta familia es <strong>obligatorio</strong> asignar un nuevo jefe de familia.
+            </p>
+
+            <div style={{ marginBottom: 20, position: 'relative' }}>
+              <label
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: muted,
+                  display: 'block',
+                  marginBottom: 6,
+                }}
+              >
+                Buscar Jefe de Familia *
+              </label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={jefeQuery}
+                  onChange={(e) => {
+                    setJefeQuery(e.target.value);
+                    if (selectedJefe) setSelectedJefe(null);
+                  }}
+                  placeholder="Escribe nombre o correo (mín. 2 letras)..."
+                  style={{
+                    flex: 1,
+                    height: 44,
+                    border: `1.5px solid ${selectedJefe ? brand : border}`,
+                    borderRadius: 10,
+                    padding: '0 14px',
+                    fontSize: 15,
+                    background: bg,
+                    color: fg,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {searchingJefe && (
+                <div style={{ fontSize: 13, color: muted, marginTop: 4 }}>
+                  Buscando usuarios...
+                </div>
+              )}
+
+              {jefeResults.length > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 60,
+                    background: surface,
+                    border: `1px solid ${border}`,
+                    borderRadius: 10,
+                    marginTop: 4,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {jefeResults.map((user) => (
+                    <div
+                      key={user.id_usuario}
+                      onClick={() => {
+                        setSelectedJefe(user);
+                        setJefeQuery(
+                          `${user.nombre} ${user.apellido_paterno} (${user.email})`,
+                        );
+                        setJefeResults([]);
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderBottom: `1px solid ${border}`,
+                        fontSize: 14,
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, color: fg }}>
+                        {user.nombre} {user.apellido_paterno}
+                      </span>
+                      <span style={{ fontSize: 12, color: muted }}>
+                        {user.email}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+            >
+              <button
+                onClick={() => setRestoreTarget(null)}
+                style={{
+                  height: 36,
+                  padding: '0 16px',
+                  borderRadius: 8,
+                  border: `1.5px solid ${border}`,
+                  background: 'transparent',
+                  color: fg,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRestoreFamily}
+                disabled={!selectedJefe || saving}
+                style={{
+                  height: 36,
+                  padding: '0 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: brand,
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: selectedJefe && !saving ? 'pointer' : 'not-allowed',
+                  opacity: selectedJefe && !saving ? 1 : 0.5,
+                }}
+              >
+                {saving ? 'Restaurando...' : 'Reactivar Familia'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
       {delTarget && (
         <div
           style={{
@@ -895,11 +1348,10 @@ export function AdminFamilies() {
                 marginBottom: 8,
               }}
             >
-              ¿Eliminar familia?
+              ¿Enviar familia a la papelera?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a eliminar "{delTarget.nombre_familia}". Esta acción no se
-              puede deshacer y podría desvincular a todos sus miembros.
+              Vas a mover "{delTarget.nombre_familia}" a la papelera. La familia quedará inactiva, sin jefe y sin miembros.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
@@ -936,7 +1388,89 @@ export function AdminFamilies() {
                   fontFamily: 'inherit',
                 }}
               >
-                Eliminar
+                Mover a papelera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {permDelTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setPermDelTarget(null)}
+        >
+          <div
+            style={{
+              background: surface,
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 440,
+              width: '90%',
+              border: `1px solid ${border}`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: coral,
+                marginBottom: 8,
+              }}
+            >
+              💥 ¿Eliminar permanentemente?
+            </h3>
+            <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
+              Esta acción eliminará de forma irreversible la familia "{permDelTarget.nombre_familia}" de la base de datos.
+            </p>
+            <div
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+            >
+              <button
+                onClick={() => setPermDelTarget(null)}
+                style={{
+                  height: 32,
+                  padding: '0 12px',
+                  borderRadius: 8,
+                  border: `1.5px solid ${border}`,
+                  background: 'transparent',
+                  color: fg,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePermanentDelete}
+                style={{
+                  height: 32,
+                  padding: '0 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: coral,
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Eliminar definitivamente
               </button>
             </div>
           </div>
@@ -945,3 +1479,4 @@ export function AdminFamilies() {
     </div>
   );
 }
+

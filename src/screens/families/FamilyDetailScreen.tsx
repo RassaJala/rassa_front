@@ -60,13 +60,13 @@ function MemberItem({
   onAssignHead,
   onRemove,
 }: MemberItemProps): React.JSX.Element {
-  const surface = isDark ? '#263028' : colors.surface;
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.brandInk : colors.border;
   const coral = colors.brandRedCoral;
   const highlightColor = colors.brandOrange;
-  const accentBg = isDark ? '#353D35' : '#F5F7F0';
+  const accentBg = isDark ? colors.iconDark : colors.background;
 
   return (
     <View
@@ -195,11 +195,11 @@ function UserSuggestionsList({
 }: UserSuggestionsListProps): React.JSX.Element | null {
   if (results.length === 0) return null;
 
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const surface = isDark ? '#263028' : colors.surface;
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const pressedBg = isDark ? '#353D35' : '#F5F7F0';
+  const border = isDark ? colors.brandInk : colors.border;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const pressedBg = isDark ? colors.iconDark : colors.background;
 
   const iconBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.08)';
   const iconColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
@@ -392,16 +392,16 @@ function AddMemberModalContent({
   onCancel,
 }: AddMemberModalContentProps): React.JSX.Element | null {
   const modalOverlay = 'rgba(0,0,0,0.4)';
-  const surface = isDark ? '#263028' : colors.surface;
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const inputBg = isDark ? '#1A211B' : '#F9FAF6';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const border = isDark ? colors.brandInk : colors.border;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const inputBg = isDark ? colors.iconDark : colors.background;
   const primaryBg = isDark ? 'rgba(222,57,58,0.12)' : 'rgba(222,57,58,0.06)';
   const primaryColor = colors.brandRedCoral;
-  const disabledBg = isDark ? '#353D35' : '#E2E6DF';
+  const disabledBg = isDark ? colors.brandInk : colors.border;
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const errorBg = isDark ? colors.brandInk : colors.background;
 
   return (
     <Modal
@@ -677,13 +677,13 @@ function ConfirmModal({
   if (!visible) return null;
 
   const modalOverlay = 'rgba(0,0,0,0.4)';
-  const surface = isDark ? '#263028' : colors.surface;
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? colors.mutedDark : '#5E6B5E';
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const border = isDark ? colors.brandInk : colors.border;
+  const fg = isDark ? colors.background : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
 
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? '#3D2023' : '#FDEDEE';
+  const errorBg = isDark ? colors.brandInk : colors.background;
   const primaryColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const primaryBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)';
 
@@ -967,12 +967,12 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     void addMemberMutation.mutateAsync(userId);
   };
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : colors.surface;
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const bg = isDark ? colors.iconDark : colors.background;
+  const surface = isDark ? colors.brandInk : colors.surface;
+  const fg = isDark ? colors.background : colors.text;
   const muted = isDark ? colors.mutedDark : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const btnBg = isDark ? '#353D35' : '#F5F7F0';
+  const border = isDark ? colors.brandInk : colors.border;
+  const btnBg = isDark ? colors.iconDark : colors.background;
   const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
   const coral = colors.brandRedCoral;
 
