@@ -109,20 +109,7 @@ function AdminTabs() {
           ),
         }}
       />
-      <AdminTab.Screen
-        name="FamilyList"
-        component={FamilyListScreen}
-        options={{
-          tabBarLabel: 'Familias',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="account-group-outline"
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
+
       <AdminTab.Screen
         name="CategoryList"
         component={CategoryListScreen}
@@ -169,6 +156,20 @@ function AdminTabs() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="account-multiple-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
+        name="FamilyList"
+        component={FamilyListScreen}
+        options={{
+          tabBarLabel: 'Familias',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-group-outline"
               size={size}
               color={color}
             />
