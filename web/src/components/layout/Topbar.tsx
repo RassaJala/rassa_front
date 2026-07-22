@@ -1,16 +1,13 @@
 import { useAuth } from '~/hooks/useAuth';
 import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 
 export function Topbar() {
   const { logout } = useAuth();
   const { resolved, toggle } = useTheme();
   const isDark = resolved === 'dark';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
+  const c = getColors(isDark);
+  const { border, bg, surface, fg, muted, brand, coral } = c;
 
   return (
     <header
@@ -100,7 +97,7 @@ export function Topbar() {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: '#DE393A',
+              background: coral,
               position: 'absolute',
               top: 6,
               right: 6,

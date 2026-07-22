@@ -14,6 +14,7 @@ import {
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import { getLoginErrorMessage } from '@/utils/authError';
@@ -30,15 +31,15 @@ const light = {
   tree: '#2A4D34',
   sun: '#F2A900',
   bird: 'rgba(55,65,55,0.35)',
-  bg: '#F5F7F0',
-  surface: '#FFFFFF',
+  bg: colors.admBgL,
+  surface: colors.admSurfaceL,
   cardBg: 'rgba(255,255,255,0.92)',
-  fg: '#2D3328',
-  muted: '#5E6B5E',
-  border: '#D6DAD4',
-  brand: '#24563C',
-  coral: '#DE393A',
-  inputBg: '#F5F7F0',
+  fg: colors.admFgL,
+  muted: colors.admMutedL,
+  border: colors.admBorderL,
+  brand: colors.admBrandL,
+  coral: colors.brandRedCoral,
+  inputBg: colors.admBgL,
 };
 
 const dark = {
@@ -51,21 +52,21 @@ const dark = {
   tree: '#2D4A3A',
   sun: '#D4E8C8',
   bird: 'rgba(180,200,190,0.35)',
-  bg: '#1A211B',
-  surface: '#263028',
+  bg: colors.admBgD,
+  surface: colors.admSurfaceD,
   cardBg: 'rgba(30,40,33,0.95)',
-  fg: '#E8EAE4',
-  muted: '#9DA89D',
-  border: '#3D4A40',
-  brand: '#4A8A63',
-  coral: '#E84A4A',
-  inputBg: '#263028',
+  fg: colors.admFgD,
+  muted: colors.admMutedD,
+  border: colors.admBorderD,
+  brand: colors.admBrandD,
+  coral: colors.brandRedCoral,
+  inputBg: colors.admSurfaceD,
 };
 
 // ── Validation ─────────────────────────────────────────────────────────
 
 // ponytail: simple email check, no ReDoS vulnerability
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
 // ── Color constants ────────────────────────────────────────────────────
 

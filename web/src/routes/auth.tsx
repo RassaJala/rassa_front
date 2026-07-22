@@ -13,12 +13,27 @@ import type { Role, User } from '~/types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function normalizeRole(apiRole: string | undefined): Role {
+  switch (apiRole) {
+    case 'admin':
+      return 'admin';
+    case 'farmer':
+      return 'agricultor';
+    case 'seller':
+      return 'vendedor';
+    case 'buyer':
+      return 'cliente';
+    default:
+      return 'cliente';
+  }
+}
+
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: raw.role as string as Role,
+    rol: normalizeRole(raw.role as string | undefined),
   };
 }
 
@@ -37,7 +52,7 @@ function mapMeUser(raw: Record<string, unknown>): User {
     municipio_nombre: raw.municipio_nombre as string | undefined,
     localidad: raw.localidad as number | undefined,
     localidad_nombre: raw.localidad_nombre as string | undefined,
-    rol: raw.role as string as Role,
+    rol: normalizeRole(raw.role as string | undefined),
   };
 }
 
@@ -132,8 +147,9 @@ export function LoginScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {
@@ -450,8 +466,9 @@ export function RegisterScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {

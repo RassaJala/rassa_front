@@ -15,13 +15,13 @@ jest.mock('@react-native-community/netinfo', () => ({
 const mockApiGet = api.get as jest.Mock;
 
 const mockMunicipios = [
-  { id_municipio: 1, nombre: 'Municipio 1' },
-  { id_municipio: 2, nombre: 'Municipio 2' },
+  { id_municipio: 1, nombre: 'Municipio 1', estado: true },
+  { id_municipio: 2, nombre: 'Municipio 2', estado: true },
 ];
 
 const mockLocalidades = [
-  { id_localidad: 1, nombre: 'Localidad 1', municipio_id: 1 },
-  { id_localidad: 2, nombre: 'Localidad 2', municipio_id: 1 },
+  { id_localidad: 1, nombre: 'Localidad 1', municipio_id: 1, estado: true },
+  { id_localidad: 2, nombre: 'Localidad 2', municipio_id: 1, estado: true },
 ];
 
 const defaultProps = {

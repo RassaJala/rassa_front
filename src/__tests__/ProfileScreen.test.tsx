@@ -11,6 +11,9 @@ import { useAuth } from '@/store/AuthContext';
 
 jest.mock('@react-native-community/netinfo');
 jest.mock('@/store/AuthContext');
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light', toggleColorScheme: jest.fn() }),
+}));
 jest.mock('@/hooks/useCatalogs');
 
 const mockUseNetInfo = useNetInfo as jest.Mock;
