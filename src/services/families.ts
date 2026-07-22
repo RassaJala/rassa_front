@@ -157,7 +157,7 @@ export async function searchUsers(
       { data?: SearchUserResult[] } | SearchUserResult[]
     >(url);
     if (Array.isArray(data)) return data;
-    return (data).data ?? [];
+    return data.data ?? [];
   } catch (err) {
     console.error('searchUsers error:', err);
     return [];

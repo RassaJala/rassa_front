@@ -231,18 +231,18 @@ export function ProfileDrawerProvider({
                     onPress={item.action}
                     style={({ pressed }) => ({
                       backgroundColor: isLast
-                        ? (isDark
+                        ? isDark
                           ? colors.admCoralBgD
-                          : colors.admCoralBgL)
-                        : (isDark
+                          : colors.admCoralBgL
+                        : isDark
                           ? colors.admInactiveBgD
-                          : colors.admInactiveBgL),
+                          : colors.admInactiveBgL,
                       borderRadius: 16,
                       borderWidth: isLast ? 1 : 0,
                       borderColor: isLast
-                        ? (isDark
+                        ? isDark
                           ? 'rgba(222,57,58,0.25)'
-                          : 'rgba(222,57,58,0.15)')
+                          : 'rgba(222,57,58,0.15)'
                         : colors.transparent,
                       opacity: pressed ? 0.7 : 1,
                     })}

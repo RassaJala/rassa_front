@@ -102,7 +102,7 @@ function FamilyCard({
           >
             Familia inactiva (en papelera)
           </Text>
-        ) : (family.jefe_nombre ? (
+        ) : family.jefe_nombre ? (
           <View
             style={{
               flexDirection: 'row',
@@ -130,7 +130,7 @@ function FamilyCard({
           <Text style={{ fontSize: 13, color: t.muted, marginTop: 3 }}>
             Sin jefe asignado
           </Text>
-        ))}
+        )}
         {family.detalle_familia ? (
           <Text
             style={{ fontSize: 12, color: t.muted, marginTop: 2 }}
@@ -180,7 +180,11 @@ function FamilyCard({
           </Pressable>
         </View>
       ) : (
-        <MaterialCommunityIcons name="chevron-right" size={22} color={t.muted} />
+        <MaterialCommunityIcons
+          name="chevron-right"
+          size={22}
+          color={t.muted}
+        />
       )}
     </TouchableOpacity>
   );
@@ -521,12 +525,12 @@ export default function FamilyListScreen(): React.JSX.Element {
           <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
             {currentList.length}{' '}
             {showTrash
-              ? (currentList.length === 1
+              ? currentList.length === 1
                 ? 'familia inactiva'
-                : 'familias inactivas')
-              : (currentList.length === 1
+                : 'familias inactivas'
+              : currentList.length === 1
                 ? 'familia registrada'
-                : 'familias registradas')}
+                : 'familias registradas'}
           </Text>
         </View>
 
