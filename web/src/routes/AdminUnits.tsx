@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
+import {
+  filterItems,
+  FILTER_LABELS,
+  STATUS_FILTERS,
+} from '../utils/crudFilter';
 
 interface Unit {
   id: number;
@@ -35,6 +40,7 @@ export function AdminUnits() {
   const [statusFilter, setStatusFilter] = useState<
     'todos' | 'activos' | 'inactivos'
   >('todos');
+  const [filterExcludedCount, setFilterExcludedCount] = useState(0);
   const [delTarget, setDelTarget] = useState<Unit | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -46,31 +52,14 @@ export function AdminUnits() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const FILTER_LABELS: Record<string, string> = {
-    todos: 'Todos',
-    activos: 'Activos',
-    inactivos: 'Inactivos',
-  };
-
-  const filtered = useMemo(
-    () =>
-      items.filter((i) => {
-        const normalizedSearch = searchDebounced.toLowerCase().trim();
-        const matchesSearch =
-          !normalizedSearch ||
-          String(i.nombre ?? '')
-            .toLowerCase()
-            .includes(normalizedSearch) ||
-          String(i.abreviatura ?? '')
-            .toLowerCase()
-            .includes(normalizedSearch);
-        const matchesStatus =
-          statusFilter === 'todos' ||
-          (statusFilter === 'activos' ? i.estado === true : i.estado === false);
-        return matchesSearch && matchesStatus;
-      }),
-    [items, searchDebounced, statusFilter],
-  );
+  const filtered = useMemo(() => {
+    const result = filterItems(items, searchDebounced, statusFilter, [
+      'nombre',
+      'abreviatura',
+    ]);
+    setFilterExcludedCount(result.excludedCount);
+    return result.items;
+  }, [items, searchDebounced, statusFilter]);
 
   function startNew() {
     setEditId(null);
@@ -272,7 +261,7 @@ export function AdminUnits() {
               borderBottom: `1px solid ${border}`,
             }}
           >
-            {(['todos', 'activos', 'inactivos'] as const).map((f) => (
+            {STATUS_FILTERS.map((f) => (
               <button
                 key={f}
                 type="button"
@@ -293,6 +282,44 @@ export function AdminUnits() {
               </button>
             ))}
           </div>
+
+          {/* ── Filter error banner ──────────────────────────── */}
+          {filterExcludedCount > 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                margin: '0 20px 8px',
+                padding: '8px 12px',
+                borderRadius: 10,
+                background: isDark ? '#3D2023' : '#FDEDEE',
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#DE393A"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span style={{ fontSize: 13, color: '#DE393A', flex: 1 }}>
+                {filterExcludedCount} elemento
+                {filterExcludedCount !== 1 ? 's' : ''} no pudo
+                {filterExcludedCount === 1 ? '' : 'ieron'} procesarse debido a
+                un error.
+              </span>
+            </div>
+          ) : null}
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
