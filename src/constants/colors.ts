@@ -38,3 +38,19 @@ export const colors = {
   iconMuted: '#9ca3af', // gray-400
   iconWhite: '#ffffff',
 };
+
+export function themeColors(isDark: boolean) {
+  return {
+    bg: isDark ? '#1A211B' : '#F5F7F0',
+    surface: isDark ? '#263028' : '#FFFFFF',
+    fg: isDark ? '#E8EAE4' : '#2D3328',
+    muted: isDark ? '#9DA89D' : '#5E6B5E',
+    border: isDark ? '#353D35' : '#E2E6DF',
+    input: isDark ? '#263028' : '#F5F7F0',
+    errorBg: isDark ? '#3D2023' : '#FDEDEE',
+    accentBg: isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)',
+    coralBg: isDark ? 'rgba(222,57,58,0.07)' : 'rgba(222,57,58,0.07)',
+    brand: isDark ? '#4A8A63' : '#24563C',
+    segBg: isDark ? '#263028' : '#E8ECE4',
+  };
+}

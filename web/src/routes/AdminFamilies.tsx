@@ -56,34 +56,26 @@ export function AdminFamilies() {
 
   useEffect(() => {
     const trimmed = jefeQuery.trim();
-    const shouldSearch = trimmed.length >= 2 && !selectedJefe;
-    if (!shouldSearch) {
+    if (trimmed.length < 1) {
       setJefeResults([]);
       return;
     }
-
-    const delayDebounce = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setSearchingJefe(true);
       try {
         const { data } = await api.get(
-          `/auth/search-users/?q=${encodeURIComponent(trimmed)}`,
+          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=true`,
         );
-        const payload = data.data ?? data;
-        if (Array.isArray(payload)) {
-          setJefeResults(payload);
-        } else {
-          setJefeResults([]);
-        }
-      } catch (err) {
-        console.error(err);
+        const payload = (data as { data?: unknown }).data ?? data;
+        setJefeResults(Array.isArray(payload) ? payload : []);
+      } catch {
         setJefeResults([]);
       } finally {
         setSearchingJefe(false);
       }
-    }, 400);
-
-    return () => clearTimeout(delayDebounce);
-  }, [jefeQuery, selectedJefe]);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [jefeQuery]);
 
   async function fetchFamilies() {
     try {

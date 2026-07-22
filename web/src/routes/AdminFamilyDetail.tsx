@@ -112,7 +112,7 @@ export function AdminFamilyDetail() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = searchQuery.trim();
-    if (trimmed.length < 2 || selectedUser) {
+    if (trimmed.length < 1 || selectedUser) {
       setSearchResults([]);
       return;
     }

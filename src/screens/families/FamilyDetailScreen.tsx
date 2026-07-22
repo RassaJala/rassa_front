@@ -21,7 +21,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import {
   addFamilyMember,
   assignFamilyHead,
@@ -60,13 +60,9 @@ function MemberItem({
   onAssignHead,
   onRemove,
 }: MemberItemProps): React.JSX.Element {
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
+  const t = themeColors(isDark);
   const coral = colors.brandRedCoral;
   const highlightColor = colors.brandOrange;
-  const accentBg = isDark ? colors.iconDark : colors.background;
 
   return (
     <View
@@ -77,8 +73,8 @@ function MemberItem({
         gap: 14,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: border,
-        backgroundColor: surface,
+        borderColor: t.border,
+        backgroundColor: t.surface,
         padding: 16,
       }}
     >
@@ -90,25 +86,25 @@ function MemberItem({
           borderRadius: 20,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: accentBg,
+          backgroundColor: t.bg,
         }}
       >
         <MaterialCommunityIcons
           name={isHead ? 'account-star' : 'account'}
           size={20}
-          color={isHead ? highlightColor : muted}
+          color={isHead ? highlightColor : t.muted}
         />
       </View>
 
       <View style={{ flex: 1 }}>
         <Text
-          style={{ fontSize: 15, fontWeight: '600', color: fg }}
+          style={{ fontSize: 15, fontWeight: '600', color: t.fg }}
           numberOfLines={1}
         >
           {member.usuario_nombre}
         </Text>
         <Text
-          style={{ fontSize: 12, color: muted, marginTop: 2 }}
+          style={{ fontSize: 12, color: t.muted, marginTop: 2 }}
           numberOfLines={1}
         >
           {member.usuario_correo}
@@ -124,10 +120,10 @@ function MemberItem({
               height: 32,
               borderRadius: 8,
               borderWidth: 1,
-              borderColor: border,
+              borderColor: t.border,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: pressed ? accentBg : 'transparent',
+              backgroundColor: pressed ? t.bg : 'transparent',
             })}
             hitSlop={6}
           >
@@ -145,10 +141,10 @@ function MemberItem({
             height: 32,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: border,
+            borderColor: t.border,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: pressed ? accentBg : 'transparent',
+            backgroundColor: pressed ? t.bg : 'transparent',
           })}
           hitSlop={6}
         >
@@ -187,14 +183,8 @@ function UserSuggestionsList({
 }: UserSuggestionsListProps): React.JSX.Element | null {
   if (results.length === 0) return null;
 
-  const border = isDark ? colors.brandInk : colors.border;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const pressedBg = isDark ? colors.iconDark : colors.background;
-
-  const iconBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.08)';
-  const iconColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
+  const iconColor = t.brand;
 
   return (
     <View
@@ -202,8 +192,8 @@ function UserSuggestionsList({
         marginTop: 4,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: border,
-        backgroundColor: surface,
+        borderColor: t.border,
+        backgroundColor: t.surface,
         maxHeight: 180,
         overflow: 'hidden',
       }}
@@ -212,12 +202,12 @@ function UserSuggestionsList({
         {results.map((user, index) => (
           <View key={user.id_usuario}>
             {index > 0 ? (
-              <View style={{ height: 1, backgroundColor: border }} />
+              <View style={{ height: 1, backgroundColor: t.border }} />
             ) : null}
             <Pressable
               onPress={() => onSelect(user)}
               style={({ pressed }) => ({
-                backgroundColor: pressed ? pressedBg : 'transparent',
+                backgroundColor: pressed ? t.bg : 'transparent',
               })}
             >
               <View
@@ -234,7 +224,7 @@ function UserSuggestionsList({
                     width: 32,
                     height: 32,
                     borderRadius: 16,
-                    backgroundColor: iconBg,
+                    backgroundColor: t.accentBg,
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
@@ -248,13 +238,13 @@ function UserSuggestionsList({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
-                    style={{ fontSize: 14, fontWeight: '600', color: fg }}
+                    style={{ fontSize: 14, fontWeight: '600', color: t.fg }}
                     numberOfLines={1}
                   >
                     {user.nombre} {user.apellido_paterno}
                   </Text>
                   <Text
-                    style={{ fontSize: 12, color: muted, marginTop: 1 }}
+                    style={{ fontSize: 12, color: t.muted, marginTop: 1 }}
                     numberOfLines={1}
                   >
                     {user.email}
@@ -383,17 +373,10 @@ function AddMemberModalContent({
   onConfirm,
   onCancel,
 }: AddMemberModalContentProps): React.JSX.Element | null {
-  const modalOverlay = 'rgba(0,0,0,0.4)';
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const border = isDark ? colors.brandInk : colors.border;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const inputBg = isDark ? colors.iconDark : colors.background;
-  const primaryBg = isDark ? 'rgba(222,57,58,0.12)' : 'rgba(222,57,58,0.06)';
+  const t = themeColors(isDark);
   const primaryColor = colors.brandRedCoral;
-  const disabledBg = isDark ? colors.brandInk : colors.border;
+  const disabledBg = t.border;
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? colors.brandInk : colors.background;
 
   return (
     <Modal
@@ -407,12 +390,12 @@ function AddMemberModalContent({
         style={{ flex: 1 }}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: modalOverlay }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
           onPress={onCancel}
         />
         <View
           style={{
-            backgroundColor: surface,
+            backgroundColor: t.surface,
             borderRadius: 24,
             padding: 24,
             paddingBottom: 34,
@@ -420,7 +403,7 @@ function AddMemberModalContent({
             borderTopWidth: 1,
             borderLeftWidth: 1,
             borderRightWidth: 1,
-            borderColor: border,
+            borderColor: t.border,
           }}
         >
           {/* Header */}
@@ -432,7 +415,7 @@ function AddMemberModalContent({
                 borderRadius: 28,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: primaryBg,
+                backgroundColor: t.coralBg,
                 marginBottom: 12,
               }}
             >
@@ -446,7 +429,7 @@ function AddMemberModalContent({
               style={{
                 fontSize: 17,
                 fontWeight: '700',
-                color: fg,
+                color: t.fg,
                 textAlign: 'center',
               }}
             >
@@ -455,7 +438,7 @@ function AddMemberModalContent({
             <Text
               style={{
                 fontSize: 14,
-                color: muted,
+                color: t.muted,
                 marginTop: 4,
                 textAlign: 'center',
               }}
@@ -470,16 +453,16 @@ function AddMemberModalContent({
               style={{
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: border,
-                backgroundColor: inputBg,
+                borderColor: t.border,
+                backgroundColor: t.input,
                 paddingLeft: 16,
                 paddingRight: (selectedUser ?? query) ? 40 : 16,
                 paddingVertical: 12,
                 fontSize: 16,
-                color: fg,
+                color: t.fg,
               }}
               placeholder="Nombre o correo..."
-              placeholderTextColor={muted}
+              placeholderTextColor={t.muted}
               value={query}
               onChangeText={onChangeText}
               editable={!isPending}
@@ -492,7 +475,7 @@ function AddMemberModalContent({
                 <MaterialCommunityIcons
                   name="close-circle"
                   size={20}
-                  color={muted}
+                  color={t.muted}
                 />
               </Pressable>
             ) : null}
@@ -519,7 +502,7 @@ function AddMemberModalContent({
               style={{
                 marginTop: 10,
                 borderRadius: 10,
-                backgroundColor: errorBg,
+                backgroundColor: t.errorBg,
                 paddingHorizontal: 12,
                 paddingVertical: 8,
                 flexDirection: 'row',
@@ -544,9 +527,9 @@ function AddMemberModalContent({
             isPending={isPending}
             primaryColor={primaryColor}
             disabledBg={disabledBg}
-            border={border}
-            fg={fg}
-            muted={muted}
+            border={t.border}
+            fg={t.fg}
+            muted={t.muted}
             onConfirm={onConfirm}
             onCancel={onCancel}
           />
@@ -668,18 +651,12 @@ function ConfirmModal({
 }: ConfirmModalProps): React.JSX.Element | null {
   if (!visible) return null;
 
-  const modalOverlay = 'rgba(0,0,0,0.4)';
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const border = isDark ? colors.brandInk : colors.border;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-
+  const t = themeColors(isDark);
   const errorColor = colors.brandRedCoral;
-  const errorBg = isDark ? colors.brandInk : colors.background;
-  const primaryColor = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
-  const primaryBg = isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)';
+  const primaryColor = t.brand;
+  const primaryBg = t.accentBg;
 
-  const iconBg = isDestructive ? errorBg : primaryBg;
+  const iconBg = isDestructive ? t.errorBg : primaryBg;
   const iconColor = isDestructive ? errorColor : primaryColor;
   const confirmBtnBg = isDestructive ? errorColor : primaryColor;
 
@@ -691,12 +668,12 @@ function ConfirmModal({
       onRequestClose={onCancel}
     >
       <Pressable
-        style={{ flex: 1, backgroundColor: modalOverlay }}
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
         onPress={onCancel}
       />
       <View
         style={{
-          backgroundColor: surface,
+          backgroundColor: t.surface,
           borderRadius: 24,
           padding: 24,
           paddingBottom: 34,
@@ -704,7 +681,7 @@ function ConfirmModal({
           borderTopWidth: 1,
           borderLeftWidth: 1,
           borderRightWidth: 1,
-          borderColor: border,
+          borderColor: t.border,
         }}
       >
         <View style={{ alignItems: 'center', marginBottom: 16 }}>
@@ -729,7 +706,7 @@ function ConfirmModal({
             style={{
               fontSize: 17,
               fontWeight: '700',
-              color: fg,
+              color: t.fg,
               textAlign: 'center',
             }}
           >
@@ -739,7 +716,7 @@ function ConfirmModal({
             <Text
               style={{
                 fontSize: 14,
-                color: muted,
+                color: t.muted,
                 marginTop: 6,
                 textAlign: 'center',
               }}
@@ -777,12 +754,12 @@ function ConfirmModal({
               height: 40,
               borderRadius: 10,
               borderWidth: 1.5,
-              borderColor: border,
+              borderColor: t.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
               {cancelText}
             </Text>
           </TouchableOpacity>
@@ -959,17 +936,11 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     void addMemberMutation.mutateAsync(userId);
   };
 
-  const bg = isDark ? colors.iconDark : colors.background;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const btnBg = isDark ? colors.iconDark : colors.background;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
   const coral = colors.brandRedCoral;
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       {/* Header */}
       <View
         style={{
@@ -979,8 +950,8 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           paddingTop: 60,
           paddingBottom: 16,
           borderBottomWidth: 1,
-          borderBottomColor: border,
-          backgroundColor: surface,
+          borderBottomColor: t.border,
+          backgroundColor: t.surface,
         }}
       >
         <Pressable
@@ -990,13 +961,13 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             opacity: pressed ? 0.6 : 1,
           })}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
         </Pressable>
         <Text
           style={{
             fontSize: 22,
             fontWeight: '700',
-            color: fg,
+            color: t.fg,
           }}
         >
           {family.nombre_familia}
@@ -1012,7 +983,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
               void refetchFamily();
               void refetchMembers();
             }}
-            tintColor={brand}
+            tintColor={t.brand}
           />
         }
       >
@@ -1021,8 +992,8 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           style={{
             borderRadius: 16,
             borderWidth: 1,
-            borderColor: border,
-            backgroundColor: surface,
+            borderColor: t.border,
+            backgroundColor: t.surface,
             padding: 20,
           }}
         >
@@ -1034,23 +1005,23 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             }}
           >
             <Text
-              style={{ flex: 1, fontSize: 20, fontWeight: '700', color: fg }}
+              style={{ flex: 1, fontSize: 20, fontWeight: '700', color: t.fg }}
             >
               {family.nombre_familia}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable
-                style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
+                style={{ borderRadius: 8, backgroundColor: t.bg, padding: 8 }}
                 onPress={() => {
                   navigation.navigate('FamilyForm', {
                     familyId,
                   });
                 }}
               >
-                <MaterialCommunityIcons name="pencil" size={18} color={fg} />
+                <MaterialCommunityIcons name="pencil" size={18} color={t.fg} />
               </Pressable>
               <Pressable
-                style={{ borderRadius: 8, backgroundColor: btnBg, padding: 8 }}
+                style={{ borderRadius: 8, backgroundColor: t.bg, padding: 8 }}
                 onPress={handleDelete}
               >
                 <MaterialCommunityIcons
@@ -1075,14 +1046,14 @@ export default function FamilyDetailScreen(): React.JSX.Element {
                 size={16}
                 color={colors.brandOrange}
               />
-              <Text style={{ marginLeft: 6, fontSize: 14, color: fg }}>
+              <Text style={{ marginLeft: 6, fontSize: 14, color: t.fg }}>
                 Jefe: {family.jefe_nombre}
               </Text>
             </View>
           ) : null}
 
           {family.detalle_familia ? (
-            <Text style={{ marginTop: 8, fontSize: 14, color: muted }}>
+            <Text style={{ marginTop: 8, fontSize: 14, color: t.muted }}>
               {family.detalle_familia}
             </Text>
           ) : null}
@@ -1098,7 +1069,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: t.fg }}>
             Miembros
           </Text>
           <TouchableOpacity
@@ -1128,9 +1099,9 @@ export default function FamilyDetailScreen(): React.JSX.Element {
             <MaterialCommunityIcons
               name="account-group-outline"
               size={48}
-              color={muted}
+              color={t.muted}
             />
-            <Text style={{ marginTop: 12, fontSize: 14, color: muted }}>
+            <Text style={{ marginTop: 12, fontSize: 14, color: t.muted }}>
               No hay miembros en esta familia.
             </Text>
           </View>

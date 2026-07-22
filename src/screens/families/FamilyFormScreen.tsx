@@ -16,7 +16,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import {
   addFamilyMember,
   assignFamilyHead,
@@ -42,8 +42,7 @@ function FormHeader({
   isDark,
   onBack,
 }: FormHeaderProps): React.JSX.Element {
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const t = themeColors(isDark);
 
   return (
     <View
@@ -63,7 +62,7 @@ function FormHeader({
         })}
         hitSlop={8}
       >
-        <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
+        <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
       </Pressable>
       <View>
         <Text
@@ -71,12 +70,12 @@ function FormHeader({
             fontSize: 28,
             fontWeight: '700',
             letterSpacing: -0.02,
-            color: fg,
+            color: t.fg,
           }}
         >
           {isEditing ? 'Editar familia' : 'Nueva familia'}
         </Text>
-        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+        <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
           {isEditing
             ? 'Modifica los datos de la familia'
             : 'Completa los datos de la nueva familia'}
@@ -99,8 +98,7 @@ function ActionsSection({
   readonly onCancel: () => void;
   readonly onSubmit: () => void;
 }): React.JSX.Element {
-  const fg = isDark ? colors.background : colors.text;
-  const border = isDark ? colors.brandInk : colors.border;
+  const t = themeColors(isDark);
 
   return (
     <View style={{ marginTop: 24, gap: 10 }}>
@@ -134,14 +132,14 @@ function ActionsSection({
           borderRadius: 10,
           height: 40,
           borderWidth: 1.5,
-          borderColor: border,
+          borderColor: t.border,
           alignItems: 'center',
           justifyContent: 'center',
         }}
         onPress={onCancel}
         disabled={isSaving}
       >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
           Cancelar
         </Text>
       </TouchableOpacity>
@@ -174,12 +172,8 @@ function JefeSearchField({
   readonly clearFieldError: (field: string) => void;
   readonly isSaving: boolean;
 }): React.JSX.Element {
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const textInputBg = isDark ? colors.iconDark : colors.background;
+  const t = themeColors(isDark);
   const errorColor = colors.brandRedCoral;
-  const surface = isDark ? colors.brandInk : colors.surface;
 
   return (
     <>
@@ -189,7 +183,7 @@ function JefeSearchField({
           marginTop: 16,
           fontSize: 14,
           fontWeight: '500',
-          color: fg,
+          color: t.fg,
         }}
       >
         Jefe de familia *
@@ -199,18 +193,16 @@ function JefeSearchField({
           style={{
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: fieldErrors.jefe ? errorColor : border,
-            backgroundColor: textInputBg,
+            borderColor: fieldErrors.jefe ? errorColor : t.border,
+            backgroundColor: t.input,
             paddingLeft: 16,
             paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
             paddingVertical: 12,
             fontSize: 16,
-            color: fg,
+            color: t.fg,
           }}
           placeholder="Buscar por nombre o correo..."
-          placeholderTextColor={
-            isDark ? colors.textSecondary : colors.textTertiary
-          }
+          placeholderTextColor={t.muted}
           value={jefeQuery}
           onChangeText={(text) => {
             onChangeJefeQuery(text);
@@ -228,7 +220,7 @@ function JefeSearchField({
             <MaterialCommunityIcons
               name="close-circle"
               size={20}
-              color={muted}
+              color={t.muted}
             />
           </Pressable>
         ) : null}
@@ -237,7 +229,7 @@ function JefeSearchField({
       {searchingJefe ? (
         <ActivityIndicator
           size="small"
-          color={colors.brandPrimary}
+          color={t.brand}
           style={{ marginTop: 8 }}
         />
       ) : null}
@@ -248,8 +240,8 @@ function JefeSearchField({
             marginTop: 4,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: border,
-            backgroundColor: surface,
+            borderColor: t.border,
+            backgroundColor: t.surface,
             maxHeight: 180,
             overflow: 'hidden',
           }}
@@ -264,17 +256,17 @@ function JefeSearchField({
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderBottomWidth: 1,
-                  borderBottomColor: border,
+                  borderBottomColor: t.border,
                 }}
               >
                 <Text
-                  style={{ fontSize: 14, fontWeight: '600', color: fg }}
+                  style={{ fontSize: 14, fontWeight: '600', color: t.fg }}
                   numberOfLines={1}
                 >
                   {user.nombre} {user.apellido_paterno}
                 </Text>
                 <Text
-                  style={{ fontSize: 12, color: muted, marginTop: 1 }}
+                  style={{ fontSize: 12, color: t.muted, marginTop: 1 }}
                   numberOfLines={1}
                 >
                   {user.email}
@@ -384,10 +376,7 @@ function FormFields({
   onCancel,
   onSubmit,
 }: FormFieldsProps): React.JSX.Element {
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const border = isDark ? colors.brandInk : colors.border;
-  const textInputBg = isDark ? colors.iconDark : colors.background;
+  const t = themeColors(isDark);
   const errorColor = colors.brandRedCoral;
 
   return (
@@ -395,8 +384,8 @@ function FormFields({
       style={{
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: border,
-        backgroundColor: surface,
+        borderColor: t.border,
+        backgroundColor: t.surface,
         padding: 20,
       }}
     >
@@ -406,7 +395,7 @@ function FormFields({
           marginBottom: 6,
           fontSize: 14,
           fontWeight: '500',
-          color: fg,
+          color: t.fg,
         }}
       >
         Nombre de la familia *
@@ -415,17 +404,15 @@ function FormFields({
         style={{
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: fieldErrors.nombre ? errorColor : border,
-          backgroundColor: textInputBg,
+          borderColor: fieldErrors.nombre ? errorColor : t.border,
+          backgroundColor: t.input,
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: 16,
-          color: fg,
+          color: t.fg,
         }}
         placeholder="Ej. Familia López"
-        placeholderTextColor={
-          isDark ? colors.textSecondary : colors.textTertiary
-        }
+        placeholderTextColor={t.muted}
         value={nombre}
         onChangeText={(text) => {
           onChangeNombre(text);
@@ -464,7 +451,7 @@ function FormFields({
           marginTop: 16,
           fontSize: 14,
           fontWeight: '500',
-          color: fg,
+          color: t.fg,
         }}
       >
         Detalle
@@ -473,19 +460,17 @@ function FormFields({
         style={{
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: border,
-          backgroundColor: textInputBg,
+          borderColor: t.border,
+          backgroundColor: t.input,
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: 16,
-          color: fg,
+          color: t.fg,
           height: 80,
           textAlignVertical: 'top',
         }}
         placeholder="Descripción opcional"
-        placeholderTextColor={
-          isDark ? colors.textSecondary : colors.textTertiary
-        }
+        placeholderTextColor={t.muted}
         multiline
         numberOfLines={3}
         value={detalle}
@@ -565,7 +550,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
   // Debounced jefe search
   useEffect(() => {
     const trimmed = jefeQuery.trim();
-    const shouldSearch = trimmed.length >= 2 && !selectedJefe;
+    const shouldSearch = trimmed.length >= 1 && !selectedJefe;
     if (!shouldSearch) {
       setJefeResults([]);
       return;
@@ -574,14 +559,14 @@ export default function FamilyFormScreen(): React.JSX.Element {
     const delay = setTimeout(async () => {
       setSearchingJefe(true);
       try {
-        const data = await searchUsers(trimmed);
+        const data = await searchUsers(trimmed, true);
         setJefeResults(data);
       } catch {
         setJefeResults([]);
       } finally {
         setSearchingJefe(false);
       }
-    }, 400);
+    }, 300);
 
     return () => clearTimeout(delay);
   }, [jefeQuery, selectedJefe]);
@@ -656,10 +641,10 @@ export default function FamilyFormScreen(): React.JSX.Element {
     return <LoadingIndicator />;
   }
 
-  const bg = isDark ? colors.iconDark : colors.background;
+  const t = themeColors(isDark);
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <FormHeader
         isEditing={isEditing}
         isDark={isDark}

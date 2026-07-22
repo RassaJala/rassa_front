@@ -143,9 +143,21 @@ export async function removeFamilyMember(memberId: number): Promise<void> {
   await api.delete(`${MIEMBROS_URL}${memberId}/`);
 }
 
-export async function searchUsers(query: string): Promise<SearchUserResult[]> {
-  const { data } = await api.get<{ data: SearchUserResult[] }>(
-    `/auth/search-users/?q=${encodeURIComponent(query)}`,
-  );
-  return data.data;
+export async function searchUsers(
+  query: string,
+  includeAssigned = false,
+): Promise<SearchUserResult[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 1) return [];
+  try {
+    const url = `/auth/search-users/?q=${encodeURIComponent(trimmed)}${includeAssigned ? '&include_assigned=true' : ''}`;
+    const { data } = await api.get<
+      { data?: SearchUserResult[] } | SearchUserResult[]
+    >(url);
+    if (Array.isArray(data)) return data;
+    return (data as { data?: SearchUserResult[] }).data ?? [];
+  } catch (err) {
+    console.error('searchUsers error:', err);
+    return [];
+  }
 }

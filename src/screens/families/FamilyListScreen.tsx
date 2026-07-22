@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import {
   deleteFamilyPermanent,
   fetchFamilies,
@@ -50,12 +50,8 @@ function FamilyCard({
   onRestore,
   onPermanentDelete,
 }: FamilyCardProps): React.JSX.Element {
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const accentBg = isDark ? colors.iconDark : colors.background;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
+  const brand = t.brand;
 
   return (
     <TouchableOpacity
@@ -63,10 +59,10 @@ function FamilyCard({
       activeOpacity={0.8}
       disabled={isTrash}
       style={{
-        backgroundColor: surface,
+        backgroundColor: t.surface,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: border,
+        borderColor: t.border,
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
@@ -81,20 +77,20 @@ function FamilyCard({
           borderRadius: 22,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: accentBg,
+          backgroundColor: t.bg,
         }}
       >
         <MaterialCommunityIcons
           name={isTrash ? 'delete-restore' : 'account-group'}
           size={22}
-          color={isTrash ? colors.brandOrange : muted}
+          color={isTrash ? colors.brandOrange : t.muted}
         />
       </View>
 
       {/* Info */}
       <View style={{ flex: 1 }}>
         <Text
-          style={{ fontSize: 16, fontWeight: '600', color: fg }}
+          style={{ fontSize: 16, fontWeight: '600', color: t.fg }}
           numberOfLines={1}
         >
           {family.nombre_familia}
@@ -130,13 +126,13 @@ function FamilyCard({
             </Text>
           </View>
         ) : (
-          <Text style={{ fontSize: 13, color: muted, marginTop: 3 }}>
+          <Text style={{ fontSize: 13, color: t.muted, marginTop: 3 }}>
             Sin jefe asignado
           </Text>
         )}
         {family.detalle_familia ? (
           <Text
-            style={{ fontSize: 12, color: muted, marginTop: 2 }}
+            style={{ fontSize: 12, color: t.muted, marginTop: 2 }}
             numberOfLines={1}
           >
             {family.detalle_familia}
@@ -154,7 +150,7 @@ function FamilyCard({
               height: 36,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: border,
+              borderColor: t.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -169,7 +165,7 @@ function FamilyCard({
               height: 36,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: border,
+              borderColor: t.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -183,7 +179,7 @@ function FamilyCard({
           </Pressable>
         </View>
       ) : (
-        <MaterialCommunityIcons name="chevron-right" size={22} color={muted} />
+        <MaterialCommunityIcons name="chevron-right" size={22} color={t.muted} />
       )}
     </TouchableOpacity>
   );
@@ -353,12 +349,7 @@ export default function FamilyListScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const isDark = colorScheme === 'dark';
 
-  const bg = isDark ? colors.iconDark : colors.background;
-  const surface = isDark ? colors.brandInk : colors.surface;
-  const fg = isDark ? colors.background : colors.text;
-  const muted = isDark ? colors.mutedDark : colors.textSecondary;
-  const border = isDark ? colors.brandInk : colors.border;
-  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const t = themeColors(isDark);
 
   const [showTrash, setShowTrash] = React.useState(false);
   const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(null);
@@ -371,7 +362,7 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   React.useEffect(() => {
     const trimmed = jefeQuery.trim();
-    if (trimmed.length < 2 || selectedJefe) {
+    if (trimmed.length < 1 || selectedJefe) {
       setJefeResults([]);
       return;
     }
@@ -379,7 +370,7 @@ export default function FamilyListScreen(): React.JSX.Element {
     const timer = setTimeout(async () => {
       setIsSearchingJefe(true);
       try {
-        const results = await searchUsers(trimmed);
+        const results = await searchUsers(trimmed, true);
         setJefeResults(results ?? []);
       } catch (err) {
         console.error(err);
@@ -387,7 +378,7 @@ export default function FamilyListScreen(): React.JSX.Element {
       } finally {
         setIsSearchingJefe(false);
       }
-    }, 400);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [jefeQuery, selectedJefe]);
@@ -463,19 +454,19 @@ export default function FamilyListScreen(): React.JSX.Element {
   });
 
   if (user?.role !== 'admin') {
-    return <UnauthorizedView bg={bg} muted={muted} />;
+    return <UnauthorizedView bg={t.bg} muted={t.muted} />;
   }
 
   if (isLoading) {
-    return <LoadingView bg={bg} brand={brand} />;
+    return <LoadingView bg={t.bg} brand={t.brand} />;
   }
 
   if (isError) {
     return (
       <ErrorView
-        bg={bg}
-        muted={muted}
-        brand={brand}
+        bg={t.bg}
+        muted={t.muted}
+        brand={t.brand}
         onRefetch={() => void refetch()}
       />
     );
@@ -485,7 +476,7 @@ export default function FamilyListScreen(): React.JSX.Element {
   const isEmpty = currentList.length === 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <View
         style={{
           paddingHorizontal: 20,
@@ -502,12 +493,12 @@ export default function FamilyListScreen(): React.JSX.Element {
               fontSize: 28,
               fontWeight: '700',
               letterSpacing: -0.02,
-              color: fg,
+              color: t.fg,
             }}
           >
             {showTrash ? 'Papelera' : 'Familias'}
           </Text>
-          <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+          <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
             {currentList.length}{' '}
             {showTrash
               ? currentList.length === 1
@@ -528,8 +519,8 @@ export default function FamilyListScreen(): React.JSX.Element {
               height: 40,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: border,
-              backgroundColor: surface,
+              borderColor: t.border,
+              backgroundColor: t.surface,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -541,7 +532,7 @@ export default function FamilyListScreen(): React.JSX.Element {
             <MaterialCommunityIcons
               name={showTrash ? 'account-group' : 'trash-can-outline'}
               size={20}
-              color={showTrash ? colors.brandRedCoral : muted}
+              color={showTrash ? colors.brandRedCoral : t.muted}
             />
           </TouchableOpacity>
 
@@ -571,7 +562,7 @@ export default function FamilyListScreen(): React.JSX.Element {
       </View>
 
       {isEmpty ? (
-        <EmptyView muted={muted} />
+        <EmptyView muted={t.muted} />
       ) : (
         <FlatList
           data={currentList}
@@ -581,7 +572,7 @@ export default function FamilyListScreen(): React.JSX.Element {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={() => void refetch()}
-              tintColor={brand}
+              tintColor={t.brand}
             />
           }
           renderItem={({ item }) => (
@@ -621,22 +612,22 @@ export default function FamilyListScreen(): React.JSX.Element {
         >
           <View
             style={{
-              backgroundColor: surface,
+              backgroundColor: t.surface,
               borderRadius: 20,
               padding: 24,
               width: '100%',
               maxWidth: 400,
               borderWidth: 1,
-              borderColor: border,
+              borderColor: t.border,
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: t.fg }}>
               Reactivar Familia
             </Text>
             <Text
               style={{
                 fontSize: 13,
-                color: muted,
+                color: t.muted,
                 marginTop: 4,
                 marginBottom: 16,
               }}
@@ -650,7 +641,7 @@ export default function FamilyListScreen(): React.JSX.Element {
               style={{
                 fontSize: 12,
                 fontWeight: '600',
-                color: muted,
+                color: t.muted,
                 marginBottom: 6,
                 textTransform: 'uppercase',
               }}
@@ -659,7 +650,7 @@ export default function FamilyListScreen(): React.JSX.Element {
             </Text>
             <TextInput
               placeholder="Nombre o correo del usuario..."
-              placeholderTextColor={muted}
+              placeholderTextColor={t.muted}
               value={jefeQuery}
               onChangeText={(text) => {
                 setJefeQuery(text);
@@ -668,11 +659,11 @@ export default function FamilyListScreen(): React.JSX.Element {
               style={{
                 height: 42,
                 borderWidth: 1,
-                borderColor: border,
+                borderColor: t.border,
                 borderRadius: 10,
                 paddingHorizontal: 12,
-                color: fg,
-                backgroundColor: bg,
+                color: t.fg,
+                backgroundColor: t.input,
                 fontSize: 14,
               }}
             />
@@ -687,20 +678,18 @@ export default function FamilyListScreen(): React.JSX.Element {
                   marginTop: 10,
                   padding: 10,
                   borderRadius: 10,
-                  backgroundColor: isDark
-                    ? 'rgba(74,138,99,0.15)'
-                    : 'rgba(36,86,60,0.08)',
+                  backgroundColor: t.accentBg,
                   borderWidth: 1,
-                  borderColor: brand,
+                  borderColor: t.brand,
                 }}
               >
                 <View>
                   <Text
-                    style={{ fontSize: 14, fontWeight: '600', color: brand }}
+                    style={{ fontSize: 14, fontWeight: '600', color: t.brand }}
                   >
                     {selectedJefe.nombre} {selectedJefe.apellido_paterno}
                   </Text>
-                  <Text style={{ fontSize: 12, color: muted }}>
+                  <Text style={{ fontSize: 12, color: t.muted }}>
                     {selectedJefe.email ?? selectedJefe.correo}
                   </Text>
                 </View>
@@ -718,7 +707,7 @@ export default function FamilyListScreen(): React.JSX.Element {
             {isSearchingJefe ? (
               <ActivityIndicator
                 size="small"
-                color={brand}
+                color={t.brand}
                 style={{ marginTop: 12 }}
               />
             ) : jefeResults.length > 0 && !selectedJefe ? (
@@ -726,7 +715,7 @@ export default function FamilyListScreen(): React.JSX.Element {
                 style={{
                   maxHeight: 150,
                   borderWidth: 1,
-                  borderColor: border,
+                  borderColor: t.border,
                   borderRadius: 10,
                   marginTop: 8,
                   overflow: 'hidden',
@@ -740,16 +729,16 @@ export default function FamilyListScreen(): React.JSX.Element {
                       style={{
                         padding: 10,
                         borderBottomWidth: 1,
-                        borderBottomColor: border,
+                        borderBottomColor: t.border,
                       }}
                       onPress={() => setSelectedJefe(item)}
                     >
                       <Text
-                        style={{ fontSize: 13, fontWeight: '600', color: fg }}
+                        style={{ fontSize: 13, fontWeight: '600', color: t.fg }}
                       >
                         {item.nombre} {item.apellido_paterno}
                       </Text>
-                      <Text style={{ fontSize: 11, color: muted }}>
+                      <Text style={{ fontSize: 11, color: t.muted }}>
                         {item.email ?? item.correo}
                       </Text>
                     </TouchableOpacity>
@@ -774,12 +763,12 @@ export default function FamilyListScreen(): React.JSX.Element {
                   height: 38,
                   borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: border,
+                  borderColor: t.border,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: fg }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: t.fg }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -791,7 +780,7 @@ export default function FamilyListScreen(): React.JSX.Element {
                   paddingHorizontal: 18,
                   height: 38,
                   borderRadius: 10,
-                  backgroundColor: colors.primary,
+                  backgroundColor: t.brand,
                   alignItems: 'center',
                   justifyContent: 'center',
                   opacity: selectedJefe && !isRestoring ? 1 : 0.5,
