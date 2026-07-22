@@ -196,7 +196,9 @@ export function AdminFamilyDetail() {
     if (!removeTarget) return;
     setError(null);
     try {
-      await api.delete(`/familias/miembros/${removeTarget.id_familia_usuario}/`);
+      await api.delete(
+        `/familias/miembros/${removeTarget.id_familia_usuario}/`,
+      );
       await fetchFamilyAndMembers();
     } catch (err: unknown) {
       console.error(err);

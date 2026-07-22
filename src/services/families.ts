@@ -43,9 +43,7 @@ export async function fetchFamilies(): Promise<Family[]> {
   const list = Array.isArray(data) ? data : data.results;
   const families = list.map(normalizeFamily);
 
-  const orphans = families.filter(
-    (f) => f.estado && f.fk_jefe_familia == null,
-  );
+  const orphans = families.filter((f) => f.estado && f.fk_jefe_familia == null);
   if (orphans.length > 0) {
     await Promise.allSettled(
       orphans.map((f) => api.delete(`${FAMILIAS_URL}${f.id_familia}/`)),
