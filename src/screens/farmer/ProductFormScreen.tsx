@@ -192,7 +192,7 @@ export default function ProductFormScreen({
 
   const pickImage = useCallback(async () => {
     const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync() as {
+      (await ImagePicker.requestMediaLibraryPermissionsAsync()) as {
         status: string;
       };
     if (status !== 'granted') {

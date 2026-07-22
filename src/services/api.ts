@@ -18,7 +18,7 @@ const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 function resolveBaseURL(): string {
   // On web, always use localhost (browser runs on the same machine as the server).
   // On native, respect EXPO_PUBLIC_API_URL so physical devices can reach the backend.
-  // eslint-disable-next-line no-undef, @typescript-eslint/no-unsafe-assignment -- process is injected by expo
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- process is injected by expo
   const envUrl: string | undefined = process.env.EXPO_PUBLIC_API_URL;
   const configured =
     Platform.OS === 'web'
@@ -32,7 +32,7 @@ function resolveBaseURL(): string {
 const baseURL = resolveBaseURL();
 
 // Guard: reject HTTP in production to prevent credential leakage
-// eslint-disable-next-line no-undef -- process is injected by expo
+
 if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
   throw new Error(
     'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +
