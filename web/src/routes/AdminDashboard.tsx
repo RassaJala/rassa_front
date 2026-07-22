@@ -1,17 +1,11 @@
-import { useTheme } from '../providers/ThemeProvider';
+import { useAppColors } from '../hooks/useAppColors';
 
 const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const colors = useAppColors();
+  const { fg, muted, border, surface, brand, coral } = colors;
 
   const days = [
     'Domingo',

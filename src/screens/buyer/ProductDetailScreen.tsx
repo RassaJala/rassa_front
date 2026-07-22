@@ -1,22 +1,56 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, View } from 'react-native';
+
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 
 export default function ProductDetailScreen(): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <Text
-        variant="titleMedium"
-        className="text-center text-gray-900 dark:text-gray-100"
+    <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        Detalle del producto
-      </Text>
-      <Text
-        variant="bodyMedium"
-        className="mt-2 text-center text-gray-500 dark:text-gray-400"
-      >
-        Próximamente podrás ver aquí toda la información del producto.
-      </Text>
+        <MaterialCommunityIcons
+          name="package-variant-closed"
+          size={64}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 20,
+            fontWeight: '700',
+            color: fg,
+            textAlign: 'center',
+          }}
+        >
+          Detalle del producto
+        </Text>
+        <Text
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: muted,
+            textAlign: 'center',
+            maxWidth: 260,
+          }}
+        >
+          Próximamente podrás ver aquí toda la información del producto.
+        </Text>
+      </View>
     </View>
   );
 }

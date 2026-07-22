@@ -58,26 +58,30 @@ export interface ChangePasswordPayload {
 export interface Municipio {
   id_municipio: number;
   nombre: string;
+  estado: boolean;
 }
 
 export interface Localidad {
   id_localidad: number;
   nombre: string;
   municipio_id: number;
+  estado: boolean;
 }
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
+export interface Producto {
+  id_producto: number;
+  nombre_producto: string;
+  descripcion: string;
+  precio: string;
   stock: number;
-  image: string;
-  farmer: number;
-  category: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  es_perecedero: boolean;
+  imagen: string | null;
+  estado: boolean;
+  categoria: Category;
+  unidad: Unidad | null;
+  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
+  imagen_principal: string | null;
+  creado_en: string;
 }
 
 export interface Order {
@@ -106,6 +110,11 @@ export interface Category {
   creado_en: string;
 }
 
+export interface Unidad {
+  id_unidad: number;
+  tipo: string;
+}
+
 export interface Unit {
   id_unidad: number;
   nombre: string;
@@ -127,6 +136,16 @@ export type AdminStackParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  MunicipioList: undefined;
+  MunicipioTrash: undefined;
+  LocalidadList: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
+  LocalidadTrash: {
+    readonly municipioId: number;
+    readonly municipioNombre: string;
+  };
 };
 
 export type AuthStackParamList = {
@@ -145,11 +164,21 @@ export type BuyerStackParamList = {
 };
 
 export type FarmerTabsParamList = {
+  HomeFarmer: undefined;
   MyProducts: undefined;
   AddProduct: undefined;
 };
 
 export type FarmerStackParamList = {
-  FarmerTabs: undefined;
+  FarmerHome: undefined;
   Profile: undefined;
+  ProductList: undefined;
+  ProductForm: { productoId?: number };
+};
+
+export type SellerTabsParamList = {
+  HomeSeller: undefined;
+  Sales: undefined;
+  Notificaciones: undefined;
+  Perfil: undefined;
 };

@@ -7,12 +7,16 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import Navbar from '@/components/Navbar';
+import { colors } from '@/constants/colors';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
 import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
+import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
+import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
+import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
+import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
@@ -25,32 +29,38 @@ import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
-import AddProductScreen from '@/screens/farmer/AddProductScreen';
-import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+// Farmer screens
+import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
+import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
+import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { AdminStackParamList, AuthStackParamList } from '@/types';
+import type {
+  AdminStackParamList,
+  AuthStackParamList,
+  FarmerStackParamList,
+  SellerTabsParamList,
+} from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
-const FarmerTab = createBottomTabNavigator();
-const SellerTab = createBottomTabNavigator();
+const SellerTab = createBottomTabNavigator<SellerTabsParamList>();
 const BuyerStack = createNativeStackNavigator();
-const FarmerStack = createNativeStackNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
+const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
 const AdminTab = createBottomTabNavigator();
 
 function AdminTabs() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const border = isDark ? '#353D35' : '#E2E6DF';
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   return (
     <AdminTab.Navigator
@@ -122,6 +132,20 @@ function AdminTabs() {
         }}
       />
       <AdminTab.Screen
+        name="MunicipioList"
+        component={MunicipioListScreen}
+        options={{
+          tabBarLabel: 'Municipios',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="map-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
         name="UserManagement"
         component={UserManagementScreen}
         options={{
@@ -133,22 +157,6 @@ function AdminTabs() {
               color={color}
             />
           ),
-        }}
-      />
-      <AdminTab.Screen
-        name="CategoryTrash"
-        component={CategoryTrashScreen}
-        options={{
-          tabBarButton: () => null,
-          tabBarItemStyle: { display: 'none', width: 0, height: 0 },
-        }}
-      />
-      <AdminTab.Screen
-        name="UnitTrash"
-        component={UnitTrashScreen}
-        options={{
-          tabBarButton: () => null,
-          tabBarItemStyle: { display: 'none', width: 0, height: 0 },
         }}
       />
     </AdminTab.Navigator>
@@ -165,20 +173,65 @@ function AuthStack() {
 }
 
 function BuyerTabs() {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+
   return (
     <BuyerTab.Navigator
       screenOptions={{
-        header: () => <Navbar />,
-        tabBarStyle: { display: 'none' },
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: surface,
+          borderTopColor: border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: brand,
+        tabBarInactiveTintColor: muted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <BuyerTab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'Inicio' }}
+        options={{
+          tabBarLabel: 'Inicio',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="home-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
-      <BuyerTab.Screen name="Carrito" component={CarritoScreen} />
-      <BuyerTab.Screen name="Notificaciones" component={NotificationsScreen} />
+      <BuyerTab.Screen
+        name="Carrito"
+        component={CarritoScreen}
+        options={{
+          tabBarLabel: 'Carrito',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="cart-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <BuyerTab.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </BuyerTab.Navigator>
   );
 }
@@ -193,65 +246,86 @@ function BuyerNavigator() {
   );
 }
 
-function FarmerTabs() {
-  return (
-    <FarmerTab.Navigator
-      screenOptions={{
-        header: () => <Navbar />,
-        tabBarStyle: { display: 'none' },
-      }}
-    >
-      <FarmerTab.Screen
-        name="MyProducts"
-        component={MyProductsScreen}
-        options={{ title: 'Mis Productos' }}
-      />
-      <FarmerTab.Screen
-        name="AddProduct"
-        component={AddProductScreen}
-        options={{ title: 'Agregar' }}
-      />
-      <FarmerTab.Screen name="Notificaciones" component={NotificationsScreen} />
-    </FarmerTab.Navigator>
-  );
-}
-
-function FarmerNavigator() {
+function FarmerScreens() {
   return (
     <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
-      <FarmerStack.Screen name="FarmerTabs" component={FarmerTabs} />
-      <FarmerStack.Screen name="Profile" component={ProfileScreen} />
+      <FarmerStack.Screen name="FarmerHome" component={FarmerHomeScreen} />
+      <FarmerStack.Screen name="ProductList" component={ProductListScreen} />
+      <FarmerStack.Screen
+        name="ProductForm"
+        component={ProductFormScreen}
+        options={{ presentation: 'transparentModal' }}
+      />
     </FarmerStack.Navigator>
   );
 }
 
 function SellerTabs() {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+
   return (
     <SellerTab.Navigator
       screenOptions={{
-        header: () => <Navbar />,
-        tabBarStyle: { display: 'none' },
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: surface,
+          borderTopColor: border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: brand,
+        tabBarInactiveTintColor: muted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <SellerTab.Screen
-        name="SellerHome"
+        name="HomeSeller"
         component={HomeSellerScreen}
-        options={{ title: 'Inicio' }}
+        options={{
+          tabBarLabel: 'Inicio',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="home-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
       <SellerTab.Screen
         name="Sales"
         component={SalesScreen}
-        options={{ title: 'Ventas' }}
+        options={{
+          tabBarLabel: 'Ventas',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="cash-register"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
       <SellerTab.Screen
         name="Notificaciones"
         component={NotificationsScreen}
-        options={{ title: 'Notificaciones' }}
+        options={{
+          tabBarButton: () => null,
+        }}
       />
       <SellerTab.Screen
         name="Perfil"
         component={ProfileSellerScreen}
-        options={{ title: 'Perfil' }}
+        options={{
+          tabBarButton: () => null,
+        }}
       />
     </SellerTab.Navigator>
   );
@@ -261,6 +335,21 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
+      <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
+      <AdminStack.Screen
+        name="MunicipioTrash"
+        component={MunicipioTrashScreen}
+      />
+      <AdminStack.Screen name="LocalidadList" component={LocalidadListScreen} />
+      <AdminStack.Screen
+        name="LocalidadTrash"
+        component={LocalidadTrashScreen}
+      />
+      <AdminStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+      />
     </AdminStack.Navigator>
   );
 }
@@ -341,7 +430,7 @@ export default function AppNavigator(): React.JSX.Element {
 
   switch (user?.role) {
     case 'farmer':
-      return <FarmerNavigator />;
+      return <FarmerScreens />;
     case 'seller':
       return <SellerTabs />;
     case 'admin':

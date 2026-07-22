@@ -1,6 +1,15 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '~/hooks/useAuth';
 import { useTheme } from '~/providers/ThemeProvider';
 import type { Role } from '~/types';
+
+const roleLabel: Record<string, string> = {
+  admin: 'Administrador',
+  agricultor: 'Agricultor',
+  farmer: 'Agricultor',
+  vendedor: 'Vendedor',
+  comprador: 'Comprador',
+};
 
 interface NavItem {
   key: string;
@@ -46,6 +55,7 @@ const roleNavMap: Record<string, NavItem[]> = {
 };
 
 export function Sidebar({ role }: { role: Role }) {
+  const { user } = useAuth();
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const items = roleNavMap[role] ?? adminNav;
@@ -74,8 +84,8 @@ export function Sidebar({ role }: { role: Role }) {
       }}
     >
       {/* Brand */}
-      <a
-        href="/admin"
+      <NavLink
+        to={items[0]?.path ?? '/'}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -110,7 +120,7 @@ export function Sidebar({ role }: { role: Role }) {
         >
           RASSA-JALA
         </h1>
-      </a>
+      </NavLink>
 
       {/* Nav */}
       <nav
@@ -171,19 +181,32 @@ export function Sidebar({ role }: { role: Role }) {
             width: 36,
             height: 36,
             borderRadius: 10,
-            background: '#DE393A',
+            background: '#24563C',
             color: '#fff',
             display: 'grid',
             placeItems: 'center',
-            fontWeight: 600,
-            fontSize: 14,
+            fontWeight: 700,
+            fontSize: 13,
           }}
         >
-          AD
+          {user?.nombre?.slice(0, 2).toUpperCase() ?? '??'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>Admin</div>
-          <div style={{ fontSize: 12, color: muted }}>Administrador</div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: fg,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user?.nombre ?? 'Usuario'}
+          </div>
+          <div style={{ fontSize: 12, color: muted }}>
+            {roleLabel[user?.rol ?? ''] ?? user?.rol ?? ''}
+          </div>
         </div>
       </div>
     </aside>

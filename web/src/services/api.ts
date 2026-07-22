@@ -10,6 +10,16 @@ function isPublic(url: string): boolean {
   return PUBLIC_ENDPOINTS.some((prefix) => url.startsWith(prefix));
 }
 
+if (
+  typeof window !== 'undefined' &&
+  window.location.protocol === 'http:' &&
+  !window.location.hostname.includes('localhost')
+) {
+  console.warn(
+    '[rassa] Running on HTTP outside localhost — tokens may be intercepted',
+  );
+}
+
 const api = axios.create({
   baseURL: API_URL,
   timeout: 15_000,
@@ -78,6 +88,7 @@ api.interceptors.response.use(
     const is401 =
       error.response?.status === 401 &&
       window.location.pathname !== '/login' &&
+      window.location.pathname !== '/register' &&
       requestUrl &&
       !NO_REDIRECT_ON_401.some((prefix) => requestUrl.startsWith(prefix));
 

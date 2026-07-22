@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useTheme } from '../providers/ThemeProvider';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Category {
   id: number;
@@ -26,15 +26,8 @@ const initialData: Category[] = [
 ];
 
 export function AdminCategories() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const colors = useAppColors();
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Category[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');

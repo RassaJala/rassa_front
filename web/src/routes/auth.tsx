@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import axios from 'axios';
 import { AuthLayout } from '~/components/layout/AuthLayout';
 import { Button } from '~/components/ui/Button';
 import { useAuth } from '~/hooks/useAuth';
@@ -13,12 +14,30 @@ import type { Role, User } from '~/types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const ROLE_MAP: Record<string, Role> = {
+  admin: 'admin',
+  administrador: 'admin',
+  farmer: 'agricultor',
+  agricultor: 'agricultor',
+  productor: 'agricultor',
+  seller: 'vendedor',
+  vendedor: 'vendedor',
+  buyer: 'comprador',
+  comprador: 'comprador',
+  cliente: 'comprador',
+};
+
+// ponytail: normalize backend role strings to web Role type
+function normalizeRole(raw: string): Role {
+  return ROLE_MAP[raw.toLowerCase()] ?? 'comprador';
+}
+
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: raw.role as string as Role,
+    rol: normalizeRole(raw.role as string),
   };
 }
 
@@ -52,7 +71,7 @@ function loginErrors(
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
   else if (password.length < 6)
-    errs.password = 'La contraseña debe tener al menos 6 caracteres';
+    errs.password = 'La contraseña debe tener al menos 6 caracteres.';
   return errs;
 }
 
@@ -71,8 +90,8 @@ function registerErrors(
     return 'Nombre, apellido, email y contraseña son obligatorios.';
   }
   if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8)
-    return 'La contraseña debe tener al menos 8 caracteres.';
+  if (password.length < 6)
+    return 'La contraseña debe tener al menos 6 caracteres.';
   if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
   if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
@@ -121,8 +140,10 @@ export function LoginScreen() {
       if (tokens.refresh)
         sessionStorage.setItem('refresh_token', tokens.refresh);
 
+      // ponytail: pasar token explícitamente porque AuthProvider aún no guardó (#21)
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
+        { headers: { Authorization: `Bearer ${tokens.access}` } },
       );
       const user = mapMeUser(meData.data);
 
@@ -132,13 +153,21 @@ export function LoginScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setGeneralError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo (puede filtrar infra)
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 401) setGeneralError('Credenciales inválidas.');
+        else if (status === 429)
+          setGeneralError('Límite de peticiones excedido. Intentá más tarde.');
+        else if (status && status >= 500)
+          setGeneralError('Error del servidor. Intentá más tarde.');
+        else setGeneralError('Error al iniciar sesión.');
       } else {
         setGeneralError('Error al iniciar sesión.');
       }
@@ -450,13 +479,29 @@ export function RegisterScreen() {
         admin: '/admin/usuarios',
         vendedor: '/vendedor/ventas',
         agricultor: '/agricultor/productos',
+        cliente: '/cliente',
       };
-      navigate(roleRoutes[user.rol] ?? '/agricultor/productos', {
+      navigate(roleRoutes[user.rol] ?? '/cliente', {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data;
+        const backendMsg =
+          data && typeof data === 'object' && typeof data.detail === 'string'
+            ? data.detail
+            : null;
+        if (backendMsg) {
+          setError(backendMsg);
+        } else if (status === 409) {
+          setError('Ya existe una cuenta con ese correo.');
+        } else if (status && status >= 500) {
+          setError('Error del servidor. Intentá más tarde.');
+        } else {
+          setError('Error al registrarse.');
+        }
       } else {
         setError('Error al registrarse.');
       }
@@ -521,7 +566,7 @@ export function RegisterScreen() {
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 6 caracteres"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

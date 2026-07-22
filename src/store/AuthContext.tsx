@@ -14,7 +14,7 @@ import React, {
 import type { AxiosError } from 'axios';
 import axios from 'axios';
 
-import api from '@/services/api';
+import api, { registerAuthExpiredCallback } from '@/services/api';
 import * as Storage from '@/services/storage';
 import type {
   ApiResponse,
@@ -375,17 +375,14 @@ export function AuthProvider({
 
           console.error('Login falló:', safe);
 
-          // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: AxiosError contiene email/contraseña en config.data; Sentry serializa toda la cadena.
-          throw new Error(message);
+          throw new Error(message, { cause: error });
         }
 
         if (error instanceof Error) {
-          // eslint-disable-next-line preserve-caught-error -- No adjuntar cause: el error original podría contener datos sensibles del request.
-          throw new Error(error.message);
+          throw new Error(error.message, { cause: error });
         }
 
-        // eslint-disable-next-line preserve-caught-error -- Error genérico; no hay causa segura que adjuntar.
-        throw new Error('Error desconocido de autenticación');
+        throw new Error('Error desconocido de autenticación', { cause: error });
       }
     },
     [fetchUserProfile],
@@ -458,8 +455,8 @@ export function AuthProvider({
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'register');
-        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
-        throw new Error(message);
+
+        throw new Error(message, { cause: error });
       }
       throw error;
     } finally {
@@ -484,8 +481,8 @@ export function AuthProvider({
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'updateProfile');
-        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
-        throw new Error(message);
+
+        throw new Error(message, { cause: error });
       }
       throw error;
     }
@@ -498,8 +495,8 @@ export function AuthProvider({
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
         const message = parseAuthError(axiosError, 'changePassword');
-        // eslint-disable-next-line preserve-caught-error -- Avoid passing AxiosError cause to prevent Sentry credential leakage
-        throw new Error(message);
+
+        throw new Error(message, { cause: error });
       }
       throw error;
     }
@@ -507,6 +504,13 @@ export function AuthProvider({
 
   const logout = useCallback(async () => {
     await clearSession();
+  }, [clearSession]);
+
+  // Register logout callback so the API interceptor can force-logout on 401
+  useEffect(() => {
+    registerAuthExpiredCallback(() => {
+      void clearSession();
+    });
   }, [clearSession]);
 
   return (
