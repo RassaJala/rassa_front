@@ -414,7 +414,7 @@ export default function CrudListScreen<
     () =>
       config.searchFields ??
       (config.fields[0] ? [config.fields[0].name] : ['nombre']), // ponytail: asume entity has nombre field
-    [config.searchFields],
+    [config.searchFields, config.fields],
   );
   const { items: filteredItems, excludedCount } = useMemo(
     () =>
