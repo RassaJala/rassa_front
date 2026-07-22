@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { colors } from '../constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Family } from '../types';

@@ -1,3 +1,4 @@
+import path from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
@@ -5,11 +6,15 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': '/src',
-      '~': '/src',
+      '@/constants/colors': path.resolve(__dirname, '../src/constants/colors.ts'),
+      '@': path.resolve(__dirname, './src'),
+      '~': path.resolve(__dirname, './src'),
     },
   },
   server: {
+    fs: {
+      allow: ['..'],
+    },
     port: 5173,
     proxy: {
       '/api': {

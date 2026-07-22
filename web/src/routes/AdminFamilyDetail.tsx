@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { colors } from '../constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
