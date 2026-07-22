@@ -29,9 +29,10 @@ import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
-import AddProductScreen from '@/screens/farmer/AddProductScreen';
-import HomeFarmerScreen from '@/screens/farmer/HomeFarmerScreen';
-import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+// Farmer screens
+import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
+import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
+import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
@@ -41,16 +42,16 @@ import { useTheme } from '@/store/ThemeContext';
 import type {
   AdminStackParamList,
   AuthStackParamList,
+  FarmerStackParamList,
   SellerTabsParamList,
 } from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
-const FarmerTab = createBottomTabNavigator();
 const SellerTab = createBottomTabNavigator<SellerTabsParamList>();
 const BuyerStack = createNativeStackNavigator();
-const FarmerStack = createNativeStackNavigator();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
+const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
 const AdminTab = createBottomTabNavigator();
 
 function AdminTabs() {
@@ -245,82 +246,16 @@ function BuyerNavigator() {
   );
 }
 
-function FarmerTabs() {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-
-  return (
-    <FarmerTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: surface,
-          borderTopColor: border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}
-    >
-      <FarmerTab.Screen
-        name="HomeFarmer"
-        component={HomeFarmerScreen}
-        options={{
-          tabBarLabel: 'Inicio',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="home-outline"
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <FarmerTab.Screen
-        name="MyProducts"
-        component={MyProductsScreen}
-        options={{
-          tabBarLabel: 'Mis Productos',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="sprout-outline"
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <FarmerTab.Screen
-        name="AddProduct"
-        component={AddProductScreen}
-        options={{
-          tabBarLabel: 'Agregar',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="plus-circle-outline"
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </FarmerTab.Navigator>
-  );
-}
-
-function FarmerNavigator() {
+function FarmerScreens() {
   return (
     <FarmerStack.Navigator screenOptions={{ headerShown: false }}>
-      <FarmerStack.Screen name="FarmerTabs" component={FarmerTabs} />
-      <FarmerStack.Screen name="Profile" component={ProfileScreen} />
+      <FarmerStack.Screen name="FarmerHome" component={FarmerHomeScreen} />
+      <FarmerStack.Screen name="ProductList" component={ProductListScreen} />
+      <FarmerStack.Screen
+        name="ProductForm"
+        component={ProductFormScreen}
+        options={{ presentation: 'transparentModal' }}
+      />
     </FarmerStack.Navigator>
   );
 }
@@ -495,7 +430,7 @@ export default function AppNavigator(): React.JSX.Element {
 
   switch (user?.role) {
     case 'farmer':
-      return <FarmerNavigator />;
+      return <FarmerScreens />;
     case 'seller':
       return <SellerTabs />;
     case 'admin':
