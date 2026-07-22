@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { getColors } from '../constants/colors';
-import { useTheme } from '../providers/ThemeProvider';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Category {
   id: number;
@@ -27,10 +26,8 @@ const initialData: Category[] = [
 ];
 
 export function AdminCategories() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const c = getColors(isDark);
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const colors = useAppColors();
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Category[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
