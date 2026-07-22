@@ -81,8 +81,8 @@ auth/ # LoginScreen, RegisterScreen
 buyer/ # HomeScreen, ProductDetailScreen
 farmer/ # MyProductsScreen, AddProductScreen
 admin/ # AdminPanelScreen
+
 ## Communication guidelines
 
 - When applying changes, do NOT show code snippets in responses — write changes directly to files.
 - Keep final responses concise, clear, and focused on natural language summaries of what was modified and verified.
-
