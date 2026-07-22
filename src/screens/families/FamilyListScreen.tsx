@@ -27,24 +27,32 @@ type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyList'>;
 interface FamilyCardProps {
   readonly family: Family;
   readonly isDark: boolean;
+  readonly isTrash?: boolean;
   readonly onPress: () => void;
+  readonly onRestore?: () => void;
+  readonly onPermanentDelete?: () => void;
 }
 
 function FamilyCard({
   family,
   isDark,
+  isTrash,
   onPress,
+  onRestore,
+  onPermanentDelete,
 }: FamilyCardProps): React.JSX.Element {
   const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
   const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
   const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
   const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
   const accentBg = isDark ? colors.rassa.accentBgDark : colors.rassa.accentBg;
+  const brand = isDark ? colors.rassa.brandDark : colors.brandPrimary;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
+      disabled={isTrash}
       style={{
         backgroundColor: surface,
         borderRadius: 16,
@@ -67,7 +75,11 @@ function FamilyCard({
           backgroundColor: accentBg,
         }}
       >
-        <MaterialCommunityIcons name="account-group" size={22} color={muted} />
+        <MaterialCommunityIcons
+          name={isTrash ? 'delete-restore' : 'account-group'}
+          size={22}
+          color={isTrash ? colors.brandOrange : muted}
+        />
       </View>
 
       {/* Info */}
@@ -78,7 +90,11 @@ function FamilyCard({
         >
           {family.nombre_familia}
         </Text>
-        {family.jefe_nombre ? (
+        {isTrash ? (
+          <Text style={{ fontSize: 13, color: colors.brandOrange, marginTop: 2 }}>
+            Familia inactiva (en papelera)
+          </Text>
+        ) : family.jefe_nombre ? (
           <View
             style={{
               flexDirection: 'row',
@@ -117,8 +133,47 @@ function FamilyCard({
         ) : null}
       </View>
 
-      {/* Chevron */}
-      <MaterialCommunityIcons name="chevron-right" size={22} color={muted} />
+      {/* Acciones */}
+      {isTrash ? (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Pressable
+            onPress={onRestore}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            hitSlop={6}
+          >
+            <MaterialCommunityIcons name="restore" size={16} color={brand} />
+          </Pressable>
+          <Pressable
+            onPress={onPermanentDelete}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            hitSlop={6}
+          >
+            <MaterialCommunityIcons
+              name="delete-forever"
+              size={16}
+              color={colors.brandRedCoral}
+            />
+          </Pressable>
+        </View>
+      ) : (
+        <MaterialCommunityIcons name="chevron-right" size={22} color={muted} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -308,10 +363,7 @@ export default function FamilyListScreen(): React.JSX.Element {
     staleTime: 30_000,
   });
 
-  const {
-    data: trashFamilies,
-    refetch: refetchTrash,
-  } = useQuery<Family[]>({
+  const { data: trashFamilies, refetch: refetchTrash } = useQuery<Family[]>({
     queryKey: ['families', 'trash'],
     queryFn: fetchFamiliesTrash,
     staleTime: 30_000,
@@ -365,12 +417,12 @@ export default function FamilyListScreen(): React.JSX.Element {
           <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
             {currentList.length}{' '}
             {showTrash
-              ? currentList.length === 1
+              ? (currentList.length === 1
                 ? 'familia inactiva'
-                : 'familias inactivas'
-              : currentList.length === 1
+                : 'familias inactivas')
+              : (currentList.length === 1
                 ? 'familia registrada'
-                : 'familias registradas'}
+                : 'familias registradas')}
           </Text>
         </View>
 
@@ -413,14 +465,17 @@ export default function FamilyListScreen(): React.JSX.Element {
             onPress={() => navigation.navigate('FamilyForm')}
           >
             <Text
-              style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.iconWhite,
+              }}
             >
               Agregar
             </Text>
           </TouchableOpacity>
         </View>
       </View>
-
 
       {isEmpty ? (
         <EmptyView muted={muted} />
@@ -440,6 +495,7 @@ export default function FamilyListScreen(): React.JSX.Element {
             <FamilyCard
               family={item}
               isDark={isDark}
+              isTrash={showTrash}
               onPress={() =>
                 navigation.navigate('FamilyDetail', {
                   familyId: item.id_familia,

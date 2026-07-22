@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { colors } from '@/constants/colors';
+
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Family } from '../types';
@@ -10,15 +13,15 @@ export function AdminFamilies() {
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
 
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
-  const primaryGreen = '#16a34a';
-  const iconWhite = '#ffffff';
+  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
+  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const surface = isDark ? colors.rassa.surfaceDark : colors.surface;
+  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
+  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const coral = colors.brandRedCoral;
+  const primaryGreen = colors.primary;
+  const iconWhite = colors.iconWhite;
 
   const [items, setItems] = useState<Family[]>([]);
   const [trashItems, setTrashItems] = useState<Family[]>([]);
@@ -43,7 +46,6 @@ export function AdminFamilies() {
     fetchFamilies();
     fetchTrashFamilies();
   }, []);
-
 
   useEffect(() => {
     const trimmed = jefeQuery.trim();
@@ -156,7 +158,6 @@ export function AdminFamilies() {
       setError('Error al eliminar permanentemente la familia.');
     }
   }
-
 
   function startEdit(item: Family) {
     setEditId(item.id_familia);
@@ -375,7 +376,6 @@ export function AdminFamilies() {
         </button>
       </div>
 
-
       {error && (
         <div
           style={{
@@ -554,7 +554,7 @@ export function AdminFamilies() {
                               : isDark
                                 ? 'rgba(212,160,32,0.12)'
                                 : 'rgba(242,169,0,0.1)',
-                            color: item.estado ? brand : '#F2A900',
+                            color: item.estado ? brand : colors.warning,
                           }}
                         >
                           {item.estado ? 'Activo' : 'Inactivo'}
@@ -848,8 +848,8 @@ export function AdminFamilies() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = isDark
-                            ? '#353D35'
-                            : '#F5F7F0';
+                            ? colors.rassa.borderDark
+                            : colors.rassa.bg;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent';
@@ -915,7 +915,7 @@ export function AdminFamilies() {
                 style={{
                   ...btnStyle,
                   background: coral,
-                  color: '#fff',
+                  color: colors.iconWhite,
                   opacity: saving ? 0.6 : 1,
                 }}
               >
@@ -976,7 +976,7 @@ export function AdminFamilies() {
               <thead>
                 <tr
                   style={{
-                    background: isDark ? '#1A211B' : '#F5F7F0',
+                    background: isDark ? colors.rassa.bgDark : colors.rassa.bg,
                     borderBottom: `1px solid ${border}`,
                   }}
                 >
@@ -1080,7 +1080,7 @@ export function AdminFamilies() {
                             background: isDark
                               ? 'rgba(242,169,0,0.12)'
                               : 'rgba(242,169,0,0.1)',
-                            color: '#F2A900',
+                            color: colors.warning,
                           }}
                         >
                           En Papelera (Inactivo)
@@ -1092,43 +1092,50 @@ export function AdminFamilies() {
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             onClick={() => {
                               setRestoreTarget(item);
                               setSelectedJefe(null);
                               setJefeQuery('');
                             }}
+                            title="Restaurar / Asignar Jefe"
                             style={{
-                              background: primaryGreen,
-                              border: 'none',
+                              height: 32,
+                              padding: '0 12px',
                               borderRadius: 8,
-                              padding: '8px 16px',
+                              border: `1px solid ${border}`,
+                              background: surface,
+                              color: brand,
                               fontSize: 13,
-                              color: iconWhite,
-                              cursor: 'pointer',
                               fontWeight: 600,
+                              cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 6,
+                              gap: 4,
                             }}
                           >
-                            🔄 Restaurar / Asignar Jefe
+                            🔄 Restaurar
                           </button>
                           <button
                             onClick={() => setPermDelTarget(item)}
+                            title="Eliminar permanentemente"
                             style={{
-                              background: 'transparent',
-                              border: `1px solid ${coral}`,
+                              height: 32,
+                              padding: '0 12px',
                               borderRadius: 8,
-                              padding: '6px 12px',
-                              fontSize: 13,
+                              border: `1px solid ${border}`,
+                              background: surface,
                               color: coral,
-                              cursor: 'pointer',
+                              fontSize: 13,
                               fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            💥 Eliminar permanente
+                            💥 Eliminar
                           </button>
                         </div>
                       </td>
@@ -1179,7 +1186,8 @@ export function AdminFamilies() {
               🔄 Restaurar "{restoreTarget.nombre_familia}"
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 16 }}>
-              Para reactivar esta familia es <strong>obligatorio</strong> asignar un nuevo jefe de familia.
+              Para reactivar esta familia es <strong>obligatorio</strong>{' '}
+              asignar un nuevo jefe de familia.
             </p>
 
             <div style={{ marginBottom: 20, position: 'relative' }}>
@@ -1353,7 +1361,8 @@ export function AdminFamilies() {
               ¿Enviar familia a la papelera?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a mover "{delTarget.nombre_familia}" a la papelera. La familia quedará inactiva, sin jefe y sin miembros.
+              Vas a mover "{delTarget.nombre_familia}" a la papelera. La familia
+              quedará inactiva, sin jefe y sin miembros.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
@@ -1435,7 +1444,8 @@ export function AdminFamilies() {
               💥 ¿Eliminar permanentemente?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Esta acción eliminará de forma irreversible la familia "{permDelTarget.nombre_familia}" de la base de datos.
+              Esta acción eliminará de forma irreversible la familia "
+              {permDelTarget.nombre_familia}" de la base de datos.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
@@ -1465,7 +1475,7 @@ export function AdminFamilies() {
                   borderRadius: 8,
                   border: 'none',
                   background: coral,
-                  color: '#fff',
+                  color: colors.iconWhite,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -1481,4 +1491,3 @@ export function AdminFamilies() {
     </div>
   );
 }
-
