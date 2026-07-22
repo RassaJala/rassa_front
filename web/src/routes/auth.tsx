@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/Button';
 import { useAuth } from '~/hooks/useAuth';
 import api from '~/services/api';
 import type { Role, User } from '~/types';
+import { normalizeRole } from '~/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -13,27 +14,13 @@ import type { Role, User } from '~/types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function normalizeRole(apiRole: string | undefined): Role {
-  switch (apiRole) {
-    case 'admin':
-      return 'admin';
-    case 'farmer':
-      return 'agricultor';
-    case 'seller':
-      return 'vendedor';
-    case 'buyer':
-      return 'cliente';
-    default:
-      return 'cliente';
-  }
-}
-
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: normalizeRole(raw.role as string | undefined),
+    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 
@@ -52,7 +39,7 @@ function mapMeUser(raw: Record<string, unknown>): User {
     municipio_nombre: raw.municipio_nombre as string | undefined,
     localidad: raw.localidad as number | undefined,
     localidad_nombre: raw.localidad_nombre as string | undefined,
-    rol: normalizeRole(raw.role as string | undefined),
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 

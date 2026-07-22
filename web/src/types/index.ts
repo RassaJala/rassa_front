@@ -1,5 +1,20 @@
 export type Role = 'cliente' | 'agricultor' | 'vendedor' | 'admin';
 
+export function normalizeRole(apiRole: string | undefined): Role {
+  switch (apiRole) {
+    case 'admin':
+      return 'admin';
+    case 'farmer':
+      return 'agricultor';
+    case 'seller':
+      return 'vendedor';
+    case 'buyer':
+      return 'cliente';
+    default:
+      return 'cliente';
+  }
+}
+
 export interface User {
   id: number;
   email: string;

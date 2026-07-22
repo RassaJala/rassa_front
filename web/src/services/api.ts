@@ -37,11 +37,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-const NO_REDIRECT_ON_401 = [
-  '/auth/change-password/',
-  '/auth/me/',
-  '/token/refresh/',
-];
+const NO_REDIRECT_ON_401 = ['/auth/change-password/', '/token/refresh/'];
 
 // --- Refresh token ---
 
@@ -57,9 +53,10 @@ async function refreshAccessToken(
   const refreshToken = sessionStorage.getItem('refresh_token');
   if (!refreshToken) throw new Error('No refresh token');
 
-  const { data } = await api.post<{ access: string }>('/token/refresh/', {
-    refresh: refreshToken,
-  });
+  const { data } = await axios.post<{ access: string }>(
+    `${API_URL}/token/refresh/`,
+    { refresh: refreshToken },
+  );
 
   localStorage.setItem('token', data.access);
 

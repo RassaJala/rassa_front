@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 import { LocationSelector } from '~/components/profile/LocationSelector';
 import type {
   FieldErrors,
   Localidad,
   Municipio,
-  ProfileForm as ProfileFormType,
+  ProfileFormData as ProfileFormType,
 } from '~/components/profile/types';
 import { generoOptions } from '~/components/profile/types';
 
@@ -14,7 +15,18 @@ import { generoOptions } from '~/components/profile/types';
 // ---------------------------------------------------------------------------
 
 const FILTER_NAME = /[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'-]/g;
-const FILTER_PHONE = /[^\d\s\-()]/g;
+const FILTER_PHONE = /[^\d]/g;
+
+// Fecha máxima: 18 años atrás (mayoría de edad)
+const today = new Date();
+const MAX_DATE = new Date(
+  today.getFullYear() - 18,
+  today.getMonth(),
+  today.getDate(),
+)
+  .toISOString()
+  .split('T')[0] as string;
+const MIN_DATE = '1900-01-01';
 
 function filterNameInput(value: string): string {
   return value.replace(FILTER_NAME, '');
@@ -63,11 +75,8 @@ export function ProfileForm({
 }: ProfileFormProps) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const bg = isDark ? '#1A241C' : '#F5F6F3';
-  const coral = '#DE393A';
+  const colors = getColors(isDark);
+  const { fg, muted, border, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const btnStyle = {
@@ -106,6 +115,7 @@ export function ProfileForm({
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <label
+          htmlFor={fieldName}
           style={{
             fontSize: 13,
             fontWeight: 600,
@@ -171,6 +181,7 @@ export function ProfileForm({
           'nombre',
           <input
             type="text"
+            id="nombre"
             value={profile.nombre}
             maxLength={100}
             onChange={(e) => {
@@ -189,6 +200,7 @@ export function ProfileForm({
           'apellido_paterno',
           <input
             type="text"
+            id="apellido_paterno"
             value={profile.apellido_paterno}
             maxLength={100}
             onChange={(e) => {
@@ -210,6 +222,7 @@ export function ProfileForm({
           'apellido_materno',
           <input
             type="text"
+            id="apellido_materno"
             value={profile.apellido_materno}
             maxLength={100}
             onChange={(e) => {
@@ -230,8 +243,9 @@ export function ProfileForm({
           'telefono',
           <input
             type="text"
+            id="telefono"
             value={profile.telefono}
-            maxLength={15}
+            maxLength={10}
             onChange={(e) => {
               onChange({
                 ...profile,
@@ -251,7 +265,10 @@ export function ProfileForm({
           'fecha_nacimiento',
           <input
             type="date"
+            id="fecha_nacimiento"
             value={profile.fecha_nacimiento}
+            min={MIN_DATE}
+            max={MAX_DATE}
             onChange={(e) => {
               onChange({ ...profile, fecha_nacimiento: e.target.value });
               onClearError('fecha_nacimiento');
@@ -267,6 +284,7 @@ export function ProfileForm({
           'Género *',
           'genero',
           <select
+            id="genero"
             value={profile.genero}
             onChange={(e) => {
               onChange({ ...profile, genero: e.target.value });
@@ -295,6 +313,7 @@ export function ProfileForm({
             'direccion',
             <input
               type="text"
+              id="direccion"
               value={profile.direccion}
               maxLength={255}
               onChange={(e) => {

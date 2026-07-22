@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../hooks/useAuth';
 import type { AuthState, User } from '../types';
+import { normalizeRole } from '../types';
 import api from '../services/api';
 
 function loadInitialState(): { token: string | null } {
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: raw.id as number,
           email: raw.email as string,
           nombre: raw.nombre as string,
-          rol: raw.rol as User['rol'],
+          rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
           apellido_paterno: (raw.apellido_paterno as string) ?? '',
           apellido_materno: raw.apellido_materno as string | undefined,
           telefono: raw.telefono as string | undefined,

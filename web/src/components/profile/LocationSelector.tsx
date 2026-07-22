@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 import type {
   FieldErrors,
   Localidad,
@@ -39,11 +40,8 @@ export function LocationSelector({
 }: LocationSelectorProps) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const bg = isDark ? '#1A241C' : '#F5F6F3';
-  const coral = '#DE393A';
+  const colors = getColors(isDark);
+  const { fg, muted, border, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   function selectStyle(fieldName: string, hasError: boolean) {
@@ -104,6 +102,7 @@ export function LocationSelector({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <label
+          htmlFor="municipio"
           style={{
             fontSize: 13,
             fontWeight: 600,
@@ -115,6 +114,7 @@ export function LocationSelector({
           Municipio *
         </label>
         <select
+          id="municipio"
           value={selectedMunicipioId ?? ''}
           onChange={(e) => {
             const id = e.target.value ? Number(e.target.value) : null;
@@ -144,6 +144,7 @@ export function LocationSelector({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <label
+          htmlFor="localidad"
           style={{
             fontSize: 13,
             fontWeight: 600,
@@ -155,6 +156,7 @@ export function LocationSelector({
           Localidad *
         </label>
         <select
+          id="localidad"
           value={selectedLocalidadId ?? ''}
           onChange={(e) => {
             const id = e.target.value ? Number(e.target.value) : null;

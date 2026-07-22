@@ -9,7 +9,7 @@ export interface Localidad {
   municipio_id: number;
 }
 
-export interface ProfileForm {
+export interface ProfileFormData {
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string;

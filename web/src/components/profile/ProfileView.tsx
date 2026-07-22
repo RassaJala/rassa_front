@@ -1,5 +1,6 @@
 import { useTheme } from '~/providers/ThemeProvider';
-import type { ProfileForm } from '~/components/profile/types';
+import { getColors } from '~/constants/colors';
+import type { ProfileFormData } from '~/components/profile/types';
 import { getGeneroLabel } from '~/components/profile/types';
 
 // ---------------------------------------------------------------------------
@@ -19,8 +20,8 @@ function formatDate(iso: string | undefined): string {
 function FieldRow({ label, value }: { label: string; value: string }) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const colors = getColors(isDark);
+  const { fg, muted } = colors;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -53,7 +54,7 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 // ---------------------------------------------------------------------------
 
 interface ProfileViewProps {
-  profile: ProfileForm | null;
+  profile: ProfileFormData | null;
 }
 
 export function ProfileView({ profile }: ProfileViewProps) {

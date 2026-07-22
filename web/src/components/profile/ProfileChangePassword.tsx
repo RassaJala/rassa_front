@@ -1,5 +1,16 @@
 import { useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+
+const FILTER_PASSWORD = /[^a-zA-Z0-9]/g;
+
+function filterPasswordInput(value: string): string {
+  return value.replace(FILTER_PASSWORD, '');
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -34,12 +45,8 @@ export function ProfileChangePassword({
 }: ProfileChangePasswordProps) {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A241C' : '#F5F6F3';
-  const coral = '#DE393A';
+  const colors = getColors(isDark);
+  const { fg, muted, border, surface, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const btnStyle = {
@@ -83,16 +90,16 @@ export function ProfileChangePassword({
     const onChange =
       fieldName === 'current'
         ? (v: string) => {
-            onCurrentPasswordChange(v);
+            onCurrentPasswordChange(filterPasswordInput(v));
             onPasswordErrorClear();
           }
         : fieldName === 'new'
           ? (v: string) => {
-              onNewPasswordChange(v);
+              onNewPasswordChange(filterPasswordInput(v));
               onPasswordErrorClear();
             }
           : (v: string) => {
-              onConfirmPasswordChange(v);
+              onConfirmPasswordChange(filterPasswordInput(v));
               onPasswordErrorClear();
             };
 
@@ -177,7 +184,7 @@ export function ProfileChangePassword({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {renderField('Contraseña Actual *', 'current')}
-        {renderField('Nueva Contraseña (mínimo 8 caracteres) *', 'new')}
+        {renderField('Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *', 'new')}
         {renderField('Confirmar Nueva Contraseña *', 'confirm')}
       </div>
 
