@@ -14,7 +14,7 @@ import React, {
 import type { AxiosError } from 'axios';
 import axios from 'axios';
 
-import api from '@/services/api';
+import api, { registerAuthExpiredCallback } from '@/services/api';
 import * as Storage from '@/services/storage';
 import type {
   ApiResponse,
@@ -504,6 +504,13 @@ export function AuthProvider({
 
   const logout = useCallback(async () => {
     await clearSession();
+  }, [clearSession]);
+
+  // Register logout callback so the API interceptor can force-logout on 401
+  useEffect(() => {
+    registerAuthExpiredCallback(() => {
+      void clearSession();
+    });
   }, [clearSession]);
 
   return (

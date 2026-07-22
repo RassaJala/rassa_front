@@ -16,7 +16,7 @@ function loadAuthState(): AuthState {
       }
     }
   } catch {
-    // localStorage no disponible (private browsing, etc.)
+    // sessionStorage no disponible (private browsing, etc.)
   }
   return { user: null, token: null, isAuthenticated: false, isLoading: false };
 }
