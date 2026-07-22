@@ -141,7 +141,7 @@ const saleColumns: Column<SaleRow>[] = [
 
 const sellerOrderStatusVariant: Record<
   SellerOrderRow['estado'],
-  'success' | 'warning' | 'error'
+  'default' | 'success' | 'warning' | 'error'
 > = {
   Pendiente: 'warning',
   'En camino': 'default',

@@ -1,125 +1,165 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { getColors } from '../constants/colors';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
-import {
-  filterItems,
-  FILTER_LABELS,
-  STATUS_FILTERS,
-} from '../utils/crudFilter';
+import { getColors } from '../constants/colors';
+import api from '../services/api';
 
-interface Category {
-  id: number;
+interface Municipio {
+  id_municipio: number;
   nombre: string;
-  descripcion: string;
   estado: boolean;
 }
 
-const initialData: Category[] = [
-  {
-    id: 1,
-    nombre: 'Hortalizas',
-    descripcion: 'Verduras y hortalizas frescas',
-    estado: true,
-  },
-  { id: 2, nombre: 'Frutas', descripcion: 'Frutas de temporada', estado: true },
-  { id: 3, nombre: 'Cereales', descripcion: 'Granos y cereales', estado: true },
-  {
-    id: 4,
-    nombre: 'Legumbres',
-    descripcion: 'Legumbres variadas',
-    estado: false,
-  },
-];
+interface ApiListResponse {
+  data: Municipio[];
+  message?: string;
+}
 
-export function AdminCategories() {
+export function AdminMunicipios() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const c = getColors(isDark);
   const { fg, muted, border, surface, bg, brand, coral } = c;
 
-  const [items, setItems] = useState<Category[]>(initialData);
-  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [items, setItems] = useState<Municipio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: '', descripcion: '' });
+  const [form, setForm] = useState({ nombre: '' });
   const [search, setSearch] = useState('');
-  const [searchDebounced, setSearchDebounced] = useState('');
-  const [statusFilter, setStatusFilter] = useState<
-    'todos' | 'activos' | 'inactivos'
-  >('todos');
-  const [filterExcludedCount, setFilterExcludedCount] = useState(0);
-  const [delTarget, setDelTarget] = useState<Category | null>(null);
+  const [delTarget, setDelTarget] = useState<Municipio | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const nextId = useRef(5);
+  const [trashItems, setTrashItems] = useState<Municipio[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
 
-  // ── Debounce search ──────────────────────────────────────────
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<ApiListResponse>('/municipios/');
+      setItems(res.data.data ?? []);
+    } catch {
+      setError('Error al cargar municipios');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const timer = setTimeout(() => setSearchDebounced(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+    void fetchItems();
+  }, [fetchItems]);
 
-  const filtered = useMemo(() => {
-    const result = filterItems(items, searchDebounced, statusFilter, [
-      'nombre',
-      'descripcion',
-    ]);
-    setFilterExcludedCount(result.excludedCount);
-    return result.items;
-  }, [items, searchDebounced, statusFilter]);
+  async function fetchTrash() {
+    setTrashLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<ApiListResponse>('/municipios/trash/');
+      setTrashItems(res.data.data ?? []);
+    } catch {
+      setError('Error al cargar papelera');
+    } finally {
+      setTrashLoading(false);
+    }
+  }
+
+  async function restoreFromTrash(id: number) {
+    try {
+      await api.post(`/municipios/${id}/restore/`);
+      setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
+    } catch {
+      setError('Error al restaurar municipio');
+    }
+  }
+
+  async function permanentDelete(id: number) {
+    try {
+      await api.post(`/municipios/${id}/permanent/`);
+      setTrashItems((prev) => prev.filter((m) => m.id_municipio !== id));
+    } catch {
+      setError('Error al eliminar municipio definitivamente');
+    }
+  }
+
+  const filtered = useMemo(
+    () =>
+      items.filter((i) =>
+        i.nombre.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [items, search],
+  );
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: '', descripcion: '' });
+    setForm({ nombre: '' });
     setTab('form');
   }
 
-  function startEdit(item: Category) {
-    setEditId(item.id);
-    setForm({ nombre: item.nombre, descripcion: item.descripcion });
+  function startEdit(item: Municipio) {
+    setEditId(item.id_municipio);
+    setForm({ nombre: item.nombre });
     setTab('form');
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre.trim()) return;
     setSaving(true);
-    if (editId) {
+    try {
+      if (editId) {
+        await api.patch(`/municipios/${editId}/`, {
+          nombre: form.nombre.trim(),
+        });
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id_municipio === editId
+              ? { ...i, nombre: form.nombre.trim() }
+              : i,
+          ),
+        );
+      } else {
+        const res = await api.post('/municipios/', {
+          nombre: form.nombre.trim(),
+        });
+        setItems((prev) => [...prev, res.data.data as Municipio]);
+      }
+      setTab('list');
+    } catch {
+      setError(editId ? 'Error al actualizar' : 'Error al crear');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!delTarget) return;
+    try {
+      await api.delete(`/municipios/${delTarget.id_municipio}/`);
+      setItems((prev) =>
+        prev.filter((i) => i.id_municipio !== delTarget.id_municipio),
+      );
+      setDelTarget(null);
+    } catch {
+      setError('Error al eliminar');
+    }
+  }
+
+  async function toggleStatus(item: Municipio) {
+    const nuevoEstado = !item.estado;
+    try {
+      await api.patch(`/municipios/${item.id_municipio}/estado/`, {
+        estado: nuevoEstado,
+      });
       setItems((prev) =>
         prev.map((i) =>
-          i.id === editId
-            ? {
-                ...i,
-                nombre: form.nombre.trim(),
-                descripcion: form.descripcion.trim(),
-              }
+          i.id_municipio === item.id_municipio
+            ? { ...i, estado: nuevoEstado }
             : i,
         ),
       );
-    } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: nextId.current++,
-          nombre: form.nombre.trim(),
-          descripcion: form.descripcion.trim(),
-          estado: true,
-        },
-      ]);
+    } catch {
+      setError('Error al cambiar estado');
     }
-    setTab('list');
-    setSaving(false);
-  }
-
-  function handleDelete() {
-    if (!delTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== delTarget.id));
-    setDelTarget(null);
-  }
-
-  function toggleStatus(item: Category) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, estado: !i.estado } : i)),
-    );
   }
 
   const btnStyle = {
@@ -139,7 +179,6 @@ export function AdminCategories() {
 
   return (
     <div>
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -158,17 +197,48 @@ export function AdminCategories() {
             color: fg,
           }}
         >
-          Gestión de categorías
+          Gestión de municipios
         </h2>
         <button
           onClick={startNew}
           style={{ ...btnStyle, background: coral, color: '#fff' }}
         >
-          ＋ Nueva categoría
+          ＋ Nuevo municipio
         </button>
       </div>
 
-      {/* Tabs */}
+      {error && (
+        <div
+          style={{
+            background: 'rgba(222,57,58,0.1)',
+            border: '1px solid #DE393A',
+            borderRadius: 10,
+            padding: '10px 16px',
+            marginBottom: 16,
+            color: coral,
+            fontSize: 14,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: coral,
+              cursor: 'pointer',
+              fontSize: 16,
+              fontWeight: 700,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div
         style={{
           display: 'flex',
@@ -195,10 +265,13 @@ export function AdminCategories() {
             boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
-          📋 Lista de categorías
+          📋 Lista
         </button>
         <button
-          onClick={() => startNew()}
+          onClick={() => {
+            setTab('trash');
+            void fetchTrash();
+          }}
           style={{
             padding: '8px 20px',
             border: 'none',
@@ -207,16 +280,33 @@ export function AdminCategories() {
             fontWeight: 600,
             fontFamily: 'inherit',
             cursor: 'pointer',
+            background: tab === 'trash' ? surface : 'transparent',
+            color: tab === 'trash' ? fg : muted,
+            boxShadow: tab === 'trash' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+          }}
+        >
+          🗑️ Papelera
+        </button>
+        <button
+          onClick={() => startNew()}
+          disabled={loading}
+          style={{
+            padding: '8px 20px',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor: loading ? 'not-allowed' : 'pointer',
             background: tab === 'form' ? surface : 'transparent',
             color: tab === 'form' ? fg : muted,
             boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
-          ➕ Agregar categoría
+          ➕ Agregar municipio
         </button>
       </div>
 
-      {/* TAB: List */}
       {tab === 'list' && (
         <div
           style={{
@@ -238,11 +328,11 @@ export function AdminCategories() {
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {items.length} categorías
+              {loading ? 'Cargando…' : `${filtered.length} municipios`}
             </span>
             <input
               type="search"
-              placeholder="Buscar categoría…"
+              placeholder="Buscar municipio…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
@@ -259,78 +349,11 @@ export function AdminCategories() {
               }}
             />
           </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: 6,
-              padding: '8px 20px',
-              borderBottom: `1px solid ${border}`,
-            }}
-          >
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setStatusFilter(f)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 12,
-                  border: 'none',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  background: statusFilter === f ? brand : 'transparent',
-                  color: statusFilter === f ? '#fff' : muted,
-                }}
-              >
-                {FILTER_LABELS[f]}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Filter error banner ──────────────────────────── */}
-          {filterExcludedCount > 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                margin: '0 20px 8px',
-                padding: '8px 12px',
-                borderRadius: 10,
-                background: isDark ? '#3D2023' : '#FDEDEE',
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#DE393A"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <span style={{ fontSize: 13, color: '#DE393A', flex: 1 }}>
-                {filterExcludedCount} elemento
-                {filterExcludedCount !== 1 ? 's' : ''} no pudo
-                {filterExcludedCount === 1 ? '' : 'ieron'} procesarse debido a
-                un error.
-              </span>
-            </div>
-          ) : null}
-
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Nombre', 'Descripción', 'Estado', 'Acciones'].map((h) => (
+                  {['Nombre', 'Estado', 'Acciones'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -351,10 +374,10 @@ export function AdminCategories() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={3}
                       style={{
                         textAlign: 'center',
                         padding: '48px 24px',
@@ -362,12 +385,26 @@ export function AdminCategories() {
                         fontSize: 14,
                       }}
                     >
-                      No hay categorías
+                      Cargando datos…
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      {search ? 'Sin resultados' : 'No hay municipios'}
                     </td>
                   </tr>
                 ) : (
                   filtered.map((item) => (
-                    <tr key={item.id} style={{ background: surface }}>
+                    <tr key={item.id_municipio} style={{ background: surface }}>
                       <td
                         style={{
                           padding: '14px 20px',
@@ -378,16 +415,6 @@ export function AdminCategories() {
                         }}
                       >
                         {item.nombre}
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          fontSize: 14,
-                          borderBottom: `1px solid ${border}`,
-                          color: muted,
-                        }}
-                      >
-                        {item.descripcion}
                       </td>
                       <td
                         style={{
@@ -439,41 +466,197 @@ export function AdminCategories() {
                           >
                             {item.estado ? '⏸' : '▶️'}
                           </button>
+                          {item.estado && (
+                            <button
+                              onClick={() => startEdit(item)}
+                              aria-label="Editar"
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 8,
+                                border: `1px solid ${border}`,
+                                background: surface,
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                display: 'grid',
+                                placeItems: 'center',
+                                color: fg,
+                              }}
+                            >
+                              ✏️
+                            </button>
+                          )}
+                          {item.estado && (
+                            <button
+                              onClick={() => setDelTarget(item)}
+                              aria-label="Eliminar"
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 8,
+                                border: `1px solid ${border}`,
+                                background: surface,
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                display: 'grid',
+                                placeItems: 'center',
+                                color: fg,
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'trash' && (
+        <div
+          style={{
+            background: surface,
+            borderRadius: 16,
+            border: `1px solid ${border}`,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '16px 20px',
+              borderBottom: `1px solid ${border}`,
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+              {trashLoading
+                ? 'Cargando…'
+                : `${trashItems.length} municipios en papelera`}
+            </span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Nombre', 'Acciones'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: 'left',
+                        fontSize: 11,
+                        color: muted,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        fontWeight: 600,
+                        padding: '12px 20px',
+                        background: bg,
+                        borderBottom: `1px solid ${border}`,
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {trashLoading ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      Cargando datos…
+                    </td>
+                  </tr>
+                ) : trashItems.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        textAlign: 'center',
+                        padding: '48px 24px',
+                        color: muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      No hay municipios en la papelera
+                    </td>
+                  </tr>
+                ) : (
+                  trashItems.map((item) => (
+                    <tr key={item.id_municipio} style={{ background: surface }}>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          fontSize: 14,
+                          borderBottom: `1px solid ${border}`,
+                          fontWeight: 600,
+                          color: fg,
+                        }}
+                      >
+                        {item.nombre}
+                      </td>
+                      <td
+                        style={{
+                          padding: '14px 20px',
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
-                            onClick={() => startEdit(item)}
-                            aria-label="Editar"
+                            onClick={() =>
+                              void restoreFromTrash(item.id_municipio)
+                            }
+                            aria-label="Restaurar"
                             style={{
-                              width: 32,
                               height: 32,
+                              padding: '0 12px',
                               borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
+                              border: '1.5px solid #24563C',
+                              background: 'transparent',
+                              color: '#24563C',
+                              fontSize: 13,
+                              fontWeight: 600,
                               cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
+                              fontFamily: 'inherit',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            ✏️
+                            ↩️ Restaurar
                           </button>
                           <button
-                            onClick={() => setDelTarget(item)}
-                            aria-label="Eliminar"
+                            onClick={() =>
+                              void permanentDelete(item.id_municipio)
+                            }
+                            aria-label="Eliminar definitivamente"
                             style={{
-                              width: 32,
                               height: 32,
+                              padding: '0 12px',
                               borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
+                              border: '1.5px solid #DE393A',
+                              background: 'transparent',
+                              color: '#DE393A',
+                              fontSize: 13,
+                              fontWeight: 600,
                               cursor: 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color: fg,
+                              fontFamily: 'inherit',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            🗑️
+                            🗑️ Eliminar
                           </button>
                         </div>
                       </td>
@@ -482,43 +665,10 @@ export function AdminCategories() {
                 )}
               </tbody>
             </table>
-            {!items.length ? null : filtered.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '48px 20px',
-                  color: muted,
-                }}
-              >
-                <div style={{ fontSize: 48, marginBottom: 12 }}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                    <path d="M8 11h6" />
-                  </svg>
-                </div>
-                <p style={{ fontSize: 14, margin: 0 }}>
-                  {searchDebounced.trim()
-                    ? `No se encontraron resultados para "${searchDebounced.trim()}".`
-                    : 'No se encontraron resultados con el filtro actual.'}
-                </p>
-              </div>
-            ) : null}
           </div>
         </div>
       )}
 
-      {/* TAB: Form */}
       {tab === 'form' && (
         <div
           style={{
@@ -535,22 +685,20 @@ export function AdminCategories() {
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? 'Editar categoría' : 'Nueva categoría'}
+              {editId ? 'Editar municipio' : 'Nuevo municipio'}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: '1fr',
               gap: 18,
               padding: 24,
             }}
           >
             <div
-              className="full"
               style={{
-                gridColumn: '1 / -1',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 5,
@@ -573,7 +721,7 @@ export function AdminCategories() {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, nombre: e.target.value }))
                 }
-                placeholder="ej. Hortalizas"
+                placeholder="ej. Tlaquepaque"
                 required
                 style={{
                   width: '100%',
@@ -591,49 +739,6 @@ export function AdminCategories() {
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div
-              className="full"
-              style={{
-                gridColumn: '1 / -1',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 5,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: muted,
-                }}
-              >
-                Descripción
-              </label>
-              <textarea
-                value={form.descripcion}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, descripcion: e.target.value }))
-                }
-                placeholder="Descripción de la categoría"
-                style={{
-                  width: '100%',
-                  height: 90,
-                  border: `1.5px solid ${focusedField === 'descripcion' ? brand : border}`,
-                  borderRadius: 10,
-                  padding: '12px 14px',
-                  fontSize: 15,
-                  fontFamily: 'inherit',
-                  background: bg,
-                  color: fg,
-                  outline: 'none',
-                  resize: 'vertical',
-                }}
-                onFocus={() => setFocusedField('descripcion')}
-                onBlur={() => setFocusedField(null)}
-              />
-            </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="submit"
@@ -645,7 +750,7 @@ export function AdminCategories() {
                   opacity: saving ? 0.6 : 1,
                 }}
               >
-                💾 Guardar categoría
+                💾 Guardar municipio
               </button>
               <button
                 type="button"
@@ -664,7 +769,6 @@ export function AdminCategories() {
         </div>
       )}
 
-      {/* Delete modal */}
       {delTarget && (
         <div
           style={{
@@ -699,11 +803,10 @@ export function AdminCategories() {
                 marginBottom: 8,
               }}
             >
-              ¿Eliminar categoría?
+              ¿Eliminar municipio?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a eliminar "{delTarget.nombre}". Esta acción no se puede
-              deshacer.
+              Vas a eliminar "{delTarget.nombre}". Se moverá a la papelera.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
@@ -740,7 +843,7 @@ export function AdminCategories() {
                   fontFamily: 'inherit',
                 }}
               >
-                Eliminar
+                Enviar a papelera
               </button>
             </div>
           </div>

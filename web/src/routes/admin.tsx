@@ -40,7 +40,7 @@ const sampleUsers: UserRow[] = [
     id: 1,
     name: 'María García',
     email: 'maria@rassa.com',
-    rol: 'comprador',
+    rol: 'cliente',
     fechaRegistro: '10/01/2026',
     estado: 'Activo',
   },
@@ -72,7 +72,7 @@ const sampleUsers: UserRow[] = [
     id: 5,
     name: 'Laura Díaz',
     email: 'laura@rassa.com',
-    rol: 'comprador',
+    rol: 'cliente',
     fechaRegistro: '20/04/2026',
     estado: 'Inactivo',
   },
@@ -176,7 +176,7 @@ const sampleAdminOrders: AdminOrderRow[] = [
 // --- Columns ---
 
 const roleVariant: Record<Role, 'default' | 'success' | 'warning' | 'error'> = {
-  comprador: 'default',
+  cliente: 'default',
   agricultor: 'success',
   vendedor: 'warning',
   admin: 'error',
