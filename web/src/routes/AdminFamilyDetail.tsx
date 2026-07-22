@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { colors } from '@/constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
@@ -16,13 +17,13 @@ export function AdminFamilyDetail() {
   const familyName = searchParams.get('familyName') ?? 'Detalle de familia';
   const familyId = parseInt(familyIdStr, 10);
 
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const fg = isDark ? colors.rassa.fgDark : colors.rassa.fg;
+  const muted = isDark ? colors.rassa.mutedDark : colors.rassa.muted;
+  const border = isDark ? colors.rassa.borderDark : colors.rassa.border;
+  const surface = isDark ? colors.rassa.surfaceDark : colors.rassa.surface;
+  const bg = isDark ? colors.rassa.bgDark : colors.rassa.bg;
+  const brand = isDark ? colors.brandPrimaryDark : colors.brandPrimary;
+  const coral = colors.brandRedCoral;
 
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -610,7 +611,7 @@ export function AdminFamilyDetail() {
                       }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLDivElement).style.background =
-                          isDark ? colors.rassa.borderDark : colors.rassa.bg;
+                          isDark ? border : bg;
                       }}
                       onMouseLeave={(e) => {
                         (e.currentTarget as HTMLDivElement).style.background =

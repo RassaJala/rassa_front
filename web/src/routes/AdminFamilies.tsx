@@ -846,8 +846,8 @@ export function AdminFamilies() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = isDark
-                            ? colors.rassa.borderDark
-                            : colors.rassa.bg;
+                            ? border
+                            : bg;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent';
@@ -974,7 +974,7 @@ export function AdminFamilies() {
               <thead>
                 <tr
                   style={{
-                    background: isDark ? colors.rassa.bgDark : colors.rassa.bg,
+                    background: bg,
                     borderBottom: `1px solid ${border}`,
                   }}
                 >
