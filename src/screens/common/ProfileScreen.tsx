@@ -28,7 +28,7 @@ import {
   validatePhone,
 } from '@/utils/validation';
 
-type ActiveTab = 'ver' | 'editar';
+type ActiveTab = 'ver' | 'editar' | 'password';
 
 const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
 
