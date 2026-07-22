@@ -6,6 +6,13 @@ import axiosRetry from 'axios-retry';
 
 import * as Storage from './storage';
 
+declare const process: {
+  env: {
+    EXPO_PUBLIC_API_URL?: string;
+    NODE_ENV?: string;
+  };
+};
+
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 3;
@@ -21,8 +28,7 @@ function resolveBaseURL(): string {
   const configured =
     Platform.OS === 'web'
       ? 'http://localhost:8000'
-      : // eslint-disable-next-line no-undef -- process is injected by expo
-        (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
+      : (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
@@ -31,7 +37,6 @@ function resolveBaseURL(): string {
 const baseURL = resolveBaseURL();
 
 // Guard: reject HTTP in production to prevent credential leakage
-// eslint-disable-next-line no-undef -- process is injected by expo
 if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
   throw new Error(
     'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +

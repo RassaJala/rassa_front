@@ -18,7 +18,9 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { colors } from '@/constants/colors';
 import ChatBubble from '@/features/chat/components/ChatBubble';
 import ChatInput from '@/features/chat/components/ChatInput';
 import MessageEditModal from '@/features/chat/components/MessageEditModal';
@@ -29,13 +31,20 @@ import { useMarkAsRead } from '@/features/chat/hooks/useMarkAsRead';
 import { useSendMessage } from '@/features/chat/hooks/useSendMessage';
 import { useSendMessageWithMedia } from '@/features/chat/hooks/useSendMessageWithMedia';
 import { useAuth } from '@/store/AuthContext';
-import type { AttachmentType, ChatStackParamList, Message } from '@/types/chat';
+import { useTheme } from '@/store/ThemeContext';
+import type { BuyerStackParamList } from '@/types';
+import type { AttachmentType, Message } from '@/types/chat';
+
+type ChatNavigation = NativeStackNavigationProp<BuyerStackParamList, 'Chat'>;
 
 export default function ChatScreen(): React.JSX.Element {
-  const route = useRoute<RouteProp<ChatStackParamList, 'Chat'>>();
-  const navigation = useNavigation();
+  const route = useRoute<RouteProp<BuyerStackParamList, 'Chat'>>();
+  const navigation = useNavigation<ChatNavigation>();
   const { conversationId, tipo, isFamily } = route.params;
   const { user } = useAuth();
+  const { colorScheme } = useTheme();
+  const groupIconColor =
+    colorScheme === 'dark' ? colors.admBrandD : colors.admBrandL;
 
   const {
     data,
@@ -56,14 +65,14 @@ export default function ChatScreen(): React.JSX.Element {
 
   useLayoutEffect(() => {
     if (tipo === 'grupal') {
-      navigation.getParent()?.setOptions({
+      navigation.setOptions({
         headerRight: () => (
           <MaterialCommunityIcons
             name="account-group"
             size={24}
-            color="#24563C"
+            color={groupIconColor}
             onPress={() => {
-              navigation.getParent()?.navigate('GroupDetail', {
+              navigation.navigate('GroupDetail', {
                 conversationId,
                 title: route.params.title,
                 isFamily,
@@ -74,7 +83,14 @@ export default function ChatScreen(): React.JSX.Element {
         ),
       });
     }
-  }, [navigation, tipo, conversationId, route.params.title, isFamily]);
+  }, [
+    navigation,
+    tipo,
+    conversationId,
+    route.params.title,
+    isFamily,
+    groupIconColor,
+  ]);
 
   const messages = useMemo(
     () => data?.pages.flatMap((page) => page.results) ?? [],

@@ -128,9 +128,13 @@ export type AdminStackParamList = {
     conversationId: number;
     title: string;
     tipo?: 'privada' | 'grupal';
-    isFamily?: boolean;
+    isFamily?: boolean | undefined;
   };
-  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
   CreateGroup: undefined;
   StartChat: undefined;
   CategoryList: undefined;
@@ -168,9 +172,13 @@ export type BuyerStackParamList = {
     conversationId: number;
     title: string;
     tipo?: 'privada' | 'grupal';
-    isFamily?: boolean;
+    isFamily?: boolean | undefined;
   };
-  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
 export type FarmerTabsParamList = {
@@ -187,9 +195,13 @@ export type FarmerStackParamList = {
     conversationId: number;
     title: string;
     tipo?: 'privada' | 'grupal';
-    isFamily?: boolean;
+    isFamily?: boolean | undefined;
   };
-  GroupDetail: { conversationId: number; title: string; isFamily?: boolean };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
 export type AdminTabsParamList = {

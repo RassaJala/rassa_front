@@ -24,15 +24,18 @@ interface ApiResponseWrapper<T> {
 // Unwrap helper: backend wraps responses in {ok, data, message}
 function unwrap<T>(response: { data: unknown }): T {
   const body = response.data as ApiResponseWrapper<T>;
+  if (body.ok === false) {
+    throw new Error(body.message || 'Error en la respuesta del servidor');
+  }
   return body.data;
 }
 
 // --- Field mappers ---
 
-function mapMessage(raw: BackendMessage): Message {
+function mapMessage(raw: BackendMessage, conversationId?: number): Message {
   return {
     id: raw.id_mensaje,
-    conversacion: 0, // not in serializer; filled by caller if needed
+    conversacion: conversationId ?? 0,
     remitente: raw.emisor.id_usuario,
     remitente_nombre: raw.emisor.nombre_completo,
     contenido: raw.contenido,
@@ -93,10 +96,7 @@ export async function getMessages(
     count: rawPaginated.count,
     next: rawPaginated.next,
     previous: rawPaginated.previous,
-    results: rawPaginated.results.map((m) => ({
-      ...mapMessage(m),
-      conversacion: conversationId,
-    })),
+    results: rawPaginated.results.map((m) => mapMessage(m, conversationId)),
   };
 }
 
@@ -108,7 +108,7 @@ export async function sendMessage(
     contenido: payload.contenido,
   });
   const raw: BackendMessage = unwrap<BackendMessage>(res);
-  return { ...mapMessage(raw), conversacion: payload.conversacion };
+  return mapMessage(raw, payload.conversacion);
 }
 
 export async function createPrivateConversation(
@@ -179,7 +179,7 @@ export async function sendMessageWithMedia(
   payload: SendMessageWithMediaPayload,
 ): Promise<Message> {
   const formData = new FormData();
-  formData.append('conversacion', String(payload.conversacion));
+  formData.append('fk_conversacion', String(payload.conversacion));
   formData.append('tipo_documento', payload.tipo_documento);
   if (payload.contenido) {
     formData.append('contenido', payload.contenido);
@@ -190,20 +190,29 @@ export async function sendMessageWithMedia(
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   // Backend returns partial: {ok, data: {id_mensaje, id_documento, url_documento}}
-  void unwrap<{
+  const data = unwrap<{
     id_mensaje: number;
     id_documento: number;
     url_documento: string;
   }>(res);
-  // Return a placeholder — hooks invalidate queries instead of using this
   return {
-    id: Date.now(),
+    id: data.id_mensaje,
     conversacion: payload.conversacion,
     remitente: 0,
     remitente_nombre: '',
     contenido: payload.contenido ?? '',
     creado_en: new Date().toISOString(),
     leido: false,
+    adjuntos: [
+      {
+        id: data.id_documento,
+        mensaje: data.id_mensaje,
+        archivo: data.url_documento,
+        tipo: payload.tipo_documento,
+        nombre: '',
+        tamaño: 0,
+      },
+    ],
   };
 }
 

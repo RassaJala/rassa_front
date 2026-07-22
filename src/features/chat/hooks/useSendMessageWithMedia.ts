@@ -54,7 +54,25 @@ export function useSendMessageWithMedia(
         };
       });
 
-      return { previousMessages };
+      return { previousMessages, optimisticId: optimisticMessage.id };
+    },
+    onSuccess: (data, _variables, context) => {
+      if (context?.optimisticId == null) return;
+      queryClient.setQueryData<{
+        pages: PaginatedResponse<Message>[];
+        pageParams: number[];
+      }>(['messages', conversationId], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            results: page.results.map((msg) =>
+              msg.id === context.optimisticId ? data : msg,
+            ),
+          })),
+        };
+      });
     },
     onError: (_error, _variables, context) => {
       if (context?.previousMessages) {
