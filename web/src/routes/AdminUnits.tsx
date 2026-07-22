@@ -21,8 +21,18 @@ export function AdminUnits() {
       entityNamePlural="unidades"
       initialData={initialData}
       fields={[
-        { name: 'nombre', label: 'Nombre', placeholder: 'Ej: Kilogramo', required: true },
-        { name: 'abreviatura', label: 'Abreviatura', placeholder: 'Ej: kg', required: true },
+        {
+          name: 'nombre',
+          label: 'Nombre',
+          placeholder: 'Ej: Kilogramo',
+          required: true,
+        },
+        {
+          name: 'abreviatura',
+          label: 'Abreviatura',
+          placeholder: 'Ej: kg',
+          required: true,
+        },
       ]}
       searchFields={['nombre', 'abreviatura']}
       nextIdStart={5}

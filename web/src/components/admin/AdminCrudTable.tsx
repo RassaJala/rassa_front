@@ -16,7 +16,9 @@ export interface FieldDefinition<T> {
   fullWidth?: boolean;
 }
 
-export interface AdminCrudTableProps<T extends { id: number; nombre: string; estado: boolean }> {
+export interface AdminCrudTableProps<
+  T extends { id: number; nombre: string; estado: boolean },
+> {
   entityName: string;
   entityNamePlural: string;
   initialData: T[];
@@ -26,10 +28,18 @@ export interface AdminCrudTableProps<T extends { id: number; nombre: string; est
   formatDeleteTarget?: (item: T) => string;
 }
 
-export function AdminCrudTable<T extends { id: number; nombre: string; estado: boolean }>(
-  props: AdminCrudTableProps<T>,
-) {
-  const { entityName, entityNamePlural, initialData, fields, searchFields, nextIdStart, formatDeleteTarget } = props;
+export function AdminCrudTable<
+  T extends { id: number; nombre: string; estado: boolean },
+>(props: AdminCrudTableProps<T>) {
+  const {
+    entityName,
+    entityNamePlural,
+    initialData,
+    fields,
+    searchFields,
+    nextIdStart,
+    formatDeleteTarget,
+  } = props;
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const c = getColors(isDark);
@@ -59,7 +69,12 @@ export function AdminCrudTable<T extends { id: number; nombre: string; estado: b
   }, [search]);
 
   const filtered = useMemo(() => {
-    const result = filterItems(items, searchDebounced, statusFilter, searchFields);
+    const result = filterItems(
+      items,
+      searchDebounced,
+      statusFilter,
+      searchFields,
+    );
     setFilterExcludedCount(result.excludedCount);
     return result.items;
   }, [items, searchDebounced, statusFilter, searchFields]);
@@ -72,7 +87,9 @@ export function AdminCrudTable<T extends { id: number; nombre: string; estado: b
 
   function startEdit(item: T) {
     setEditId(item.id);
-    setForm(Object.fromEntries(fields.map((f) => [f.name, String(item[f.name])])));
+    setForm(
+      Object.fromEntries(fields.map((f) => [f.name, String(item[f.name])])),
+    );
     setTab('form');
   }
 
@@ -86,9 +103,7 @@ export function AdminCrudTable<T extends { id: number; nombre: string; estado: b
     );
     if (editId) {
       setItems((prev) =>
-        prev.map((i) =>
-          i.id === editId ? { ...i, ...formData } as T : i,
-        ),
+        prev.map((i) => (i.id === editId ? ({ ...i, ...formData } as T) : i)),
       );
     } else {
       setItems((prev) => [
@@ -316,24 +331,26 @@ export function AdminCrudTable<T extends { id: number; nombre: string; estado: b
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {[...fields.map((f) => f.label), 'Estado', 'Acciones'].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        textAlign: 'left',
-                        fontSize: 11,
-                        color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        fontWeight: 600,
-                        padding: '12px 20px',
-                        background: bg,
-                        borderBottom: `1px solid ${border}`,
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {[...fields.map((f) => f.label), 'Estado', 'Acciones'].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: 'left',
+                          fontSize: 11,
+                          color: muted,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          fontWeight: 600,
+                          padding: '12px 20px',
+                          background: bg,
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>

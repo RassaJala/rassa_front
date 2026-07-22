@@ -31,8 +31,20 @@ export function AdminCategories() {
       entityNamePlural="categorías"
       initialData={initialData}
       fields={[
-        { name: 'nombre', label: 'Nombre', placeholder: 'Ej: Hortalizas', required: true, fullWidth: true },
-        { name: 'descripcion', label: 'Descripción', placeholder: 'Descripción de la categoría', type: 'textarea', fullWidth: true },
+        {
+          name: 'nombre',
+          label: 'Nombre',
+          placeholder: 'Ej: Hortalizas',
+          required: true,
+          fullWidth: true,
+        },
+        {
+          name: 'descripcion',
+          label: 'Descripción',
+          placeholder: 'Descripción de la categoría',
+          type: 'textarea',
+          fullWidth: true,
+        },
       ]}
       searchFields={['nombre', 'descripcion']}
       nextIdStart={5}

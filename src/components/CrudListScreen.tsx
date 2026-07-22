@@ -134,9 +134,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
       ]}
     >
       {/* Icono */}
-      <View
-        style={[styles.listItemIcon, { backgroundColor: accentBg }]}
-      >
+      <View style={[styles.listItemIcon, { backgroundColor: accentBg }]}>
         <MaterialCommunityIcons
           name={item.estado ? 'check-circle-outline' : 'circle-outline'}
           size={20}
@@ -613,9 +611,7 @@ export default function CrudListScreen<
         ]}
       >
         <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
-        <Text
-          style={[styles.infoText, { color: muted }]}
-        >
+        <Text style={[styles.infoText, { color: muted }]}>
           No tienes permisos para acceder a esta sección.
         </Text>
       </View>
@@ -635,14 +631,10 @@ export default function CrudListScreen<
           size={64}
           color={muted}
         />
-        <Text
-          style={[styles.comingSoonTitle, { color: muted }]}
-        >
+        <Text style={[styles.comingSoonTitle, { color: muted }]}>
           Funcionalidad en desarrollo
         </Text>
-        <Text
-          style={[styles.comingSoonDesc, { color: muted }]}
-        >
+        <Text style={[styles.comingSoonDesc, { color: muted }]}>
           Esta sección estará disponible próximamente.
         </Text>
       </View>
@@ -651,9 +643,7 @@ export default function CrudListScreen<
 
   function renderLoadingView() {
     return (
-      <View
-        style={[styles.centerFlex, { backgroundColor: bg }]}
-      >
+      <View style={[styles.centerFlex, { backgroundColor: bg }]}>
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -672,9 +662,7 @@ export default function CrudListScreen<
           size={48}
           color={muted}
         />
-        <Text
-          style={[styles.infoText, { color: muted }]}
-        >
+        <Text style={[styles.infoText, { color: muted }]}>
           {netInfo.isConnected === false
             ? 'Sin conexión a Internet. Verifica tu conexión.'
             : config.loadingErrorText}
@@ -704,14 +692,10 @@ export default function CrudListScreen<
             size={64}
             color={muted}
           />
-          <Text
-            style={[styles.emptyTitle, { color: muted }]}
-          >
+          <Text style={[styles.emptyTitle, { color: muted }]}>
             {config.emptyText}
           </Text>
-          <Text
-            style={[styles.emptyDesc, { color: muted }]}
-          >
+          <Text style={[styles.emptyDesc, { color: muted }]}>
             {config.emptyDescription}
           </Text>
         </View>
@@ -762,7 +746,10 @@ export default function CrudListScreen<
               onPress={() => setStatusFilter(filter)}
               style={[
                 styles.filterChip,
-                { backgroundColor: statusFilter === filter ? brand : segmentedBg },
+                {
+                  backgroundColor:
+                    statusFilter === filter ? brand : segmentedBg,
+                },
               ]}
             >
               <Text
@@ -779,9 +766,7 @@ export default function CrudListScreen<
 
         {/* ── Filter error banner ────────────────────────────────── */}
         {excludedCount > 0 ? (
-          <View
-            style={[styles.errorBanner, { backgroundColor: errorBg }]}
-          >
+          <View style={[styles.errorBanner, { backgroundColor: errorBg }]}>
             <MaterialCommunityIcons
               name="alert-circle-outline"
               size={18}
@@ -802,9 +787,7 @@ export default function CrudListScreen<
               size={64}
               color={muted}
             />
-            <Text
-              style={[styles.infoText, { color: muted }]}
-            >
+            <Text style={[styles.infoText, { color: muted }]}>
               {searchTermDebounced.trim()
                 ? `No se encontraron resultados para "${searchTermDebounced.trim()}".`
                 : 'No se encontraron resultados con el filtro actual.'}
@@ -879,17 +862,13 @@ export default function CrudListScreen<
           </Text>
 
           {formErrors.general ? (
-            <View
-              style={[styles.formErrorBox, { backgroundColor: errorBg }]}
-            >
+            <View style={[styles.formErrorBox, { backgroundColor: errorBg }]}>
               <MaterialCommunityIcons
                 name="alert-circle"
                 size={18}
                 color={errorColor}
               />
-              <Text
-                style={[styles.formErrorText, { color: errorColor }]}
-              >
+              <Text style={[styles.formErrorText, { color: errorColor }]}>
                 {formErrors.general}
               </Text>
             </View>
@@ -899,9 +878,7 @@ export default function CrudListScreen<
             const fieldErr = formErrors.fields[field.name];
             return (
               <View key={field.name} style={styles.fieldWrapper}>
-                <Text
-                  style={[styles.fieldLabel, { color: muted }]}
-                >
+                <Text style={[styles.fieldLabel, { color: muted }]}>
                   {field.label}
                 </Text>
                 <TextInput
@@ -934,9 +911,7 @@ export default function CrudListScreen<
                   }}
                 />
                 {fieldErr ? (
-                  <Text
-                    style={[styles.fieldError, { color: errorColor }]}
-                  >
+                  <Text style={[styles.fieldError, { color: errorColor }]}>
                     {fieldErr}
                   </Text>
                 ) : null}
@@ -945,9 +920,7 @@ export default function CrudListScreen<
           })}
         </ScrollView>
 
-        <View
-          style={[styles.formFooter, { borderTopColor: border }]}
-        >
+        <View style={[styles.formFooter, { borderTopColor: border }]}>
           <TouchableOpacity
             onPress={handleSave}
             disabled={isSaving}
@@ -1005,9 +978,7 @@ export default function CrudListScreen<
                 />
               </Pressable>
             ) : null}
-            <Text
-              style={[styles.headerTitle, { color: fg }]}
-            >
+            <Text style={[styles.headerTitle, { color: fg }]}>
               {config.headerTitle}
             </Text>
           </View>
@@ -1033,7 +1004,10 @@ export default function CrudListScreen<
 
         <View style={styles.segmentedRow}>
           <View
-            style={[styles.segmentedContainer, { backgroundColor: segmentedBg }]}
+            style={[
+              styles.segmentedContainer,
+              { backgroundColor: segmentedBg },
+            ]}
           >
             <TouchableOpacity
               onPress={() => {
@@ -1091,9 +1065,7 @@ export default function CrudListScreen<
             style={[styles.modalOverlay, { backgroundColor: modalOverlay }]}
             onPress={() => setToggleTarget(null)}
           />
-          <View
-            style={[styles.modalSheet, { backgroundColor: surface }]}
-          >
+          <View style={[styles.modalSheet, { backgroundColor: surface }]}>
             <View style={styles.modalHeader}>
               <View
                 style={[styles.modalIconWrapper, { backgroundColor: errorBg }]}
@@ -1108,16 +1080,12 @@ export default function CrudListScreen<
                   color={errorColor}
                 />
               </View>
-              <Text
-                style={[styles.modalTitle, { color: fg }]}
-              >
+              <Text style={[styles.modalTitle, { color: fg }]}>
                 {toggleTarget?.estado
                   ? `Desactivar "${toggleTarget?.nombre}"?`
                   : `Activar "${toggleTarget?.nombre}"?`}
               </Text>
-              <Text
-                style={[styles.modalDesc, { color: muted }]}
-              >
+              <Text style={[styles.modalDesc, { color: muted }]}>
                 {toggleTarget?.estado
                   ? 'El elemento se moverá a la papelera.'
                   : 'El elemento volverá a estar activo.'}
@@ -1132,9 +1100,7 @@ export default function CrudListScreen<
                 activeOpacity={0.8}
                 style={[styles.primaryBtn, { backgroundColor: errorColor }]}
               >
-                <Text
-                  style={[styles.primaryBtnText, { color: iconWhite }]}
-                >
+                <Text style={[styles.primaryBtnText, { color: iconWhite }]}>
                   {toggleTarget?.estado ? 'Desactivar' : 'Activar'}
                 </Text>
               </TouchableOpacity>
@@ -1161,9 +1127,7 @@ export default function CrudListScreen<
             style={[styles.modalOverlay, { backgroundColor: modalOverlay }]}
             onPress={() => setDeleteTarget(null)}
           />
-          <View
-            style={[styles.modalSheet, { backgroundColor: surface }]}
-          >
+          <View style={[styles.modalSheet, { backgroundColor: surface }]}>
             <View style={styles.modalHeader}>
               <View
                 style={[styles.modalIconWrapper, { backgroundColor: errorBg }]}
@@ -1174,14 +1138,10 @@ export default function CrudListScreen<
                   color={errorColor}
                 />
               </View>
-              <Text
-                style={[styles.modalTitle, { color: fg }]}
-              >
+              <Text style={[styles.modalTitle, { color: fg }]}>
                 {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
               </Text>
-              <Text
-                style={[styles.modalDesc, { color: muted }]}
-              >
+              <Text style={[styles.modalDesc, { color: muted }]}>
                 Esta acción no se puede deshacer.
               </Text>
             </View>
@@ -1224,9 +1184,7 @@ export default function CrudListScreen<
                 {isSaving || deleteMutation.isPending ? (
                   <ActivityIndicator size={16} color={iconWhite} />
                 ) : null}
-                <Text
-                  style={[styles.primaryBtnText, { color: iconWhite }]}
-                >
+                <Text style={[styles.primaryBtnText, { color: iconWhite }]}>
                   Eliminar
                 </Text>
               </TouchableOpacity>
@@ -1340,14 +1298,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  emptyTitle: { marginTop: 16, textAlign: 'center', fontSize: 20, fontWeight: '700' },
+  emptyTitle: {
+    marginTop: 16,
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '700',
+  },
   emptyDesc: { marginTop: 4, textAlign: 'center', fontSize: 14 },
 
   // Shared info text
   infoText: { marginTop: 16, textAlign: 'center', fontSize: 16 },
 
   // Coming soon
-  comingSoonTitle: { marginTop: 16, textAlign: 'center', fontSize: 24, fontWeight: '700' },
+  comingSoonTitle: {
+    marginTop: 16,
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: '700',
+  },
   comingSoonDesc: { marginTop: 8, textAlign: 'center', fontSize: 14 },
 
   // Retry button
