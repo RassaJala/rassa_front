@@ -5,8 +5,7 @@ const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
   const colors = useAppColors();
-  const { fg, muted, border, surface, brand, coral, bg, accentBg, isDark } =
-    colors;
+  const { fg, muted, border, surface, brand, coral } = colors;
 
   const days = [
     'Domingo',
