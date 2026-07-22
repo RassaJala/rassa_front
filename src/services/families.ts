@@ -82,7 +82,7 @@ export async function deleteFamily(id: number): Promise<void> {
 export async function fetchFamiliesTrash(): Promise<Family[]> {
   const { data } = await api.get<
     Record<string, unknown>[] | { data: Record<string, unknown>[] }
-  >('/familias/trash/');
+  >(`${FAMILIAS_URL}trash/`);
   const list = Array.isArray(data)
     ? data
     : ((data as { data?: Record<string, unknown>[] }).data ?? []);
