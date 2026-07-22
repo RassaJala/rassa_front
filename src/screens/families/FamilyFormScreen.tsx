@@ -559,7 +559,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
     const delay = setTimeout(async () => {
       setSearchingJefe(true);
       try {
-        const data = await searchUsers(trimmed, true);
+        const data = await searchUsers(trimmed);
         setJefeResults(data);
       } catch {
         setJefeResults([]);

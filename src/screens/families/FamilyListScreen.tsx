@@ -363,7 +363,7 @@ function useJefeSearch(
     const timer = setTimeout(async () => {
       setIsSearchingJefe(true);
       try {
-        const results = await searchUsers(trimmed, true);
+        const results = await searchUsers(trimmed);
         setJefeResults(results ?? []);
       } catch (err) {
         console.error(err);

@@ -121,7 +121,7 @@ export function AdminFamilyDetail() {
       setSearchLoading(true);
       try {
         const { data } = await api.get<{ data: SearchUserResult[] }>(
-          `/auth/search-users/?q=${encodeURIComponent(trimmed)}`,
+          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,
         );
         setSearchResults(data.data);
       } catch {

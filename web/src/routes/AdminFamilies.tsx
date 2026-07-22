@@ -64,7 +64,7 @@ export function AdminFamilies() {
       setSearchingJefe(true);
       try {
         const { data } = await api.get(
-          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=true`,
+          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,
         );
         const payload = (data as { data?: unknown }).data ?? data;
         setJefeResults(Array.isArray(payload) ? payload : []);
