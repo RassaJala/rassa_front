@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
@@ -273,7 +274,7 @@ export function AdminFamilyDetail() {
               setModalError(null);
               setModalVisible(true);
             }}
-            style={{ ...btnStyle, background: coral, color: '#fff' }}
+            style={{ ...btnStyle, background: coral, color: colors.iconWhite }}
           >
             ＋ Agregar integrante
           </button>
@@ -609,7 +610,7 @@ export function AdminFamilyDetail() {
                       }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLDivElement).style.background =
-                          isDark ? '#353D35' : '#F5F7F0';
+                          isDark ? colors.rassa.borderDark : colors.rassa.bg;
                       }}
                       onMouseLeave={(e) => {
                         (e.currentTarget as HTMLDivElement).style.background =
@@ -689,7 +690,7 @@ export function AdminFamilyDetail() {
                   borderRadius: 8,
                   border: 'none',
                   background: coral,
-                  color: '#fff',
+                  color: colors.iconWhite,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
