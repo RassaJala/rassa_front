@@ -3,7 +3,6 @@ import { useTheme } from '~/providers/ThemeProvider';
 import { getColors } from '~/constants/colors';
 import type { Role } from '~/types';
 
-
 interface NavItem {
   key: string;
   label: string;
