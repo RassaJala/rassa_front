@@ -1,6 +1,6 @@
 /* globals clearTimeout, setTimeout -- Required for React Native timers */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -168,6 +168,8 @@ export default function FamilyFormScreen(): React.JSX.Element {
     }
   };
 
+  const t = useMemo(() => themeColors(isDark), [isDark]);
+
   if (isEditing && loadingFamily) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -176,7 +178,6 @@ export default function FamilyFormScreen(): React.JSX.Element {
     );
   }
 
-  const t = themeColors(isDark);
   const errorColor = colors.brandRedCoral;
 
   return (

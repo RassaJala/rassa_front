@@ -102,7 +102,9 @@ export function AdminFamilies() {
           `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,
         );
         const payload = (data as { data?: unknown }).data ?? data;
-        setJefeResults(Array.isArray(payload) ? payload : []);
+        setJefeResults(
+          Array.isArray(payload) ? (payload as SearchUserResult[]) : [],
+        );
       } catch {
         setJefeResults([]);
       } finally {
@@ -188,9 +190,10 @@ export function AdminFamilies() {
           ...payload,
           estado: true,
         });
-        const createdFamily = data.data ?? data;
+        const createdFamily = (data as { data?: { id_familia: number } }).data ?? (data as { id_familia: number });
         const familyId = createdFamily.id_familia;
 
+        let rollbackOk = true;
         try {
           await api.post('/familias/miembros/', {
             fk_usuario: selectedJefe.id_usuario,
@@ -204,9 +207,15 @@ export function AdminFamilies() {
           try {
             await api.delete(`/familias/grupos/${familyId}/`);
           } catch (rollbackErr) {
+            rollbackOk = false;
             console.error(
               '[Rollback Error] Failed to delete empty family:',
               rollbackErr,
+            );
+          }
+          if (!rollbackOk) {
+            throw new Error(
+              'Error al asignar el jefe de familia. La familia fue creada pero el rollback falló — contactá al administrador.',
             );
           }
           throw err;

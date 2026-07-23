@@ -1,5 +1,5 @@
 /* global setTimeout, clearTimeout -- RN timer functions not in ESLint env */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -611,6 +611,8 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     },
   });
 
+  const t = useMemo(() => themeColors(isDark), [isDark]);
+
   if (familyLoading || membersLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -652,7 +654,6 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     void addMemberMutation.mutateAsync(userId);
   };
 
-  const t = themeColors(isDark);
   const coral = colors.brandRedCoral;
 
   return (

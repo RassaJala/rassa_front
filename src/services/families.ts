@@ -7,70 +7,34 @@ import api from './api';
 const FAMILIAS_URL = '/familias/grupos/';
 const MIEMBROS_URL = '/familias/miembros/';
 
-// ── Normalizers ─────────────────────────────────────────
-
-function normalizeFamily(raw: Record<string, unknown>): Family {
-  return {
-    id_familia: raw.id_familia as number,
-    fk_jefe_familia: (raw.fk_jefe_familia as number) ?? null,
-    jefe_nombre: (raw.jefe_nombre as string) ?? null,
-    nombre_familia: raw.nombre_familia as string,
-    nombre: raw.nombre_familia as string,
-    detalle_familia: (raw.detalle_familia as string) ?? null,
-    creado_en: raw.creado_en as string,
-    estado: raw.estado as boolean,
-  };
-}
-
-function normalizeMember(raw: Record<string, unknown>): FamilyMember {
-  return {
-    id_familia_usuario: raw.id_familia_usuario as number,
-    fk_usuario: raw.fk_usuario as number,
-    usuario_nombre: raw.usuario_nombre as string,
-    usuario_correo: raw.usuario_correo as string,
-    fk_familia: raw.fk_familia as number,
-    estado: raw.estado as boolean,
-    creado_en: raw.creado_en as string,
-  };
-}
-
 // ── Families CRUD ──────────────────────────────────────
 
 export async function fetchFamilies(): Promise<Family[]> {
-  const { data } = await api.get<
-    Record<string, unknown>[] | { results: Record<string, unknown>[] }
-  >(FAMILIAS_URL);
-  const list = Array.isArray(data) ? data : data.results;
-  return list.map(normalizeFamily);
+  const { data } = await api.get<Family[] | { results: Family[] }>(
+    FAMILIAS_URL,
+  );
+  return Array.isArray(data) ? data : data.results;
 }
 
 export async function fetchFamily(id: number): Promise<Family> {
-  const { data } = await api.get<Record<string, unknown>>(
-    `${FAMILIAS_URL}${id}/`,
-  );
-  return normalizeFamily(data);
+  const { data } = await api.get<Family>(`${FAMILIAS_URL}${id}/`);
+  return data;
 }
 
 export async function createFamily(payload: {
   nombre_familia: string;
   detalle_familia?: string;
 }): Promise<Family> {
-  const { data } = await api.post<Record<string, unknown>>(
-    FAMILIAS_URL,
-    payload,
-  );
-  return normalizeFamily(data);
+  const { data } = await api.post<Family>(FAMILIAS_URL, payload);
+  return data;
 }
 
 export async function updateFamily(
   id: number,
   payload: { nombre_familia: string; detalle_familia?: string },
 ): Promise<Family> {
-  const { data } = await api.patch<Record<string, unknown>>(
-    `${FAMILIAS_URL}${id}/`,
-    payload,
-  );
-  return normalizeFamily(data);
+  const { data } = await api.patch<Family>(`${FAMILIAS_URL}${id}/`, payload);
+  return data;
 }
 
 export async function deleteFamily(id: number): Promise<void> {
@@ -81,25 +45,21 @@ export async function deleteFamily(id: number): Promise<void> {
 
 export async function fetchFamiliesTrash(): Promise<Family[]> {
   const { data } = await api.get<
-    | Record<string, unknown>[]
-    | { results?: Record<string, unknown>[]; data?: Record<string, unknown>[] }
+    Family[] | { results?: Family[]; data?: Family[] }
   >(`${FAMILIAS_URL}trash/`);
-  const list = Array.isArray(data)
-    ? data
-    : (data.results ?? (data as { data?: Record<string, unknown>[] }).data ?? []);
-  return list.map(normalizeFamily);
+  if (Array.isArray(data)) return data;
+  return data.results ?? (data as { data?: Family[] }).data ?? [];
 }
 
 export async function restoreFamily(
   id: number,
   jefeUserId: number,
 ): Promise<Family> {
-  const { data } = await api.post<Record<string, unknown>>(
+  const { data } = await api.post<{ data?: Family } | Family>(
     `${FAMILIAS_URL}${id}/restore/`,
     { fk_jefe_familia: jefeUserId },
   );
-  const payload = (data.data as Record<string, unknown>) ?? data;
-  return normalizeFamily(payload);
+  return ('data' in data && data.data ? data.data : data) as Family;
 }
 
 export async function deleteFamilyPermanent(id: number): Promise<void> {
@@ -113,6 +73,7 @@ export async function createFamilyWithHead(
   jefeUserId: number,
 ): Promise<Family> {
   const family = await createFamily(payload);
+  let rollbackOk = true;
   try {
     await addFamilyMember(jefeUserId, family.id_familia);
     await assignFamilyHead(family.id_familia, jefeUserId);
@@ -120,7 +81,16 @@ export async function createFamilyWithHead(
     try {
       await deleteFamily(family.id_familia);
     } catch (rollbackErr) {
-      console.error('[Rollback Error] Failed to delete empty family:', rollbackErr);
+      rollbackOk = false;
+      console.error(
+        '[Rollback Error] Failed to delete empty family:',
+        rollbackErr,
+      );
+    }
+    if (!rollbackOk) {
+      throw new Error(
+        'Error al asignar el jefe de familia. La familia fue creada pero el rollback falló — contactá al administrador.',
+      );
     }
     throw new Error('Error al asignar el jefe de familia.');
   }
@@ -133,11 +103,11 @@ export async function assignFamilyHead(
   familyId: number,
   userId: number,
 ): Promise<Family> {
-  const { data } = await api.post<Record<string, unknown>>(
+  const { data } = await api.post<Family>(
     `${FAMILIAS_URL}${familyId}/asignar-jefe/`,
     { fk_jefe_familia: userId },
   );
-  return normalizeFamily(data);
+  return data;
 }
 
 // ── Members CRUD ───────────────────────────────────────
@@ -146,21 +116,20 @@ export async function fetchFamilyMembers(
   familyId: number,
 ): Promise<FamilyMember[]> {
   const { data } = await api.get<
-    Record<string, unknown>[] | { results: Record<string, unknown>[] }
+    FamilyMember[] | { results: FamilyMember[] }
   >(`${MIEMBROS_URL}?fk_familia=${familyId}`);
-  const list = Array.isArray(data) ? data : data.results;
-  return list.map(normalizeMember);
+  return Array.isArray(data) ? data : data.results;
 }
 
 export async function addFamilyMember(
   fk_usuario: number,
   fk_familia: number,
 ): Promise<FamilyMember> {
-  const { data } = await api.post<Record<string, unknown>>(MIEMBROS_URL, {
+  const { data } = await api.post<FamilyMember>(MIEMBROS_URL, {
     fk_usuario,
     fk_familia,
   });
-  return normalizeMember(data);
+  return data;
 }
 
 export async function removeFamilyMember(memberId: number): Promise<void> {

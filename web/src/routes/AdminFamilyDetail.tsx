@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { colors, themeColors } from '@/constants/colors';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
@@ -27,6 +28,7 @@ export function AdminFamilyDetail() {
   const brand = t.brand;
   const coral = colors.brandRedCoral;
   const queryClient = useQueryClient();
+  const btnStyle = sharedBtnStyle;
 
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +66,7 @@ export function AdminFamilyDetail() {
       return { jefeId, members };
     },
     staleTime: 30_000,
-    enabled: !isNaN(familyId),
+    enabled: familyId > 0,
   });
 
   const members = familyData?.members ?? [];
@@ -166,7 +168,7 @@ export function AdminFamilyDetail() {
     }
   }
 
-  async function handleRemoveMember(member: FamilyMember) {
+  function handleRemoveMember(member: FamilyMember) {
     if (jefeId === member.fk_usuario) {
       setError(
         'No puedes remover al jefe de familia. Primero asigna otro jefe.',
@@ -205,20 +207,6 @@ export function AdminFamilyDetail() {
       setError(apiErr || 'Error al asignar el jefe de familia.');
     }
   }
-
-  const btnStyle = {
-    height: 38,
-    padding: '0 16px',
-    borderRadius: 8,
-    border: 'none',
-    fontSize: 13,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-  } as const;
 
   return (
     <div>

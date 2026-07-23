@@ -1,15 +1,12 @@
 /* globals console, clearTimeout, setTimeout -- RN globals */
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -19,12 +16,11 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { colors, themeColors } from '@/constants/colors';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import {
-  createFamilyWithHead,
   deleteFamilyPermanent,
   fetchFamilies,
   fetchFamiliesTrash,
@@ -213,10 +209,9 @@ export default function FamilyListScreen(): React.JSX.Element {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const navigation = useNavigation<Nav>();
-  const queryClient = useQueryClient();
   const isDark = colorScheme === 'dark';
 
-  const t = themeColors(isDark);
+  const t = useMemo(() => themeColors(isDark), [isDark]);
 
   const [showTrash, setShowTrash] = React.useState(false);
   const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(null);
@@ -225,26 +220,10 @@ export default function FamilyListScreen(): React.JSX.Element {
     React.useState<SearchUserResult | null>(null);
   const [isRestoring, setIsRestoring] = React.useState(false);
 
-  // Form states
-  const [tab, setTab] = React.useState<'list' | 'form'>('list');
-  const [nombre, setNombre] = React.useState('');
-  const [detalle, setDetalle] = React.useState('');
-  const [formJefeQuery, setFormJefeQuery] = React.useState('');
-  const [formSelectedJefe, setFormSelectedJefe] =
-    React.useState<SearchUserResult | null>(null);
-  const [isFormSaving, setIsFormSaving] = React.useState(false);
-  const [formServerError, setFormServerError] = React.useState('');
-  const [formFieldErrors, setFormFieldErrors] = React.useState<
-    Record<string, string>
-  >({});
-
   const { results: jefeResults, setResults: setJefeResults, isSearching: isSearchingJefe } = useUserSearch(
     jefeQuery,
     selectedJefe,
   );
-
-  const { results: formJefeResults, isSearching: isSearchingFormJefe } =
-    useUserSearch(formJefeQuery, formSelectedJefe);
 
   const handleOpenRestore = (family: Family) => {
     setRestoreTarget(family);
@@ -289,44 +268,6 @@ export default function FamilyListScreen(): React.JSX.Element {
         },
       ],
     );
-  };
-
-  const handleCreateSubmit = async () => {
-    const jefe = formSelectedJefe;
-    if (!nombre.trim() || !jefe) {
-      const errors: Record<string, string> = {};
-      if (!nombre.trim()) errors.nombre = 'El nombre es obligatorio.';
-      if (!jefe) errors.jefe = 'Debes seleccionar un jefe de familia.';
-      setFormFieldErrors(errors);
-      return;
-    }
-
-    setIsFormSaving(true);
-    setFormServerError('');
-
-    try {
-      const payload = {
-        nombre_familia: nombre.trim(),
-        ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
-      };
-
-      await createFamilyWithHead(payload, jefe.id_usuario);
-
-      void queryClient.invalidateQueries({ queryKey: ['families'] });
-      setNombre('');
-      setDetalle('');
-      setFormJefeQuery('');
-      setFormSelectedJefe(null);
-      setFormFieldErrors({});
-      setTab('list');
-    } catch (err) {
-      console.error(err);
-      setFormServerError(
-        err instanceof Error ? err.message : 'Error al crear la familia.',
-      );
-    } finally {
-      setIsFormSaving(false);
-    }
   };
 
   const {
@@ -445,7 +386,6 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   function renderSegmentedControl() {
     if (showTrash) return null;
-    const isFormActive = tab === 'form';
     return (
       <View
         style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
@@ -458,35 +398,33 @@ export default function FamilyListScreen(): React.JSX.Element {
             padding: 3,
           }}
         >
-          <TouchableOpacity
-            onPress={() => setTab('list')}
+          <View
             style={{
               flex: 1,
               paddingVertical: 8,
               borderRadius: 8,
-              backgroundColor: isFormActive ? colors.transparent : t.surface,
+              backgroundColor: t.surface,
               alignItems: 'center',
             }}
-            activeOpacity={0.7}
           >
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: '600',
-                color: isFormActive ? t.muted : t.fg,
+                color: t.fg,
                 letterSpacing: 0.01,
               }}
             >
               📋 Lista
             </Text>
-          </TouchableOpacity>
+          </View>
           <TouchableOpacity
-            onPress={() => setTab('form')}
+            onPress={() => navigation.navigate('FamilyForm')}
             style={{
               flex: 1,
               paddingVertical: 8,
               borderRadius: 8,
-              backgroundColor: isFormActive ? t.surface : colors.transparent,
+              backgroundColor: colors.transparent,
               alignItems: 'center',
             }}
             activeOpacity={0.7}
@@ -495,7 +433,7 @@ export default function FamilyListScreen(): React.JSX.Element {
               style={{
                 fontSize: 13,
                 fontWeight: '600',
-                color: isFormActive ? t.fg : t.muted,
+                color: t.muted,
                 letterSpacing: 0.01,
               }}
             >
@@ -573,310 +511,6 @@ export default function FamilyListScreen(): React.JSX.Element {
           />
         )}
       />
-    );
-  }
-
-  function renderFormTab() {
-    const errorColor = colors.brandRedCoral;
-    return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={{ padding: 20, gap: 18 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={{ fontSize: 18, fontWeight: '700', color: t.fg }}>
-            Nueva familia
-          </Text>
-
-          {formServerError ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 8,
-                backgroundColor: isDark
-                  ? colors.admCoralBgD
-                  : colors.admCoralBgL,
-                borderRadius: 12,
-                padding: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="alert-circle"
-                size={18}
-                color={errorColor}
-              />
-              <Text
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: errorColor,
-                }}
-              >
-                {formServerError}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Nombre de la familia */}
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: t.muted,
-              }}
-            >
-              Nombre de la familia *
-            </Text>
-            <TextInput
-              value={nombre}
-              onChangeText={(text) => {
-                setNombre(text);
-                setFormFieldErrors((prev) => ({ ...prev, nombre: '' }));
-                setFormServerError('');
-              }}
-              placeholder="Ej. Familia López"
-              placeholderTextColor={t.muted}
-              style={{
-                borderWidth: 1.5,
-                borderColor: formFieldErrors.nombre ? errorColor : t.border,
-                borderRadius: 12,
-                backgroundColor: t.surface,
-                color: t.fg,
-                fontSize: 15,
-                paddingHorizontal: 14,
-                height: 46,
-              }}
-            />
-            {formFieldErrors.nombre ? (
-              <Text style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}>
-                {formFieldErrors.nombre}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Jefe de familia */}
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: t.muted,
-              }}
-            >
-              Jefe de familia *
-            </Text>
-            <View style={{ position: 'relative' }}>
-              <TextInput
-                value={formJefeQuery}
-                onChangeText={(text) => {
-                  setFormJefeQuery(text);
-                  if (formSelectedJefe) setFormSelectedJefe(null);
-                  setFormFieldErrors((prev) => ({ ...prev, jefe: '' }));
-                  setFormServerError('');
-                }}
-                placeholder="Buscar por nombre o correo..."
-                placeholderTextColor={t.muted}
-                style={{
-                  borderWidth: 1.5,
-                  borderColor: formFieldErrors.jefe ? errorColor : t.border,
-                  borderRadius: 12,
-                  backgroundColor: t.surface,
-                  color: t.fg,
-                  fontSize: 15,
-                  paddingHorizontal: 14,
-                  height: 46,
-                  paddingRight: (formSelectedJefe ?? formJefeQuery) ? 40 : 14,
-                }}
-              />
-              {(formSelectedJefe ?? formJefeQuery) ? (
-                <Pressable
-                  onPress={() => {
-                    setFormJefeQuery('');
-                    setFormSelectedJefe(null);
-                  }}
-                  style={{ position: 'absolute', right: 12, top: 14 }}
-                >
-                  <MaterialCommunityIcons
-                    name="close-circle"
-                    size={20}
-                    color={t.muted}
-                  />
-                </Pressable>
-              ) : null}
-            </View>
-            {formFieldErrors.jefe ? (
-              <Text style={{ fontSize: 12, color: errorColor, marginLeft: 4 }}>
-                {formFieldErrors.jefe}
-              </Text>
-            ) : null}
-
-            {isSearchingFormJefe ? (
-              <ActivityIndicator
-                size="small"
-                color={t.brand}
-                style={{ marginTop: 8 }}
-              />
-            ) : null}
-
-            {/* Suggestions */}
-            {formJefeResults.length > 0 && !formSelectedJefe ? (
-              <View
-                style={{
-                  marginTop: 4,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: t.border,
-                  backgroundColor: t.surface,
-                  maxHeight: 180,
-                  overflow: 'hidden',
-                }}
-              >
-                <ScrollView nestedScrollEnabled>
-                  {formJefeResults.map((user) => (
-                    <TouchableOpacity
-                      key={user.id_usuario}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        setFormSelectedJefe(user);
-                        setFormJefeQuery(
-                          `${user.nombre} ${user.apellido_paterno}`,
-                        );
-                      }}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
-                        borderBottomWidth: 1,
-                        borderBottomColor: t.border,
-                      }}
-                    >
-                      <Text
-                        style={{ fontSize: 14, fontWeight: '600', color: t.fg }}
-                        numberOfLines={1}
-                      >
-                        {user.nombre} {user.apellido_paterno}
-                      </Text>
-                      <Text
-                        style={{ fontSize: 12, color: t.muted, marginTop: 1 }}
-                        numberOfLines={1}
-                      >
-                        {user.email ?? user.correo}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null}
-          </View>
-
-          {/* Detalle */}
-          <View style={{ gap: 6 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                letterSpacing: 0.08,
-                textTransform: 'uppercase',
-                color: t.muted,
-              }}
-            >
-              Detalle
-            </Text>
-            <TextInput
-              value={detalle}
-              onChangeText={setDetalle}
-              placeholder="Descripción opcional"
-              placeholderTextColor={t.muted}
-              multiline
-              numberOfLines={3}
-              style={{
-                borderWidth: 1.5,
-                borderColor: t.border,
-                borderRadius: 12,
-                backgroundColor: t.surface,
-                color: t.fg,
-                fontSize: 15,
-                paddingHorizontal: 14,
-                height: 80,
-                paddingTop: 12,
-                textAlignVertical: 'top',
-              }}
-            />
-          </View>
-        </ScrollView>
-
-        <View
-          style={{
-            padding: 20,
-            gap: 10,
-            borderTopWidth: 1,
-            borderTopColor: t.border,
-          }}
-        >
-          <TouchableOpacity
-            onPress={handleCreateSubmit}
-            disabled={isFormSaving}
-            activeOpacity={0.8}
-            style={{
-              height: 50,
-              borderRadius: 14,
-              backgroundColor: errorColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-              opacity: isFormSaving ? 0.6 : 1,
-            }}
-          >
-            {isFormSaving ? (
-              <ActivityIndicator size={16} color={colors.iconWhite} />
-            ) : null}
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: '600',
-                color: colors.iconWhite,
-              }}
-            >
-              Guardar
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setNombre('');
-              setDetalle('');
-              setFormJefeQuery('');
-              setFormSelectedJefe(null);
-              setFormFieldErrors({});
-              setFormServerError('');
-              setTab('list');
-            }}
-            disabled={isFormSaving}
-            activeOpacity={0.8}
-            style={{
-              height: 44,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: t.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-              Cancelar
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
     );
   }
 
@@ -966,7 +600,7 @@ export default function FamilyListScreen(): React.JSX.Element {
 
       {renderSegmentedControl()}
 
-      {showTrash || tab === 'list' ? renderListTab() : renderFormTab()}
+      {renderListTab()}
 
       {/* Modal de Restauración (Requisito Jefe de Familia) */}
       <RestoreFamilyModal
