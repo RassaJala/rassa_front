@@ -12,6 +12,7 @@ import { AdminProducts } from './AdminProducts';
 import { AdminMunicipios } from './AdminMunicipios';
 import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
+import { AdminOrderDetail } from './AdminOrderDetail';
 import { BuyerHome } from './BuyerHome';
 import { BuyerCart } from './BuyerCart';
 import { BuyerOrders } from './BuyerOrders';
@@ -121,6 +122,7 @@ export function AppRouter() {
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
+                <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
