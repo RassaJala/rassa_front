@@ -22,6 +22,7 @@ import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
 import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
+import OrderDetailScreen from '@/screens/admin/OrderDetailScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
@@ -463,6 +464,11 @@ function AdminScreens() {
       <AdminStack.Screen
         name="Notificaciones"
         component={NotificationsScreen}
+      />
+      <AdminStack.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+        options={{ title: 'Detalle del Pedido' }}
       />
     </AdminStack.Navigator>
   );
