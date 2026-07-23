@@ -65,7 +65,9 @@ export default function ConversationItem({
           />
         ) : (
           <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            {conversation.participante_nombre.slice(0, 2).toUpperCase()}
+            {(conversation.participante_nombre || '?')
+              .slice(0, 2)
+              .toUpperCase()}
           </Text>
         )}
       </View>

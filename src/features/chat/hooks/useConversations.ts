@@ -23,6 +23,6 @@ export function useConversations(): UseQueryResult<
       return backoff;
     },
     refetchIntervalInBackground: false,
-    staleTime: 0,
+    staleTime: BASE_POLL_MS,
   });
 }

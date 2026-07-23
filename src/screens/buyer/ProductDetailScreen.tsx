@@ -3,19 +3,15 @@ import { Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute } from '@react-navigation/native';
 
 import { colors } from '@/constants/colors';
 import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
 
-type ChatNav = NativeStackNavigationProp<BuyerStackParamList, 'ProductDetail'>;
-
 export default function ProductDetailScreen(): React.JSX.Element {
   const route = useRoute<RouteProp<BuyerStackParamList, 'ProductDetail'>>();
-  const navigation = useNavigation<ChatNav>();
   const { farmerId } = route.params;
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -28,68 +24,35 @@ export default function ProductDetailScreen(): React.JSX.Element {
   const createConversation = useCreatePrivateConversation();
 
   const handleContact = () => {
-    createConversation.mutate(
-      { fk_usuario: farmerId },
-      {
-        onSuccess: (conversation) => {
-          navigation.navigate('Chat', {
-            conversationId: conversation.id,
-            title: conversation.nombre || 'Chat',
-            tipo: conversation.tipo,
-          });
-        },
-      },
-    );
+    createConversation.mutate({ fk_usuario: farmerId });
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+    <View className="flex-1 p-4" style={{ backgroundColor: bg }}>
+      <View className="flex-1 items-center justify-center">
         <MaterialCommunityIcons
           name="package-variant-closed"
           size={64}
           color={muted}
         />
         <Text
-          style={{
-            marginTop: 16,
-            fontSize: 20,
-            fontWeight: '700',
-            color: fg,
-            textAlign: 'center',
-          }}
+          className="mt-4 text-center text-xl font-bold"
+          style={{ color: fg }}
         >
           Detalle del producto
         </Text>
         <Text
-          style={{
-            marginTop: 8,
-            fontSize: 14,
-            color: muted,
-            textAlign: 'center',
-            maxWidth: 260,
-          }}
+          className="mt-2 max-w-[260px] text-center text-sm"
+          style={{ color: muted }}
         >
           Próximamente podrás ver aquí toda la información del producto.
         </Text>
         <Pressable
           onPress={handleContact}
           disabled={createConversation.isPending}
+          className="mt-6 flex-row items-center gap-2 rounded-[10px] px-5 py-3"
           style={{
-            marginTop: 24,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
             backgroundColor: brand,
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderRadius: 10,
             opacity: createConversation.isPending ? 0.6 : 1,
           }}
         >
@@ -98,7 +61,7 @@ export default function ProductDetailScreen(): React.JSX.Element {
             size={20}
             color={colors.iconWhite}
           />
-          <Text style={{ color: colors.iconWhite, fontWeight: '600' }}>
+          <Text className="font-semibold" style={{ color: colors.iconWhite }}>
             {createConversation.isPending
               ? 'Iniciando chat...'
               : 'Contactar agricultor'}

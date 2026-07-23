@@ -89,7 +89,7 @@ export default function AttachmentPicker({
     <Menu
       visible={menuVisible}
       onDismiss={() => setMenuVisible(false)}
-      anchor={<React.Fragment>{children}</React.Fragment>}
+      anchor={<>{children}</>}
     >
       <Menu.Item onPress={handleImage} title="Imagen / Video" />
       <Menu.Item onPress={handleAudio} title="Audio" />

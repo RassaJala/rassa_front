@@ -122,7 +122,7 @@ export type ChatStackParamList = {
   Chat: {
     conversationId: number;
     title: string;
-    tipo?: 'privada' | 'grupal' | undefined;
+    tipo: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
   };
   GroupDetail: {

@@ -23,7 +23,10 @@ export function useCreatePrivateConversation(): UseMutationResult<
       });
       navigation.navigate('Chat', {
         conversationId: conversation.id,
-        title: conversation.participante_nombre,
+        title:
+          conversation.participante_nombre || conversation.nombre || 'Chat',
+        tipo: conversation.tipo,
+        isFamily: conversation.es_familia,
       });
     },
   });

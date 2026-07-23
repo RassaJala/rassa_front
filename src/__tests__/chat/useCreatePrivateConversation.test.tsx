@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -5,15 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
-import { useCreateGroup } from '@/features/chat/hooks/useCreateGroup';
+import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
 import api from '@/services/api';
 
 jest.mock('@/services/api');
-jest.mock('@/store/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 1, nombre: 'Test User', role: 'admin' },
-  }),
-}));
+
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
@@ -21,8 +18,9 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 const mockApiPost = api.post as jest.Mock;
+const mockApiGet = api.get as jest.Mock;
 
-describe('useCreateGroup', () => {
+describe('useCreatePrivateConversation', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -36,15 +34,12 @@ describe('useCreateGroup', () => {
   });
 
   const TestComponent = () => {
-    const mutation = useCreateGroup();
+    const mutation = useCreatePrivateConversation();
     return (
       <View>
-        <Text testID="pending">{String(mutation.isPending)}</Text>
         <Text
           testID="create"
-          onPress={() =>
-            mutation.mutate({ nombre: 'Test Group', fk_usuarios: [1, 2] })
-          }
+          onPress={() => mutation.mutate({ fk_usuario: 5 })}
         >
           Create
         </Text>
@@ -59,54 +54,24 @@ describe('useCreateGroup', () => {
       </QueryClientProvider>,
     );
 
-  it('calls API with correct payload', async () => {
-    mockApiPost.mockResolvedValue({
-      data: {
-        ok: true,
-        data: { id_conversacion: 1 },
-      },
-    });
-
-    const { getByTestId } = renderComponent();
-
-    await act(async () => {
-      getByTestId('create').props.onPress();
-    });
-
-    expect(mockApiPost).toHaveBeenCalledWith(
-      '/chat/conversaciones/crear-grupal/',
-      { nombre: 'Test Group', fk_usuarios: [1, 2] },
-    );
-  });
-
-  it('invalidates conversations on success', async () => {
-    mockApiPost.mockResolvedValue({
-      data: {
-        ok: true,
-        data: { id_conversacion: 1 },
-      },
-    });
-
-    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-
-    const { getByTestId } = renderComponent();
-
-    await act(async () => {
-      getByTestId('create').props.onPress();
-    });
-
-    await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ['conversations'],
-      });
-    });
-  });
-
   it('navigates to Chat with tipo and isFamily on success', async () => {
     mockApiPost.mockResolvedValue({
+      data: { ok: true, data: { id_conversacion: 7 } },
+    });
+    mockApiGet.mockResolvedValue({
       data: {
         ok: true,
-        data: { id_conversacion: 1 },
+        data: [
+          {
+            id_conversacion: 7,
+            tipo: false,
+            nombre: 'Juan',
+            ultimo_mensaje: null,
+            ultimo_mensaje_creado_en: null,
+            no_leidos: 0,
+            es_familia: false,
+          },
+        ],
       },
     });
 
@@ -118,9 +83,33 @@ describe('useCreateGroup', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('Chat', {
-        conversationId: 1,
-        title: 'Test Group',
-        tipo: 'grupal',
+        conversationId: 7,
+        title: 'Juan',
+        tipo: 'privada',
+        isFamily: false,
+      });
+    });
+  });
+
+  it('falls back to "Chat" title when participant name is empty', async () => {
+    mockApiPost.mockResolvedValue({
+      data: { ok: true, data: { id_conversacion: 9 } },
+    });
+    mockApiGet.mockResolvedValue({
+      data: { ok: true, data: [] },
+    });
+
+    const { getByTestId } = renderComponent();
+
+    await act(async () => {
+      getByTestId('create').props.onPress();
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('Chat', {
+        conversationId: 9,
+        title: 'Chat',
+        tipo: 'privada',
         isFamily: false,
       });
     });

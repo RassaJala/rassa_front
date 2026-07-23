@@ -28,6 +28,8 @@ export function useCreateGroup(): UseMutationResult<
       navigation.navigate('Chat', {
         conversationId: conversation.id,
         title: conversation.nombre,
+        tipo: conversation.tipo,
+        isFamily: conversation.es_familia,
       });
     },
   });

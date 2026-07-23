@@ -32,13 +32,12 @@ import { useSendMessage } from '@/features/chat/hooks/useSendMessage';
 import { useSendMessageWithMedia } from '@/features/chat/hooks/useSendMessageWithMedia';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { BuyerStackParamList } from '@/types';
-import type { AttachmentType, Message } from '@/types/chat';
+import type { AttachmentType, ChatStackParamList, Message } from '@/types/chat';
 
-type ChatNavigation = NativeStackNavigationProp<BuyerStackParamList, 'Chat'>;
+type ChatNavigation = NativeStackNavigationProp<ChatStackParamList, 'Chat'>;
 
 export default function ChatScreen(): React.JSX.Element {
-  const route = useRoute<RouteProp<BuyerStackParamList, 'Chat'>>();
+  const route = useRoute<RouteProp<ChatStackParamList, 'Chat'>>();
   const navigation = useNavigation<ChatNavigation>();
   const { conversationId, tipo, isFamily } = route.params;
   const { user } = useAuth();
