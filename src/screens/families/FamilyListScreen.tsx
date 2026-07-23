@@ -1,4 +1,3 @@
-/* globals console, clearTimeout, setTimeout -- RN globals */
 import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
@@ -212,7 +211,9 @@ export default function FamilyListScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
 
   const t = useMemo(() => themeColors(isDark), [isDark]);
+  const coral = colors.brandRedCoral;
 
+  const [permDeleteTarget, setPermDeleteTarget] = React.useState<Family | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
   const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(null);
   const [jefeQuery, setJefeQuery] = React.useState('');
@@ -252,22 +253,7 @@ export default function FamilyListScreen(): React.JSX.Element {
   };
 
   const handlePromptPermanentDelete = (family: Family) => {
-    Alert.alert(
-      'Eliminar permanentemente',
-      `¿Estás seguro de eliminar permanentemente la familia "${family.nombre_familia}"? Esta acción es irreversible.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => {
-            void executePermanentDelete(family, () => {
-              void refetchTrash();
-            });
-          },
-        },
-      ],
-    );
+    setPermDeleteTarget(family);
   };
 
   const {
@@ -619,6 +605,114 @@ export default function FamilyListScreen(): React.JSX.Element {
         onSelectJefe={(jefe) => setSelectedJefe(jefe)}
         onConfirm={() => void handleConfirmRestore()}
       />
+
+      {/* ── Permanent delete confirmation ──────────────────── */}
+      <Modal
+        visible={permDeleteTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPermDeleteTarget(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: colors.overlayBg }}
+          onPress={() => setPermDeleteTarget(null)}
+        />
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.errorBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={26}
+                color={coral}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: t.fg,
+                textAlign: 'center',
+              }}
+            >
+              ¿Eliminar permanentemente?
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: t.muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
+              Esta acción eliminará de forma irreversible la familia "
+              {permDeleteTarget?.nombre_familia}".
+            </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!permDeleteTarget) return;
+                void executePermanentDelete(permDeleteTarget, () => {
+                  void refetchTrash();
+                  setPermDeleteTarget(null);
+                });
+              }}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: coral,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Eliminar definitivamente
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setPermDeleteTarget(null)}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

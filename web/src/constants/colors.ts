@@ -65,6 +65,8 @@ export const colors = {
   admCoralBgD: 'rgba(232,74,74,0.12)',
   admPumpkinBgL: 'rgba(242,169,0,0.07)',
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
+  admErrorBgL: '#FDEDEE',
+  admErrorBgD: '#3D2023',
 };
 
 export interface ThemeColors {

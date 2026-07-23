@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { colors, themeColors } from '@/constants/colors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useJefeSearch } from '../hooks/useJefeSearch';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
+import { createFamilyWithHead } from '../services/families';
 import type { Family, SearchUserResult } from '../types';
 import { extractApiError } from '../utils/apiError';
 
@@ -46,9 +48,9 @@ export function AdminFamilies() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const [jefeQuery, setJefeQuery] = useState('');
-  const [jefeResults, setJefeResults] = useState<SearchUserResult[]>([]);
   const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(null);
-  const [searchingJefe, setSearchingJefe] = useState(false);
+  const { results: jefeResults, isSearching: searchingJefe } =
+    useJefeSearch(jefeQuery, selectedJefe);
 
   const {
     data: items = [],
@@ -88,31 +90,6 @@ export function AdminFamilies() {
     },
     staleTime: 30_000,
   });
-
-  useEffect(() => {
-    const trimmed = jefeQuery.trim();
-    if (trimmed.length < 1) {
-      setJefeResults([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setSearchingJefe(true);
-      try {
-        const { data } = await api.get(
-          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,
-        );
-        const payload = (data as { data?: unknown }).data ?? data;
-        setJefeResults(
-          Array.isArray(payload) ? (payload as SearchUserResult[]) : [],
-        );
-      } catch {
-        setJefeResults([]);
-      } finally {
-        setSearchingJefe(false);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [jefeQuery]);
 
   async function handleRestoreFamily() {
     if (!restoreTarget || !selectedJefe) return;
@@ -154,7 +131,6 @@ export function AdminFamilies() {
     setForm({ nombre_familia: '', detalle_familia: '' });
     setSelectedJefe(null);
     setJefeQuery('');
-    setJefeResults([]);
     setTab('form');
   }
 
@@ -186,40 +162,15 @@ export function AdminFamilies() {
         await api.patch(`/familias/grupos/${editId}/`, payload);
       } else {
         if (!selectedJefe) return;
-        const { data } = await api.post('/familias/grupos/', {
-          ...payload,
-          estado: true,
-        });
-        const createdFamily = (data as { data?: { id_familia: number } }).data ?? (data as { id_familia: number });
-        const familyId = createdFamily.id_familia;
-
-        let rollbackOk = true;
-        try {
-          await api.post('/familias/miembros/', {
-            fk_usuario: selectedJefe.id_usuario,
-            fk_familia: familyId,
-          });
-
-          await api.post(`/familias/grupos/${familyId}/asignar-jefe/`, {
-            fk_jefe_familia: selectedJefe.id_usuario,
-          });
-        } catch (err: unknown) {
-          try {
-            await api.delete(`/familias/grupos/${familyId}/`);
-          } catch (rollbackErr) {
-            rollbackOk = false;
-            console.error(
-              '[Rollback Error] Failed to delete empty family:',
-              rollbackErr,
-            );
-          }
-          if (!rollbackOk) {
-            throw new Error(
-              'Error al asignar el jefe de familia. La familia fue creada pero el rollback falló — contactá al administrador.',
-            );
-          }
-          throw err;
-        }
+        await createFamilyWithHead(
+          {
+            nombre_familia: payload.nombre_familia,
+            ...(payload.detalle_familia
+              ? { detalle_familia: payload.detalle_familia }
+              : {}),
+          },
+          selectedJefe.id_usuario,
+        );
       }
       await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
       setTab('list');
@@ -754,7 +705,6 @@ export function AdminFamilies() {
                       onClick={() => {
                         setSelectedJefe(null);
                         setJefeQuery('');
-                        setJefeResults([]);
                       }}
                       style={{
                         position: 'absolute',
@@ -802,7 +752,6 @@ export function AdminFamilies() {
                           setJefeQuery(
                             `${user.nombre} ${user.apellido_paterno} (${user.email})`,
                           );
-                          setJefeResults([]);
                         }}
                         style={{
                           padding: '10px 14px',
@@ -1223,7 +1172,6 @@ export function AdminFamilies() {
                         setJefeQuery(
                           `${user.nombre} ${user.apellido_paterno} (${user.email})`,
                         );
-                        setJefeResults([]);
                       }}
                       style={{
                         padding: '10px 14px',

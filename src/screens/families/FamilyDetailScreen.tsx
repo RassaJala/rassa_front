@@ -1,4 +1,4 @@
-/* global setTimeout, clearTimeout -- RN timer functions not in ESLint env */
+/* globals console */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -284,7 +284,7 @@ function AddMemberModal({
       setSelectedUser(null);
       return;
     }
-  }, [visible]);
+  }, [visible, setResults]);
 
   const handleClear = (): void => {
     setQuery('');
@@ -518,6 +518,151 @@ function AddMemberModal({
           </View>
         </View>
       </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ── Confirm action modal ─────────────────────────────
+
+interface ConfirmActionModalProps {
+  readonly visible: boolean;
+  readonly isDark: boolean;
+  readonly iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  readonly iconBgColor: string;
+  readonly iconColor: string;
+  readonly title: string;
+  readonly description: string;
+  readonly confirmLabel: string;
+  readonly confirmBgColor: string;
+  readonly isPending: boolean;
+  readonly onConfirm: () => void;
+  readonly onClose: () => void;
+}
+
+function ConfirmActionModal({
+  visible,
+  isDark,
+  iconName,
+  iconBgColor,
+  iconColor,
+  title,
+  description,
+  confirmLabel,
+  confirmBgColor,
+  isPending,
+  onConfirm,
+  onClose,
+}: ConfirmActionModalProps): React.JSX.Element | null {
+  const t = themeColors(isDark);
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <Pressable
+        style={{ flex: 1, backgroundColor: colors.overlayBg }}
+        onPress={onClose}
+      />
+      <View
+        style={{
+          backgroundColor: t.surface,
+          borderRadius: 24,
+          padding: 24,
+          paddingBottom: 34,
+          marginTop: 'auto',
+        }}
+      >
+        <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: iconBgColor,
+              marginBottom: 12,
+            }}
+          >
+            <MaterialCommunityIcons
+              name={iconName}
+              size={26}
+              color={iconColor}
+            />
+          </View>
+          <Text
+            style={{
+              fontSize: 17,
+              fontWeight: '700',
+              color: t.fg,
+              textAlign: 'center',
+            }}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: t.muted,
+              marginTop: 6,
+              textAlign: 'center',
+            }}
+          >
+            {description}
+          </Text>
+        </View>
+        <View style={{ gap: 10 }}>
+          <TouchableOpacity
+            onPress={onConfirm}
+            disabled={isPending}
+            activeOpacity={0.8}
+            style={{
+              height: 50,
+              borderRadius: 14,
+              backgroundColor: confirmBgColor,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+              opacity: isPending ? 0.6 : 1,
+            }}
+          >
+            {isPending ? (
+              <ActivityIndicator size={16} color={colors.iconWhite} />
+            ) : null}
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: colors.iconWhite,
+              }}
+            >
+              {confirmLabel}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onClose}
+            disabled={isPending}
+            activeOpacity={0.8}
+            style={{
+              height: 44,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+              Cancelar
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -868,342 +1013,61 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       ) : null}
 
       {/* ── Delete family confirmation ─────────────────────── */}
-      <Modal
+      {/* ── Delete family confirmation ──────────────────────── */}
+      <ConfirmActionModal
         visible={deleteConfirmVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDeleteConfirmVisible(false)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: colors.overlayBg }}
-          onPress={() => setDeleteConfirmVisible(false)}
-        />
-        <View
-          style={{
-            backgroundColor: t.surface,
-            borderRadius: 24,
-            padding: 24,
-            paddingBottom: 34,
-            marginTop: 'auto',
-          }}
-        >
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: t.errorBg,
-                marginBottom: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="trash-can-outline"
-                size={26}
-                color={coral}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: '700',
-                color: t.fg,
-                textAlign: 'center',
-              }}
-            >
-              ¿Eliminar familia "{family.nombre_familia}"?
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: t.muted,
-                marginTop: 6,
-                textAlign: 'center',
-              }}
-            >
-              Esta acción desactivará la familia y todos sus miembros.
-            </Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity
-              onPress={() => {
-                void deleteMutation.mutateAsync();
-              }}
-              disabled={deleteMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 50,
-                borderRadius: 14,
-                backgroundColor: coral,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 6,
-                opacity: deleteMutation.isPending ? 0.6 : 1,
-              }}
-            >
-              {deleteMutation.isPending ? (
-                <ActivityIndicator size={16} color={colors.iconWhite} />
-              ) : null}
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: colors.iconWhite,
-                }}
-              >
-                Eliminar
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setDeleteConfirmVisible(false)}
-              disabled={deleteMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 44,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        isDark={isDark}
+        iconName="trash-can-outline"
+        iconBgColor={t.errorBg}
+        iconColor={coral}
+        title={`¿Eliminar familia "${family.nombre_familia}"?`}
+        description="Esta acción desactivará la familia y todos sus miembros."
+        confirmLabel="Eliminar"
+        confirmBgColor={coral}
+        isPending={deleteMutation.isPending}
+        onConfirm={() => void deleteMutation.mutateAsync()}
+        onClose={() => setDeleteConfirmVisible(false)}
+      />
 
       {/* ── Remove member confirmation ──────────────────────── */}
-      <Modal
+      <ConfirmActionModal
         visible={removeMemberTarget !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setRemoveMemberTarget(null)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: colors.overlayBg }}
-          onPress={() => setRemoveMemberTarget(null)}
-        />
-        <View
-          style={{
-            backgroundColor: t.surface,
-            borderRadius: 24,
-            padding: 24,
-            paddingBottom: 34,
-            marginTop: 'auto',
-          }}
-        >
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: t.errorBg,
-                marginBottom: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="account-remove-outline"
-                size={26}
-                color={coral}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: '700',
-                color: t.fg,
-                textAlign: 'center',
-              }}
-            >
-              ¿Remover a "{removeMemberTarget?.usuario_nombre ?? ''}"?
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: t.muted,
-                marginTop: 6,
-                textAlign: 'center',
-              }}
-            >
-              Se removerá al miembro de esta familia.
-            </Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity
-              onPress={() => {
-                if (!removeMemberTarget) return;
-                void removeMemberMutation.mutateAsync(
-                  removeMemberTarget.id_familia_usuario,
-                );
-              }}
-              disabled={removeMemberMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 50,
-                borderRadius: 14,
-                backgroundColor: coral,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 6,
-                opacity: removeMemberMutation.isPending ? 0.6 : 1,
-              }}
-            >
-              {removeMemberMutation.isPending ? (
-                <ActivityIndicator size={16} color={colors.iconWhite} />
-              ) : null}
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: colors.iconWhite,
-                }}
-              >
-                Remover
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setRemoveMemberTarget(null)}
-              disabled={removeMemberMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 44,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        isDark={isDark}
+        iconName="account-remove-outline"
+        iconBgColor={t.errorBg}
+        iconColor={coral}
+        title={`¿Remover a "${removeMemberTarget?.usuario_nombre ?? ''}"?`}
+        description="Se removerá al miembro de esta familia."
+        confirmLabel="Remover"
+        confirmBgColor={coral}
+        isPending={removeMemberMutation.isPending}
+        onConfirm={() => {
+          if (!removeMemberTarget) return;
+          void removeMemberMutation.mutateAsync(
+            removeMemberTarget.id_familia_usuario,
+          );
+        }}
+        onClose={() => setRemoveMemberTarget(null)}
+      />
 
       {/* ── Assign head confirmation ────────────────────────── */}
-      <Modal
+      <ConfirmActionModal
         visible={assignHeadTarget !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAssignHeadTarget(null)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: colors.overlayBg }}
-          onPress={() => setAssignHeadTarget(null)}
-        />
-        <View
-          style={{
-            backgroundColor: t.surface,
-            borderRadius: 24,
-            padding: 24,
-            paddingBottom: 34,
-            marginTop: 'auto',
-          }}
-        >
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: t.accentBg,
-                marginBottom: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="account-star-outline"
-                size={26}
-                color={colors.brandOrange}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: '700',
-                color: t.fg,
-                textAlign: 'center',
-              }}
-            >
-              ¿Designar jefe de familia?
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: t.muted,
-                marginTop: 6,
-                textAlign: 'center',
-              }}
-            >
-              Se designará a "{assignHeadTarget?.usuario_nombre ?? ''}" como
-              jefe de familia.
-            </Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            <TouchableOpacity
-              onPress={() => {
-                if (!assignHeadTarget) return;
-                void assignHeadMutation.mutateAsync(assignHeadTarget.fk_usuario);
-              }}
-              disabled={assignHeadMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 50,
-                borderRadius: 14,
-                backgroundColor: colors.brandOrange,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 6,
-                opacity: assignHeadMutation.isPending ? 0.6 : 1,
-              }}
-            >
-              {assignHeadMutation.isPending ? (
-                <ActivityIndicator size={16} color={colors.iconWhite} />
-              ) : null}
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: colors.iconWhite,
-                }}
-              >
-                Asignar
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setAssignHeadTarget(null)}
-              disabled={assignHeadMutation.isPending}
-              activeOpacity={0.8}
-              style={{
-                height: 44,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: t.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        isDark={isDark}
+        iconName="account-star-outline"
+        iconBgColor={t.accentBg}
+        iconColor={colors.brandOrange}
+        title="¿Designar jefe de familia?"
+        description={`Se designará a "${assignHeadTarget?.usuario_nombre ?? ''}" como jefe de familia.`}
+        confirmLabel="Asignar"
+        confirmBgColor={colors.brandOrange}
+        isPending={assignHeadMutation.isPending}
+        onConfirm={() => {
+          if (!assignHeadTarget) return;
+          void assignHeadMutation.mutateAsync(assignHeadTarget.fk_usuario);
+        }}
+        onClose={() => setAssignHeadTarget(null)}
+      />
 
       <Toast
         visible={toastMessage !== null}

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { colors, themeColors } from '@/constants/colors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useJefeSearch } from '../hooks/useJefeSearch';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
@@ -75,15 +76,14 @@ export function AdminFamilyDetail() {
   // Add member modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
   const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
     null,
   );
-  const [searchLoading, setSearchLoading] = useState(false);
+  const { results: searchResults, isSearching: searchLoading } =
+    useJefeSearch(searchQuery, selectedUser);
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Remove member confirmation modal
   const [removeTarget, setRemoveTarget] = useState<FamilyMember | null>(null);
@@ -98,44 +98,14 @@ export function AdminFamilyDetail() {
     );
   }, [members, memberSearch]);
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    const trimmed = searchQuery.trim();
-    if (trimmed.length < 1 || selectedUser) {
-      setSearchResults([]);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setSearchLoading(true);
-      try {
-        const { data } = await api.get<{ data: SearchUserResult[] }>(
-          `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,
-        );
-        setSearchResults(data.data);
-      } catch {
-        setSearchResults([]);
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 400);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [searchQuery, selectedUser]);
-
   function handleSelectUser(user: SearchUserResult) {
     setSelectedUser(user);
     setSearchQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
-    setSearchResults([]);
   }
 
   function handleClearSearch() {
     setSearchQuery('');
     setSelectedUser(null);
-    setSearchResults([]);
   }
 
   async function handleAddMember(e: React.FormEvent) {

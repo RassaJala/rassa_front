@@ -77,7 +77,7 @@ export async function createFamilyWithHead(
   try {
     await addFamilyMember(jefeUserId, family.id_familia);
     await assignFamilyHead(family.id_familia, jefeUserId);
-  } catch (err) {
+  } catch {
     try {
       await deleteFamily(family.id_familia);
     } catch (rollbackErr) {

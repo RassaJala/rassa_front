@@ -1,5 +1,3 @@
-/* globals clearTimeout, setTimeout -- Required for React Native timers */
-
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
