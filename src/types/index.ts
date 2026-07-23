@@ -129,11 +129,11 @@ export interface ApiResponse<T> {
 }
 
 export interface OrderStatusHistory {
-  readonly id: number;
-  readonly previous_status: string | null;
-  readonly new_status: string;
-  readonly changed_at: string; // ISO datetime
-  readonly changed_by: string | null;
+  readonly id_historial: number;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+  readonly creado_en: string; // ISO datetime
+  readonly cambiado_por_nombre: string | null;
 }
 
 export type AdminStackParamList = {

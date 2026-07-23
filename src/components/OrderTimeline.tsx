@@ -8,12 +8,12 @@ import { useOrderTimeline } from '@/hooks/useOrderTimeline';
 import { useTheme } from '@/store/ThemeContext';
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente',
-  confirmed: 'Confirmado',
-  in_preparation: 'En preparación',
-  shipped: 'Enviado',
-  delivered: 'Entregado',
-  cancelled: 'Cancelado',
+  pendiente: 'Pendiente',
+  confirmado: 'Confirmado',
+  en_preparacion: 'En preparación',
+  listo_para_retirar: 'Listo para retirar',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
 };
 
 function formatTimestamp(iso: string): string {
@@ -31,15 +31,15 @@ function getStatusDot(
   border: string,
 ): string {
   switch (status) {
-    case 'pending':
+    case 'pendiente':
       return colors.accent;
-    case 'confirmed':
-    case 'shipped':
-    case 'delivered':
+    case 'confirmado':
+    case 'entregado':
       return isDark ? colors.admBrandD : colors.admBrandL;
-    case 'in_preparation':
+    case 'en_preparacion':
+    case 'listo_para_retirar':
       return isDark ? colors.admBrandD : colors.admBrandL;
-    case 'cancelled':
+    case 'cancelado':
       return colors.brandRedCoral;
     default:
       return border;
@@ -47,24 +47,24 @@ function getStatusDot(
 }
 
 function buildDescription(entry: {
-  readonly previous_status: string | null;
-  readonly new_status: string;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
 }): string {
-  if (entry.previous_status === null) {
+  if (entry.estado_anterior === null) {
     return 'Pedido creado';
   }
-  const fromLabel = STATUS_LABELS[entry.previous_status] ?? entry.previous_status;
-  const toLabel = STATUS_LABELS[entry.new_status] ?? entry.new_status;
+  const fromLabel = STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
+  const toLabel = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
   return `${fromLabel} → ${toLabel}`;
 }
 
 interface TimelineEntryProps {
   readonly entry: {
-    readonly id: number;
-    readonly previous_status: string | null;
-    readonly new_status: string;
-    readonly changed_at: string;
-    readonly changed_by: string | null;
+    readonly id_historial: number;
+    readonly estado_anterior: string | null;
+    readonly estado_nuevo: string;
+    readonly creado_en: string;
+    readonly cambiado_por_nombre: string | null;
   };
   readonly isLast: boolean;
   readonly lineColor: string;
@@ -110,7 +110,7 @@ function TimelineEntry({
       {/* Content */}
       <View style={{ flex: 1, paddingLeft: 12, paddingBottom: isLast ? 0 : 20 }}>
         <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
-          {STATUS_LABELS[entry.new_status] ?? entry.new_status}
+          {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
         </Text>
         <Text
           style={{
@@ -124,14 +124,14 @@ function TimelineEntry({
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
           <MaterialCommunityIcons name="clock-outline" size={12} color={mutedColor} />
           <Text style={{ fontSize: 12, color: mutedColor }}>
-            {formatTimestamp(entry.changed_at)}
+            {formatTimestamp(entry.creado_en)}
           </Text>
-          {entry.changed_by !== null && (
+          {entry.cambiado_por_nombre !== null && (
             <>
               <Text style={{ fontSize: 12, color: mutedColor }}>·</Text>
               <MaterialCommunityIcons name="account-outline" size={12} color={mutedColor} />
               <Text style={{ fontSize: 12, color: mutedColor }}>
-                {entry.changed_by}
+                {entry.cambiado_por_nombre}
               </Text>
             </>
           )}
@@ -230,11 +230,11 @@ export default function OrderTimeline({
       >
         {entries.map((entry, index) => {
           const isLast = index === entries.length - 1;
-          const dotColor = getStatusDot(entry.new_status, isDark, border);
+          const dotColor = getStatusDot(entry.estado_nuevo, isDark, border);
 
           return (
             <TimelineEntry
-              key={entry.id}
+              key={entry.id_historial}
               entry={entry}
               isLast={isLast}
               lineColor={border}
