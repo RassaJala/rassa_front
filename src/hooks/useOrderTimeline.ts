@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/services/api';
-import { getMockOrderHistory } from '@/services/mock/orderHistory';
 import type { ApiResponse, OrderStatusHistory } from '@/types';
-
-declare const __DEV__: boolean | undefined;
 
 export function useOrderTimeline(
   orderId: number,
@@ -20,20 +17,12 @@ export function useOrderTimeline(
   >({
     queryKey: ['order-history', orderId],
     queryFn: async () => {
-      // ponytail: use mock data in dev so the timeline is visible without backend
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        await new Promise((r) => setTimeout(r, 600)); // simulate network delay
-        const mock = getMockOrderHistory(orderId);
-        if (mock.length === 0) {
-          throw new Error('El pedido no tiene historial');
-        }
-        return mock;
-      }
-
-      const { data } = await api.get<ApiResponse<OrderStatusHistory[]>>(
-        `/orders/${orderId}/history/`,
-      );
-      return data.data;
+      const { data } = await api.get<
+        ApiResponse<OrderStatusHistory[]> | OrderStatusHistory[]
+      >(`/pedidos/${orderId}/historial`);
+      // Handle both wrapped { data: [...] } and flat [...] responses
+      if (Array.isArray(data)) return data;
+      return (data as ApiResponse<OrderStatusHistory[]>).data;
     },
     enabled: orderId > 0,
     staleTime: 30_000,
