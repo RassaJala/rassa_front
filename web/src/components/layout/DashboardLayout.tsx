@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { useTheme } from '../../providers/ThemeProvider';
-import { getColors } from '../../constants/colors';
-import type { Role } from '../../types';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
+import type { Role } from '~/types';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
@@ -25,7 +25,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           flexDirection: 'column',
         }}
       >
-        <Topbar />
+        <Topbar role={role} />
         <main style={{ flex: 1, padding: '28px 32px 40px', overflowY: 'auto' }}>
           {children}
         </main>

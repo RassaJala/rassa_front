@@ -1009,6 +1009,7 @@ export default function CrudListScreen<
                 if (isFormActive) return;
                 startNew();
               }}
+              testID="add-new-btn"
               style={{
                 flex: 1,
                 paddingVertical: 8,
