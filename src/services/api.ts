@@ -25,10 +25,12 @@ const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
 function resolveBaseURL(): string {
   // On web, always use localhost (browser runs on the same machine as the server).
   // On native, respect EXPO_PUBLIC_API_URL so physical devices can reach the backend.
+  // eslint-disable-next-line no-undef, @typescript-eslint/no-unsafe-assignment -- process is injected by expo
+  const envUrl: string | undefined = process.env.EXPO_PUBLIC_API_URL;
   const configured =
     Platform.OS === 'web'
       ? 'http://localhost:8000'
-      : (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
+      : (envUrl ?? 'http://localhost:8000');
   const trimmed = configured.replace(/\/$/, '');
 
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
@@ -82,6 +84,14 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// ── Auth expiry callback ──────────────────────────────────
+// Registered by AuthContext so the interceptor can force-logout the user.
+let onAuthExpired: (() => void) | null = null;
+
+export function registerAuthExpiredCallback(cb: () => void): void {
+  onAuthExpired = cb;
+}
+
 // ── Token refresh single-flight ───────────────────────────
 // Ensures concurrent 401s coalesce into a single refresh call.
 let refreshPromise: Promise<string> | null = null;
@@ -96,25 +106,27 @@ async function refreshTokens(): Promise<string> {
     const refreshToken = await Storage.getItemAsync(Storage.REFRESH_TOKEN_KEY);
     if (!refreshToken) throw new Error('No refresh token available');
 
-    const res = await Promise.race([
-      api.post<{ access: string; refresh: string }>('/token/refresh/', {
-        refresh: refreshToken,
-      }),
-      new Promise<never>((_resolve, reject) =>
-        // eslint-disable-next-line no-undef -- global in RN/Node
-        setTimeout(
-          () => reject(new Error('Refresh token request timed out')),
-          REFRESH_TIMEOUT_MS,
-        ),
-      ),
-    ]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
 
-    const { access, refresh } = res.data;
-    await Promise.all([
-      Storage.setItemAsync(Storage.ACCESS_TOKEN_KEY, access),
-      Storage.setItemAsync(Storage.REFRESH_TOKEN_KEY, refresh),
-    ]);
-    return access;
+    try {
+      const res = await api.post<{ access: string; refresh: string }>(
+        '/token/refresh/',
+        { refresh: refreshToken },
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timeoutId);
+      const { access, refresh } = res.data;
+      await Promise.all([
+        Storage.setItemAsync(Storage.ACCESS_TOKEN_KEY, access),
+        Storage.setItemAsync(Storage.REFRESH_TOKEN_KEY, refresh),
+      ]);
+      return access;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   })();
 
   try {
@@ -157,12 +169,13 @@ api.interceptors.response.use(
       throw error;
     }
 
-    // Auth endpoints themselves (login, refresh) — clear tokens, no retry
+    // Auth endpoints themselves (login, refresh) — clear tokens, notify, no retry
     if (AUTH_ENDPOINTS.includes(originalRequest.url ?? '')) {
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
       ]);
+      onAuthExpired?.();
       throw error;
     }
 
@@ -173,11 +186,12 @@ api.interceptors.response.use(
     try {
       newAccessToken = await refreshTokens();
     } catch {
-      // Refresh itself failed — clear tokens and reject
+      // Refresh itself failed — clear tokens, notify AuthContext, and reject
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
       ]);
+      onAuthExpired?.();
       throw error;
     }
 
@@ -190,3 +204,12 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const base = baseURL.replace(/\/api\/?$/, '');
+  // ponytail: sanitizar path para evitar traversal (#34)
+  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
+  return `${base}${clean}`;
+}

@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { useTheme } from '../../providers/ThemeProvider';
-import { getColors } from '../../constants/colors';
+import { useAuth } from '~/hooks/useAuth';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
+import type { Role } from '~/types';
 
 interface NavItem {
   key: string;
@@ -75,7 +77,8 @@ const roleNavMap: Record<string, NavItem[]> = {
   ],
 };
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role }: { role: Role }) {
+  const { user } = useAuth();
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');
   const items = roleNavMap[role] ?? adminNav;
@@ -93,6 +96,7 @@ export function Sidebar({ role }: { role: string }) {
   > = {
     admin: { initials: 'AD', label: 'Admin', subtitle: 'Administrador' },
     agricultor: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
+    farmer: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
     vendedor: { initials: 'VD', label: 'Vendedor', subtitle: 'Vendedor' },
     cliente: { initials: 'CL', label: 'Cliente', subtitle: 'Cliente' },
   };
@@ -114,8 +118,8 @@ export function Sidebar({ role }: { role: string }) {
       }}
     >
       {/* Brand */}
-      <a
-        href="/admin"
+      <NavLink
+        to={items[0]?.path ?? '/'}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -150,7 +154,7 @@ export function Sidebar({ role }: { role: string }) {
         >
           RASSA-JALA
         </h1>
-      </a>
+      </NavLink>
 
       {/* Nav */}
       <nav
@@ -219,11 +223,13 @@ export function Sidebar({ role }: { role: string }) {
             fontSize: 14,
           }}
         >
-          {roleLabels[role]?.initials ?? 'AD'}
+          {user?.nombre?.slice(0, 2).toUpperCase() ??
+            roleLabels[role]?.initials ??
+            'AD'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-            {roleLabels[role]?.label ?? 'Admin'}
+            {user?.nombre ?? roleLabels[role]?.label ?? 'Admin'}
           </div>
           <div style={{ fontSize: 12, color: muted }}>
             {roleLabels[role]?.subtitle ?? 'Administrador'}

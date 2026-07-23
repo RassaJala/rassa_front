@@ -2,8 +2,16 @@
 import React from 'react';
 
 import '@testing-library/jest-native/extend-expect';
-import { render } from '@testing-library/react-native';
-import { useQuery } from '@tanstack/react-query';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
+import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { AdminStackParamList } from '@/types';
+
+const mockMutate = jest.fn();
+const mockQueryClient = { invalidateQueries: jest.fn() };
 
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
@@ -26,22 +34,12 @@ jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
   removeListener: jest.fn(),
   removeAllListeners: jest.fn(),
   dismiss: jest.fn(),
+  isVisible: jest.fn().mockReturnValue(false),
 }));
 jest.mock('@tanstack/react-query', () => ({
-  useQuery: jest.fn().mockReturnValue({
-    data: { data: [] },
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: jest.fn(),
-  }),
-  useMutation: jest.fn().mockReturnValue({
-    mutateAsync: jest.fn(),
-    isPending: false,
-  }),
-  useQueryClient: jest.fn().mockReturnValue({
-    invalidateQueries: jest.fn(),
-  }),
+  useQuery: jest.fn(),
+  useMutation: jest.fn(),
+  useQueryClient: jest.fn(),
 }));
 jest.mock('@/services/api', () => ({
   __esModule: true,
@@ -52,11 +50,6 @@ jest.mock('@/services/api', () => ({
     delete: jest.fn().mockResolvedValue({ data: { data: {} } }),
   },
 }));
-
-import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
-import type { RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AdminStackParamList } from '@/types';
 
 const mockNavigate = jest.fn();
 
@@ -86,6 +79,18 @@ const mockRoute = {
 describe('LocalidadListScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (useQuery as unknown as jest.Mock).mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+    (useMutation as unknown as jest.Mock).mockReturnValue({
+      mutate: mockMutate,
+      isPending: false,
+    });
+    (useQueryClient as unknown as jest.Mock).mockReturnValue(mockQueryClient);
   });
 
   it('se importa correctamente', () => {
@@ -122,5 +127,58 @@ describe('LocalidadListScreen', () => {
     expect(
       getByText('Agrega una localidad en Test Municipio para comenzar.'),
     ).toBeTruthy();
+  });
+
+  it('abre el formulario al presionar "➕ Nuevo"', () => {
+    const { getByTestId, getByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    fireEvent.press(getByTestId('add-new-btn'));
+    expect(getByText('Nueva localidad')).toBeTruthy();
+  });
+
+  it('muestra error de validacion al guardar con nombre vacio', async () => {
+    const { getByTestId, getByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    fireEvent.press(getByTestId('add-new-btn'));
+    expect(getByText('Nueva localidad')).toBeTruthy();
+    fireEvent.press(getByText('Guardar'));
+    await waitFor(() => {
+      expect(getByText('El nombre es obligatorio.')).toBeTruthy();
+    });
+  });
+
+  it('llama a mutate al guardar con nombre valido', async () => {
+    const { getByTestId, getByText, getByDisplayValue } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    fireEvent.press(getByTestId('add-new-btn'));
+    const input = getByDisplayValue('');
+    fireEvent.changeText(input, 'Nueva Localidad');
+    fireEvent.press(getByText('Guardar'));
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ nombre: 'Nueva Localidad' }),
+        expect.any(Object),
+      );
+    });
+  });
+
+  it('cancela la creacion al presionar Cancelar', () => {
+    const { getByTestId, getByText, queryByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    fireEvent.press(getByTestId('add-new-btn'));
+    expect(getByText('Nueva localidad')).toBeTruthy();
+    fireEvent.press(getByText('Cancelar'));
+    expect(queryByText('Nueva localidad')).toBeNull();
+  });
+
+  it('navega a LocalidadTrash desde el icono de papelera', () => {
+    const { getByText } = render(
+      <LocalidadListScreen navigation={mockNavigation} route={mockRoute} />,
+    );
+    expect(getByText('Localidades (Test Municipio)')).toBeTruthy();
   });
 });

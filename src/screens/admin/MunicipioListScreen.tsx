@@ -247,6 +247,7 @@ function MunicipioListItem({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Pressable
             onPress={actions.onEdit}
+            testID="edit-btn"
             style={{
               width: 36,
               height: 36,
@@ -267,6 +268,7 @@ function MunicipioListItem({
 
           <Pressable
             onPress={actions.onToggleStatus}
+            testID="toggle-status-btn"
             style={{
               width: 36,
               height: 36,
@@ -283,6 +285,7 @@ function MunicipioListItem({
 
           <Pressable
             onPress={actions.onDelete}
+            testID="delete-btn"
             style={{
               width: 36,
               height: 36,
