@@ -1,3 +1,4 @@
+import '~/styles/global.css';
 import React from 'react';
 import {
   MD3DarkTheme,
@@ -8,7 +9,6 @@ import {
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
 import {
   QueryCache,
   QueryClient,
@@ -17,7 +17,6 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
-import '~/styles/global.css';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
@@ -25,18 +24,14 @@ import { ThemeProvider } from '~/store/ThemeContext';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
+      retry: 1,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 30_000,
     },
   },
   queryCache: new QueryCache({
     onError: (error: Error) => {
-      Sentry.captureException(error, {
-        extra: {
-          message: error.message,
-          stack: error.stack,
-        },
-      });
+      console.error('[QueryCache]', error.message);
     },
   }),
 });

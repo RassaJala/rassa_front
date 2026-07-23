@@ -1,8 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '~/hooks/useAuth';
-import type { Role } from '~/types';
 
-export function ProtectedRoute({ role }: { role?: Role } = {}) {
+export function AdminRoute() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
@@ -18,15 +17,8 @@ export function ProtectedRoute({ role }: { role?: Role } = {}) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (role && user?.rol !== role) {
-    // Redirect to their own dashboard
-    const fallback =
-      user?.rol === 'admin'
-        ? '/admin'
-        : user?.rol === 'vendedor'
-          ? '/vendedor/ventas'
-          : '/agricultor/productos';
-    return <Navigate to={fallback} replace />;
+  if (user?.rol !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
