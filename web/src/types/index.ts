@@ -63,4 +63,5 @@ export interface Column<T> {
   sortable?: boolean;
   render?: (item: T) => React.ReactNode;
   className?: string;
+  sortValue?: (item: T) => string | number;
 }

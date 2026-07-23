@@ -85,22 +85,45 @@ export interface Producto {
 }
 
 export interface Order {
-  id: number;
-  buyer: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  id_pedido: number;
+  cliente_nombre: string | null;
+  vendedor_nombre: string | null;
   total: string;
-  items: OrderItem[];
-  created_at: string;
-  updated_at: string;
+  estado_actual: PedidoEstado;
+  creado_en: string;
+}
+
+export interface OrderDetail extends Order {
+  subtotal: string;
+  iva: string;
+  fecha_expiracion: string | null;
+  detalles: OrderItem[];
+  historial: OrderHistoryEntry[];
 }
 
 export interface OrderItem {
-  id: number;
-  order: number;
-  product: number | null;
-  quantity: number;
-  price: string;
+  id_detalle: number;
+  nombre_producto: string;
+  precio_unitario: string;
+  cantidad: number;
+  importe: string;
 }
+
+export interface OrderHistoryEntry {
+  id_historial: number;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  cambiado_por_nombre: string | null;
+  creado_en: string;
+}
+
+export type PedidoEstado =
+  | 'pendiente'
+  | 'confirmado'
+  | 'en_preparacion'
+  | 'listo_para_retirar'
+  | 'entregado'
+  | 'cancelado';
 
 export interface Category {
   id_categoria: number;
