@@ -191,15 +191,6 @@ export default function FamilyFormScreen(): React.JSX.Element {
           gap: 12,
         }}
       >
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-          })}
-          hitSlop={8}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
-        </Pressable>
         <View>
           <Text
             style={{
@@ -209,15 +200,74 @@ export default function FamilyFormScreen(): React.JSX.Element {
               color: t.fg,
             }}
           >
-            {isEditing ? 'Editar familia' : 'Nueva familia'}
+            {isEditing ? 'Editar familia' : 'Familias'}
           </Text>
           <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
             {isEditing
               ? 'Modifica los datos de la familia'
-              : 'Completa los datos de la nueva familia'}
+              : 'Crea una nueva familia'}
           </Text>
         </View>
       </View>
+
+      {/* ── Segmented control ──────────────────────── */}
+      {!isEditing ? (
+        <View
+          style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: isDark ? colors.admSegBgD : colors.admSegBgL,
+              borderRadius: 10,
+              padding: 3,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                flex: 1,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: colors.transparent,
+                alignItems: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: t.muted,
+                  letterSpacing: 0.01,
+                }}
+              >
+                📋 Lista
+              </Text>
+            </TouchableOpacity>
+            <View
+              style={{
+                flex: 1,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: t.surface,
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: t.fg,
+                  letterSpacing: 0.01,
+                }}
+              >
+                ➕ Nuevo
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
 
       <ScrollView
         style={{ flex: 1 }}
