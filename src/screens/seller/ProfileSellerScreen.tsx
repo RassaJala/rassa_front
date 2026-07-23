@@ -1,16 +1,16 @@
-import React from "react";
-import { Text, View } from "react-native";
+import React from 'react';
+import { Text, View } from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from "@/constants/colors";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
+import { colors } from '@/constants/colors';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 
 export default function ProfileSellerScreen(): React.JSX.Element {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
@@ -24,8 +24,8 @@ export default function ProfileSellerScreen(): React.JSX.Element {
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <View
@@ -36,8 +36,8 @@ export default function ProfileSellerScreen(): React.JSX.Element {
             backgroundColor: surface,
             borderWidth: 1,
             borderColor: border,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
             marginBottom: 16,
           }}
         >
@@ -50,12 +50,12 @@ export default function ProfileSellerScreen(): React.JSX.Element {
         <Text
           style={{
             fontSize: 22,
-            fontWeight: "700",
+            fontWeight: '700',
             color: fg,
             letterSpacing: -0.3,
           }}
         >
-          {user?.first_name ?? "Usuario"}
+          {user?.first_name ?? 'Usuario'}
         </Text>
         <Text
           style={{

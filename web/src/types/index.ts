@@ -1,17 +1,17 @@
-export type Role = "cliente" | "agricultor" | "vendedor" | "admin";
+export type Role = 'cliente' | 'agricultor' | 'vendedor' | 'admin';
 
 export function normalizeRole(apiRole: string | undefined): Role {
   switch (apiRole) {
-    case "admin":
-      return "admin";
-    case "farmer":
-      return "agricultor";
-    case "seller":
-      return "vendedor";
-    case "buyer":
-      return "cliente";
+    case 'admin':
+      return 'admin';
+    case 'farmer':
+      return 'agricultor';
+    case 'seller':
+      return 'vendedor';
+    case 'buyer':
+      return 'cliente';
     default:
-      return "cliente";
+      return 'cliente';
   }
 }
 
@@ -46,11 +46,11 @@ export interface NavItem {
   path: string;
 }
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
-export type BadgeVariant = "default" | "success" | "warning" | "error";
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'error';
 
-export type SortDirection = "asc" | "desc";
+export type SortDirection = 'asc' | 'desc';
 
 export interface SortConfig {
   key: string;

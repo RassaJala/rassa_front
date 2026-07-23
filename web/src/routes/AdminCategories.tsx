@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { useAppColors } from "../hooks/useAppColors";
+import { useMemo, useRef, useState } from 'react';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Category {
   id: number;
@@ -11,16 +11,16 @@ interface Category {
 const initialData: Category[] = [
   {
     id: 1,
-    nombre: "Hortalizas",
-    descripcion: "Verduras y hortalizas frescas",
+    nombre: 'Hortalizas',
+    descripcion: 'Verduras y hortalizas frescas',
     estado: true,
   },
-  { id: 2, nombre: "Frutas", descripcion: "Frutas de temporada", estado: true },
-  { id: 3, nombre: "Cereales", descripcion: "Granos y cereales", estado: true },
+  { id: 2, nombre: 'Frutas', descripcion: 'Frutas de temporada', estado: true },
+  { id: 3, nombre: 'Cereales', descripcion: 'Granos y cereales', estado: true },
   {
     id: 4,
-    nombre: "Legumbres",
-    descripcion: "Legumbres variadas",
+    nombre: 'Legumbres',
+    descripcion: 'Legumbres variadas',
     estado: false,
   },
 ];
@@ -30,10 +30,10 @@ export function AdminCategories() {
   const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Category[]>(initialData);
-  const [tab, setTab] = useState<"list" | "form">("list");
+  const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: "", descripcion: "" });
-  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({ nombre: '', descripcion: '' });
+  const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -49,14 +49,14 @@ export function AdminCategories() {
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: "", descripcion: "" });
-    setTab("form");
+    setForm({ nombre: '', descripcion: '' });
+    setTab('form');
   }
 
   function startEdit(item: Category) {
     setEditId(item.id);
     setForm({ nombre: item.nombre, descripcion: item.descripcion });
-    setTab("form");
+    setTab('form');
   }
 
   function handleSave(e: React.FormEvent) {
@@ -86,7 +86,7 @@ export function AdminCategories() {
         },
       ]);
     }
-    setTab("list");
+    setTab('list');
     setSaving(false);
   }
 
@@ -104,16 +104,16 @@ export function AdminCategories() {
 
   const btnStyle = {
     height: 40,
-    padding: "0 18px",
+    padding: '0 18px',
     borderRadius: 10,
-    border: "none",
+    border: 'none',
     fontSize: 14,
     fontWeight: 600,
-    fontFamily: "inherit",
-    cursor: "pointer",
-    letterSpacing: "0.01em",
-    display: "inline-flex",
-    alignItems: "center",
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+    display: 'inline-flex',
+    alignItems: 'center',
     gap: 6,
   } as const;
 
@@ -122,11 +122,11 @@ export function AdminCategories() {
       {/* Header */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 20,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
           gap: 12,
         }}
       >
@@ -134,7 +134,7 @@ export function AdminCategories() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: "-0.01em",
+            letterSpacing: '-0.01em',
             color: fg,
           }}
         >
@@ -142,7 +142,7 @@ export function AdminCategories() {
         </h2>
         <button
           onClick={startNew}
-          style={{ ...btnStyle, background: coral, color: "#fff" }}
+          style={{ ...btnStyle, background: coral, color: '#fff' }}
         >
           ＋ Nueva categoría
         </button>
@@ -151,28 +151,28 @@ export function AdminCategories() {
       {/* Tabs */}
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           gap: 2,
           background: border,
           borderRadius: 12,
           padding: 3,
           marginBottom: 20,
-          width: "fit-content",
+          width: 'fit-content',
         }}
       >
         <button
-          onClick={() => setTab("list")}
+          onClick={() => setTab('list')}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "list" ? surface : "transparent",
-            color: tab === "list" ? fg : muted,
-            boxShadow: tab === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'list' ? surface : 'transparent',
+            color: tab === 'list' ? fg : muted,
+            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           📋 Lista de categorías
@@ -180,16 +180,16 @@ export function AdminCategories() {
         <button
           onClick={() => startNew()}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "form" ? surface : "transparent",
-            color: tab === "form" ? fg : muted,
-            boxShadow: tab === "form" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'form' ? surface : 'transparent',
+            color: tab === 'form' ? fg : muted,
+            boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           ➕ Agregar categoría
@@ -197,23 +197,23 @@ export function AdminCategories() {
       </div>
 
       {/* TAB: List */}
-      {tab === "list" && (
+      {tab === 'list' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 20px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
               borderBottom: `1px solid ${border}`,
-              flexWrap: "wrap",
+              flexWrap: 'wrap',
               gap: 8,
             }}
           >
@@ -229,31 +229,31 @@ export function AdminCategories() {
                 height: 36,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
-                padding: "0 12px",
+                padding: '0 12px',
                 fontSize: 13,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
                 width: 220,
                 background: bg,
                 color: fg,
-                outline: "none",
+                outline: 'none',
               }}
             />
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {["Nombre", "Descripción", "Estado", "Acciones"].map((h) => (
+                  {['Nombre', 'Descripción', 'Estado', 'Acciones'].map((h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: "left",
+                        textAlign: 'left',
                         fontSize: 11,
                         color: muted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
                         fontWeight: 600,
-                        padding: "12px 20px",
+                        padding: '12px 20px',
                         background: bg,
                         borderBottom: `1px solid ${border}`,
                       }}
@@ -269,8 +269,8 @@ export function AdminCategories() {
                     <td
                       colSpan={4}
                       style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
+                        textAlign: 'center',
+                        padding: '48px 24px',
                         color: muted,
                         fontSize: 14,
                       }}
@@ -283,7 +283,7 @@ export function AdminCategories() {
                     <tr key={item.id} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           fontWeight: 600,
@@ -294,7 +294,7 @@ export function AdminCategories() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           color: muted,
@@ -304,7 +304,7 @@ export function AdminCategories() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -312,45 +312,45 @@ export function AdminCategories() {
                           style={{
                             fontSize: 12,
                             fontWeight: 600,
-                            padding: "3px 10px",
+                            padding: '3px 10px',
                             borderRadius: 6,
                             background: item.estado
                               ? isDark
-                                ? "rgba(74,138,99,0.15)"
-                                : "rgba(36,86,60,0.07)"
+                                ? 'rgba(74,138,99,0.15)'
+                                : 'rgba(36,86,60,0.07)'
                               : isDark
-                                ? "rgba(212,160,32,0.12)"
-                                : "rgba(242,169,0,0.1)",
-                            color: item.estado ? brand : "#F2A900",
+                                ? 'rgba(212,160,32,0.12)'
+                                : 'rgba(242,169,0,0.1)',
+                            color: item.estado ? brand : '#F2A900',
                           }}
                         >
-                          {item.estado ? "Activo" : "Inactivo"}
+                          {item.estado ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => toggleStatus(item)}
-                            aria-label={item.estado ? "Desactivar" : "Activar"}
+                            aria-label={item.estado ? 'Desactivar' : 'Activar'}
                             style={{
                               width: 32,
                               height: 32,
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
-                            {item.estado ? "⏸" : "▶️"}
+                            {item.estado ? '⏸' : '▶️'}
                           </button>
                           <button
                             onClick={() => startEdit(item)}
@@ -361,10 +361,10 @@ export function AdminCategories() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -379,10 +379,10 @@ export function AdminCategories() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -400,30 +400,30 @@ export function AdminCategories() {
       )}
 
       {/* TAB: Form */}
-      {tab === "form" && (
+      {tab === 'form' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              padding: "20px 24px",
+              padding: '20px 24px',
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? "Editar categoría" : "Nueva categoría"}
+              {editId ? 'Editar categoría' : 'Nueva categoría'}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
               gap: 18,
               padding: 24,
             }}
@@ -431,9 +431,9 @@ export function AdminCategories() {
             <div
               className="full"
               style={{
-                gridColumn: "1 / -1",
-                display: "flex",
-                flexDirection: "column",
+                gridColumn: '1 / -1',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 5,
               }}
             >
@@ -441,8 +441,8 @@ export function AdminCategories() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -457,27 +457,27 @@ export function AdminCategories() {
                 placeholder="ej. Hortalizas"
                 required
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === "nombre" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "0 14px",
+                  padding: '0 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
+                  outline: 'none',
                 }}
-                onFocus={() => setFocusedField("nombre")}
+                onFocus={() => setFocusedField('nombre')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
             <div
               className="full"
               style={{
-                gridColumn: "1 / -1",
-                display: "flex",
-                flexDirection: "column",
+                gridColumn: '1 / -1',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 5,
               }}
             >
@@ -485,8 +485,8 @@ export function AdminCategories() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -499,30 +499,30 @@ export function AdminCategories() {
                 }
                 placeholder="Descripción de la categoría"
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 90,
-                  border: `1.5px solid ${focusedField === "descripcion" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'descripcion' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "12px 14px",
+                  padding: '12px 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
-                  resize: "vertical",
+                  outline: 'none',
+                  resize: 'vertical',
                 }}
-                onFocus={() => setFocusedField("descripcion")}
+                onFocus={() => setFocusedField('descripcion')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="submit"
                 disabled={saving}
                 style={{
                   ...btnStyle,
                   background: coral,
-                  color: "#fff",
+                  color: '#fff',
                   opacity: saving ? 0.6 : 1,
                 }}
               >
@@ -530,10 +530,10 @@ export function AdminCategories() {
               </button>
               <button
                 type="button"
-                onClick={() => setTab("list")}
+                onClick={() => setTab('list')}
                 style={{
                   ...btnStyle,
-                  background: "transparent",
+                  background: 'transparent',
                   border: `1.5px solid ${border}`,
                   color: fg,
                 }}
@@ -549,14 +549,14 @@ export function AdminCategories() {
       {delTarget && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
-            backdropFilter: "blur(4px)",
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setDelTarget(null)}
         >
@@ -566,9 +566,9 @@ export function AdminCategories() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: "90%",
+              width: '90%',
               border: `1px solid ${border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -587,21 +587,21 @@ export function AdminCategories() {
               deshacer.
             </p>
             <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Cancelar
@@ -610,15 +610,15 @@ export function AdminCategories() {
                 onClick={handleDelete}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
-                  border: "1.5px solid #DE393A",
-                  background: "transparent",
-                  color: "#DE393A",
+                  border: '1.5px solid #DE393A',
+                  background: 'transparent',
+                  color: '#DE393A',
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Eliminar

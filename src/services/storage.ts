@@ -1,14 +1,14 @@
-import { Platform } from "react-native";
+import { Platform } from 'react-native';
 
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from 'expo-secure-store';
 
 // ── Token storage keys ────────────────────────────────────
-export const ACCESS_TOKEN_KEY = "access_token";
-export const REFRESH_TOKEN_KEY = "refresh_token";
-export const ONBOARDING_KEY = "onboarding_completed";
+export const ACCESS_TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const ONBOARDING_KEY = 'onboarding_completed';
 
 function isWeb(): boolean {
-  return Platform.OS === "web";
+  return Platform.OS === 'web';
 }
 
 export async function getItemAsync(key: string): Promise<string | null> {

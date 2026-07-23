@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -10,30 +10,30 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
+} from 'react-native';
 
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import { colors } from "@/constants/colors";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import { getLoginErrorMessage } from "@/utils/authError";
+import { colors } from '@/constants/colors';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import { getLoginErrorMessage } from '@/utils/authError';
 
 // ── Palette ────────────────────────────────────────────────────────────
 
 const light = {
-  skyTop: "#C4D6B8",
-  skyMid: "#D6E3CA",
-  skyBot: "#E8EED8",
-  hill1: "#3A6D56",
-  hill2: "#4D8A63",
-  hill3: "#6AA366",
-  tree: "#2A4D34",
-  sun: "#F2A900",
-  bird: "rgba(55,65,55,0.35)",
+  skyTop: '#C4D6B8',
+  skyMid: '#D6E3CA',
+  skyBot: '#E8EED8',
+  hill1: '#3A6D56',
+  hill2: '#4D8A63',
+  hill3: '#6AA366',
+  tree: '#2A4D34',
+  sun: '#F2A900',
+  bird: 'rgba(55,65,55,0.35)',
   bg: colors.admBgL,
   surface: colors.admSurfaceL,
-  cardBg: "rgba(255,255,255,0.92)",
+  cardBg: 'rgba(255,255,255,0.92)',
   fg: colors.admFgL,
   muted: colors.admMutedL,
   border: colors.admBorderL,
@@ -43,18 +43,18 @@ const light = {
 };
 
 const dark = {
-  skyTop: "#2A3D4A",
-  skyMid: "#354A55",
-  skyBot: "#3D5560",
-  hill1: "#2D4A3A",
-  hill2: "#3A5C48",
-  hill3: "#4A6E56",
-  tree: "#2D4A3A",
-  sun: "#D4E8C8",
-  bird: "rgba(180,200,190,0.35)",
+  skyTop: '#2A3D4A',
+  skyMid: '#354A55',
+  skyBot: '#3D5560',
+  hill1: '#2D4A3A',
+  hill2: '#3A5C48',
+  hill3: '#4A6E56',
+  tree: '#2D4A3A',
+  sun: '#D4E8C8',
+  bird: 'rgba(180,200,190,0.35)',
   bg: colors.admBgD,
   surface: colors.admSurfaceD,
-  cardBg: "rgba(30,40,33,0.95)",
+  cardBg: 'rgba(30,40,33,0.95)',
   fg: colors.admFgD,
   muted: colors.admMutedD,
   border: colors.admBorderD,
@@ -70,12 +70,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
 // ── Color constants ────────────────────────────────────────────────────
 
-const transparentBg = "transparent";
-const scenePillBg = "rgba(0,0,0,0.2)";
-const scenePillBorder = "rgba(255,255,255,0.25)";
-const scenePillText = "#FFFFFF";
-const loginBtnBorder = "#c03232";
-const loginBtnText = "#FFFFFF";
+const transparentBg = 'transparent';
+const scenePillBg = 'rgba(0,0,0,0.2)';
+const scenePillBorder = 'rgba(255,255,255,0.25)';
+const scenePillText = '#FFFFFF';
+const loginBtnBorder = '#c03232';
+const loginBtnText = '#FFFFFF';
 
 // ── Sky bands ──────────────────────────────────────────────────────────
 
@@ -107,7 +107,7 @@ function Tree({
   return (
     <View
       style={{
-        position: "absolute",
+        position: 'absolute',
         bottom,
         left,
         width: 0,
@@ -143,8 +143,8 @@ function Scene({ isDark }: { isDark: boolean }) {
       style={{
         opacity: fade,
         height: 310,
-        position: "relative",
-        overflow: "hidden",
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       <Sky c={c} />
@@ -152,7 +152,7 @@ function Scene({ isDark }: { isDark: boolean }) {
       {/* Celestial */}
       <View
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 20,
           right: 30,
           width: 52,
@@ -170,7 +170,7 @@ function Scene({ isDark }: { isDark: boolean }) {
       {/* Birds */}
       <Text
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 40,
           left: 80,
           fontSize: 14,
@@ -181,7 +181,7 @@ function Scene({ isDark }: { isDark: boolean }) {
       </Text>
       <Text
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 55,
           left: 104,
           fontSize: 10,
@@ -199,7 +199,7 @@ function Scene({ isDark }: { isDark: boolean }) {
       {/* Hills — extend well below, card sits on top */}
       <View
         style={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
@@ -208,7 +208,7 @@ function Scene({ isDark }: { isDark: boolean }) {
       >
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 0,
             left: -50,
             width: 350,
@@ -220,7 +220,7 @@ function Scene({ isDark }: { isDark: boolean }) {
         />
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 0,
             left: 80,
             width: 400,
@@ -232,7 +232,7 @@ function Scene({ isDark }: { isDark: boolean }) {
         />
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 0,
             left: 220,
             width: 240,
@@ -247,11 +247,11 @@ function Scene({ isDark }: { isDark: boolean }) {
       {/* Brand pill */}
       <View
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 80,
-          alignSelf: "center",
-          flexDirection: "row",
-          alignItems: "center",
+          alignSelf: 'center',
+          flexDirection: 'row',
+          alignItems: 'center',
           paddingVertical: 8,
           paddingHorizontal: 18,
           borderRadius: 99,
@@ -265,7 +265,7 @@ function Scene({ isDark }: { isDark: boolean }) {
           style={{
             color: scenePillText,
             fontSize: 15,
-            fontWeight: "600",
+            fontWeight: '600',
             marginLeft: 8,
             letterSpacing: 1,
           }}
@@ -299,14 +299,14 @@ function Md3Field({
   value: string;
   onChangeText: (v: string) => void;
   secureTextEntry?: boolean | undefined;
-  autoComplete?: "email" | "password" | undefined;
-  keyboardType?: "email-address" | undefined;
+  autoComplete?: 'email' | 'password' | undefined;
+  keyboardType?: 'email-address' | undefined;
   isDark: boolean;
   showPwToggle?: boolean | undefined;
   showPw?: boolean | undefined;
   onTogglePw?: (() => void) | undefined;
   error?: string | null | undefined;
-  autoCapitalize?: "none" | undefined;
+  autoCapitalize?: 'none' | undefined;
 }) {
   const [focused, setFocused] = useState(false);
   const float = focused || value.length > 0;
@@ -327,12 +327,12 @@ function Md3Field({
   const inputPb = float ? 8 : 16;
   const containerBorderWidth = focused ? 2 : 1.5;
   const textInputPr = showPwToggle ? 56 : 20;
-  const pwIconName = showPw ? "eye-off" : "eye";
+  const pwIconName = showPw ? 'eye-off' : 'eye';
   const pwToggle = showPwToggle ? (
     <Pressable
       onPress={onTogglePw}
       style={{
-        position: "absolute",
+        position: 'absolute',
         right: 4,
         top: 12,
         padding: 10,
@@ -362,15 +362,15 @@ function Md3Field({
       <View
         style={{
           borderRadius: 6,
-          position: "relative",
-          justifyContent: "center",
+          position: 'relative',
+          justifyContent: 'center',
           minHeight: 64,
           borderWidth: containerBorderWidth,
           borderColor: borderClr,
           backgroundColor: c.inputBg,
         }}
       >
-        <View style={{ position: "absolute", left: 16, top: 22, zIndex: 2 }}>
+        <View style={{ position: 'absolute', left: 16, top: 22, zIndex: 2 }}>
           <MaterialCommunityIcons
             name={icon as keyof typeof MaterialCommunityIcons.glyphMap}
             size={22}
@@ -380,12 +380,12 @@ function Md3Field({
 
         <Text
           style={{
-            position: "absolute",
+            position: 'absolute',
             left: 50,
             top: topPos,
             fontSize: fontSizeLbl,
             color: labelColor,
-            fontWeight: "400",
+            fontWeight: '400',
             zIndex: 2,
           }}
         >
@@ -428,11 +428,11 @@ function Md3Field({
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const c = isDark ? dark : light;
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -464,10 +464,10 @@ export default function LoginScreen(): React.JSX.Element {
   const handleLogin = useCallback(async () => {
     if (loading) return;
     const errs: { email?: string; password?: string } = {};
-    if (!email.trim()) errs.email = "Ingresá tu correo electrónico";
+    if (!email.trim()) errs.email = 'Ingresá tu correo electrónico';
     else if (!EMAIL_RE.test(email.trim()))
-      errs.email = "El correo no tiene formato válido";
-    if (!password) errs.password = "Ingresá tu contraseña";
+      errs.email = 'El correo no tiene formato válido';
+    if (!password) errs.password = 'Ingresá tu contraseña';
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setError(null);
@@ -481,7 +481,7 @@ export default function LoginScreen(): React.JSX.Element {
     }
   }, [email, password, loading, login]);
 
-  const clearErr = (f: "email" | "password") =>
+  const clearErr = (f: 'email' | 'password') =>
     setFieldErrors((p) => {
       const n = { ...p };
       delete n[f];
@@ -490,7 +490,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1, backgroundColor: c.bg }}
     >
       <ScrollView
@@ -503,7 +503,7 @@ export default function LoginScreen(): React.JSX.Element {
         <Scene isDark={isDark} />
 
         {/* Wave transition — svg-like, bg color for smooth transition */}
-        <View style={{ height: 48, overflow: "hidden", marginTop: -4 }}>
+        <View style={{ height: 48, overflow: 'hidden', marginTop: -4 }}>
           <View
             style={{
               height: 80,
@@ -527,7 +527,7 @@ export default function LoginScreen(): React.JSX.Element {
             paddingHorizontal: 20,
             ...Platform.select({
               ios: {
-                shadowColor: "#000",
+                shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.06,
                 shadowRadius: 14,
@@ -539,7 +539,7 @@ export default function LoginScreen(): React.JSX.Element {
           <Text
             style={{
               fontSize: 26,
-              fontWeight: "600",
+              fontWeight: '600',
               color: c.fg,
               marginBottom: 4,
             }}
@@ -557,7 +557,7 @@ export default function LoginScreen(): React.JSX.Element {
               value={email}
               onChangeText={(v) => {
                 setEmail(v);
-                clearErr("email");
+                clearErr('email');
               }}
               autoComplete="email"
               keyboardType="email-address"
@@ -574,7 +574,7 @@ export default function LoginScreen(): React.JSX.Element {
               value={password}
               onChangeText={(v) => {
                 setPassword(v);
-                clearErr("password");
+                clearErr('password');
               }}
               secureTextEntry={!showPw}
               autoComplete="password"
@@ -591,7 +591,7 @@ export default function LoginScreen(): React.JSX.Element {
               style={{
                 color: c.coral,
                 fontSize: 15,
-                textAlign: "center",
+                textAlign: 'center',
                 marginTop: 12,
                 marginBottom: 8,
               }}
@@ -607,15 +607,15 @@ export default function LoginScreen(): React.JSX.Element {
               style={{
                 height: 56,
                 borderRadius: 28,
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: 'center',
+                justifyContent: 'center',
                 backgroundColor: c.coral,
                 opacity: loading ? 0.5 : 1,
                 borderWidth: 2,
                 borderColor: loginBtnBorder,
                 ...Platform.select({
                   ios: {
-                    shadowColor: "#8B1A1A",
+                    shadowColor: '#8B1A1A',
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.35,
                     shadowRadius: 8,
@@ -628,11 +628,11 @@ export default function LoginScreen(): React.JSX.Element {
                 style={{
                   color: loginBtnText,
                   fontSize: 20,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   letterSpacing: 0.5,
                 }}
               >
-                {loading ? "INGRESANDO…" : "INICIAR SESIÓN"}
+                {loading ? 'INGRESANDO…' : 'INICIAR SESIÓN'}
               </Text>
             </Pressable>
           </View>

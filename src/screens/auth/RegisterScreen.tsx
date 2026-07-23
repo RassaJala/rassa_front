@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -6,29 +6,29 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { useNetInfo } from "@react-native-community/netinfo";
-import { useNavigation } from "@react-navigation/native";
-import * as Sentry from "@sentry/react-native";
+import { useNetInfo } from '@react-native-community/netinfo';
+import { useNavigation } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 
-import DatePickerModal from "@/components/DatePickerModal";
-import RegistrationFormFields from "@/components/RegistrationFormFields";
-import { colors } from "@/constants/colors";
-import { useRegistrationForm } from "@/hooks/useRegistrationForm";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import type { RegisterRole } from "@/types";
-import { cleanPhoneNumber, validateRegistrationForm } from "@/utils/validation";
+import DatePickerModal from '@/components/DatePickerModal';
+import RegistrationFormFields from '@/components/RegistrationFormFields';
+import { colors } from '@/constants/colors';
+import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import type { RegisterRole } from '@/types';
+import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
-const DEFAULT_REGISTER_ROLE: RegisterRole = "buyer";
+const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
 export default function RegisterScreen(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
   const netInfo = useNetInfo();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const isMounted = useRef(true);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
@@ -55,7 +55,7 @@ export default function RegisterScreen(): React.JSX.Element {
     setErrorMessage(null);
 
     if (netInfo.isConnected === false) {
-      setErrorMessage("Sin conexión a Internet.");
+      setErrorMessage('Sin conexión a Internet.');
       return;
     }
 
@@ -98,7 +98,7 @@ export default function RegisterScreen(): React.JSX.Element {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Error al registrar usuario.",
+            : 'Error al registrar usuario.',
         );
       }
       Sentry.captureException(error);
@@ -128,7 +128,7 @@ export default function RegisterScreen(): React.JSX.Element {
             style={{
               marginBottom: 4,
               fontSize: 22,
-              fontWeight: "700",
+              fontWeight: '700',
               color: fg,
               letterSpacing: -0.3,
             }}
@@ -155,7 +155,7 @@ export default function RegisterScreen(): React.JSX.Element {
             <Text
               style={{
                 marginBottom: 16,
-                textAlign: "center",
+                textAlign: 'center',
                 fontSize: 13,
                 color: colors.brandRedCoral,
               }}
@@ -171,8 +171,8 @@ export default function RegisterScreen(): React.JSX.Element {
               backgroundColor: colors.brandRedCoral,
               borderRadius: 16,
               paddingVertical: 14,
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
               opacity: isSubmitting ? 0.7 : 1,
             }}
           >
@@ -182,7 +182,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   color: colors.iconWhite,
                 }}
               >
@@ -193,20 +193,20 @@ export default function RegisterScreen(): React.JSX.Element {
 
           <Pressable
             onPress={() => navigation.goBack()}
-            style={{ marginTop: 16, alignItems: "center" }}
+            style={{ marginTop: 16, alignItems: 'center' }}
           >
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "500",
+                fontWeight: '500',
                 color: muted,
               }}
             >
-              ¿Ya tienes cuenta?{" "}
+              ¿Ya tienes cuenta?{' '}
               <Text
                 style={{
                   color: isDark ? colors.admBrandD : colors.admBrandL,
-                  fontWeight: "600",
+                  fontWeight: '600',
                 }}
               >
                 Inicia sesión

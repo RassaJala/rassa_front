@@ -1,5 +1,5 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
-import type { AppColors } from "../../hooks/useAppColors";
+import { forwardRef, type InputHTMLAttributes } from 'react';
+import type { AppColors } from '../../hooks/useAppColors';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -8,7 +8,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, colors, className = "", ...props }, ref) => {
+  ({ label, error, colors, className = '', ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1">
         {label && (
@@ -20,8 +20,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={`rounded-lg border px-3 py-2 text-sm outline-none ${
             error
-              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-              : ""
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+              : ''
           } ${className}`}
           style={
             colors
@@ -40,4 +40,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   },
 );
 
-Input.displayName = "Input";
+Input.displayName = 'Input';

@@ -1,5 +1,5 @@
-import { forwardRef, type SelectHTMLAttributes } from "react";
-import type { AppColors } from "../../hooks/useAppColors";
+import { forwardRef, type SelectHTMLAttributes } from 'react';
+import type { AppColors } from '../../hooks/useAppColors';
 
 interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   colors: AppColors;
@@ -8,7 +8,7 @@ interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 // ponytail: select reutilizable (#28) — reemplaza HTML raw en ProductFormModal
 export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
-  ({ colors, hasError, className = "", children, ...props }, ref) => {
+  ({ colors, hasError, className = '', children, ...props }, ref) => {
     return (
       <select
         ref={ref}
@@ -17,7 +17,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
           borderColor: hasError ? colors.coral : colors.inputBorder,
           background: colors.surface,
           color: colors.fg,
-          borderWidth: "1.5px",
+          borderWidth: '1.5px',
         }}
         {...props}
       >
@@ -27,4 +27,4 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
   },
 );
 
-FormSelect.displayName = "FormSelect";
+FormSelect.displayName = 'FormSelect';

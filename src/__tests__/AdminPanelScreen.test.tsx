@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
-import React from "react";
+import React from 'react';
 
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import "@testing-library/jest-native/extend-expect";
-import { render } from "@testing-library/react-native";
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import '@testing-library/jest-native/extend-expect';
+import { render } from '@testing-library/react-native';
 
-import AdminPanelScreen from "@/screens/admin/AdminPanelScreen";
-import type { AdminStackParamList } from "@/types";
+import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import type { AdminStackParamList } from '@/types';
 
-let mockColorScheme: string | null = "light";
+let mockColorScheme: string | null = 'light';
 
-jest.mock("@/store/AuthContext", () => ({
+jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
     logout: jest.fn(),
-    user: { id_usuario: 1, nombre: "Admin", role: "admin" },
+    user: { id_usuario: 1, nombre: 'Admin', role: 'admin' },
   }),
 }));
-jest.mock("@/store/ThemeContext", () => ({
+jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({
     get colorScheme() {
       return mockColorScheme;
@@ -25,10 +25,10 @@ jest.mock("@/store/ThemeContext", () => ({
     isLoaded: true,
   }),
 }));
-jest.mock("@react-native-community/netinfo", () => ({
+jest.mock('@react-native-community/netinfo', () => ({
   useNetInfo: () => ({ isConnected: true }),
 }));
-jest.mock("react-native/Libraries/Components/Keyboard/Keyboard", () => ({
+jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
   addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
   removeListener: jest.fn(),
   removeAllListeners: jest.fn(),
@@ -52,30 +52,30 @@ const mockNavigation = {
   removeListener: jest.fn(),
   navigateDeprecated: jest.fn(),
   preload: jest.fn(),
-} as unknown as NativeStackNavigationProp<AdminStackParamList, "AdminPanel">;
+} as unknown as NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
 const days = [
-  "Domingo",
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
 ];
 const months = [
-  "enero",
-  "febrero",
-  "marzo",
-  "abril",
-  "mayo",
-  "junio",
-  "julio",
-  "agosto",
-  "septiembre",
-  "octubre",
-  "noviembre",
-  "diciembre",
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
 ];
 
 function todayString(): string {
@@ -83,59 +83,59 @@ function todayString(): string {
   return `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
 }
 
-describe("AdminPanelScreen", () => {
+describe('AdminPanelScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockColorScheme = "light";
+    mockColorScheme = 'light';
   });
 
-  it("renderiza el titulo Panel", () => {
+  it('renderiza el titulo Panel', () => {
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("Panel")).toBeTruthy();
+    expect(getByText('Panel')).toBeTruthy();
   });
 
-  it("renderiza las tarjetas de estadisticas", () => {
+  it('renderiza las tarjetas de estadisticas', () => {
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("Productos")).toBeTruthy();
-    expect(getByText("Usuarios")).toBeTruthy();
-    expect(getByText("Pedidos")).toBeTruthy();
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
   });
 
-  it("muestra la fecha actual formateada", () => {
+  it('muestra la fecha actual formateada', () => {
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
     expect(getByText(todayString())).toBeTruthy();
   });
 
-  it("muestra los valores correctos de estadisticas", () => {
+  it('muestra los valores correctos de estadisticas', () => {
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("1,248")).toBeTruthy();
-    expect(getByText("856")).toBeTruthy();
-    expect(getByText("432")).toBeTruthy();
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
   });
 
-  it("renderiza en modo oscuro sin errores", () => {
-    mockColorScheme = "dark";
+  it('renderiza en modo oscuro sin errores', () => {
+    mockColorScheme = 'dark';
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("Panel")).toBeTruthy();
-    expect(getByText("1,248")).toBeTruthy();
-    expect(getByText("856")).toBeTruthy();
-    expect(getByText("432")).toBeTruthy();
-    expect(getByText("Productos")).toBeTruthy();
-    expect(getByText("Usuarios")).toBeTruthy();
-    expect(getByText("Pedidos")).toBeTruthy();
+    expect(getByText('Panel')).toBeTruthy();
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
   });
 
-  it("fecha cambia con el dia real", () => {
+  it('fecha cambia con el dia real', () => {
     const { getByText, rerender } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
@@ -145,7 +145,7 @@ describe("AdminPanelScreen", () => {
     expect(getByText(todayString())).toBeTruthy();
   });
 
-  it("el header muestra la fecha en uppercase", () => {
+  it('el header muestra la fecha en uppercase', () => {
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
@@ -153,33 +153,33 @@ describe("AdminPanelScreen", () => {
     expect(dateText).toBeTruthy();
   });
 
-  it("renderiza el icono de notificaciones", () => {
+  it('renderiza el icono de notificaciones', () => {
     const { getByTestId } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByTestId("notification-bell")).toBeTruthy();
+    expect(getByTestId('notification-bell')).toBeTruthy();
   });
 
-  it("renderiza las tarjetas con colores diferentes por tipo", () => {
-    mockColorScheme = "light";
+  it('renderiza las tarjetas con colores diferentes por tipo', () => {
+    mockColorScheme = 'light';
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("Productos")).toBeTruthy();
-    expect(getByText("Usuarios")).toBeTruthy();
-    expect(getByText("Pedidos")).toBeTruthy();
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
   });
 
-  it("aplica colores del tema oscuro en las tarjetas", () => {
-    mockColorScheme = "dark";
+  it('aplica colores del tema oscuro en las tarjetas', () => {
+    mockColorScheme = 'dark';
     const { getByText } = render(
       <AdminPanelScreen navigation={mockNavigation} />,
     );
-    expect(getByText("Productos")).toBeTruthy();
-    expect(getByText("Usuarios")).toBeTruthy();
-    expect(getByText("Pedidos")).toBeTruthy();
-    expect(getByText("1,248")).toBeTruthy();
-    expect(getByText("856")).toBeTruthy();
-    expect(getByText("432")).toBeTruthy();
+    expect(getByText('Productos')).toBeTruthy();
+    expect(getByText('Usuarios')).toBeTruthy();
+    expect(getByText('Pedidos')).toBeTruthy();
+    expect(getByText('1,248')).toBeTruthy();
+    expect(getByText('856')).toBeTruthy();
+    expect(getByText('432')).toBeTruthy();
   });
 });

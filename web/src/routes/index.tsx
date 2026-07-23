@@ -1,22 +1,22 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { AdminRoute } from "~/components/guards/AdminRoute";
-import { ProtectedRoute } from "~/components/guards/ProtectedRoute";
-import { DashboardLayout } from "~/components/layout/DashboardLayout";
-import { LoginScreen, RegisterScreen } from "./auth";
-import { FarmerProducts, FarmerOrders } from "./farmer";
-import { SellerOrders, SellerSales } from "./seller";
-import { AdminDashboard } from "./AdminDashboard";
-import { AdminCategories } from "./AdminCategories";
-import { AdminUnits } from "./AdminUnits";
-import { AdminProducts } from "./AdminProducts";
-import { AdminMunicipios } from "./AdminMunicipios";
-import { AdminLocalidades } from "./AdminLocalidades";
-import { AdminUsers } from "./AdminUsers";
-import { BuyerHome } from "./BuyerHome";
-import { BuyerCart } from "./BuyerCart";
-import { BuyerOrders } from "./BuyerOrders";
-import { ProfilePage } from "./ProfilePage";
-import { useAuth } from "../hooks/useAuth";
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminRoute } from '~/components/guards/AdminRoute';
+import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
+import { DashboardLayout } from '~/components/layout/DashboardLayout';
+import { LoginScreen, RegisterScreen } from './auth';
+import { FarmerProducts, FarmerOrders } from './farmer';
+import { SellerOrders, SellerSales } from './seller';
+import { AdminDashboard } from './AdminDashboard';
+import { AdminCategories } from './AdminCategories';
+import { AdminUnits } from './AdminUnits';
+import { AdminProducts } from './AdminProducts';
+import { AdminMunicipios } from './AdminMunicipios';
+import { AdminLocalidades } from './AdminLocalidades';
+import { AdminUsers } from './AdminUsers';
+import { BuyerHome } from './BuyerHome';
+import { BuyerCart } from './BuyerCart';
+import { BuyerOrders } from './BuyerOrders';
+import { ProfilePage } from './ProfilePage';
+import { useAuth } from '../hooks/useAuth';
 
 function NotFound() {
   return (
@@ -47,13 +47,13 @@ function RootRedirect() {
   }
 
   const routes: Record<string, string> = {
-    admin: "/admin",
-    agricultor: "/agricultor/productos",
-    vendedor: "/vendedor/ventas",
-    cliente: "/cliente",
+    admin: '/admin',
+    agricultor: '/agricultor/productos',
+    vendedor: '/vendedor/ventas',
+    cliente: '/cliente',
   };
 
-  return <Navigate to={routes[user.rol] ?? "/login"} replace />;
+  return <Navigate to={routes[user.rol] ?? '/login'} replace />;
 }
 
 export function AppRouter() {

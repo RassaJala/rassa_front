@@ -1,55 +1,55 @@
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import React from 'react';
+import { ScrollView, Text, View } from 'react-native';
 
 export default function AdminUsersScreen(): React.JSX.Element {
   const users = [
     {
       id: 1,
-      name: "Carlos Rodríguez",
-      email: "carlos@ejemplo.com",
-      role: "Agricultor",
-      status: "Activo",
+      name: 'Carlos Rodríguez',
+      email: 'carlos@ejemplo.com',
+      role: 'Agricultor',
+      status: 'Activo',
     },
     {
       id: 2,
-      name: "María García",
-      email: "maria@ejemplo.com",
-      role: "Comprador",
-      status: "Activo",
+      name: 'María García',
+      email: 'maria@ejemplo.com',
+      role: 'Comprador',
+      status: 'Activo',
     },
     {
       id: 3,
-      name: "Juan Pérez",
-      email: "juan@ejemplo.com",
-      role: "Vendedor",
-      status: "Activo",
+      name: 'Juan Pérez',
+      email: 'juan@ejemplo.com',
+      role: 'Vendedor',
+      status: 'Activo',
     },
     {
       id: 4,
-      name: "Ana López",
-      email: "ana@ejemplo.com",
-      role: "Agricultor",
-      status: "Inactivo",
+      name: 'Ana López',
+      email: 'ana@ejemplo.com',
+      role: 'Agricultor',
+      status: 'Inactivo',
     },
     {
       id: 5,
-      name: "Luis Martínez",
-      email: "luis@ejemplo.com",
-      role: "Comprador",
-      status: "Activo",
+      name: 'Luis Martínez',
+      email: 'luis@ejemplo.com',
+      role: 'Comprador',
+      status: 'Activo',
     },
   ];
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
-      case "Agricultor":
-        return "bg-brand-green-forest/10 text-brand-green-forest";
-      case "Comprador":
-        return "bg-blue-500/10 text-blue-600";
-      case "Vendedor":
-        return "bg-brand-red-coral/10 text-brand-red-coral";
+      case 'Agricultor':
+        return 'bg-brand-green-forest/10 text-brand-green-forest';
+      case 'Comprador':
+        return 'bg-blue-500/10 text-blue-600';
+      case 'Vendedor':
+        return 'bg-brand-red-coral/10 text-brand-red-coral';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 

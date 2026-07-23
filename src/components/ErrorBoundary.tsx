@@ -1,6 +1,6 @@
-import React, { Component } from "react";
-import { Platform, Text, View } from "react-native";
-import { Button, Card } from "react-native-paper";
+import React, { Component } from 'react';
+import { Platform, Text, View } from 'react-native';
+import { Button, Card } from 'react-native-paper';
 
 interface Props {
   readonly children: React.ReactNode;
@@ -27,7 +27,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   override componentDidMount(): void {
     // ponytail: captura errores async que componentDidCatch no alcanza
-    if (Platform.OS === "web") {
+    if (Platform.OS === 'web') {
       this.errorHandler = (event: ErrorEvent) => {
         event.preventDefault();
         this.setState({ hasError: true, error: new Error(event.message) });
@@ -41,25 +41,25 @@ export default class ErrorBoundary extends Component<Props, State> {
         this.setState({ hasError: true, error: new Error(msg) });
       };
       // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
-      window.addEventListener("error", this.errorHandler);
+      window.addEventListener('error', this.errorHandler);
       // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
-      window.addEventListener("unhandledrejection", this.rejectionHandler);
+      window.addEventListener('unhandledrejection', this.rejectionHandler);
     }
   }
 
   override componentWillUnmount(): void {
     if (this.errorHandler) {
       // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
-      window.removeEventListener("error", this.errorHandler);
+      window.removeEventListener('error', this.errorHandler);
     }
     if (this.rejectionHandler) {
       // eslint-disable-next-line no-undef -- window is web-only, not in RN typings
-      window.removeEventListener("unhandledrejection", this.rejectionHandler);
+      window.removeEventListener('unhandledrejection', this.rejectionHandler);
     }
   }
 
   override componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
-    console.error("[ErrorBoundary]", error.message);
+    console.error('[ErrorBoundary]', error.message);
   }
 
   handleRetry = (): void => {
@@ -91,7 +91,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                     {this.state.error.message}
                     {this.state.error.stack
                       ? `\n\n${this.state.error.stack}`
-                      : ""}
+                      : ''}
                   </Text>
                 </View>
               ) : null}

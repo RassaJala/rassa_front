@@ -171,7 +171,7 @@ NativeWind usa `class` strategy por defecto. El toggle se aplica así:
 
 ```tsx
 // Toggle manual
-import { useColorScheme } from "nativewind";
+import { useColorScheme } from 'nativewind';
 
 function App() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -186,11 +186,11 @@ import {
   MD3DarkTheme,
   MD3LightTheme,
   Provider as PaperProvider,
-} from "react-native-paper";
+} from 'react-native-paper';
 
-const brandCoral = "#DE393A";
+const brandCoral = '#DE393A';
 const theme =
-  colorScheme === "dark"
+  colorScheme === 'dark'
     ? {
         ...MD3DarkTheme,
         colors: { ...MD3DarkTheme.colors, primary: brandCoral },
@@ -273,7 +273,7 @@ El nombre **"RASSA"** en el logo usa una **sans-serif condensada, monolineal** (
 ```tsx
 <Text
   className="text-2xl font-bold tracking-tight text-brand-green-forest"
-  style={{ fontFamily: "sans-serif-condensed" }}
+  style={{ fontFamily: 'sans-serif-condensed' }}
 >
   RASSA
 </Text>
@@ -473,16 +473,16 @@ Usar `@expo/vector-icons` (MaterialCommunityIcons por defecto).
       <Pressable
         key={item.key}
         className={`flex-row items-center gap-3 px-6 py-3 ${
-          active ? "border-r-2 border-brand-green-forest" : ""
+          active ? 'border-r-2 border-brand-green-forest' : ''
         }`}
       >
         <Icon
           icon={item.icon}
           size={20}
-          color={active ? "#3A6D56" : "#6b7280"}
+          color={active ? '#3A6D56' : '#6b7280'}
         />
         <Text
-          className={`text-sm ${active ? "font-medium text-brand-green-forest" : "text-gray-600"}`}
+          className={`text-sm ${active ? 'font-medium text-brand-green-forest' : 'text-gray-600'}`}
         >
           {item.label}
         </Text>

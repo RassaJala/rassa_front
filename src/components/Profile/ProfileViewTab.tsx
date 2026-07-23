@@ -1,11 +1,11 @@
-import React from "react";
-import { Text, View } from "react-native";
+import React from 'react';
+import { Text, View } from 'react-native';
 
-import type { useAuth } from "@/store/AuthContext";
-import { getGenderLabel } from "@/utils/labels";
+import type { useAuth } from '@/store/AuthContext';
+import { getGenderLabel } from '@/utils/labels';
 
 interface ProfileViewTabProps {
-  readonly user: ReturnType<typeof useAuth>["user"];
+  readonly user: ReturnType<typeof useAuth>['user'];
 }
 
 export default function ProfileViewTab({
@@ -23,8 +23,8 @@ export default function ProfileViewTab({
             Nombre Completo
           </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.nombre} {user?.apellido_paterno}{" "}
-            {user?.apellido_materno ?? ""}
+            {user?.nombre} {user?.apellido_paterno}{' '}
+            {user?.apellido_materno ?? ''}
           </Text>
         </View>
 
@@ -33,7 +33,7 @@ export default function ProfileViewTab({
             Teléfono
           </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.telefono ?? "No especificado"}
+            {user?.telefono ?? 'No especificado'}
           </Text>
         </View>
 
@@ -51,7 +51,7 @@ export default function ProfileViewTab({
             Género
           </Text>
           <Text className="text-base font-normal text-brand-ink dark:text-gray-200">
-            {user?.genero ? getGenderLabel(user.genero) : "No especificado"}
+            {user?.genero ? getGenderLabel(user.genero) : 'No especificado'}
           </Text>
         </View>
 

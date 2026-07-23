@@ -1,7 +1,7 @@
 export interface AdminUser {
   id_usuario: number;
   email: string;
-  role: "buyer" | "farmer" | "admin" | "seller";
+  role: 'buyer' | 'farmer' | 'admin' | 'seller';
   nombre: string;
   apellido_paterno: string | null;
   apellido_materno: string | null;

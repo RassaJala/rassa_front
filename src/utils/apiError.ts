@@ -1,22 +1,22 @@
 /* global console, __DEV__ -- console + RN dev-mode flag set by Metro bundler */
-import type { AxiosError } from "axios";
-import axios from "axios";
+import type { AxiosError } from 'axios';
+import axios from 'axios';
 
 function parseHtmlOrStringError(data: string, status?: number): string {
   const trimmed = data.trim();
 
   if (
-    trimmed.startsWith("<!DOCTYPE") ||
-    trimmed.startsWith("<html") ||
-    trimmed.includes("Traceback (most recent call last)")
+    trimmed.startsWith('<!DOCTYPE') ||
+    trimmed.startsWith('<html') ||
+    trimmed.includes('Traceback (most recent call last)')
   ) {
     if (__DEV__) {
       console.warn(
-        "[API Error] Backend returned HTML instead of JSON — check backend logs. Status:",
+        '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         status,
       );
     }
-    return "Error interno del servidor. Revisa los logs del backend.";
+    return 'Error interno del servidor. Revisa los logs del backend.';
   }
   return trimmed;
 }
@@ -28,21 +28,21 @@ function parseHtmlOrStringError(data: string, status?: number): string {
  */
 export function extractApiError(error: unknown, fieldKeys: string[]): string {
   if (!axios.isAxiosError(error)) {
-    return error instanceof Error ? error.message : "Error desconocido.";
+    return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
   const axiosErr = error as AxiosError<Record<string, unknown> | string>;
   const data = axiosErr.response?.data;
 
-  if (!data) return "Error del servidor. Intenta de nuevo.";
+  if (!data) return 'Error del servidor. Intenta de nuevo.';
 
   // ── HTML error page (e.g. Django DEBUG=True 500 page) ──────
-  if (typeof data === "string") {
+  if (typeof data === 'string') {
     return parseHtmlOrStringError(data, axiosErr.response?.status);
   }
 
-  if (typeof data.detail === "string") return data.detail;
-  if (typeof data.message === "string") return data.message;
+  if (typeof data.detail === 'string') return data.detail;
+  if (typeof data.message === 'string') return data.message;
 
   for (const key of fieldKeys) {
     const value = data[key];
@@ -50,7 +50,7 @@ export function extractApiError(error: unknown, fieldKeys: string[]): string {
     if (Array.isArray(value) && value[0]) return String(value[0]);
   }
 
-  return "Error del servidor. Intenta de nuevo.";
+  return 'Error del servidor. Intenta de nuevo.';
 }
 
 function extractFieldErrorsFromData(
@@ -59,10 +59,10 @@ function extractFieldErrorsFromData(
 ): { fields: Record<string, string>; general: string | null } {
   const fields: Record<string, string> = {};
 
-  if (typeof data.detail === "string") {
+  if (typeof data.detail === 'string') {
     return { fields, general: data.detail };
   }
-  if (typeof data.message === "string") {
+  if (typeof data.message === 'string') {
     return { fields, general: data.message };
   }
 
@@ -72,7 +72,7 @@ function extractFieldErrorsFromData(
     if (Array.isArray(value) && value.length > 0) {
       fields[key] = String(value[0]);
       foundField = true;
-    } else if (typeof value === "string") {
+    } else if (typeof value === 'string') {
       fields[key] = value;
       foundField = true;
     }
@@ -84,7 +84,7 @@ function extractFieldErrorsFromData(
         return { fields, general: `${k}: ${String(v[0])}` };
       }
     }
-    return { fields, general: "Error del servidor. Intenta de nuevo." };
+    return { fields, general: 'Error del servidor. Intenta de nuevo.' };
   }
 
   return { fields, general: null };
@@ -101,7 +101,7 @@ export function extractFieldErrors(
   if (!axios.isAxiosError(error)) {
     return {
       fields: {},
-      general: error instanceof Error ? error.message : "Error desconocido.",
+      general: error instanceof Error ? error.message : 'Error desconocido.',
     };
   }
 
@@ -109,10 +109,10 @@ export function extractFieldErrors(
   const data = axiosErr.response?.data;
 
   if (!data) {
-    return { fields: {}, general: "Error del servidor. Intenta de nuevo." };
+    return { fields: {}, general: 'Error del servidor. Intenta de nuevo.' };
   }
 
-  if (typeof data === "string") {
+  if (typeof data === 'string') {
     return {
       fields: {},
       general: parseHtmlOrStringError(data, axiosErr.response?.status),

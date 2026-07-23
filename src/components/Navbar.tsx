@@ -1,13 +1,13 @@
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-import { colors } from "@/constants/colors";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import type { UserRole } from "@/types";
+import { colors } from '@/constants/colors';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import type { UserRole } from '@/types';
 
 interface NavItem {
   label: string;
@@ -17,21 +17,21 @@ interface NavItem {
 
 const NAV_CONFIG: Record<UserRole, NavItem[]> = {
   admin: [
-    { label: "Panel", screen: "AdminPanel", icon: "view-dashboard" },
-    { label: "Categorías", screen: "CategoryList", icon: "folder" },
-    { label: "Unidades", screen: "UnitList", icon: "ruler" },
+    { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
+    { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
+    { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
   ],
   buyer: [
-    { label: "Home", screen: "Home", icon: "home" },
-    { label: "Carrito", screen: "Carrito", icon: "cart" },
+    { label: 'Home', screen: 'Home', icon: 'home' },
+    { label: 'Carrito', screen: 'Carrito', icon: 'cart' },
   ],
   farmer: [
-    { label: "Home", screen: "MyProducts", icon: "leaf" },
-    { label: "Productos", screen: "AddProduct", icon: "plus-circle" },
+    { label: 'Home', screen: 'MyProducts', icon: 'leaf' },
+    { label: 'Productos', screen: 'AddProduct', icon: 'plus-circle' },
   ],
   seller: [
-    { label: "Home", screen: "SellerHome", icon: "storefront" },
-    { label: "Ventas", screen: "Sales", icon: "cash" },
+    { label: 'Home', screen: 'SellerHome', icon: 'storefront' },
+    { label: 'Ventas', screen: 'Sales', icon: 'cash' },
   ],
 };
 
@@ -43,8 +43,8 @@ export default function Navbar(): React.JSX.Element {
   const state = navigation.getState();
   const currentRoute = state?.routes[state.index]?.name;
 
-  const items = NAV_CONFIG[user?.role ?? "buyer"];
-  const isDark = colorScheme === "dark";
+  const items = NAV_CONFIG[user?.role ?? 'buyer'];
+  const isDark = colorScheme === 'dark';
 
   const bg = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
@@ -54,8 +54,8 @@ export default function Navbar(): React.JSX.Element {
   return (
     <View
       style={{
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: 'row',
+        alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: border,
         backgroundColor: bg,
@@ -67,7 +67,7 @@ export default function Navbar(): React.JSX.Element {
         style={{
           marginRight: 24,
           fontSize: 18,
-          fontWeight: "700",
+          fontWeight: '700',
           color: brand,
           letterSpacing: -0.3,
         }}
@@ -83,15 +83,15 @@ export default function Navbar(): React.JSX.Element {
         {items.map((item) => {
           const isActive =
             currentRoute === item.screen ||
-            (currentRoute === "AdminPanel" && item.screen === "AdminDashboard");
+            (currentRoute === 'AdminPanel' && item.screen === 'AdminDashboard');
 
           return (
             <Pressable
               key={item.screen}
               style={{
                 marginRight: 4,
-                flexDirection: "row",
-                alignItems: "center",
+                flexDirection: 'row',
+                alignItems: 'center',
                 borderRadius: 10,
                 paddingHorizontal: 12,
                 paddingVertical: 8,
@@ -113,7 +113,7 @@ export default function Navbar(): React.JSX.Element {
                 style={{
                   marginLeft: 6,
                   fontSize: 14,
-                  fontWeight: "500",
+                  fontWeight: '500',
                   color: isActive ? brand : muted,
                 }}
               >
@@ -140,7 +140,7 @@ export default function Navbar(): React.JSX.Element {
           hitSlop={8}
         >
           <MaterialCommunityIcons
-            name={isDark ? "weather-sunny" : "weather-night"}
+            name={isDark ? 'weather-sunny' : 'weather-night'}
             size={20}
             color={isDark ? colors.iconWhite : colors.iconDark}
           />
@@ -150,8 +150,8 @@ export default function Navbar(): React.JSX.Element {
       <Pressable
         style={{
           marginLeft: 8,
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: 'row',
+          alignItems: 'center',
           borderRadius: 10,
           paddingHorizontal: 12,
           paddingVertical: 8,
@@ -171,7 +171,7 @@ export default function Navbar(): React.JSX.Element {
           style={{
             marginLeft: 6,
             fontSize: 14,
-            fontWeight: "500",
+            fontWeight: '500',
             color: colors.brandRedCoral,
           }}
         >

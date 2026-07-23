@@ -1,21 +1,21 @@
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
-} from "@/components/ProfileDrawer";
-import StatCard from "@/components/StatCard";
-import { colors } from "@/constants/colors";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { getSellerStats } from "@/services/mock/dashboard";
-import { useTheme } from "@/store/ThemeContext";
-import type { SellerTabsParamList } from "@/types";
+} from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
+import { colors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
+import { getSellerStats } from '@/services/mock/dashboard';
+import { useTheme } from '@/store/ThemeContext';
+import type { SellerTabsParamList } from '@/types';
 
-type Nav = BottomTabNavigationProp<SellerTabsParamList, "HomeSeller">;
+type Nav = BottomTabNavigationProp<SellerTabsParamList, 'HomeSeller'>;
 
 interface Props {
   readonly navigation: Nav;
@@ -25,11 +25,11 @@ export default function HomeSellerScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const stats = getSellerStats();
 
   const handleProfilePress = () => {
-    navigation.navigate("Perfil");
+    navigation.navigate('Perfil');
   };
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
@@ -62,18 +62,18 @@ export default function HomeSellerScreen({
             <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
               <View
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
                 }}
               >
                 <View>
                   <Text
                     style={{
                       fontSize: 14,
-                      fontWeight: "600",
+                      fontWeight: '600',
                       letterSpacing: 0.06,
-                      textTransform: "uppercase",
+                      textTransform: 'uppercase',
                       color: muted,
                     }}
                   >
@@ -82,7 +82,7 @@ export default function HomeSellerScreen({
                   <Text
                     style={{
                       fontSize: 32,
-                      fontWeight: "700",
+                      fontWeight: '700',
                       letterSpacing: -0.3,
                       color: fg,
                     }}
@@ -90,7 +90,7 @@ export default function HomeSellerScreen({
                     Inicio
                   </Text>
                 </View>
-                <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     style={({ pressed }) => ({
                       width: 48,
@@ -99,8 +99,8 @@ export default function HomeSellerScreen({
                       backgroundColor: surface,
                       borderWidth: 1,
                       borderColor: border,
-                      alignItems: "center",
-                      justifyContent: "center",
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       opacity: pressed ? 0.6 : 1,
                     })}
                   >
@@ -115,7 +115,7 @@ export default function HomeSellerScreen({
               </View>
 
               <View
-                style={{ flexDirection: "row", gap: 10, paddingVertical: 24 }}
+                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
               >
                 <StatCard
                   icon="cash"

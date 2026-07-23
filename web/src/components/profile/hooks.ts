@@ -1,12 +1,12 @@
-import axios from "axios";
-import { useCallback, useEffect, useRef, useState } from "react";
+import axios from 'axios';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   FieldErrors,
   Localidad,
   Municipio,
   ProfileFormData,
-} from "~/components/profile/types";
-import api from "~/services/api";
+} from '~/components/profile/types';
+import api from '~/services/api';
 
 // ---------------------------------------------------------------------------
 // Constants & helpers
@@ -20,24 +20,24 @@ const MAX_APELLIDO = 100;
 const MAX_DIRECCION = 255;
 
 function cleanPhoneNumber(val: string): string {
-  return val.replace(/[\s\-()]+/g, "");
+  return val.replace(/[\s\-()]+/g, '');
 }
 
 /** Normaliza fechas ISO del backend (2000-01-15T00:00:00Z → 2000-01-15) */
 function normalizeDate(val: string): string {
-  return val.split("T")[0] ?? val;
+  return val.split('T')[0] ?? val;
 }
 
-function str(val: unknown, fallback = ""): string {
-  return typeof val === "string" ? val : fallback;
+function str(val: unknown, fallback = ''): string {
+  return typeof val === 'string' ? val : fallback;
 }
 
 function num(val: unknown, fallback: number | null = null): number | null {
-  return typeof val === "number" ? val : fallback;
+  return typeof val === 'number' ? val : fallback;
 }
 
 function parseAxiosError(err: unknown, fallback: string): string {
-  if (err && typeof err === "object" && "response" in err) {
+  if (err && typeof err === 'object' && 'response' in err) {
     const axiosErr = err as {
       response?: { data?: { detail?: string } };
     };
@@ -47,10 +47,10 @@ function parseAxiosError(err: unknown, fallback: string): string {
 }
 
 function isRealDate(dateStr: string): boolean {
-  const parts = dateStr.split("-");
-  const year = parseInt(parts[0] ?? "0", 10);
-  const month = parseInt(parts[1] ?? "0", 10) - 1;
-  const day = parseInt(parts[2] ?? "0", 10);
+  const parts = dateStr.split('-');
+  const year = parseInt(parts[0] ?? '0', 10);
+  const month = parseInt(parts[1] ?? '0', 10) - 1;
+  const day = parseInt(parts[2] ?? '0', 10);
   const date = new Date(year, month, day);
   return (
     date.getFullYear() === year &&
@@ -61,10 +61,10 @@ function isRealDate(dateStr: string): boolean {
 
 function isAdult(birthDate: string): boolean {
   if (!DATE_REGEX.test(birthDate)) return false;
-  const parts = birthDate.split("-");
-  const year = parseInt(parts[0] || "0", 10);
-  const month = parseInt(parts[1] || "0", 10) - 1;
-  const day = parseInt(parts[2] || "0", 10);
+  const parts = birthDate.split('-');
+  const year = parseInt(parts[0] || '0', 10);
+  const month = parseInt(parts[1] || '0', 10) - 1;
+  const day = parseInt(parts[2] || '0', 10);
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - month;
@@ -78,19 +78,19 @@ export function validateForm(form: ProfileFormData): FieldErrors {
   const errors: FieldErrors = {};
 
   if (!form.nombre.trim()) {
-    errors.nombre = "El nombre es obligatorio.";
+    errors.nombre = 'El nombre es obligatorio.';
   } else if (form.nombre.length > MAX_NOMBRE) {
     errors.nombre = `El nombre no puede exceder ${MAX_NOMBRE} caracteres.`;
   } else if (!NAME_REGEX.test(form.nombre)) {
-    errors.nombre = "El nombre solo puede contener letras.";
+    errors.nombre = 'El nombre solo puede contener letras.';
   }
 
   if (!form.apellido_paterno.trim()) {
-    errors.apellido_paterno = "El apellido paterno es obligatorio.";
+    errors.apellido_paterno = 'El apellido paterno es obligatorio.';
   } else if (form.apellido_paterno.length > MAX_APELLIDO) {
     errors.apellido_paterno = `El apellido paterno no puede exceder ${MAX_APELLIDO} caracteres.`;
   } else if (!NAME_REGEX.test(form.apellido_paterno)) {
-    errors.apellido_paterno = "El apellido solo puede contener letras.";
+    errors.apellido_paterno = 'El apellido solo puede contener letras.';
   }
 
   if (
@@ -102,45 +102,45 @@ export function validateForm(form: ProfileFormData): FieldErrors {
     form.apellido_materno.trim() &&
     !NAME_REGEX.test(form.apellido_materno)
   ) {
-    errors.apellido_materno = "El apellido solo puede contener letras.";
+    errors.apellido_materno = 'El apellido solo puede contener letras.';
   }
 
   const rawTelefono = cleanPhoneNumber(form.telefono);
   if (!rawTelefono) {
-    errors.telefono = "El teléfono es obligatorio.";
+    errors.telefono = 'El teléfono es obligatorio.';
   } else if (!PHONE_ALLOWED.test(form.telefono)) {
     errors.telefono =
-      "El teléfono solo puede contener números, guiones y paréntesis.";
+      'El teléfono solo puede contener números, guiones y paréntesis.';
   } else if (rawTelefono.length !== 10) {
-    errors.telefono = "El teléfono debe tener exactamente 10 dígitos.";
+    errors.telefono = 'El teléfono debe tener exactamente 10 dígitos.';
   }
 
   if (!form.fecha_nacimiento.trim()) {
-    errors.fecha_nacimiento = "La fecha de nacimiento es obligatoria.";
+    errors.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
   } else if (!DATE_REGEX.test(form.fecha_nacimiento)) {
-    errors.fecha_nacimiento = "Formato inválido (AAAA-MM-DD).";
+    errors.fecha_nacimiento = 'Formato inválido (AAAA-MM-DD).';
   } else if (!isRealDate(form.fecha_nacimiento)) {
-    errors.fecha_nacimiento = "Fecha inválida.";
+    errors.fecha_nacimiento = 'Fecha inválida.';
   } else if (!isAdult(form.fecha_nacimiento)) {
-    errors.fecha_nacimiento = "Debes ser mayor de 18 años.";
+    errors.fecha_nacimiento = 'Debes ser mayor de 18 años.';
   }
 
   if (!form.genero) {
-    errors.genero = "Selecciona un género.";
+    errors.genero = 'Selecciona un género.';
   }
 
   if (!form.direccion.trim()) {
-    errors.direccion = "La dirección es obligatoria.";
+    errors.direccion = 'La dirección es obligatoria.';
   } else if (form.direccion.length > MAX_DIRECCION) {
     errors.direccion = `La dirección no puede exceder ${MAX_DIRECCION} caracteres.`;
   }
 
   if (form.municipio_id === null) {
-    errors.municipio_id = "Selecciona un municipio.";
+    errors.municipio_id = 'Selecciona un municipio.';
   }
 
   if (form.localidad_id === null) {
-    errors.localidad_id = "Selecciona una localidad.";
+    errors.localidad_id = 'Selecciona una localidad.';
   }
 
   return errors;
@@ -180,7 +180,7 @@ export function useProfileData() {
     setError(null);
     try {
       const { data } = await api.get<{ data: Record<string, unknown> }>(
-        "/auth/me/",
+        '/auth/me/',
         { signal: abortSignal },
       );
       const raw = data.data;
@@ -202,16 +202,16 @@ export function useProfileData() {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
         if (!err.response) {
-          setError("Error de red — verifica tu conexión.");
+          setError('Error de red — verifica tu conexión.');
         } else if (err.response.status === 401) {
-          setError("Sesión expirada — inicia sesión de nuevo.");
+          setError('Sesión expirada — inicia sesión de nuevo.');
         } else if (err.response.status >= 500) {
-          setError("Error del servidor — intenta más tarde.");
+          setError('Error del servidor — intenta más tarde.');
         } else {
-          setError("Error al cargar perfil");
+          setError('Error al cargar perfil');
         }
       } else {
-        setError("Error inesperado al cargar perfil");
+        setError('Error inesperado al cargar perfil');
       }
     } finally {
       setFetching(false);
@@ -235,7 +235,7 @@ export function useProfileData() {
     setLoading(true);
 
     try {
-      await api.patch("/auth/me/", {
+      await api.patch('/auth/me/', {
         nombre: profile.nombre.trim(),
         apellido_paterno: profile.apellido_paterno.trim(),
         apellido_materno: profile.apellido_materno.trim() || null,
@@ -247,11 +247,11 @@ export function useProfileData() {
       });
 
       await fetchProfile();
-      setSuccess("Perfil actualizado exitosamente.");
+      setSuccess('Perfil actualizado exitosamente.');
       setEditing(false);
       setFieldErrors({});
     } catch (err: unknown) {
-      setError(parseAxiosError(err, "Error al actualizar perfil."));
+      setError(parseAxiosError(err, 'Error al actualizar perfil.'));
     } finally {
       setLoading(false);
     }
@@ -336,7 +336,7 @@ export function useProfileCatalog() {
     setCatalogError(null);
     setLoadingMunicipios(true);
     try {
-      const res = await api.get<{ data: Municipio[] }>("/municipios/", {
+      const res = await api.get<{ data: Municipio[] }>('/municipios/', {
         signal,
       });
       const items = res.data.data ?? [];
@@ -346,14 +346,14 @@ export function useProfileCatalog() {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
         if (!err.response) {
-          setCatalogError("Error de red — verifica tu conexión.");
+          setCatalogError('Error de red — verifica tu conexión.');
         } else if (err.response.status >= 500) {
-          setCatalogError("Error del servidor — intenta más tarde.");
+          setCatalogError('Error del servidor — intenta más tarde.');
         } else {
-          setCatalogError("Error al cargar municipios.");
+          setCatalogError('Error al cargar municipios.');
         }
       } else {
-        setCatalogError("Error inesperado al cargar municipios.");
+        setCatalogError('Error inesperado al cargar municipios.');
       }
     } finally {
       setLoadingMunicipios(false);
@@ -401,30 +401,30 @@ const PASSWORD_HAS_UPPER = /[A-Z]/;
 
 export function usePasswordChange() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
   function validatePasswordForm(): string | null {
-    if (!currentPassword) return "La contraseña actual es obligatoria.";
-    if (!newPassword) return "La nueva contraseña es obligatoria.";
+    if (!currentPassword) return 'La contraseña actual es obligatoria.';
+    if (!newPassword) return 'La nueva contraseña es obligatoria.';
     if (newPassword.length < 8)
-      return "La nueva contraseña debe tener al menos 8 caracteres.";
+      return 'La nueva contraseña debe tener al menos 8 caracteres.';
     if (!PASSWORD_ALPHANUMERIC.test(newPassword))
-      return "La nueva contraseña solo puede contener letras y números (sin caracteres especiales).";
+      return 'La nueva contraseña solo puede contener letras y números (sin caracteres especiales).';
     if (!PASSWORD_HAS_UPPER.test(newPassword))
-      return "La nueva contraseña debe contener al menos una mayúscula.";
+      return 'La nueva contraseña debe contener al menos una mayúscula.';
     if (!confirmPassword)
-      return "La confirmación de contraseña es obligatoria.";
-    if (newPassword !== confirmPassword) return "Las contraseñas no coinciden.";
+      return 'La confirmación de contraseña es obligatoria.';
+    if (newPassword !== confirmPassword) return 'Las contraseñas no coinciden.';
     return null;
   }
 
   function parsePasswordError(err: unknown): string {
-    if (err && typeof err === "object" && "response" in err) {
+    if (err && typeof err === 'object' && 'response' in err) {
       const axiosErr = err as {
         response?: {
           data?: {
@@ -438,10 +438,10 @@ export function usePasswordChange() {
         axiosErr.response?.data?.detail ??
         axiosErr.response?.data?.old_password?.[0] ??
         axiosErr.response?.data?.new_password?.[0] ??
-        "Error al cambiar contraseña."
+        'Error al cambiar contraseña.'
       );
     }
-    return "Error al cambiar contraseña.";
+    return 'Error al cambiar contraseña.';
   }
 
   async function handlePasswordChange() {
@@ -456,14 +456,14 @@ export function usePasswordChange() {
 
     setPasswordSubmitting(true);
     try {
-      await api.post("/auth/change-password/", {
+      await api.post('/auth/change-password/', {
         old_password: currentPassword,
         new_password: newPassword,
       });
-      setPasswordSuccess("Contraseña actualizada exitosamente.");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      setPasswordSuccess('Contraseña actualizada exitosamente.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (err: unknown) {
       setPasswordError(parsePasswordError(err));
     } finally {
@@ -473,9 +473,9 @@ export function usePasswordChange() {
 
   function closePasswordSection() {
     setShowPasswordSection(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
     setPasswordError(null);
     setPasswordSuccess(null);
   }

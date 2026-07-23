@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from "react";
+} from 'react';
 import {
   Animated,
   Dimensions,
@@ -13,16 +13,16 @@ import {
   ScrollView,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from "@/constants/colors";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
+import { colors } from '@/constants/colors';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 
 const DRAWER_WIDTH = 0.55;
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface DrawerContextValue {
   openDrawer: () => void;
@@ -36,7 +36,7 @@ const DrawerContext = createContext<DrawerContextValue | null>(null);
 function useDrawer(): DrawerContextValue {
   const ctx = useContext(DrawerContext);
   if (!ctx)
-    throw new Error("useDrawer must be used inside ProfileDrawerProvider");
+    throw new Error('useDrawer must be used inside ProfileDrawerProvider');
   return ctx;
 }
 
@@ -49,13 +49,13 @@ interface ProfileDrawerProviderProps {
 
 export function ProfileDrawerProvider({
   children,
-  defaultName = "Usuario",
-  defaultEmail = "usuario@rassa.com",
+  defaultName = 'Usuario',
+  defaultEmail = 'usuario@rassa.com',
   onProfilePress,
 }: ProfileDrawerProviderProps): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -66,7 +66,7 @@ export function ProfileDrawerProvider({
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coral = colors.brandRedCoral;
   const drawerBg = isDark ? colors.admBgD : colors.surface;
-  const overlayBg = "#000";
+  const overlayBg = '#000';
 
   const openDrawer = useCallback(() => {
     setDrawerOpen(true);
@@ -106,8 +106,8 @@ export function ProfileDrawerProvider({
 
   const menuItems: MenuItem[] = [
     {
-      icon: "account-circle-outline",
-      label: "Perfil",
+      icon: 'account-circle-outline',
+      label: 'Perfil',
       color: fg,
       action: () => {
         closeDrawer();
@@ -115,20 +115,20 @@ export function ProfileDrawerProvider({
       },
     },
     {
-      icon: isDark ? "weather-sunny" : "weather-night",
-      label: `Tema ${isDark ? "claro" : "oscuro"}`,
+      icon: isDark ? 'weather-sunny' : 'weather-night',
+      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
       color: fg,
       action: toggleColorScheme,
     },
     {
-      icon: "cog-outline",
-      label: "Configuración",
+      icon: 'cog-outline',
+      label: 'Configuración',
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: "logout",
-      label: "Cerrar sesión",
+      icon: 'logout',
+      label: 'Cerrar sesión',
       color: coral,
       action: () => {
         closeDrawer();
@@ -150,7 +150,7 @@ export function ProfileDrawerProvider({
         {drawerOpen ? (
           <Animated.View
             style={{
-              position: "absolute",
+              position: 'absolute',
               left: 0,
               top: 0,
               bottom: 0,
@@ -166,7 +166,7 @@ export function ProfileDrawerProvider({
 
         <Animated.View
           style={{
-            position: "absolute",
+            position: 'absolute',
             right: 0,
             top: 0,
             bottom: 0,
@@ -181,7 +181,7 @@ export function ProfileDrawerProvider({
           <ScrollView showsVerticalScrollIndicator={false}>
             <View
               style={{
-                alignItems: "center",
+                alignItems: 'center',
                 paddingTop: 60,
                 paddingHorizontal: 20,
                 paddingBottom: 24,
@@ -196,8 +196,8 @@ export function ProfileDrawerProvider({
                   height: 64,
                   borderRadius: 32,
                   backgroundColor: accentBg,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   marginBottom: 12,
                 }}
               >
@@ -210,7 +210,7 @@ export function ProfileDrawerProvider({
               <Text
                 style={{
                   fontSize: 24,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   color: fg,
                   letterSpacing: -0.2,
                 }}
@@ -241,16 +241,16 @@ export function ProfileDrawerProvider({
                       borderWidth: isLast ? 1 : 0,
                       borderColor: isLast
                         ? isDark
-                          ? "rgba(222,57,58,0.25)"
-                          : "rgba(222,57,58,0.15)"
+                          ? 'rgba(222,57,58,0.25)'
+                          : 'rgba(222,57,58,0.15)'
                         : colors.transparent,
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
                     <View
                       style={{
-                        flexDirection: "row",
-                        alignItems: "center",
+                        flexDirection: 'row',
+                        alignItems: 'center',
                         gap: 12,
                         paddingVertical: 12,
                         paddingHorizontal: 16,
@@ -267,7 +267,7 @@ export function ProfileDrawerProvider({
                       <Text
                         style={{
                           fontSize: 20,
-                          fontWeight: "600",
+                          fontWeight: '600',
                           color: item.color,
                           letterSpacing: -0.15,
                           flexShrink: 1,
@@ -292,7 +292,7 @@ export function ProfileDrawerProvider({
 export function ProfileDrawerTrigger(): React.JSX.Element {
   const { openDrawer } = useDrawer();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const fg = isDark ? colors.admFgD : colors.admFgL;
 
   return (
@@ -305,8 +305,8 @@ export function ProfileDrawerTrigger(): React.JSX.Element {
         backgroundColor: isDark ? colors.admSurfaceD : colors.surface,
         borderWidth: 1,
         borderColor: isDark ? colors.admBorderD : colors.admBorderL,
-        alignItems: "center",
-        justifyContent: "center",
+        alignItems: 'center',
+        justifyContent: 'center',
         opacity: pressed ? 0.6 : 1,
       })}
     >

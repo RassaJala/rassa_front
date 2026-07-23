@@ -1,13 +1,13 @@
-import React from "react";
-import { Pressable, Switch, Text, View } from "react-native";
+import React from 'react';
+import { Pressable, Switch, Text, View } from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { ROLE_COLOR_MAP } from "@/constants/roles";
-import { useTheme } from "@/store/ThemeContext";
-import type { AdminUser } from "@/types/userManagement";
-import { getRoleLabel } from "@/utils/labels";
-import { getFullName, getRoleBadgeBg } from "@/utils/userManagement";
+import { ROLE_COLOR_MAP } from '@/constants/roles';
+import { useTheme } from '@/store/ThemeContext';
+import type { AdminUser } from '@/types/userManagement';
+import { getRoleLabel } from '@/utils/labels';
+import { getFullName, getRoleBadgeBg } from '@/utils/userManagement';
 
 interface UserCardProps {
   user: AdminUser;
@@ -24,24 +24,24 @@ export default function UserCard({
   onRolePress,
 }: UserCardProps): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
-  const surface = isDark ? "#263028" : "#FFFFFF";
-  const fg = isDark ? "#E8EAE4" : "#2D3328";
-  const muted = isDark ? "#9DA89D" : "#5E6B5E";
-  const border = isDark ? "#353D35" : "#E2E6DF";
-  const brand = isDark ? "#4A8A63" : "#24563C";
-  const amberBg = isDark ? "rgba(212,160,32,0.2)" : "#FEF3C7";
-  const amberFg = isDark ? "#F2A900" : "#D97706";
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const amberBg = isDark ? 'rgba(212,160,32,0.2)' : '#FEF3C7';
+  const amberFg = isDark ? '#F2A900' : '#D97706';
   const isActive = user.estado;
-  const bgDisabled = isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB";
-  const bgEnabled = isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6";
-  const textDisabled = isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB";
+  const bgDisabled = isDark ? 'rgba(255,255,255,0.05)' : '#F9FAFB';
+  const bgEnabled = isDark ? 'rgba(255,255,255,0.08)' : '#F3F4F6';
+  const textDisabled = isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB';
   const roleBtnBg = isSelf ? bgDisabled : bgEnabled;
   const roleBtnTextColor = isSelf ? textDisabled : muted;
   const thumbColor = isSelf ? muted : isActive ? brand : muted;
   const showTuBadge = isSelf;
   const roleBadgeOpacity = isSelf ? 0.5 : 1;
-  const stateText = isActive ? "Activo" : "Inactivo";
+  const stateText = isActive ? 'Activo' : 'Inactivo';
 
   return (
     <View
@@ -56,9 +56,9 @@ export default function UserCard({
       {/* Top row: name + role badge */}
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: 12,
         }}
       >
@@ -66,7 +66,7 @@ export default function UserCard({
           <Text
             style={{
               fontSize: 16,
-              fontWeight: "600",
+              fontWeight: '600',
               color: fg,
             }}
             numberOfLines={1}
@@ -99,7 +99,7 @@ export default function UserCard({
           <Text
             style={{
               fontSize: 12,
-              fontWeight: "600",
+              fontWeight: '600',
               color: ROLE_COLOR_MAP[user.role] ?? muted,
             }}
           >
@@ -111,12 +111,12 @@ export default function UserCard({
       {/* Bottom row: toggle + change role button */}
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Switch
             value={isActive}
             onValueChange={() => onTogglePress(user)}
@@ -148,7 +148,7 @@ export default function UserCard({
                 style={{
                   fontSize: 11,
                   color: amberFg,
-                  fontWeight: "600",
+                  fontWeight: '600',
                 }}
               >
                 tú
@@ -161,8 +161,8 @@ export default function UserCard({
           onPress={() => onRolePress(user)}
           disabled={isSelf}
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
             gap: 6,
             backgroundColor: roleBtnBg,
             borderRadius: 8,

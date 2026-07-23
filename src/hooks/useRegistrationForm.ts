@@ -1,8 +1,8 @@
-import type { Dispatch, SetStateAction } from "react";
-import { useState } from "react";
+import type { Dispatch, SetStateAction } from 'react';
+import { useState } from 'react';
 
-import { useCatalogs } from "@/hooks/useCatalogs";
-import type { RegisterRole } from "@/types";
+import { useCatalogs } from '@/hooks/useCatalogs';
+import type { RegisterRole } from '@/types';
 
 export interface UseRegistrationFormReturn {
   email: string;
@@ -21,8 +21,8 @@ export interface UseRegistrationFormReturn {
   setApellidoMaterno: Dispatch<SetStateAction<string>>;
   fechaNacimiento: string;
   setFechaNacimiento: Dispatch<SetStateAction<string>>;
-  sexo: "M" | "F" | "O";
-  setSexo: Dispatch<SetStateAction<"M" | "F" | "O">>;
+  sexo: 'M' | 'F' | 'O';
+  setSexo: Dispatch<SetStateAction<'M' | 'F' | 'O'>>;
   domicilio: string;
   setDomicilio: Dispatch<SetStateAction<string>>;
   catalog: ReturnType<typeof useCatalogs>;
@@ -32,35 +32,35 @@ export interface UseRegistrationFormReturn {
 export function useRegistrationForm(options?: {
   readonly initialRole?: RegisterRole;
 }): UseRegistrationFormReturn {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [role, setRole] = useState<RegisterRole>(
-    options?.initialRole ?? "buyer",
+    options?.initialRole ?? 'buyer',
   );
-  const [nombre, setNombre] = useState("");
-  const [apellidoPaterno, setApellidoPaterno] = useState("");
-  const [apellidoMaterno, setApellidoMaterno] = useState("");
-  const [fechaNacimiento, setFechaNacimiento] = useState("");
-  const [sexo, setSexo] = useState<"M" | "F" | "O">("M");
-  const [domicilio, setDomicilio] = useState("");
+  const [nombre, setNombre] = useState('');
+  const [apellidoPaterno, setApellidoPaterno] = useState('');
+  const [apellidoMaterno, setApellidoMaterno] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>('M');
+  const [domicilio, setDomicilio] = useState('');
 
   const catalog = useCatalogs();
 
   const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setTelefono("");
-    setNombre("");
-    setApellidoPaterno("");
-    setApellidoMaterno("");
-    setFechaNacimiento("");
-    setSexo("M");
-    setDomicilio("");
+    setEmail('');
+    setPassword('');
+    setTelefono('');
+    setNombre('');
+    setApellidoPaterno('');
+    setApellidoMaterno('');
+    setFechaNacimiento('');
+    setSexo('M');
+    setDomicilio('');
     catalog.setLocalidadId(null);
-    catalog.setLocalidadNombre("");
+    catalog.setLocalidadNombre('');
     catalog.setSelectedMunicipioId(null);
-    catalog.setSelectedMunicipioNombre("");
+    catalog.setSelectedMunicipioNombre('');
   };
 
   return {

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,33 +13,33 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNetInfo } from "@react-native-community/netinfo";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNetInfo } from '@react-native-community/netinfo';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query';
 
-import Toast from "@/components/Toast";
-import api, { mediaUrl } from "@/services/api";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
+import Toast from '@/components/Toast';
+import api, { mediaUrl } from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type {
   ApiResponse,
   Category,
   FarmerStackParamList,
   Producto,
-} from "@/types";
+} from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
-  "ProductList"
+  'ProductList'
 >;
 
 interface Props {
@@ -55,22 +55,22 @@ export default function ProductListScreen({
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const isDark = colorScheme === "dark";
-  const brand = isDark ? "#4A8A63" : "#24563C";
-  const coral = "#DE393A";
-  const fg = isDark ? "#E8EAE4" : "#2D3328";
-  const muted = isDark ? "#9DA89D" : "#5E6B5E";
-  const bg = isDark ? "#1A211B" : "#F5F7F0";
-  const surface = isDark ? "#263028" : "#FFFFFF";
-  const border = isDark ? "#353D35" : "#E2E6DF";
-  const accentBg = isDark ? "rgba(74,138,99,0.12)" : "rgba(36,86,60,0.07)";
-  const coralBg = isDark ? "rgba(232,74,74,0.12)" : "rgba(222,57,58,0.07)";
-  const white = "#FFFFFF";
-  const overlay = isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)";
-  const pumpkinBg = isDark ? "rgba(242,169,0,0.12)" : "rgba(242,169,0,0.1)";
-  const pumpkin = "#F2A900";
+  const isDark = colorScheme === 'dark';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const coral = '#DE393A';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const white = '#FFFFFF';
+  const overlay = isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)';
+  const pumpkinBg = isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)';
+  const pumpkin = '#F2A900';
 
-  const { width: SCREEN_WIDTH } = Dimensions.get("window");
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
   const DRAWER_WIDTH = 0.55;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -107,30 +107,30 @@ export default function ProductListScreen({
 
   const menuItems = [
     {
-      icon: "account-circle-outline",
-      label: "Perfil",
-      desc: "Tu información personal",
+      icon: 'account-circle-outline',
+      label: 'Perfil',
+      desc: 'Tu información personal',
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: isDark ? "weather-sunny" : "weather-night",
-      label: `Tema ${isDark ? "claro" : "oscuro"}`,
-      desc: "Alternar apariencia",
+      icon: isDark ? 'weather-sunny' : 'weather-night',
+      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
+      desc: 'Alternar apariencia',
       color: fg,
       action: toggleColorScheme,
     },
     {
-      icon: "cog-outline",
-      label: "Configuración",
-      desc: "Preferencias del sistema",
+      icon: 'cog-outline',
+      label: 'Configuración',
+      desc: 'Preferencias del sistema',
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: "logout",
-      label: "Cerrar sesión",
-      desc: "",
+      icon: 'logout',
+      label: 'Cerrar sesión',
+      desc: '',
       color: coral,
       action: () => {
         closeDrawer();
@@ -139,42 +139,42 @@ export default function ProductListScreen({
     },
   ];
 
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       await api.delete(`/productos/${id}/`);
     },
     onSuccess: () => {
-      setToastMessage("Producto eliminado.");
-      setToastType("success");
-      void queryClient.invalidateQueries({ queryKey: ["productos"] });
+      setToastMessage('Producto eliminado.');
+      setToastType('success');
+      void queryClient.invalidateQueries({ queryKey: ['productos'] });
     },
     onError: () => {
-      setToastMessage("Error al eliminar producto.");
-      setToastType("error");
+      setToastMessage('Error al eliminar producto.');
+      setToastType('error');
     },
   });
 
   const confirmDelete = useCallback(
     (producto: Producto) => {
       const msg = `Se eliminará "${producto.nombre_producto}". Esta acción no se puede deshacer.`;
-      if (Platform.OS === "web") {
+      if (Platform.OS === 'web') {
         if (window.confirm(`¿Eliminar producto?\n${msg}`)) {
           deleteMutation.mutate(producto.id_producto);
         }
         return;
       }
-      Alert.alert("¿Eliminar producto?", msg, [
-        { text: "Cancelar", style: "cancel" },
+      Alert.alert('¿Eliminar producto?', msg, [
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: "Eliminar",
-          style: "destructive",
+          text: 'Eliminar',
+          style: 'destructive',
           onPress: () => deleteMutation.mutate(producto.id_producto),
         },
       ]);
@@ -183,9 +183,9 @@ export default function ProductListScreen({
   );
 
   const { data: categories } = useQuery<Category[]>({
-    queryKey: ["categories"],
+    queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>("/categorias/");
+      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
       return data.data;
     },
     staleTime: 60_000,
@@ -193,11 +193,11 @@ export default function ProductListScreen({
 
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams();
-    if (searchText) params.set("nombre", searchText);
-    if (selectedCategory) params.set("categoria", String(selectedCategory));
+    if (searchText) params.set('nombre', searchText);
+    if (selectedCategory) params.set('categoria', String(selectedCategory));
     const qs = params.toString();
 
-    return qs ? `/productos/?${qs}` : "/productos/";
+    return qs ? `/productos/?${qs}` : '/productos/';
   }, [searchText, selectedCategory]);
 
   const {
@@ -207,7 +207,7 @@ export default function ProductListScreen({
     refetch,
     isRefetching,
   } = useQuery<Producto[]>({
-    queryKey: ["productos", searchText, selectedCategory],
+    queryKey: ['productos', searchText, selectedCategory],
     queryFn: async () => {
       const { data } =
         await api.get<ApiResponse<{ results: Producto[] }>>(buildUrl());
@@ -226,9 +226,9 @@ export default function ProductListScreen({
           height: 100,
           width: 100,
           flexShrink: 0,
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
           borderRadius: 12,
           backgroundColor: accentBg,
         }}
@@ -255,8 +255,8 @@ export default function ProductListScreen({
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: bg,
         }}
       >
@@ -270,8 +270,8 @@ export default function ProductListScreen({
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           paddingHorizontal: 24,
           backgroundColor: bg,
         }}
@@ -281,8 +281,8 @@ export default function ProductListScreen({
             marginBottom: 16,
             height: 64,
             width: 64,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
             borderRadius: 32,
             backgroundColor: coralBg,
           }}
@@ -296,33 +296,33 @@ export default function ProductListScreen({
         <Text
           style={{
             marginBottom: 8,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 18,
-            fontWeight: "700",
+            fontWeight: '700',
             color: fg,
           }}
         >
           {netInfo.isConnected === false
-            ? "Sin conexión a Internet"
-            : "Error al cargar productos"}
+            ? 'Sin conexión a Internet'
+            : 'Error al cargar productos'}
         </Text>
         <Text
           style={{
             marginBottom: 24,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 14,
             color: muted,
           }}
         >
           {netInfo.isConnected === false
-            ? "Verifica tu conexión y vuelve a intentarlo."
-            : "Ocurrió un problema inesperado. Intenta de nuevo más tarde."}
+            ? 'Verifica tu conexión y vuelve a intentarlo.'
+            : 'Ocurrió un problema inesperado. Intenta de nuevo más tarde.'}
         </Text>
         <Pressable
           onPress={() => void refetch()}
           style={({ pressed }) => ({
-            flexDirection: "row",
-            alignItems: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
             borderRadius: 12,
             borderWidth: 1,
             borderColor: border,
@@ -338,7 +338,7 @@ export default function ProductListScreen({
             color={fg}
             style={{ marginRight: 8 }}
           />
-          <Text style={{ fontSize: 16, fontWeight: "600", color: fg }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>
             Reintentar
           </Text>
         </Pressable>
@@ -364,8 +364,8 @@ export default function ProductListScreen({
               zIndex: 10,
               height: 48,
               width: 48,
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
               borderRadius: 24,
               borderWidth: 1,
               borderColor: border,
@@ -379,18 +379,18 @@ export default function ProductListScreen({
             className="absolute left-0 right-0 items-center"
             pointerEvents="none"
           >
-            <Text style={{ fontSize: 20, fontWeight: "700", color: fg }}>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: fg }}>
               Mis Productos
             </Text>
           </View>
           <View className="z-10 flex-row gap-3.5">
             <Pressable
-              onPress={() => navigation.navigate("ProductForm", {})}
+              onPress={() => navigation.navigate('ProductForm', {})}
               style={({ pressed }) => ({
                 height: 52,
                 width: 52,
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: 'center',
+                justifyContent: 'center',
                 borderRadius: 26,
                 backgroundColor: brand,
                 opacity: pressed ? 0.8 : 1,
@@ -404,8 +404,8 @@ export default function ProductListScreen({
                 zIndex: 10,
                 height: 52,
                 width: 52,
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: 'center',
+                justifyContent: 'center',
                 borderRadius: 26,
                 borderWidth: 1,
                 borderColor: border,
@@ -424,8 +424,8 @@ export default function ProductListScreen({
 
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
             borderRadius: 16,
             borderWidth: 1,
             borderColor: border,
@@ -445,7 +445,7 @@ export default function ProductListScreen({
             cursorColor={brand}
           />
           {searchText ? (
-            <Pressable onPress={() => setSearchText("")} hitSlop={8}>
+            <Pressable onPress={() => setSearchText('')} hitSlop={8}>
               <MaterialCommunityIcons
                 name="close-circle"
                 size={20}
@@ -472,7 +472,7 @@ export default function ProductListScreen({
               contentContainerStyle={{
                 paddingHorizontal: 10,
                 paddingVertical: 10,
-                alignItems: "center",
+                alignItems: 'center',
               }}
               keyboardShouldPersistTaps="handled"
             >
@@ -483,7 +483,7 @@ export default function ProductListScreen({
                 >
                   <View
                     style={{
-                      alignItems: "center",
+                      alignItems: 'center',
                       borderRadius: 999,
                       borderWidth: 1.5,
                       paddingHorizontal: 18,
@@ -496,7 +496,7 @@ export default function ProductListScreen({
                     <Text
                       style={{
                         fontSize: 13,
-                        fontWeight: "600",
+                        fontWeight: '600',
                         color: selectedCategory === null ? white : fg,
                       }}
                     >
@@ -514,7 +514,7 @@ export default function ProductListScreen({
                     >
                       <View
                         style={{
-                          alignItems: "center",
+                          alignItems: 'center',
                           borderRadius: 999,
                           borderWidth: 1.5,
                           paddingHorizontal: 18,
@@ -526,7 +526,7 @@ export default function ProductListScreen({
                         <Text
                           style={{
                             fontSize: 13,
-                            fontWeight: "600",
+                            fontWeight: '600',
                             color: isSelected ? white : fg,
                           }}
                         >
@@ -546,8 +546,8 @@ export default function ProductListScreen({
         <View
           style={{
             flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
             paddingHorizontal: 24,
           }}
         >
@@ -556,8 +556,8 @@ export default function ProductListScreen({
               marginBottom: 20,
               height: 80,
               width: 80,
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
               borderRadius: 40,
               backgroundColor: accentBg,
             }}
@@ -571,15 +571,15 @@ export default function ProductListScreen({
           <Text
             style={{
               marginBottom: 8,
-              textAlign: "center",
+              textAlign: 'center',
               fontSize: 20,
-              fontWeight: "700",
+              fontWeight: '700',
               color: fg,
             }}
           >
             No hay productos
           </Text>
-          <Text style={{ textAlign: "center", fontSize: 15, color: muted }}>
+          <Text style={{ textAlign: 'center', fontSize: 15, color: muted }}>
             Agrega un producto para comenzar a vender.
           </Text>
         </View>
@@ -601,8 +601,8 @@ export default function ProductListScreen({
           renderItem={({ item }) => (
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
+                flexDirection: 'row',
+                alignItems: 'center',
                 borderRadius: 16,
                 borderWidth: 1,
                 borderColor: border,
@@ -616,7 +616,7 @@ export default function ProductListScreen({
                   style={{
                     marginBottom: 4,
                     fontSize: 16,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     color: fg,
                   }}
                   numberOfLines={2}
@@ -627,9 +627,9 @@ export default function ProductListScreen({
                 <View
                   style={{
                     marginBottom: 8,
-                    flexDirection: "row",
-                    flexWrap: "wrap",
-                    alignItems: "center",
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
                     gap: 6,
                   }}
                 >
@@ -638,7 +638,7 @@ export default function ProductListScreen({
                     numberOfLines={1}
                   >
                     {item.categoria?.nombre}
-                    {item.unidad ? ` · ${item.unidad.tipo}` : ""}
+                    {item.unidad ? ` · ${item.unidad.tipo}` : ''}
                   </Text>
                   <View
                     style={{
@@ -647,39 +647,39 @@ export default function ProductListScreen({
                       paddingVertical: 2,
                       backgroundColor: item.estado
                         ? isDark
-                          ? "rgba(74,138,99,0.2)"
-                          : "#DCFCE7"
+                          ? 'rgba(74,138,99,0.2)'
+                          : '#DCFCE7'
                         : isDark
-                          ? "rgba(255,255,255,0.1)"
-                          : "#F3F4F6",
+                          ? 'rgba(255,255,255,0.1)'
+                          : '#F3F4F6',
                     }}
                   >
                     <Text
                       style={{
                         fontSize: 11,
-                        fontWeight: "600",
+                        fontWeight: '600',
                         color: item.estado
                           ? isDark
-                            ? "#4ADE80"
+                            ? '#4ADE80'
                             : brand
                           : muted,
                       }}
                     >
-                      {item.estado ? "Activo" : "Inactivo"}
+                      {item.estado ? 'Activo' : 'Inactivo'}
                     </Text>
                   </View>
                 </View>
 
                 <View
                   style={{
-                    flexDirection: "row",
-                    flexWrap: "wrap",
-                    alignItems: "center",
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
                     gap: 8,
                   }}
                 >
                   <Text
-                    style={{ fontSize: 16, fontWeight: "700", color: brand }}
+                    style={{ fontSize: 16, fontWeight: '700', color: brand }}
                   >
                     ${item.precio}
                   </Text>
@@ -698,7 +698,7 @@ export default function ProductListScreen({
                       <Text
                         style={{
                           fontSize: 11,
-                          fontWeight: "600",
+                          fontWeight: '600',
                           color: pumpkin,
                         }}
                       >
@@ -712,15 +712,15 @@ export default function ProductListScreen({
               <View style={{ marginLeft: 12, gap: 8 }}>
                 <Pressable
                   onPress={() =>
-                    navigation.navigate("ProductForm", {
+                    navigation.navigate('ProductForm', {
                       productoId: item.id_producto,
                     })
                   }
                   style={({ pressed }) => ({
                     height: 40,
                     width: 40,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     borderRadius: 10,
                     borderWidth: 1,
                     borderColor: border,
@@ -735,8 +735,8 @@ export default function ProductListScreen({
                   style={({ pressed }) => ({
                     height: 40,
                     width: 40,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     borderRadius: 10,
                     borderWidth: 1,
                     borderColor: border,
@@ -760,7 +760,7 @@ export default function ProductListScreen({
       {drawerOpen ? (
         <Animated.View
           style={{
-            position: "absolute",
+            position: 'absolute',
             left: 0,
             top: 0,
             bottom: 0,
@@ -777,7 +777,7 @@ export default function ProductListScreen({
       {/* DRAWER — must stay inline for Animated transform */}
       <Animated.View
         style={{
-          position: "absolute",
+          position: 'absolute',
           right: 0,
           top: 0,
           bottom: 0,
@@ -792,7 +792,7 @@ export default function ProductListScreen({
         <View style={{ flex: 1, paddingTop: 60 }}>
           <View
             style={{
-              alignItems: "center",
+              alignItems: 'center',
               borderBottomWidth: 1,
               borderBottomColor: border,
               paddingHorizontal: 20,
@@ -805,8 +805,8 @@ export default function ProductListScreen({
                 marginBottom: 12,
                 height: 64,
                 width: 64,
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: 'center',
+                justifyContent: 'center',
                 borderRadius: 32,
                 backgroundColor: accentBg,
               }}
@@ -820,15 +820,15 @@ export default function ProductListScreen({
             <Text
               style={{
                 fontSize: 24,
-                fontWeight: "700",
+                fontWeight: '700',
                 color: fg,
                 letterSpacing: -0.2,
               }}
             >
-              {user?.nombre ?? "Agricultor"}
+              {user?.nombre ?? 'Agricultor'}
             </Text>
             <Text style={{ marginTop: 4, fontSize: 15, color: muted }}>
-              {user?.email ?? ""}
+              {user?.email ?? ''}
             </Text>
           </View>
 
@@ -842,25 +842,25 @@ export default function ProductListScreen({
                   style={({ pressed }) => ({
                     backgroundColor: isLast
                       ? isDark
-                        ? "rgba(222,57,58,0.1)"
-                        : "rgba(222,57,58,0.07)"
+                        ? 'rgba(222,57,58,0.1)'
+                        : 'rgba(222,57,58,0.07)'
                       : isDark
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(0,0,0,0.03)",
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.03)',
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
                       ? isDark
-                        ? "rgba(222,57,58,0.25)"
-                        : "rgba(222,57,58,0.15)"
-                      : "transparent",
+                        ? 'rgba(222,57,58,0.25)'
+                        : 'rgba(222,57,58,0.15)'
+                      : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
                   <View
                     style={{
-                      flexDirection: "row",
-                      alignItems: "center",
+                      flexDirection: 'row',
+                      alignItems: 'center',
                       gap: 12,
                       paddingVertical: 12,
                       paddingHorizontal: 16,
@@ -878,7 +878,7 @@ export default function ProductListScreen({
                       style={{
                         flexShrink: 1,
                         fontSize: 20,
-                        fontWeight: "600",
+                        fontWeight: '600',
                         color: item.color,
                         letterSpacing: -0.15,
                       }}
@@ -894,7 +894,7 @@ export default function ProductListScreen({
       </Animated.View>
 
       <Toast
-        message={toastMessage ?? ""}
+        message={toastMessage ?? ''}
         visible={!!toastMessage}
         onDismiss={() => setToastMessage(null)}
         type={toastType}

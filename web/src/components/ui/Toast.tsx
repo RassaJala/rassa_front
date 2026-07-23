@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export interface ToastState {
   message: string;
-  type: "success" | "error";
+  type: 'success' | 'error';
 }
 
 /** Auto-dismissing toast — call with setToast({ message, type }). */
@@ -35,25 +35,25 @@ export function Toast({
 
   if (!toast) return null;
 
-  const isError = toast.type === "error";
+  const isError = toast.type === 'error';
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         top: 16,
         right: 16,
         zIndex: 9999,
-        padding: "12px 20px",
+        padding: '12px 20px',
         borderRadius: 10,
-        background: isError ? "#DE393A" : "#24563C",
-        color: "#fff",
+        background: isError ? '#DE393A' : '#24563C',
+        color: '#fff',
         fontSize: 14,
         fontWeight: 600,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-        transition: "opacity 0.3s, transform 0.3s",
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        transition: 'opacity 0.3s, transform 0.3s',
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(-8px)",
-        pointerEvents: "none",
+        transform: visible ? 'translateY(0)' : 'translateY(-8px)',
+        pointerEvents: 'none',
         maxWidth: 360,
       }}
     >

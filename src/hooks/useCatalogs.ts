@@ -1,16 +1,16 @@
-import { useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import { useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import api from "@/services/api";
-import type { Localidad, Municipio } from "@/types";
+import api from '@/services/api';
+import type { Localidad, Municipio } from '@/types';
 
 export function useCatalogs(
   initialMunicipioId: number | null = null,
   initialLocalidadId: number | null = null,
-  initialMunicipioNombre = "",
-  initialLocalidadNombre = "",
+  initialMunicipioNombre = '',
+  initialLocalidadNombre = '',
 ): {
   municipios: Municipio[];
   localidades: Localidad[];
@@ -50,9 +50,9 @@ export function useCatalogs(
     error: errorMunicipios,
     refetch: refetchMunicipios,
   } = useQuery<Municipio[]>({
-    queryKey: ["municipios"],
+    queryKey: ['municipios'],
     queryFn: async () => {
-      const { data } = await api.get<{ data: Municipio[] }>("/municipios/", {
+      const { data } = await api.get<{ data: Municipio[] }>('/municipios/', {
         timeout: 10000,
       });
       return data.data;
@@ -66,7 +66,7 @@ export function useCatalogs(
     error: errorLocalidades,
     refetch: refetchLocalidades,
   } = useQuery<Localidad[]>({
-    queryKey: ["localidades", selectedMunicipioId],
+    queryKey: ['localidades', selectedMunicipioId],
     queryFn: async () => {
       if (selectedMunicipioId === null) return [];
       const { data } = await api.get<{ data: Localidad[] }>(
@@ -84,7 +84,7 @@ export function useCatalogs(
     setSelectedMunicipioId(id);
     setSelectedMunicipioNombre(nombre);
     setLocalidadId(null);
-    setLocalidadNombre("");
+    setLocalidadNombre('');
   };
 
   const handleSelectLocalidad = (id: number, nombre: string) => {
@@ -102,10 +102,10 @@ export function useCatalogs(
     isLoadingMunicipios,
     isLoadingLocalidades,
     errorMunicipios: errorMunicipios
-      ? "Error al cargar datos. Toca Reintentar."
+      ? 'Error al cargar datos. Toca Reintentar.'
       : null,
     errorLocalidades: errorLocalidades
-      ? "Error al cargar datos. Toca Reintentar."
+      ? 'Error al cargar datos. Toca Reintentar.'
       : null,
     refetchMunicipios,
     refetchLocalidades,

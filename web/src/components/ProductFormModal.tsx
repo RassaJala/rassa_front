@@ -1,12 +1,12 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "./ui/Button";
-import { FormField } from "./ui/FormField";
-import { FormSelect } from "./ui/FormSelect";
-import { Input } from "./ui/Input";
-import { TextArea } from "./ui/TextArea";
-import type { AppColors, useAppColors } from "../hooks/useAppColors";
-import api from "../services/api";
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from './ui/Button';
+import { FormField } from './ui/FormField';
+import { FormSelect } from './ui/FormSelect';
+import { Input } from './ui/Input';
+import { TextArea } from './ui/TextArea';
+import type { AppColors, useAppColors } from '../hooks/useAppColors';
+import api from '../services/api';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -42,13 +42,13 @@ interface ApiResponse<T> {
 // ── Helpers ────────────────────────────────────────────────
 
 const BASE = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"
-).replace(/\/api\/?$/, "");
+  import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+).replace(/\/api\/?$/, '');
 
 export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
-  if (path.startsWith("http")) return path;
-  const clean = path.replace(/\.\./g, "").replace(/^\/+/, "/");
+  if (path.startsWith('http')) return path;
+  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
   return `${BASE}${clean}`;
 }
 
@@ -70,17 +70,17 @@ interface FormState {
 
 function buildInitialForm(producto?: Producto): FormState {
   return {
-    nombre_producto: producto?.nombre_producto ?? "",
-    descripcion: producto?.descripcion ?? "",
-    precio: producto?.precio ?? "",
+    nombre_producto: producto?.nombre_producto ?? '',
+    descripcion: producto?.descripcion ?? '',
+    precio: producto?.precio ?? '',
     stock: String(producto?.stock ?? 0),
     es_perecedero: producto?.es_perecedero ?? false,
     categoriaId:
-      typeof producto?.categoria === "object"
+      typeof producto?.categoria === 'object'
         ? producto.categoria.id_categoria
         : (producto?.categoria ?? null),
     unidadId:
-      typeof producto?.unidad === "object" && producto.unidad !== null
+      typeof producto?.unidad === 'object' && producto.unidad !== null
         ? producto.unidad.id_unidad
         : (producto?.unidad ?? null),
     imageFile: null,
@@ -95,13 +95,13 @@ function buildInitialForm(producto?: Producto): FormState {
 function validate(form: FormState): Record<string, string> {
   const errs: Record<string, string> = {};
   if (!form.nombre_producto.trim())
-    errs.nombre_producto = "El nombre es obligatorio.";
+    errs.nombre_producto = 'El nombre es obligatorio.';
   const p = parseFloat(form.precio);
   if (!form.precio || isNaN(p) || p <= 0)
-    errs.precio = "El precio debe ser mayor a 0.";
-  if (!form.categoriaId) errs.categoriaId = "Seleccioná una categoría.";
+    errs.precio = 'El precio debe ser mayor a 0.';
+  if (!form.categoriaId) errs.categoriaId = 'Seleccioná una categoría.';
   if (form.stock && isNaN(parseInt(form.stock, 10)))
-    errs.stock = "El stock debe ser un número entero.";
+    errs.stock = 'El stock debe ser un número entero.';
   return errs;
 }
 
@@ -125,7 +125,7 @@ function buildPayload(form: FormState) {
 async function toBase64(file: File): Promise<string> {
   return new Promise((res, rej) => {
     const reader = new FileReader();
-    reader.onload = () => res((reader.result as string).split(",")[1] ?? "");
+    reader.onload = () => res((reader.result as string).split(',')[1] ?? '');
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
@@ -206,7 +206,7 @@ export function ProductFormModal({
   const handleClose = useCallback(() => {
     if (
       isDirty &&
-      !window.confirm("Tenés cambios sin guardar. ¿Cerrar de todas formas?")
+      !window.confirm('Tenés cambios sin guardar. ¿Cerrar de todas formas?')
     )
       return;
     onClose();
@@ -226,11 +226,11 @@ export function ProductFormModal({
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setErrors((p) => ({ ...p, image: "La imagen no puede superar 5 MB." }));
+      setErrors((p) => ({ ...p, image: 'La imagen no puede superar 5 MB.' }));
       return;
     }
-    if (file.type === "image/svg+xml") {
-      setErrors((p) => ({ ...p, image: "No se permiten archivos SVG." }));
+    if (file.type === 'image/svg+xml') {
+      setErrors((p) => ({ ...p, image: 'No se permiten archivos SVG.' }));
       return;
     }
 
@@ -255,7 +255,7 @@ export function ProductFormModal({
       existingImageUrl: null,
       imageDeleted: true,
     }));
-    if (fileRef.current) fileRef.current.value = "";
+    if (fileRef.current) fileRef.current.value = '';
   }
 
   async function handleSave() {
@@ -275,7 +275,7 @@ export function ProductFormModal({
             `/productos/${producto!.id_producto}/`,
             payload,
           )
-        : await api.post<ApiResponse<Producto>>("/productos/", payload);
+        : await api.post<ApiResponse<Producto>>('/productos/', payload);
       const saved = data.data;
 
       if (isEditing && producto && form.imageDeleted) {
@@ -286,11 +286,11 @@ export function ProductFormModal({
         await uploadImage(saved.id_producto, form.imageFile);
       }
 
-      await qc.invalidateQueries({ queryKey: ["farmer-productos"] });
+      await qc.invalidateQueries({ queryKey: ['farmer-productos'] });
       onSaved();
     } catch (err: unknown) {
       setGeneralError(
-        err instanceof Error ? err.message : "Error al guardar el producto.",
+        err instanceof Error ? err.message : 'Error al guardar el producto.',
       );
     } finally {
       savingRef.current = false;
@@ -303,13 +303,13 @@ export function ProductFormModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)" }}
+      style={{ background: 'rgba(0,0,0,0.5)' }}
     >
       <div
         className="flex max-h-[92vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl"
         style={{
           background: surface,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
         }}
       >
         {/* Header */}
@@ -320,12 +320,12 @@ export function ProductFormModal({
           <button
             onClick={handleClose}
             className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border-none text-lg text-white"
-            style={{ background: "rgba(255,255,255,0.15)" }}
+            style={{ background: 'rgba(255,255,255,0.15)' }}
           >
             ✕
           </button>
           <span className="text-lg font-bold text-white">
-            {isEditing ? "Editar Producto" : "Nuevo Producto"}
+            {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
           </span>
         </div>
 
@@ -335,8 +335,8 @@ export function ProductFormModal({
             <div
               className="rounded-lg px-3.5 py-2.5 text-sm"
               style={{
-                background: "rgba(222,57,58,0.08)",
-                border: "1px solid rgba(222,57,58,0.2)",
+                background: 'rgba(222,57,58,0.08)',
+                border: '1px solid rgba(222,57,58,0.2)',
                 color: coral,
               }}
             >
@@ -355,8 +355,8 @@ export function ProductFormModal({
                 title="Haz clic para subir o cambiar imagen"
                 className="grid h-[140px] w-[140px] shrink-0 cursor-pointer place-items-center overflow-hidden rounded-2xl"
                 style={{
-                  border: displayImage ? "none" : `2px dashed ${border}`,
-                  background: displayImage ? "transparent" : accentBg,
+                  border: displayImage ? 'none' : `2px dashed ${border}`,
+                  background: displayImage ? 'transparent' : accentBg,
                 }}
               >
                 {displayImage ? (
@@ -376,7 +376,7 @@ export function ProductFormModal({
                   className="absolute -right-2 -top-2 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-none text-sm text-white"
                   style={{
                     background: coral,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                   }}
                 >
                   ✕
@@ -407,7 +407,7 @@ export function ProductFormModal({
             colors={colors}
             label="Nombre del producto *"
             value={form.nombre_producto}
-            onChange={(e) => set("nombre_producto", e.target.value)}
+            onChange={(e) => set('nombre_producto', e.target.value)}
             placeholder="Ej. Tomates frescos"
             error={errors.nombre_producto}
           />
@@ -417,7 +417,7 @@ export function ProductFormModal({
             <TextArea
               colors={colors}
               value={form.descripcion}
-              onChange={(e) => set("descripcion", e.target.value)}
+              onChange={(e) => set('descripcion', e.target.value)}
               placeholder="Detalles sobre tu producto..."
             />
           </FormField>
@@ -429,9 +429,9 @@ export function ProductFormModal({
               label="Precio *"
               value={form.precio}
               onChange={(e) => {
-                const raw = e.target.value.replace(/[^.0-9]/g, "");
-                const fixed = raw.replace(/\.(?=.*\.)/g, "");
-                set("precio", fixed);
+                const raw = e.target.value.replace(/[^.0-9]/g, '');
+                const fixed = raw.replace(/\.(?=.*\.)/g, '');
+                set('precio', fixed);
               }}
               placeholder="0.00"
               inputMode="decimal"
@@ -442,7 +442,7 @@ export function ProductFormModal({
               label="Stock"
               value={form.stock}
               onChange={(e) =>
-                set("stock", e.target.value.replace(/[^0-9]/g, ""))
+                set('stock', e.target.value.replace(/[^0-9]/g, ''))
               }
               placeholder="0"
               inputMode="numeric"
@@ -458,7 +458,7 @@ export function ProductFormModal({
             <input
               type="checkbox"
               checked={form.es_perecedero}
-              onChange={(e) => set("es_perecedero", e.target.checked)}
+              onChange={(e) => set('es_perecedero', e.target.checked)}
               className="h-4 w-4"
               style={{ accentColor: brand }}
             />
@@ -477,10 +477,10 @@ export function ProductFormModal({
               <FormSelect
                 colors={colors}
                 hasError={!!errors.categoriaId}
-                value={form.categoriaId ?? ""}
+                value={form.categoriaId ?? ''}
                 onChange={(e) =>
                   set(
-                    "categoriaId",
+                    'categoriaId',
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
@@ -497,10 +497,10 @@ export function ProductFormModal({
             <FormField label="Unidad de medida" colors={colors}>
               <FormSelect
                 colors={colors}
-                value={form.unidadId ?? ""}
+                value={form.unidadId ?? ''}
                 onChange={(e) =>
                   set(
-                    "unidadId",
+                    'unidadId',
                     e.target.value ? Number(e.target.value) : null,
                   )
                 }
@@ -526,10 +526,10 @@ export function ProductFormModal({
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={saving}>
             {saving
-              ? "Guardando…"
+              ? 'Guardando…'
               : isEditing
-                ? "Guardar cambios"
-                : "Crear producto"}
+                ? 'Guardar cambios'
+                : 'Crear producto'}
           </Button>
         </div>
       </div>

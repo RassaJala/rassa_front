@@ -1,50 +1,50 @@
 /* globals clearTimeout, setTimeout -- Required for React Native timers */
 
-import React, { useEffect, useState } from "react";
-import { Platform } from "react-native";
+import React, { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { colors } from "@/constants/colors";
-import { RoleErrorScreen } from "@/navigation/RoleErrorScreen";
-import AdminPanelScreen from "@/screens/admin/AdminPanelScreen";
-import AdminProductsScreen from "@/screens/admin/AdminProductsScreen";
-import CategoryListScreen from "@/screens/admin/CategoryListScreen";
-import CategoryTrashScreen from "@/screens/admin/CategoryTrashScreen";
-import LocalidadListScreen from "@/screens/admin/LocalidadListScreen";
-import LocalidadTrashScreen from "@/screens/admin/LocalidadTrashScreen";
-import MunicipioListScreen from "@/screens/admin/MunicipioListScreen";
-import MunicipioTrashScreen from "@/screens/admin/MunicipioTrashScreen";
-import UnitListScreen from "@/screens/admin/UnitListScreen";
-import UnitTrashScreen from "@/screens/admin/UnitTrashScreen";
-import UserManagementScreen from "@/screens/admin/UserManagementScreen";
-import LoginScreen from "@/screens/auth/LoginScreen";
-import RegisterScreen from "@/screens/auth/RegisterScreen";
-import HomeScreen from "@/screens/buyer/HomeScreen";
-import ProductDetailScreen from "@/screens/buyer/ProductDetailScreen";
-import CarritoScreen from "@/screens/common/CarritoScreen";
-import NotificationsScreen from "@/screens/common/NotificationsScreen";
-import OnboardingScreen from "@/screens/common/OnboardingScreen";
-import ProfileScreen from "@/screens/common/ProfileScreen";
-import SplashScreen from "@/screens/common/SplashScreen";
+import { colors } from '@/constants/colors';
+import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
+import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
+import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
+import CategoryListScreen from '@/screens/admin/CategoryListScreen';
+import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
+import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
+import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
+import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
+import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
+import UnitListScreen from '@/screens/admin/UnitListScreen';
+import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserManagementScreen from '@/screens/admin/UserManagementScreen';
+import LoginScreen from '@/screens/auth/LoginScreen';
+import RegisterScreen from '@/screens/auth/RegisterScreen';
+import HomeScreen from '@/screens/buyer/HomeScreen';
+import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
+import CarritoScreen from '@/screens/common/CarritoScreen';
+import NotificationsScreen from '@/screens/common/NotificationsScreen';
+import OnboardingScreen from '@/screens/common/OnboardingScreen';
+import ProfileScreen from '@/screens/common/ProfileScreen';
+import SplashScreen from '@/screens/common/SplashScreen';
 // Farmer screens
-import FarmerHomeScreen from "@/screens/farmer/FarmerHomeScreen";
-import ProductFormScreen from "@/screens/farmer/ProductFormScreen";
-import ProductListScreen from "@/screens/farmer/ProductListScreen";
-import HomeSellerScreen from "@/screens/seller/HomeSellerScreen";
-import ProfileSellerScreen from "@/screens/seller/ProfileSellerScreen";
-import SalesScreen from "@/screens/seller/SalesScreen";
-import * as Storage from "@/services/storage";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
+import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
+import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
+import ProductListScreen from '@/screens/farmer/ProductListScreen';
+import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import SalesScreen from '@/screens/seller/SalesScreen';
+import * as Storage from '@/services/storage';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
 import type {
   AdminStackParamList,
   AuthStackParamList,
   FarmerStackParamList,
   SellerTabsParamList,
-} from "@/types";
+} from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
@@ -56,7 +56,7 @@ const AdminTab = createBottomTabNavigator();
 
 function AdminTabs() {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
@@ -76,14 +76,14 @@ function AdminTabs() {
         },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <AdminTab.Screen
         name="AdminPanel"
         component={AdminPanelScreen}
         options={{
-          tabBarLabel: "Inicio",
+          tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="home-outline"
@@ -97,7 +97,7 @@ function AdminTabs() {
         name="AdminProducts"
         component={AdminProductsScreen}
         options={{
-          tabBarLabel: "Productos",
+          tabBarLabel: 'Productos',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="package-variant"
@@ -111,7 +111,7 @@ function AdminTabs() {
         name="CategoryList"
         component={CategoryListScreen}
         options={{
-          tabBarLabel: "Categorías",
+          tabBarLabel: 'Categorías',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="folder-multiple-outline"
@@ -125,7 +125,7 @@ function AdminTabs() {
         name="UnitList"
         component={UnitListScreen}
         options={{
-          tabBarLabel: "Unidades",
+          tabBarLabel: 'Unidades',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="ruler" size={size} color={color} />
           ),
@@ -135,7 +135,7 @@ function AdminTabs() {
         name="MunicipioList"
         component={MunicipioListScreen}
         options={{
-          tabBarLabel: "Municipios",
+          tabBarLabel: 'Municipios',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="map-outline"
@@ -149,7 +149,7 @@ function AdminTabs() {
         name="UserManagement"
         component={UserManagementScreen}
         options={{
-          tabBarLabel: "Usuarios",
+          tabBarLabel: 'Usuarios',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="account-group-outline"
@@ -174,7 +174,7 @@ function AuthStack() {
 
 function BuyerTabs() {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
@@ -194,14 +194,14 @@ function BuyerTabs() {
         },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <BuyerTab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: "Inicio",
+          tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="home-outline"
@@ -215,7 +215,7 @@ function BuyerTabs() {
         name="Carrito"
         component={CarritoScreen}
         options={{
-          tabBarLabel: "Carrito",
+          tabBarLabel: 'Carrito',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="cart-outline"
@@ -254,7 +254,7 @@ function FarmerScreens() {
       <FarmerStack.Screen
         name="ProductForm"
         component={ProductFormScreen}
-        options={{ presentation: "transparentModal" }}
+        options={{ presentation: 'transparentModal' }}
       />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} />
     </FarmerStack.Navigator>
@@ -263,7 +263,7 @@ function FarmerScreens() {
 
 function SellerTabs() {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
@@ -283,14 +283,14 @@ function SellerTabs() {
         },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <SellerTab.Screen
         name="HomeSeller"
         component={HomeSellerScreen}
         options={{
-          tabBarLabel: "Inicio",
+          tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="home-outline"
@@ -304,7 +304,7 @@ function SellerTabs() {
         name="Sales"
         component={SalesScreen}
         options={{
-          tabBarLabel: "Ventas",
+          tabBarLabel: 'Ventas',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="cash-register"
@@ -383,7 +383,7 @@ export default function AppNavigator(): React.JSX.Element {
   }, [isLoading, checkingOnboarding]);
 
   useEffect(() => {
-    if (Platform.OS === "web") {
+    if (Platform.OS === 'web') {
       setShowOnboarding(false);
       setCheckingOnboarding(false);
       return;
@@ -417,7 +417,7 @@ export default function AppNavigator(): React.JSX.Element {
       <OnboardingScreen
         onFinish={() => {
           void (async () => {
-            await Storage.setItemAsync(Storage.ONBOARDING_KEY, "true");
+            await Storage.setItemAsync(Storage.ONBOARDING_KEY, 'true');
             setShowOnboarding(false);
           })();
         }}
@@ -430,13 +430,13 @@ export default function AppNavigator(): React.JSX.Element {
   }
 
   switch (user?.role) {
-    case "farmer":
+    case 'farmer':
       return <FarmerScreens />;
-    case "seller":
+    case 'seller':
       return <SellerTabs />;
-    case "admin":
+    case 'admin':
       return <AdminScreens />;
-    case "buyer":
+    case 'buyer':
       return <BuyerNavigator />;
     case undefined:
     default:

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,21 +12,21 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNetInfo } from "@react-native-community/netinfo";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNetInfo } from '@react-native-community/netinfo';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import Toast from "@/components/Toast";
-import { colors } from "@/constants/colors";
-import api from "@/services/api";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import type { AdminStackParamList, ApiResponse } from "@/types";
-import { extractFieldErrors } from "@/utils/apiError";
-import { parseApiList } from "@/utils/apiResponse";
+import Toast from '@/components/Toast';
+import { colors } from '@/constants/colors';
+import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import type { AdminStackParamList, ApiResponse } from '@/types';
+import { extractFieldErrors } from '@/utils/apiError';
+import { parseApiList } from '@/utils/apiResponse';
 
 // ── Configuration ──────────────────────────────────────────
 
@@ -78,7 +78,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
   ) => string | null;
   readonly queryParams?: Record<string, string>;
   readonly trashScreenName?:
-    "CategoryTrash" | "UnitTrash" | "MunicipioTrash" | "LocalidadTrash";
+    'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
   readonly trashScreenParams?: Record<string, unknown>;
   readonly toggleEndpoint?: string;
   readonly comingSoon?: boolean;
@@ -87,7 +87,7 @@ interface CrudConfig<T extends { nombre: string; estado: boolean }> {
 // ── Navigation type ────────────────────────────────────────
 
 type CrudScreenName =
-  "CategoryList" | "UnitList" | "MunicipioList" | "LocalidadList";
+  'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
 
 interface CrudListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: CrudConfig<T>;
@@ -121,7 +121,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
 ): React.JSX.Element {
   const secondField = config.fields[1];
   const secondValue = secondField ? _getSecondValue(item) : null;
-  const accentBg = isDark ? "rgba(74,138,99,0.12)" : "rgba(36,86,60,0.07)";
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
 
   return (
     <View
@@ -131,8 +131,8 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
         borderWidth: 1,
         borderColor: colors.border,
         padding: 16,
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 14,
       }}
     >
@@ -142,13 +142,13 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           width: 40,
           height: 40,
           borderRadius: 20,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: accentBg,
         }}
       >
         <MaterialCommunityIcons
-          name={item.estado ? "check-circle-outline" : "circle-outline"}
+          name={item.estado ? 'check-circle-outline' : 'circle-outline'}
           size={20}
           color={item.estado ? colors.brand : colors.muted}
         />
@@ -157,7 +157,7 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
       {/* Info */}
       <View style={{ flex: 1 }}>
         <Text
-          style={{ fontSize: 16, fontWeight: "600", color: colors.fg }}
+          style={{ fontSize: 16, fontWeight: '600', color: colors.fg }}
           numberOfLines={1}
         >
           {item.nombre}
@@ -181,8 +181,8 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           borderRadius: 10,
           borderWidth: 1,
           borderColor: colors.border,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         hitSlop={6}
       >
@@ -200,13 +200,13 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           borderRadius: 10,
           borderWidth: 1,
           borderColor: colors.border,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         hitSlop={6}
       >
         <MaterialCommunityIcons
-          name={item.estado ? "pause-circle-outline" : "play-circle-outline"}
+          name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'}
           size={16}
           color={colors.muted}
         />
@@ -219,8 +219,8 @@ function defaultRenderListItem<T extends { nombre: string; estado: boolean }>(
           borderRadius: 10,
           borderWidth: 1,
           borderColor: colors.border,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         hitSlop={6}
       >
@@ -240,13 +240,13 @@ function fieldValueFor<T extends { nombre: string; estado: boolean }>(
   name: string,
   item: T,
 ): string {
-  if (name === "descripcion" && "descripcion" in item) {
-    return String((item as Record<string, unknown>).descripcion ?? "");
+  if (name === 'descripcion' && 'descripcion' in item) {
+    return String((item as Record<string, unknown>).descripcion ?? '');
   }
-  if (name === "abreviatura" && "abreviatura" in item) {
-    return String((item as Record<string, unknown>).abreviatura ?? "");
+  if (name === 'abreviatura' && 'abreviatura' in item) {
+    return String((item as Record<string, unknown>).abreviatura ?? '');
   }
-  return "";
+  return '';
 }
 
 // ── Helper API fetcher ─────────────────────────────────────
@@ -271,7 +271,7 @@ export default function CrudListScreen<
   // ── Hooks must be called unconditionally, in same order every render ──
   const { user } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -281,9 +281,9 @@ export default function CrudListScreen<
   const iconWhite = colors.iconWhite;
   const errorColor = colors.brandRedCoral;
   const segmentedBg = isDark ? colors.admSegBgD : colors.admSegBgL;
-  const transparent = "transparent";
+  const transparent = 'transparent';
   const errorBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
-  const modalOverlay = "rgba(0,0,0,0.4)";
+  const modalOverlay = 'rgba(0,0,0,0.4)';
   const netInfo = useNetInfo();
   const queryClient = useQueryClient();
 
@@ -304,7 +304,7 @@ export default function CrudListScreen<
   });
 
   // ── Tab state ──────────────────────────────────────────────
-  const [tab, setTab] = useState<"list" | "form">("list");
+  const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<{
@@ -314,7 +314,7 @@ export default function CrudListScreen<
 
   // ── Toast state ────────────────────────────────────────────
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   // ── Delete sheet state ─────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
@@ -323,7 +323,7 @@ export default function CrudListScreen<
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
-    (message: string, type: "success" | "error" = "success") => {
+    (message: string, type: 'success' | 'error' = 'success') => {
       setToastMessage(message);
       setToastType(type);
     },
@@ -332,7 +332,7 @@ export default function CrudListScreen<
 
   const invalidateAndGoToList = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
-    setTab("list");
+    setTab('list');
     setEditingItem(null);
     setFormValues({});
     setFormErrors({ fields: {}, general: null });
@@ -382,12 +382,12 @@ export default function CrudListScreen<
   const startNew = useCallback(() => {
     const initial: Record<string, string> = {};
     for (const field of config.fields) {
-      initial[field.name] = "";
+      initial[field.name] = '';
     }
     setEditingItem(null);
     setFormValues(initial);
     setFormErrors({ fields: {}, general: null });
-    setTab("form");
+    setTab('form');
   }, [config.fields]);
 
   const startEdit = useCallback(
@@ -395,24 +395,24 @@ export default function CrudListScreen<
       const initial: Record<string, string> = {};
       for (const field of config.fields) {
         initial[field.name] =
-          field.name === "nombre"
+          field.name === 'nombre'
             ? item.nombre
             : fieldValueFor(field.name, item);
       }
       setEditingItem(item);
       setFormValues(initial);
       setFormErrors({ fields: {}, general: null });
-      setTab("form");
+      setTab('form');
     },
     [config.fields],
   );
 
   const switchToList = useCallback(() => {
-    setTab("list");
+    setTab('list');
     setEditingItem(null);
     const empty: Record<string, string> = {};
     for (const field of config.fields) {
-      empty[field.name] = "";
+      empty[field.name] = '';
     }
     setFormValues(empty);
     setFormErrors({ fields: {}, general: null });
@@ -429,11 +429,11 @@ export default function CrudListScreen<
     }
 
     // Duplicate name check
-    const trimmedName = (formValues.nombre ?? "").trim();
+    const trimmedName = (formValues.nombre ?? '').trim();
     const nameLower = trimmedName.toLocaleLowerCase();
     const isDuplicate = (items ?? []).some(
       (item) =>
-        (item.nombre ?? "").toLocaleLowerCase() === nameLower &&
+        (item.nombre ?? '').toLocaleLowerCase() === nameLower &&
         (!editingItem || config.getId(item) !== config.getId(editingItem)),
     );
 
@@ -465,7 +465,7 @@ export default function CrudListScreen<
     const payload: Record<string, unknown> = {};
 
     for (const field of config.fields) {
-      payload[field.name] = (formValues[field.name] ?? "").trim();
+      payload[field.name] = (formValues[field.name] ?? '').trim();
     }
     payload.estado = true;
 
@@ -499,7 +499,7 @@ export default function CrudListScreen<
   const handleToggleStatus = useCallback(
     (item: T) => {
       const newStatus = !item.estado;
-      const action = newStatus ? "activó" : "desactivó";
+      const action = newStatus ? 'activó' : 'desactivó';
       const name = item.nombre;
       const id = config.getId(item);
       const toggleUrl = config.toggleEndpoint
@@ -542,8 +542,8 @@ export default function CrudListScreen<
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: bg,
           paddingHorizontal: 24,
         }}
@@ -552,7 +552,7 @@ export default function CrudListScreen<
         <Text
           style={{
             marginTop: 16,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 16,
             color: muted,
           }}
@@ -568,8 +568,8 @@ export default function CrudListScreen<
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: bg,
           paddingHorizontal: 24,
         }}
@@ -582,9 +582,9 @@ export default function CrudListScreen<
         <Text
           style={{
             marginTop: 16,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 24,
-            fontWeight: "700",
+            fontWeight: '700',
             color: muted,
           }}
         >
@@ -593,7 +593,7 @@ export default function CrudListScreen<
         <Text
           style={{
             marginTop: 8,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 14,
             color: muted,
           }}
@@ -609,8 +609,8 @@ export default function CrudListScreen<
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: bg,
         }}
       >
@@ -624,8 +624,8 @@ export default function CrudListScreen<
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: bg,
           paddingHorizontal: 24,
         }}
@@ -638,21 +638,21 @@ export default function CrudListScreen<
         <Text
           style={{
             marginTop: 16,
-            textAlign: "center",
+            textAlign: 'center',
             fontSize: 16,
             color: muted,
           }}
         >
           {netInfo.isConnected === false
-            ? "Sin conexión a Internet. Verifica tu conexión."
+            ? 'Sin conexión a Internet. Verifica tu conexión.'
             : config.loadingErrorText}
         </Text>
         <Pressable
           onPress={() => void refetch()}
           style={{
             marginTop: 16,
-            flexDirection: "row",
-            alignItems: "center",
+            flexDirection: 'row',
+            alignItems: 'center',
             gap: 8,
             backgroundColor: brand,
             borderRadius: 12,
@@ -661,7 +661,7 @@ export default function CrudListScreen<
           }}
         >
           <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
-          <Text style={{ fontWeight: "600", color: iconWhite }}>
+          <Text style={{ fontWeight: '600', color: iconWhite }}>
             Reintentar
           </Text>
         </Pressable>
@@ -677,22 +677,22 @@ export default function CrudListScreen<
         <View
           style={{
             flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
             paddingHorizontal: 24,
           }}
         >
           <MaterialCommunityIcons
-            name={config.emptyIcon as "folder-open-outline" | "ruler"}
+            name={config.emptyIcon as 'folder-open-outline' | 'ruler'}
             size={64}
             color={muted}
           />
           <Text
             style={{
               marginTop: 16,
-              textAlign: "center",
+              textAlign: 'center',
               fontSize: 20,
-              fontWeight: "700",
+              fontWeight: '700',
               color: muted,
             }}
           >
@@ -701,7 +701,7 @@ export default function CrudListScreen<
           <Text
             style={{
               marginTop: 4,
-              textAlign: "center",
+              textAlign: 'center',
               fontSize: 14,
               color: muted,
             }}
@@ -757,14 +757,14 @@ export default function CrudListScreen<
   function renderFormTab() {
     return (
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{ padding: 20, gap: 18 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ fontSize: 18, fontWeight: "700", color: fg }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
             {editingItem
               ? `Editar ${config.entityName}`
               : `Nueva ${config.entityName}`}
@@ -773,8 +773,8 @@ export default function CrudListScreen<
           {formErrors.general ? (
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "flex-start",
+                flexDirection: 'row',
+                alignItems: 'flex-start',
                 gap: 8,
                 backgroundColor: errorBg,
                 borderRadius: 12,
@@ -806,21 +806,21 @@ export default function CrudListScreen<
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     letterSpacing: 0.08,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     color: muted,
                   }}
                 >
                   {field.label}
                 </Text>
                 <TextInput
-                  value={formValues[field.name] ?? ""}
+                  value={formValues[field.name] ?? ''}
                   onChangeText={(text) => {
                     setFormValues((prev) => ({ ...prev, [field.name]: text }));
                     setFormErrors((prev) => ({
                       ...prev,
-                      fields: { ...prev.fields, [field.name]: "" },
+                      fields: { ...prev.fields, [field.name]: '' },
                       general: null,
                     }));
                   }}
@@ -840,7 +840,7 @@ export default function CrudListScreen<
                     paddingHorizontal: 14,
                     height: field.multiline ? 80 : 46,
                     paddingTop: field.multiline ? 12 : 0,
-                    textAlignVertical: field.multiline ? "top" : "center",
+                    textAlignVertical: field.multiline ? 'top' : 'center',
                   }}
                 />
                 {fieldErr ? (
@@ -871,9 +871,9 @@ export default function CrudListScreen<
               height: 50,
               borderRadius: 14,
               backgroundColor: errorColor,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
               gap: 6,
               opacity: isSaving ? 0.6 : 1,
             }}
@@ -881,7 +881,7 @@ export default function CrudListScreen<
             {isSaving ? (
               <ActivityIndicator size={16} color={iconWhite} />
             ) : null}
-            <Text style={{ fontSize: 16, fontWeight: "600", color: iconWhite }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}>
               Guardar
             </Text>
           </TouchableOpacity>
@@ -894,11 +894,11 @@ export default function CrudListScreen<
               borderRadius: 14,
               borderWidth: 1.5,
               borderColor: border,
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: "600", color: fg }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -909,21 +909,21 @@ export default function CrudListScreen<
 
   function renderContent() {
     const trashScreen = config.trashScreenName;
-    const isFormActive = tab === "form";
+    const isFormActive = tab === 'form';
 
     return (
       <View style={{ flex: 1, backgroundColor: bg }}>
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             paddingHorizontal: 20,
             paddingTop: 60,
             paddingBottom: 4,
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {navigation.canGoBack() ? (
               <Pressable
                 onPress={() => navigation.goBack()}
@@ -940,7 +940,7 @@ export default function CrudListScreen<
             <Text
               style={{
                 fontSize: 28,
-                fontWeight: "700",
+                fontWeight: '700',
                 letterSpacing: -0.02,
                 color: fg,
               }}
@@ -973,7 +973,7 @@ export default function CrudListScreen<
         >
           <View
             style={{
-              flexDirection: "row",
+              flexDirection: 'row',
               backgroundColor: segmentedBg,
               borderRadius: 10,
               padding: 3,
@@ -989,14 +989,14 @@ export default function CrudListScreen<
                 paddingVertical: 8,
                 borderRadius: 8,
                 backgroundColor: isFormActive ? transparent : surface,
-                alignItems: "center",
+                alignItems: 'center',
               }}
               activeOpacity={0.7}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "600",
+                  fontWeight: '600',
                   color: isFormActive ? muted : fg,
                   letterSpacing: 0.01,
                 }}
@@ -1015,14 +1015,14 @@ export default function CrudListScreen<
                 paddingVertical: 8,
                 borderRadius: 8,
                 backgroundColor: isFormActive ? surface : transparent,
-                alignItems: "center",
+                alignItems: 'center',
               }}
               activeOpacity={0.7}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "600",
+                  fontWeight: '600',
                   color: isFormActive ? fg : muted,
                   letterSpacing: 0.01,
                 }}
@@ -1051,17 +1051,17 @@ export default function CrudListScreen<
               borderRadius: 24,
               padding: 24,
               paddingBottom: 34,
-              marginTop: "auto",
+              marginTop: 'auto',
             }}
           >
-            <View style={{ alignItems: "center", marginBottom: 16 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
               <View
                 style={{
                   width: 56,
                   height: 56,
                   borderRadius: 28,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: errorBg,
                   marginBottom: 12,
                 }}
@@ -1069,8 +1069,8 @@ export default function CrudListScreen<
                 <MaterialCommunityIcons
                   name={
                     toggleTarget?.estado
-                      ? "pause-circle-outline"
-                      : "play-circle-outline"
+                      ? 'pause-circle-outline'
+                      : 'play-circle-outline'
                   }
                   size={26}
                   color={errorColor}
@@ -1079,9 +1079,9 @@ export default function CrudListScreen<
               <Text
                 style={{
                   fontSize: 17,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   color: fg,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 {toggleTarget?.estado
@@ -1093,12 +1093,12 @@ export default function CrudListScreen<
                   fontSize: 14,
                   color: muted,
                   marginTop: 6,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 {toggleTarget?.estado
-                  ? "El elemento se moverá a la papelera."
-                  : "El elemento volverá a estar activo."}
+                  ? 'El elemento se moverá a la papelera.'
+                  : 'El elemento volverá a estar activo.'}
               </Text>
             </View>
             <View style={{ gap: 10 }}>
@@ -1112,14 +1112,14 @@ export default function CrudListScreen<
                   height: 50,
                   borderRadius: 14,
                   backgroundColor: errorColor,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <Text
-                  style={{ fontSize: 16, fontWeight: "600", color: iconWhite }}
+                  style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
                 >
-                  {toggleTarget?.estado ? "Desactivar" : "Activar"}
+                  {toggleTarget?.estado ? 'Desactivar' : 'Activar'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1130,11 +1130,11 @@ export default function CrudListScreen<
                   borderRadius: 14,
                   borderWidth: 1.5,
                   borderColor: border,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: fg }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -1158,17 +1158,17 @@ export default function CrudListScreen<
               borderRadius: 24,
               padding: 24,
               paddingBottom: 34,
-              marginTop: "auto",
+              marginTop: 'auto',
             }}
           >
-            <View style={{ alignItems: "center", marginBottom: 16 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
               <View
                 style={{
                   width: 56,
                   height: 56,
                   borderRadius: 28,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: errorBg,
                   marginBottom: 12,
                 }}
@@ -1182,19 +1182,19 @@ export default function CrudListScreen<
               <Text
                 style={{
                   fontSize: 17,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   color: fg,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
-                {deleteTarget ? config.deleteConfirmText(deleteTarget) : ""}
+                {deleteTarget ? config.deleteConfirmText(deleteTarget) : ''}
               </Text>
               <Text
                 style={{
                   fontSize: 14,
                   color: muted,
                   marginTop: 6,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 Esta acción no se puede deshacer.
@@ -1218,7 +1218,7 @@ export default function CrudListScreen<
                     onError: () => {
                       toast(
                         `Error al eliminar ${config.entityName} "${name}".`,
-                        "error",
+                        'error',
                       );
                       setDeleteTarget(null);
                     },
@@ -1230,9 +1230,9 @@ export default function CrudListScreen<
                   height: 50,
                   borderRadius: 14,
                   backgroundColor: errorColor,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "row",
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
                   gap: 6,
                   opacity: isSaving || deleteMutation.isPending ? 0.6 : 1,
                 }}
@@ -1241,7 +1241,7 @@ export default function CrudListScreen<
                   <ActivityIndicator size={16} color={iconWhite} />
                 ) : null}
                 <Text
-                  style={{ fontSize: 16, fontWeight: "600", color: iconWhite }}
+                  style={{ fontSize: 16, fontWeight: '600', color: iconWhite }}
                 >
                   Eliminar
                 </Text>
@@ -1255,11 +1255,11 @@ export default function CrudListScreen<
                   borderRadius: 14,
                   borderWidth: 1.5,
                   borderColor: border,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: fg }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -1269,11 +1269,11 @@ export default function CrudListScreen<
 
         <Toast
           visible={toastMessage !== null}
-          message={toastMessage ?? ""}
+          message={toastMessage ?? ''}
           type={toastType}
           onDismiss={() => {
             setToastMessage(null);
-            setToastType("success");
+            setToastType('success');
           }}
         />
       </View>
@@ -1281,7 +1281,7 @@ export default function CrudListScreen<
   }
 
   // ── Early returns ──
-  if (user?.role !== "admin") return renderGuardView();
+  if (user?.role !== 'admin') return renderGuardView();
   if (config.comingSoon) return renderComingSoonView();
   if (isLoading) return renderLoadingView();
   if (isError) return renderErrorView();

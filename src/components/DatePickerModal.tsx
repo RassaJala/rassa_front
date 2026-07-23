@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -6,21 +6,21 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
 
 const MONTH_NAMES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 // Years back from 18 years ago (allows ages 18 to ~121)
@@ -44,7 +44,7 @@ export default function DatePickerModal({
   const maxAdultYear = currentYear - 18;
   const years = Array.from({ length: YEARS_BACK }, (_, i) => maxAdultYear - i);
 
-  const [step, setStep] = useState<"year" | "month" | "day">("year");
+  const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-indexed: 0 = Enero, 11 = Diciembre
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -53,7 +53,7 @@ export default function DatePickerModal({
   useEffect(() => {
     if (visible) {
       if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-        const parts = initialDate.split("-").map(Number);
+        const parts = initialDate.split('-').map(Number);
         if (parts.length === 3) {
           const y = parts[0] ?? currentYear;
           const m = parts[1] ?? 1;
@@ -61,32 +61,32 @@ export default function DatePickerModal({
           setSelectedYear(y);
           setSelectedMonth(m - 1);
           setSelectedDay(d);
-          setStep("day"); // Jump to day selection if we have full date
+          setStep('day'); // Jump to day selection if we have full date
         }
       } else {
         setSelectedYear(null);
         setSelectedMonth(null);
         setSelectedDay(null);
-        setStep("year");
+        setStep('year');
       }
     }
   }, [visible, initialDate, currentYear]);
 
   const handleSelectYear = (year: number) => {
     setSelectedYear(year);
-    setStep("month");
+    setStep('month');
   };
 
   const handleSelectMonth = (monthIndex: number) => {
     setSelectedMonth(monthIndex);
-    setStep("day");
+    setStep('day');
   };
 
   const handleSelectDay = (day: number) => {
     setSelectedDay(day);
     if (selectedYear !== null && selectedMonth !== null) {
-      const monthStr = String(selectedMonth + 1).padStart(2, "0");
-      const dayStr = String(day).padStart(2, "0");
+      const monthStr = String(selectedMonth + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
       onSelectDate(`${selectedYear}-${monthStr}-${dayStr}`);
       onClose();
     }
@@ -127,55 +127,55 @@ export default function DatePickerModal({
           <View className="mb-4 flex-row justify-between rounded-xl bg-gray-100 p-2 dark:bg-gray-800">
             <TouchableOpacity
               testID="tab-year-selector"
-              onPress={() => setStep("year")}
+              onPress={() => setStep('year')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === "year" ? "bg-white shadow-sm dark:bg-gray-700" : ""
+                step === 'year' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
               <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Año
               </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedYear ?? "----"}
+                {selectedYear ?? '----'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               testID="tab-month-selector"
               disabled={selectedYear === null}
-              onPress={() => setStep("month")}
+              onPress={() => setStep('month')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === "month" ? "bg-white shadow-sm dark:bg-gray-700" : ""
+                step === 'month' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
               <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Mes
               </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : "---"}
+                {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               testID="tab-day-selector"
               disabled={selectedMonth === null}
-              onPress={() => setStep("day")}
+              onPress={() => setStep('day')}
               className={`flex-1 items-center rounded-lg py-2 ${
-                step === "day" ? "bg-white shadow-sm dark:bg-gray-700" : ""
+                step === 'day' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
               }`}
             >
               <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 Día
               </Text>
               <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedDay ?? "--"}
+                {selectedDay ?? '--'}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Selector Content based on Step */}
           <View className="h-60 justify-center">
-            {step === "year" && (
+            {step === 'year' && (
               <ScrollView testID="years-list">
                 {years.map((item) => (
                   <TouchableOpacity
@@ -184,15 +184,15 @@ export default function DatePickerModal({
                     onPress={() => handleSelectYear(item)}
                     className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
                       selectedYear === item
-                        ? "bg-red-50 dark:bg-brand-red-coral/20"
-                        : ""
+                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
+                        : ''
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
                         selectedYear === item
-                          ? "text-brand-red-coral"
-                          : "text-brand-ink dark:text-gray-200"
+                          ? 'text-brand-red-coral'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -202,7 +202,7 @@ export default function DatePickerModal({
               </ScrollView>
             )}
 
-            {step === "month" && (
+            {step === 'month' && (
               <ScrollView testID="months-list">
                 {MONTH_NAMES.map((item, index) => (
                   <TouchableOpacity
@@ -211,15 +211,15 @@ export default function DatePickerModal({
                     onPress={() => handleSelectMonth(index)}
                     className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
                       selectedMonth === index
-                        ? "bg-red-50 dark:bg-brand-red-coral/20"
-                        : ""
+                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
+                        : ''
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
                         selectedMonth === index
-                          ? "text-brand-red-coral"
-                          : "text-brand-ink dark:text-gray-200"
+                          ? 'text-brand-red-coral'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}
@@ -229,7 +229,7 @@ export default function DatePickerModal({
               </ScrollView>
             )}
 
-            {step === "day" && (
+            {step === 'day' && (
               <ScrollView
                 testID="days-grid"
                 contentContainerClassName="flex-row flex-wrap justify-start"
@@ -241,15 +241,15 @@ export default function DatePickerModal({
                     onPress={() => handleSelectDay(item)}
                     className={`m-[1%] aspect-square w-[18%] items-center justify-center rounded-xl border border-gray-100 dark:border-gray-800 ${
                       selectedDay === item
-                        ? "border-brand-red-coral bg-brand-red-coral"
-                        : "bg-white dark:bg-gray-800"
+                        ? 'border-brand-red-coral bg-brand-red-coral'
+                        : 'bg-white dark:bg-gray-800'
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
                         selectedDay === item
-                          ? "text-white"
-                          : "text-brand-ink dark:text-gray-200"
+                          ? 'text-white'
+                          : 'text-brand-ink dark:text-gray-200'
                       }`}
                     >
                       {item}

@@ -1,30 +1,30 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
-import React from "react";
-import { Text, View } from "react-native";
+import React from 'react';
+import { Text, View } from 'react-native';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, waitFor } from "@testing-library/react-native";
-import "@testing-library/jest-native/extend-expect";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, waitFor } from '@testing-library/react-native';
+import '@testing-library/jest-native/extend-expect';
 
-import { useCatalogs } from "@/hooks/useCatalogs";
-import api from "@/services/api";
+import { useCatalogs } from '@/hooks/useCatalogs';
+import api from '@/services/api';
 
-jest.mock("@/services/api");
-jest.mock("@react-native-community/netinfo", () => ({
+jest.mock('@/services/api');
+jest.mock('@react-native-community/netinfo', () => ({
   useNetInfo: () => ({ isConnected: true }),
 }));
 
 const mockApiGet = api.get as jest.Mock;
 
-describe("useCatalogs", () => {
+describe('useCatalogs', () => {
   const municipios = [
-    { id_municipio: 1, nombre: "Municipio 1" },
-    { id_municipio: 2, nombre: "Municipio 2" },
+    { id_municipio: 1, nombre: 'Municipio 1' },
+    { id_municipio: 2, nombre: 'Municipio 2' },
   ];
 
   const localidades = [
-    { id_localidad: 1, nombre: "Localidad 1", municipio_id: 1 },
-    { id_localidad: 2, nombre: "Localidad 2", municipio_id: 1 },
+    { id_localidad: 1, nombre: 'Localidad 1', municipio_id: 1 },
+    { id_localidad: 2, nombre: 'Localidad 2', municipio_id: 1 },
   ];
 
   let queryClient: QueryClient;
@@ -59,17 +59,17 @@ describe("useCatalogs", () => {
           {String(catalog.localidades.length)}
         </Text>
         <Text testID="selected-municipio-id">
-          {String(catalog.selectedMunicipioId ?? "")}
+          {String(catalog.selectedMunicipioId ?? '')}
         </Text>
-        <Text testID="localidad-id">{String(catalog.localidadId ?? "")}</Text>
+        <Text testID="localidad-id">{String(catalog.localidadId ?? '')}</Text>
         <Text testID="is-loading-municipios">
           {String(catalog.isLoadingMunicipios)}
         </Text>
         <Text testID="is-loading-localidades">
           {String(catalog.isLoadingLocalidades)}
         </Text>
-        <Text testID="error-municipios">{catalog.errorMunicipios ?? ""}</Text>
-        <Text testID="error-localidades">{catalog.errorLocalidades ?? ""}</Text>
+        <Text testID="error-municipios">{catalog.errorMunicipios ?? ''}</Text>
+        <Text testID="error-localidades">{catalog.errorLocalidades ?? ''}</Text>
       </View>
     );
   };
@@ -81,11 +81,11 @@ describe("useCatalogs", () => {
       </QueryClientProvider>,
     );
 
-  it("fetches municipios on initial render", async () => {
+  it('fetches municipios on initial render', async () => {
     renderTestComponent();
 
     await waitFor(() => {
-      expect(mockApiGet).toHaveBeenCalledWith("/municipios/", {
+      expect(mockApiGet).toHaveBeenCalledWith('/municipios/', {
         timeout: 10000,
       });
     });
@@ -95,31 +95,31 @@ describe("useCatalogs", () => {
     });
   });
 
-  it("returns municipios data after fetch", async () => {
+  it('returns municipios data after fetch', async () => {
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
-      expect(getByTestId("municipios-count").props.children).toBe("2");
+      expect(getByTestId('municipios-count').props.children).toBe('2');
     });
   });
 
-  it("fetches localidades when municipio is selected", async () => {
+  it('fetches localidades when municipio is selected', async () => {
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
-      expect(getByTestId("municipios-count").props.children).toBe("2");
+      expect(getByTestId('municipios-count').props.children).toBe('2');
     });
   });
 
-  it("selecting municipio resets localidad", async () => {
+  it('selecting municipio resets localidad', async () => {
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
-      expect(getByTestId("municipios-count").props.children).toBe("2");
+      expect(getByTestId('municipios-count').props.children).toBe('2');
     });
   });
 
-  it("does not fetch localidades when no municipio is selected", async () => {
+  it('does not fetch localidades when no municipio is selected', async () => {
     mockApiGet.mockClear();
     renderTestComponent();
 
@@ -128,46 +128,46 @@ describe("useCatalogs", () => {
     });
   });
 
-  it("handles error for municipios fetch", async () => {
-    mockApiGet.mockReset().mockRejectedValue(new Error("Network error"));
+  it('handles error for municipios fetch', async () => {
+    mockApiGet.mockReset().mockRejectedValue(new Error('Network error'));
 
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
-      expect(getByTestId("error-municipios").props.children).toBe(
-        "Error al cargar datos. Toca Reintentar.",
+      expect(getByTestId('error-municipios').props.children).toBe(
+        'Error al cargar datos. Toca Reintentar.',
       );
     });
   });
 
-  it("handles error for localidades fetch", async () => {
+  it('handles error for localidades fetch', async () => {
     mockApiGet
       .mockReset()
       .mockResolvedValueOnce({ data: { data: municipios } })
-      .mockRejectedValue(new Error("Localidades error"));
+      .mockRejectedValue(new Error('Localidades error'));
 
     const { getByTestId } = renderTestComponent(1);
 
     await waitFor(() => {
-      expect(getByTestId("error-localidades").props.children).toBe(
-        "Error al cargar datos. Toca Reintentar.",
+      expect(getByTestId('error-localidades').props.children).toBe(
+        'Error al cargar datos. Toca Reintentar.',
       );
     });
   });
 
-  it("exposes refetch functions", async () => {
+  it('exposes refetch functions', async () => {
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
-      expect(getByTestId("municipios-count").props.children).toBe("2");
+      expect(getByTestId('municipios-count').props.children).toBe('2');
     });
   });
 
-  it("has staleTime of 5 minutes", async () => {
+  it('has staleTime of 5 minutes', async () => {
     renderTestComponent();
   });
 
-  it("uses placeholderData to keep previous data", async () => {
+  it('uses placeholderData to keep previous data', async () => {
     renderTestComponent();
   });
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -6,19 +6,19 @@ import {
   ScrollView,
   Text,
   View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQuery } from '@tanstack/react-query';
 
-import api from "@/services/api";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import type { ApiResponse, FarmerStackParamList, Producto } from "@/types";
+import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import type { ApiResponse, FarmerStackParamList, Producto } from '@/types';
 
-type Nav = NativeStackNavigationProp<FarmerStackParamList, "FarmerHome">;
+type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerHome'>;
 
 interface Props {
   readonly navigation: Nav;
@@ -27,10 +27,10 @@ interface Props {
 const DRAWER_WIDTH = 0.55;
 
 function useScreenWidth(): number {
-  const [width, setWidth] = useState(() => Dimensions.get("window").width);
+  const [width, setWidth] = useState(() => Dimensions.get('window').width);
 
   React.useEffect(() => {
-    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setWidth(window.width);
     });
     return () => subscription.remove();
@@ -45,7 +45,7 @@ export default function FarmerHomeScreen({
 }: Props): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const screenWidth = useScreenWidth();
   const isCompact = screenWidth < 400;
@@ -53,12 +53,12 @@ export default function FarmerHomeScreen({
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const { data: productsData } = useQuery({
-    queryKey: ["productos-count"],
+    queryKey: ['productos-count'],
     queryFn: async () => {
       // Pedimos los productos (idealmente el backend tendría un endpoint ligero para conteo, pero esto sirve por ahora)
       const { data } =
         await api.get<ApiResponse<{ results: Producto[]; count?: number }>>(
-          "/productos/",
+          '/productos/',
         );
       return data.data;
     },
@@ -68,43 +68,43 @@ export default function FarmerHomeScreen({
   const totalProducts =
     productsData?.count ?? productsData?.results?.length ?? 0;
 
-  const bg = isDark ? "#1A211B" : "#F5F7F0";
-  const surface = isDark ? "#263028" : "#FFFFFF";
-  const fg = isDark ? "#E8EAE4" : "#2D3328";
-  const muted = isDark ? "#9DA89D" : "#5E6B5E";
-  const border = isDark ? "#353D35" : "#E2E6DF";
-  const sidebarBorder = isDark ? "#353D35" : "#E8ECE4";
-  const brand = isDark ? "#4A8A63" : "#24563C";
-  const accentBg = isDark ? "rgba(74,138,99,0.12)" : "rgba(36,86,60,0.07)";
-  const coralBg = isDark ? "rgba(232,74,74,0.12)" : "rgba(222,57,58,0.07)";
-  const pumpkinBg = isDark ? "rgba(212,160,32,0.12)" : "rgba(242,169,0,0.07)";
-  const coral = "#DE393A";
-  const pumpkin = "#F2A900";
-  const drawerBg = isDark ? "#1A211B" : "#FFFFFF";
-  const overlayBg = "#000";
+  const bg = isDark ? '#1A211B' : '#F5F7F0';
+  const surface = isDark ? '#263028' : '#FFFFFF';
+  const fg = isDark ? '#E8EAE4' : '#2D3328';
+  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const border = isDark ? '#353D35' : '#E2E6DF';
+  const sidebarBorder = isDark ? '#353D35' : '#E8ECE4';
+  const brand = isDark ? '#4A8A63' : '#24563C';
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
+  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
+  const coral = '#DE393A';
+  const pumpkin = '#F2A900';
+  const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
+  const overlayBg = '#000';
 
   const days = [
-    "Domingo",
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
   ];
   const months = [
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
   ];
   const d = new Date();
   const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
@@ -148,30 +148,30 @@ export default function FarmerHomeScreen({
 
   const menuItems: MenuItem[] = [
     {
-      icon: "account-circle-outline",
-      label: "Perfil",
-      desc: "Tu información personal",
+      icon: 'account-circle-outline',
+      label: 'Perfil',
+      desc: 'Tu información personal',
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: isDark ? "weather-sunny" : "weather-night",
-      label: `Tema ${isDark ? "claro" : "oscuro"}`,
-      desc: "Alternar apariencia",
+      icon: isDark ? 'weather-sunny' : 'weather-night',
+      label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
+      desc: 'Alternar apariencia',
       color: fg,
       action: toggleColorScheme,
     },
     {
-      icon: "cog-outline",
-      label: "Configuración",
-      desc: "Preferencias del sistema",
+      icon: 'cog-outline',
+      label: 'Configuración',
+      desc: 'Preferencias del sistema',
       color: fg,
       action: closeDrawer,
     },
     {
-      icon: "logout",
-      label: "Cerrar sesión",
-      desc: "",
+      icon: 'logout',
+      label: 'Cerrar sesión',
+      desc: '',
       color: coral,
       action: () => {
         closeDrawer();
@@ -199,9 +199,9 @@ export default function FarmerHomeScreen({
             {/* HEADER */}
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
               }}
             >
               <View
@@ -210,9 +210,9 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 12 : 14,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     letterSpacing: 0.06,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     color: muted,
                   }}
                   numberOfLines={2}
@@ -222,7 +222,7 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 28 : 32,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     letterSpacing: -0.3,
                     color: fg,
                   }}
@@ -232,17 +232,17 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 17 : 20,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     color: muted,
                     marginTop: 4,
                   }}
                   numberOfLines={2}
                 >
-                  Bienvenido, {user?.nombre ?? "Agricultor"}
+                  Bienvenido, {user?.nombre ?? 'Agricultor'}
                 </Text>
               </View>
               <View
-                style={{ flexDirection: "row", flexShrink: 0, marginLeft: 8 }}
+                style={{ flexDirection: 'row', flexShrink: 0, marginLeft: 8 }}
               >
                 <Pressable
                   onPress={openDrawer}
@@ -253,8 +253,8 @@ export default function FarmerHomeScreen({
                     backgroundColor: surface,
                     borderWidth: 1,
                     borderColor: border,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     opacity: pressed ? 0.6 : 1,
                   })}
                 >
@@ -270,8 +270,8 @@ export default function FarmerHomeScreen({
             {/* STATS */}
             <View
               style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
+                flexDirection: 'row',
+                flexWrap: 'wrap',
                 paddingVertical: 24,
                 gap: isCompact ? 8 : 10,
               }}
@@ -279,8 +279,8 @@ export default function FarmerHomeScreen({
               <View
                 style={{
                   flex: 1,
-                  minWidth: isCompact ? "45%" : 0,
-                  alignItems: "center",
+                  minWidth: isCompact ? '45%' : 0,
+                  alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
@@ -294,8 +294,8 @@ export default function FarmerHomeScreen({
                     width: 44,
                     height: 44,
                     borderRadius: 14,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     backgroundColor: accentBg,
                     marginBottom: 10,
                   }}
@@ -309,7 +309,7 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: 22,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     letterSpacing: -0.2,
                     color: brand,
                   }}
@@ -319,12 +319,12 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 11 : 13,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     letterSpacing: 0.06,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
-                    textAlign: "center",
+                    textAlign: 'center',
                   }}
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -336,8 +336,8 @@ export default function FarmerHomeScreen({
               <View
                 style={{
                   flex: 1,
-                  minWidth: isCompact ? "45%" : 0,
-                  alignItems: "center",
+                  minWidth: isCompact ? '45%' : 0,
+                  alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
@@ -351,8 +351,8 @@ export default function FarmerHomeScreen({
                     width: 44,
                     height: 44,
                     borderRadius: 14,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     backgroundColor: coralBg,
                     marginBottom: 10,
                   }}
@@ -366,7 +366,7 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: 22,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     letterSpacing: -0.2,
                     color: coral,
                   }}
@@ -376,12 +376,12 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 11 : 13,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     letterSpacing: 0.06,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
-                    textAlign: "center",
+                    textAlign: 'center',
                   }}
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -393,8 +393,8 @@ export default function FarmerHomeScreen({
               <View
                 style={{
                   flex: 1,
-                  minWidth: isCompact ? "45%" : 0,
-                  alignItems: "center",
+                  minWidth: isCompact ? '45%' : 0,
+                  alignItems: 'center',
                   backgroundColor: surface,
                   borderRadius: 16,
                   borderWidth: 1,
@@ -408,8 +408,8 @@ export default function FarmerHomeScreen({
                     width: 44,
                     height: 44,
                     borderRadius: 14,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     backgroundColor: pumpkinBg,
                     marginBottom: 10,
                   }}
@@ -423,7 +423,7 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: 22,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     letterSpacing: -0.2,
                     color: pumpkin,
                   }}
@@ -433,12 +433,12 @@ export default function FarmerHomeScreen({
                 <Text
                   style={{
                     fontSize: isCompact ? 11 : 13,
-                    fontWeight: "600",
+                    fontWeight: '600',
                     letterSpacing: 0.06,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     color: muted,
                     marginTop: 4,
-                    textAlign: "center",
+                    textAlign: 'center',
                   }}
                   numberOfLines={1}
                   adjustsFontSizeToFit
@@ -451,13 +451,13 @@ export default function FarmerHomeScreen({
 
             {/* QUICK ACTIONS */}
             <Pressable
-              onPress={() => navigation.navigate("ProductList")}
+              onPress={() => navigation.navigate('ProductList')}
               style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             >
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
+                  flexDirection: 'row',
+                  alignItems: 'center',
                   backgroundColor: surface,
                   borderWidth: 1,
                   borderColor: border,
@@ -471,8 +471,8 @@ export default function FarmerHomeScreen({
                     width: 44,
                     height: 44,
                     borderRadius: 14,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     backgroundColor: accentBg,
                   }}
                 >
@@ -486,7 +486,7 @@ export default function FarmerHomeScreen({
                   <Text
                     style={{
                       fontSize: 16,
-                      fontWeight: "600",
+                      fontWeight: '600',
                       color: fg,
                       marginBottom: 2,
                     }}
@@ -515,7 +515,7 @@ export default function FarmerHomeScreen({
       {drawerOpen ? (
         <Animated.View
           style={{
-            position: "absolute",
+            position: 'absolute',
             left: 0,
             top: 0,
             bottom: 0,
@@ -532,7 +532,7 @@ export default function FarmerHomeScreen({
       {/* DRAWER */}
       <Animated.View
         style={{
-          position: "absolute",
+          position: 'absolute',
           right: 0,
           top: 0,
           bottom: 0,
@@ -547,7 +547,7 @@ export default function FarmerHomeScreen({
         <ScrollView showsVerticalScrollIndicator={false}>
           <View
             style={{
-              alignItems: "center",
+              alignItems: 'center',
               paddingTop: 60,
               paddingHorizontal: 20,
               paddingBottom: 24,
@@ -562,8 +562,8 @@ export default function FarmerHomeScreen({
                 height: 64,
                 borderRadius: 32,
                 backgroundColor: accentBg,
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: 'center',
+                justifyContent: 'center',
                 marginBottom: 12,
               }}
             >
@@ -576,15 +576,15 @@ export default function FarmerHomeScreen({
             <Text
               style={{
                 fontSize: 24,
-                fontWeight: "700",
+                fontWeight: '700',
                 color: fg,
                 letterSpacing: -0.2,
               }}
             >
-              {user?.nombre ?? "Agricultor"}
+              {user?.nombre ?? 'Agricultor'}
             </Text>
             <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>
-              {user?.email ?? ""}
+              {user?.email ?? ''}
             </Text>
           </View>
 
@@ -598,25 +598,25 @@ export default function FarmerHomeScreen({
                   style={({ pressed }) => ({
                     backgroundColor: isLast
                       ? isDark
-                        ? "rgba(222,57,58,0.1)"
-                        : "rgba(222,57,58,0.07)"
+                        ? 'rgba(222,57,58,0.1)'
+                        : 'rgba(222,57,58,0.07)'
                       : isDark
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(0,0,0,0.03)",
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.03)',
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
                       ? isDark
-                        ? "rgba(222,57,58,0.25)"
-                        : "rgba(222,57,58,0.15)"
-                      : "transparent",
+                        ? 'rgba(222,57,58,0.25)'
+                        : 'rgba(222,57,58,0.15)'
+                      : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
                   <View
                     style={{
-                      flexDirection: "row",
-                      alignItems: "center",
+                      flexDirection: 'row',
+                      alignItems: 'center',
                       gap: 12,
                       paddingVertical: 12,
                       paddingHorizontal: 16,
@@ -633,7 +633,7 @@ export default function FarmerHomeScreen({
                     <Text
                       style={{
                         fontSize: 20,
-                        fontWeight: "600",
+                        fontWeight: '600',
                         color: item.color,
                         letterSpacing: -0.15,
                         flexShrink: 1,
