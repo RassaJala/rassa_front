@@ -1,6 +1,6 @@
 /* globals clearTimeout, setTimeout -- Required for React Native timers */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,274 +17,16 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { colors, themeColors } from '@/constants/colors';
+import { useUserSearch } from '@/hooks/useUserSearch';
 import {
-  addFamilyMember,
-  assignFamilyHead,
-  createFamily,
-  deleteFamily,
+  createFamilyWithHead,
   fetchFamily,
-  searchUsers,
   updateFamily,
 } from '@/services/families';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, Family, SearchUserResult } from '@/types';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyForm'>;
-
-interface FormHeaderProps {
-  readonly isEditing: boolean;
-  readonly isDark: boolean;
-  readonly onBack: () => void;
-}
-
-function FormHeader({
-  isEditing,
-  isDark,
-  onBack,
-}: FormHeaderProps): React.JSX.Element {
-  const t = themeColors(isDark);
-
-  return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}
-    >
-      <Pressable
-        onPress={onBack}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.6 : 1,
-        })}
-        hitSlop={8}
-      >
-        <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
-      </Pressable>
-      <View>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: t.fg,
-          }}
-        >
-          {isEditing ? 'Editar familia' : 'Nueva familia'}
-        </Text>
-        <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
-          {isEditing
-            ? 'Modifica los datos de la familia'
-            : 'Completa los datos de la nueva familia'}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function ActionsSection({
-  isEditing,
-  isDark,
-  isSaving,
-  onCancel,
-  onSubmit,
-}: {
-  readonly isEditing: boolean;
-  readonly isDark: boolean;
-  readonly isSaving: boolean;
-  readonly onCancel: () => void;
-  readonly onSubmit: () => void;
-}): React.JSX.Element {
-  const t = themeColors(isDark);
-
-  return (
-    <View style={{ marginTop: 24, gap: 10 }}>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={{
-          borderRadius: 10,
-          backgroundColor: colors.brandRedCoral,
-          height: 42,
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'row',
-          gap: 6,
-          opacity: isSaving ? 0.6 : 1,
-        }}
-        onPress={onSubmit}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <ActivityIndicator size={16} color={colors.iconWhite} />
-        ) : null}
-        <Text
-          style={{ fontSize: 14, fontWeight: '600', color: colors.iconWhite }}
-        >
-          {isEditing ? 'Guardar cambios' : 'Crear familia'}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={{
-          borderRadius: 10,
-          height: 40,
-          borderWidth: 1.5,
-          borderColor: t.border,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        onPress={onCancel}
-        disabled={isSaving}
-      >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
-          Cancelar
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function JefeSearchField({
-  isDark,
-  jefeQuery,
-  onChangeJefeQuery,
-  jefeResults,
-  selectedJefe,
-  searchingJefe,
-  onSelectJefe,
-  onClearJefe,
-  fieldErrors,
-  clearFieldError,
-  isSaving,
-}: {
-  readonly isDark: boolean;
-  readonly jefeQuery: string;
-  readonly onChangeJefeQuery: (val: string) => void;
-  readonly jefeResults: SearchUserResult[];
-  readonly selectedJefe: SearchUserResult | null;
-  readonly searchingJefe: boolean;
-  readonly onSelectJefe: (user: SearchUserResult) => void;
-  readonly onClearJefe: () => void;
-  readonly fieldErrors: Record<string, string>;
-  readonly clearFieldError: (field: string) => void;
-  readonly isSaving: boolean;
-}): React.JSX.Element {
-  const t = themeColors(isDark);
-  const errorColor = colors.brandRedCoral;
-
-  return (
-    <>
-      <Text
-        style={{
-          marginBottom: 6,
-          marginTop: 16,
-          fontSize: 14,
-          fontWeight: '500',
-          color: t.fg,
-        }}
-      >
-        Jefe de familia *
-      </Text>
-      <View style={{ position: 'relative' }}>
-        <TextInput
-          style={{
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: fieldErrors.jefe ? errorColor : t.border,
-            backgroundColor: t.input,
-            paddingLeft: 16,
-            paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
-            paddingVertical: 12,
-            fontSize: 16,
-            color: t.fg,
-          }}
-          placeholder="Buscar por nombre o correo..."
-          placeholderTextColor={t.muted}
-          value={jefeQuery}
-          onChangeText={(text) => {
-            onChangeJefeQuery(text);
-            if (fieldErrors.jefe) {
-              clearFieldError('jefe');
-            }
-          }}
-          editable={!isSaving}
-        />
-        {(selectedJefe ?? jefeQuery) ? (
-          <Pressable
-            onPress={onClearJefe}
-            style={{ position: 'absolute', right: 12, top: 14 }}
-          >
-            <MaterialCommunityIcons
-              name="close-circle"
-              size={20}
-              color={t.muted}
-            />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {searchingJefe ? (
-        <ActivityIndicator
-          size="small"
-          color={t.brand}
-          style={{ marginTop: 8 }}
-        />
-      ) : null}
-
-      {jefeResults.length > 0 ? (
-        <View
-          style={{
-            marginTop: 4,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: t.border,
-            backgroundColor: t.surface,
-            maxHeight: 180,
-            overflow: 'hidden',
-          }}
-        >
-          <ScrollView nestedScrollEnabled>
-            {jefeResults.map((user) => (
-              <TouchableOpacity
-                key={user.id_usuario}
-                activeOpacity={0.7}
-                onPress={() => onSelectJefe(user)}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderBottomWidth: 1,
-                  borderBottomColor: t.border,
-                }}
-              >
-                <Text
-                  style={{ fontSize: 14, fontWeight: '600', color: t.fg }}
-                  numberOfLines={1}
-                >
-                  {user.nombre} {user.apellido_paterno}
-                </Text>
-                <Text
-                  style={{ fontSize: 12, color: t.muted, marginTop: 1 }}
-                  numberOfLines={1}
-                >
-                  {user.email}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      ) : null}
-
-      {fieldErrors.jefe ? (
-        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
-          {fieldErrors.jefe}
-        </Text>
-      ) : null}
-    </>
-  );
-}
 
 async function handleCreateFamily(
   trimmedNombre: string,
@@ -306,207 +48,10 @@ async function handleCreateFamily(
     ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
   };
 
-  const created = await createFamily(payload);
-  const newFamilyId = created.id_familia;
-
-  try {
-    await addFamilyMember(selectedJefe.id_usuario, newFamilyId);
-    await assignFamilyHead(newFamilyId, selectedJefe.id_usuario);
-  } catch {
-    try {
-      await deleteFamily(newFamilyId);
-    } catch {
-      // Rollback failed silently
-    }
-    throw new Error('Error al asignar el jefe de familia.');
-  }
+  await createFamilyWithHead(payload, selectedJefe.id_usuario);
 
   void queryClient.invalidateQueries({ queryKey: ['families'] });
   navigation.goBack();
-}
-
-function LoadingIndicator(): React.JSX.Element {
-  return (
-    <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <ActivityIndicator size="large" color={colors.brandRedCoral} />
-    </View>
-  );
-}
-
-interface FormFieldsProps {
-  readonly isDark: boolean;
-  readonly isEditing: boolean;
-  readonly nombre: string;
-  readonly onChangeNombre: (val: string) => void;
-  readonly detalle: string;
-  readonly onChangeDetalle: (val: string) => void;
-  readonly jefeQuery: string;
-  readonly onChangeJefeQuery: (val: string) => void;
-  readonly jefeResults: SearchUserResult[];
-  readonly selectedJefe: SearchUserResult | null;
-  readonly searchingJefe: boolean;
-  readonly onSelectJefe: (user: SearchUserResult) => void;
-  readonly onClearJefe: () => void;
-  readonly fieldErrors: Record<string, string>;
-  readonly clearFieldError: (field: string) => void;
-  readonly serverError: string;
-  readonly isSaving: boolean;
-  readonly onCancel: () => void;
-  readonly onSubmit: () => void;
-}
-
-function FormFields({
-  isDark,
-  isEditing,
-  nombre,
-  onChangeNombre,
-  detalle,
-  onChangeDetalle,
-  jefeQuery,
-  onChangeJefeQuery,
-  jefeResults,
-  selectedJefe,
-  searchingJefe,
-  onSelectJefe,
-  onClearJefe,
-  fieldErrors,
-  clearFieldError,
-  serverError,
-  isSaving,
-  onCancel,
-  onSubmit,
-}: FormFieldsProps): React.JSX.Element {
-  const t = themeColors(isDark);
-  const errorColor = colors.brandRedCoral;
-
-  return (
-    <View
-      style={{
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: t.border,
-        backgroundColor: t.surface,
-        padding: 20,
-      }}
-    >
-      {/* ── Nombre ──────────────────────────────────── */}
-      <Text
-        style={{
-          marginBottom: 6,
-          fontSize: 14,
-          fontWeight: '500',
-          color: t.fg,
-        }}
-      >
-        Nombre de la familia *
-      </Text>
-      <TextInput
-        style={{
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: fieldErrors.nombre ? errorColor : t.border,
-          backgroundColor: t.input,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          fontSize: 16,
-          color: t.fg,
-        }}
-        placeholder="Ej. Familia López"
-        placeholderTextColor={t.muted}
-        value={nombre}
-        onChangeText={(text) => {
-          onChangeNombre(text);
-          if (fieldErrors.nombre) {
-            clearFieldError('nombre');
-          }
-        }}
-        editable={!isSaving}
-      />
-      {fieldErrors.nombre ? (
-        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
-          {fieldErrors.nombre}
-        </Text>
-      ) : null}
-
-      {!isEditing ? (
-        <JefeSearchField
-          isDark={isDark}
-          jefeQuery={jefeQuery}
-          onChangeJefeQuery={onChangeJefeQuery}
-          jefeResults={jefeResults}
-          selectedJefe={selectedJefe}
-          searchingJefe={searchingJefe}
-          onSelectJefe={onSelectJefe}
-          onClearJefe={onClearJefe}
-          fieldErrors={fieldErrors}
-          clearFieldError={clearFieldError}
-          isSaving={isSaving}
-        />
-      ) : null}
-
-      {/* ── Detalle ─────────────────────────────────── */}
-      <Text
-        style={{
-          marginBottom: 6,
-          marginTop: 16,
-          fontSize: 14,
-          fontWeight: '500',
-          color: t.fg,
-        }}
-      >
-        Detalle
-      </Text>
-      <TextInput
-        style={{
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: t.border,
-          backgroundColor: t.input,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          fontSize: 16,
-          color: t.fg,
-          height: 80,
-          textAlignVertical: 'top',
-        }}
-        placeholder="Descripción opcional"
-        placeholderTextColor={t.muted}
-        multiline
-        numberOfLines={3}
-        value={detalle}
-        onChangeText={onChangeDetalle}
-        editable={!isSaving}
-      />
-
-      {/* ── Server error ────────────────────────────── */}
-      {serverError ? (
-        <View
-          style={{
-            marginTop: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <MaterialCommunityIcons
-            name="alert-circle"
-            size={16}
-            color={errorColor}
-          />
-          <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
-            {serverError}
-          </Text>
-        </View>
-      ) : null}
-
-      <ActionsSection
-        isEditing={isEditing}
-        isDark={isDark}
-        isSaving={isSaving}
-        onCancel={onCancel}
-        onSubmit={onSubmit}
-      />
-    </View>
-  );
 }
 
 export default function FamilyFormScreen(): React.JSX.Element {
@@ -532,44 +77,22 @@ export default function FamilyFormScreen(): React.JSX.Element {
   const [serverError, setServerError] = useState('');
 
   const [jefeQuery, setJefeQuery] = useState('');
-  const [jefeResults, setJefeResults] = useState<SearchUserResult[]>([]);
   const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(
     null,
   );
-  const [searchingJefe, setSearchingJefe] = useState(false);
+  const {
+    results: jefeResults,
+    setResults: setJefeResults,
+    isSearching: searchingJefe,
+  } = useUserSearch(jefeQuery, selectedJefe);
   const [saving, setSaving] = useState(false);
 
-  // Populate form when editing
   React.useEffect(() => {
     if (existingFamily) {
       setNombre(existingFamily.nombre_familia);
       setDetalle(existingFamily.detalle_familia ?? '');
     }
   }, [existingFamily]);
-
-  // Debounced jefe search
-  useEffect(() => {
-    const trimmed = jefeQuery.trim();
-    const shouldSearch = trimmed.length >= 3 && !selectedJefe;
-    if (!shouldSearch) {
-      setJefeResults([]);
-      return;
-    }
-
-    const delay = setTimeout(async () => {
-      setSearchingJefe(true);
-      try {
-        const data = await searchUsers(trimmed);
-        setJefeResults(data);
-      } catch {
-        setJefeResults([]);
-      } finally {
-        setSearchingJefe(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [jefeQuery, selectedJefe]);
 
   const handleSelectJefe = (user: SearchUserResult): void => {
     setSelectedJefe(user);
@@ -581,6 +104,14 @@ export default function FamilyFormScreen(): React.JSX.Element {
     setJefeQuery('');
     setSelectedJefe(null);
     setJefeResults([]);
+  };
+
+  const clearFieldError = (field: string): void => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const handleSubmit = async (): Promise<void> => {
@@ -638,51 +169,329 @@ export default function FamilyFormScreen(): React.JSX.Element {
   };
 
   if (isEditing && loadingFamily) {
-    return <LoadingIndicator />;
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <ActivityIndicator size="large" color={colors.brandRedCoral} />
+      </View>
+    );
   }
 
   const t = themeColors(isDark);
+  const errorColor = colors.brandRedCoral;
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <FormHeader
-        isEditing={isEditing}
-        isDark={isDark}
-        onBack={() => navigation.goBack()}
-      />
+      {/* ── Header ──────────────────────────────────── */}
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+          })}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={24} color={t.fg} />
+        </Pressable>
+        <View>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: t.fg,
+            }}
+          >
+            {isEditing ? 'Editar familia' : 'Nueva familia'}
+          </Text>
+          <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
+            {isEditing
+              ? 'Modifica los datos de la familia'
+              : 'Completa los datos de la nueva familia'}
+          </Text>
+        </View>
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, gap: 0 }}
         keyboardShouldPersistTaps="handled"
       >
-        <FormFields
-          isDark={isDark}
-          isEditing={isEditing}
-          nombre={nombre}
-          onChangeNombre={setNombre}
-          detalle={detalle}
-          onChangeDetalle={setDetalle}
-          jefeQuery={jefeQuery}
-          onChangeJefeQuery={setJefeQuery}
-          jefeResults={jefeResults}
-          selectedJefe={selectedJefe}
-          searchingJefe={searchingJefe}
-          onSelectJefe={handleSelectJefe}
-          onClearJefe={handleClearJefe}
-          fieldErrors={fieldErrors}
-          clearFieldError={(field) => {
-            setFieldErrors((prev) => {
-              const next = { ...prev };
-              delete next[field];
-              return next;
-            });
+        {/* ── Form card ──────────────────────────────── */}
+        <View
+          style={{
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: t.border,
+            backgroundColor: t.surface,
+            padding: 20,
           }}
-          serverError={serverError}
-          isSaving={saving}
-          onCancel={() => navigation.goBack()}
-          onSubmit={handleSubmit}
-        />
+        >
+          {/* Nombre */}
+          <Text
+            style={{
+              marginBottom: 6,
+              fontSize: 14,
+              fontWeight: '500',
+              color: t.fg,
+            }}
+          >
+            Nombre de la familia *
+          </Text>
+          <TextInput
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: fieldErrors.nombre ? errorColor : t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              fontSize: 16,
+              color: t.fg,
+            }}
+            placeholder="Ej. Familia López"
+            placeholderTextColor={t.muted}
+            value={nombre}
+            onChangeText={(text) => {
+              setNombre(text);
+              if (fieldErrors.nombre) clearFieldError('nombre');
+            }}
+            editable={!saving}
+          />
+          {fieldErrors.nombre ? (
+            <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
+              {fieldErrors.nombre}
+            </Text>
+          ) : null}
+
+          {/* Jefe de familia (solo creación) */}
+          {!isEditing ? (
+            <>
+              <Text
+                style={{
+                  marginBottom: 6,
+                  marginTop: 16,
+                  fontSize: 14,
+                  fontWeight: '500',
+                  color: t.fg,
+                }}
+              >
+                Jefe de familia *
+              </Text>
+              <View style={{ position: 'relative' }}>
+                <TextInput
+                  style={{
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: fieldErrors.jefe ? errorColor : t.border,
+                    backgroundColor: t.input,
+                    paddingLeft: 16,
+                    paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    color: t.fg,
+                  }}
+                  placeholder="Buscar por nombre o correo..."
+                  placeholderTextColor={t.muted}
+                  value={jefeQuery}
+                  onChangeText={(text) => {
+                    setJefeQuery(text);
+                    if (fieldErrors.jefe) clearFieldError('jefe');
+                  }}
+                  editable={!saving}
+                />
+                {(selectedJefe ?? jefeQuery) ? (
+                  <Pressable
+                    onPress={handleClearJefe}
+                    style={{ position: 'absolute', right: 12, top: 14 }}
+                  >
+                    <MaterialCommunityIcons
+                      name="close-circle"
+                      size={20}
+                      color={t.muted}
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+
+              {searchingJefe ? (
+                <ActivityIndicator
+                  size="small"
+                  color={t.brand}
+                  style={{ marginTop: 8 }}
+                />
+              ) : null}
+
+              {jefeResults.length > 0 ? (
+                <View
+                  style={{
+                    marginTop: 4,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    backgroundColor: t.surface,
+                    maxHeight: 180,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <ScrollView nestedScrollEnabled>
+                    {jefeResults.map((user) => (
+                      <TouchableOpacity
+                        key={user.id_usuario}
+                        activeOpacity={0.7}
+                        onPress={() => handleSelectJefe(user)}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: t.border,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '600',
+                            color: t.fg,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {user.nombre} {user.apellido_paterno}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: t.muted,
+                            marginTop: 1,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {user.email}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : null}
+
+              {fieldErrors.jefe ? (
+                <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
+                  {fieldErrors.jefe}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+
+          {/* Detalle */}
+          <Text
+            style={{
+              marginBottom: 6,
+              marginTop: 16,
+              fontSize: 14,
+              fontWeight: '500',
+              color: t.fg,
+            }}
+          >
+            Detalle
+          </Text>
+          <TextInput
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              fontSize: 16,
+              color: t.fg,
+              height: 80,
+              textAlignVertical: 'top',
+            }}
+            placeholder="Descripción opcional"
+            placeholderTextColor={t.muted}
+            multiline
+            numberOfLines={3}
+            value={detalle}
+            onChangeText={setDetalle}
+            editable={!saving}
+          />
+
+          {/* Server error */}
+          {serverError ? (
+            <View
+              style={{
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle"
+                size={16}
+                color={errorColor}
+              />
+              <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
+                {serverError}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Actions */}
+          <View style={{ marginTop: 24, gap: 10 }}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={{
+                borderRadius: 10,
+                backgroundColor: colors.brandRedCoral,
+                height: 42,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: saving ? 0.6 : 1,
+              }}
+              onPress={() => void handleSubmit()}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                {isEditing ? 'Guardar cambios' : 'Crear familia'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{
+                borderRadius: 10,
+                height: 40,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => navigation.goBack()}
+              disabled={saving}
+            >
+              <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );

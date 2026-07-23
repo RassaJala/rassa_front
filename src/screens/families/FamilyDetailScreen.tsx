@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -22,6 +23,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import { colors, themeColors } from '@/constants/colors';
+import { useUserSearch } from '@/hooks/useUserSearch';
 import {
   addFamilyMember,
   assignFamilyHead,
@@ -29,7 +31,6 @@ import {
   fetchFamily,
   fetchFamilyMembers,
   removeFamilyMember,
-  searchUsers,
 } from '@/services/families';
 import { useTheme } from '@/store/ThemeContext';
 import type {
@@ -259,124 +260,62 @@ function UserSuggestionsList({
   );
 }
 
-interface AddMemberModalContentProps extends AddMemberModalProps {
-  readonly query: string;
-  readonly results: SearchUserResult[];
-  readonly selectedUser: SearchUserResult | null;
-  readonly loading: boolean;
-  readonly onChangeText: (text: string) => void;
-  readonly onClear: () => void;
-  readonly onSelect: (user: SearchUserResult) => void;
-}
-
-interface ModalActionsProps {
-  readonly selectedUser: SearchUserResult | null;
-  readonly isPending: boolean;
-  readonly primaryColor: string;
-  readonly disabledBg: string;
-  readonly border: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly onConfirm: (userId: number) => void;
-  readonly onCancel: () => void;
-}
-
-function ModalActions({
-  selectedUser,
+function AddMemberModal({
+  visible,
+  isDark,
   isPending,
-  primaryColor,
-  disabledBg,
-  border,
-  fg,
-  muted,
+  errorMsg,
   onConfirm,
   onCancel,
-}: ModalActionsProps): React.JSX.Element {
+}: AddMemberModalProps): React.JSX.Element | null {
+  const [query, setQuery] = useState('');
+  const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
+    null,
+  );
+  const { results, setResults, isSearching: loading } = useUserSearch(
+    query,
+    selectedUser,
+    400,
+  );
+
+  useEffect(() => {
+    if (!visible) {
+      setQuery('');
+      setResults([]);
+      setSelectedUser(null);
+      return;
+    }
+  }, [visible]);
+
+  const handleClear = (): void => {
+    setQuery('');
+    setSelectedUser(null);
+    setResults([]);
+  };
+
+  const handleSelect = (user: SearchUserResult): void => {
+    setSelectedUser(user);
+    setQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
+    setResults([]);
+  };
+
+  const handleChangeText = (text: string): void => {
+    setQuery(text);
+    if (selectedUser) {
+      setSelectedUser(null);
+    }
+  };
+
+  const t = themeColors(isDark);
+  const primaryColor = colors.brandRedCoral;
+  const disabledBg = t.border;
+  const errorColor = colors.brandRedCoral;
+
   const handleConfirm = (): void => {
     if (selectedUser) {
       onConfirm(selectedUser.id_usuario);
     }
   };
-
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 20,
-      }}
-    >
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={onCancel}
-        disabled={isPending}
-        style={{
-          width: '47%',
-          height: 40,
-          borderRadius: 10,
-          borderWidth: 1.5,
-          borderColor: border,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-          Cancelar
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleConfirm}
-        disabled={!selectedUser || isPending}
-        style={{
-          width: '47%',
-          height: 40,
-          borderRadius: 10,
-          backgroundColor: selectedUser ? primaryColor : disabledBg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {isPending ? (
-          <ActivityIndicator
-            size={16}
-            color={selectedUser ? colors.iconWhite : fg}
-          />
-        ) : null}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: '600',
-            color: selectedUser ? colors.iconWhite : muted,
-          }}
-        >
-          Agregar
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function AddMemberModalContent({
-  visible,
-  isDark,
-  isPending,
-  errorMsg,
-  query,
-  results,
-  selectedUser,
-  loading,
-  onChangeText,
-  onClear,
-  onSelect,
-  onConfirm,
-  onCancel,
-}: AddMemberModalContentProps): React.JSX.Element | null {
-  const t = themeColors(isDark);
-  const primaryColor = colors.brandRedCoral;
-  const disabledBg = t.border;
-  const errorColor = colors.brandRedCoral;
 
   return (
     <Modal
@@ -464,12 +403,12 @@ function AddMemberModalContent({
               placeholder="Nombre o correo..."
               placeholderTextColor={t.muted}
               value={query}
-              onChangeText={onChangeText}
+              onChangeText={handleChangeText}
               editable={!isPending}
             />
             {(selectedUser ?? query) ? (
               <Pressable
-                onPress={onClear}
+                onPress={handleClear}
                 style={{ position: 'absolute', right: 12, top: 14 }}
               >
                 <MaterialCommunityIcons
@@ -485,7 +424,7 @@ function AddMemberModalContent({
           <UserSuggestionsList
             results={results}
             isDark={isDark}
-            onSelect={onSelect}
+            onSelect={handleSelect}
           />
 
           {loading ? (
@@ -522,249 +461,64 @@ function AddMemberModalContent({
           ) : null}
 
           {/* Actions */}
-          <ModalActions
-            selectedUser={selectedUser}
-            isPending={isPending}
-            primaryColor={primaryColor}
-            disabledBg={disabledBg}
-            border={t.border}
-            fg={t.fg}
-            muted={t.muted}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
-function AddMemberModal({
-  visible,
-  isDark,
-  isPending,
-  errorMsg,
-  onConfirm,
-  onCancel,
-}: AddMemberModalProps): React.JSX.Element | null {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchUserResult[]>([]);
-  const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!visible) {
-      setQuery('');
-      setResults([]);
-      setSelectedUser(null);
-      return;
-    }
-  }, [visible]);
-
-  useEffect(() => {
-    const trimmed = query.trim();
-    const shouldSearch = trimmed.length >= 3 && !selectedUser;
-    if (!shouldSearch) {
-      setResults([]);
-      return;
-    }
-
-    const delayDebounce = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const data = await searchUsers(trimmed);
-        setResults(data);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(delayDebounce);
-  }, [query, selectedUser]);
-
-  const handleClear = (): void => {
-    setQuery('');
-    setSelectedUser(null);
-    setResults([]);
-  };
-
-  const handleSelect = (user: SearchUserResult): void => {
-    setSelectedUser(user);
-    setQuery(`${user.nombre} ${user.apellido_paterno} (${user.email})`);
-    setResults([]);
-  };
-
-  const handleChangeText = (text: string): void => {
-    setQuery(text);
-    if (selectedUser) {
-      setSelectedUser(null);
-    }
-  };
-
-  return (
-    <AddMemberModalContent
-      visible={visible}
-      isDark={isDark}
-      isPending={isPending}
-      errorMsg={errorMsg}
-      query={query}
-      results={results}
-      selectedUser={selectedUser}
-      loading={loading}
-      onChangeText={handleChangeText}
-      onClear={handleClear}
-      onSelect={handleSelect}
-      onConfirm={onConfirm}
-      onCancel={onCancel}
-    />
-  );
-}
-
-interface ConfirmModalProps {
-  readonly visible: boolean;
-  readonly title: string;
-  readonly description: string;
-  readonly confirmText: string;
-  readonly cancelText: string;
-  readonly isDestructive: boolean;
-  readonly iconName: keyof typeof MaterialCommunityIcons.glyphMap;
-  readonly isDark: boolean;
-  readonly onConfirm: () => void;
-  readonly onCancel: () => void;
-}
-
-function ConfirmModal({
-  visible,
-  title,
-  description,
-  confirmText,
-  cancelText,
-  isDestructive,
-  iconName,
-  isDark,
-  onConfirm,
-  onCancel,
-}: ConfirmModalProps): React.JSX.Element | null {
-  if (!visible) return null;
-
-  const t = themeColors(isDark);
-  const errorColor = colors.brandRedCoral;
-  const primaryColor = t.brand;
-  const primaryBg = t.accentBg;
-
-  const iconBg = isDestructive ? t.errorBg : primaryBg;
-  const iconColor = isDestructive ? errorColor : primaryColor;
-  const confirmBtnBg = isDestructive ? errorColor : primaryColor;
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
-      <Pressable
-        style={{ flex: 1, backgroundColor: colors.overlayBg }}
-        onPress={onCancel}
-      />
-      <View
-        style={{
-          backgroundColor: t.surface,
-          borderRadius: 24,
-          padding: 24,
-          paddingBottom: 34,
-          marginTop: 'auto',
-          borderTopWidth: 1,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: t.border,
-        }}
-      >
-        <View style={{ alignItems: 'center', marginBottom: 16 }}>
           <View
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: iconBg,
-              marginBottom: 12,
+              marginTop: 20,
             }}
           >
-            <MaterialCommunityIcons
-              name={iconName}
-              size={26}
-              color={iconColor}
-            />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={onCancel}
+              disabled={isPending}
+              style={{
+                width: '47%',
+                height: 40,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleConfirm}
+              disabled={!selectedUser || isPending}
+              style={{
+                width: '47%',
+                height: 40,
+                borderRadius: 10,
+                backgroundColor: selectedUser ? primaryColor : disabledBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {isPending ? (
+                <ActivityIndicator
+                  size={16}
+                  color={selectedUser ? colors.iconWhite : t.fg}
+                />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: selectedUser ? colors.iconWhite : t.muted,
+                }}
+              >
+                Agregar
+              </Text>
+            </TouchableOpacity>
           </View>
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '700',
-              color: t.fg,
-              textAlign: 'center',
-            }}
-          >
-            {title}
-          </Text>
-          {description ? (
-            <Text
-              style={{
-                fontSize: 14,
-                color: t.muted,
-                marginTop: 6,
-                textAlign: 'center',
-              }}
-            >
-              {description}
-            </Text>
-          ) : null}
         </View>
-        <View style={{ gap: 10 }}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onConfirm}
-            style={{
-              height: 42,
-              borderRadius: 10,
-              backgroundColor: confirmBtnBg,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: colors.iconWhite,
-              }}
-            >
-              {confirmText}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={onCancel}
-            style={{
-              height: 40,
-              borderRadius: 10,
-              borderWidth: 1.5,
-              borderColor: t.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>
-              {cancelText}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -780,16 +534,6 @@ export default function FamilyDetailScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
 
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState<{
-    title: string;
-    description: string;
-    confirmText: string;
-    cancelText: string;
-    isDestructive: boolean;
-    iconName: keyof typeof MaterialCommunityIcons.glyphMap;
-    onConfirm: () => void;
-  } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
@@ -813,6 +557,14 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     queryFn: () => fetchFamilyMembers(familyId),
     staleTime: 30_000,
   });
+
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' = 'success',
+  ): void => {
+    setToastMessage(message);
+    setToastType(type);
+  };
 
   const addMemberMutation = useMutation({
     mutationFn: (userId: number) => addFamilyMember(userId, familyId),
@@ -847,6 +599,10 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       navigation.goBack();
     },
+    onError: (err) => {
+      console.error('Error al eliminar familia:', err);
+      showToast('Error al eliminar la familia.', 'error');
+    },
   });
 
   if (familyLoading || membersLoading) {
@@ -867,28 +623,21 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     );
   }
 
-  const showToast = (
-    message: string,
-    type: 'success' | 'error' = 'success',
-  ): void => {
-    setToastMessage(message);
-    setToastType(type);
-  };
-
   const handleDelete = (): void => {
-    setConfirmConfig({
-      title: 'Eliminar familia',
-      description: `¿Estás seguro de eliminar "${family.nombre_familia}"? Esta acción desactivará la familia y todos sus miembros.`,
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      isDestructive: true,
-      iconName: 'delete-forever',
-      onConfirm: () => {
-        void deleteMutation.mutateAsync();
-        setConfirmVisible(false);
-      },
-    });
-    setConfirmVisible(true);
+    Alert.alert(
+      'Eliminar familia',
+      `¿Estás seguro de eliminar "${family.nombre_familia}"? Esta acción desactivará la familia y todos sus miembros.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            void deleteMutation.mutateAsync();
+          },
+        },
+      ],
+    );
   };
 
   const handleRemoveMember = (member: FamilyMember): void => {
@@ -901,35 +650,36 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       return;
     }
 
-    setConfirmConfig({
-      title: 'Remover miembro',
-      description: `¿Remover a "${member.usuario_nombre}" de esta familia?`,
-      confirmText: 'Remover',
-      cancelText: 'Cancelar',
-      isDestructive: true,
-      iconName: 'account-remove',
-      onConfirm: () => {
-        void removeMemberMutation.mutateAsync(member.id_familia_usuario);
-        setConfirmVisible(false);
-      },
-    });
-    setConfirmVisible(true);
+    Alert.alert(
+      'Remover miembro',
+      `¿Remover a "${member.usuario_nombre}" de esta familia?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: () => {
+            void removeMemberMutation.mutateAsync(member.id_familia_usuario);
+          },
+        },
+      ],
+    );
   };
 
   const handleAssignHead = (member: FamilyMember): void => {
-    setConfirmConfig({
-      title: 'Asignar jefe de familia',
-      description: `¿Designar a "${member.usuario_nombre}" como jefe de familia?`,
-      confirmText: 'Asignar',
-      cancelText: 'Cancelar',
-      isDestructive: false,
-      iconName: 'account-star',
-      onConfirm: () => {
-        void assignHeadMutation.mutateAsync(member.fk_usuario);
-        setConfirmVisible(false);
-      },
-    });
-    setConfirmVisible(true);
+    Alert.alert(
+      'Asignar jefe de familia',
+      `¿Designar a "${member.usuario_nombre}" como jefe de familia?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Asignar',
+          onPress: () => {
+            void assignHeadMutation.mutateAsync(member.fk_usuario);
+          },
+        },
+      ],
+    );
   };
 
   const handleAddMember = (userId: number): void => {
@@ -1138,19 +888,6 @@ export default function FamilyDetailScreen(): React.JSX.Element {
           setAddModalVisible(false);
           addMemberMutation.reset();
         }}
-      />
-
-      <ConfirmModal
-        visible={confirmVisible && confirmConfig !== null ? true : false}
-        title={confirmConfig?.title ?? ''}
-        description={confirmConfig?.description ?? ''}
-        confirmText={confirmConfig?.confirmText ?? ''}
-        cancelText={confirmConfig?.cancelText ?? ''}
-        isDestructive={confirmConfig?.isDestructive ?? false}
-        iconName={confirmConfig?.iconName ?? 'alert-circle'}
-        isDark={isDark}
-        onConfirm={confirmConfig?.onConfirm ?? (() => {})}
-        onCancel={() => setConfirmVisible(false)}
       />
 
       <Toast

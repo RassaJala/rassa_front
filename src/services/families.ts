@@ -41,17 +41,7 @@ export async function fetchFamilies(): Promise<Family[]> {
     Record<string, unknown>[] | { results: Record<string, unknown>[] }
   >(FAMILIAS_URL);
   const list = Array.isArray(data) ? data : data.results;
-  const families = list.map(normalizeFamily);
-
-  const orphans = families.filter((f) => f.estado && f.fk_jefe_familia == null);
-  if (orphans.length > 0) {
-    await Promise.allSettled(
-      orphans.map((f) => api.delete(`${FAMILIAS_URL}${f.id_familia}/`)),
-    );
-    return families.filter((f) => f.fk_jefe_familia != null);
-  }
-
-  return families;
+  return list.map(normalizeFamily);
 }
 
 export async function fetchFamily(id: number): Promise<Family> {
@@ -91,11 +81,12 @@ export async function deleteFamily(id: number): Promise<void> {
 
 export async function fetchFamiliesTrash(): Promise<Family[]> {
   const { data } = await api.get<
-    Record<string, unknown>[] | { data: Record<string, unknown>[] }
+    | Record<string, unknown>[]
+    | { results?: Record<string, unknown>[]; data?: Record<string, unknown>[] }
   >(`${FAMILIAS_URL}trash/`);
   const list = Array.isArray(data)
     ? data
-    : ((data as { results?: Record<string, unknown>[] }).results ?? []);
+    : (data.results ?? (data as { data?: Record<string, unknown>[] }).data ?? []);
   return list.map(normalizeFamily);
 }
 
@@ -113,6 +104,27 @@ export async function restoreFamily(
 
 export async function deleteFamilyPermanent(id: number): Promise<void> {
   await api.post(`${FAMILIAS_URL}${id}/permanent/`);
+}
+
+// ── Composite: create + add member + assign head ───────
+
+export async function createFamilyWithHead(
+  payload: { nombre_familia: string; detalle_familia?: string },
+  jefeUserId: number,
+): Promise<Family> {
+  const family = await createFamily(payload);
+  try {
+    await addFamilyMember(jefeUserId, family.id_familia);
+    await assignFamilyHead(family.id_familia, jefeUserId);
+  } catch (err) {
+    try {
+      await deleteFamily(family.id_familia);
+    } catch (rollbackErr) {
+      console.error('[Rollback Error] Failed to delete empty family:', rollbackErr);
+    }
+    throw new Error('Error al asignar el jefe de familia.');
+  }
+  return family;
 }
 
 // ── Family head assignment ─────────────────────────────

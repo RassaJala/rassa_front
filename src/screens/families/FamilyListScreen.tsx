@@ -22,16 +22,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { colors, themeColors } from '@/constants/colors';
+import { useUserSearch } from '@/hooks/useUserSearch';
 import {
-  addFamilyMember,
-  assignFamilyHead,
-  createFamily,
-  deleteFamily,
+  createFamilyWithHead,
   deleteFamilyPermanent,
   fetchFamilies,
   fetchFamiliesTrash,
   restoreFamily,
-  searchUsers,
 } from '@/services/families';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
@@ -197,195 +194,6 @@ function FamilyCard({
   );
 }
 
-// ── Sub-states ────────────────────────────────────────────
-
-interface StateViewProps {
-  readonly bg: string;
-  readonly muted: string;
-}
-
-function UnauthorizedView({ bg, muted }: StateViewProps): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bg,
-        paddingHorizontal: 24,
-      }}
-    >
-      <MaterialCommunityIcons name="lock-outline" size={48} color={muted} />
-      <Text
-        style={{
-          marginTop: 16,
-          textAlign: 'center',
-          fontSize: 16,
-          color: muted,
-        }}
-      >
-        No tienes permisos para acceder a esta sección.
-      </Text>
-    </View>
-  );
-}
-
-function LoadingView({
-  bg,
-  brand,
-}: {
-  bg: string;
-  brand: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bg,
-      }}
-    >
-      <ActivityIndicator size="large" color={brand} />
-    </View>
-  );
-}
-
-interface ErrorViewProps extends StateViewProps {
-  readonly brand: string;
-  readonly onRefetch: () => void;
-}
-
-function ErrorView({
-  bg,
-  muted,
-  brand,
-  onRefetch,
-}: ErrorViewProps): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: bg,
-        paddingHorizontal: 24,
-      }}
-    >
-      <MaterialCommunityIcons
-        name="alert-circle-outline"
-        size={48}
-        color={muted}
-      />
-      <Text
-        style={{
-          marginTop: 16,
-          textAlign: 'center',
-          fontSize: 16,
-          color: muted,
-        }}
-      >
-        Error al cargar las familias.
-      </Text>
-      <Pressable
-        onPress={onRefetch}
-        style={{
-          marginTop: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: brand,
-          borderRadius: 12,
-          paddingHorizontal: 24,
-          paddingVertical: 12,
-        }}
-      >
-        <MaterialCommunityIcons
-          name="refresh"
-          size={18}
-          color={colors.iconWhite}
-        />
-        <Text style={{ fontWeight: '600', color: colors.iconWhite }}>
-          Reintentar
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function EmptyView({ muted }: { muted: string }): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-      }}
-    >
-      <MaterialCommunityIcons
-        name="account-group-outline"
-        size={64}
-        color={muted}
-      />
-      <Text
-        style={{
-          marginTop: 16,
-          textAlign: 'center',
-          fontSize: 20,
-          fontWeight: '700',
-          color: muted,
-        }}
-      >
-        No hay familias
-      </Text>
-      <Text
-        style={{
-          marginTop: 4,
-          textAlign: 'center',
-          fontSize: 14,
-          color: muted,
-        }}
-      >
-        Crea una familia para comenzar.
-      </Text>
-    </View>
-  );
-}
-
-function useJefeSearch(
-  jefeQuery: string,
-  selectedJefe: SearchUserResult | null,
-) {
-  const [jefeResults, setJefeResults] = React.useState<SearchUserResult[]>([]);
-  const [isSearchingJefe, setIsSearchingJefe] = React.useState(false);
-
-  React.useEffect(() => {
-    const trimmed = jefeQuery.trim();
-    if (trimmed.length < 3 || selectedJefe) {
-      setJefeResults([]);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearchingJefe(true);
-      try {
-        const results = await searchUsers(trimmed);
-        setJefeResults(results ?? []);
-      } catch (err) {
-        console.error(err);
-        setJefeResults([]);
-      } finally {
-        setIsSearchingJefe(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [jefeQuery, selectedJefe]);
-
-  return { jefeResults, setJefeResults, isSearchingJefe };
-}
-
 async function executePermanentDelete(
   family: Family,
   onDeleted: () => void,
@@ -430,13 +238,13 @@ export default function FamilyListScreen(): React.JSX.Element {
     Record<string, string>
   >({});
 
-  const { jefeResults, setJefeResults, isSearchingJefe } = useJefeSearch(
+  const { results: jefeResults, setResults: setJefeResults, isSearching: isSearchingJefe } = useUserSearch(
     jefeQuery,
     selectedJefe,
   );
 
-  const { jefeResults: formJefeResults, isSearchingJefe: isSearchingFormJefe } =
-    useJefeSearch(formJefeQuery, formSelectedJefe);
+  const { results: formJefeResults, isSearching: isSearchingFormJefe } =
+    useUserSearch(formJefeQuery, formSelectedJefe);
 
   const handleOpenRestore = (family: Family) => {
     setRestoreTarget(family);
@@ -502,20 +310,7 @@ export default function FamilyListScreen(): React.JSX.Element {
         ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
       };
 
-      const created = await createFamily(payload);
-      const newFamilyId = created.id_familia;
-
-      try {
-        await addFamilyMember(jefe.id_usuario, newFamilyId);
-        await assignFamilyHead(newFamilyId, jefe.id_usuario);
-      } catch {
-        try {
-          await deleteFamily(newFamilyId);
-        } catch {
-          // rollback
-        }
-        throw new Error('Error al asignar el jefe de familia.');
-      }
+      await createFamilyWithHead(payload, jefe.id_usuario);
 
       void queryClient.invalidateQueries({ queryKey: ['families'] });
       setNombre('');
@@ -553,21 +348,95 @@ export default function FamilyListScreen(): React.JSX.Element {
   });
 
   if (user?.role !== 'admin') {
-    return <UnauthorizedView bg={t.bg} muted={t.muted} />;
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons name="lock-outline" size={48} color={t.muted} />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: t.muted,
+          }}
+        >
+          No tienes permisos para acceder a esta sección.
+        </Text>
+      </View>
+    );
   }
 
   if (isLoading) {
-    return <LoadingView bg={t.bg} brand={t.brand} />;
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.bg,
+        }}
+      >
+        <ActivityIndicator size="large" color={t.brand} />
+      </View>
+    );
   }
 
   if (isError) {
     return (
-      <ErrorView
-        bg={t.bg}
-        muted={t.muted}
-        brand={t.brand}
-        onRefetch={() => void refetch()}
-      />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.bg,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={48}
+          color={t.muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 16,
+            color: t.muted,
+          }}
+        >
+          Error al cargar las familias.
+        </Text>
+        <Pressable
+          onPress={() => void refetch()}
+          style={{
+            marginTop: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: t.brand,
+            borderRadius: 12,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="refresh"
+            size={18}
+            color={colors.iconWhite}
+          />
+          <Text style={{ fontWeight: '600', color: colors.iconWhite }}>
+            Reintentar
+          </Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -640,7 +509,41 @@ export default function FamilyListScreen(): React.JSX.Element {
 
   function renderListTab() {
     return isEmpty ? (
-      <EmptyView muted={t.muted} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="account-group-outline"
+          size={64}
+          color={t.muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            textAlign: 'center',
+            fontSize: 20,
+            fontWeight: '700',
+            color: t.muted,
+          }}
+        >
+          No hay familias
+        </Text>
+        <Text
+          style={{
+            marginTop: 4,
+            textAlign: 'center',
+            fontSize: 14,
+            color: t.muted,
+          }}
+        >
+          Crea una familia para comenzar.
+        </Text>
+      </View>
     ) : (
       <FlatList
         data={currentList}

@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { colors, themeColors } from '@/constants/colors';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
-import type { Family } from '../types';
+import type { Family, SearchUserResult } from '../types';
 import { extractApiError } from '../utils/apiError';
 
 export function AdminFamilies() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const t = themeColors(isDark);
+  const t = useMemo(() => themeColors(isDark), [isDark]);
   const fg = t.fg;
   const muted = t.muted;
   const border = t.border;
@@ -31,9 +34,6 @@ export function AdminFamilies() {
   const primaryGreen = colors.primary;
   const iconWhite = colors.iconWhite;
 
-  const [items, setItems] = useState<Family[]>([]);
-  const [trashItems, setTrashItems] = useState<Family[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
   const [editId, setEditId] = useState<number | null>(null);
@@ -46,14 +46,48 @@ export function AdminFamilies() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const [jefeQuery, setJefeQuery] = useState('');
-  const [jefeResults, setJefeResults] = useState<any[]>([]);
-  const [selectedJefe, setSelectedJefe] = useState<any | null>(null);
+  const [jefeResults, setJefeResults] = useState<SearchUserResult[]>([]);
+  const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(null);
   const [searchingJefe, setSearchingJefe] = useState(false);
 
-  useEffect(() => {
-    fetchFamilies();
-    fetchTrashFamilies();
-  }, []);
+  const {
+    data: items = [],
+    isLoading: loading,
+    isError: isFetchError,
+  } = useQuery<Family[]>({
+    queryKey: ['admin-families'],
+    queryFn: async () => {
+      const { data } = await api.get('/familias/grupos/');
+      let families: Family[] = [];
+      if (Array.isArray(data)) {
+        families = data as Family[];
+      } else if (data && typeof data === 'object') {
+        const payload = (data as { data?: unknown }).data ?? data;
+        if (Array.isArray(payload)) {
+          families = payload as Family[];
+        } else if (
+          payload &&
+          typeof payload === 'object' &&
+          Array.isArray((payload as { results?: unknown }).results)
+        ) {
+          families = (payload as { results: Family[] }).results;
+        }
+      }
+      return families;
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: trashItems = [] } = useQuery<Family[]>({
+    queryKey: ['admin-families-trash'],
+    queryFn: async () => {
+      const { data } = await api.get('/familias/grupos/trash/');
+      const payload = (data as { results?: unknown }).results ?? data;
+      if (Array.isArray(payload)) return payload as Family[];
+      return [];
+    },
+    staleTime: 30_000,
+  });
 
   useEffect(() => {
     const trimmed = jefeQuery.trim();
@@ -78,61 +112,6 @@ export function AdminFamilies() {
     return () => clearTimeout(timer);
   }, [jefeQuery]);
 
-  async function fetchFamilies() {
-    try {
-      setLoading(true);
-      setError(null);
-      const { data } = await api.get('/familias/grupos/');
-      let families: Family[] = [];
-      if (Array.isArray(data)) {
-        families = data as Family[];
-      } else if (data && typeof data === 'object') {
-        const payload = (data as { data?: unknown }).data ?? data;
-        if (Array.isArray(payload)) {
-          families = payload as Family[];
-        } else if (
-          payload &&
-          typeof payload === 'object' &&
-          Array.isArray((payload as { results?: unknown }).results)
-        ) {
-          families = (payload as { results: Family[] }).results;
-        }
-      }
-
-      const orphans = families.filter(
-        (f) => f.estado && f.fk_jefe_familia == null,
-      );
-      if (orphans.length > 0) {
-        await Promise.allSettled(
-          orphans.map((f) => api.delete(`/familias/grupos/${f.id_familia}/`)),
-        );
-        families = families.filter((f) => f.fk_jefe_familia != null);
-      }
-
-      setItems(families);
-    } catch (err: unknown) {
-      console.error(err);
-      setError('Error al cargar las familias.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchTrashFamilies() {
-    try {
-      const { data } = await api.get('/familias/grupos/trash/');
-      const payload = (data as { results?: unknown }).results ?? data;
-      if (Array.isArray(payload)) {
-        setTrashItems(payload as Family[]);
-      } else {
-        setTrashItems([]);
-      }
-    } catch (err: unknown) {
-      console.error(err);
-      setTrashItems([]);
-    }
-  }
-
   async function handleRestoreFamily() {
     if (!restoreTarget || !selectedJefe) return;
     setError(null);
@@ -141,8 +120,8 @@ export function AdminFamilies() {
       await api.post(`/familias/grupos/${restoreTarget.id_familia}/restore/`, {
         fk_jefe_familia: selectedJefe.id_usuario,
       });
-      await fetchFamilies();
-      await fetchTrashFamilies();
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
       setRestoreTarget(null);
       setSelectedJefe(null);
       setJefeQuery('');
@@ -160,7 +139,7 @@ export function AdminFamilies() {
     setError(null);
     try {
       await api.post(`/familias/grupos/${permDelTarget.id_familia}/permanent/`);
-      await fetchTrashFamilies();
+      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
       setPermDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
@@ -233,7 +212,7 @@ export function AdminFamilies() {
           throw err;
         }
       }
-      await fetchFamilies();
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
       setTab('list');
     } catch (err: unknown) {
       console.error(err);
@@ -255,8 +234,8 @@ export function AdminFamilies() {
     setError(null);
     try {
       await api.delete(`/familias/grupos/${delTarget.id_familia}/`);
-      await fetchFamilies();
-      await fetchTrashFamilies();
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
       setDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
@@ -273,20 +252,7 @@ export function AdminFamilies() {
     );
   }, [items, search]);
 
-  const btnStyle = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-  } as const;
+  const btnStyle = sharedBtnStyle;
 
   return (
     <div>
@@ -385,7 +351,7 @@ export function AdminFamilies() {
         </button>
       </div>
 
-      {error && (
+      {(error || isFetchError) && (
         <div
           style={{
             padding: '12px 16px',
@@ -399,7 +365,7 @@ export function AdminFamilies() {
             border: `1px solid ${coral}`,
           }}
         >
-          ⚠️ {error}
+          ⚠️ {error || 'Error al cargar las familias.'}
         </div>
       )}
 
@@ -1071,7 +1037,7 @@ export function AdminFamilies() {
                             background: isDark
                               ? 'rgba(242,169,0,0.12)'
                               : 'rgba(242,169,0,0.1)',
-                            color: warning,
+                            color: warning.color,
                           }}
                         >
                           En Papelera (Inactivo)

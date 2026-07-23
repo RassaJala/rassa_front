@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { colors, themeColors } from '@/constants/colors';
@@ -17,7 +18,7 @@ export function AdminFamilyDetail() {
   const familyName = searchParams.get('familyName') ?? 'Detalle de familia';
   const familyId = parseInt(familyIdStr, 10);
 
-  const t = themeColors(isDark);
+  const t = useMemo(() => themeColors(isDark), [isDark]);
   const fg = t.fg;
   const muted = t.muted;
   const border = t.border;
@@ -25,11 +26,49 @@ export function AdminFamilyDetail() {
   const bg = t.bg;
   const brand = t.brand;
   const coral = colors.brandRedCoral;
+  const queryClient = useQueryClient();
 
-  const [members, setMembers] = useState<FamilyMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jefeId, setJefeId] = useState<number | null>(null);
+
+  const {
+    data: familyData,
+    isLoading: loading,
+    isError: isFetchError,
+  } = useQuery({
+    queryKey: ['admin-family-detail', familyId] as const,
+    queryFn: async () => {
+      const familyRes = await api.get<{
+        fk_jefe_familia?: number | null;
+      }>(`/familias/grupos/${familyId}/`);
+      const jefeId = familyRes.data?.fk_jefe_familia ?? null;
+
+      const membersRes = await api.get(
+        `/familias/miembros/?fk_familia=${familyId}`,
+      );
+      const data = membersRes.data;
+      let members: FamilyMember[] = [];
+      if (Array.isArray(data)) {
+        members = data;
+      } else if (data && typeof data === 'object') {
+        const payload = (data as { data?: unknown }).data ?? data;
+        if (Array.isArray(payload)) {
+          members = payload;
+        } else if (
+          payload &&
+          typeof payload === 'object' &&
+          Array.isArray((payload as { results?: unknown }).results)
+        ) {
+          members = (payload as { results: FamilyMember[] }).results;
+        }
+      }
+      return { jefeId, members };
+    },
+    staleTime: 30_000,
+    enabled: !isNaN(familyId),
+  });
+
+  const members = familyData?.members ?? [];
+  const jefeId = familyData?.jefeId ?? null;
 
   // Add member modal states
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,61 +95,6 @@ export function AdminFamilyDetail() {
         m.usuario_correo.toLowerCase().includes(q),
     );
   }, [members, memberSearch]);
-
-  useEffect(() => {
-    if (!isNaN(familyId)) {
-      fetchFamilyAndMembers();
-    } else {
-      setError('ID de familia no válido.');
-      setLoading(false);
-    }
-  }, [familyId]);
-
-  async function fetchFamilyAndMembers() {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch family detail to know the head of family
-      const familyRes = await api.get<{
-        fk_jefe_familia?: number | null;
-        jefe_nombre?: string | null;
-      }>(`/familias/grupos/${familyId}/`);
-      if (familyRes.data) {
-        setJefeId(familyRes.data.fk_jefe_familia ?? null);
-      }
-
-      // Fetch members
-      const membersRes = await api.get(
-        `/familias/miembros/?fk_familia=${familyId}`,
-      );
-      const data = membersRes.data;
-
-      if (Array.isArray(data)) {
-        setMembers(data);
-      } else if (data && typeof data === 'object') {
-        const payload = (data as { data?: unknown }).data ?? data;
-        if (Array.isArray(payload)) {
-          setMembers(payload);
-        } else if (
-          payload &&
-          typeof payload === 'object' &&
-          Array.isArray((payload as { results?: unknown }).results)
-        ) {
-          setMembers((payload as { results: FamilyMember[] }).results);
-        } else {
-          setMembers([]);
-        }
-      } else {
-        setMembers([]);
-      }
-    } catch (err: unknown) {
-      console.error(err);
-      setError('Error al cargar la familia y sus miembros.');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -166,7 +150,7 @@ export function AdminFamilyDetail() {
         fk_usuario: selectedUser.id_usuario,
         fk_familia: familyId,
       });
-      await fetchFamilyAndMembers();
+      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
       setModalVisible(false);
       handleClearSearch();
     } catch (err: unknown) {
@@ -199,7 +183,7 @@ export function AdminFamilyDetail() {
       await api.delete(
         `/familias/miembros/${removeTarget.id_familia_usuario}/`,
       );
-      await fetchFamilyAndMembers();
+      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
     } catch (err: unknown) {
       console.error(err);
       setError('Error al remover al miembro de la familia.');
@@ -214,7 +198,7 @@ export function AdminFamilyDetail() {
       await api.post(`/familias/grupos/${familyId}/asignar-jefe/`, {
         fk_jefe_familia: member.fk_usuario,
       });
-      await fetchFamilyAndMembers();
+      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
     } catch (err: unknown) {
       console.error(err);
       setError('Error al asignar el jefe de familia.');
@@ -287,7 +271,7 @@ export function AdminFamilyDetail() {
         </div>
       </div>
 
-      {error && (
+      {(error || isFetchError) && (
         <div
           style={{
             padding: '12px 16px',
@@ -301,7 +285,7 @@ export function AdminFamilyDetail() {
             border: `1px solid ${coral}`,
           }}
         >
-          ⚠️ {error}
+          ⚠️ {error || 'Error al cargar la familia y sus miembros.'}
         </div>
       )}
 
