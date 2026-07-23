@@ -47,7 +47,7 @@ export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const colors = useAppColors();
-  const { fg, muted, border, surface, bg, brand } = colors;
+  const { fg, muted, border, surface, brand } = colors;
   const orderId = Number(id);
 
   const { data, isLoading, isError, error, refetch } = useQuery<

@@ -8,7 +8,7 @@ const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
   const colors = useAppColors();
-  const { isDark, fg, muted, border, surface, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, brand, coral, bg } = colors;
   const navigate = useNavigate();
   const [lookupId, setLookupId] = useState('');
 

@@ -41,6 +41,7 @@ export default function AdminPanelScreen({
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
   const pumpkin = colors.accent;
+  const white = '#fff';
 
   const { today } = useFormattedDate();
 
@@ -154,7 +155,7 @@ export default function AdminPanelScreen({
                 </Pressable>
               </View>
 
-              {showLookup && (
+              {showLookup ? (
                 <View
                   style={{
                     backgroundColor: surface,
@@ -213,14 +214,14 @@ export default function AdminPanelScreen({
                       style={{
                         fontSize: 15,
                         fontWeight: '700',
-                        color: '#fff',
+                        color: white,
                       }}
                     >
                       Ver historial
                     </Text>
                   </Pressable>
                 </View>
-              )}
+              ) : null}
             </View>
           </ScrollView>
         </View>
