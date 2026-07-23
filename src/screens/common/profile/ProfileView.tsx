@@ -7,6 +7,7 @@ import type { User } from '@/types';
 import { getGenderLabel, getRoleLabel } from '@/utils/labels';
 import { formatPhoneNumber } from '@/utils/validation';
 
+import ChangePassword from './ChangePassword';
 import { useProfileColors } from './profileColors';
 
 interface InfoRowProps {
@@ -52,13 +53,13 @@ function InfoRow({ label, value, icon }: InfoRowProps): React.JSX.Element {
   );
 }
 
-interface AdminProfileViewProps {
+interface ProfileViewProps {
   readonly user: User | null;
 }
 
-export default function AdminProfileView({
+export default function ProfileView({
   user,
-}: AdminProfileViewProps): React.JSX.Element {
+}: ProfileViewProps): React.JSX.Element {
   const c = useProfileColors();
   return (
     <>
@@ -218,6 +219,8 @@ export default function AdminProfileView({
           icon="map-marker-radius-outline"
         />
       </View>
+
+      <ChangePassword onPasswordChanged={() => {}} />
     </>
   );
 }

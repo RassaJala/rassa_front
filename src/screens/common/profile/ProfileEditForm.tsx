@@ -32,7 +32,6 @@ import {
   validatePhone,
 } from '@/utils/validation';
 
-import AdminChangePassword from './AdminChangePassword';
 import { useProfileColors } from './profileColors';
 
 // ── Validation ──────────────────────────────────────────
@@ -65,18 +64,18 @@ function validateProfileEdit(
 }
 
 // ── Props ───────────────────────────────────────────────
-interface AdminProfileEditFormProps {
+interface ProfileEditFormProps {
   readonly user: User | null;
   readonly onUpdateSuccess: (message: string) => void;
   readonly onCancel: () => void;
 }
 
 // ── Component ──────────────────────────────────────────
-export default function AdminProfileEditForm({
+export default function ProfileEditForm({
   user,
   onUpdateSuccess,
   onCancel,
-}: AdminProfileEditFormProps): React.JSX.Element {
+}: ProfileEditFormProps): React.JSX.Element {
   const c = useProfileColors();
   const { updateProfile } = useAuth();
   const netInfo = useNetInfo();
@@ -218,10 +217,6 @@ export default function AdminProfileEditForm({
     }
   }
 
-  function handlePasswordChanged(): void {
-    onUpdateSuccess('Contraseña cambiada exitosamente.');
-  }
-
   function handleCancel(): void {
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -280,11 +275,6 @@ export default function AdminProfileEditForm({
         ) : null}
       </>
     );
-  }
-
-  // ── Change password section ─────────────────────────
-  function renderChangePassword(): React.JSX.Element {
-    return <AdminChangePassword onPasswordChanged={handlePasswordChanged} />;
   }
 
   // ── Municipio dialog ────────────────────────────────
@@ -909,8 +899,6 @@ export default function AdminProfileEditForm({
           </Pressable>
         </View>
       </View>
-
-      {renderChangePassword()}
 
       {/* Dialogs */}
       {renderMunicipioDialog()}

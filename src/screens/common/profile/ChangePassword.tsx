@@ -10,17 +10,33 @@ import { parseAuthError, useAuth } from '@/store/AuthContext';
 
 import { useProfileColors } from './profileColors';
 
-interface AdminChangePasswordProps {
+interface ChangePasswordProps {
   readonly onPasswordChanged: () => void;
 }
 
-function validateAdminPasswordChange(
+const PASSWORD_ALPHANUMERIC = /^[a-zA-Z0-9]+$/;
+const PASSWORD_HAS_UPPER = /[A-Z]/;
+const MIN_PASSWORD_LENGTH = 8;
+
+function validatePasswordChange(
   oldPass: string,
   newPass: string,
   confirmPass: string,
 ): string | null {
   if (!oldPass || !newPass || !confirmPass) {
     return 'Por favor, completa todos los campos.';
+  }
+
+  if (newPass.length < MIN_PASSWORD_LENGTH) {
+    return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  }
+
+  if (!PASSWORD_ALPHANUMERIC.test(newPass)) {
+    return 'La nueva contraseña solo puede contener letras y números (sin caracteres especiales).';
+  }
+
+  if (!PASSWORD_HAS_UPPER.test(newPass)) {
+    return 'La nueva contraseña debe contener al menos una mayúscula.';
   }
 
   if (newPass !== confirmPass) {
@@ -34,9 +50,9 @@ function validateAdminPasswordChange(
   return null;
 }
 
-export default function AdminChangePassword({
+export default function ChangePassword({
   onPasswordChanged,
-}: AdminChangePasswordProps): React.JSX.Element {
+}: ChangePasswordProps): React.JSX.Element {
   const c = useProfileColors();
   const { changePassword } = useAuth();
   const netInfo = useNetInfo();
@@ -61,7 +77,7 @@ export default function AdminChangePassword({
       return;
     }
 
-    const validationError = validateAdminPasswordChange(
+    const validationError = validatePasswordChange(
       oldPassword,
       newPassword,
       confirmPassword,
@@ -238,7 +254,7 @@ export default function AdminChangePassword({
               letterSpacing: 0.04,
             }}
           >
-            Nueva Contraseña *
+            Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *
           </Text>
           <TextInput
             mode="outlined"

@@ -4,7 +4,7 @@ import React from 'react';
 
 import { render } from '@testing-library/react-native';
 
-import AdminProfileView from '@/screens/admin/profile/AdminProfileView';
+import ProfileView from '@/screens/common/profile/ProfileView';
 
 // ── Mock Animated ──────────────────────────────────────
 const emptyAnimation = { start: () => {}, stop: () => {}, reset: () => {} };
@@ -165,23 +165,23 @@ describe('validateProfileEdit', () => {
   });
 });
 
-// ── AdminProfileView ───────────────────────────────────
-describe('AdminProfileView', () => {
+// ── ProfileView ───────────────────────────────────
+describe('ProfileView', () => {
   it('renderiza el nombre del usuario', () => {
-    const { getByText } = render(<AdminProfileView user={mockUser} />);
+    const { getByText } = render(<ProfileView user={mockUser} />);
 
     expect(getByText('Admin Sistema Test')).toBeTruthy();
   });
 
   it('renderiza el email del usuario en el header y en InfoRow', () => {
-    const { getAllByText } = render(<AdminProfileView user={mockUser} />);
+    const { getAllByText } = render(<ProfileView user={mockUser} />);
 
     // Aparece en el header y en el InfoRow de email
     expect(getAllByText('admin@rassa.com')).toHaveLength(2);
   });
 
   it('renderiza la inicial del nombre en el avatar', () => {
-    const { getByText } = render(<AdminProfileView user={mockUser} />);
+    const { getByText } = render(<ProfileView user={mockUser} />);
 
     expect(getByText('A')).toBeTruthy();
   });
@@ -189,19 +189,19 @@ describe('AdminProfileView', () => {
   it('muestra No especificado cuando falta teléfono', () => {
     const userSinTelefono = { ...mockUser, telefono: null };
 
-    const { getByText } = render(<AdminProfileView user={userSinTelefono} />);
+    const { getByText } = render(<ProfileView user={userSinTelefono} />);
 
     expect(getByText('No especificado')).toBeTruthy();
   });
 
   it('muestra la fecha de nacimiento con formato', () => {
-    const { getByText } = render(<AdminProfileView user={mockUser} />);
+    const { getByText } = render(<ProfileView user={mockUser} />);
 
     expect(getByText('1990-01-15')).toBeTruthy();
   });
 
   it('maneja user null sin crash', () => {
-    const { toJSON } = render(<AdminProfileView user={null} />);
+    const { toJSON } = render(<ProfileView user={null} />);
 
     expect(toJSON()).toBeTruthy();
   });

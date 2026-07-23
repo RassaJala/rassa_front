@@ -28,7 +28,7 @@ import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
-import ProfileScreen from '@/screens/common/ProfileScreen';
+import ProfileScreen from '@/screens/common/profile/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 // Farmer screens
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
@@ -257,6 +257,7 @@ function FarmerScreens() {
         component={ProductFormScreen}
         options={{ presentation: 'transparentModal' }}
       />
+      <FarmerStack.Screen name="Profile" component={ProfileScreen} />
     </FarmerStack.Navigator>
   );
 }
