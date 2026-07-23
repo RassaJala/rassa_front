@@ -32,9 +32,7 @@ import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
 import FamilyListScreen from '@/screens/families/FamilyListScreen';
-import AddProductScreen from '@/screens/farmer/AddProductScreen';
-import HomeFarmerScreen from '@/screens/farmer/HomeFarmerScreen';
-import MyProductsScreen from '@/screens/farmer/MyProductsScreen';
+
 // Farmer screens
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
