@@ -254,7 +254,8 @@ export default function ChangePassword({
               letterSpacing: 0.04,
             }}
           >
-            Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *
+            Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula)
+            *
           </Text>
           <TextInput
             mode="outlined"
