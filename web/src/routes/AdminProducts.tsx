@@ -96,10 +96,8 @@ const unitLabels: Record<string, string> = {
 };
 
 export function AdminProducts() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const c = getColors(isDark);
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const colors = useAppColors();
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Product[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');

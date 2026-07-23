@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { getColors } from '../constants/colors';
-import { useTheme } from '../providers/ThemeProvider';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Unit {
   id: number;
@@ -17,10 +16,8 @@ const initialData: Unit[] = [
 ];
 
 export function AdminUnits() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const c = getColors(isDark);
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const colors = useAppColors();
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Unit[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');

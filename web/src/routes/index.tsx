@@ -67,7 +67,7 @@ export function AppRouter() {
       <Route path="/" element={<RootRedirect />} />
 
       {/* Agricultor */}
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute role="agricultor" />}>
         <Route
           path="/agricultor/*"
           element={
@@ -87,7 +87,7 @@ export function AppRouter() {
       </Route>
 
       {/* Vendedor */}
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute role="vendedor" />}>
         <Route
           path="/vendedor/*"
           element={

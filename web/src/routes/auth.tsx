@@ -54,7 +54,7 @@ function loginErrors(
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
   else if (password.length < 6)
-    errs.password = 'La contraseña debe tener al menos 6 caracteres';
+    errs.password = 'La contraseña debe tener al menos 6 caracteres.';
   return errs;
 }
 
@@ -73,8 +73,8 @@ function registerErrors(
     return 'Nombre, apellido, email y contraseña son obligatorios.';
   }
   if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8)
-    return 'La contraseña debe tener al menos 8 caracteres.';
+  if (password.length < 6)
+    return 'La contraseña debe tener al menos 6 caracteres.';
   if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
   if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
@@ -125,6 +125,7 @@ export function LoginScreen() {
 
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
+        { headers: { Authorization: `Bearer ${tokens.access}` } },
       );
       const user = mapMeUser(meData.data);
 
@@ -140,8 +141,15 @@ export function LoginScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setGeneralError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo (puede filtrar infra)
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 401) setGeneralError('Credenciales inválidas.');
+        else if (status === 429)
+          setGeneralError('Límite de peticiones excedido. Intentá más tarde.');
+        else if (status && status >= 500)
+          setGeneralError('Error del servidor. Intentá más tarde.');
+        else setGeneralError('Error al iniciar sesión.');
       } else {
         setGeneralError('Error al iniciar sesión.');
       }
@@ -459,8 +467,23 @@ export function RegisterScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data;
+        const backendMsg =
+          data && typeof data === 'object' && typeof data.detail === 'string'
+            ? data.detail
+            : null;
+        if (backendMsg) {
+          setError(backendMsg);
+        } else if (status === 409) {
+          setError('Ya existe una cuenta con ese correo.');
+        } else if (status && status >= 500) {
+          setError('Error del servidor. Intentá más tarde.');
+        } else {
+          setError('Error al registrarse.');
+        }
       } else {
         setError('Error al registrarse.');
       }
@@ -525,7 +548,7 @@ export function RegisterScreen() {
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 6 caracteres"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

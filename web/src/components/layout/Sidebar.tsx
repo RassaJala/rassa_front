@@ -94,6 +94,7 @@ export function Sidebar({ role }: { role: Role }) {
   > = {
     admin: { initials: 'AD', label: 'Admin', subtitle: 'Administrador' },
     agricultor: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
+    farmer: { initials: 'AG', label: 'Agricultor', subtitle: 'Productor' },
     vendedor: { initials: 'VD', label: 'Vendedor', subtitle: 'Vendedor' },
     cliente: { initials: 'CL', label: 'Cliente', subtitle: 'Cliente' },
   };
@@ -115,8 +116,8 @@ export function Sidebar({ role }: { role: Role }) {
       }}
     >
       {/* Brand */}
-      <a
-        href="/admin"
+      <NavLink
+        to={items[0]?.path ?? '/'}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -151,7 +152,7 @@ export function Sidebar({ role }: { role: Role }) {
         >
           RASSA-JALA
         </h1>
-      </a>
+      </NavLink>
 
       {/* Nav */}
       <nav
@@ -220,11 +221,13 @@ export function Sidebar({ role }: { role: Role }) {
             fontSize: 14,
           }}
         >
-          {roleLabels[role]?.initials ?? 'AD'}
+          {user?.nombre?.slice(0, 2).toUpperCase() ??
+            roleLabels[role]?.initials ??
+            'AD'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-            {roleLabels[role]?.label ?? 'Admin'}
+            {user?.nombre ?? roleLabels[role]?.label ?? 'Admin'}
           </div>
           <div style={{ fontSize: 12, color: muted }}>
             {roleLabels[role]?.subtitle ?? 'Administrador'}
