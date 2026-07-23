@@ -22,6 +22,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- property shorthand triggers false positive in CI runner
     return { hasError: true, error };
   }
 
