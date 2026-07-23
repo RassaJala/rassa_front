@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 // ── Token storage keys ────────────────────────────────────
 export const ACCESS_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const ONBOARDING_KEY = 'onboarding_completed';
 
 function isWeb(): boolean {
   return Platform.OS === 'web';
@@ -13,11 +14,12 @@ function isWeb(): boolean {
 export async function getItemAsync(key: string): Promise<string | null> {
   if (isWeb()) {
     try {
-      // ponytail: sessionStorage over localStorage — tokens die with the tab,
-      // reducing the XSS window. Real XSS mitigation requires httpOnly cookies
-      // served from the backend + CSP.
+      // ponytail: localStorage over sessionStorage — tokens survive tab navigation
+      // and refresh-token rotation works across tabs. The storage event listener
+      // in AuthProvider syncs logout across tabs. Real XSS mitigation requires
+      // httpOnly cookies served from the backend + CSP.
       // eslint-disable-next-line no-undef -- web only
-      return window.sessionStorage.getItem(key);
+      return window.localStorage.getItem(key);
     } catch {
       return null;
     }
@@ -29,7 +31,7 @@ export async function setItemAsync(key: string, value: string): Promise<void> {
   if (isWeb()) {
     try {
       // eslint-disable-next-line no-undef -- web only
-      window.sessionStorage.setItem(key, value);
+      window.localStorage.setItem(key, value);
     } catch {
       // Silently ignore storage errors; upstream handles auth failures
     }
@@ -42,7 +44,7 @@ export async function deleteItemAsync(key: string): Promise<void> {
   if (isWeb()) {
     try {
       // eslint-disable-next-line no-undef -- web only
-      window.sessionStorage.removeItem(key);
+      window.localStorage.removeItem(key);
     } catch {
       // Silently ignore storage errors
     }

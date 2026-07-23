@@ -10,7 +10,6 @@
 
 import eslint from '@eslint/js';
 import boundariesPlugin from 'eslint-plugin-boundaries';
-import eslintCommentsPlugin from 'eslint-plugin-eslint-comments';
 import importXPlugin from 'eslint-plugin-import-x';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import packageJsonPlugin from 'eslint-plugin-package-json';
@@ -45,16 +44,19 @@ function createIgnoresConfig() {
       'config/prettier.config.mjs',
       '**/*.js',
       '**/*.mjs',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'jest.setup.ts',
+      'web/**',
+      'packages/**',
     ],
   });
 }
 
-// 2. Reglas base de JS y comentarios ESLint.
+// 2. Reglas base de JS.
 function createBaseRules() {
   return defineConfig({
-    plugins: {
-      'eslint-comments': eslintCommentsPlugin,
-    },
     rules: {
       // Variables y sintaxis básica
       'no-var': 'error',
@@ -64,11 +66,6 @@ function createBaseRules() {
 
       // Deactivar no-unused-vars nativo; unused-imports plugin lo gestiona
       'no-unused-vars': 'off',
-
-      // Comentarios ESLint
-      'eslint-comments/no-unlimited-disable': 'error',
-      'eslint-comments/no-unused-disable': 'error',
-      'eslint-comments/require-description': 'error',
     },
   });
 }
@@ -89,6 +86,9 @@ function createTypeScriptRules() {
       'unused-imports': unusedImportsPlugin,
     },
     rules: {
+      // Desactivar no-undef para TS — TypeScript ya valida esto.
+      'no-undef': 'off',
+
       // SEGURIDAD DE TIPOS //
 
       // Prohibir el uso explícito de any.

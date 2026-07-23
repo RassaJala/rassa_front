@@ -1,76 +1,155 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import LogoutButton from '@/components/LogoutButton';
+import {
+  ProfileDrawerProvider,
+  ProfileDrawerTrigger,
+} from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
+import { colors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
+import { getAdminStats } from '@/services/mock/dashboard';
+import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
 
-type NavigationProp = NativeStackNavigationProp<
-  AdminStackParamList,
-  'AdminPanel'
->;
+type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
 interface Props {
-  navigation: NavigationProp;
+  readonly navigation: Nav;
 }
 
-const menuItems = [
-  {
-    key: 'CategoryList',
-    label: 'Categorías',
-    icon: '📂',
-    description: 'Administrar categorías de productos',
-  },
-  {
-    key: 'UnitList',
-    label: 'Unidades de Medida',
-    icon: '📏',
-    description: 'Administrar unidades (kg, pz, lt...)',
-  },
-];
-
 export default function AdminPanelScreen({
-  navigation,
+  navigation: _navigation,
 }: Props): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const stats = getAdminStats();
+
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
+  const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
+  const coral = colors.brandRedCoral;
+  const pumpkin = colors.accent;
+
+  const { today } = useFormattedDate();
+
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <View className="bg-brand-green-forest px-4 pb-6 pt-12">
-        <Text className="text-2xl font-bold text-white">Panel Admin</Text>
-        <Text className="mt-1 text-sm text-white/80">
-          Administración del sistema
-        </Text>
-      </View>
-
-      {/* Menu */}
-      <View className="flex-1 gap-3 p-4">
-        {menuItems.map((item) => (
-          <Pressable
-            key={item.key}
-            onPress={() =>
-              navigation.navigate(item.key as 'CategoryList' | 'UnitList')
-            }
-            className="flex-row items-center rounded-xl bg-white p-4 shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
+    <ProfileDrawerProvider
+      defaultName="Administrador"
+      defaultEmail="admin@rassa.com"
+    >
+      <View style={{ flex: 1, backgroundColor: bg }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
           >
-            <Text className="mr-4 text-3xl">{item.icon}</Text>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-brand-ink dark:text-gray-100">
-                {item.label}
-              </Text>
-              <Text className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                {item.description}
-              </Text>
-            </View>
-            <Text className="text-xl text-gray-300">→</Text>
-          </Pressable>
-        ))}
-      </View>
+            <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+              {/* ═══ HEADER ═══ */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      letterSpacing: 0.06,
+                      textTransform: 'uppercase',
+                      color: muted,
+                    }}
+                  >
+                    {today}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: '700',
+                      letterSpacing: -0.3,
+                      color: fg,
+                    }}
+                  >
+                    Panel
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable
+                    testID="notification-bell"
+                    style={({ pressed }) => ({
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: surface,
+                      borderWidth: 1,
+                      borderColor: border,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: pressed ? 0.6 : 1,
+                    })}
+                  >
+                    <MaterialCommunityIcons
+                      name="bell-outline"
+                      size={24}
+                      color={fg}
+                    />
+                  </Pressable>
+                  <ProfileDrawerTrigger />
+                </View>
+              </View>
 
-      {/* Logout */}
-      <View className="border-t border-gray-200 p-4 dark:border-gray-800">
-        <LogoutButton mode="contained" />
+              {/* ═══ STATS ═══ */}
+              <View
+                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
+              >
+                <StatCard
+                  icon="package-variant"
+                  value={stats.totalProducts.toLocaleString()}
+                  label="Productos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={accentBg}
+                  iconColor={brand}
+                />
+                <StatCard
+                  icon="account-group"
+                  value={stats.totalUsers.toLocaleString()}
+                  label="Usuarios"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={coralBg}
+                  iconColor={coral}
+                />
+                <StatCard
+                  icon="clipboard-list"
+                  value={stats.totalOrders.toLocaleString()}
+                  label="Pedidos"
+                  surface={surface}
+                  border={border}
+                  muted={muted}
+                  iconBg={pumpkinBg}
+                  iconColor={pumpkin}
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </View>
       </View>
-    </View>
+    </ProfileDrawerProvider>
   );
 }

@@ -1,15 +1,56 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
+
 export default function ProductDetailScreen(): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+
+  const bg = isDark ? colors.admBgD : colors.admBgL;
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+
   return (
-    <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="text-center text-lg font-semibold text-slate-700">
-        Detalle del producto
-      </Text>
-      <Text className="mt-2 text-center text-sm text-slate-500">
-        Próximamente podrás ver aquí toda la información del producto.
-      </Text>
+    <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <MaterialCommunityIcons
+          name="package-variant-closed"
+          size={64}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 20,
+            fontWeight: '700',
+            color: fg,
+            textAlign: 'center',
+          }}
+        >
+          Detalle del producto
+        </Text>
+        <Text
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: muted,
+            textAlign: 'center',
+            maxWidth: 260,
+          }}
+        >
+          Próximamente podrás ver aquí toda la información del producto.
+        </Text>
+      </View>
     </View>
   );
 }

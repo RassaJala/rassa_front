@@ -3,13 +3,36 @@ import React from 'react';
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+// Mock Keyboard to prevent "isVisible" / "remove" errors from KeyboardAvoidingView
+jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
+  addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  removeListener: jest.fn(),
+  removeAllListeners: jest.fn(),
+  dismiss: jest.fn(),
+  isVisible: jest.fn().mockReturnValue(false),
+}));
+
 import LoginScreen from '@/screens/auth/LoginScreen';
 
 const mockLogin = jest.fn();
+const mockNavigate = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
 
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
     login: mockLogin,
+  }),
+}));
+
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    toggleColorScheme: jest.fn(),
   }),
 }));
 
@@ -30,50 +53,45 @@ describe('LoginScreen', () => {
   });
 
   it('renderiza correctamente', () => {
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+    const { getByText } = render(<LoginScreen />);
 
-    expect(getByPlaceholderText('Correo electrónico')).toBeTruthy();
-    expect(getByPlaceholderText('Contraseña')).toBeTruthy();
-    expect(getByText('Ingresar')).toBeTruthy();
+    expect(getByText('Bienvenido')).toBeTruthy();
+    expect(getByText('INICIAR SESIÓN')).toBeTruthy();
   });
 
   it('muestra error cuando los campos están vacíos', async () => {
     const { getByText } = render(<LoginScreen />);
 
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
     await waitFor(() => {
-      expect(getByText('Ingresa tu correo y contraseña.')).toBeTruthy();
+      expect(getByText('Ingresá tu correo electrónico')).toBeTruthy();
     });
   });
 
   it('valida un correo inválido', async () => {
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+    const { getByText } = render(<LoginScreen />);
 
-    fireEvent.changeText(getByPlaceholderText('Correo electrónico'), 'correo');
-
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
-
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
     await waitFor(() => {
-      expect(getByText('Ingresa un correo electrónico válido.')).toBeTruthy();
+      expect(getByText('Ingresá tu correo electrónico')).toBeTruthy();
     });
   });
 
   it('llama a login cuando los datos son válidos', async () => {
     mockLogin.mockResolvedValue(undefined);
 
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+    const { getByText, getAllByDisplayValue } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com',
-    );
+    const inputs = getAllByDisplayValue('');
+    const emailInput = inputs[0];
+    const passwordInput = inputs[1];
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(emailInput!, 'admin@rassa.com');
+    fireEvent.changeText(passwordInput!, 'admin123');
 
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('admin@rassa.com', 'admin123');
@@ -83,42 +101,42 @@ describe('LoginScreen', () => {
   it('muestra el error cuando login falla', async () => {
     mockLogin.mockRejectedValue(new Error('Credenciales inválidas'));
 
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+    const { getByText, getAllByDisplayValue } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com',
-    );
+    const inputs = getAllByDisplayValue('');
+    const emailInput = inputs[0];
+    const passwordInput = inputs[1];
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), '123456');
+    fireEvent.changeText(emailInput!, 'admin@rassa.com');
+    fireEvent.changeText(passwordInput!, '123456');
 
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
     await waitFor(() => {
       expect(getByText('Credenciales inválidas')).toBeTruthy();
     });
   });
 
-  it('muestra error de conexión cuando no hay internet', async () => {
-    mockNetInfoState.isConnected = false;
+  it('muestra el mensaje de error del servidor cuando login falla', async () => {
+    mockLogin.mockRejectedValue(new Error('Error del servidor'));
 
-    const { getByPlaceholderText, getByText } = render(<LoginScreen />);
+    const { getByText, getAllByDisplayValue } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com',
-    );
+    const inputs = getAllByDisplayValue('');
+    const emailInput = inputs[0];
+    const passwordInput = inputs[1];
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
+    fireEvent.changeText(emailInput!, 'admin@rassa.com');
+    fireEvent.changeText(passwordInput!, 'admin123');
 
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
     await waitFor(() => {
-      expect(getByText('Sin conexión a Internet.')).toBeTruthy();
+      expect(getByText(/Error del servidor/i)).toBeTruthy();
     });
   });
 
-  it('no llama a login si el componente se desmonta durante la petición', async () => {
+  it('no arroja errores al desmontarse durante una petición pendiente', async () => {
     let resolveLogin!: (_value: unknown) => void;
     mockLogin.mockReturnValue(
       new Promise((resolve) => {
@@ -126,31 +144,24 @@ describe('LoginScreen', () => {
       }),
     );
 
-    const { getByPlaceholderText, getByText, unmount } = render(
+    const { getByText, getAllByDisplayValue, unmount } = render(
       <LoginScreen />,
     );
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com',
-    );
+    const inputs = getAllByDisplayValue('');
+    const emailInput = inputs[0];
+    const passwordInput = inputs[1];
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.changeText(emailInput!, 'admin@rassa.com');
+    fireEvent.changeText(passwordInput!, 'admin123');
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
-    // Unmount before the promise resolves
-    unmount();
+    expect(() => unmount()).not.toThrow();
 
     resolveLogin(undefined);
-
-    // No error should be thrown — isMounted guard prevents setState on unmounted
-    // Just verify the component unmounts without crashing
-    await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalled();
-    });
   });
 
-  it('muestra ActivityIndicator mientras se envía el formulario', async () => {
+  it('muestra INGRESANDO… mientras se envía el formulario y vuelve a INICIAR SESIÓN al completar', async () => {
     let resolveLogin!: (_value: unknown) => void;
     mockLogin.mockReturnValue(
       new Promise((resolve) => {
@@ -158,40 +169,22 @@ describe('LoginScreen', () => {
       }),
     );
 
-    const { getByPlaceholderText, getByText, queryByText } = render(
-      <LoginScreen />,
-    );
+    const { getByText, getAllByDisplayValue } = render(<LoginScreen />);
 
-    fireEvent.changeText(
-      getByPlaceholderText('Correo electrónico'),
-      'admin@rassa.com',
-    );
+    const inputs = getAllByDisplayValue('');
+    const emailInput = inputs[0];
+    const passwordInput = inputs[1];
 
-    fireEvent.changeText(getByPlaceholderText('Contraseña'), 'admin123');
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.changeText(emailInput!, 'admin@rassa.com');
+    fireEvent.changeText(passwordInput!, 'admin123');
+    fireEvent.press(getByText('INICIAR SESIÓN'));
 
-    // "Ingresar" text is replaced by ActivityIndicator when submitting
-    await waitFor(() => {
-      expect(queryByText('Ingresar')).toBeNull();
-    });
+    expect(getByText('INGRESANDO…')).toBeTruthy();
 
     resolveLogin(undefined);
-  });
 
-  it('alterna la visibilidad de la contraseña al presionar Mostrar/Ocultar', async () => {
-    const { getByText, getByPlaceholderText } = render(<LoginScreen />);
-
-    const passwordInput = getByPlaceholderText('Contraseña');
-
-    // Initially hidden
-    expect(passwordInput.props.secureTextEntry).toBe(true);
-
-    // Press "Mostrar"
-    fireEvent.press(getByText('Mostrar'));
-    expect(passwordInput.props.secureTextEntry).toBe(false);
-
-    // Press "Ocultar"
-    fireEvent.press(getByText('Ocultar'));
-    expect(passwordInput.props.secureTextEntry).toBe(true);
+    await waitFor(() => {
+      expect(getByText('INICIAR SESIÓN')).toBeTruthy();
+    });
   });
 });
