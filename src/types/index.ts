@@ -131,6 +131,19 @@ export interface ApiResponse<T> {
 export type AdminStackParamList = {
   AdminPanel: undefined;
   UserManagement: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
+  CreateGroup: undefined;
+  StartChat: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;
@@ -155,18 +168,34 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
-  ProductDetail: undefined;
+  ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
   Profile: undefined;
+  ProductDetail: { productId: number; farmerId: number };
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
-export type FarmerTabsParamList = {
-  HomeFarmer: undefined;
-  MyProducts: undefined;
-  AddProduct: undefined;
+export type AdminTabsParamList = {
+  AdminPanel: undefined;
+  AdminProducts: undefined;
+  CategoryList: undefined;
+  UnitList: undefined;
+  CategoryTrash: undefined;
+  UnitTrash: undefined;
+  ChatList: undefined;
 };
 
 export type FarmerStackParamList = {
@@ -174,6 +203,18 @@ export type FarmerStackParamList = {
   Profile: undefined;
   ProductList: undefined;
   ProductForm: { productoId?: number };
+  ChatList: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
 export type SellerTabsParamList = {
@@ -181,4 +222,20 @@ export type SellerTabsParamList = {
   Sales: undefined;
   Notificaciones: undefined;
   Perfil: undefined;
+  ChatList: undefined;
+};
+
+export type SellerStackParamList = {
+  SellerTabs: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
