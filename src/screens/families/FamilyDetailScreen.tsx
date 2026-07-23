@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -534,6 +533,11 @@ export default function FamilyDetailScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
 
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [removeMemberTarget, setRemoveMemberTarget] =
+    useState<FamilyMember | null>(null);
+  const [assignHeadTarget, setAssignHeadTarget] =
+    useState<FamilyMember | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
@@ -583,6 +587,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         queryKey: ['familyMembers', familyId],
       });
       void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
+      setRemoveMemberTarget(null);
     },
   });
 
@@ -590,6 +595,7 @@ export default function FamilyDetailScreen(): React.JSX.Element {
     mutationFn: (userId: number) => assignFamilyHead(familyId, userId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
+      setAssignHeadTarget(null);
     },
   });
 
@@ -624,24 +630,10 @@ export default function FamilyDetailScreen(): React.JSX.Element {
   }
 
   const handleDelete = (): void => {
-    Alert.alert(
-      'Eliminar familia',
-      `¿Estás seguro de eliminar "${family.nombre_familia}"? Esta acción desactivará la familia y todos sus miembros.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => {
-            void deleteMutation.mutateAsync();
-          },
-        },
-      ],
-    );
+    setDeleteConfirmVisible(true);
   };
 
   const handleRemoveMember = (member: FamilyMember): void => {
-    // Bloquear si el miembro es el jefe de familia
     if (family.fk_jefe_familia === member.fk_usuario) {
       showToast(
         'No puedes remover al jefe de familia. Primero asigna otro jefe.',
@@ -649,37 +641,11 @@ export default function FamilyDetailScreen(): React.JSX.Element {
       );
       return;
     }
-
-    Alert.alert(
-      'Remover miembro',
-      `¿Remover a "${member.usuario_nombre}" de esta familia?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Remover',
-          style: 'destructive',
-          onPress: () => {
-            void removeMemberMutation.mutateAsync(member.id_familia_usuario);
-          },
-        },
-      ],
-    );
+    setRemoveMemberTarget(member);
   };
 
   const handleAssignHead = (member: FamilyMember): void => {
-    Alert.alert(
-      'Asignar jefe de familia',
-      `¿Designar a "${member.usuario_nombre}" como jefe de familia?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Asignar',
-          onPress: () => {
-            void assignHeadMutation.mutateAsync(member.fk_usuario);
-          },
-        },
-      ],
-    );
+    setAssignHeadTarget(member);
   };
 
   const handleAddMember = (userId: number): void => {
@@ -772,7 +738,15 @@ export default function FamilyDetailScreen(): React.JSX.Element {
                 <MaterialCommunityIcons name="pencil" size={18} color={t.fg} />
               </Pressable>
               <Pressable
-                style={{ borderRadius: 8, backgroundColor: t.bg, padding: 8 }}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: t.bg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                hitSlop={6}
                 onPress={handleDelete}
               >
                 <MaterialCommunityIcons
@@ -870,25 +844,365 @@ export default function FamilyDetailScreen(): React.JSX.Element {
         )}
       </ScrollView>
 
-      <AddMemberModal
-        visible={addModalVisible}
-        isDark={isDark}
-        isPending={addMemberMutation.isPending}
-        errorMsg={
-          addMemberMutation.error
-            ? extractApiError(addMemberMutation.error, [
-                'fk_usuario',
-                'fk_familia',
-                'detail',
-              ])
-            : null
-        }
-        onConfirm={handleAddMember}
-        onCancel={() => {
-          setAddModalVisible(false);
-          addMemberMutation.reset();
-        }}
-      />
+      {addModalVisible ? (
+        <AddMemberModal
+          visible={addModalVisible}
+          isDark={isDark}
+          isPending={addMemberMutation.isPending}
+          errorMsg={
+            addMemberMutation.error
+              ? extractApiError(addMemberMutation.error, [
+                  'fk_usuario',
+                  'fk_familia',
+                  'detail',
+                ])
+              : null
+          }
+          onConfirm={handleAddMember}
+          onCancel={() => {
+            setAddModalVisible(false);
+            addMemberMutation.reset();
+          }}
+        />
+      ) : null}
+
+      {/* ── Delete family confirmation ─────────────────────── */}
+      <Modal
+        visible={deleteConfirmVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDeleteConfirmVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: colors.overlayBg }}
+          onPress={() => setDeleteConfirmVisible(false)}
+        />
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.errorBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={26}
+                color={coral}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: t.fg,
+                textAlign: 'center',
+              }}
+            >
+              ¿Eliminar familia "{family.nombre_familia}"?
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: t.muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
+              Esta acción desactivará la familia y todos sus miembros.
+            </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => {
+                void deleteMutation.mutateAsync();
+              }}
+              disabled={deleteMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: coral,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: deleteMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {deleteMutation.isPending ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Eliminar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setDeleteConfirmVisible(false)}
+              disabled={deleteMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Remove member confirmation ──────────────────────── */}
+      <Modal
+        visible={removeMemberTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRemoveMemberTarget(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: colors.overlayBg }}
+          onPress={() => setRemoveMemberTarget(null)}
+        />
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.errorBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="account-remove-outline"
+                size={26}
+                color={coral}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: t.fg,
+                textAlign: 'center',
+              }}
+            >
+              ¿Remover a "{removeMemberTarget?.usuario_nombre ?? ''}"?
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: t.muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
+              Se removerá al miembro de esta familia.
+            </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!removeMemberTarget) return;
+                void removeMemberMutation.mutateAsync(
+                  removeMemberTarget.id_familia_usuario,
+                );
+              }}
+              disabled={removeMemberMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: coral,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: removeMemberMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {removeMemberMutation.isPending ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Remover
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setRemoveMemberTarget(null)}
+              disabled={removeMemberMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Assign head confirmation ────────────────────────── */}
+      <Modal
+        visible={assignHeadTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAssignHeadTarget(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: colors.overlayBg }}
+          onPress={() => setAssignHeadTarget(null)}
+        />
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderRadius: 24,
+            padding: 24,
+            paddingBottom: 34,
+            marginTop: 'auto',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.accentBg,
+                marginBottom: 12,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="account-star-outline"
+                size={26}
+                color={colors.brandOrange}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: '700',
+                color: t.fg,
+                textAlign: 'center',
+              }}
+            >
+              ¿Designar jefe de familia?
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: t.muted,
+                marginTop: 6,
+                textAlign: 'center',
+              }}
+            >
+              Se designará a "{assignHeadTarget?.usuario_nombre ?? ''}" como
+              jefe de familia.
+            </Text>
+          </View>
+          <View style={{ gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!assignHeadTarget) return;
+                void assignHeadMutation.mutateAsync(assignHeadTarget.fk_usuario);
+              }}
+              disabled={assignHeadMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: colors.brandOrange,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: assignHeadMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {assignHeadMutation.isPending ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Asignar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setAssignHeadTarget(null)}
+              disabled={assignHeadMutation.isPending}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Toast
         visible={toastMessage !== null}

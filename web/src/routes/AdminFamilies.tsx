@@ -239,7 +239,8 @@ export function AdminFamilies() {
       setDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
-      setError('Error al eliminar la familia.');
+      const apiErr = extractApiError(err, ['detail']);
+      setError(apiErr || 'Error al eliminar la familia.');
     }
   }
 

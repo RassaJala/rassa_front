@@ -201,7 +201,8 @@ export function AdminFamilyDetail() {
       await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
     } catch (err: unknown) {
       console.error(err);
-      setError('Error al asignar el jefe de familia.');
+      const apiErr = extractApiError(err, ['fk_jefe_familia', 'detail']);
+      setError(apiErr || 'Error al asignar el jefe de familia.');
     }
   }
 
