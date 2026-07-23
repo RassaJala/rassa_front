@@ -27,20 +27,21 @@ function formatTimestamp(iso: string): string {
 
 function getStatusDot(
   status: string,
-  isDark: boolean,
+  _isDark: boolean,
   border: string,
 ): string {
   switch (status) {
     case 'pendiente':
-      return colors.accent;
+      return colors.accent;        // 🟡 amber — esperando acción
     case 'confirmado':
-    case 'entregado':
-      return isDark ? colors.admBrandD : colors.admBrandL;
+      return colors.success;       // 🟢 verde — confirmado
     case 'en_preparacion':
     case 'listo_para_retirar':
-      return isDark ? colors.admBrandD : colors.admBrandL;
+      return colors.info;          // 🔵 azul — en proceso
+    case 'entregado':
+      return colors.success;       // 🟢 verde — completado
     case 'cancelado':
-      return colors.brandRedCoral;
+      return colors.brandRedCoral; // 🔴 rojo — cancelado
     default:
       return border;
   }
