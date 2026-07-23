@@ -274,6 +274,31 @@ export function usePublicationWizard({
     return !hasError;
   }, [activeItems]);
 
+  const compensateCreatedItems = useCallback(
+    async (pubId: number, createdIds: number[]) => {
+      for (const id of createdIds) {
+        try {
+          await removeItemMutation.mutateAsync({ pubId, itemId: id });
+        } catch {
+          // Best-effort cleanup
+        }
+      }
+    },
+    [removeItemMutation],
+  );
+
+  const compensateAutoCreatedPub = useCallback(
+    async (pub: Publicacion) => {
+      try {
+        await deletePublicationMutation.mutateAsync(pub.id_publicacion);
+        publicationRef.current = undefined;
+      } catch {
+        // Best-effort cleanup
+      }
+    },
+    [deletePublicationMutation],
+  );
+
   const ensurePublicationAndPersist = useCallback(async (): Promise<
     Publicacion | undefined
   > => {
@@ -305,23 +330,9 @@ export function usePublicationWizard({
         }
       }
     } catch (error) {
-      for (const id of createdIds) {
-        try {
-          await removeItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId: id,
-          });
-        } catch {
-          // Best-effort cleanup
-        }
-      }
+      await compensateCreatedItems(pub.id_publicacion, createdIds);
       if (autoCreatedPub) {
-        try {
-          await deletePublicationMutation.mutateAsync(pub.id_publicacion);
-          publicationRef.current = undefined;
-        } catch {
-          // Best-effort cleanup
-        }
+        await compensateAutoCreatedPub(pub);
       }
       throw error;
     }
@@ -331,10 +342,10 @@ export function usePublicationWizard({
     activeItems,
     productos,
     createMutation,
-    deletePublicationMutation,
+    compensateCreatedItems,
+    compensateAutoCreatedPub,
     addItemMutation,
     updateItemMutation,
-    removeItemMutation,
   ]);
 
   const publish = useCallback(async () => {
