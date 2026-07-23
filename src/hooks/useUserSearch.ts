@@ -7,7 +7,7 @@ export function useUserSearch(
   query: string,
   selectedUser: SearchUserResult | null,
   debounceMs = 300,
-) {
+): { results: SearchUserResult[]; setResults: React.Dispatch<React.SetStateAction<SearchUserResult[]>>; isSearching: boolean } {
   const [results, setResults] = useState<SearchUserResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
