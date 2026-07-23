@@ -1,13 +1,13 @@
-import { useTheme } from '~/providers/ThemeProvider';
 import { getColors } from '~/constants/colors';
+import { useTheme } from '~/providers/ThemeProvider';
 
 import { ProfileChangePassword } from '~/components/profile/ProfileChangePassword';
 import { ProfileForm } from '~/components/profile/ProfileForm';
 import { ProfileView } from '~/components/profile/ProfileView';
 import {
-  useProfileCatalog,
-  useProfileData,
-  usePasswordChange,
+    usePasswordChange,
+    useProfileCatalog,
+    useProfileData,
 } from '~/components/profile/hooks';
 
 // ---------------------------------------------------------------------------

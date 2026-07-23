@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
 import { getColors } from '~/constants/colors';
 import { LocationSelector } from '~/components/profile/LocationSelector';
@@ -93,6 +93,15 @@ export function ProfileForm({
     alignItems: 'center',
     gap: 6,
   } as const;
+
+  // Cargar municipios al montar el formulario de edición
+  useEffect(() => {
+    onLoadMunicipios();
+    if (profile.municipio_id != null) {
+      onFetchLocalidades(profile.municipio_id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps — solo al montar
+  }, []);
 
   const handleMunicipioChange = (id: number | null) => {
     onChange({ ...profile, municipio_id: id, localidad_id: null });
