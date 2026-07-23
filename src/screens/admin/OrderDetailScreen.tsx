@@ -22,7 +22,9 @@ export default function OrderDetailScreen(): React.JSX.Element {
   const route = useRoute<RouteProp<AdminStackParamList, 'OrderDetail'>>();
   const { orderId } = route.params;
   const navigation =
-    useNavigation<NativeStackNavigationProp<AdminStackParamList, 'OrderDetail'>>();
+    useNavigation<
+      NativeStackNavigationProp<AdminStackParamList, 'OrderDetail'>
+    >();
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -43,11 +45,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
             padding: 4,
           })}
         >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={28}
-            color={fg}
-          />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={fg} />
         </Pressable>
         <Text
           style={{

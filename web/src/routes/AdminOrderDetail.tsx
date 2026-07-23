@@ -50,20 +50,20 @@ export function AdminOrderDetail() {
   const { fg, muted, border, surface, brand } = colors;
   const orderId = Number(id);
 
-  const { data, isLoading, isError, error, refetch } = useQuery<
-    HistoryEntry[]
-  >({
-    queryKey: ['order-history', orderId],
-    queryFn: async () => {
-      const res = await api.get<
-        ApiResponse<HistoryEntry[]> | HistoryEntry[]
-      >(`/pedidos/${orderId}/historial`);
-      if (Array.isArray(res.data)) return res.data;
-      return (res.data as ApiResponse<HistoryEntry[]>).data;
+  const { data, isLoading, isError, error, refetch } = useQuery<HistoryEntry[]>(
+    {
+      queryKey: ['order-history', orderId],
+      queryFn: async () => {
+        const res = await api.get<ApiResponse<HistoryEntry[]> | HistoryEntry[]>(
+          `/pedidos/${orderId}/historial`,
+        );
+        if (Array.isArray(res.data)) return res.data;
+        return (res.data as ApiResponse<HistoryEntry[]>).data;
+      },
+      enabled: orderId > 0,
+      retry: false,
     },
-    enabled: orderId > 0,
-    retry: false,
-  });
+  );
 
   const entries = data ?? [];
 
@@ -224,9 +224,9 @@ export function AdminOrderDetail() {
           <div style={{ padding: 24 }}>
             {entries.map((entry, index) => {
               const isLast = index === entries.length - 1;
-              const dotColor =
-                STATUS_COLORS[entry.estado_nuevo] ?? border;
-              const label = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
+              const dotColor = STATUS_COLORS[entry.estado_nuevo] ?? border;
+              const label =
+                STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
               const description =
                 entry.estado_anterior === null
                   ? 'Pedido creado'

@@ -146,7 +146,8 @@ export function AdminDashboard() {
             fontSize: 14,
             fontWeight: 600,
             fontFamily: 'inherit',
-            cursor: lookupId && Number(lookupId) > 0 ? 'pointer' : 'not-allowed',
+            cursor:
+              lookupId && Number(lookupId) > 0 ? 'pointer' : 'not-allowed',
             opacity: lookupId && Number(lookupId) > 0 ? 1 : 0.5,
           }}
         >

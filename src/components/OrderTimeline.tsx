@@ -1,5 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -32,14 +38,14 @@ function getStatusDot(
 ): string {
   switch (status) {
     case 'pendiente':
-      return colors.accent;        // 🟡 amber — esperando acción
+      return colors.accent; // 🟡 amber — esperando acción
     case 'confirmado':
-      return colors.success;       // 🟢 verde — confirmado
+      return colors.success; // 🟢 verde — confirmado
     case 'en_preparacion':
     case 'listo_para_retirar':
-      return colors.info;          // 🔵 azul — en proceso
+      return colors.info; // 🔵 azul — en proceso
     case 'entregado':
-      return colors.success;       // 🟢 verde — completado
+      return colors.success; // 🟢 verde — completado
     case 'cancelado':
       return colors.brandRedCoral; // 🔴 rojo — cancelado
     default:
@@ -54,7 +60,8 @@ function buildDescription(entry: {
   if (entry.estado_anterior === null) {
     return 'Pedido creado';
   }
-  const fromLabel = STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
+  const fromLabel =
+    STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
   const toLabel = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
   return `${fromLabel} → ${toLabel}`;
 }
@@ -109,7 +116,9 @@ function TimelineEntry({
       </View>
 
       {/* Content */}
-      <View style={{ flex: 1, paddingLeft: 12, paddingBottom: isLast ? 0 : 20 }}>
+      <View
+        style={{ flex: 1, paddingLeft: 12, paddingBottom: isLast ? 0 : 20 }}
+      >
         <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
           {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
         </Text>
@@ -122,15 +131,30 @@ function TimelineEntry({
         >
           {buildDescription(entry)}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
-          <MaterialCommunityIcons name="clock-outline" size={12} color={mutedColor} />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 4,
+            gap: 4,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="clock-outline"
+            size={12}
+            color={mutedColor}
+          />
           <Text style={{ fontSize: 12, color: mutedColor }}>
             {formatTimestamp(entry.creado_en)}
           </Text>
           {entry.cambiado_por_nombre !== null && (
             <>
               <Text style={{ fontSize: 12, color: mutedColor }}>·</Text>
-              <MaterialCommunityIcons name="account-outline" size={12} color={mutedColor} />
+              <MaterialCommunityIcons
+                name="account-outline"
+                size={12}
+                color={mutedColor}
+              />
               <Text style={{ fontSize: 12, color: mutedColor }}>
                 {entry.cambiado_por_nombre}
               </Text>
@@ -164,7 +188,15 @@ export default function OrderTimeline({
   // Loading
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingVertical: 48 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 48,
+        }}
+      >
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -173,9 +205,29 @@ export default function OrderTimeline({
   // Error
   if (isError) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingVertical: 48, paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={40} color={muted} />
-        <Text style={{ marginTop: 12, textAlign: 'center', fontSize: 15, color: muted }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 48,
+          paddingHorizontal: 24,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={40}
+          color={muted}
+        />
+        <Text
+          style={{
+            marginTop: 12,
+            textAlign: 'center',
+            fontSize: 15,
+            color: muted,
+          }}
+        >
           {error?.message ?? 'Error al cargar el historial'}
         </Text>
         <Pressable
@@ -204,7 +256,15 @@ export default function OrderTimeline({
   // Empty
   if (entries.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingVertical: 48 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 48,
+        }}
+      >
         <MaterialCommunityIcons name="history" size={40} color={muted} />
         <Text style={{ marginTop: 12, fontSize: 15, color: muted }}>
           Sin historial de cambios
