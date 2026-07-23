@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,11 +22,13 @@ interface Props {
 }
 
 export default function AdminPanelScreen({
-  navigation: _navigation,
+  navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const stats = getAdminStats();
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupId, setLookupId] = useState('');
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
@@ -135,17 +137,90 @@ export default function AdminPanelScreen({
                   iconBg={coralBg}
                   iconColor={coral}
                 />
-                <StatCard
-                  icon="clipboard-list"
-                  value={stats.totalOrders.toLocaleString()}
-                  label="Pedidos"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
-                  iconBg={pumpkinBg}
-                  iconColor={pumpkin}
-                />
+                <Pressable
+                  onPress={() => setShowLookup((v) => !v)}
+                  style={{ flex: 1 }}
+                >
+                  <StatCard
+                    icon="clipboard-list"
+                    value={stats.totalOrders.toLocaleString()}
+                    label="Pedidos"
+                    surface={surface}
+                    border={border}
+                    muted={muted}
+                    iconBg={pumpkinBg}
+                    iconColor={pumpkin}
+                  />
+                </Pressable>
               </View>
+
+              {showLookup && (
+                <View
+                  style={{
+                    backgroundColor: surface,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: border,
+                    padding: 20,
+                    marginBottom: 24,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: fg,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Buscar historial de pedido
+                  </Text>
+                  <TextInput
+                    placeholder="ID del pedido"
+                    placeholderTextColor={muted}
+                    value={lookupId}
+                    onChangeText={setLookupId}
+                    keyboardType="number-pad"
+                    style={{
+                      backgroundColor: bg,
+                      color: fg,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: border,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      marginBottom: 12,
+                    }}
+                  />
+                  <Pressable
+                    onPress={() => {
+                      const id = Number.parseInt(lookupId, 10);
+                      if (id > 0) {
+                        navigation.navigate('OrderDetail', { orderId: id });
+                        setShowLookup(false);
+                        setLookupId('');
+                      }
+                    }}
+                    style={{
+                      backgroundColor: brand,
+                      borderRadius: 12,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '700',
+                        color: '#fff',
+                      }}
+                    >
+                      Ver historial
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           </ScrollView>
         </View>
