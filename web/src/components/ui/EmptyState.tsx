@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface EmptyStateProps {
   icon?: string;
@@ -8,7 +8,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon = '📦',
+  icon = "📦",
   title,
   message,
   action,

@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,38 +15,38 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import Toast from '@/components/Toast';
-import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
-import EmptyState from '@/components/UserManagement/EmptyState';
-import FilterBar from '@/components/UserManagement/FilterBar';
-import RoleDialog from '@/components/UserManagement/RoleDialog';
-import UserCard from '@/components/UserManagement/UserCard';
-import { colors } from '@/constants/colors';
-import api from '@/services/api';
-import { useAuth } from '@/store/AuthContext';
-import { useTheme } from '@/store/ThemeContext';
-import type { ApiResponse } from '@/types';
-import type { AdminUser } from '@/types/userManagement';
+import Toast from "@/components/Toast";
+import ConfirmDeactivationDialog from "@/components/UserManagement/ConfirmDeactivationDialog";
+import EmptyState from "@/components/UserManagement/EmptyState";
+import FilterBar from "@/components/UserManagement/FilterBar";
+import RoleDialog from "@/components/UserManagement/RoleDialog";
+import UserCard from "@/components/UserManagement/UserCard";
+import { colors } from "@/constants/colors";
+import api from "@/services/api";
+import { useAuth } from "@/store/AuthContext";
+import { useTheme } from "@/store/ThemeContext";
+import type { ApiResponse } from "@/types";
+import type { AdminUser } from "@/types/userManagement";
 
-const TRANSPARENT = 'transparent';
-const WHITE = '#FFFFFF';
+const TRANSPARENT = "transparent";
+const WHITE = "#FFFFFF";
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: 'Admin',
-  farmer: 'Agricultor',
-  seller: 'Vendedor',
-  buyer: 'Cliente',
+  admin: "Admin",
+  farmer: "Agricultor",
+  seller: "Vendedor",
+  buyer: "Cliente",
 };
 
 function getFullName(u: AdminUser): string {
   return [u.nombre, u.apellido_paterno, u.apellido_materno]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 }
 
 // ── Multi-page fetch (like web) ──
@@ -67,15 +67,15 @@ async function fetchAllPages(
   const body = response.data;
   const payload: unknown =
     body &&
-    typeof body === 'object' &&
-    'data' in (body as Record<string, unknown>)
+    typeof body === "object" &&
+    "data" in (body as Record<string, unknown>)
       ? (body as Record<string, unknown>).data
       : body;
 
   const results: AdminUser[] =
     payload &&
-    typeof payload === 'object' &&
-    'results' in (payload as Record<string, unknown>)
+    typeof payload === "object" &&
+    "results" in (payload as Record<string, unknown>)
       ? (payload as { results: AdminUser[] }).results
       : Array.isArray(payload)
         ? (payload as AdminUser[])
@@ -83,7 +83,7 @@ async function fetchAllPages(
 
   const all = [...accumulated, ...results];
   const next: string | null =
-    payload && typeof payload === 'object'
+    payload && typeof payload === "object"
       ? (((payload as Record<string, unknown>).next as string | null) ?? null)
       : null;
 
@@ -93,7 +93,7 @@ async function fetchAllPages(
 
 export default function UserManagementScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
@@ -106,9 +106,9 @@ export default function UserManagementScreen(): React.JSX.Element {
   const { user: currentUser } = useAuth();
 
   // ── Search & filter state ──
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -126,7 +126,7 @@ export default function UserManagementScreen(): React.JSX.Element {
 
   // ── Role change modal state ──
   const [roleModalUser, setRoleModalUser] = useState<AdminUser | null>(null);
-  const [newRole, setNewRole] = useState<string>('');
+  const [newRole, setNewRole] = useState<string>("");
 
   // ── Deactivation confirmation state ──
   const [confirmUser, setConfirmUser] = useState<AdminUser | null>(null);
@@ -135,8 +135,8 @@ export default function UserManagementScreen(): React.JSX.Element {
   const [toast, setToast] = useState<{
     visible: boolean;
     message: string;
-    type: 'success' | 'error' | 'info';
-  }>({ visible: false, message: '', type: 'info' });
+    type: "success" | "error" | "info";
+  }>({ visible: false, message: "", type: "info" });
 
   // ── Users query (multi-page, like web) ──
   const {
@@ -147,15 +147,15 @@ export default function UserManagementScreen(): React.JSX.Element {
     refetch,
     isRefetching,
   } = useQuery<AdminUser[]>({
-    queryKey: ['admin-users'],
-    queryFn: () => fetchAllPages('/admin/usuarios/', []),
+    queryKey: ["admin-users"],
+    queryFn: () => fetchAllPages("/admin/usuarios/", []),
   });
 
   const errorMessage =
     (queryError as { response?: { data?: { detail?: string } } })?.response
       ?.data?.detail ??
     (queryError as Error)?.message ??
-    'Error al cargar usuarios';
+    "Error al cargar usuarios";
 
   // ── Client-side filtering (like web) ──
   const filtered = useMemo(() => {
@@ -170,8 +170,8 @@ export default function UserManagementScreen(): React.JSX.Element {
         if (roleLabel !== roleFilter) return false;
       }
 
-      if (statusFilter === 'true' && !u.estado) return false;
-      if (statusFilter === 'false' && u.estado) return false;
+      if (statusFilter === "true" && !u.estado) return false;
+      if (statusFilter === "false" && u.estado) return false;
 
       return true;
     });
@@ -198,18 +198,18 @@ export default function UserManagementScreen(): React.JSX.Element {
       const u = users.find((x) => x.id_usuario === userId);
       const name = u ? getFullName(u) : `#${userId}`;
       const newState = u ? !u.estado : false;
-      const label = newState ? 'activado' : 'desactivado';
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      const label = newState ? "activado" : "desactivado";
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setConfirmUser(null);
-      showToast(`${name} fue ${label} correctamente`, 'success');
+      showToast(`${name} fue ${label} correctamente`, "success");
     },
     onError: (error: unknown) => {
       const detail =
         (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? 'Error al cambiar estado';
+          ?.detail ?? "Error al cambiar estado";
 
-      showToast(detail, 'error');
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      showToast(detail, "error");
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 
@@ -226,25 +226,25 @@ export default function UserManagementScreen(): React.JSX.Element {
     onSuccess: (_data, { userId, role }) => {
       const u = users.find((x) => x.id_usuario === userId);
       const name = u ? getFullName(u) : `#${userId}`;
-      const oldRole = u ? (ROLE_LABELS[u.role] ?? u.role) : '?';
+      const oldRole = u ? (ROLE_LABELS[u.role] ?? u.role) : "?";
       const newRole = ROLE_LABELS[role] ?? role;
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       closeRoleModal();
-      showToast(`${name} cambió de ${oldRole} a ${newRole}`, 'success');
+      showToast(`${name} cambió de ${oldRole} a ${newRole}`, "success");
     },
     onError: (error: unknown) => {
       const detail =
         (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? 'Error al cambiar rol';
+          ?.detail ?? "Error al cambiar rol";
 
-      showToast(detail, 'error');
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      showToast(detail, "error");
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 
   // ── Handlers ──
   const showToast = useCallback(
-    (message: string, type: 'success' | 'error' | 'info') => {
+    (message: string, type: "success" | "error" | "info") => {
       setToast({ visible: true, message, type });
     },
     [],
@@ -261,7 +261,7 @@ export default function UserManagementScreen(): React.JSX.Element {
 
   const closeRoleModal = useCallback(() => {
     setRoleModalUser(null);
-    setNewRole('');
+    setNewRole("");
   }, []);
 
   const isSelf = useCallback(
@@ -276,7 +276,7 @@ export default function UserManagementScreen(): React.JSX.Element {
 
     if (isSelf(roleModalUser)) {
       closeRoleModal();
-      showToast('No puedes cambiar tu propio rol.', 'info');
+      showToast("No puedes cambiar tu propio rol.", "info");
       return;
     }
 
@@ -293,7 +293,7 @@ export default function UserManagementScreen(): React.JSX.Element {
       if (toggleMutation.isPending) return;
 
       if (isSelf(targetUser)) {
-        showToast('No puedes desactivar tu propia cuenta.', 'info');
+        showToast("No puedes desactivar tu propia cuenta.", "info");
         return;
       }
 
@@ -343,9 +343,9 @@ export default function UserManagementScreen(): React.JSX.Element {
     return (
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
           gap: 6,
           paddingVertical: 20,
         }}
@@ -360,15 +360,15 @@ export default function UserManagementScreen(): React.JSX.Element {
             borderRadius: 8,
             borderWidth: 1.5,
             borderColor: border,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
             opacity: safePage <= 1 ? 0.4 : 1,
           }}
         >
           <Text
             style={{
               fontSize: 13,
-              fontWeight: '600',
+              fontWeight: "600",
               color: safePage <= 1 ? muted : fg,
             }}
           >
@@ -390,15 +390,15 @@ export default function UserManagementScreen(): React.JSX.Element {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
+                justifyContent: "center",
+                alignItems: "center",
                 backgroundColor: p === safePage ? brand : TRANSPARENT,
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: p === safePage ? '700' : '500',
+                  fontWeight: p === safePage ? "700" : "500",
                   color: p === safePage ? WHITE : fg,
                 }}
               >
@@ -418,15 +418,15 @@ export default function UserManagementScreen(): React.JSX.Element {
             borderRadius: 8,
             borderWidth: 1.5,
             borderColor: border,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
             opacity: safePage >= totalPages ? 0.4 : 1,
           }}
         >
           <Text
             style={{
               fontSize: 13,
-              fontWeight: '600',
+              fontWeight: "600",
               color: safePage >= totalPages ? muted : fg,
             }}
           >
@@ -444,8 +444,8 @@ export default function UserManagementScreen(): React.JSX.Element {
         style={{
           flex: 1,
           backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
+          justifyContent: "center",
           paddingHorizontal: 24,
         }}
       >
@@ -458,7 +458,7 @@ export default function UserManagementScreen(): React.JSX.Element {
           style={{
             marginTop: 12,
             marginBottom: 8,
-            textAlign: 'center',
+            textAlign: "center",
             fontSize: 15,
             color: muted,
           }}
@@ -468,8 +468,8 @@ export default function UserManagementScreen(): React.JSX.Element {
         <Pressable
           onPress={() => void refetch()}
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: "row",
+            alignItems: "center",
             gap: 6,
             marginTop: 8,
             paddingHorizontal: 20,
@@ -480,7 +480,7 @@ export default function UserManagementScreen(): React.JSX.Element {
           }}
         >
           <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: brand }}>
             Reintentar
           </Text>
         </Pressable>
@@ -496,7 +496,7 @@ export default function UserManagementScreen(): React.JSX.Element {
         <Text
           style={{
             fontSize: 28,
-            fontWeight: '700',
+            fontWeight: "700",
             letterSpacing: -0.02,
             color: fg,
           }}
@@ -507,7 +507,7 @@ export default function UserManagementScreen(): React.JSX.Element {
 
       {/* ═══ User list ═══ */}
       {isLoading ? (
-        <View style={{ flex: 1, alignItems: 'center', paddingTop: 60 }}>
+        <View style={{ flex: 1, alignItems: "center", paddingTop: 60 }}>
           <ActivityIndicator size="large" color={brand} />
         </View>
       ) : (
@@ -530,8 +530,8 @@ export default function UserManagementScreen(): React.JSX.Element {
                 {/* Search */}
                 <View
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    flexDirection: "row",
+                    alignItems: "center",
                     backgroundColor: inputBg,
                     borderRadius: 10,
                     borderWidth: 1,
@@ -563,7 +563,7 @@ export default function UserManagementScreen(): React.JSX.Element {
                   />
                   {search.length > 0 && (
                     <Pressable
-                      onPress={() => setSearch('')}
+                      onPress={() => setSearch("")}
                       style={{ padding: 4 }}
                       hitSlop={6}
                     >
@@ -589,7 +589,7 @@ export default function UserManagementScreen(): React.JSX.Element {
               <Text
                 style={{
                   fontSize: 14,
-                  fontWeight: '600',
+                  fontWeight: "600",
                   color: fg,
                   paddingBottom: 4,
                 }}

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,19 +8,19 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import Toast from '@/components/Toast';
-import { colors } from '@/constants/colors';
-import api from '@/services/api';
-import { useAuth } from '@/store/AuthContext';
-import { useTheme } from '@/store/ThemeContext';
-import type { AdminStackParamList, ApiResponse } from '@/types';
-import { parseApiList } from '@/utils/apiResponse';
+import Toast from "@/components/Toast";
+import { colors } from "@/constants/colors";
+import api from "@/services/api";
+import { useAuth } from "@/store/AuthContext";
+import { useTheme } from "@/store/ThemeContext";
+import type { AdminStackParamList, ApiResponse } from "@/types";
+import { parseApiList } from "@/utils/apiResponse";
 
 // ── Configuration ──────────────────────────────────────────
 
@@ -40,13 +40,13 @@ interface TrashConfig<T extends { nombre: string; estado: boolean }> {
   readonly permanentConfirmText: (item: T) => string;
   readonly queryParams?: Record<string, string>;
   readonly listScreen:
-    'CategoryList' | 'UnitList' | 'MunicipioList' | 'LocalidadList';
+    "CategoryList" | "UnitList" | "MunicipioList" | "LocalidadList";
 }
 
 // ── Navigation type ────────────────────────────────────────
 
 type TrashScreenName =
-  'CategoryTrash' | 'UnitTrash' | 'MunicipioTrash' | 'LocalidadTrash';
+  "CategoryTrash" | "UnitTrash" | "MunicipioTrash" | "LocalidadTrash";
 
 interface TrashListScreenProps<T extends { nombre: string; estado: boolean }> {
   readonly config: TrashConfig<T>;
@@ -83,8 +83,8 @@ function AdminGuard({ bg, muted }: GuardProps): React.JSX.Element {
     <View
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         backgroundColor: bg,
         paddingHorizontal: 24,
       }}
@@ -93,7 +93,7 @@ function AdminGuard({ bg, muted }: GuardProps): React.JSX.Element {
       <Text
         style={{
           marginTop: 16,
-          textAlign: 'center',
+          textAlign: "center",
           fontSize: 16,
           color: muted,
         }}
@@ -114,8 +114,8 @@ function LoadingView({ bg, brand }: LoadingProps): React.JSX.Element {
     <View
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         backgroundColor: bg,
       }}
     >
@@ -145,8 +145,8 @@ function ErrorView({
     <View
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         backgroundColor: bg,
         paddingHorizontal: 24,
       }}
@@ -159,7 +159,7 @@ function ErrorView({
       <Text
         style={{
           marginTop: 16,
-          textAlign: 'center',
+          textAlign: "center",
           fontSize: 16,
           color: muted,
         }}
@@ -171,8 +171,8 @@ function ErrorView({
         activeOpacity={0.8}
         style={{
           marginTop: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
+          flexDirection: "row",
+          alignItems: "center",
           gap: 8,
           backgroundColor: brand,
           borderRadius: 12,
@@ -181,7 +181,7 @@ function ErrorView({
         }}
       >
         <MaterialCommunityIcons name="refresh" size={18} color={iconWhite} />
-        <Text style={{ fontWeight: '600', color: iconWhite }}>Reintentar</Text>
+        <Text style={{ fontWeight: "600", color: iconWhite }}>Reintentar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -323,32 +323,32 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
         style={{
           flex: 1,
           backgroundColor: themeColors.modalOverlay,
-          justifyContent: 'center',
-          alignItems: 'center',
+          justifyContent: "center",
+          alignItems: "center",
         }}
         onPress={onCancel}
       >
         <View
           style={{
-            width: '85%',
+            width: "85%",
             backgroundColor: themeColors.surface,
             borderRadius: 24,
             padding: 24,
             paddingBottom: 34,
-            marginTop: 'auto',
+            marginTop: "auto",
           }}
           onStartShouldSetResponder={() => true}
           onTouchEnd={(e) => e.stopPropagation()}
         >
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ alignItems: "center", marginBottom: 16 }}>
             <View
               style={{
                 width: 56,
                 height: 56,
                 borderRadius: 28,
                 backgroundColor: themeColors.errorBg,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: "center",
+                justifyContent: "center",
                 marginBottom: 12,
               }}
             >
@@ -361,8 +361,8 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
             <Text
               style={{
                 fontSize: 17,
-                fontWeight: '700',
-                textAlign: 'center',
+                fontWeight: "700",
+                textAlign: "center",
                 color: themeColors.fg,
               }}
             >
@@ -372,11 +372,11 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
               style={{
                 fontSize: 14,
                 marginTop: 6,
-                textAlign: 'center',
+                textAlign: "center",
                 color: themeColors.fg,
               }}
             >
-              {item ? config.permanentConfirmText(item) : ''}
+              {item ? config.permanentConfirmText(item) : ""}
             </Text>
           </View>
 
@@ -389,9 +389,9 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
                 height: 50,
                 borderRadius: 14,
                 backgroundColor: themeColors.errorColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
                 gap: 6,
                 opacity: isPending ? 0.6 : 1,
               }}
@@ -408,7 +408,7 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: '600',
+                  fontWeight: "600",
                   color: themeColors.iconWhite,
                 }}
               >
@@ -424,14 +424,14 @@ function PermanentDeleteModal<T extends { nombre: string; estado: boolean }>({
                 borderRadius: 14,
                 borderWidth: 1.5,
                 borderColor: themeColors.border,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Text
                 style={{
                   fontSize: 15,
-                  fontWeight: '600',
+                  fontWeight: "600",
                   color: themeColors.fg,
                 }}
               >
@@ -452,7 +452,7 @@ export default function TrashListScreen<
 >({ config, navigation }: TrashListScreenProps<T>): React.JSX.Element | null {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -461,7 +461,7 @@ export default function TrashListScreen<
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const iconWhite = colors.iconWhite;
   const errorColor = colors.brandRedCoral;
-  const modalOverlay = 'rgba(0,0,0,0.4)';
+  const modalOverlay = "rgba(0,0,0,0.4)";
   const errorBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const queryClient = useQueryClient();
 
@@ -474,8 +474,8 @@ export default function TrashListScreen<
     isRefetching,
   } = useQuery<T[]>({
     queryKey: config.queryParams
-      ? [...config.queryKey, 'trash', JSON.stringify(config.queryParams)]
-      : [...config.queryKey, 'trash'],
+      ? [...config.queryKey, "trash", JSON.stringify(config.queryParams)]
+      : [...config.queryKey, "trash"],
     queryFn: () => fetchTrashItems<T>(config.endpoint, config.queryParams),
     staleTime: 10_000,
     retry: 2,
@@ -483,14 +483,14 @@ export default function TrashListScreen<
 
   // ── Toast state ────────────────────────────────────────────
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
   // ── Permanent delete state ─────────────────────────────────
   const [permanentTarget, setPermanentTarget] = useState<T | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────
   const toast = useCallback(
-    (message: string, type: 'success' | 'error' = 'success') => {
+    (message: string, type: "success" | "error" = "success") => {
       setToastMessage(message);
       setToastType(type);
     },
@@ -499,7 +499,7 @@ export default function TrashListScreen<
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({
-      queryKey: [...config.queryKey, 'trash'],
+      queryKey: [...config.queryKey, "trash"],
     });
     void queryClient.invalidateQueries({ queryKey: [...config.queryKey] });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- config.queryKey is stable from parent
@@ -531,7 +531,7 @@ export default function TrashListScreen<
           toast(config.toastRestored(name));
         },
         onError: () => {
-          toast(`Error al restaurar ${config.entityName} "${name}".`, 'error');
+          toast(`Error al restaurar ${config.entityName} "${name}".`, "error");
         },
       });
     },
@@ -552,14 +552,14 @@ export default function TrashListScreen<
         setPermanentTarget(null);
         toast(
           `Error al eliminar permanentemente ${config.entityName} "${name}".`,
-          'error',
+          "error",
         );
       },
     });
   }, [permanentTarget, config, permanentMutation, invalidate, toast]);
 
   // ── Role guard ──────────────────────────────────────────────
-  if (user?.role !== 'admin') {
+  if (user?.role !== "admin") {
     return <AdminGuard bg={bg} muted={muted} />;
   }
 
@@ -589,7 +589,7 @@ export default function TrashListScreen<
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
       <View style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 4 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {navigation.canGoBack() ? (
             <Pressable
               onPress={() => navigation.goBack()}
@@ -602,7 +602,7 @@ export default function TrashListScreen<
           <Text
             style={{
               fontSize: 28,
-              fontWeight: '700',
+              fontWeight: "700",
               letterSpacing: -0.02,
               color: fg,
             }}
@@ -626,8 +626,8 @@ export default function TrashListScreen<
         <View
           style={{
             flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: "center",
+            justifyContent: "center",
             paddingHorizontal: 24,
           }}
         >
@@ -639,9 +639,9 @@ export default function TrashListScreen<
           <Text
             style={{
               marginTop: 16,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 20,
-              fontWeight: '700',
+              fontWeight: "700",
               color: muted,
             }}
           >
@@ -650,7 +650,7 @@ export default function TrashListScreen<
           <Text
             style={{
               marginTop: 4,
-              textAlign: 'center',
+              textAlign: "center",
               fontSize: 14,
               color: muted,
             }}
@@ -708,11 +708,11 @@ export default function TrashListScreen<
       {/* Toast */}
       <Toast
         visible={toastMessage !== null}
-        message={toastMessage ?? ''}
+        message={toastMessage ?? ""}
         type={toastType}
         onDismiss={() => {
           setToastMessage(null);
-          setToastType('success');
+          setToastType("success");
         }}
       />
     </View>

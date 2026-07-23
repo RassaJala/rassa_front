@@ -1,14 +1,14 @@
-import { getColors } from '~/constants/colors';
-import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from "~/constants/colors";
+import { useTheme } from "~/providers/ThemeProvider";
 
-import { ProfileChangePassword } from '~/components/profile/ProfileChangePassword';
-import { ProfileForm } from '~/components/profile/ProfileForm';
-import { ProfileView } from '~/components/profile/ProfileView';
+import { ProfileChangePassword } from "~/components/profile/ProfileChangePassword";
+import { ProfileForm } from "~/components/profile/ProfileForm";
+import { ProfileView } from "~/components/profile/ProfileView";
 import {
-    usePasswordChange,
-    useProfileCatalog,
-    useProfileData,
-} from '~/components/profile/hooks';
+  usePasswordChange,
+  useProfileCatalog,
+  useProfileData,
+} from "~/components/profile/hooks";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -16,7 +16,7 @@ import {
 
 export function ProfileComponent() {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const isDark = resolved === "dark";
   const colors = getColors(isDark);
   const { fg, muted, border, surface, bg, coral } = colors;
 
@@ -26,16 +26,16 @@ export function ProfileComponent() {
 
   const btnStyle = {
     height: 40,
-    padding: '0 18px',
+    padding: "0 18px",
     borderRadius: 10,
-    border: 'none',
+    border: "none",
     fontSize: 14,
     fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex',
-    alignItems: 'center',
+    fontFamily: "inherit",
+    cursor: "pointer",
+    letterSpacing: "0.01em",
+    display: "inline-flex",
+    alignItems: "center",
     gap: 6,
   } as const;
 
@@ -45,11 +45,11 @@ export function ProfileComponent() {
       <div>
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: 20,
-            flexWrap: 'wrap',
+            flexWrap: "wrap",
             gap: 12,
           }}
         >
@@ -57,7 +57,7 @@ export function ProfileComponent() {
             style={{
               fontSize: 24,
               fontWeight: 700,
-              letterSpacing: '-0.01em',
+              letterSpacing: "-0.01em",
               color: fg,
             }}
           >
@@ -66,10 +66,10 @@ export function ProfileComponent() {
         </div>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '80px 0',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "80px 0",
             color: muted,
             fontSize: 14,
           }}
@@ -85,11 +85,11 @@ export function ProfileComponent() {
       {/* Header */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 20,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 12,
         }}
       >
@@ -97,7 +97,7 @@ export function ProfileComponent() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
@@ -106,7 +106,7 @@ export function ProfileComponent() {
         {!profile.editing && profile.profile && (
           <button
             onClick={profile.startEditing}
-            style={{ ...btnStyle, background: coral, color: '#fff' }}
+            style={{ ...btnStyle, background: coral, color: "#fff" }}
           >
             Editar perfil
           </button>
@@ -121,18 +121,18 @@ export function ProfileComponent() {
           border: `1px solid ${border}`,
           padding: 24,
           maxWidth: 672,
-          margin: '0 auto',
+          margin: "0 auto",
         }}
       >
         {profile.error && (
           <div
             style={{
               borderRadius: 10,
-              border: '1px solid #fca5a5',
-              background: isDark ? '#451a1a' : '#fef2f2',
+              border: "1px solid #fca5a5",
+              background: isDark ? "#451a1a" : "#fef2f2",
               padding: 12,
               fontSize: 14,
-              color: isDark ? '#fca5a5' : '#dc2626',
+              color: isDark ? "#fca5a5" : "#dc2626",
               marginBottom: 16,
             }}
           >
@@ -144,11 +144,11 @@ export function ProfileComponent() {
           <div
             style={{
               borderRadius: 10,
-              border: '1px solid #86efac',
-              background: isDark ? '#052e16' : '#f0fdf4',
+              border: "1px solid #86efac",
+              background: isDark ? "#052e16" : "#f0fdf4",
               padding: 12,
               fontSize: 14,
-              color: isDark ? '#86efac' : '#16a34a',
+              color: isDark ? "#86efac" : "#16a34a",
               marginBottom: 16,
             }}
           >
@@ -176,12 +176,12 @@ export function ProfileComponent() {
         ) : !profile.profile ? (
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               gap: 16,
-              padding: '40px 0',
-              textAlign: 'center',
+              padding: "40px 0",
+              textAlign: "center",
             }}
           >
             <p style={{ color: muted, fontSize: 14 }}>
@@ -189,7 +189,7 @@ export function ProfileComponent() {
             </p>
             <button
               onClick={profile.fetchProfile}
-              style={{ ...btnStyle, background: coral, color: '#fff' }}
+              style={{ ...btnStyle, background: coral, color: "#fff" }}
             >
               Reintentar
             </button>
@@ -208,10 +208,10 @@ export function ProfileComponent() {
             border: `1px solid ${border}`,
             padding: 24,
             maxWidth: 672,
-            margin: '16px auto 0',
+            margin: "16px auto 0",
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <ProfileChangePassword
               currentPassword={password.currentPassword}
               newPassword={password.newPassword}
@@ -230,10 +230,10 @@ export function ProfileComponent() {
               onClick={password.closePasswordSection}
               style={{
                 ...btnStyle,
-                background: 'transparent',
+                background: "transparent",
                 border: `1.5px solid ${border}`,
                 color: fg,
-                alignSelf: 'flex-end',
+                alignSelf: "flex-end",
               }}
             >
               Cerrar
@@ -246,7 +246,7 @@ export function ProfileComponent() {
           <div
             style={{
               maxWidth: 672,
-              margin: '16px auto 0',
+              margin: "16px auto 0",
             }}
           >
             <button
@@ -254,7 +254,7 @@ export function ProfileComponent() {
               onClick={() => password.setShowPasswordSection(true)}
               style={{
                 ...btnStyle,
-                background: 'transparent',
+                background: "transparent",
                 border: `1.5px solid ${border}`,
                 color: fg,
               }}

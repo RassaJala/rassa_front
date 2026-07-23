@@ -1,6 +1,6 @@
 /* globals console, setTimeout -- Required for React Native logging and timers */
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 import React, {
   createContext,
   useCallback,
@@ -9,13 +9,13 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import type { AxiosError } from 'axios';
-import axios from 'axios';
+import type { AxiosError } from "axios";
+import axios from "axios";
 
-import api, { registerAuthExpiredCallback } from '@/services/api';
-import * as Storage from '@/services/storage';
+import api, { registerAuthExpiredCallback } from "@/services/api";
+import * as Storage from "@/services/storage";
 import type {
   ApiResponse,
   ChangePasswordPayload,
@@ -23,7 +23,7 @@ import type {
   UpdateProfilePayload,
   User,
   UserRole,
-} from '@/types';
+} from "@/types";
 
 interface BackendUser {
   id_usuario: number;
@@ -45,8 +45,8 @@ interface LoginResponse {
   refresh: string;
 }
 
-const AUTH_LOGIN_ENDPOINT = '/token/';
-const AUTH_PROFILE_ENDPOINT = '/auth/me/';
+const AUTH_LOGIN_ENDPOINT = "/token/";
+const AUTH_PROFILE_ENDPOINT = "/auth/me/";
 
 const ACCESS_TOKEN_KEY = Storage.ACCESS_TOKEN_KEY;
 const REFRESH_TOKEN_KEY = Storage.REFRESH_TOKEN_KEY;
@@ -73,24 +73,24 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ROLE_MAP: Record<string, UserRole> = {
-  admin: 'admin',
-  administrator: 'admin',
-  administrador: 'admin',
+  admin: "admin",
+  administrator: "admin",
+  administrador: "admin",
 
-  farmer: 'farmer',
-  agricultor: 'farmer',
-  productor: 'farmer',
+  farmer: "farmer",
+  agricultor: "farmer",
+  productor: "farmer",
 
-  seller: 'seller',
-  vendedor: 'seller',
+  seller: "seller",
+  vendedor: "seller",
 
-  buyer: 'buyer',
-  cliente: 'buyer',
-  comprador: 'buyer',
+  buyer: "buyer",
+  cliente: "buyer",
+  comprador: "buyer",
 };
 
 function normalizeRole(role?: string): UserRole {
-  const normalized = role?.toLowerCase() ?? '';
+  const normalized = role?.toLowerCase() ?? "";
 
   const mappedRole = ROLE_MAP[normalized];
 
@@ -100,7 +100,7 @@ function normalizeRole(role?: string): UserRole {
 
   const message =
     `Rol de usuario inválido o no reconocido: "${role}". ` +
-    'Denegando acceso para evitar puerta trasera.';
+    "Denegando acceso para evitar puerta trasera.";
 
   console.warn(message);
 
@@ -108,7 +108,7 @@ function normalizeRole(role?: string): UserRole {
 }
 
 function mapBackendUser(user: Readonly<BackendUser>): User {
-  const nombre = user.nombre ?? '';
+  const nombre = user.nombre ?? "";
 
   const [firstName, ...lastNameParts] = nombre.trim().split(/\s+/);
 
@@ -119,41 +119,41 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
     id_usuario: user.id_usuario,
     telefono: user.telefono,
     role: normalizeRole(user.role),
-    first_name: firstName ?? '',
-    last_name: lastNameParts.join(' '),
-    nombre: user.nombre ?? '',
-    apellido_paterno: user.apellido_paterno ?? '',
+    first_name: firstName ?? "",
+    last_name: lastNameParts.join(" "),
+    nombre: user.nombre ?? "",
+    apellido_paterno: user.apellido_paterno ?? "",
     apellido_materno: user.apellido_materno,
-    fecha_nacimiento: user.fecha_nacimiento ?? '',
-    genero: user.genero ?? '',
-    direccion: user.direccion ?? '',
+    fecha_nacimiento: user.fecha_nacimiento ?? "",
+    genero: user.genero ?? "",
+    direccion: user.direccion ?? "",
     localidad: user.localidad ?? 0,
     localidad_nombre: user.localidad_nombre,
   };
 }
 
 function extractErrorMessage(data: unknown): string | null {
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== "object") {
     return null;
   }
   const dict = data as Record<string, unknown>;
-  if (typeof dict.detail === 'string') return dict.detail;
-  if (typeof dict.message === 'string') return dict.message;
+  if (typeof dict.detail === "string") return dict.detail;
+  if (typeof dict.message === "string") return dict.message;
   if (Array.isArray(dict.non_field_errors)) {
-    return dict.non_field_errors.join(' ');
+    return dict.non_field_errors.join(" ");
   }
 
   // Iterate over all fields to find any validation errors (which are strings or arrays of strings)
   for (const [field, value] of Object.entries(dict)) {
     if (
-      field === 'detail' ||
-      field === 'message' ||
-      field === 'non_field_errors'
+      field === "detail" ||
+      field === "message" ||
+      field === "non_field_errors"
     ) {
       continue;
     }
-    if (typeof value === 'string') return value;
-    if (Array.isArray(value)) return value.join(' ');
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value.join(" ");
   }
 
   return null;
@@ -161,19 +161,19 @@ function extractErrorMessage(data: unknown): string | null {
 
 function parseAuthError(
   axiosError: Readonly<AxiosError<Record<string, unknown>>>,
-  context: 'login' | 'register' | 'updateProfile' | 'changePassword',
+  context: "login" | "register" | "updateProfile" | "changePassword",
 ): string {
   const status = axiosError.response?.status;
   const data = axiosError.response?.data;
 
   if (status === 429) {
-    return 'Límite de peticiones excedido. Inténtalo más tarde.';
+    return "Límite de peticiones excedido. Inténtalo más tarde.";
   }
   if (status === 502 || status === 503 || status === 504) {
-    return 'El servidor no está disponible temporalmente. Inténtalo más tarde.';
+    return "El servidor no está disponible temporalmente. Inténtalo más tarde.";
   }
 
-  if (typeof data === 'string') {
+  if (typeof data === "string") {
     return data;
   }
 
@@ -183,14 +183,14 @@ function parseAuthError(
   }
 
   if (status === 401) {
-    return context === 'login'
-      ? 'Credenciales inválidas.'
-      : 'Sesión expirada o no autorizada.';
+    return context === "login"
+      ? "Credenciales inválidas."
+      : "Sesión expirada o no autorizada.";
   }
-  if (status === 403) return 'Acceso denegado.';
-  if (status === 500) return 'Error interno del servidor. Inténtalo más tarde.';
+  if (status === 403) return "Acceso denegado.";
+  if (status === 500) return "Error interno del servidor. Inténtalo más tarde.";
 
-  return 'Error de conexión con el servidor.';
+  return "Error de conexión con el servidor.";
 }
 
 function sanitizeAxiosError(error: AxiosError): {
@@ -275,7 +275,7 @@ export function AuthProvider({
       const isNetworkError = axios.isAxiosError(error) && !error.response;
 
       if (!isNetworkError) {
-        logSafeError('Error al restaurar sesión:', error);
+        logSafeError("Error al restaurar sesión:", error);
         await clearSession();
         return;
       }
@@ -293,7 +293,7 @@ export function AuthProvider({
         }
 
         logSafeError(
-          'Restauración de sesión falló después del reintento.',
+          "Restauración de sesión falló después del reintento.",
           retryError,
         );
 
@@ -345,7 +345,7 @@ export function AuthProvider({
 
         if (!data?.access || !data?.refresh) {
           throw new Error(
-            'La respuesta del backend no incluyó los tokens de autenticación.',
+            "La respuesta del backend no incluyó los tokens de autenticación.",
           );
         }
 
@@ -368,12 +368,12 @@ export function AuthProvider({
         if (axios.isAxiosError(error)) {
           const message = parseAuthError(
             error as AxiosError<Record<string, unknown>>,
-            'login',
+            "login",
           );
 
           const safe = sanitizeAxiosError(error);
 
-          console.error('Login falló:', safe);
+          console.error("Login falló:", safe);
 
           throw new Error(message, { cause: error });
         }
@@ -382,7 +382,7 @@ export function AuthProvider({
           throw new Error(error.message, { cause: error });
         }
 
-        throw new Error('Error desconocido de autenticación', { cause: error });
+        throw new Error("Error desconocido de autenticación", { cause: error });
       }
     },
     [fetchUserProfile],
@@ -391,7 +391,7 @@ export function AuthProvider({
   const register = useCallback(async (payload: RegisterPayload) => {
     // Prevent double submission
     if (isRegisteringRef.current) {
-      throw new Error('Ya hay un registro en curso. Por favor, espera.');
+      throw new Error("Ya hay un registro en curso. Por favor, espera.");
     }
 
     // Set registering flag
@@ -415,7 +415,7 @@ export function AuthProvider({
 
       const { data: responseBody } = await api.post<
         ApiResponse<BackendUser & { access: string; refresh: string }>
-      >('/auth/register/', {
+      >("/auth/register/", {
         email,
         password,
         telefono,
@@ -432,7 +432,7 @@ export function AuthProvider({
       const user = responseBody.data;
 
       if (!user?.access || !user?.refresh) {
-        throw new Error('La respuesta del backend no incluyó los tokens.');
+        throw new Error("La respuesta del backend no incluyó los tokens.");
       }
 
       await Promise.all([
@@ -454,7 +454,7 @@ export function AuthProvider({
       setState((prev) => ({ ...prev, isRegistering: false }));
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
-        const message = parseAuthError(axiosError, 'register');
+        const message = parseAuthError(axiosError, "register");
 
         throw new Error(message, { cause: error });
       }
@@ -467,7 +467,7 @@ export function AuthProvider({
   const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
     try {
       const { data: responseBody } = await api.patch<ApiResponse<BackendUser>>(
-        '/auth/me/',
+        "/auth/me/",
         payload,
       );
 
@@ -480,7 +480,7 @@ export function AuthProvider({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
-        const message = parseAuthError(axiosError, 'updateProfile');
+        const message = parseAuthError(axiosError, "updateProfile");
 
         throw new Error(message, { cause: error });
       }
@@ -490,11 +490,11 @@ export function AuthProvider({
 
   const changePassword = useCallback(async (payload: ChangePasswordPayload) => {
     try {
-      await api.post('/auth/change-password/', payload);
+      await api.post("/auth/change-password/", payload);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<Record<string, unknown>>;
-        const message = parseAuthError(axiosError, 'changePassword');
+        const message = parseAuthError(axiosError, "changePassword");
 
         throw new Error(message, { cause: error });
       }
@@ -536,7 +536,7 @@ export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
 
   if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
 
   return ctx;

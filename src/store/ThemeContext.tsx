@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 import React, {
   createContext,
   useCallback,
@@ -6,17 +6,17 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from 'react';
-import { useColorScheme } from 'react-native';
+} from "react";
+import { useColorScheme } from "react-native";
 
-import { useColorScheme as useNativewindScheme } from 'nativewind';
+import { useColorScheme as useNativewindScheme } from "nativewind";
 
-import * as Storage from '@/services/storage';
+import * as Storage from "@/services/storage";
 
-const THEME_STORAGE_KEY = 'color_scheme_preference';
+const THEME_STORAGE_KEY = "color_scheme_preference";
 
-type ThemePreference = 'light' | 'dark' | 'system';
-type ResolvedScheme = 'light' | 'dark';
+type ThemePreference = "light" | "dark" | "system";
+type ResolvedScheme = "light" | "dark";
 
 interface ThemeContextValue {
   colorScheme: ResolvedScheme;
@@ -34,7 +34,7 @@ export function ThemeProvider({
   const osScheme = useColorScheme(); // React Native — sigue al OS automáticamente
   const { setColorScheme: setNativewindScheme } = useNativewindScheme();
 
-  const [preference, setPreference] = useState<ThemePreference>('system');
+  const [preference, setPreference] = useState<ThemePreference>("system");
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function ThemeProvider({
 
       if (cancelled) return;
 
-      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+      if (saved === "light" || saved === "dark" || saved === "system") {
         setPreference(saved);
       }
 
@@ -61,22 +61,22 @@ export function ThemeProvider({
 
   // Sincroniza NativeWind cuando cambia la preferencia o el OS
   useEffect(() => {
-    if (preference === 'system') {
-      setNativewindScheme(osScheme ?? 'light');
+    if (preference === "system") {
+      setNativewindScheme(osScheme ?? "light");
     } else {
       setNativewindScheme(preference);
     }
   }, [preference, osScheme, setNativewindScheme]);
 
   const resolvedScheme: ResolvedScheme = useMemo(() => {
-    if (preference === 'system') {
-      return (osScheme as ResolvedScheme) ?? 'light';
+    if (preference === "system") {
+      return (osScheme as ResolvedScheme) ?? "light";
     }
     return preference;
   }, [preference, osScheme]);
 
   const toggleColorScheme = useCallback(() => {
-    const next: ResolvedScheme = resolvedScheme === 'dark' ? 'light' : 'dark';
+    const next: ResolvedScheme = resolvedScheme === "dark" ? "light" : "dark";
     setPreference(next);
     void Storage.setItemAsync(THEME_STORAGE_KEY, next);
   }, [resolvedScheme]);
@@ -112,7 +112,7 @@ export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
 
   if (!ctx) {
-    throw new Error('useTheme debe usarse dentro de un ThemeProvider');
+    throw new Error("useTheme debe usarse dentro de un ThemeProvider");
   }
 
   return ctx;

@@ -3,12 +3,12 @@ export const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const MIN_PASSWORD_LENGTH = 6;
 
 export function cleanName(val: string): string {
-  return val.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  return val.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, "");
 }
 
 export function cleanPhoneNumber(val: string): string {
-  const digits = val.replace(/\D/g, '');
-  if (val.trim().startsWith('+')) {
+  const digits = val.replace(/\D/g, "");
+  if (val.trim().startsWith("+")) {
     return digits.slice(0, 12);
   }
   return digits.slice(0, 10);
@@ -16,9 +16,9 @@ export function cleanPhoneNumber(val: string): string {
 
 export function formatPhoneNumber(val: string): string {
   const cleaned = cleanPhoneNumber(val);
-  const hasPlus = val.trim().startsWith('+');
+  const hasPlus = val.trim().startsWith("+");
   if (cleaned.length === 0) {
-    return hasPlus ? '+' : '';
+    return hasPlus ? "+" : "";
   }
 
   if (cleaned.length <= 3) {
@@ -37,15 +37,15 @@ export function formatPhoneNumber(val: string): string {
 }
 
 export function cleanAddress(val: string): string {
-  return val.replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  return val.replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, "");
 }
 
 export function isAdult(birthDate: string): boolean {
   if (!DATE_REGEX.test(birthDate)) return false;
-  const parts = birthDate.split('-');
-  const year = parseInt(parts[0] || '0', 10);
-  const month = parseInt(parts[1] || '0', 10) - 1;
-  const day = parseInt(parts[2] || '0', 10);
+  const parts = birthDate.split("-");
+  const year = parseInt(parts[0] || "0", 10);
+  const month = parseInt(parts[1] || "0", 10) - 1;
+  const day = parseInt(parts[2] || "0", 10);
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - month;
@@ -57,17 +57,17 @@ export function isAdult(birthDate: string): boolean {
 
 export function validateEmail(email: string): string | null {
   if (!email.trim()) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
   if (!EMAIL_REGEX.test(email)) {
-    return 'Ingresa un correo electrónico válido.';
+    return "Ingresa un correo electrónico válido.";
   }
   return null;
 }
 
 export function validatePassword(password: string): string | null {
   if (!password) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
   if (password.length < MIN_PASSWORD_LENGTH) {
     return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
@@ -78,10 +78,10 @@ export function validatePassword(password: string): string | null {
 export function validatePhone(phone: string): string | null {
   const cleaned = cleanPhoneNumber(phone);
   if (!cleaned) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
   if (cleaned.length !== 10 && cleaned.length !== 12) {
-    return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
+    return "El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).";
   }
   return null;
 }
@@ -91,13 +91,13 @@ export function validateBirthdate(
   customMsg?: string,
 ): string | null {
   if (!dateStr.trim()) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
   if (!DATE_REGEX.test(dateStr)) {
-    return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
+    return "La fecha de nacimiento debe tener el formato AAAA-MM-DD.";
   }
   if (!isAdult(dateStr)) {
-    return customMsg || 'Debes ser mayor de 18 años.';
+    return customMsg || "Debes ser mayor de 18 años.";
   }
   return null;
 }
@@ -143,7 +143,7 @@ export function validateRegistrationForm({
   if (fechaNacimiento.trim()) {
     const birthdateErr = validateBirthdate(
       fechaNacimiento,
-      customAgeMsg || 'Debes ser mayor de 18 años para registrarte.',
+      customAgeMsg || "Debes ser mayor de 18 años para registrarte.",
     );
     if (birthdateErr) return birthdateErr;
   }
@@ -158,7 +158,7 @@ export function validateRegistrationForm({
     !domicilio.trim() ||
     localidadId === null
   ) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
 
   return null;

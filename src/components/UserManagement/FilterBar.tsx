@@ -1,8 +1,8 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React from "react";
+import { Pressable, Text, View } from "react-native";
 
-import { ROLE_FILTERS, STATUS_FILTERS } from '@/constants/roles';
-import { useTheme } from '@/store/ThemeContext';
+import { ROLE_FILTERS, STATUS_FILTERS } from "@/constants/roles";
+import { useTheme } from "@/store/ThemeContext";
 
 interface FilterBarProps {
   roleFilter: string;
@@ -18,12 +18,12 @@ export default function FilterBar({
   onStatusFilterChange,
 }: FilterBarProps): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const chipBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const iconWhite = '#FFFFFF';
+  const isDark = colorScheme === "dark";
+  const muted = isDark ? "#9DA89D" : "#5E6B5E";
+  const border = isDark ? "#353D35" : "#E2E6DF";
+  const brand = isDark ? "#4A8A63" : "#24563C";
+  const chipBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const iconWhite = "#FFFFFF";
 
   return (
     <View>
@@ -32,24 +32,24 @@ export default function FilterBar({
         <Text
           style={{
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: "600",
             letterSpacing: 0.08,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             color: muted,
             marginBottom: 6,
           }}
         >
           Rol
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {ROLE_FILTERS.map((opt) => {
             const isSelected =
-              opt.value === null ? roleFilter === '' : roleFilter === opt.value;
+              opt.value === null ? roleFilter === "" : roleFilter === opt.value;
 
             return (
               <Pressable
                 key={String(opt.value)}
-                onPress={() => onRoleFilterChange(opt.value ?? '')}
+                onPress={() => onRoleFilterChange(opt.value ?? "")}
                 style={{
                   backgroundColor: isSelected ? brand : chipBg,
                   borderRadius: 999,
@@ -60,7 +60,7 @@ export default function FilterBar({
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: '500',
+                    fontWeight: "500",
                     color: isSelected ? iconWhite : muted,
                   }}
                 >
@@ -82,26 +82,26 @@ export default function FilterBar({
         <Text
           style={{
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: "600",
             letterSpacing: 0.08,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             color: muted,
             marginBottom: 6,
           }}
         >
           Estado
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {STATUS_FILTERS.map((opt) => {
             const isSelected =
               opt.value === null
-                ? statusFilter === ''
+                ? statusFilter === ""
                 : statusFilter === opt.value;
 
             return (
               <Pressable
                 key={String(opt.value)}
-                onPress={() => onStatusFilterChange(opt.value ?? '')}
+                onPress={() => onStatusFilterChange(opt.value ?? "")}
                 style={{
                   backgroundColor: isSelected ? brand : chipBg,
                   borderRadius: 999,
@@ -112,7 +112,7 @@ export default function FilterBar({
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: '500',
+                    fontWeight: "500",
                     color: isSelected ? iconWhite : muted,
                   }}
                 >

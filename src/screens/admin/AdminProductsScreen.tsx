@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -10,13 +10,13 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
 
-import { useTheme } from '@/store/ThemeContext';
+import { useTheme } from "@/store/ThemeContext";
 
 type AdminTabParamList = {
   AdminProducts: undefined;
@@ -37,42 +37,42 @@ let nextId = 6;
 const initialProducts: Product[] = [
   {
     id: 1,
-    name: 'Tomate orgánico',
-    price: '45.00',
-    stock: '200 kg',
-    category: 'Hortalizas',
+    name: "Tomate orgánico",
+    price: "45.00",
+    stock: "200 kg",
+    category: "Hortalizas",
     estado: true,
   },
   {
     id: 2,
-    name: 'Zanahoria premium',
-    price: '28.00',
-    stock: '150 kg',
-    category: 'Hortalizas',
+    name: "Zanahoria premium",
+    price: "28.00",
+    stock: "150 kg",
+    category: "Hortalizas",
     estado: true,
   },
   {
     id: 3,
-    name: 'Lechuga iceberg',
-    price: '35.00',
-    stock: '300 unid',
-    category: 'Hortalizas',
+    name: "Lechuga iceberg",
+    price: "35.00",
+    stock: "300 unid",
+    category: "Hortalizas",
     estado: true,
   },
   {
     id: 4,
-    name: 'Maíz dulce',
-    price: '60.00',
-    stock: '100 m',
-    category: 'Cereales',
+    name: "Maíz dulce",
+    price: "60.00",
+    stock: "100 m",
+    category: "Cereales",
     estado: true,
   },
   {
     id: 5,
-    name: 'Frijoles negros',
-    price: '32.00',
-    stock: '500 kg',
-    category: 'Legumbres',
+    name: "Frijoles negros",
+    price: "32.00",
+    stock: "500 kg",
+    category: "Legumbres",
     estado: true,
   },
 ];
@@ -115,13 +115,13 @@ function CategoryPickerModal({
               activeOpacity={0.7}
               className={`rounded-xl px-2 py-3.5 ${
                 selected === cat
-                  ? 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
-                  : 'bg-transparent'
+                  ? "bg-brand-green-forest/7 dark:bg-brand-green-forest/12"
+                  : "bg-transparent"
               }`}
             >
               <Text
                 className={`text-base text-brand-ink dark:text-gray-100 ${
-                  selected === cat ? 'font-semibold' : 'font-normal'
+                  selected === cat ? "font-semibold" : "font-normal"
                 }`}
               >
                 {cat}
@@ -153,13 +153,13 @@ function ToggleConfirmModal({
       <Pressable className="flex-1 bg-black/40" onPress={onClose} />
       <View
         className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900"
-        style={{ marginTop: 'auto' }}
+        style={{ marginTop: "auto" }}
       >
         <View className="mb-4 items-center">
           <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
             <MaterialCommunityIcons
               name={
-                target?.estado ? 'pause-circle-outline' : 'play-circle-outline'
+                target?.estado ? "pause-circle-outline" : "play-circle-outline"
               }
               size={26}
               color="#DE393A"
@@ -172,8 +172,8 @@ function ToggleConfirmModal({
           </Text>
           <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado
-              ? 'El producto se moverá a la papelera.'
-              : 'El producto volverá a estar activo.'}
+              ? "El producto se moverá a la papelera."
+              : "El producto volverá a estar activo."}
           </Text>
         </View>
         <View className="gap-2.5">
@@ -186,7 +186,7 @@ function ToggleConfirmModal({
             className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
           >
             <Text className="text-base font-semibold text-white">
-              {target?.estado ? 'Desactivar' : 'Activar'}
+              {target?.estado ? "Desactivar" : "Activar"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -225,7 +225,7 @@ function DeleteConfirmModal({
       <Pressable className="flex-1 bg-black/40" onPress={onClose} />
       <View
         className="rounded-3xl bg-white p-6 pb-[34px] dark:bg-gray-900"
-        style={{ marginTop: 'auto' }}
+        style={{ marginTop: "auto" }}
       >
         <View className="mb-4 items-center">
           <View className="mb-3 h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30">
@@ -242,8 +242,8 @@ function DeleteConfirmModal({
           </Text>
           <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado === false
-              ? 'Esta acción no se puede deshacer.'
-              : 'El producto se moverá a la papelera.'}
+              ? "Esta acción no se puede deshacer."
+              : "El producto se moverá a la papelera."}
           </Text>
         </View>
         <View className="gap-2.5">
@@ -262,8 +262,8 @@ function DeleteConfirmModal({
           >
             <Text className="text-base font-semibold text-white">
               {target?.estado === false
-                ? 'Eliminar permanentemente'
-                : 'Desactivar'}
+                ? "Eliminar permanentemente"
+                : "Desactivar"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -283,18 +283,18 @@ function DeleteConfirmModal({
 
 export default function AdminProductsScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const isDark = colorScheme === "dark";
+  const brand = isDark ? "#4A8A63" : "#24563C";
+  const muted = isDark ? "#9DA89D" : "#5E6B5E";
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [tab, setTab] = useState<"list" | "form">("list");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formValues, setFormValues] = useState({
-    name: '',
-    price: '',
-    stock: '',
-    category: '',
+    name: "",
+    price: "",
+    stock: "",
+    category: "",
   });
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [toggleTarget, setToggleTarget] = useState<Product | null>(null);
@@ -310,9 +310,9 @@ export default function AdminProductsScreen(): React.JSX.Element {
     useNavigation<BottomTabNavigationProp<AdminTabParamList>>();
 
   useEffect(() => {
-    return navigation.addListener('tabPress', () => {
+    return navigation.addListener("tabPress", () => {
       setShowTrash(false);
-      setTab('list');
+      setTab("list");
     });
   }, [navigation]);
 
@@ -320,12 +320,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
   const inactiveProducts = products.filter((p) => !p.estado);
   const displayProducts = showTrash ? inactiveProducts : activeProducts;
 
-  const isFormActive = tab === 'form';
+  const isFormActive = tab === "form";
 
   function startNew() {
     setEditingProduct(null);
-    setFormValues({ name: '', price: '', stock: '', category: '' });
-    setTab('form');
+    setFormValues({ name: "", price: "", stock: "", category: "" });
+    setTab("form");
   }
 
   function startEdit(product: Product) {
@@ -336,11 +336,11 @@ export default function AdminProductsScreen(): React.JSX.Element {
       stock: product.stock,
       category: product.category,
     });
-    setTab('form');
+    setTab("form");
   }
 
   function switchToList() {
-    setTab('list');
+    setTab("list");
     setEditingProduct(null);
   }
 
@@ -400,16 +400,16 @@ export default function AdminProductsScreen(): React.JSX.Element {
   function renderCard(item: Product) {
     const isTrash = !item.estado;
     const iconName = isTrash
-      ? ('delete-restore' as const)
-      : ('package-variant' as const);
-    const iconColor = isTrash ? '#F2A900' : brand;
+      ? ("delete-restore" as const)
+      : ("package-variant" as const);
+    const iconColor = isTrash ? "#F2A900" : brand;
     return (
       <View className="flex-row items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
         <View
           className={`h-10 w-10 items-center justify-center rounded-full ${
             isTrash
-              ? 'bg-brand-orange/10'
-              : 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
+              ? "bg-brand-orange/10"
+              : "bg-brand-green-forest/7 dark:bg-brand-green-forest/12"
           }`}
         >
           <MaterialCommunityIcons name={iconName} size={20} color={iconColor} />
@@ -475,7 +475,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
             >
               <MaterialCommunityIcons
                 name={
-                  item.estado ? 'pause-circle-outline' : 'play-circle-outline'
+                  item.estado ? "pause-circle-outline" : "play-circle-outline"
                 }
                 size={16}
                 color={muted}
@@ -531,15 +531,15 @@ export default function AdminProductsScreen(): React.JSX.Element {
               switchToList();
             }}
             className={`flex-1 items-center rounded-lg py-2 ${
-              isFormActive ? 'bg-transparent' : 'bg-white dark:bg-gray-900'
+              isFormActive ? "bg-transparent" : "bg-white dark:bg-gray-900"
             }`}
             activeOpacity={0.7}
           >
             <Text
               className={`text-[13px] font-semibold tracking-wide ${
                 isFormActive
-                  ? 'text-gray-400 dark:text-gray-500'
-                  : 'text-brand-ink dark:text-gray-100'
+                  ? "text-gray-400 dark:text-gray-500"
+                  : "text-brand-ink dark:text-gray-100"
               }`}
             >
               📋 Lista
@@ -551,15 +551,15 @@ export default function AdminProductsScreen(): React.JSX.Element {
               startNew();
             }}
             className={`flex-1 items-center rounded-lg py-2 ${
-              isFormActive ? 'bg-white dark:bg-gray-900' : 'bg-transparent'
+              isFormActive ? "bg-white dark:bg-gray-900" : "bg-transparent"
             }`}
             activeOpacity={0.7}
           >
             <Text
               className={`text-[13px] font-semibold tracking-wide ${
                 isFormActive
-                  ? 'text-brand-ink dark:text-gray-100'
-                  : 'text-gray-400 dark:text-gray-500'
+                  ? "text-brand-ink dark:text-gray-100"
+                  : "text-gray-400 dark:text-gray-500"
               }`}
             >
               ➕ Nuevo
@@ -573,7 +573,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
   function renderForm() {
     return (
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
         <ScrollView
@@ -581,7 +581,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
           keyboardShouldPersistTaps="handled"
         >
           <Text className="text-lg font-bold text-brand-ink dark:text-gray-100">
-            {editingProduct ? 'Editar producto' : 'Nuevo producto'}
+            {editingProduct ? "Editar producto" : "Nuevo producto"}
           </Text>
 
           <View className="gap-1.5">
@@ -610,11 +610,11 @@ export default function AdminProductsScreen(): React.JSX.Element {
               <Text
                 className={`text-[15px] ${
                   formValues.category
-                    ? 'text-brand-ink dark:text-gray-100'
-                    : 'text-gray-400 dark:text-gray-500'
+                    ? "text-brand-ink dark:text-gray-100"
+                    : "text-gray-400 dark:text-gray-500"
                 }`}
               >
-                {formValues.category || 'Seleccionar…'}
+                {formValues.category || "Seleccionar…"}
               </Text>
               <MaterialCommunityIcons
                 name="chevron-down"
@@ -678,17 +678,17 @@ export default function AdminProductsScreen(): React.JSX.Element {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <MaterialCommunityIcons
-          name={showTrash ? 'delete-restore' : 'package-variant'}
+          name={showTrash ? "delete-restore" : "package-variant"}
           size={64}
           color={muted}
         />
         <Text className="mt-4 text-center text-xl font-bold text-gray-400 dark:text-gray-500">
-          {showTrash ? 'No hay productos en la papelera' : 'No hay productos'}
+          {showTrash ? "No hay productos en la papelera" : "No hay productos"}
         </Text>
         <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
           {showTrash
-            ? 'Los productos desactivados aparecerán aquí.'
-            : 'Agregá un producto para comenzar.'}
+            ? "Los productos desactivados aparecerán aquí."
+            : "Agregá un producto para comenzar."}
         </Text>
       </View>
     );

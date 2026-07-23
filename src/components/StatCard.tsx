@@ -1,7 +1,7 @@
-import React from 'react';
-import { Text, View } from 'react-native';
+import React from "react";
+import { Text, View } from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface StatCardProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -28,7 +28,7 @@ export default function StatCard({
     <View
       style={{
         flex: 1,
-        alignItems: 'center',
+        alignItems: "center",
         backgroundColor: surface,
         borderRadius: 16,
         borderWidth: 1,
@@ -42,8 +42,8 @@ export default function StatCard({
           width: 44,
           height: 44,
           borderRadius: 14,
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: "center",
+          justifyContent: "center",
           backgroundColor: iconBg,
           marginBottom: 10,
         }}
@@ -53,7 +53,7 @@ export default function StatCard({
       <Text
         style={{
           fontSize: 22,
-          fontWeight: '700',
+          fontWeight: "700",
           letterSpacing: -0.2,
           color: iconColor,
         }}
@@ -63,9 +63,9 @@ export default function StatCard({
       <Text
         style={{
           fontSize: 13,
-          fontWeight: '600',
+          fontWeight: "600",
           letterSpacing: 0.06,
-          textTransform: 'uppercase',
+          textTransform: "uppercase",
           color: muted,
           marginTop: 4,
         }}

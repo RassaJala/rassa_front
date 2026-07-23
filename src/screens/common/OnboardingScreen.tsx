@@ -1,30 +1,30 @@
 /* globals require -- React Native module resolution */
 
-import React, { useEffect, useRef, useState } from 'react';
-import type { ImageSourcePropType } from 'react-native';
-import { Animated, Image, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import React, { useEffect, useRef, useState } from "react";
+import type { ImageSourcePropType } from "react-native";
+import { Animated, Image, Text, View } from "react-native";
+import { Button } from "react-native-paper";
 
-import { colors } from '@/constants/colors';
+import { colors } from "@/constants/colors";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- require() retorna any en React Native; el tipo se declara explícitamente.
-const logo: ImageSourcePropType = require('../../../assets/logo-rassa.jpeg');
+const logo: ImageSourcePropType = require("../../../assets/logo-rassa.jpeg");
 
 const slides = [
   {
-    title: 'Bienvenido a RASSA JALA',
+    title: "Bienvenido a RASSA JALA",
     description:
-      'Una plataforma que conecta productores agrícolas con compradores.',
+      "Una plataforma que conecta productores agrícolas con compradores.",
   },
   {
-    title: 'Compra productos frescos',
+    title: "Compra productos frescos",
     description:
-      'Encuentra productos agrícolas publicados directamente por productores.',
+      "Encuentra productos agrícolas publicados directamente por productores.",
   },
   {
-    title: 'Publica y vende tu cosecha',
+    title: "Publica y vende tu cosecha",
     description:
-      'Los agricultores pueden mostrar sus productos y administrar sus publicaciones.',
+      "Los agricultores pueden mostrar sus productos y administrar sus publicaciones.",
   },
 ] as const;
 
@@ -100,8 +100,8 @@ export default function OnboardingScreen({
               key={slide.title}
               className={`mx-1 rounded-full ${
                 index === current
-                  ? 'h-3 w-10 bg-brand-red-coral'
-                  : 'h-3 w-3 bg-gray-300 dark:bg-gray-600'
+                  ? "h-3 w-10 bg-brand-red-coral"
+                  : "h-3 w-3 bg-gray-300 dark:bg-gray-600"
               }`}
             />
           ))}
@@ -115,7 +115,7 @@ export default function OnboardingScreen({
           onPress={goToNext}
           className="w-56 rounded-full"
         >
-          {current === slides.length - 1 ? 'Comenzar' : 'Siguiente'}
+          {current === slides.length - 1 ? "Comenzar" : "Siguiente"}
         </Button>
 
         {/* Omitir */}

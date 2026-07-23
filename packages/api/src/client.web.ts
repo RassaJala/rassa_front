@@ -1,7 +1,7 @@
 // packages/api/src/client.web.ts
 
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import axios from "axios";
+import axiosRetry from "axios-retry";
 
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
@@ -10,8 +10,8 @@ const SERVER_ERROR_THRESHOLD = 500;
 
 function resolveBaseURL(): string {
   // Web environment - always use localhost as per original pattern
-  const baseURL = 'http://localhost:8000/api';
-  const trimmed = baseURL.replace(/\/$/, '');
+  const baseURL = "http://localhost:8000/api";
+  const trimmed = baseURL.replace(/\/$/, "");
   return trimmed;
 }
 
@@ -21,8 +21,8 @@ const api = axios.create({
   baseURL,
   timeout: API_TIMEOUT_MS,
   headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
@@ -34,7 +34,7 @@ axiosRetry(api, {
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
           error.response.status >= SERVER_ERROR_THRESHOLD)) &&
-      error.config?.method !== 'post'
+      error.config?.method !== "post"
     );
   },
 });

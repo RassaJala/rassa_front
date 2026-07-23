@@ -1,17 +1,17 @@
-import React from 'react';
+import React from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
+} from "react-native";
+import { Button, SegmentedButtons, TextInput } from "react-native-paper";
 
-import CatalogSelector from '@/components/CatalogSelector';
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
-import type { Localidad, Municipio } from '@/types';
-import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
+import CatalogSelector from "@/components/CatalogSelector";
+import { BRAND_RED_CORAL } from "@/constants/brandColors";
+import type { Localidad, Municipio } from "@/types";
+import { cleanAddress, cleanName, formatPhoneNumber } from "@/utils/validation";
 
 export interface ProfileFormFields {
   readonly nombre: string;
@@ -24,8 +24,8 @@ export interface ProfileFormFields {
   readonly setTelefono: (val: string) => void;
   readonly fechaNacimiento: string;
   readonly setFechaNacimiento: (val: string) => void;
-  readonly sexo: 'M' | 'F' | 'O';
-  readonly setSexo: (val: 'M' | 'F' | 'O') => void;
+  readonly sexo: "M" | "F" | "O";
+  readonly setSexo: (val: "M" | "F" | "O") => void;
   readonly domicilio: string;
   readonly setDomicilio: (val: string) => void;
 }
@@ -129,9 +129,9 @@ export default function ProfileEditTab({
         value={form.sexo}
         onValueChange={form.setSexo}
         buttons={[
-          { value: 'M', label: 'Masculino' },
-          { value: 'F', label: 'Femenino' },
-          { value: 'O', label: 'Otro' },
+          { value: "M", label: "Masculino" },
+          { value: "F", label: "Femenino" },
+          { value: "O", label: "Otro" },
         ]}
         style={styles.segmentedButtons}
       />
@@ -172,7 +172,7 @@ export default function ProfileEditTab({
         className="mt-4 rounded-lg"
         contentStyle={styles.buttonContent}
       >
-        {isSubmitting ? <ActivityIndicator color="#fff" /> : 'Guardar Cambios'}
+        {isSubmitting ? <ActivityIndicator color="#fff" /> : "Guardar Cambios"}
       </Button>
     </View>
   );

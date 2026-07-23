@@ -1,6 +1,6 @@
 /* global setTimeout, clearTimeout -- RN timer functions not in ESLint env */
-import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useRef } from "react";
+import { Animated, Pressable, Text, View } from "react-native";
 
 // ── Animation constants ────────────────────────────────────
 const DISPLAY_DURATION = 4000;
@@ -11,7 +11,7 @@ const SLIDE_DISTANCE = 50;
 interface ToastProps {
   readonly visible: boolean;
   readonly message: string;
-  readonly type?: 'success' | 'error' | 'info';
+  readonly type?: "success" | "error" | "info";
   readonly duration?: number;
   readonly onDismiss: () => void;
 }
@@ -19,7 +19,7 @@ interface ToastProps {
 export default function Toast({
   visible,
   message,
-  type = 'success',
+  type = "success",
   duration = DISPLAY_DURATION,
   onDismiss,
 }: ToastProps): React.JSX.Element | null {
@@ -66,11 +66,11 @@ export default function Toast({
   if (!visible) return null;
 
   const bgClass =
-    type === 'success'
-      ? 'bg-brand-green-forest'
-      : type === 'error'
-        ? 'bg-brand-red-coral'
-        : 'bg-gray-800 dark:bg-gray-700';
+    type === "success"
+      ? "bg-brand-green-forest"
+      : type === "error"
+        ? "bg-brand-red-coral"
+        : "bg-gray-800 dark:bg-gray-700";
 
   return (
     <View className="pointer-events-box-none absolute bottom-24 left-4 right-4 z-50">

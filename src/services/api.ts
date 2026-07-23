@@ -1,10 +1,10 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
+import axiosRetry from "axios-retry";
 
-import * as Storage from './storage';
+import * as Storage from "./storage";
 
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
@@ -13,7 +13,7 @@ const SERVER_ERROR_THRESHOLD = 500;
 const REFRESH_TIMEOUT_MS = 8_000;
 
 // Endpoints where we never attempt token refresh (login, refresh themselves)
-const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
+const AUTH_ENDPOINTS = ["/token/", "/token/refresh/"];
 
 function resolveBaseURL(): string {
   // On web, always use localhost (browser runs on the same machine as the server).
@@ -21,22 +21,22 @@ function resolveBaseURL(): string {
   // eslint-disable-next-line no-undef, @typescript-eslint/no-unsafe-assignment -- process is injected by expo
   const envUrl: string | undefined = process.env.EXPO_PUBLIC_API_URL;
   const configured =
-    Platform.OS === 'web'
-      ? 'http://localhost:8000'
-      : (envUrl ?? 'http://localhost:8000');
-  const trimmed = configured.replace(/\/$/, '');
+    Platform.OS === "web"
+      ? "http://localhost:8000"
+      : (envUrl ?? "http://localhost:8000");
+  const trimmed = configured.replace(/\/$/, "");
 
-  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 }
 
 const baseURL = resolveBaseURL();
 
 // Guard: reject HTTP in production to prevent credential leakage
 // eslint-disable-next-line no-undef -- process is injected by expo
-if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
+if (baseURL.startsWith("http://") && process.env.NODE_ENV === "production") {
   throw new Error(
-    'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +
-      'Unencrypted HTTP exposes authentication tokens to network interception.',
+    "EXPO_PUBLIC_API_URL must use HTTPS in production. " +
+      "Unencrypted HTTP exposes authentication tokens to network interception.",
   );
 }
 
@@ -44,8 +44,8 @@ const api = axios.create({
   baseURL,
   timeout: API_TIMEOUT_MS,
   headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
@@ -57,7 +57,7 @@ axiosRetry(api, {
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
           error.response.status >= SERVER_ERROR_THRESHOLD)) &&
-      error.config?.method !== 'post'
+      error.config?.method !== "post"
     );
   },
 });
@@ -98,14 +98,14 @@ async function refreshTokens(): Promise<string> {
 
   refreshPromise = (async () => {
     const refreshToken = await Storage.getItemAsync(Storage.REFRESH_TOKEN_KEY);
-    if (!refreshToken) throw new Error('No refresh token available');
+    if (!refreshToken) throw new Error("No refresh token available");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
 
     try {
       const res = await api.post<{ access: string; refresh: string }>(
-        '/token/refresh/',
+        "/token/refresh/",
         { refresh: refreshToken },
         { signal: controller.signal },
       );
@@ -164,7 +164,7 @@ api.interceptors.response.use(
     }
 
     // Auth endpoints themselves (login, refresh) — clear tokens, notify, no retry
-    if (AUTH_ENDPOINTS.includes(originalRequest.url ?? '')) {
+    if (AUTH_ENDPOINTS.includes(originalRequest.url ?? "")) {
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
@@ -201,9 +201,9 @@ export default api;
 
 export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const base = baseURL.replace(/\/api\/?$/, '');
+  if (path.startsWith("http")) return path;
+  const base = baseURL.replace(/\/api\/?$/, "");
   // ponytail: sanitizar path para evitar traversal (#34)
-  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
+  const clean = path.replace(/\.\./g, "").replace(/^\/+/, "/");
   return `${base}${clean}`;
 }

@@ -1,14 +1,14 @@
-import React from 'react';
-import { Text, View } from 'react-native';
+import React from "react";
+import { Text, View } from "react-native";
 
-import { useTheme } from '@/store/ThemeContext';
+import { useTheme } from "@/store/ThemeContext";
 
 export default function AdminDashboardScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
 
-  const isDark = colorScheme === 'dark';
-  const surface = isDark ? '#111827' : '#FFFFFF';
-  const borderColor = isDark ? '#374151' : 'transparent';
+  const isDark = colorScheme === "dark";
+  const surface = isDark ? "#111827" : "#FFFFFF";
+  const borderColor = isDark ? "#374151" : "transparent";
   const card = {
     backgroundColor: surface,
     borderRadius: 12,
@@ -30,8 +30,8 @@ export default function AdminDashboardScreen(): React.JSX.Element {
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-        <View style={[card, { flexBasis: '48%' }]}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
+        <View style={[card, { flexBasis: "48%" }]}>
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Productos
           </Text>
@@ -40,7 +40,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           </Text>
         </View>
 
-        <View style={[card, { flexBasis: '48%' }]}>
+        <View style={[card, { flexBasis: "48%" }]}>
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Usuarios
           </Text>
@@ -49,7 +49,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           </Text>
         </View>
 
-        <View style={[card, { flexBasis: '48%' }]}>
+        <View style={[card, { flexBasis: "48%" }]}>
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Pedidos
           </Text>
@@ -58,7 +58,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           </Text>
         </View>
 
-        <View style={[card, { flexBasis: '48%' }]}>
+        <View style={[card, { flexBasis: "48%" }]}>
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Ingresos
           </Text>

@@ -1,18 +1,18 @@
-import React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Button } from 'react-native-paper';
+import React from "react";
+import type { StyleProp, ViewStyle } from "react-native";
+import { Button } from "react-native-paper";
 
-import { useAuth } from '@/store/AuthContext';
+import { useAuth } from "@/store/AuthContext";
 
 interface LogoutButtonProps {
   readonly mode?:
-    'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal';
+    "text" | "outlined" | "contained" | "elevated" | "contained-tonal";
   readonly style?: StyleProp<ViewStyle>;
   readonly testID?: string;
 }
 
 export default function LogoutButton({
-  mode = 'outlined',
+  mode = "outlined",
   style,
   testID,
 }: LogoutButtonProps): React.JSX.Element {

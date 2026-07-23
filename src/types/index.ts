@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
+export type UserRole = "admin" | "seller" | "farmer" | "buyer";
 
 export interface User {
   id: number;
@@ -23,7 +23,7 @@ export interface User {
   localidad_nombre?: string | null;
 }
 
-export type RegisterRole = 'buyer' | 'farmer' | 'seller';
+export type RegisterRole = "buyer" | "farmer" | "seller";
 
 export interface RegisterPayload {
   email: string;
@@ -34,7 +34,7 @@ export interface RegisterPayload {
   apellido_paterno: string;
   apellido_materno: string | null;
   fecha_nacimiento: string;
-  sexo: 'M' | 'F' | 'O';
+  sexo: "M" | "F" | "O";
   domicilio: string;
   fk_localidad: number;
 }
@@ -45,7 +45,7 @@ export interface UpdateProfilePayload {
   apellido_materno: string | null;
   telefono: string;
   fecha_nacimiento: string;
-  sexo: 'M' | 'F' | 'O';
+  sexo: "M" | "F" | "O";
   domicilio: string;
   fk_localidad: number;
 }
@@ -87,7 +87,7 @@ export interface Producto {
 export interface Order {
   id: number;
   buyer: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   total: string;
   items: OrderItem[];
   created_at: string;

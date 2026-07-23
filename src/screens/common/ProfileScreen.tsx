@@ -1,33 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SegmentedButtons } from 'react-native-paper';
+import React, { useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SegmentedButtons } from "react-native-paper";
 
-import { useNetInfo } from '@react-native-community/netinfo';
-import * as Sentry from '@sentry/react-native';
-import axios from 'axios';
+import { useNetInfo } from "@react-native-community/netinfo";
+import * as Sentry from "@sentry/react-native";
+import axios from "axios";
 
-import DatePickerModal from '@/components/DatePickerModal';
+import DatePickerModal from "@/components/DatePickerModal";
 import type {
   ProfileFormFields,
   ProfileLocationFields,
-} from '@/components/Profile/ProfileEditTab';
-import ProfileEditTab from '@/components/Profile/ProfileEditTab';
-import ProfilePasswordTab from '@/components/Profile/ProfilePasswordTab';
-import ProfileViewTab from '@/components/Profile/ProfileViewTab';
-import { colors } from '@/constants/colors';
-import { useCatalogs } from '@/hooks/useCatalogs';
-import { useAuth } from '@/store/AuthContext';
-import { useTheme } from '@/store/ThemeContext';
-import { getRoleLabel } from '@/utils/labels';
+} from "@/components/Profile/ProfileEditTab";
+import ProfileEditTab from "@/components/Profile/ProfileEditTab";
+import ProfilePasswordTab from "@/components/Profile/ProfilePasswordTab";
+import ProfileViewTab from "@/components/Profile/ProfileViewTab";
+import { colors } from "@/constants/colors";
+import { useCatalogs } from "@/hooks/useCatalogs";
+import { useAuth } from "@/store/AuthContext";
+import { useTheme } from "@/store/ThemeContext";
+import { getRoleLabel } from "@/utils/labels";
 import {
   cleanPhoneNumber,
   formatPhoneNumber,
   validateBirthdate,
   validatePassword,
   validatePhone,
-} from '@/utils/validation';
+} from "@/utils/validation";
 
-type ActiveTab = 'ver' | 'editar' | 'password';
+type ActiveTab = "ver" | "editar" | "password";
 
 const PASSWORD_CHANGE_LOGOUT_DELAY_MS = 2000;
 
@@ -47,7 +47,7 @@ function validateProfileEdit(
     !domicilio.trim() ||
     localidadId === null
   ) {
-    return 'Por favor, completa todos los campos obligatorios.';
+    return "Por favor, completa todos los campos obligatorios.";
   }
 
   const phoneErr = validatePhone(rawTelefono);
@@ -65,20 +65,20 @@ function validatePasswordChange(
   confirmPass: string,
 ): string | null {
   if (!oldPass || !newPass || !confirmPass) {
-    return 'Por favor, completa todos los campos.';
+    return "Por favor, completa todos los campos.";
   }
 
   const newPassErr = validatePassword(newPass);
   if (newPassErr) {
-    return 'La nueva contraseña debe tener al menos 6 caracteres.';
+    return "La nueva contraseña debe tener al menos 6 caracteres.";
   }
 
   if (newPass !== confirmPass) {
-    return 'La confirmación de la contraseña no coincide.';
+    return "La confirmación de la contraseña no coincide.";
   }
 
   if (oldPass === newPass) {
-    return 'La nueva contraseña debe ser diferente a la actual.';
+    return "La nueva contraseña debe ser diferente a la actual.";
   }
 
   return null;
@@ -86,18 +86,18 @@ function validatePasswordChange(
 
 function getPasswordChangeErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error) && error.response?.status === 401) {
-    return 'Sesión expirada o no autorizada.';
+    return "Sesión expirada o no autorizada.";
   }
 
   return error instanceof Error
     ? error.message
-    : 'Error al cambiar contraseña.';
+    : "Error al cambiar contraseña.";
 }
 
 export default function ProfileScreen(): React.JSX.Element {
   const { user, updateProfile, changePassword, logout } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const netInfo = useNetInfo();
   const isMounted = useRef(true);
 
@@ -108,31 +108,31 @@ export default function ProfileScreen(): React.JSX.Element {
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('ver');
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ver");
 
-  const [nombre, setNombre] = useState(user?.nombre ?? '');
+  const [nombre, setNombre] = useState(user?.nombre ?? "");
   const [apellidoPaterno, setApellidoPaterno] = useState(
-    user?.apellido_paterno ?? '',
+    user?.apellido_paterno ?? "",
   );
   const [apellidoMaterno, setApellidoMaterno] = useState(
-    user?.apellido_materno ?? '',
+    user?.apellido_materno ?? "",
   );
   const [telefono, setTelefono] = useState(
-    formatPhoneNumber(user?.telefono ?? ''),
+    formatPhoneNumber(user?.telefono ?? ""),
   );
   const [fechaNacimiento, setFechaNacimiento] = useState(
-    user?.fecha_nacimiento ?? '',
+    user?.fecha_nacimiento ?? "",
   );
-  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>(
-    (user?.genero as 'M' | 'F' | 'O') ?? 'M',
+  const [sexo, setSexo] = useState<"M" | "F" | "O">(
+    (user?.genero as "M" | "F" | "O") ?? "M",
   );
-  const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
+  const [domicilio, setDomicilio] = useState(user?.direccion ?? "");
 
   const catalog = useCatalogs(
     user?.localidad ?? null,
     user?.localidad ?? null,
-    '',
-    user?.localidad_nombre ?? '',
+    "",
+    user?.localidad_nombre ?? "",
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,9 +140,9 @@ export default function ProfileScreen(): React.JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   // eslint-disable-next-line no-undef -- setTimeout is global in RN
   const logoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -160,16 +160,16 @@ export default function ProfileScreen(): React.JSX.Element {
 
   useEffect(() => {
     if (user) {
-      setNombre(user.nombre ?? '');
-      setApellidoPaterno(user.apellido_paterno ?? '');
-      setApellidoMaterno(user.apellido_materno ?? '');
-      setTelefono(formatPhoneNumber(user.telefono ?? ''));
-      setFechaNacimiento(user.fecha_nacimiento ?? '');
-      setSexo((user.genero as 'M' | 'F' | 'O') ?? 'M');
-      setDomicilio(user.direccion ?? '');
+      setNombre(user.nombre ?? "");
+      setApellidoPaterno(user.apellido_paterno ?? "");
+      setApellidoMaterno(user.apellido_materno ?? "");
+      setTelefono(formatPhoneNumber(user.telefono ?? ""));
+      setFechaNacimiento(user.fecha_nacimiento ?? "");
+      setSexo((user.genero as "M" | "F" | "O") ?? "M");
+      setDomicilio(user.direccion ?? "");
       if (user.localidad) {
         catalog.setLocalidadId(user.localidad);
-        catalog.setLocalidadNombre(user.localidad_nombre ?? '');
+        catalog.setLocalidadNombre(user.localidad_nombre ?? "");
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- user is the only meaningful dependency; catalog and setters are stable references
@@ -181,7 +181,7 @@ export default function ProfileScreen(): React.JSX.Element {
     setErrorMessage(null);
 
     if (netInfo.isConnected === false) {
-      setErrorMessage('Sin conexión a Internet.');
+      setErrorMessage("Sin conexión a Internet.");
       return;
     }
 
@@ -216,14 +216,14 @@ export default function ProfileScreen(): React.JSX.Element {
 
       await updateProfile(payload);
       if (isMounted.current) {
-        setSuccessMessage('Perfil actualizado exitosamente.');
+        setSuccessMessage("Perfil actualizado exitosamente.");
       }
     } catch (error) {
       if (isMounted.current) {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : 'Error al actualizar perfil.',
+            : "Error al actualizar perfil.",
         );
       }
       Sentry.captureException(error);
@@ -240,7 +240,7 @@ export default function ProfileScreen(): React.JSX.Element {
     setErrorMessage(null);
 
     if (netInfo.isConnected === false) {
-      setErrorMessage('Sin conexión a Internet.');
+      setErrorMessage("Sin conexión a Internet.");
       return;
     }
 
@@ -265,7 +265,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
       if (isMounted.current) {
         setSuccessMessage(
-          'Contraseña cambiada exitosamente. Cerrando sesión...',
+          "Contraseña cambiada exitosamente. Cerrando sesión...",
         );
       }
       // eslint-disable-next-line no-undef -- setTimeout is global in RN
@@ -332,7 +332,7 @@ export default function ProfileScreen(): React.JSX.Element {
         <View
           style={{
             marginBottom: 24,
-            alignItems: 'center',
+            alignItems: "center",
             borderRadius: 16,
             borderWidth: 1,
             borderColor: border,
@@ -346,8 +346,8 @@ export default function ProfileScreen(): React.JSX.Element {
               width: 64,
               height: 64,
               borderRadius: 32,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               backgroundColor: surface,
               borderWidth: 2,
               borderColor: colors.brandRedCoral,
@@ -356,17 +356,17 @@ export default function ProfileScreen(): React.JSX.Element {
             <Text
               style={{
                 fontSize: 24,
-                fontWeight: '700',
+                fontWeight: "700",
                 color: colors.brandRedCoral,
               }}
             >
-              {user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'}
+              {user?.nombre ? user.nombre.charAt(0).toUpperCase() : "?"}
             </Text>
           </View>
           <Text
             style={{
               fontSize: 20,
-              fontWeight: '700',
+              fontWeight: "700",
               color: fg,
               letterSpacing: -0.3,
             }}
@@ -394,7 +394,7 @@ export default function ProfileScreen(): React.JSX.Element {
             <Text
               style={{
                 fontSize: 12,
-                fontWeight: '700',
+                fontWeight: "700",
                 color: colors.brandRedCoral,
               }}
             >
@@ -412,9 +412,9 @@ export default function ProfileScreen(): React.JSX.Element {
             setSuccessMessage(null);
           }}
           buttons={[
-            { value: 'ver', label: 'Ver' },
-            { value: 'editar', label: 'Editar' },
-            { value: 'password', label: 'Seguridad' },
+            { value: "ver", label: "Ver" },
+            { value: "editar", label: "Editar" },
+            { value: "password", label: "Seguridad" },
           ]}
           style={styles.tabsButtons}
         />
@@ -435,9 +435,9 @@ export default function ProfileScreen(): React.JSX.Element {
           >
             <Text
               style={{
-                textAlign: 'center',
+                textAlign: "center",
                 fontSize: 14,
-                fontWeight: '700',
+                fontWeight: "700",
                 color: brand,
               }}
             >
@@ -459,9 +459,9 @@ export default function ProfileScreen(): React.JSX.Element {
           >
             <Text
               style={{
-                textAlign: 'center',
+                textAlign: "center",
                 fontSize: 14,
-                fontWeight: '700',
+                fontWeight: "700",
                 color: colors.brandRedCoral,
               }}
             >
@@ -471,9 +471,9 @@ export default function ProfileScreen(): React.JSX.Element {
         ) : null}
 
         {/* Tab Contents */}
-        {activeTab === 'ver' && <ProfileViewTab user={user} />}
+        {activeTab === "ver" && <ProfileViewTab user={user} />}
 
-        {activeTab === 'editar' && (
+        {activeTab === "editar" && (
           <ProfileEditTab
             isSubmitting={isSubmitting}
             form={formFields}
@@ -488,7 +488,7 @@ export default function ProfileScreen(): React.JSX.Element {
           />
         )}
 
-        {activeTab === 'password' && (
+        {activeTab === "password" && (
           <ProfilePasswordTab
             isSubmitting={isSubmitting}
             oldPassword={oldPassword}

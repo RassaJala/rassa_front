@@ -16,12 +16,12 @@ pre-commit:
     - name: prettier
       # --check: solo verifica, no escribe. Si falla, el developer debe correr bun run format
       run: bunx prettier --config config/prettier.config.mjs --check {staged_files}
-      glob: '*.{ts,tsx,js,jsx,mjs,json,md,yml,yaml}'
+      glob: "*.{ts,tsx,js,jsx,mjs,json,md,yml,yaml}"
 
     - name: eslint
       # Sin --fix: solo verifica. Si falla, el developer debe correr bun run lint:fix
       run: bunx eslint -c config/eslint.config.ts {staged_files}
-      glob: '*.{ts,tsx}'
+      glob: "*.{ts,tsx}"
 
     - name: typecheck
       # Verifica que todos los tipos sean correctos

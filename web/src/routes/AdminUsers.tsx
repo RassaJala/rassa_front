@@ -1,14 +1,14 @@
 /* globals console */
-import { useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTheme } from '../providers/ThemeProvider';
-import api from '../services/api';
-import { Toast } from '../components/ui/Toast';
-import type { ToastState } from '../components/ui/Toast';
+import { useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "../providers/ThemeProvider";
+import api from "../services/api";
+import { Toast } from "../components/ui/Toast";
+import type { ToastState } from "../components/ui/Toast";
 
 // ── Types ────────────────────────────────────────────────
 
-type UserRole = 'admin' | 'farmer' | 'seller' | 'buyer';
+type UserRole = "admin" | "farmer" | "seller" | "buyer";
 
 interface User {
   id: number;
@@ -22,43 +22,43 @@ interface User {
 }
 
 const roleLabels: Record<UserRole, string> = {
-  admin: 'Admin',
-  farmer: 'Agricultor',
-  seller: 'Vendedor',
-  buyer: 'Cliente',
+  admin: "Admin",
+  farmer: "Agricultor",
+  seller: "Vendedor",
+  buyer: "Cliente",
 };
 
 const roleColors: Record<UserRole, string> = {
-  admin: '#DE393A',
-  farmer: '#16a34a',
-  seller: '#f59e0b',
-  buyer: '#3b82f6',
+  admin: "#DE393A",
+  farmer: "#16a34a",
+  seller: "#f59e0b",
+  buyer: "#3b82f6",
 };
 
 const ROLE_FILTERS = [
-  { label: 'Todos', value: '' },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Agricultor', value: 'Agricultor' },
-  { label: 'Vendedor', value: 'Vendedor' },
-  { label: 'Cliente', value: 'Cliente' },
+  { label: "Todos", value: "" },
+  { label: "Admin", value: "Admin" },
+  { label: "Agricultor", value: "Agricultor" },
+  { label: "Vendedor", value: "Vendedor" },
+  { label: "Cliente", value: "Cliente" },
 ] as const;
 
 const STATUS_FILTERS = [
-  { label: 'Todos', value: '' },
-  { label: 'Activos', value: 'true' },
-  { label: 'Inactivos', value: 'false' },
+  { label: "Todos", value: "" },
+  { label: "Activos", value: "true" },
+  { label: "Inactivos", value: "false" },
 ] as const;
 
 const ROLE_OPTIONS: { label: string; value: UserRole; color: string }[] = [
-  { label: 'Agricultor', value: 'farmer', color: '#16a34a' },
-  { label: 'Vendedor', value: 'seller', color: '#f59e0b' },
-  { label: 'Cliente', value: 'buyer', color: '#3b82f6' },
+  { label: "Agricultor", value: "farmer", color: "#16a34a" },
+  { label: "Vendedor", value: "seller", color: "#f59e0b" },
+  { label: "Cliente", value: "buyer", color: "#3b82f6" },
 ];
 
 function getFullName(u: User): string {
   return [u.nombre, u.apellido_paterno, u.apellido_materno]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 }
 
 // ponytail: single fetch wrapper, no service layer for now
@@ -66,7 +66,7 @@ function mapUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     nombre: raw.nombre as string,
-    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    apellido_paterno: (raw.apellido_paterno as string) ?? "",
     apellido_materno: (raw.apellido_materno as string | null) ?? null,
     email: raw.email as string,
     role: raw.role as UserRole,
@@ -92,15 +92,15 @@ async function fetchAllPages(
   const body = response.data;
   const payload =
     body &&
-    typeof body === 'object' &&
-    'data' in (body as Record<string, unknown>)
+    typeof body === "object" &&
+    "data" in (body as Record<string, unknown>)
       ? (body as Record<string, unknown>).data
       : body;
 
   const results: Record<string, unknown>[] =
     payload &&
-    typeof payload === 'object' &&
-    'results' in (payload as Record<string, unknown>)
+    typeof payload === "object" &&
+    "results" in (payload as Record<string, unknown>)
       ? (payload as { results: Record<string, unknown>[] }).results
       : Array.isArray(payload)
         ? (payload as Record<string, unknown>[])
@@ -109,7 +109,7 @@ async function fetchAllPages(
   const page = results.map(mapUser);
   const all = [...accumulated, ...page];
   const next =
-    payload && typeof payload === 'object'
+    payload && typeof payload === "object"
       ? ((payload as Record<string, unknown>).next as string | null)
       : null;
 
@@ -118,18 +118,18 @@ async function fetchAllPages(
 }
 
 async function fetchUsers(): Promise<User[]> {
-  return fetchAllPages('/admin/usuarios/', []);
+  return fetchAllPages("/admin/usuarios/", []);
 }
 
 async function fetchCurrentUser(): Promise<User> {
   const response = await api.get<{ data: Record<string, unknown> }>(
-    '/auth/me/',
+    "/auth/me/",
   );
   const raw = response.data.data;
   return {
     id: raw.id_usuario as number,
     nombre: raw.nombre as string,
-    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    apellido_paterno: (raw.apellido_paterno as string) ?? "",
     apellido_materno: (raw.apellido_materno as string | null) ?? null,
     email: raw.email as string,
     role: raw.role as UserRole,
@@ -146,7 +146,7 @@ function RolePill({ role }: { role: UserRole }) {
       style={{
         fontSize: 12,
         fontWeight: 600,
-        padding: '3px 10px',
+        padding: "3px 10px",
         borderRadius: 999,
         background: `${roleColors[role]}1A`,
         color: roleColors[role],
@@ -173,19 +173,19 @@ function StatusBadge({
       style={{
         fontSize: 12,
         fontWeight: 600,
-        padding: '3px 10px',
+        padding: "3px 10px",
         borderRadius: 6,
         background: active
           ? isDark
-            ? 'rgba(74,138,99,0.15)'
-            : 'rgba(36,86,60,0.07)'
+            ? "rgba(74,138,99,0.15)"
+            : "rgba(36,86,60,0.07)"
           : isDark
-            ? 'rgba(212,160,32,0.12)'
-            : 'rgba(242,169,0,0.1)',
-        color: active ? brand : '#F2A900',
+            ? "rgba(212,160,32,0.12)"
+            : "rgba(242,169,0,0.1)",
+        color: active ? brand : "#F2A900",
       }}
     >
-      {active ? 'Activo' : 'Inactivo'}
+      {active ? "Activo" : "Inactivo"}
     </span>
   );
 }
@@ -194,14 +194,14 @@ function StatusBadge({
 
 export function AdminUsers() {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#2A332A' : '#D6DAD4';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const isDark = resolved === "dark";
+  const fg = isDark ? "#E8EAE4" : "#2D3328";
+  const muted = isDark ? "#9DA89D" : "#5E6B5E";
+  const border = isDark ? "#2A332A" : "#D6DAD4";
+  const surface = isDark ? "#263028" : "#FFFFFF";
+  const bg = isDark ? "#1A211B" : "#F5F7F0";
+  const brand = isDark ? "#4A8A63" : "#24563C";
+  const coral = "#DE393A";
   const queryClient = useQueryClient();
 
   // ── Queries ──
@@ -211,11 +211,11 @@ export function AdminUsers() {
     isError,
     refetch,
   } = useQuery<User[]>({
-    queryKey: ['admin-users'],
+    queryKey: ["admin-users"],
     queryFn: fetchUsers,
   });
   const { data: currentUser } = useQuery<User>({
-    queryKey: ['current-user'],
+    queryKey: ["current-user"],
     queryFn: fetchCurrentUser,
     retry: false,
   });
@@ -224,12 +224,12 @@ export function AdminUsers() {
   // ── Toast ──
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  function showToast(message: string, type: 'success' | 'error') {
+  function showToast(message: string, type: "success" | "error") {
     setToast({ message, type });
   }
 
   // ── Mutations ──
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   const toggleMutation = useMutation({
     mutationFn: (userId: number) =>
@@ -238,19 +238,19 @@ export function AdminUsers() {
       setDeactTarget(null);
       const u = users.find((x) => x.id === userId);
       const name = u ? getFullName(u) : `#${userId}`;
-      const newState = u ? !u.estado : 'desconocido';
-      const label = newState ? 'activado' : 'desactivado';
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      showToast(`${name} fue ${label} correctamente`, 'success');
-      setErrorMessage('');
+      const newState = u ? !u.estado : "desconocido";
+      const label = newState ? "activado" : "desactivado";
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      showToast(`${name} fue ${label} correctamente`, "success");
+      setErrorMessage("");
     },
     onError: (err: unknown) => {
       const detail =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
           ?.detail ??
         (err as Error)?.message ??
-        'Error al cambiar estado';
-      showToast(detail, 'error');
+        "Error al cambiar estado";
+      showToast(detail, "error");
       setErrorMessage(detail);
     },
   });
@@ -261,19 +261,19 @@ export function AdminUsers() {
     onSuccess: (_data, { userId, role }) => {
       const u = users.find((x) => x.id === userId);
       const name = u ? getFullName(u) : `#${userId}`;
-      const oldRole = u ? roleLabels[u.role] : '?';
+      const oldRole = u ? roleLabels[u.role] : "?";
       const newRole = roleLabels[role];
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      showToast(`${name} cambió de ${oldRole} a ${newRole}`, 'success');
-      setErrorMessage('');
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      showToast(`${name} cambió de ${oldRole} a ${newRole}`, "success");
+      setErrorMessage("");
     },
     onError: (err: unknown) => {
       const detail =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
           ?.detail ??
         (err as Error)?.message ??
-        'Error al cambiar rol';
-      showToast(detail, 'error');
+        "Error al cambiar rol";
+      showToast(detail, "error");
       setErrorMessage(detail);
     },
   });
@@ -281,14 +281,14 @@ export function AdminUsers() {
   const PAGE_SIZE = 10;
 
   // ── State ──
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
   // Role change modal
   const [roleTarget, setRoleTarget] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole | ''>('');
+  const [selectedRole, setSelectedRole] = useState<UserRole | "">("");
 
   // Deactivation confirm
   const [deactTarget, setDeactTarget] = useState<User | null>(null);
@@ -318,8 +318,8 @@ export function AdminUsers() {
         if (roleLabel !== roleFilter) return false;
       }
 
-      if (statusFilter === 'true' && !u.estado) return false;
-      if (statusFilter === 'false' && u.estado) return false;
+      if (statusFilter === "true" && !u.estado) return false;
+      if (statusFilter === "false" && u.estado) return false;
 
       return true;
     });
@@ -336,10 +336,10 @@ export function AdminUsers() {
 
   function toggleStatus(user: User) {
     if (user.id === currentUserId) {
-      showToast('No puedes desactivar tu propia cuenta.', 'error');
+      showToast("No puedes desactivar tu propia cuenta.", "error");
       return;
     }
-    setErrorMessage('');
+    setErrorMessage("");
     if (user.estado) {
       setDeactTarget(user);
     } else {
@@ -349,7 +349,7 @@ export function AdminUsers() {
 
   function confirmDeactivation() {
     if (!deactTarget) return;
-    setErrorMessage('');
+    setErrorMessage("");
     toggleMutation.mutate(deactTarget.id);
   }
 
@@ -361,7 +361,7 @@ export function AdminUsers() {
   function saveRole() {
     if (!roleTarget || !selectedRole) return;
     if (roleTarget.id === currentUserId) {
-      showToast('No puedes cambiar tu propio rol.', 'error');
+      showToast("No puedes cambiar tu propio rol.", "error");
       closeRoleModal();
       return;
     }
@@ -369,7 +369,7 @@ export function AdminUsers() {
       closeRoleModal();
       return;
     }
-    setErrorMessage('');
+    setErrorMessage("");
     roleMutation.mutate({
       userId: roleTarget.id,
       role: selectedRole as UserRole,
@@ -379,13 +379,13 @@ export function AdminUsers() {
 
   function closeRoleModal() {
     setRoleTarget(null);
-    setSelectedRole('');
+    setSelectedRole("");
   }
 
   // ── Loading / Error ──
   if (isLoading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center', color: muted }}>
+      <div style={{ padding: 48, textAlign: "center", color: muted }}>
         Cargando usuarios…
       </div>
     );
@@ -393,22 +393,22 @@ export function AdminUsers() {
 
   if (isError) {
     return (
-      <div style={{ padding: 48, textAlign: 'center' }}>
+      <div style={{ padding: 48, textAlign: "center" }}>
         <p style={{ color: muted, marginBottom: 12 }}>
           Error al cargar usuarios.
         </p>
         <button
           onClick={() => refetch()}
           style={{
-            padding: '10px 20px',
+            padding: "10px 20px",
             borderRadius: 8,
-            border: 'none',
+            border: "none",
             background: brand,
-            color: '#fff',
+            color: "#fff",
             fontWeight: 600,
             fontSize: 14,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
+            cursor: "pointer",
+            fontFamily: "inherit",
           }}
         >
           Reintentar
@@ -419,31 +419,31 @@ export function AdminUsers() {
 
   const btnStyle = {
     height: 40,
-    padding: '0 18px',
+    padding: "0 18px",
     borderRadius: 10,
-    border: 'none',
+    border: "none",
     fontSize: 14,
     fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex' as const,
-    alignItems: 'center',
+    fontFamily: "inherit",
+    cursor: "pointer",
+    letterSpacing: "0.01em",
+    display: "inline-flex" as const,
+    alignItems: "center",
     gap: 6,
   };
 
   const inputStyle = (focused: boolean) => ({
-    width: '100%',
+    width: "100%",
     height: 44,
     border: `1.5px solid ${focused ? brand : border}`,
     borderRadius: 10,
-    padding: '0 14px',
+    padding: "0 14px",
     fontSize: 15,
-    fontFamily: 'inherit' as const,
+    fontFamily: "inherit" as const,
     background: bg,
     color: fg,
-    outline: 'none',
-    boxSizing: 'border-box' as const,
+    outline: "none",
+    boxSizing: "border-box" as const,
   });
 
   return (
@@ -453,11 +453,11 @@ export function AdminUsers() {
       {/* ═══ Header ═══ */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 20,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 12,
         }}
       >
@@ -465,7 +465,7 @@ export function AdminUsers() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
@@ -501,16 +501,16 @@ export function AdminUsers() {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
               color: muted,
-              display: 'block',
+              display: "block",
               marginBottom: 6,
             }}
           >
             Rol
           </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {ROLE_FILTERS.map((opt) => (
               <button
                 key={String(opt.value)}
@@ -518,12 +518,12 @@ export function AdminUsers() {
                 style={{
                   ...btnStyle,
                   height: 32,
-                  padding: '0 14px',
+                  padding: "0 14px",
                   borderRadius: 999,
                   background:
-                    roleFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
-                  color: roleFilter === opt.value ? '#fff' : muted,
-                  border: 'none',
+                    roleFilter === opt.value ? brand : "rgba(0,0,0,0.06)",
+                  color: roleFilter === opt.value ? "#fff" : muted,
+                  border: "none",
                 }}
               >
                 {opt.label}
@@ -532,7 +532,7 @@ export function AdminUsers() {
           </div>
         </div>
 
-        <div style={{ height: 1, background: border, margin: '12px 0' }} />
+        <div style={{ height: 1, background: border, margin: "12px 0" }} />
 
         {/* Status filters */}
         <div>
@@ -540,16 +540,16 @@ export function AdminUsers() {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
               color: muted,
-              display: 'block',
+              display: "block",
               marginBottom: 6,
             }}
           >
             Estado
           </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {STATUS_FILTERS.map((opt) => (
               <button
                 key={String(opt.value)}
@@ -557,12 +557,12 @@ export function AdminUsers() {
                 style={{
                   ...btnStyle,
                   height: 32,
-                  padding: '0 14px',
+                  padding: "0 14px",
                   borderRadius: 999,
                   background:
-                    statusFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
-                  color: statusFilter === opt.value ? '#fff' : muted,
-                  border: 'none',
+                    statusFilter === opt.value ? brand : "rgba(0,0,0,0.06)",
+                  color: statusFilter === opt.value ? "#fff" : muted,
+                  border: "none",
                 }}
               >
                 {opt.label}
@@ -576,10 +576,10 @@ export function AdminUsers() {
       {errorMessage && (
         <div
           style={{
-            padding: '12px 16px',
+            padding: "12px 16px",
             borderRadius: 10,
-            background: isDark ? 'rgba(222,57,58,0.12)' : '#FEF2F2',
-            border: `1px solid ${isDark ? 'rgba(222,57,58,0.3)' : '#FECACA'}`,
+            background: isDark ? "rgba(222,57,58,0.12)" : "#FEF2F2",
+            border: `1px solid ${isDark ? "rgba(222,57,58,0.3)" : "#FECACA"}`,
             color: coral,
             fontSize: 13,
             fontWeight: 500,
@@ -596,17 +596,17 @@ export function AdminUsers() {
           background: surface,
           borderRadius: 16,
           border: `1px solid ${border}`,
-          overflow: 'hidden',
+          overflow: "hidden",
         }}
       >
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '16px 20px',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 20px",
             borderBottom: `1px solid ${border}`,
-            flexWrap: 'wrap',
+            flexWrap: "wrap",
             gap: 8,
           }}
         >
@@ -614,21 +614,21 @@ export function AdminUsers() {
             {filtered.length} usuarios
           </span>
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {['Usuario', 'Email', 'Rol', 'Estado', 'Acciones'].map((h) => (
+                {["Usuario", "Email", "Rol", "Estado", "Acciones"].map((h) => (
                   <th
                     key={h}
                     style={{
-                      textAlign: 'left',
+                      textAlign: "left",
                       fontSize: 11,
                       color: muted,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       fontWeight: 600,
-                      padding: '12px 20px',
+                      padding: "12px 20px",
                       background: bg,
                       borderBottom: `1px solid ${border}`,
                     }}
@@ -644,8 +644,8 @@ export function AdminUsers() {
                   <td
                     colSpan={5}
                     style={{
-                      textAlign: 'center',
-                      padding: '48px 24px',
+                      textAlign: "center",
+                      padding: "48px 24px",
                       color: muted,
                       fontSize: 14,
                     }}
@@ -660,14 +660,14 @@ export function AdminUsers() {
                     <tr key={user.id} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
                         <div
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
+                            display: "flex",
+                            alignItems: "center",
                             gap: 10,
                           }}
                         >
@@ -676,9 +676,9 @@ export function AdminUsers() {
                               width: 36,
                               height: 36,
                               borderRadius: 10,
-                              background: isDark ? '#1C2D22' : '#E2F0E6',
-                              display: 'grid',
-                              placeItems: 'center',
+                              background: isDark ? "#1C2D22" : "#E2F0E6",
+                              display: "grid",
+                              placeItems: "center",
                               fontWeight: 600,
                               fontSize: 13,
                               color: brand,
@@ -694,8 +694,8 @@ export function AdminUsers() {
                                 fontSize: 14,
                                 fontWeight: 600,
                                 color: fg,
-                                display: 'flex',
-                                alignItems: 'center',
+                                display: "flex",
+                                alignItems: "center",
                                 gap: 6,
                               }}
                             >
@@ -705,14 +705,14 @@ export function AdminUsers() {
                                   style={{
                                     fontSize: 10,
                                     fontWeight: 600,
-                                    padding: '1px 6px',
+                                    padding: "1px 6px",
                                     borderRadius: 4,
                                     background: isDark
-                                      ? 'rgba(212,160,32,0.2)'
-                                      : '#FEF3C7',
-                                    color: isDark ? '#F2A900' : '#D97706',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
+                                      ? "rgba(212,160,32,0.2)"
+                                      : "#FEF3C7",
+                                    color: isDark ? "#F2A900" : "#D97706",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em",
                                   }}
                                 >
                                   tú
@@ -724,7 +724,7 @@ export function AdminUsers() {
                       </td>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           fontSize: 13,
                           color: muted,
                           borderBottom: `1px solid ${border}`,
@@ -734,7 +734,7 @@ export function AdminUsers() {
                       </td>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -742,7 +742,7 @@ export function AdminUsers() {
                       </td>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -754,15 +754,15 @@ export function AdminUsers() {
                       </td>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: 'flex', gap: 4 }}>
+                        <div style={{ display: "flex", gap: 4 }}>
                           <button
                             onClick={() => toggleStatus(user)}
                             disabled={isSelf || toggleMutation.isPending}
-                            aria-label={user.estado ? 'Desactivar' : 'Activar'}
+                            aria-label={user.estado ? "Desactivar" : "Activar"}
                             style={{
                               width: 32,
                               height: 32,
@@ -771,18 +771,18 @@ export function AdminUsers() {
                               background: surface,
                               cursor:
                                 isSelf || toggleMutation.isPending
-                                  ? 'not-allowed'
-                                  : 'pointer',
+                                  ? "not-allowed"
+                                  : "pointer",
                               fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
+                              display: "grid",
+                              placeItems: "center",
                               color:
                                 isSelf || toggleMutation.isPending ? muted : fg,
                               opacity:
                                 isSelf || toggleMutation.isPending ? 0.5 : 1,
                             }}
                           >
-                            {user.estado ? '⏸' : '▶️'}
+                            {user.estado ? "⏸" : "▶️"}
                           </button>
                           <button
                             onClick={() => openRoleModal(user)}
@@ -796,11 +796,11 @@ export function AdminUsers() {
                               background: surface,
                               cursor:
                                 isSelf || roleMutation.isPending
-                                  ? 'not-allowed'
-                                  : 'pointer',
+                                  ? "not-allowed"
+                                  : "pointer",
                               fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
+                              display: "grid",
+                              placeItems: "center",
                               color:
                                 isSelf || roleMutation.isPending
                                   ? muted
@@ -826,9 +826,9 @@ export function AdminUsers() {
       {totalPages > 1 && (
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
             gap: 6,
             marginTop: 16,
           }}
@@ -839,12 +839,12 @@ export function AdminUsers() {
             style={{
               ...btnStyle,
               height: 36,
-              padding: '0 14px',
+              padding: "0 14px",
               borderRadius: 8,
-              background: safePage <= 1 ? 'transparent' : surface,
+              background: safePage <= 1 ? "transparent" : surface,
               border: `1.5px solid ${border}`,
               color: safePage <= 1 ? muted : fg,
-              cursor: safePage <= 1 ? 'not-allowed' : 'pointer',
+              cursor: safePage <= 1 ? "not-allowed" : "pointer",
               opacity: safePage <= 1 ? 0.5 : 1,
               fontSize: 13,
             }}
@@ -861,13 +861,13 @@ export function AdminUsers() {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                border: 'none',
-                background: p === safePage ? brand : 'transparent',
-                color: p === safePage ? '#fff' : fg,
+                border: "none",
+                background: p === safePage ? brand : "transparent",
+                color: p === safePage ? "#fff" : fg,
                 fontWeight: p === safePage ? 700 : 500,
-                cursor: 'pointer',
+                cursor: "pointer",
                 fontSize: 13,
-                justifyContent: 'center',
+                justifyContent: "center",
               }}
             >
               {p}
@@ -880,12 +880,12 @@ export function AdminUsers() {
             style={{
               ...btnStyle,
               height: 36,
-              padding: '0 14px',
+              padding: "0 14px",
               borderRadius: 8,
-              background: safePage >= totalPages ? 'transparent' : surface,
+              background: safePage >= totalPages ? "transparent" : surface,
               border: `1.5px solid ${border}`,
               color: safePage >= totalPages ? muted : fg,
-              cursor: safePage >= totalPages ? 'not-allowed' : 'pointer',
+              cursor: safePage >= totalPages ? "not-allowed" : "pointer",
               opacity: safePage >= totalPages ? 0.5 : 1,
               fontSize: 13,
             }}
@@ -899,14 +899,14 @@ export function AdminUsers() {
       {roleTarget && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 50,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: "blur(4px)",
           }}
           onClick={closeRoleModal}
         >
@@ -916,9 +916,9 @@ export function AdminUsers() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 400,
-              width: '90%',
+              width: "90%",
               border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -933,26 +933,26 @@ export function AdminUsers() {
               Cambiar Rol
             </h3>
             <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
-              Usuario:{' '}
+              Usuario:{" "}
               <strong style={{ color: fg }}>{getFullName(roleTarget)}</strong>
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {ROLE_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     gap: 10,
-                    padding: '10px 14px',
+                    padding: "10px 14px",
                     borderRadius: 10,
                     background:
                       selectedRole === opt.value
                         ? `${opt.color}12`
-                        : 'transparent',
-                    border: `1.5px solid ${selectedRole === opt.value ? opt.color : 'transparent'}`,
-                    cursor: 'pointer',
+                        : "transparent",
+                    border: `1.5px solid ${selectedRole === opt.value ? opt.color : "transparent"}`,
+                    cursor: "pointer",
                   }}
                 >
                   <input
@@ -974,9 +974,9 @@ export function AdminUsers() {
 
             <div
               style={{
-                display: 'flex',
+                display: "flex",
                 gap: 10,
-                justifyContent: 'flex-end',
+                justifyContent: "flex-end",
                 marginTop: 24,
               }}
             >
@@ -984,15 +984,15 @@ export function AdminUsers() {
                 onClick={closeRoleModal}
                 style={{
                   height: 36,
-                  padding: '0 16px',
+                  padding: "0 16px",
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: 'transparent',
+                  background: "transparent",
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Cancelar
@@ -1001,15 +1001,15 @@ export function AdminUsers() {
                 onClick={saveRole}
                 style={{
                   height: 36,
-                  padding: '0 16px',
+                  padding: "0 16px",
                   borderRadius: 8,
-                  border: 'none',
+                  border: "none",
                   background: brand,
-                  color: '#fff',
+                  color: "#fff",
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Guardar
@@ -1023,14 +1023,14 @@ export function AdminUsers() {
       {deactTarget && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 50,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: "blur(4px)",
           }}
           onClick={() => setDeactTarget(null)}
         >
@@ -1040,9 +1040,9 @@ export function AdminUsers() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: '90%',
+              width: "90%",
               border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1057,28 +1057,28 @@ export function AdminUsers() {
               Confirmar desactivación
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 8 }}>
-              ¿Estás seguro de desactivar a{' '}
+              ¿Estás seguro de desactivar a{" "}
               <strong style={{ color: fg }}>{getFullName(deactTarget)}</strong>?
             </p>
             <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
               El usuario perderá acceso al sistema hasta que sea reactivado.
             </p>
             <div
-              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
             >
               <button
                 onClick={() => setDeactTarget(null)}
                 style={{
                   height: 36,
-                  padding: '0 16px',
+                  padding: "0 16px",
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: 'transparent',
+                  background: "transparent",
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Cancelar
@@ -1087,15 +1087,15 @@ export function AdminUsers() {
                 onClick={confirmDeactivation}
                 style={{
                   height: 36,
-                  padding: '0 16px',
+                  padding: "0 16px",
                   borderRadius: 8,
-                  border: '1.5px solid #DE393A',
-                  background: 'transparent',
-                  color: '#DE393A',
+                  border: "1.5px solid #DE393A",
+                  background: "transparent",
+                  color: "#DE393A",
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Desactivar

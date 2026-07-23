@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
+} from "react-native";
+import { Button, Dialog, Portal } from "react-native-paper";
 
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
-import type { Localidad, Municipio } from '@/types';
+import { BRAND_RED_CORAL } from "@/constants/brandColors";
+import type { Localidad, Municipio } from "@/types";
 
 interface CatalogSelectorProps {
   readonly selectedMunicipioId: number | null;
@@ -52,9 +52,9 @@ function MunicipioSelector({
       {errorMunicipios ? (
         <View className="mb-3 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
           <Text className="text-sm text-red-600 dark:text-red-400">
-            {errorMunicipios !== 'API Error'
+            {errorMunicipios !== "API Error"
               ? errorMunicipios
-              : 'Error al cargar municipios'}
+              : "Error al cargar municipios"}
           </Text>
           <TouchableOpacity onPress={() => void refetchMunicipios()}>
             <Text className="font-semibold text-red-700 dark:text-red-300">
@@ -78,11 +78,11 @@ function MunicipioSelector({
             <Text
               className={`text-base ${
                 selectedMunicipioNombre
-                  ? 'text-brand-ink dark:text-gray-100'
-                  : 'text-gray-400 dark:text-gray-500'
+                  ? "text-brand-ink dark:text-gray-100"
+                  : "text-gray-400 dark:text-gray-500"
               }`}
             >
-              {selectedMunicipioNombre || 'Seleccionar Municipio'}
+              {selectedMunicipioNombre || "Seleccionar Municipio"}
             </Text>
           )}
         </TouchableOpacity>
@@ -116,9 +116,9 @@ function LocalidadSelector({
       {selectedMunicipioId && errorLocalidades ? (
         <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
           <Text className="text-sm text-red-600 dark:text-red-400">
-            {errorLocalidades !== 'API Error'
+            {errorLocalidades !== "API Error"
               ? errorLocalidades
-              : 'Error al cargar localidades'}
+              : "Error al cargar localidades"}
           </Text>
           <TouchableOpacity onPress={() => void refetchLocalidades()}>
             <Text className="font-semibold text-red-700 dark:text-red-300">
@@ -142,11 +142,11 @@ function LocalidadSelector({
             <Text
               className={`text-base ${
                 localidadNombre
-                  ? 'text-brand-ink dark:text-gray-100'
-                  : 'text-gray-400 dark:text-gray-500'
+                  ? "text-brand-ink dark:text-gray-100"
+                  : "text-gray-400 dark:text-gray-500"
               }`}
             >
-              {localidadNombre || 'Seleccionar Localidad'}
+              {localidadNombre || "Seleccionar Localidad"}
             </Text>
           )}
         </TouchableOpacity>
@@ -193,7 +193,7 @@ export default function CatalogSelector({
         refetchLocalidades={refetchLocalidades}
         onPress={() => {
           if (!selectedMunicipioId) {
-            setErrorMessage('Selecciona primero un municipio.');
+            setErrorMessage("Selecciona primero un municipio.");
             return;
           }
           setShowLocalidadDialog(true);

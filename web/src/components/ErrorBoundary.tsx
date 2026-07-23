@@ -1,5 +1,5 @@
-import { Component } from 'react';
-import type { ErrorInfo, ReactNode } from 'react';
+import { Component } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -35,22 +35,22 @@ export class ErrorBoundary extends Component<
       event.preventDefault();
       this.setState({ hasError: true });
     };
-    window.addEventListener('error', this.errorHandler);
-    window.addEventListener('unhandledrejection', this.rejectionHandler);
+    window.addEventListener("error", this.errorHandler);
+    window.addEventListener("unhandledrejection", this.rejectionHandler);
   }
 
   override componentWillUnmount(): void {
     if (this.errorHandler) {
-      window.removeEventListener('error', this.errorHandler);
+      window.removeEventListener("error", this.errorHandler);
     }
     if (this.rejectionHandler) {
-      window.removeEventListener('unhandledrejection', this.rejectionHandler);
+      window.removeEventListener("unhandledrejection", this.rejectionHandler);
     }
   }
 
   override componentDidCatch(error: Error, _errorInfo: ErrorInfo) {
     // ponytail: sanitize — only log message, not stack/user data
-    console.error('[ErrorBoundary]', error.message);
+    console.error("[ErrorBoundary]", error.message);
   }
 
   override render() {

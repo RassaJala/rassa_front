@@ -1,6 +1,6 @@
-import { useAppColors } from '../hooks/useAppColors';
+import { useAppColors } from "../hooks/useAppColors";
 
-const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const weekDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
@@ -8,59 +8,59 @@ export function AdminDashboard() {
   const { fg, muted, border, surface, brand, coral } = colors;
 
   const days = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
   ];
   const months = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
   ];
   const d = new Date();
   const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`;
 
   const stats = [
     {
-      icon: '💰',
-      value: '$12,450',
-      label: 'Ventas de hoy',
-      change: '↑ 12%',
+      icon: "💰",
+      value: "$12,450",
+      label: "Ventas de hoy",
+      change: "↑ 12%",
       color: brand,
     },
     {
-      icon: '📦',
-      value: '8',
-      label: 'Pedidos activos',
-      change: '↑ 3',
+      icon: "📦",
+      value: "8",
+      label: "Pedidos activos",
+      change: "↑ 3",
       color: coral,
     },
     {
-      icon: '👨‍🌾',
-      value: '24',
-      label: 'Productores',
-      change: '↑ 2',
-      color: '#F2A900',
+      icon: "👨‍🌾",
+      value: "24",
+      label: "Productores",
+      change: "↑ 2",
+      color: "#F2A900",
     },
     {
-      icon: '📈',
-      value: '$98,300',
-      label: 'Ingresos del mes',
-      change: '↑ 8%',
-      color: '#4A8E68',
+      icon: "📈",
+      value: "$98,300",
+      label: "Ingresos del mes",
+      change: "↑ 8%",
+      color: "#4A8E68",
     },
   ];
 
@@ -72,7 +72,7 @@ export function AdminDashboard() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
@@ -83,7 +83,7 @@ export function AdminDashboard() {
             fontSize: 13,
             color: muted,
             marginTop: 2,
-            letterSpacing: '0.02em',
+            letterSpacing: "0.02em",
           }}
         >
           {today}
@@ -93,8 +93,8 @@ export function AdminDashboard() {
       {/* Stats row */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: 16,
           marginBottom: 28,
         }}
@@ -105,15 +105,15 @@ export function AdminDashboard() {
             style={{
               background: surface,
               borderRadius: 16,
-              padding: '20px 22px',
+              padding: "20px 22px",
               border: `1px solid ${border}`,
             }}
           >
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
                 marginBottom: 10,
               }}
             >
@@ -122,11 +122,11 @@ export function AdminDashboard() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  padding: '3px 8px',
+                  padding: "3px 8px",
                   borderRadius: 6,
                   background: isDark
-                    ? 'rgba(74,138,99,0.15)'
-                    : 'rgba(36,86,60,0.07)',
+                    ? "rgba(74,138,99,0.15)"
+                    : "rgba(36,86,60,0.07)",
                   color: brand,
                 }}
               >
@@ -137,7 +137,7 @@ export function AdminDashboard() {
               style={{
                 fontSize: 28,
                 fontWeight: 700,
-                letterSpacing: '-0.02em',
+                letterSpacing: "-0.02em",
                 color: s.color,
               }}
             >
@@ -147,8 +147,8 @@ export function AdminDashboard() {
               style={{
                 fontSize: 12,
                 color: muted,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
                 fontWeight: 600,
                 marginTop: 2,
               }}
@@ -162,8 +162,8 @@ export function AdminDashboard() {
       {/* Charts + Table row */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: 20,
           marginBottom: 28,
         }}
@@ -173,7 +173,7 @@ export function AdminDashboard() {
           style={{
             background: surface,
             borderRadius: 16,
-            padding: '20px 22px',
+            padding: "20px 22px",
             border: `1px solid ${border}`,
           }}
         >
@@ -182,7 +182,7 @@ export function AdminDashboard() {
               fontSize: 16,
               fontWeight: 600,
               marginBottom: 16,
-              letterSpacing: '-0.01em',
+              letterSpacing: "-0.01em",
               color: fg,
             }}
           >
@@ -190,8 +190,8 @@ export function AdminDashboard() {
           </h3>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'flex-end',
+              display: "flex",
+              alignItems: "flex-end",
               gap: 12,
               height: 160,
               paddingTop: 8,
@@ -202,17 +202,17 @@ export function AdminDashboard() {
                 key={i}
                 style={{
                   flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                   gap: 8,
                 }}
               >
                 <div
                   style={{
-                    width: '100%',
+                    width: "100%",
                     maxWidth: 52,
-                    borderRadius: '8px 8px 0 0',
+                    borderRadius: "8px 8px 0 0",
                     height: h,
                     background: i === 3 ? coral : brand,
                     minHeight: 8,
@@ -222,8 +222,8 @@ export function AdminDashboard() {
                   style={{
                     fontSize: 11,
                     color: muted,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
                     fontWeight: 600,
                   }}
                 >
@@ -239,7 +239,7 @@ export function AdminDashboard() {
           style={{
             background: surface,
             borderRadius: 16,
-            padding: '20px 22px',
+            padding: "20px 22px",
             border: `1px solid ${border}`,
           }}
         >
@@ -248,7 +248,7 @@ export function AdminDashboard() {
               fontSize: 16,
               fontWeight: 600,
               marginBottom: 16,
-              letterSpacing: '-0.01em',
+              letterSpacing: "-0.01em",
               color: fg,
             }}
           >
@@ -256,20 +256,20 @@ export function AdminDashboard() {
           </h3>
           <div>
             {[
-              { name: '🥑 Aguacate Hass', sales: '$4,200' },
-              { name: '🍅 Tomate orgánico', sales: '$3,150' },
-              { name: '🌿 Café especial', sales: '$2,880' },
-              { name: '🧅 Cebolla larga', sales: '$1,940' },
-              { name: '🌽 Maíz criollo', sales: '$1,620' },
+              { name: "🥑 Aguacate Hass", sales: "$4,200" },
+              { name: "🍅 Tomate orgánico", sales: "$3,150" },
+              { name: "🌿 Café especial", sales: "$2,880" },
+              { name: "🧅 Cebolla larga", sales: "$1,940" },
+              { name: "🌽 Maíz criollo", sales: "$1,620" },
             ].map((p, i) => (
               <div
                 key={i}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 0',
-                  borderBottom: i < 4 ? `1px solid ${border}` : 'none',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "10px 0",
+                  borderBottom: i < 4 ? `1px solid ${border}` : "none",
                 }}
               >
                 <span style={{ fontSize: 14, color: fg }}>{p.name}</span>
@@ -285,7 +285,7 @@ export function AdminDashboard() {
         style={{
           background: surface,
           borderRadius: 16,
-          padding: '20px 22px',
+          padding: "20px 22px",
           border: `1px solid ${border}`,
         }}
       >
@@ -294,28 +294,28 @@ export function AdminDashboard() {
             fontSize: 16,
             fontWeight: 600,
             marginBottom: 16,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
           Actividad reciente
         </h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {['Pedido', 'Productor', 'Producto', 'Monto', 'Estado'].map(
+                {["Pedido", "Productor", "Producto", "Monto", "Estado"].map(
                   (h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: 'left',
+                        textAlign: "left",
                         fontSize: 11,
                         color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         fontWeight: 600,
-                        padding: '0 0 10px',
+                        padding: "0 0 10px",
                         borderBottom: `1px solid ${border}`,
                       }}
                     >
@@ -328,55 +328,55 @@ export function AdminDashboard() {
             <tbody>
               {[
                 {
-                  id: '#2841',
-                  producer: 'Don Carlos',
-                  avatar: 'DC',
-                  product: 'Aguacates Hass · 12 kg',
-                  amount: '$1,280',
-                  status: 'Entregado',
+                  id: "#2841",
+                  producer: "Don Carlos",
+                  avatar: "DC",
+                  product: "Aguacates Hass · 12 kg",
+                  amount: "$1,280",
+                  status: "Entregado",
                   color: brand,
                 },
                 {
-                  id: '#2840',
-                  producer: 'María G.',
-                  avatar: 'MG',
-                  product: 'Tomates orgánicos · 8 kg',
-                  amount: '$960',
-                  status: 'En camino',
-                  color: '#F2A900',
+                  id: "#2840",
+                  producer: "María G.",
+                  avatar: "MG",
+                  product: "Tomates orgánicos · 8 kg",
+                  amount: "$960",
+                  status: "En camino",
+                  color: "#F2A900",
                 },
                 {
-                  id: '#2839',
-                  producer: 'Finca El Paraíso',
-                  avatar: 'EP',
-                  product: 'Café especial · 5 kg',
-                  amount: '$2,450',
-                  status: 'Entregado',
+                  id: "#2839",
+                  producer: "Finca El Paraíso",
+                  avatar: "EP",
+                  product: "Café especial · 5 kg",
+                  amount: "$2,450",
+                  status: "Entregado",
                   color: brand,
                 },
                 {
-                  id: '#2838',
-                  producer: 'La Rinconada',
-                  avatar: 'LR',
-                  product: 'Cebolla larga · 15 kg',
-                  amount: '$890',
-                  status: 'Entregado',
+                  id: "#2838",
+                  producer: "La Rinconada",
+                  avatar: "LR",
+                  product: "Cebolla larga · 15 kg",
+                  amount: "$890",
+                  status: "Entregado",
                   color: brand,
                 },
                 {
-                  id: '#2837',
-                  producer: 'José V.',
-                  avatar: 'JV',
-                  product: 'Maíz criollo · 20 kg',
-                  amount: '$1,100',
-                  status: 'Preparando',
-                  color: '#F2A900',
+                  id: "#2837",
+                  producer: "José V.",
+                  avatar: "JV",
+                  product: "Maíz criollo · 20 kg",
+                  amount: "$1,100",
+                  status: "Preparando",
+                  color: "#F2A900",
                 },
               ].map((row, i) => (
                 <tr key={i}>
                   <td
                     style={{
-                      padding: '12px 0',
+                      padding: "12px 0",
                       fontSize: 14,
                       fontWeight: 600,
                       color: fg,
@@ -387,24 +387,24 @@ export function AdminDashboard() {
                   </td>
                   <td
                     style={{
-                      padding: '12px 0',
+                      padding: "12px 0",
                       fontSize: 14,
                       borderBottom: `1px solid ${border}`,
                     }}
                   >
                     <div
-                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
                     >
                       <span
                         style={{
                           width: 28,
                           height: 28,
                           borderRadius: 8,
-                          display: 'grid',
-                          placeItems: 'center',
+                          display: "grid",
+                          placeItems: "center",
                           fontSize: 13,
                           fontWeight: 600,
-                          background: isDark ? '#1C2D22' : '#E2F0E6',
+                          background: isDark ? "#1C2D22" : "#E2F0E6",
                           color: brand,
                         }}
                       >
@@ -415,7 +415,7 @@ export function AdminDashboard() {
                   </td>
                   <td
                     style={{
-                      padding: '12px 0',
+                      padding: "12px 0",
                       fontSize: 13,
                       color: muted,
                       borderBottom: `1px solid ${border}`,
@@ -425,7 +425,7 @@ export function AdminDashboard() {
                   </td>
                   <td
                     style={{
-                      padding: '12px 0',
+                      padding: "12px 0",
                       fontSize: 14,
                       fontWeight: 600,
                       color: brand,
@@ -436,7 +436,7 @@ export function AdminDashboard() {
                   </td>
                   <td
                     style={{
-                      padding: '12px 0',
+                      padding: "12px 0",
                       borderBottom: `1px solid ${border}`,
                     }}
                   >
@@ -444,11 +444,11 @@ export function AdminDashboard() {
                       style={{
                         fontSize: 12,
                         fontWeight: 600,
-                        padding: '3px 10px',
+                        padding: "3px 10px",
                         borderRadius: 6,
                         background: isDark
-                          ? 'rgba(74,138,99,0.15)'
-                          : 'rgba(36,86,60,0.07)',
+                          ? "rgba(74,138,99,0.15)"
+                          : "rgba(36,86,60,0.07)",
                         color: row.color,
                       }}
                     >

@@ -1,10 +1,10 @@
-import React from 'react';
-import { Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import React from "react";
+import { Text, View } from "react-native";
+import { Button } from "react-native-paper";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { colors } from '@/constants/colors';
+import { colors } from "@/constants/colors";
 
 export function RoleErrorScreen({
   onLogout,

@@ -1,4 +1,4 @@
-import { colors } from './colors';
+import { colors } from "./colors";
 
 export const BRAND_RED_CORAL = colors.brand.redCoral;
 export const BRAND_GREEN_FOREST = colors.brand.greenForest;

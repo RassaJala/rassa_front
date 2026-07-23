@@ -1,8 +1,8 @@
-import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import React from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { Button, TextInput } from "react-native-paper";
 
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
+import { BRAND_RED_CORAL } from "@/constants/brandColors";
 
 export interface ProfilePasswordTabProps {
   readonly isSubmitting: boolean;
@@ -76,7 +76,7 @@ export default function ProfilePasswordTab({
         {isSubmitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          'Cambiar Contraseña'
+          "Cambiar Contraseña"
         )}
       </Button>
     </View>

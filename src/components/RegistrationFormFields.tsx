@@ -1,10 +1,10 @@
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { SegmentedButtons, TextInput } from 'react-native-paper';
+import React from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { SegmentedButtons, TextInput } from "react-native-paper";
 
-import CatalogSelector from '@/components/CatalogSelector';
-import type { useRegistrationForm } from '@/hooks/useRegistrationForm';
-import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
+import CatalogSelector from "@/components/CatalogSelector";
+import type { useRegistrationForm } from "@/hooks/useRegistrationForm";
+import { cleanAddress, cleanName, formatPhoneNumber } from "@/utils/validation";
 
 interface RegistrationFormFieldsProps {
   readonly form: ReturnType<typeof useRegistrationForm>;
@@ -123,9 +123,9 @@ export default function RegistrationFormFields({
         value={sexo}
         onValueChange={setSexo}
         buttons={[
-          { value: 'M', label: 'Masculino' },
-          { value: 'F', label: 'Femenino' },
-          { value: 'O', label: 'Otro' },
+          { value: "M", label: "Masculino" },
+          { value: "F", label: "Femenino" },
+          { value: "O", label: "Otro" },
         ]}
         style={{ marginBottom: 16 }}
       />

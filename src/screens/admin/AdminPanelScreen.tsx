@@ -1,21 +1,21 @@
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
-} from '@/components/ProfileDrawer';
-import StatCard from '@/components/StatCard';
-import { colors } from '@/constants/colors';
-import { useFormattedDate } from '@/hooks/useFormattedDate';
-import { getAdminStats } from '@/services/mock/dashboard';
-import { useTheme } from '@/store/ThemeContext';
-import type { AdminStackParamList } from '@/types';
+} from "@/components/ProfileDrawer";
+import StatCard from "@/components/StatCard";
+import { colors } from "@/constants/colors";
+import { useFormattedDate } from "@/hooks/useFormattedDate";
+import { getAdminStats } from "@/services/mock/dashboard";
+import { useTheme } from "@/store/ThemeContext";
+import type { AdminStackParamList } from "@/types";
 
-type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
+type Nav = NativeStackNavigationProp<AdminStackParamList, "AdminPanel">;
 
 interface Props {
   readonly navigation: Nav;
@@ -25,7 +25,7 @@ export default function AdminPanelScreen({
   navigation: _navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const stats = getAdminStats();
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
@@ -58,18 +58,18 @@ export default function AdminPanelScreen({
               {/* ═══ HEADER ═══ */}
               <View
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
                 }}
               >
                 <View>
                   <Text
                     style={{
                       fontSize: 14,
-                      fontWeight: '600',
+                      fontWeight: "600",
                       letterSpacing: 0.06,
-                      textTransform: 'uppercase',
+                      textTransform: "uppercase",
                       color: muted,
                     }}
                   >
@@ -78,7 +78,7 @@ export default function AdminPanelScreen({
                   <Text
                     style={{
                       fontSize: 32,
-                      fontWeight: '700',
+                      fontWeight: "700",
                       letterSpacing: -0.3,
                       color: fg,
                     }}
@@ -86,7 +86,7 @@ export default function AdminPanelScreen({
                     Panel
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={{ flexDirection: "row", gap: 10 }}>
                   <Pressable
                     testID="notification-bell"
                     style={({ pressed }) => ({
@@ -96,8 +96,8 @@ export default function AdminPanelScreen({
                       backgroundColor: surface,
                       borderWidth: 1,
                       borderColor: border,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      alignItems: "center",
+                      justifyContent: "center",
                       opacity: pressed ? 0.6 : 1,
                     })}
                   >
@@ -113,7 +113,7 @@ export default function AdminPanelScreen({
 
               {/* ═══ STATS ═══ */}
               <View
-                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
+                style={{ flexDirection: "row", gap: 10, paddingVertical: 24 }}
               >
                 <StatCard
                   icon="package-variant"

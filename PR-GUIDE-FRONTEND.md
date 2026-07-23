@@ -13,19 +13,19 @@ branch_prefixes:
   - chore/
   - hotfix/
 commands:
-  install: 'bun install'
-  dev: 'bun run start'
-  typecheck: 'bun run typecheck'
-  lint: 'bun run lint'
-  lint_fix: 'bun run lint:fix'
-  format: 'bun run format'
-  format_check: 'bun run format:check'
-  test: 'npx jest'
-ci_order: 'typecheck → lint → format:check'
+  install: "bun install"
+  dev: "bun run start"
+  typecheck: "bun run typecheck"
+  lint: "bun run lint"
+  lint_fix: "bun run lint:fix"
+  format: "bun run format"
+  format_check: "bun run format:check"
+  test: "npx jest"
+ci_order: "typecheck → lint → format:check"
 path_aliases:
-  '@/*': 'src/'
-  '~/*': 'src/'
-architecture_layers: 'screens → features → components → hooks → services → api'
+  "@/*": "src/"
+  "~/*": "src/"
+architecture_layers: "screens → features → components → hooks → services → api"
 ---
 
 # PR Guide — Frontend (rassa_front)
@@ -249,11 +249,11 @@ El proyecto usa TypeScript estricto. Reglas que NUNCA se deben romper:
 
 ```typescript
 // ✅ Correcto
-import { Button } from '@/components/Button';
-import { useAuth } from '~/hooks/useAuth';
+import { Button } from "@/components/Button";
+import { useAuth } from "~/hooks/useAuth";
 
 // ❌ Incorrecto
-import { Button } from '../../components/Button';
+import { Button } from "../../components/Button";
 ```
 
 ### Architecture Layers (enforced by ESLint)

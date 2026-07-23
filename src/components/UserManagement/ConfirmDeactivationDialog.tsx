@@ -1,10 +1,10 @@
-import React from 'react';
-import { Text, View } from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
+import React from "react";
+import { Text, View } from "react-native";
+import { Button, Dialog, Portal } from "react-native-paper";
 
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/store/ThemeContext';
-import type { AdminUser } from '@/types/userManagement';
+import { colors } from "@/constants/colors";
+import { useTheme } from "@/store/ThemeContext";
+import type { AdminUser } from "@/types/userManagement";
 
 interface ConfirmDeactivationDialogProps {
   user: AdminUser | null;
@@ -22,10 +22,10 @@ export default function ConfirmDeactivationDialog({
   onDismiss,
 }: ConfirmDeactivationDialogProps): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const gray700 = isDark ? '#D1D5DB' : '#374151';
-  const red50 = isDark ? 'rgba(127,29,29,0.3)' : '#FEF2F2';
-  const red600 = isDark ? '#FCA5A5' : '#DC2626';
+  const isDark = colorScheme === "dark";
+  const gray700 = isDark ? "#D1D5DB" : "#374151";
+  const red50 = isDark ? "rgba(127,29,29,0.3)" : "#FEF2F2";
+  const red600 = isDark ? "#FCA5A5" : "#DC2626";
 
   return (
     <Portal>
@@ -42,7 +42,7 @@ export default function ConfirmDeactivationDialog({
                 }}
               >
                 {isSelf
-                  ? 'No puedes desactivar tu propia cuenta.'
+                  ? "No puedes desactivar tu propia cuenta."
                   : `¿Estás seguro de desactivar a ${user.nombre}?\n\nEl usuario perderá acceso al sistema hasta que sea reactivado.`}
               </Text>
 

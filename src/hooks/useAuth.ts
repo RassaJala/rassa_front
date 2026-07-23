@@ -1,2 +1,2 @@
 // Re-export for convenience
-export { useAuth } from '@/store/AuthContext';
+export { useAuth } from "@/store/AuthContext";

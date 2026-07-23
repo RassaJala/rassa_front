@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test file for admin CRUD validation & Toast */
-import React from 'react';
+import React from "react";
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render } from "@testing-library/react-native";
 
-import Toast from '@/components/Toast';
-import type { Category } from '@/types';
+import Toast from "@/components/Toast";
+import type { Category } from "@/types";
 
 // Minimal mock for Animated that avoids native driver connections in Jest.
 // The real timing/parallel with useNativeDriver triggers the native renderer
@@ -12,16 +12,16 @@ import type { Category } from '@/types';
 // This mock does not use NativeAnimatedModule.
 const emptyAnimation = { start: () => {}, stop: () => {}, reset: () => {} };
 
-jest.mock('react-native/Libraries/Animated/Animated', () => {
+jest.mock("react-native/Libraries/Animated/Animated", () => {
   const ViewComponent =
-    require('react-native/Libraries/Components/View/View').default;
-  const TextComponent = require('react-native/Libraries/Text/Text').default;
+    require("react-native/Libraries/Components/View/View").default;
+  const TextComponent = require("react-native/Libraries/Text/Text").default;
 
   const { default: AnimatedValueClass } = jest.requireActual(
-    'react-native/Libraries/Animated/nodes/AnimatedValue',
+    "react-native/Libraries/Animated/nodes/AnimatedValue",
   );
   const { default: AnimatedValueXYClass } = jest.requireActual(
-    'react-native/Libraries/Animated/nodes/AnimatedValueXY',
+    "react-native/Libraries/Animated/nodes/AnimatedValueXY",
   );
 
   return {
@@ -75,7 +75,7 @@ jest.mock('react-native/Libraries/Animated/Animated', () => {
 
 const mockInvalidateQueries = jest.fn();
 
-jest.mock('@tanstack/react-query', () => ({
+jest.mock("@tanstack/react-query", () => ({
   useQuery: jest.fn(),
   useMutation: jest.fn(() => ({
     mutate: jest.fn(),
@@ -86,15 +86,15 @@ jest.mock('@tanstack/react-query', () => ({
   })),
 }));
 
-jest.mock('@/store/AuthContext', () => ({
-  useAuth: () => ({ user: { role: 'admin' } }),
+jest.mock("@/store/AuthContext", () => ({
+  useAuth: () => ({ user: { role: "admin" } }),
 }));
 
-jest.mock('@react-native-community/netinfo', () => ({
+jest.mock("@react-native-community/netinfo", () => ({
   useNetInfo: jest.fn(() => ({ isConnected: true })),
 }));
 
-jest.mock('@/services/api', () => ({
+jest.mock("@/services/api", () => ({
   get: jest.fn(),
   post: jest.fn(),
   patch: jest.fn(),
@@ -104,13 +104,13 @@ jest.mock('@/services/api', () => ({
   },
 }));
 
-jest.mock('@sentry/react-native', () => ({
+jest.mock("@sentry/react-native", () => ({
   captureException: jest.fn(),
 }));
 
 // ── Toast tests ───────────────────────────────────────────
 
-describe('Toast component', () => {
+describe("Toast component", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -119,33 +119,33 @@ describe('Toast component', () => {
     jest.useRealTimers();
   });
 
-  it('renderiza cuando visible es true', () => {
+  it("renderiza cuando visible es true", () => {
     const { getByText } = render(
       <Toast visible message="Operación exitosa" onDismiss={jest.fn()} />,
     );
 
-    expect(getByText('Operación exitosa')).toBeTruthy();
+    expect(getByText("Operación exitosa")).toBeTruthy();
   });
 
-  it('no renderiza cuando visible es false', () => {
+  it("no renderiza cuando visible es false", () => {
     const { queryByText } = render(
       <Toast visible={false} message="No visible" onDismiss={jest.fn()} />,
     );
 
-    expect(queryByText('No visible')).toBeNull();
+    expect(queryByText("No visible")).toBeNull();
   });
 
-  it('llama onDismiss al presionar el toast', () => {
+  it("llama onDismiss al presionar el toast", () => {
     const onDismiss = jest.fn();
     const { getByText } = render(
       <Toast visible message="Presióname" onDismiss={onDismiss} />,
     );
 
-    fireEvent.press(getByText('Presióname'));
+    fireEvent.press(getByText("Presióname"));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('se auto-descarta después de la duración + animación', () => {
+  it("se auto-descarta después de la duración + animación", () => {
     const onDismiss = jest.fn();
 
     render(
@@ -163,117 +163,117 @@ describe('Toast component', () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('acepta type error sin romperse', () => {
+  it("acepta type error sin romperse", () => {
     const { getByText } = render(
       <Toast visible message="Error" type="error" onDismiss={jest.fn()} />,
     );
 
-    expect(getByText('Error')).toBeTruthy();
+    expect(getByText("Error")).toBeTruthy();
   });
 
-  it('acepta type info sin romperse', () => {
+  it("acepta type info sin romperse", () => {
     const { getByText } = render(
       <Toast visible message="Info" type="info" onDismiss={jest.fn()} />,
     );
 
-    expect(getByText('Info')).toBeTruthy();
+    expect(getByText("Info")).toBeTruthy();
   });
 });
 
 // ── Validate function tests ──────────────────────────────
 
-describe('CategoryListScreen validate', () => {
+describe("CategoryListScreen validate", () => {
   const catValidate = (formValues: Record<string, string>) => {
-    if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
-    if (!(formValues.descripcion ?? '').trim())
-      return 'La descripción es obligatoria.';
+    if (!(formValues.nombre ?? "").trim()) return "El nombre es obligatorio.";
+    if (!(formValues.descripcion ?? "").trim())
+      return "La descripción es obligatoria.";
     return null;
   };
 
-  it('retorna null para valores válidos', () => {
+  it("retorna null para valores válidos", () => {
     expect(
-      catValidate({ nombre: 'Frutas', descripcion: 'Frutas frescas' }),
+      catValidate({ nombre: "Frutas", descripcion: "Frutas frescas" }),
     ).toBeNull();
     expect(
-      catValidate({ nombre: 'Verduras', descripcion: 'Cosas verdes' }),
+      catValidate({ nombre: "Verduras", descripcion: "Cosas verdes" }),
     ).toBeNull();
   });
 
-  it('retorna error cuando el nombre está vacío', () => {
-    expect(catValidate({ nombre: '', descripcion: 'Cosas' })).toBe(
-      'El nombre es obligatorio.',
+  it("retorna error cuando el nombre está vacío", () => {
+    expect(catValidate({ nombre: "", descripcion: "Cosas" })).toBe(
+      "El nombre es obligatorio.",
     );
-    expect(catValidate({ nombre: '   ', descripcion: 'Cosas' })).toBe(
-      'El nombre es obligatorio.',
-    );
-  });
-
-  it('retorna error cuando falta la clave nombre', () => {
-    expect(catValidate({ descripcion: 'Cosas' })).toBe(
-      'El nombre es obligatorio.',
+    expect(catValidate({ nombre: "   ", descripcion: "Cosas" })).toBe(
+      "El nombre es obligatorio.",
     );
   });
 
-  it('retorna error cuando la descripción está vacía', () => {
-    expect(catValidate({ nombre: 'Frutas', descripcion: '' })).toBe(
-      'La descripción es obligatoria.',
-    );
-    expect(catValidate({ nombre: 'Frutas', descripcion: '   ' })).toBe(
-      'La descripción es obligatoria.',
+  it("retorna error cuando falta la clave nombre", () => {
+    expect(catValidate({ descripcion: "Cosas" })).toBe(
+      "El nombre es obligatorio.",
     );
   });
 
-  it('retorna error cuando falta la clave descripcion', () => {
-    expect(catValidate({ nombre: 'Frutas' })).toBe(
-      'La descripción es obligatoria.',
+  it("retorna error cuando la descripción está vacía", () => {
+    expect(catValidate({ nombre: "Frutas", descripcion: "" })).toBe(
+      "La descripción es obligatoria.",
+    );
+    expect(catValidate({ nombre: "Frutas", descripcion: "   " })).toBe(
+      "La descripción es obligatoria.",
+    );
+  });
+
+  it("retorna error cuando falta la clave descripcion", () => {
+    expect(catValidate({ nombre: "Frutas" })).toBe(
+      "La descripción es obligatoria.",
     );
   });
 });
 
-describe('UnitListScreen validate', () => {
+describe("UnitListScreen validate", () => {
   const unitValidate = (formValues: Record<string, string>) => {
-    if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
-    if (!(formValues.abreviatura ?? '').trim())
-      return 'La abreviatura es obligatoria.';
+    if (!(formValues.nombre ?? "").trim()) return "El nombre es obligatorio.";
+    if (!(formValues.abreviatura ?? "").trim())
+      return "La abreviatura es obligatoria.";
     return null;
   };
 
-  it('retorna null para valores válidos', () => {
-    expect(unitValidate({ nombre: 'Kilogramo', abreviatura: 'kg' })).toBeNull();
+  it("retorna null para valores válidos", () => {
+    expect(unitValidate({ nombre: "Kilogramo", abreviatura: "kg" })).toBeNull();
   });
 
-  it('retorna error cuando el nombre está vacío', () => {
-    expect(unitValidate({ nombre: '', abreviatura: 'kg' })).toBe(
-      'El nombre es obligatorio.',
+  it("retorna error cuando el nombre está vacío", () => {
+    expect(unitValidate({ nombre: "", abreviatura: "kg" })).toBe(
+      "El nombre es obligatorio.",
     );
   });
 
-  it('retorna error cuando la abreviatura está vacía', () => {
-    expect(unitValidate({ nombre: 'Kilogramo', abreviatura: '' })).toBe(
-      'La abreviatura es obligatoria.',
+  it("retorna error cuando la abreviatura está vacía", () => {
+    expect(unitValidate({ nombre: "Kilogramo", abreviatura: "" })).toBe(
+      "La abreviatura es obligatoria.",
     );
   });
 });
 
 // ── Duplicate validation in handleSave ────────────────────
 
-describe('CrudListScreen duplicate validation', () => {
+describe("CrudListScreen duplicate validation", () => {
   const getId = (item: Category) => item.id_categoria;
 
   const items: Category[] = [
     {
       id_categoria: 1,
-      nombre: 'Frutas',
-      descripcion: '',
+      nombre: "Frutas",
+      descripcion: "",
       estado: true,
-      creado_en: '',
+      creado_en: "",
     },
     {
       id_categoria: 2,
-      nombre: 'Verduras',
-      descripcion: '',
+      nombre: "Verduras",
+      descripcion: "",
       estado: true,
-      creado_en: '',
+      creado_en: "",
     },
   ];
 
@@ -281,7 +281,7 @@ describe('CrudListScreen duplicate validation', () => {
     formValues: Record<string, string>,
     editingItem: Category | null,
   ) => {
-    const trimmedName = (formValues.nombre ?? '').trim();
+    const trimmedName = (formValues.nombre ?? "").trim();
     const nameLower = trimmedName.toLocaleLowerCase();
     const isDuplicate = items.some(
       (item) =>
@@ -295,64 +295,64 @@ describe('CrudListScreen duplicate validation', () => {
     return null;
   };
 
-  it('detecta nombre duplicado en creación', () => {
-    expect(checkDuplicate({ nombre: 'Frutas' }, null)).toBe(
+  it("detecta nombre duplicado en creación", () => {
+    expect(checkDuplicate({ nombre: "Frutas" }, null)).toBe(
       'Ya existe categoría con el nombre "Frutas".',
     );
   });
 
-  it('ignora el mismo item en edición (mismo nombre, mismo ID)', () => {
+  it("ignora el mismo item en edición (mismo nombre, mismo ID)", () => {
     const result = checkDuplicate(
-      { nombre: 'Frutas' },
+      { nombre: "Frutas" },
       {
         id_categoria: 1,
-        nombre: 'Frutas',
-        descripcion: '',
+        nombre: "Frutas",
+        descripcion: "",
         estado: true,
-        creado_en: '',
+        creado_en: "",
       },
     );
 
     expect(result).toBeNull();
   });
 
-  it('detecta duplicado con otro item aunque esté editando', () => {
+  it("detecta duplicado con otro item aunque esté editando", () => {
     const result = checkDuplicate(
-      { nombre: 'Verduras' },
+      { nombre: "Verduras" },
       {
         id_categoria: 1,
-        nombre: 'Frutas',
-        descripcion: '',
+        nombre: "Frutas",
+        descripcion: "",
         estado: true,
-        creado_en: '',
+        creado_en: "",
       },
     );
 
     expect(result).toBe('Ya existe categoría con el nombre "Verduras".');
   });
 
-  it('ignora duplicados con diferente capitalización en edición', () => {
+  it("ignora duplicados con diferente capitalización en edición", () => {
     const result = checkDuplicate(
-      { nombre: 'frutas' },
+      { nombre: "frutas" },
       {
         id_categoria: 1,
-        nombre: 'Frutas',
-        descripcion: '',
+        nombre: "Frutas",
+        descripcion: "",
         estado: true,
-        creado_en: '',
+        creado_en: "",
       },
     );
 
     expect(result).toBeNull(); // mismo item, ignorado por ID
   });
 
-  it('detecta duplicado con diferente capitalización si es otro item', () => {
-    const result = checkDuplicate({ nombre: 'frutas' }, null);
+  it("detecta duplicado con diferente capitalización si es otro item", () => {
+    const result = checkDuplicate({ nombre: "frutas" }, null);
 
     expect(result).toBe('Ya existe categoría con el nombre "frutas".');
   });
 
-  it('retorna null para nombre nuevo', () => {
-    expect(checkDuplicate({ nombre: 'Lácteos' }, null)).toBeNull();
+  it("retorna null para nombre nuevo", () => {
+    expect(checkDuplicate({ nombre: "Lácteos" }, null)).toBeNull();
   });
 });

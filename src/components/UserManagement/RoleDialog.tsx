@@ -1,12 +1,12 @@
-import React from 'react';
-import { Pressable, Text } from 'react-native';
-import { Button, Dialog, Portal, RadioButton } from 'react-native-paper';
+import React from "react";
+import { Pressable, Text } from "react-native";
+import { Button, Dialog, Portal, RadioButton } from "react-native-paper";
 
-import { colors } from '@/constants/colors';
-import { ROLE_OPTIONS } from '@/constants/roles';
-import { useTheme } from '@/store/ThemeContext';
-import type { AdminUser } from '@/types/userManagement';
-import { getFullName } from '@/utils/userManagement';
+import { colors } from "@/constants/colors";
+import { ROLE_OPTIONS } from "@/constants/roles";
+import { useTheme } from "@/store/ThemeContext";
+import type { AdminUser } from "@/types/userManagement";
+import { getFullName } from "@/utils/userManagement";
 
 interface RoleDialogProps {
   user: AdminUser | null;
@@ -26,9 +26,9 @@ export default function RoleDialog({
   onDismiss,
 }: RoleDialogProps): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const gray500 = isDark ? '#9CA3AF' : '#6B7280';
-  const gray800 = isDark ? '#E5E7EB' : '#1F2937';
+  const isDark = colorScheme === "dark";
+  const gray500 = isDark ? "#9CA3AF" : "#6B7280";
+  const gray800 = isDark ? "#E5E7EB" : "#1F2937";
 
   return (
     <Portal>
@@ -45,10 +45,10 @@ export default function RoleDialog({
                   color: gray500,
                 }}
               >
-                Usuario:{' '}
+                Usuario:{" "}
                 <Text
                   style={{
-                    fontWeight: '500',
+                    fontWeight: "500",
                     color: gray800,
                   }}
                 >
@@ -65,8 +65,8 @@ export default function RoleDialog({
                     key={opt.value}
                     onPress={() => onRoleChange(opt.value)}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
+                      flexDirection: "row",
+                      alignItems: "center",
                       paddingVertical: 6,
                     }}
                   >
@@ -74,14 +74,14 @@ export default function RoleDialog({
                       value={opt.value}
                       color={colors.primary}
                       status={
-                        selectedRole === opt.value ? 'checked' : 'unchecked'
+                        selectedRole === opt.value ? "checked" : "unchecked"
                       }
                     />
                     <Text
                       style={{
                         marginLeft: 8,
                         fontSize: 15,
-                        fontWeight: '500',
+                        fontWeight: "500",
                         color: opt.color,
                       }}
                     >

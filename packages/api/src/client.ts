@@ -1,12 +1,12 @@
 // packages/api/src/client.ts
 
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
+import axiosRetry from "axios-retry";
 
-import * as Storage from '../../../src/services/storage';
+import * as Storage from "../../../src/services/storage";
 
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
@@ -15,29 +15,29 @@ const SERVER_ERROR_THRESHOLD = 500;
 const REFRESH_TIMEOUT_MS = 8_000;
 
 // Endpoints where we never attempt token refresh (login, refresh themselves)
-const AUTH_ENDPOINTS = ['/token/', '/token/refresh/'];
+const AUTH_ENDPOINTS = ["/token/", "/token/refresh/"];
 
 function resolveBaseURL(): string {
   // On web, always use localhost (browser runs on the same machine as the server).
   // On native, respect EXPO_PUBLIC_API_URL so physical devices can reach the backend.
   const configured =
-    Platform.OS === 'web'
-      ? 'http://localhost:8000'
+    Platform.OS === "web"
+      ? "http://localhost:8000"
       : // eslint-disable-next-line no-undef -- process is injected by expo
-        (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000');
-  const trimmed = configured.replace(/\/$/, '');
+        (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000");
+  const trimmed = configured.replace(/\/$/, "");
 
-  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 }
 
 const baseURL = resolveBaseURL();
 
 // Guard: reject HTTP in production to prevent credential leakage
 // eslint-disable-next-line no-undef -- process is injected by expo
-if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
+if (baseURL.startsWith("http://") && process.env.NODE_ENV === "production") {
   throw new Error(
-    'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +
-      'Unencrypted HTTP exposes authentication tokens to network interception.',
+    "EXPO_PUBLIC_API_URL must use HTTPS in production. " +
+      "Unencrypted HTTP exposes authentication tokens to network interception.",
   );
 }
 
@@ -45,8 +45,8 @@ const api = axios.create({
   baseURL,
   timeout: API_TIMEOUT_MS,
   headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
@@ -58,7 +58,7 @@ axiosRetry(api, {
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
           error.response.status >= SERVER_ERROR_THRESHOLD)) &&
-      error.config?.method !== 'post'
+      error.config?.method !== "post"
     );
   },
 });
@@ -91,16 +91,16 @@ async function refreshTokens(): Promise<string> {
 
   refreshPromise = (async () => {
     const refreshToken = await Storage.getItemAsync(Storage.REFRESH_TOKEN_KEY);
-    if (!refreshToken) throw new Error('No refresh token available');
+    if (!refreshToken) throw new Error("No refresh token available");
 
     const res = await Promise.race([
-      api.post<{ access: string; refresh: string }>('/token/refresh/', {
+      api.post<{ access: string; refresh: string }>("/token/refresh/", {
         refresh: refreshToken,
       }),
       new Promise<never>((_resolve, reject) =>
         // eslint-disable-next-line no-undef -- global in RN/Node
         setTimeout(
-          () => reject(new Error('Refresh token request timed out')),
+          () => reject(new Error("Refresh token request timed out")),
           REFRESH_TIMEOUT_MS,
         ),
       ),
@@ -155,7 +155,7 @@ api.interceptors.response.use(
     }
 
     // Auth endpoints themselves (login, refresh) — clear tokens, no retry
-    if (AUTH_ENDPOINTS.includes(originalRequest.url ?? '')) {
+    if (AUTH_ENDPOINTS.includes(originalRequest.url ?? "")) {
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),

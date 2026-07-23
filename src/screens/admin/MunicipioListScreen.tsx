@@ -1,17 +1,17 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React from "react";
+import { Pressable, Text, View } from "react-native";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-import CrudListScreen from '@/components/CrudListScreen';
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/store/ThemeContext';
-import type { AdminStackParamList, Municipio } from '@/types';
+import CrudListScreen from "@/components/CrudListScreen";
+import { colors } from "@/constants/colors";
+import { useTheme } from "@/store/ThemeContext";
+import type { AdminStackParamList, Municipio } from "@/types";
 
 type NavigationProp = NativeStackNavigationProp<
   AdminStackParamList,
-  'MunicipioList'
+  "MunicipioList"
 >;
 
 interface Props {
@@ -41,9 +41,9 @@ interface ItemTheme {
   readonly errorColor: string;
   readonly statusBg: string;
   readonly statusColor: string;
-  readonly statusIcon: 'check-circle-outline' | 'circle-outline';
-  readonly statusLabel: 'Activo' | 'Inactivo';
-  readonly toggleIcon: 'pause-circle-outline' | 'play-circle-outline';
+  readonly statusIcon: "check-circle-outline" | "circle-outline";
+  readonly statusLabel: "Activo" | "Inactivo";
+  readonly toggleIcon: "pause-circle-outline" | "play-circle-outline";
   readonly shadowOpacity: number;
   readonly elevation: number;
 }
@@ -79,11 +79,11 @@ function getMunicipioItemTheme(
   const theme = isDark ? DARK_THEME : LIGHT_THEME;
   const statusBg = isEstadoActive ? theme.activeBg : theme.inactiveBg;
   const statusColor = isEstadoActive ? theme.brand : theme.muted;
-  const statusIcon = isEstadoActive ? 'check-circle-outline' : 'circle-outline';
-  const statusLabel = isEstadoActive ? 'Activo' : 'Inactivo';
+  const statusIcon = isEstadoActive ? "check-circle-outline" : "circle-outline";
+  const statusLabel = isEstadoActive ? "Activo" : "Inactivo";
   const toggleIcon = isEstadoActive
-    ? 'pause-circle-outline'
-    : 'play-circle-outline';
+    ? "pause-circle-outline"
+    : "play-circle-outline";
 
   return {
     surface: theme.surface,
@@ -108,7 +108,7 @@ function MunicipioListItem({
   navigation,
 }: MunicipioItemProps): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const {
     surface,
     fg,
@@ -141,15 +141,15 @@ function MunicipioListItem({
       }}
     >
       {/* Top row: Icon + Info */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         {/* Icono de Estado */}
         <View
           style={{
             width: 40,
             height: 40,
             borderRadius: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: "center",
+            justifyContent: "center",
             backgroundColor: statusBg,
           }}
         >
@@ -163,15 +163,15 @@ function MunicipioListItem({
         {/* Info */}
         <View style={{ flex: 1 }}>
           <Text
-            style={{ fontSize: 16, fontWeight: '600', color: fg }}
+            style={{ fontSize: 16, fontWeight: "600", color: fg }}
             numberOfLines={1}
           >
             {item.nombre}
           </Text>
           <View
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
+              flexDirection: "row",
+              alignItems: "center",
               gap: 8,
               marginTop: 2,
             }}
@@ -187,7 +187,7 @@ function MunicipioListItem({
               <Text
                 style={{
                   fontSize: 11,
-                  fontWeight: '600',
+                  fontWeight: "600",
                   color: statusColor,
                 }}
               >
@@ -205,22 +205,22 @@ function MunicipioListItem({
           paddingTop: 12,
           borderTopWidth: 1,
           borderTopColor: border,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         {/* "Ver localidades" (botón con texto) */}
         <Pressable
           onPress={() =>
-            navigation.navigate('LocalidadList', {
+            navigation.navigate("LocalidadList", {
               municipioId: item.id_municipio,
               municipioNombre: item.nombre,
             })
           }
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: "row",
+            alignItems: "center",
             gap: 4,
             paddingVertical: 6,
             paddingHorizontal: 8,
@@ -235,7 +235,7 @@ function MunicipioListItem({
           <Text
             style={{
               fontSize: 13,
-              fontWeight: '600',
+              fontWeight: "600",
               color: brand,
             }}
           >
@@ -244,7 +244,7 @@ function MunicipioListItem({
         </Pressable>
 
         {/* CRUD Actions: 36x36 buttons */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Pressable
             onPress={actions.onEdit}
             testID="edit-btn"
@@ -254,8 +254,8 @@ function MunicipioListItem({
               borderRadius: 10,
               borderWidth: 1,
               borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
             }}
             hitSlop={6}
           >
@@ -275,8 +275,8 @@ function MunicipioListItem({
               borderRadius: 10,
               borderWidth: 1,
               borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
             }}
             hitSlop={6}
           >
@@ -292,8 +292,8 @@ function MunicipioListItem({
               borderRadius: 10,
               borderWidth: 1,
               borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
             }}
             hitSlop={6}
           >
@@ -313,23 +313,23 @@ function MunicipioListItem({
 
 function makeMunicipioConfig(navigation: NavigationProp) {
   return {
-    queryKey: ['municipios'] as const,
-    endpoint: '/municipios/',
+    queryKey: ["municipios"] as const,
+    endpoint: "/municipios/",
     comingSoon: false,
-    entityName: 'municipio',
-    entityNamePlural: 'Municipios',
-    entityNamePluralLower: 'municipios',
+    entityName: "municipio",
+    entityNamePlural: "Municipios",
+    entityNamePluralLower: "municipios",
     getId: (item: Municipio) => item.id_municipio,
-    fields: [{ name: 'nombre', label: 'Nombre' }] as const,
-    errorFieldKeys: ['nombre', 'detail'] as const,
-    emptyIcon: 'map-outline',
-    emptyText: 'No hay municipios',
-    emptyDescription: 'Agrega un municipio para comenzar.',
-    headerTitle: 'Municipios',
-    loadingErrorText: 'Error al cargar municipios.',
-    newDialogTitle: 'Nuevo municipio',
-    editDialogTitle: 'Editar municipio',
-    deleteDialogTitle: 'Eliminar municipio',
+    fields: [{ name: "nombre", label: "Nombre" }] as const,
+    errorFieldKeys: ["nombre", "detail"] as const,
+    emptyIcon: "map-outline",
+    emptyText: "No hay municipios",
+    emptyDescription: "Agrega un municipio para comenzar.",
+    headerTitle: "Municipios",
+    loadingErrorText: "Error al cargar municipios.",
+    newDialogTitle: "Nuevo municipio",
+    editDialogTitle: "Editar municipio",
+    deleteDialogTitle: "Eliminar municipio",
     deleteConfirmText: (item: Municipio) =>
       `¿Estás seguro de eliminar "${item.nombre}"?`,
     toastCreated: (name: string) => `Se creó el municipio "${name}"`,
@@ -337,11 +337,11 @@ function makeMunicipioConfig(navigation: NavigationProp) {
     toastDeleted: (name: string) => `Se eliminó el municipio "${name}"`,
     toastActivated: (name: string) => `Se activó el municipio "${name}"`,
     toastDeactivated: (name: string) => `Se desactivó el municipio "${name}"`,
-    statusLabels: { active: 'Activo', inactive: 'Inactivo' },
-    trashScreenName: 'MunicipioTrash' as const,
-    toggleEndpoint: 'estado/',
+    statusLabels: { active: "Activo", inactive: "Inactivo" },
+    trashScreenName: "MunicipioTrash" as const,
+    toggleEndpoint: "estado/",
     validate: (formValues: Record<string, string>) => {
-      if (!(formValues.nombre ?? '').trim()) return 'El nombre es obligatorio.';
+      if (!(formValues.nombre ?? "").trim()) return "El nombre es obligatorio.";
       return null;
     },
     renderListItem: (item: Municipio, actions: ItemActions) => (
