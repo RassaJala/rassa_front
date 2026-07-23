@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "~/hooks/useAuth";
 import { useTheme } from "~/providers/ThemeProvider";
 import { getColors } from "~/constants/colors";
 import type { Role } from "~/types";
@@ -77,6 +78,7 @@ const roleNavMap: Record<string, NavItem[]> = {
 };
 
 export function Sidebar({ role }: { role: Role }) {
+  const { user } = useAuth();
   const { resolved } = useTheme();
   const c = getColors(resolved === "dark");
   const items = roleNavMap[role] ?? adminNav;
