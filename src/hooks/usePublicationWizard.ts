@@ -158,11 +158,7 @@ async function persistItem(
   }
 
   if (item.foto && isLocalFileUri(item.foto)) {
-    try {
-      await uploadLocalPhoto(pubId, itemId, item.foto);
-    } catch {
-      // Photo upload failed — item was created/updated without photo
-    }
+    await uploadLocalPhoto(pubId, itemId, item.foto);
   }
 
   return { itemId, isNew: !isExisting };
@@ -203,8 +199,7 @@ export function usePublicationWizard({
     setLocalItemsInitialized(true);
   }
 
-  const activeItems =
-    publicacion && localItemsInitialized ? localItems : localItems;
+  const activeItems = localItems;
 
   const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
 
@@ -318,7 +313,7 @@ export function usePublicationWizard({
       throw error;
     }
 
-    // Remove deleted items
+    // Remove deleted items — best-effort, don't block publish
     const existingIds = new Set(
       productos.map((p) => String(p.id_producto_semanal)),
     );
@@ -326,10 +321,14 @@ export function usePublicationWizard({
 
     for (const id of existingIds) {
       if (!currentIds.has(id)) {
-        await removeItemMutation.mutateAsync({
-          pubId: pub.id_publicacion,
-          itemId: Number(id),
-        });
+        try {
+          await removeItemMutation.mutateAsync({
+            pubId: pub.id_publicacion,
+            itemId: Number(id),
+          });
+        } catch {
+          // Best-effort cleanup — log and continue
+        }
       }
     }
 
