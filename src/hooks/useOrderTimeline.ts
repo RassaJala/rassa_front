@@ -22,7 +22,7 @@ export function useOrderTimeline(
       >(`/pedidos/${orderId}/historial`);
       // Handle both wrapped { data: [...] } and flat [...] responses
       if (Array.isArray(data)) return data;
-      return (data as ApiResponse<OrderStatusHistory[]>).data;
+      return data.data;
     },
     enabled: orderId > 0,
     staleTime: 30_000,
