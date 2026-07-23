@@ -8,6 +8,7 @@ import {
   useAddProductoSemanal,
   useCreatePublicacion,
   useDeleteProductoSemanal,
+  useDeletePublicacion,
   usePublishPublicacion,
   useUpdateProductoSemanal,
 } from './usePublications';
@@ -171,8 +172,10 @@ export function usePublicationWizard({
   const [stepIndex, setStepIndex] = useState(0);
   const publicationRef = useRef(publicacion);
   publicationRef.current = publicacion;
+  const publishingRef = useRef(false);
 
   const createMutation = useCreatePublicacion();
+  const deletePublicationMutation = useDeletePublicacion();
   const publishMutation = usePublishPublicacion();
   const addItemMutation = useAddProductoSemanal();
   const updateItemMutation = useUpdateProductoSemanal();
@@ -272,71 +275,90 @@ export function usePublicationWizard({
   }, [activeItems]);
 
   const publish = useCallback(async () => {
-    // Ensure publication exists — create if needed
-    let pub = publicationRef.current;
-    if (!pub) {
-      const result = await createMutation.mutateAsync();
-      pub = result.data;
-      publicationRef.current = pub;
-    }
+    if (publishingRef.current) return;
+    publishingRef.current = true;
 
-    if (!pub) return;
-
-    // Persist items with rollback on failure
-    const createdIds: number[] = [];
+    let autoCreatedPub = false;
 
     try {
-      for (const item of activeItems) {
-        const result = await persistItem(
-          pub.id_publicacion,
-          item,
-          productos,
-          addItemMutation.mutateAsync,
-          updateItemMutation.mutateAsync,
-        );
-        if (result.isNew) {
-          createdIds.push(result.itemId);
+      let pub = publicationRef.current;
+
+      if (!pub) {
+        const result = await createMutation.mutateAsync();
+        pub = result.data;
+        publicationRef.current = pub;
+        autoCreatedPub = true;
+      }
+
+      if (!pub) return;
+
+      const createdIds: number[] = [];
+
+      try {
+        for (const item of activeItems) {
+          const result = await persistItem(
+            pub.id_publicacion,
+            item,
+            productos,
+            addItemMutation.mutateAsync,
+            updateItemMutation.mutateAsync,
+          );
+          if (result.isNew) {
+            createdIds.push(result.itemId);
+          }
+        }
+      } catch (error) {
+        // Compensation: delete items created in this run
+        for (const id of createdIds) {
+          try {
+            await removeItemMutation.mutateAsync({
+              pubId: pub.id_publicacion,
+              itemId: id,
+            });
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+        // If we auto-created the publication and it has no items, clean it up
+        if (autoCreatedPub) {
+          try {
+            await deletePublicationMutation.mutateAsync(pub.id_publicacion);
+            publicationRef.current = undefined;
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+        throw error;
+      }
+
+      // Remove deleted items — best-effort, don't block publish
+      const existingIds = new Set(
+        productos.map((p) => String(p.id_producto_semanal)),
+      );
+      const currentIds = new Set(activeItems.map((i) => i.tempId));
+
+      for (const id of existingIds) {
+        if (!currentIds.has(id)) {
+          try {
+            await removeItemMutation.mutateAsync({
+              pubId: pub.id_publicacion,
+              itemId: Number(id),
+            });
+          } catch {
+            // Best-effort cleanup
+          }
         }
       }
-    } catch (error) {
-      // Compensation: delete items created in this run
-      for (const id of createdIds) {
-        try {
-          await removeItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId: id,
-          });
-        } catch {
-          // Best-effort cleanup — log and continue
-        }
-      }
-      throw error;
+
+      await publishMutation.mutateAsync(pub.id_publicacion);
+    } finally {
+      publishingRef.current = false;
     }
-
-    // Remove deleted items — best-effort, don't block publish
-    const existingIds = new Set(
-      productos.map((p) => String(p.id_producto_semanal)),
-    );
-    const currentIds = new Set(activeItems.map((i) => i.tempId));
-
-    for (const id of existingIds) {
-      if (!currentIds.has(id)) {
-        try {
-          await removeItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId: Number(id),
-          });
-        } catch {
-          // Best-effort cleanup — log and continue
-        }
-      }
-    }
-
-    await publishMutation.mutateAsync(pub.id_publicacion);
   }, [
     activeItems,
     productos,
     createMutation,
+    deletePublicationMutation,
     addItemMutation,
     updateItemMutation,
     removeItemMutation,
@@ -344,48 +366,69 @@ export function usePublicationWizard({
   ]);
 
   const saveDraft = useCallback(async () => {
-    let pub = publicationRef.current;
+    if (publishingRef.current) return;
+    publishingRef.current = true;
 
-    if (!pub) {
-      const result = await createMutation.mutateAsync();
-      pub = result.data;
-      publicationRef.current = pub;
-    }
-
-    if (!pub) return;
-
-    const createdIds: number[] = [];
+    let autoCreatedPub = false;
 
     try {
-      for (const item of activeItems) {
-        const result = await persistItem(
-          pub.id_publicacion,
-          item,
-          productos,
-          addItemMutation.mutateAsync,
-          updateItemMutation.mutateAsync,
-        );
-        if (result.isNew) {
-          createdIds.push(result.itemId);
-        }
+      let pub = publicationRef.current;
+
+      if (!pub) {
+        const result = await createMutation.mutateAsync();
+        pub = result.data;
+        publicationRef.current = pub;
+        autoCreatedPub = true;
       }
-    } catch (error) {
-      for (const id of createdIds) {
-        try {
-          await removeItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId: id,
-          });
-        } catch {
-          // Best-effort cleanup
+
+      if (!pub) return;
+
+      const createdIds: number[] = [];
+
+      try {
+        for (const item of activeItems) {
+          const result = await persistItem(
+            pub.id_publicacion,
+            item,
+            productos,
+            addItemMutation.mutateAsync,
+            updateItemMutation.mutateAsync,
+          );
+          if (result.isNew) {
+            createdIds.push(result.itemId);
+          }
         }
+      } catch (error) {
+        // Compensation: delete items created in this run
+        for (const id of createdIds) {
+          try {
+            await removeItemMutation.mutateAsync({
+              pubId: pub.id_publicacion,
+              itemId: id,
+            });
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+        // If we auto-created the publication and it has no items, clean it up
+        if (autoCreatedPub) {
+          try {
+            await deletePublicationMutation.mutateAsync(pub.id_publicacion);
+            publicationRef.current = undefined;
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+        throw error;
       }
-      throw error;
+    } finally {
+      publishingRef.current = false;
     }
   }, [
     activeItems,
     productos,
     createMutation,
+    deletePublicationMutation,
     addItemMutation,
     updateItemMutation,
     removeItemMutation,

@@ -156,22 +156,18 @@ export function useProductForm(productoId?: number): UseProductFormResult {
 
     const onMutationSuccess = async (result: ApiResponse<ProductoDetail>) => {
       if (form.imagenUri && !form.imagenUri.startsWith('http')) {
-        try {
-          const formData = new FormData();
-          const filename = form.imagenUri.split('/').pop() ?? 'photo.jpg';
-          const ext = filename.split('.').pop() ?? 'jpg';
-          formData.append('imagen', {
-            uri: form.imagenUri,
-            name: filename,
-            type: `image/${ext}`,
-          } as unknown as Blob);
-          await productosApi.uploadProductoImagen(
-            result.data.id_producto,
-            formData,
-          );
-        } catch {
-          // Image upload failed silently — product was created/updated
-        }
+        const formData = new FormData();
+        const filename = form.imagenUri.split('/').pop() ?? 'photo.jpg';
+        const ext = filename.split('.').pop() ?? 'jpg';
+        formData.append('imagen', {
+          uri: form.imagenUri,
+          name: filename,
+          type: `image/${ext}`,
+        } as unknown as Blob);
+        await productosApi.uploadProductoImagen(
+          result.data.id_producto,
+          formData,
+        );
       }
       onSuccess();
     };
