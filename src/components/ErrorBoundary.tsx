@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(err: Error): State {
-    return { hasError: true, error: err };
+    return { hasError: true, error: err } satisfies State;
   }
 
   override componentDidMount(): void {
