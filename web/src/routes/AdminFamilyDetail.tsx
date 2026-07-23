@@ -79,8 +79,10 @@ export function AdminFamilyDetail() {
   const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
     null,
   );
-  const { results: searchResults, isSearching: searchLoading } =
-    useJefeSearch(searchQuery, selectedUser);
+  const { results: searchResults, isSearching: searchLoading } = useJefeSearch(
+    searchQuery,
+    selectedUser,
+  );
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
@@ -122,7 +124,9 @@ export function AdminFamilyDetail() {
         fk_usuario: selectedUser.id_usuario,
         fk_familia: familyId,
       });
-      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-family-detail', familyId],
+      });
       setModalVisible(false);
       handleClearSearch();
     } catch (err: unknown) {
@@ -155,7 +159,9 @@ export function AdminFamilyDetail() {
       await api.delete(
         `/familias/miembros/${removeTarget.id_familia_usuario}/`,
       );
-      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-family-detail', familyId],
+      });
     } catch (err: unknown) {
       console.error(err);
       setError('Error al remover al miembro de la familia.');
@@ -170,7 +176,9 @@ export function AdminFamilyDetail() {
       await api.post(`/familias/grupos/${familyId}/asignar-jefe/`, {
         fk_jefe_familia: member.fk_usuario,
       });
-      await queryClient.invalidateQueries({ queryKey: ['admin-family-detail', familyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-family-detail', familyId],
+      });
     } catch (err: unknown) {
       console.error(err);
       const apiErr = extractApiError(err, ['fk_jefe_familia', 'detail']);

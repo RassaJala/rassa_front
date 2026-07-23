@@ -115,9 +115,9 @@ export async function assignFamilyHead(
 export async function fetchFamilyMembers(
   familyId: number,
 ): Promise<FamilyMember[]> {
-  const { data } = await api.get<
-    FamilyMember[] | { results: FamilyMember[] }
-  >(`${MIEMBROS_URL}?fk_familia=${familyId}`);
+  const { data } = await api.get<FamilyMember[] | { results: FamilyMember[] }>(
+    `${MIEMBROS_URL}?fk_familia=${familyId}`,
+  );
   return Array.isArray(data) ? data : data.results;
 }
 

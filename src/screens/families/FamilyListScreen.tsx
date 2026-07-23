@@ -213,7 +213,9 @@ export default function FamilyListScreen(): React.JSX.Element {
   const t = useMemo(() => themeColors(isDark), [isDark]);
   const coral = colors.brandRedCoral;
 
-  const [permDeleteTarget, setPermDeleteTarget] = React.useState<Family | null>(null);
+  const [permDeleteTarget, setPermDeleteTarget] = React.useState<Family | null>(
+    null,
+  );
   const [showTrash, setShowTrash] = React.useState(false);
   const [restoreTarget, setRestoreTarget] = React.useState<Family | null>(null);
   const [jefeQuery, setJefeQuery] = React.useState('');
@@ -221,10 +223,11 @@ export default function FamilyListScreen(): React.JSX.Element {
     React.useState<SearchUserResult | null>(null);
   const [isRestoring, setIsRestoring] = React.useState(false);
 
-  const { results: jefeResults, setResults: setJefeResults, isSearching: isSearchingJefe } = useUserSearch(
-    jefeQuery,
-    selectedJefe,
-  );
+  const {
+    results: jefeResults,
+    setResults: setJefeResults,
+    isSearching: isSearchingJefe,
+  } = useUserSearch(jefeQuery, selectedJefe);
 
   const handleOpenRestore = (family: Family) => {
     setRestoreTarget(family);
@@ -522,7 +525,11 @@ export default function FamilyListScreen(): React.JSX.Element {
                 }}
                 hitSlop={8}
               >
-                <MaterialCommunityIcons name="arrow-left" size={28} color={t.fg} />
+                <MaterialCommunityIcons
+                  name="arrow-left"
+                  size={28}
+                  color={t.fg}
+                />
               </Pressable>
             ) : null}
             <Text
@@ -946,8 +953,8 @@ function RestoreFamilyModal({
                 {isRestoring ? 'Reactivando...' : 'Reactivar Familia'}
               </Text>
             </TouchableOpacity>
+          </View>
         </View>
-      </View>
       </View>
     </Modal>
   );

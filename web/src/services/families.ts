@@ -9,9 +9,9 @@ export async function createFamilyWithHead(
     ...payload,
     estado: true,
   });
-  const createdFamily = (
-    (data as { data?: { id_familia: number } }).data ?? (data as { id_familia: number })
-  );
+  const createdFamily =
+    (data as { data?: { id_familia: number } }).data ??
+    (data as { id_familia: number });
   const familyId = createdFamily.id_familia;
 
   let rollbackOk = true;

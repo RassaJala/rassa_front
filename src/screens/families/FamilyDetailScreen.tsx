@@ -271,11 +271,11 @@ function AddMemberModal({
   const [selectedUser, setSelectedUser] = useState<SearchUserResult | null>(
     null,
   );
-  const { results, setResults, isSearching: loading } = useUserSearch(
-    query,
-    selectedUser,
-    400,
-  );
+  const {
+    results,
+    setResults,
+    isSearching: loading,
+  } = useUserSearch(query, selectedUser, 400);
 
   useEffect(() => {
     if (!visible) {
@@ -527,7 +527,9 @@ function AddMemberModal({
 interface ConfirmActionModalProps {
   readonly visible: boolean;
   readonly isDark: boolean;
-  readonly iconName: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  readonly iconName: React.ComponentProps<
+    typeof MaterialCommunityIcons
+  >['name'];
   readonly iconBgColor: string;
   readonly iconColor: string;
   readonly title: string;
@@ -681,8 +683,9 @@ export default function FamilyDetailScreen(): React.JSX.Element {
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [removeMemberTarget, setRemoveMemberTarget] =
     useState<FamilyMember | null>(null);
-  const [assignHeadTarget, setAssignHeadTarget] =
-    useState<FamilyMember | null>(null);
+  const [assignHeadTarget, setAssignHeadTarget] = useState<FamilyMember | null>(
+    null,
+  );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 

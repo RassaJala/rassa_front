@@ -48,9 +48,13 @@ export function AdminFamilies() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const [jefeQuery, setJefeQuery] = useState('');
-  const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(null);
-  const { results: jefeResults, isSearching: searchingJefe } =
-    useJefeSearch(jefeQuery, selectedJefe);
+  const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(
+    null,
+  );
+  const { results: jefeResults, isSearching: searchingJefe } = useJefeSearch(
+    jefeQuery,
+    selectedJefe,
+  );
 
   const {
     data: items = [],
@@ -100,7 +104,9 @@ export function AdminFamilies() {
         fk_jefe_familia: selectedJefe.id_usuario,
       });
       await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
-      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-families-trash'],
+      });
       setRestoreTarget(null);
       setSelectedJefe(null);
       setJefeQuery('');
@@ -118,7 +124,9 @@ export function AdminFamilies() {
     setError(null);
     try {
       await api.post(`/familias/grupos/${permDelTarget.id_familia}/permanent/`);
-      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-families-trash'],
+      });
       setPermDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
@@ -195,7 +203,9 @@ export function AdminFamilies() {
     try {
       await api.delete(`/familias/grupos/${delTarget.id_familia}/`);
       await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
-      await queryClient.invalidateQueries({ queryKey: ['admin-families-trash'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['admin-families-trash'],
+      });
       setDelTarget(null);
     } catch (err: unknown) {
       console.error(err);

@@ -26,30 +26,210 @@ import type { AdminStackParamList, Family, SearchUserResult } from '@/types';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyForm'>;
 
-async function handleCreateFamily(
+interface JefeSearchFieldProps {
+  readonly isDark: boolean;
+  readonly errorColor: string;
+  readonly fieldError: string | undefined;
+  readonly saving: boolean;
+  readonly jefeQuery: string;
+  readonly selectedJefe: SearchUserResult | null;
+  readonly searchingJefe: boolean;
+  readonly jefeResults: SearchUserResult[];
+  readonly onQueryChange: (text: string) => void;
+  readonly onSelect: (user: SearchUserResult) => void;
+  readonly onClear: () => void;
+}
+
+function JefeSearchField({
+  isDark,
+  errorColor,
+  fieldError,
+  saving,
+  jefeQuery,
+  selectedJefe,
+  searchingJefe,
+  jefeResults,
+  onQueryChange,
+  onSelect,
+  onClear,
+}: JefeSearchFieldProps): React.JSX.Element {
+  const t = themeColors(isDark);
+  return (
+    <>
+      <Text
+        style={{
+          marginBottom: 6,
+          marginTop: 16,
+          fontSize: 14,
+          fontWeight: '500',
+          color: t.fg,
+        }}
+      >
+        Jefe de familia *
+      </Text>
+      <View style={{ position: 'relative' }}>
+        <TextInput
+          style={{
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: fieldError ? errorColor : t.border,
+            backgroundColor: t.input,
+            paddingLeft: 16,
+            paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
+            paddingVertical: 12,
+            fontSize: 16,
+            color: t.fg,
+          }}
+          placeholder="Buscar por nombre o correo..."
+          placeholderTextColor={t.muted}
+          value={jefeQuery}
+          onChangeText={onQueryChange}
+          editable={!saving}
+        />
+        {(selectedJefe ?? jefeQuery) ? (
+          <Pressable
+            onPress={onClear}
+            style={{ position: 'absolute', right: 12, top: 14 }}
+          >
+            <MaterialCommunityIcons
+              name="close-circle"
+              size={20}
+              color={t.muted}
+            />
+          </Pressable>
+        ) : null}
+      </View>
+
+      {searchingJefe ? (
+        <ActivityIndicator
+          size="small"
+          color={t.brand}
+          style={{ marginTop: 8 }}
+        />
+      ) : null}
+
+      {jefeResults.length > 0 ? (
+        <View
+          style={{
+            marginTop: 4,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: t.border,
+            backgroundColor: t.surface,
+            maxHeight: 180,
+            overflow: 'hidden',
+          }}
+        >
+          <ScrollView nestedScrollEnabled>
+            {jefeResults.map((user) => (
+              <TouchableOpacity
+                key={user.id_usuario}
+                activeOpacity={0.7}
+                onPress={() => onSelect(user)}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderBottomWidth: 1,
+                  borderBottomColor: t.border,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: t.fg,
+                  }}
+                  numberOfLines={1}
+                >
+                  {user.nombre} {user.apellido_paterno}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: t.muted,
+                    marginTop: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {user.email}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
+      {fieldError ? (
+        <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
+          {fieldError}
+        </Text>
+      ) : null}
+    </>
+  );
+}
+
+async function handleSubmit(
   trimmedNombre: string,
   detalle: string,
+  isEditing: boolean,
   selectedJefe: SearchUserResult | null,
+  familyId: number | undefined,
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   setServerError: (msg: string) => void,
   setSaving: (v: boolean) => void,
   queryClient: ReturnType<typeof useQueryClient>,
   navigation: { goBack: () => void },
 ): Promise<void> {
-  if (!selectedJefe) {
-    setServerError('Debes seleccionar un jefe de familia.');
-    setSaving(false);
+  if (!trimmedNombre) {
+    setFieldErrors({ nombre: 'El nombre es obligatorio.' });
+    setServerError('');
+    return;
+  }
+  if (trimmedNombre.length < 3) {
+    setFieldErrors({
+      nombre: 'El nombre debe tener al menos 3 caracteres.',
+    });
+    setServerError('');
+    return;
+  }
+  if (!isEditing && !selectedJefe) {
+    setFieldErrors({ jefe: 'Debes seleccionar un jefe de familia.' });
+    setServerError('');
     return;
   }
 
-  const payload = {
-    nombre_familia: trimmedNombre,
-    ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
-  };
+  setFieldErrors({});
+  setServerError('');
+  setSaving(true);
 
-  await createFamilyWithHead(payload, selectedJefe.id_usuario);
-
-  void queryClient.invalidateQueries({ queryKey: ['families'] });
-  navigation.goBack();
+  try {
+    if (isEditing) {
+      const payload = {
+        nombre_familia: trimmedNombre,
+        ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
+      };
+      await updateFamily(Number(familyId), payload);
+      void queryClient.invalidateQueries({ queryKey: ['families'] });
+      void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
+      navigation.goBack();
+    } else if (selectedJefe) {
+      await createFamilyWithHead(
+        {
+          nombre_familia: trimmedNombre,
+          ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
+        },
+        selectedJefe.id_usuario,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['families'] });
+      navigation.goBack();
+    }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Error al guardar la familia.';
+    setServerError(message);
+  } finally {
+    setSaving(false);
+  }
 }
 
 export default function FamilyFormScreen(): React.JSX.Element {
@@ -112,58 +292,20 @@ export default function FamilyFormScreen(): React.JSX.Element {
     });
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const onSubmit = (): void => {
     const trimmedNombre = nombre.trim();
-    if (!trimmedNombre) {
-      setFieldErrors({ nombre: 'El nombre es obligatorio.' });
-      setServerError('');
-      return;
-    }
-    if (trimmedNombre.length < 3) {
-      setFieldErrors({
-        nombre: 'El nombre debe tener al menos 3 caracteres.',
-      });
-      setServerError('');
-      return;
-    }
-    if (!isEditing && !selectedJefe) {
-      setFieldErrors({ jefe: 'Debes seleccionar un jefe de familia.' });
-      setServerError('');
-      return;
-    }
-
-    setFieldErrors({});
-    setServerError('');
-    setSaving(true);
-
-    try {
-      if (isEditing) {
-        const payload = {
-          nombre_familia: trimmedNombre,
-          ...(detalle.trim() ? { detalle_familia: detalle.trim() } : {}),
-        };
-        await updateFamily(Number(familyId), payload);
-        void queryClient.invalidateQueries({ queryKey: ['families'] });
-        void queryClient.invalidateQueries({ queryKey: ['family', familyId] });
-        navigation.goBack();
-      } else {
-        await handleCreateFamily(
-          trimmedNombre,
-          detalle,
-          selectedJefe,
-          setServerError,
-          setSaving,
-          queryClient,
-          navigation,
-        );
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error al guardar la familia.';
-      setServerError(message);
-    } finally {
-      setSaving(false);
-    }
+    void handleSubmit(
+      trimmedNombre,
+      detalle,
+      isEditing,
+      selectedJefe,
+      familyId,
+      setFieldErrors,
+      setServerError,
+      setSaving,
+      queryClient,
+      navigation,
+    );
   };
 
   const t = useMemo(() => themeColors(isDark), [isDark]);
@@ -323,119 +465,22 @@ export default function FamilyFormScreen(): React.JSX.Element {
 
           {/* Jefe de familia (solo creación) */}
           {!isEditing ? (
-            <>
-              <Text
-                style={{
-                  marginBottom: 6,
-                  marginTop: 16,
-                  fontSize: 14,
-                  fontWeight: '500',
-                  color: t.fg,
-                }}
-              >
-                Jefe de familia *
-              </Text>
-              <View style={{ position: 'relative' }}>
-                <TextInput
-                  style={{
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: fieldErrors.jefe ? errorColor : t.border,
-                    backgroundColor: t.input,
-                    paddingLeft: 16,
-                    paddingRight: (selectedJefe ?? jefeQuery) ? 40 : 16,
-                    paddingVertical: 12,
-                    fontSize: 16,
-                    color: t.fg,
-                  }}
-                  placeholder="Buscar por nombre o correo..."
-                  placeholderTextColor={t.muted}
-                  value={jefeQuery}
-                  onChangeText={(text) => {
-                    setJefeQuery(text);
-                    if (fieldErrors.jefe) clearFieldError('jefe');
-                  }}
-                  editable={!saving}
-                />
-                {(selectedJefe ?? jefeQuery) ? (
-                  <Pressable
-                    onPress={handleClearJefe}
-                    style={{ position: 'absolute', right: 12, top: 14 }}
-                  >
-                    <MaterialCommunityIcons
-                      name="close-circle"
-                      size={20}
-                      color={t.muted}
-                    />
-                  </Pressable>
-                ) : null}
-              </View>
-
-              {searchingJefe ? (
-                <ActivityIndicator
-                  size="small"
-                  color={t.brand}
-                  style={{ marginTop: 8 }}
-                />
-              ) : null}
-
-              {jefeResults.length > 0 ? (
-                <View
-                  style={{
-                    marginTop: 4,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: t.border,
-                    backgroundColor: t.surface,
-                    maxHeight: 180,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <ScrollView nestedScrollEnabled>
-                    {jefeResults.map((user) => (
-                      <TouchableOpacity
-                        key={user.id_usuario}
-                        activeOpacity={0.7}
-                        onPress={() => handleSelectJefe(user)}
-                        style={{
-                          paddingHorizontal: 16,
-                          paddingVertical: 10,
-                          borderBottomWidth: 1,
-                          borderBottomColor: t.border,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '600',
-                            color: t.fg,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {user.nombre} {user.apellido_paterno}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            color: t.muted,
-                            marginTop: 1,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {user.email}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              ) : null}
-
-              {fieldErrors.jefe ? (
-                <Text style={{ marginTop: 4, fontSize: 12, color: errorColor }}>
-                  {fieldErrors.jefe}
-                </Text>
-              ) : null}
-            </>
+            <JefeSearchField
+              isDark={isDark}
+              errorColor={errorColor}
+              fieldError={fieldErrors.jefe}
+              saving={saving}
+              jefeQuery={jefeQuery}
+              selectedJefe={selectedJefe}
+              searchingJefe={searchingJefe}
+              jefeResults={jefeResults}
+              onQueryChange={(text) => {
+                setJefeQuery(text);
+                if (fieldErrors.jefe) clearFieldError('jefe');
+              }}
+              onSelect={handleSelectJefe}
+              onClear={handleClearJefe}
+            />
           ) : null}
 
           {/* Detalle */}
@@ -506,7 +551,7 @@ export default function FamilyFormScreen(): React.JSX.Element {
                 gap: 6,
                 opacity: saving ? 0.6 : 1,
               }}
-              onPress={() => void handleSubmit()}
+              onPress={onSubmit}
               disabled={saving}
             >
               {saving ? (
