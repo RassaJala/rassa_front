@@ -892,18 +892,38 @@ export default function FamilyListScreen(): React.JSX.Element {
           alignItems: 'center',
         }}
       >
-        <View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {showTrash ? (
+              <Pressable
+                onPress={() => {
+                  setShowTrash(false);
+                  void refetchTrash();
+                }}
+                hitSlop={8}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={28} color={t.fg} />
+              </Pressable>
+            ) : null}
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: '700',
+                letterSpacing: -0.02,
+                color: t.fg,
+              }}
+            >
+              {showTrash ? 'Papelera' : 'Familias'}
+            </Text>
+          </View>
           <Text
             style={{
-              fontSize: 28,
-              fontWeight: '700',
-              letterSpacing: -0.02,
-              color: t.fg,
+              fontSize: 14,
+              color: t.muted,
+              marginTop: 2,
+              marginLeft: showTrash ? 36 : 0,
             }}
           >
-            {showTrash ? 'Papelera' : 'Familias'}
-          </Text>
-          <Text style={{ fontSize: 14, color: t.muted, marginTop: 2 }}>
             {currentList.length}{' '}
             {showTrash
               ? currentList.length === 1
@@ -915,32 +935,33 @@ export default function FamilyListScreen(): React.JSX.Element {
           </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {/* Botón de Papelera */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: t.border,
-              backgroundColor: t.surface,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onPress={() => {
-              setShowTrash((prev) => !prev);
-              void refetchTrash();
-            }}
-          >
-            <MaterialCommunityIcons
-              name={showTrash ? 'account-group' : 'trash-can-outline'}
-              size={20}
-              color={showTrash ? colors.brandRedCoral : t.muted}
-            />
-          </TouchableOpacity>
-        </View>
+        {!showTrash ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: t.border,
+                backgroundColor: t.surface,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => {
+                setShowTrash((prev) => !prev);
+                void refetchTrash();
+              }}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={20}
+                color={t.muted}
+              />
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
 
       {renderSegmentedControl()}
@@ -1197,8 +1218,8 @@ function RestoreFamilyModal({
                 {isRestoring ? 'Reactivando...' : 'Reactivar Familia'}
               </Text>
             </TouchableOpacity>
-          </View>
         </View>
+      </View>
       </View>
     </Modal>
   );
