@@ -64,3 +64,32 @@ export interface Column<T> {
   render?: (item: T) => React.ReactNode;
   className?: string;
 }
+
+export interface Family {
+  id_familia: number;
+  fk_jefe_familia: number | null;
+  jefe_nombre: string | null;
+  nombre_familia: string;
+  nombre?: string;
+  detalle_familia: string | null;
+  creado_en: string;
+  estado: boolean;
+}
+
+export interface FamilyMember {
+  id_familia_usuario: number;
+  fk_usuario: number;
+  usuario_nombre: string;
+  usuario_correo: string;
+  fk_familia: number;
+  estado: boolean;
+  creado_en: string;
+}
+
+export interface SearchUserResult {
+  id_usuario: number;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+}
