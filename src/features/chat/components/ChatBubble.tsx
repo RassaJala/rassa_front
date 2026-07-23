@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { IconButton, Menu } from 'react-native-paper';
 
 import { useCanModifyMessage } from '@/features/chat/hooks/useCanModifyMessage';
@@ -124,13 +124,14 @@ export default function ChatBubble({
           }`}
           onStartShouldSetResponder={() => false}
         >
-          <Text
+          <Pressable
             onLongPress={() => {
               if (showMenu) setMenuVisible(true);
             }}
+            accessibilityRole="button"
           >
             {!isOwn && (
-              <Text className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <Text className="mb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                 {message.remitente_nombre}
               </Text>
             )}
@@ -157,7 +158,7 @@ export default function ChatBubble({
               {formatTime(message.creado_en)}
               {message.editado ? ' · editado' : ''}
             </Text>
-          </Text>
+          </Pressable>
         </View>
       }
     >

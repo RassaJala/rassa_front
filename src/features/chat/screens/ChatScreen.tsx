@@ -63,25 +63,28 @@ export default function ChatScreen(): React.JSX.Element {
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
   useLayoutEffect(() => {
-    if (tipo === 'grupal') {
-      navigation.setOptions({
-        headerRight: () => (
-          <MaterialCommunityIcons
-            name="account-group"
-            size={24}
-            color={groupIconColor}
-            onPress={() => {
-              navigation.navigate('GroupDetail', {
-                conversationId,
-                title: route.params.title,
-                isFamily,
-              });
-            }}
-            style={{ marginRight: 16 }}
-          />
-        ),
-      });
-    }
+    navigation.setOptions({
+      title: route.params.title,
+      ...(tipo === 'grupal'
+        ? {
+            headerRight: () => (
+              <MaterialCommunityIcons
+                name="account-group"
+                size={24}
+                color={groupIconColor}
+                onPress={() => {
+                  navigation.navigate('GroupDetail', {
+                    conversationId,
+                    title: route.params.title,
+                    isFamily,
+                  });
+                }}
+                style={{ marginRight: 16 }}
+              />
+            ),
+          }
+        : {}),
+    });
   }, [
     navigation,
     tipo,

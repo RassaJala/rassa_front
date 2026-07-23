@@ -54,7 +54,7 @@ export default function ChatInput({
         multiline
         numberOfLines={1}
         dense
-        className="flex-1"
+        style={{ flex: 1 }}
         contentStyle={{ minHeight: 44 }}
         outlineStyle={{ borderRadius: 24 }}
       />
