@@ -97,8 +97,13 @@ export default function ChatScreen(): React.JSX.Element {
     [data],
   );
   // Inverted FlatList displays newest items at the bottom; keep data newest-first
-  const sortedMessages = [...messages].sort(
-    (a, b) => new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime(),
+  const sortedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) =>
+          new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime(),
+      ),
+    [messages],
   );
 
   // Auto-mark unread messages from other participant as read

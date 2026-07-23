@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Button, Modal, Portal, TextInput } from 'react-native-paper';
 
@@ -18,6 +18,10 @@ export default function MessageEditModal({
   saving = false,
 }: Readonly<MessageEditModalProps>): React.JSX.Element {
   const [text, setText] = useState(currentContent);
+
+  useEffect(() => {
+    setText(currentContent);
+  }, [currentContent]);
 
   const handleSave = () => {
     const trimmed = text.trim();

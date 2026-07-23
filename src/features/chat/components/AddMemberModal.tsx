@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Modal, Portal, TextInput } from 'react-native-paper';
 
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
+
 interface AddMemberModalProps {
   visible: boolean;
   onDismiss: () => void;
@@ -9,20 +12,14 @@ interface AddMemberModalProps {
   adding: boolean;
 }
 
-// ponytail: Paper Modal requires inline style object for contentContainerStyle
-const MODAL_STYLE = {
-  margin: 24,
-  borderRadius: 16,
-  backgroundColor: '#FFFFFF',
-  padding: 24,
-} as const;
-
 export default function AddMemberModal({
   visible,
   onDismiss,
   onAdd,
   adding,
 }: Readonly<AddMemberModalProps>): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
   const [userIdText, setUserIdText] = useState('');
 
   const handleAdd = () => {
@@ -38,9 +35,14 @@ export default function AddMemberModal({
       <Modal
         visible={visible}
         onDismiss={onDismiss}
-        contentContainerStyle={MODAL_STYLE}
+        contentContainerStyle={{
+          margin: 24,
+          borderRadius: 16,
+          backgroundColor: isDark ? colors.brandInk : colors.surface,
+          padding: 24,
+        }}
       >
-        <Text className="mb-4 text-lg font-bold text-gray-900">
+        <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
           Agregar integrante
         </Text>
         <TextInput

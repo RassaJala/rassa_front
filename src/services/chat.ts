@@ -120,6 +120,13 @@ export async function createPrivateConversation(
     typeof data === 'object' && 'id_conversacion' in data
       ? data.id_conversacion
       : data.id;
+
+  const conversations = await getConversations();
+  const existing = conversations.results.find((c) => c.id === id);
+  if (existing) {
+    return existing;
+  }
+
   return {
     id,
     nombre: '',

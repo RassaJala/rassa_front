@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Modal, Portal, TextInput } from 'react-native-paper';
+
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 
 interface RenameGroupModalProps {
   visible: boolean;
@@ -10,14 +13,6 @@ interface RenameGroupModalProps {
   saving: boolean;
 }
 
-// ponytail: Paper Modal requires inline style object for contentContainerStyle
-const MODAL_STYLE = {
-  margin: 24,
-  borderRadius: 16,
-  backgroundColor: '#FFFFFF',
-  padding: 24,
-} as const;
-
 export default function RenameGroupModal({
   visible,
   currentName,
@@ -25,7 +20,13 @@ export default function RenameGroupModal({
   onSave,
   saving,
 }: Readonly<RenameGroupModalProps>): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
   const [name, setName] = useState(currentName);
+
+  useEffect(() => {
+    setName(currentName);
+  }, [currentName]);
 
   const handleSave = () => {
     const trimmed = name.trim();
@@ -39,9 +40,14 @@ export default function RenameGroupModal({
       <Modal
         visible={visible}
         onDismiss={onDismiss}
-        contentContainerStyle={MODAL_STYLE}
+        contentContainerStyle={{
+          margin: 24,
+          borderRadius: 16,
+          backgroundColor: isDark ? colors.brandInk : colors.surface,
+          padding: 24,
+        }}
       >
-        <Text className="mb-4 text-lg font-bold text-gray-900">
+        <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
           Renombrar grupo
         </Text>
         <TextInput

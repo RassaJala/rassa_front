@@ -126,13 +126,29 @@ describe('chat service', () => {
     });
   });
 
-  it('createPrivateConversation handles existing conversation', async () => {
+  it('createPrivateConversation fills fields from existing conversation', async () => {
     const payload = { fk_usuario: 5 };
     mockApi.post.mockResolvedValueOnce({
       data: {
         ok: true,
         mensaje: 'La conversación ya existe.',
         data: { id_conversacion: 20 },
+      },
+    });
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        data: [
+          {
+            id_conversacion: 20,
+            tipo: false,
+            nombre: 'Juan Perez',
+            ultimo_mensaje: 'Hola',
+            ultimo_mensaje_creado_en: '2026-01-01T00:00:00Z',
+            no_leidos: 0,
+            es_familia: false,
+          },
+        ],
       },
     });
 
@@ -142,8 +158,33 @@ describe('chat service', () => {
       '/chat/conversaciones/crear-privada/',
       payload,
     );
+    expect(mockApi.get).toHaveBeenCalledWith('/chat/usuarios/conversaciones/');
     expect(result.id).toBe(20);
     expect(result.tipo).toBe('privada');
+    expect(result.participante_nombre).toBe('Juan Perez');
+    expect(result.nombre).toBe('Juan Perez');
+  });
+
+  it('createPrivateConversation falls back to placeholder when conversation is not found', async () => {
+    const payload = { fk_usuario: 5 };
+    mockApi.post.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        mensaje: 'Conversación creada.',
+        data: { id_conversacion: 21 },
+      },
+    });
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        data: [],
+      },
+    });
+
+    const result = await createPrivateConversation(payload);
+
+    expect(result.id).toBe(21);
+    expect(result.participante_nombre).toBe('');
   });
 
   it('markMessageAsRead calls PATCH and returns placeholder', async () => {

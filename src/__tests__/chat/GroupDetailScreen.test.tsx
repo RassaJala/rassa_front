@@ -13,6 +13,9 @@ jest.mock('@/store/AuthContext', () => ({
     user: { id: 1, nombre: 'Admin User', role: 'admin' },
   }),
 }));
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light' }),
+}));
 jest.mock('@react-navigation/native', () => {
   const mockRoute = {
     params: {

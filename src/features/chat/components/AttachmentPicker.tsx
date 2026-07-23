@@ -47,7 +47,7 @@ export default function AttachmentPicker({
       return;
     }
 
-    const isVideo = asset.type === 'video';
+    const isVideo = asset.type?.toLowerCase() === 'video';
     onSelected(
       {
         uri: asset.uri,

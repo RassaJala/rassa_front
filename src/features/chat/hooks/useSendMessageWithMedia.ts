@@ -27,6 +27,8 @@ export function useSendMessageWithMedia(
         pageParams: number[];
       }>(['messages', conversationId]);
 
+      const localDocument =
+        'uri' in payload.documento ? payload.documento : null;
       const optimisticMessage: Message = {
         id: Date.now(),
         conversacion: payload.conversacion,
@@ -36,6 +38,18 @@ export function useSendMessageWithMedia(
         creado_en: new Date().toISOString(),
         leido: false,
       };
+      if (localDocument) {
+        optimisticMessage.adjuntos = [
+          {
+            id: Date.now(),
+            mensaje: 0,
+            archivo: localDocument.uri,
+            tipo: payload.tipo_documento,
+            nombre: localDocument.name,
+            tamaño: 0,
+          },
+        ];
+      }
 
       queryClient.setQueryData<{
         pages: PaginatedResponse<Message>[];

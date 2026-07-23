@@ -100,7 +100,7 @@ export default function ChatBubble({
   if (isDeleted) {
     return (
       <View
-        className={`mb-2 max-w-[80%] self-end rounded-2xl px-4 py-2 ${
+        className={`mb-2 max-w-[80%] rounded-2xl px-4 py-2 ${
           isOwn ? 'self-end' : 'self-start'
         }`}
       >
@@ -117,10 +117,10 @@ export default function ChatBubble({
       onDismiss={() => setMenuVisible(false)}
       anchor={
         <View
-          className={`mb-2 max-w-[80%] self-end rounded-2xl px-4 py-2 ${
+          className={`mb-2 max-w-[80%] rounded-2xl px-4 py-2 ${
             isOwn
-              ? 'rounded-br-md bg-gray-700 dark:bg-gray-600'
-              : 'rounded-bl-md bg-white dark:bg-gray-800'
+              ? 'self-end rounded-br-md bg-gray-700 dark:bg-gray-600'
+              : 'self-start rounded-bl-md bg-white dark:bg-gray-800'
           }`}
           onStartShouldSetResponder={() => false}
         >

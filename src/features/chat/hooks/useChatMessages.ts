@@ -36,6 +36,6 @@ export function useChatMessages(
       return backoff;
     },
     refetchIntervalInBackground: false,
-    staleTime: 0,
+    staleTime: 5_000,
   });
 }
