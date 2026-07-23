@@ -32,8 +32,6 @@ import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
 import FamilyListScreen from '@/screens/families/FamilyListScreen';
-
-// Farmer screens
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
