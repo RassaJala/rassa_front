@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../providers/ThemeProvider';
-import { getColors } from '../../constants/colors';
+import { useAuth } from '~/hooks/useAuth';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
+import type { Role } from '~/types';
 
 interface NavItem {
   key: string;
@@ -76,7 +77,7 @@ const roleNavMap: Record<string, NavItem[]> = {
   ],
 };
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role }: { role: Role }) {
   const { user } = useAuth();
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');

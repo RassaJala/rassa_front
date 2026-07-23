@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ProtectedRoute } from '../components/guards/ProtectedRoute';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { AdminRoute } from '~/components/guards/AdminRoute';
+import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
+import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen, RegisterScreen } from './auth';
 import { FarmerProducts, FarmerOrders } from './farmer';
 import { SellerOrders, SellerSales } from './seller';
@@ -106,7 +107,7 @@ export function AppRouter() {
       </Route>
 
       {/* Admin */}
-      <Route element={<ProtectedRoute role="admin" />}>
+      <Route element={<AdminRoute />}>
         <Route
           path="/admin/*"
           element={
@@ -116,10 +117,10 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
+                <Route path="perfil" element={<ProfilePage />} />
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
-                <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>

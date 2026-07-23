@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { useTheme } from '../../providers/ThemeProvider';
-import { getColors } from '../../constants/colors';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 
 interface AuthLayoutProps {
   children: ReactNode;

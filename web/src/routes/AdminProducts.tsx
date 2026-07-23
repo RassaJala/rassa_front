@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { useAppColors } from '../hooks/useAppColors';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 
 interface Product {
   id: number;
