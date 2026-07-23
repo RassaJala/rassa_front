@@ -128,8 +128,17 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface OrderStatusHistory {
+  readonly id: number;
+  readonly previous_status: string | null;
+  readonly new_status: string;
+  readonly changed_at: string; // ISO datetime
+  readonly changed_by: string | null;
+}
+
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
   Chat: {
     conversationId: number;
