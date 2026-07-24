@@ -9,7 +9,9 @@ import { useCatalogs } from '@/hooks/useCatalogs';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import { useAuth } from '@/store/AuthContext';
 
-jest.mock('@react-native-community/netinfo');
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(),
+}));
 jest.mock('@/store/AuthContext');
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light', toggleColorScheme: jest.fn() }),
