@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   Text,
@@ -321,18 +322,23 @@ export default function SalesScreen(): React.JSX.Element {
             {accionNoTerminal.has(item.estado_actual) ? (
               <Pressable
                 onPress={() => {
-                  Alert.alert(
-                    'Cancelar pedido',
-                    '¿Estás seguro? Esta acción no se puede deshacer.',
-                    [
-                      { text: 'No', style: 'cancel' },
-                      {
-                        text: 'Sí, cancelar',
-                        style: 'destructive',
-                        onPress: () => cancelMutation.mutate(item.id_pedido),
-                      },
-                    ],
-                  );
+                  Platform.OS === 'web'
+                    ? window.confirm(
+                        '¿Estás seguro? Esta acción no se puede deshacer.',
+                      ) && cancelMutation.mutate(item.id_pedido)
+                    : Alert.alert(
+                        'Cancelar pedido',
+                        '¿Estás seguro? Esta acción no se puede deshacer.',
+                        [
+                          { text: 'No', style: 'cancel' },
+                          {
+                            text: 'Sí, cancelar',
+                            style: 'destructive',
+                            onPress: () =>
+                              cancelMutation.mutate(item.id_pedido),
+                          },
+                        ],
+                      );
                 }}
                 disabled={busy}
                 style={{
