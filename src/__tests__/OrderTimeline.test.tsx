@@ -98,7 +98,12 @@ describe('OrderTimeline', () => {
 
   it('renders timeline entries', () => {
     const entries: OrderStatusHistory[] = [
-      { ...baseEntry, id_historial: 1, estado_nuevo: 'pendiente', estado_anterior: null },
+      {
+        ...baseEntry,
+        id_historial: 1,
+        estado_nuevo: 'pendiente',
+        estado_anterior: null,
+      },
       {
         ...baseEntry,
         id_historial: 2,

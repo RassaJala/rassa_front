@@ -143,21 +143,15 @@ function TimelineEntry({
       {/* Timeline gutter */}
       <View style={styles.gutter}>
         {/* Dot */}
-        <View
-          style={[styles.dot, { backgroundColor: dotColor }]}
-        />
+        <View style={[styles.dot, { backgroundColor: dotColor }]} />
         {/* Vertical line */}
         {!isLast && (
-          <View
-            style={[styles.gutterLine, { backgroundColor: lineColor }]}
-          />
+          <View style={[styles.gutterLine, { backgroundColor: lineColor }]} />
         )}
       </View>
 
       {/* Content */}
-      <View
-        style={[styles.content, { paddingBottom: isLast ? 0 : 20 }]}
-      >
+      <View style={[styles.content, { paddingBottom: isLast ? 0 : 20 }]}>
         <Text style={[styles.title, { color: fg }]}>
           {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
         </Text>
@@ -208,8 +202,7 @@ export default function OrderTimeline({
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
-  const { entries, isLoading, isError, refetch } =
-    useOrderTimeline(orderId);
+  const { entries, isLoading, isError, refetch } = useOrderTimeline(orderId);
 
   // Loading
   if (isLoading) {
@@ -269,10 +262,7 @@ export default function OrderTimeline({
       showsVerticalScrollIndicator={false}
     >
       <View
-        style={[
-          styles.card,
-          { backgroundColor: surface, borderColor: border },
-        ]}
+        style={[styles.card, { backgroundColor: surface, borderColor: border }]}
       >
         {entries.map((entry, index) => {
           const isLast = index === entries.length - 1;

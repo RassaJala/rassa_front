@@ -220,10 +220,7 @@ export function AdminOrderDetail() {
                   : `${STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior} → ${label}`;
 
               return (
-                <div
-                  key={entry.id_historial}
-                  style={timelineEntryStyle}
-                >
+                <div key={entry.id_historial} style={timelineEntryStyle}>
                   {/* Gutter */}
                   <div
                     style={{
