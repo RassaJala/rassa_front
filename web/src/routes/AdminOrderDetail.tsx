@@ -37,7 +37,10 @@ export function AdminOrderDetail() {
           `/pedidos/${orderId}/historial`,
         );
         if (Array.isArray(res.data)) return res.data;
-        if (res.data && Array.isArray((res.data as ApiResponse<HistoryEntry[]>).data)) {
+        if (
+          res.data &&
+          Array.isArray((res.data as ApiResponse<HistoryEntry[]>).data)
+        ) {
           return (res.data as ApiResponse<HistoryEntry[]>).data;
         }
         return [];
