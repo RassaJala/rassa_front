@@ -303,7 +303,9 @@ export default function FarmerDashboardScreen({
                   width: 44,
                   height: 44,
                   borderRadius: 22,
-                  backgroundColor: coral,
+                  backgroundColor: surface,
+                  borderWidth: 1,
+                  borderColor: border,
                   alignItems: 'center',
                   justifyContent: 'center',
                   opacity: pressed ? 0.6 : 1,
@@ -312,7 +314,7 @@ export default function FarmerDashboardScreen({
                 <MaterialCommunityIcons
                   name="plus"
                   size={24}
-                  color={colors.iconWhite}
+                  color={fg}
                 />
               </Pressable>
             )}
