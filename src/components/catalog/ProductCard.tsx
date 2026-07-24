@@ -44,7 +44,7 @@ export default function ProductCard({
       <View
         className="h-40 w-full items-center justify-center"
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- colors is a plain object with string values
-        style={{ backgroundColor: isDark ? colors.admBgD : colors.iconBg }}
+        style={{ backgroundColor: isDark ? colors.admBgD : colors.admBgL }}
       >
         {imageUri ? (
           <Image
