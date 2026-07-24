@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Producto } from '@/services/productos';
 import { uploadProductoSemanalImagen } from '@/services/publications';
@@ -106,11 +106,12 @@ async function uploadLocalPhoto(
 ): Promise<void> {
   const formData = new FormData();
   const filename = fotoUri.split('/').pop() ?? 'photo.jpg';
-  const ext = filename.split('.').pop() ?? 'jpg';
+  const ext = (filename.split('.').pop() ?? 'jpg').toLowerCase();
+  const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
   formData.append('imagen', {
     uri: fotoUri,
     name: filename,
-    type: `image/${ext}`,
+    type: mimeType,
   } as unknown as Blob);
   await uploadProductoSemanalImagen(pubId, itemId, formData);
 }
@@ -197,10 +198,12 @@ export function usePublicationWizard({
   >(new Map());
 
   // Initialize localItems from server data when editing an existing publication
-  if (publicacion && !localItemsInitialized && items.length > 0) {
-    setLocalItems(items);
-    setLocalItemsInitialized(true);
-  }
+  useEffect(() => {
+    if (publicacion && !localItemsInitialized && items.length > 0) {
+      setLocalItems(items);
+      setLocalItemsInitialized(true);
+    }
+  }, [publicacion, localItemsInitialized, items]);
 
   const activeItems = localItems;
 
@@ -279,8 +282,8 @@ export function usePublicationWizard({
       for (const id of createdIds) {
         try {
           await removeItemMutation.mutateAsync({ pubId, itemId: id });
-        } catch {
-          // Best-effort cleanup
+        } catch (err) {
+          console.error('[usePublicationWizard] compensateCreatedItems failed:', err);
         }
       }
     },
@@ -292,8 +295,8 @@ export function usePublicationWizard({
       try {
         await deletePublicationMutation.mutateAsync(pub.id_publicacion);
         publicationRef.current = undefined;
-      } catch {
-        // Best-effort cleanup
+      } catch (err) {
+        console.error('[usePublicationWizard] compensateAutoCreatedPub failed:', err);
       }
     },
     [deletePublicationMutation],
@@ -315,6 +318,7 @@ export function usePublicationWizard({
     if (!pub) return undefined;
 
     const createdIds: number[] = [];
+    const tempIdRemap: Array<{ oldTempId: string; newTempId: string }> = [];
 
     try {
       for (const item of activeItems) {
@@ -327,14 +331,28 @@ export function usePublicationWizard({
         );
         if (result.isNew) {
           createdIds.push(result.itemId);
+          tempIdRemap.push({
+            oldTempId: item.tempId,
+            newTempId: String(result.itemId),
+          });
         }
       }
     } catch (error) {
+      console.error('[usePublicationWizard] persistItem failed:', error);
       await compensateCreatedItems(pub.id_publicacion, createdIds);
       if (autoCreatedPub) {
         await compensateAutoCreatedPub(pub);
       }
       throw error;
+    }
+
+    if (tempIdRemap.length > 0) {
+      setLocalItems((prev) =>
+        prev.map((item) => {
+          const remap = tempIdRemap.find((r) => r.oldTempId === item.tempId);
+          return remap ? { ...item, tempId: remap.newTempId } : item;
+        }),
+      );
     }
 
     return pub;
@@ -368,8 +386,8 @@ export function usePublicationWizard({
               pubId: pub.id_publicacion,
               itemId: Number(id),
             });
-          } catch {
-            // Best-effort cleanup
+          } catch (err) {
+            console.error('[usePublicationWizard] removeItem failed:', err);
           }
         }
       }

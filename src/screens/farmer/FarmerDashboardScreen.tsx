@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import { usePublicaciones } from '@/hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '@/services/publications';
 import { useTheme } from '@/store/ThemeContext';
@@ -101,10 +101,11 @@ function PublicationCard({
   isDark: boolean;
   onPress: () => void;
 }): React.JSX.Element {
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const border = isDark ? '#353D35' : '#E2E6DF';
+  const theme = themeColors(isDark);
+  const fg = theme.fg;
+  const muted = theme.muted;
+  const surface = theme.surface;
+  const border = theme.border;
   const productCount = pub.productos?.length ?? 0;
 
   return (
@@ -196,7 +197,7 @@ function EmptyState({
   isDark: boolean;
   tab: TabKey;
 }): React.JSX.Element {
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
+  const muted = themeColors(isDark).muted;
   const msgs: Record<TabKey, string> = {
     borrador: 'No hay borradores. Creá una nueva publicación.',
     publicado: 'No hay publicaciones activas.',
@@ -238,18 +239,19 @@ export default function FarmerDashboardScreen({
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('borrador');
 
-  const { data, isLoading, refetch, isRefetching } =
+  const { data, isLoading, isError, refetch, isRefetching } =
     usePublicaciones(activeTab);
 
   const publications = data?.data?.results ?? [];
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const theme = themeColors(isDark);
+  const bg = theme.bg;
+  const fg = theme.fg;
+  const muted = theme.muted;
+  const surface = theme.surface;
+  const border = theme.border;
+  const brand = theme.brand;
+  const coral = colors.brandRedCoral;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -387,6 +389,38 @@ export default function FarmerDashboardScreen({
         {isLoading ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
             <ActivityIndicator size="large" color={brand} />
+          </View>
+        ) : isError ? (
+          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+            <MaterialCommunityIcons
+              name="alert-circle-outline"
+              size={48}
+              color={muted}
+            />
+            <Text
+              style={{
+                fontSize: 15,
+                color: muted,
+                textAlign: 'center',
+                marginTop: 12,
+              }}
+            >
+              Error al cargar publicaciones.
+            </Text>
+            <Pressable
+              onPress={() => void refetch()}
+              style={{
+                marginTop: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 20,
+                borderRadius: 8,
+                backgroundColor: brand,
+              }}
+            >
+              <Text style={{ color: colors.iconWhite, fontWeight: '600' }}>
+                Reintentar
+              </Text>
+            </Pressable>
           </View>
         ) : publications.length === 0 ? (
           <EmptyState isDark={isDark} tab={activeTab} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,10 +13,11 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { usePreventRemove } from '@react-navigation/native';
 
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
 import WizardItemCard from '@/components/wizard/WizardItemCard';
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
 import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
 import {
@@ -86,29 +87,45 @@ export default function PublicationWizardScreen({
 
   const wizard = usePublicationWizard({ publicacion, productos });
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const theme = themeColors(isDark);
+  const bg = theme.bg;
+  const fg = theme.fg;
+  const muted = theme.muted;
+  const surface = theme.surface;
+  const border = theme.border;
+  const brand = theme.brand;
+  const coral = colors.brandRedCoral;
   const white = colors.iconWhite;
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const errorBg = isDark ? 'rgba(232,74,74,0.1)' : 'rgba(222,57,58,0.05)';
+  const accentBg = theme.accentBg;
+  const errorBg = theme.errorBg;
   const shadowBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
   const subtleBg = isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)';
 
+  const isMutating = wizard.isPublishing || wizard.isCreating;
+
+  usePreventRemove(isMutating, ({ data: { action: _action } }) => {
+    Alert.alert(
+      'Operación en curso',
+      'Esperá a que termine la operación actual.',
+      [{ text: 'OK' }],
+    );
+  });
+
   const handlePickImage = useCallback(
     async (tempId: string) => {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.8,
-      });
+      try {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          quality: 0.8,
+        });
 
-      if (!result.canceled && result.assets[0]) {
-        wizard.updateItem(tempId, 'foto', result.assets[0].uri);
+        if (!result.canceled && result.assets[0]) {
+          wizard.updateItem(tempId, 'foto', result.assets[0].uri);
+        }
+      } catch (error) {
+        console.error('[PublicationWizard] ImagePicker failed:', error);
+        Alert.alert('Error', 'No se pudo seleccionar la imagen.');
       }
     },
     [wizard],
@@ -127,7 +144,8 @@ export default function PublicationWizardScreen({
       Alert.alert('Publicado', 'Tu publicación está activa.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
+    } catch (error) {
+      console.error('[PublicationWizard] publish failed:', error);
       Alert.alert('Error', 'No se pudo publicar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
@@ -138,13 +156,22 @@ export default function PublicationWizardScreen({
       Alert.alert('Borrador guardado', 'Tu publicación se guardó.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    } catch {
+    } catch (error) {
+      console.error('[PublicationWizard] saveDraft failed:', error);
       Alert.alert('Error', 'No se pudo guardar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
 
-  const now = new Date();
-  const weekNumber = getWeekNumber(now);
+  const publicationDate = useMemo(() => {
+    const d = new Date();
+    const dayOfWeek = d.getDay();
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
+    d.setDate(d.getDate() + daysUntilMonday);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const weekNumber = getWeekNumber(publicationDate);
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -292,7 +319,7 @@ export default function PublicationWizardScreen({
                   marginBottom: 4,
                 }}
               >
-                {now.toLocaleDateString('es-AR', {
+                {publicationDate.toLocaleDateString('es-AR', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -638,7 +665,9 @@ export default function PublicationWizardScreen({
             <Pressable
               onPress={() => {
                 if (wizard.currentStep === 'productos') {
-                  wizard.validateItems();
+                  if (!wizard.validateItems()) {
+                    return;
+                  }
                 }
                 wizard.nextStep();
               }}
