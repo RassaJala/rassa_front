@@ -7,21 +7,23 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import * as ImagePicker from 'expo-image-picker';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { colors } from '@/constants/colors';
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
 import WizardItemCard from '@/components/wizard/WizardItemCard';
-import {
-  usePublicationWizard,
-  WIZARD_STEPS,
-  type WizardStep,
-} from '@/hooks/usePublicationWizard';
-import { usePublicacion, useProductosSemanales } from '@/hooks/usePublications';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
+import { usePublicacion, useProductosSemanales } from '@/hooks/usePublications';
+import {
+  WIZARD_STEPS,
+  usePublicationWizard,
+} from '@/hooks/usePublicationWizard';
+import type { WizardStep } from '@/hooks/usePublicationWizard';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
 
@@ -91,6 +93,11 @@ export default function PublicationWizardScreen({
   const border = isDark ? '#353D35' : '#E2E6DF';
   const brand = isDark ? '#4A8A63' : '#24563C';
   const coral = '#DE393A';
+  const white = colors.iconWhite;
+  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
+  const errorBg = isDark ? 'rgba(232,74,74,0.1)' : 'rgba(222,57,58,0.05)';
+  const shadowBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const subtleBg = isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)';
 
   const handlePickImage = useCallback(
     async (tempId: string) => {
@@ -216,8 +223,8 @@ export default function PublicationWizardScreen({
                     : isDone
                       ? brand
                       : isDark
-                        ? 'rgba(255,255,255,0.1)'
-                        : 'rgba(0,0,0,0.08)',
+                        ? shadowBg
+                        : colors.transparent,
                   opacity: isDone && !isActive ? 0.5 : 1,
                 }}
               />
@@ -249,9 +256,7 @@ export default function PublicationWizardScreen({
                   width: 44,
                   height: 44,
                   borderRadius: 14,
-                  backgroundColor: isDark
-                    ? 'rgba(74,138,99,0.12)'
-                    : 'rgba(36,86,60,0.07)',
+                  backgroundColor: accentBg,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -274,9 +279,7 @@ export default function PublicationWizardScreen({
 
             <View
               style={{
-                backgroundColor: isDark
-                  ? 'rgba(74,138,99,0.08)'
-                  : 'rgba(36,86,60,0.04)',
+                backgroundColor: subtleBg,
                 borderRadius: 12,
                 padding: 16,
               }}
@@ -568,9 +571,7 @@ export default function PublicationWizardScreen({
                     alignItems: 'center',
                     gap: 6,
                     marginTop: 12,
-                    backgroundColor: isDark
-                      ? 'rgba(232,74,74,0.1)'
-                      : 'rgba(222,57,58,0.05)',
+                    backgroundColor: errorBg,
                     borderRadius: 8,
                     paddingHorizontal: 12,
                     paddingVertical: 8,
@@ -602,7 +603,13 @@ export default function PublicationWizardScreen({
           borderTopColor: border,
         }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
           {wizard.stepIndex > 0 ? (
             <Pressable
               onPress={wizard.prevStep}
@@ -647,15 +654,13 @@ export default function PublicationWizardScreen({
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <Text
-                style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#FFFFFF' : fg }}
-              >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: white }}>
                 Siguiente
               </Text>
               <MaterialCommunityIcons
                 name="arrow-right"
                 size={18}
-                color={isDark ? '#FFFFFF' : fg}
+                color={white}
               />
             </Pressable>
           ) : (
@@ -716,13 +721,13 @@ export default function PublicationWizardScreen({
                 })}
               >
                 {wizard.isPublishing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={white} />
                 ) : (
                   <Text
                     style={{
                       fontSize: 15,
                       fontWeight: '600',
-                      color: isDark ? '#FFFFFF' : fg,
+                      color: white,
                     }}
                   >
                     Publicar

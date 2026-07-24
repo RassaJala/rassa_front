@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { colors } from '@/constants/colors';
 import { usePublicaciones } from '@/hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '@/services/publications';
 import { useTheme } from '@/store/ThemeContext';
@@ -177,7 +178,9 @@ function PublicationCard({
             size={14}
             color="#F2A900"
           />
-          <Text style={{ fontSize: 12, color: '#F2A900', fontWeight: '500' }}>
+          <Text
+            style={{ fontSize: 12, color: colors.warning, fontWeight: '500' }}
+          >
             Toca para editar
           </Text>
         </View>
@@ -304,7 +307,11 @@ export default function FarmerDashboardScreen({
                   opacity: pressed ? 0.6 : 1,
                 })}
               >
-                <MaterialCommunityIcons name="plus" size={24} color={isDark ? '#FFFFFF' : fg} />
+                <MaterialCommunityIcons
+                  name="plus"
+                  size={24}
+                  color={colors.iconWhite}
+                />
               </Pressable>
             )}
             <Pressable
@@ -352,7 +359,7 @@ export default function FarmerDashboardScreen({
                   gap: 5,
                   paddingVertical: 10,
                   borderRadius: 10,
-                  backgroundColor: isActive ? brand : 'transparent',
+                  backgroundColor: isActive ? brand : colors.transparent,
                 }}
               >
                 <MaterialCommunityIcons
@@ -360,13 +367,13 @@ export default function FarmerDashboardScreen({
                     tab.icon as keyof typeof MaterialCommunityIcons.glyphMap
                   }
                   size={16}
-                  color={isActive ? '#FFFFFF' : muted}
+                  color={isActive ? colors.iconWhite : muted}
                 />
                 <Text
                   style={{
                     fontSize: 13,
                     fontWeight: '600',
-                    color: isActive ? '#FFFFFF' : muted,
+                    color: isActive ? colors.iconWhite : muted,
                   }}
                 >
                   {tab.label}
@@ -423,8 +430,14 @@ export default function FarmerDashboardScreen({
             shadowRadius: 6,
           })}
         >
-          <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
-          <Text style={{ fontSize: 15, fontWeight: '600', color: '#FFFFFF' }}>
+          <MaterialCommunityIcons
+            name="plus"
+            size={20}
+            color={colors.iconWhite}
+          />
+          <Text
+            style={{ fontSize: 15, fontWeight: '600', color: colors.iconWhite }}
+          >
             Nueva publicación
           </Text>
         </Pressable>
