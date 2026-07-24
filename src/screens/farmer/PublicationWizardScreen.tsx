@@ -7,21 +7,21 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as ImagePicker from 'expo-image-picker';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/constants/colors';
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
 import WizardItemCard from '@/components/wizard/WizardItemCard';
+import { colors } from '@/constants/colors';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
-import { usePublicacion, useProductosSemanales } from '@/hooks/usePublications';
+import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
 import {
-  WIZARD_STEPS,
   usePublicationWizard,
+  WIZARD_STEPS,
 } from '@/hooks/usePublicationWizard';
 import type { WizardStep } from '@/hooks/usePublicationWizard';
 import { useTheme } from '@/store/ThemeContext';
