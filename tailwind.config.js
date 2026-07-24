@@ -1,3 +1,5 @@
+const { colors } = require('./src/constants/colors');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
@@ -8,22 +10,43 @@ module.exports = {
       colors: {
         brand: {
           green: {
-            forest: '#3A6D56', // Hojas — verde base
-            sage: '#AEC0BC', // Nopal — verde pálido
-            olive: '#CED295', // Tipografía y marco — verde oliva
+            forest: colors.brand.greenForest,
+            sage: colors.brand.greenSage,
+            olive: colors.brand.greenOlive,
           },
           red: {
-            coral: '#DE393A', // Tomates — rojo intenso
+            coral: colors.brand.redCoral,
           },
-          magenta: '#D52E7A', // Tunas — fucsia
-          orange: '#E46C38', // Zanahorias — naranja
-          skin: '#D8D3C8', // Manos — beige grisáceo
-          ink: '#1D1D1D', // Contornos — negro suave
+          magenta: colors.brand.magenta,
+          orange: colors.brand.orange,
+          skin: colors.brand.skin,
+          ink: colors.brand.ink,
           mountain: {
-            top: '#EEAA6F', // Montaña superior
-            mid: '#B2C2B2', // Montaña media
-            bot: '#A19FB6', // Montaña inferior
+            top: colors.brand.mountainTop,
+            mid: colors.brand.mountainMid,
+            bot: colors.brand.mountainBot,
           },
+        },
+        rassa: {
+          bg: colors.admBgL,
+          surface: colors.admSurfaceL,
+          fg: colors.admFgL,
+          muted: colors.admMutedL,
+          border: colors.admBorderL,
+          input: colors.admBgL,
+          'bg-dark': colors.admBgD,
+          'surface-dark': colors.admSurfaceD,
+          'fg-dark': colors.admFgD,
+          'muted-dark': colors.admMutedD,
+          'border-dark': colors.admBorderD,
+          'input-dark': colors.admBgD,
+          'accent-bg': colors.admBgL,
+          'accent-bg-dark': colors.admBorderD,
+          'brand-dark': colors.admBrandD,
+          error: colors.brandRedCoral,
+          'error-bg': colors.admErrorBgL,
+          'error-bg-dark': colors.admErrorBgD,
+          overlay: colors.overlayBg,
         },
       },
     },

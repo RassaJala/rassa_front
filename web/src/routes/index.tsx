@@ -4,9 +4,12 @@ import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
 import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen, RegisterScreen } from './auth';
 import { FarmerProducts, FarmerOrders } from './farmer';
-import { SellerOrders, SellerSales } from './seller';
+import { SellerSales } from './seller';
+import { VendorPanelScreen } from './VendorPanelScreen';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
+import { AdminFamilies } from './AdminFamilies';
+import { AdminFamilyDetail } from './AdminFamilyDetail';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
 import { AdminMunicipios } from './AdminMunicipios';
@@ -14,6 +17,7 @@ import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
 import { BuyerHome } from './BuyerHome';
 import { BuyerCart } from './BuyerCart';
+import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
 import { ProfilePage } from './ProfilePage';
 import { useAuth } from '../hooks/useAuth';
@@ -94,7 +98,7 @@ export function AppRouter() {
             <DashboardLayout role="vendedor">
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
-                <Route path="pedidos" element={<SellerOrders />} />
+                <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route
                   path="*"
@@ -117,6 +121,11 @@ export function AppRouter() {
                 <Route path="productos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="unidades" element={<AdminUnits />} />
+                <Route path="familias" element={<AdminFamilies />} />
+                <Route
+                  path="familias/detalle"
+                  element={<AdminFamilyDetail />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
@@ -138,6 +147,7 @@ export function AppRouter() {
                 <Route index element={<BuyerHome />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
+                <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>

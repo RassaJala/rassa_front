@@ -37,6 +37,12 @@ jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
 
 const mockNavigate = jest.fn();
 
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
+
 const mockNavigation = {
   navigate: mockNavigate,
   goBack: jest.fn(),

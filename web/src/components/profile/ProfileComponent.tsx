@@ -1,4 +1,5 @@
 import { getColors } from '~/constants/colors';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '~/providers/ThemeProvider';
 
 import { ProfileChangePassword } from '~/components/profile/ProfileChangePassword';
@@ -24,20 +25,7 @@ export function ProfileComponent() {
   const catalog = useProfileCatalog();
   const password = usePasswordChange();
 
-  const btnStyle = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-  } as const;
+  const btnStyle = sharedBtnStyle;
 
   // --- Loading ---
   if (profile.fetching) {

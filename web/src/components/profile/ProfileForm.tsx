@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from '~/providers/ThemeProvider';
 import { getColors } from '~/constants/colors';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { LocationSelector } from '~/components/profile/LocationSelector';
 import type {
   FieldErrors,
@@ -79,20 +80,7 @@ export function ProfileForm({
   const { fg, muted, border, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const btnStyle = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-  } as const;
+  const btnStyle = sharedBtnStyle;
 
   // Cargar municipios al montar el formulario de edición
   useEffect(() => {
