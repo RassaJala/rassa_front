@@ -60,10 +60,16 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   updateQuantity: (id, cantidad) => {
+    if (cantidad <= 0) {
+      set((state) => ({
+        items: state.items.filter((i) => i.id_producto_semanal !== id),
+      }));
+      return;
+    }
     set((state) => ({
       items: state.items.map((i) =>
         i.id_producto_semanal === id
-          ? { ...i, cantidad: Math.min(Math.max(cantidad, 1), i.stock) }
+          ? { ...i, cantidad: Math.min(cantidad, i.stock) }
           : i,
       ),
     }));
