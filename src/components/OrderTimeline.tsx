@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -17,6 +18,89 @@ import {
 } from '@/constants/orderTimeline';
 import { useOrderTimeline } from '@/hooks/useOrderTimeline';
 import { useTheme } from '@/store/ThemeContext';
+
+const DOT_SIZE = 12;
+const GUTTER_WIDTH = 28;
+const MIN_HEIGHT = 64;
+
+const styles = StyleSheet.create({
+  dot: {
+    width: DOT_SIZE,
+    height: DOT_SIZE,
+    borderRadius: DOT_SIZE / 2,
+    marginTop: 4,
+  },
+  gutter: {
+    width: GUTTER_WIDTH,
+    alignItems: 'center',
+  },
+  gutterLine: {
+    flex: 1,
+    width: 2,
+  },
+  row: {
+    flexDirection: 'row',
+    minHeight: MIN_HEIGHT,
+  },
+  content: {
+    flex: 1,
+    paddingLeft: 12,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+  },
+  centeredContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+  },
+  centeredContainerWide: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 15,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  retryBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+  },
+});
 
 function buildDescription(entry: {
   readonly estado_anterior: string | null;
@@ -55,72 +139,49 @@ function TimelineEntry({
   mutedColor,
 }: TimelineEntryProps): React.JSX.Element {
   return (
-    <View style={{ flexDirection: 'row', minHeight: 64 }}>
+    <View style={styles.row}>
       {/* Timeline gutter */}
-      <View style={{ width: 28, alignItems: 'center' }}>
+      <View style={styles.gutter}>
         {/* Dot */}
         <View
-          style={{
-            width: 12,
-            height: 12,
-            borderRadius: 6,
-            backgroundColor: dotColor,
-            marginTop: 4,
-          }}
+          style={[styles.dot, { backgroundColor: dotColor }]}
         />
         {/* Vertical line */}
         {!isLast && (
           <View
-            style={{
-              flex: 1,
-              width: 2,
-              backgroundColor: lineColor,
-            }}
+            style={[styles.gutterLine, { backgroundColor: lineColor }]}
           />
         )}
       </View>
 
       {/* Content */}
       <View
-        style={{ flex: 1, paddingLeft: 12, paddingBottom: isLast ? 0 : 20 }}
+        style={[styles.content, { paddingBottom: isLast ? 0 : 20 }]}
       >
-        <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+        <Text style={[styles.title, { color: fg }]}>
           {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
         </Text>
-        <Text
-          style={{
-            fontSize: 13,
-            color: mutedColor,
-            marginTop: 2,
-          }}
-        >
+        <Text style={[styles.subtitle, { color: mutedColor }]}>
           {buildDescription(entry)}
         </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 4,
-            gap: 4,
-          }}
-        >
+        <View style={styles.metaRow}>
           <MaterialCommunityIcons
             name="clock-outline"
-            size={12}
+            size={DOT_SIZE}
             color={mutedColor}
           />
-          <Text style={{ fontSize: 12, color: mutedColor }}>
+          <Text style={[styles.metaText, { color: mutedColor }]}>
             {formatTimestamp(entry.creado_en)}
           </Text>
           {entry.cambiado_por_nombre !== null && (
             <>
-              <Text style={{ fontSize: 12, color: mutedColor }}>·</Text>
+              <Text style={[styles.metaText, { color: mutedColor }]}>·</Text>
               <MaterialCommunityIcons
                 name="account-outline"
-                size={12}
+                size={DOT_SIZE}
                 color={mutedColor}
               />
-              <Text style={{ fontSize: 12, color: mutedColor }}>
+              <Text style={[styles.metaText, { color: mutedColor }]}>
                 {entry.cambiado_por_nombre}
               </Text>
             </>
@@ -147,21 +208,13 @@ export default function OrderTimeline({
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
-  const { entries, isLoading, isError, error, refetch } =
+  const { entries, isLoading, isError, refetch } =
     useOrderTimeline(orderId);
 
   // Loading
   if (isLoading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 48,
-        }}
-      >
+      <View style={[styles.centeredContainer, { backgroundColor: bg }]}>
         <ActivityIndicator size="large" color={brand} />
       </View>
     );
@@ -170,47 +223,21 @@ export default function OrderTimeline({
   // Error
   if (isError) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 48,
-          paddingHorizontal: 24,
-        }}
-      >
+      <View style={[styles.centeredContainerWide, { backgroundColor: bg }]}>
         <MaterialCommunityIcons
           name="alert-circle-outline"
           size={40}
           color={muted}
         />
-        <Text
-          style={{
-            marginTop: 12,
-            textAlign: 'center',
-            fontSize: 15,
-            color: muted,
-          }}
-        >
-          {error?.message ?? 'Error al cargar el historial'}
+        <Text style={[styles.errorText, { color: muted }]}>
+          Error al cargar el historial
         </Text>
         <Pressable
           onPress={() => void refetch()}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-          }}
+          style={[styles.retryBtn, { borderColor: border }]}
         >
           <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+          <Text style={[styles.retryBtnText, { color: brand }]}>
             Reintentar
           </Text>
         </Pressable>
@@ -221,15 +248,7 @@ export default function OrderTimeline({
   // Empty
   if (entries.length === 0) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 48,
-        }}
-      >
+      <View style={[styles.centeredContainer, { backgroundColor: bg }]}>
         <MaterialCommunityIcons name="history" size={40} color={muted} />
         <Text style={{ marginTop: 12, fontSize: 15, color: muted }}>
           Sin historial de cambios
@@ -246,13 +265,10 @@ export default function OrderTimeline({
       showsVerticalScrollIndicator={false}
     >
       <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: border,
-          padding: 20,
-        }}
+        style={[
+          styles.card,
+          { backgroundColor: surface, borderColor: border },
+        ]}
       >
         {entries.map((entry, index) => {
           const isLast = index === entries.length - 1;

@@ -132,7 +132,7 @@ export function AdminDashboard() {
         />
         <button
           onClick={() => {
-            const id = Number.parseInt(lookupId, 10);
+            const id = Number(lookupId);
             if (id > 0) navigate(`/admin/pedidos/${id}`);
           }}
           disabled={!lookupId || Number(lookupId) <= 0}

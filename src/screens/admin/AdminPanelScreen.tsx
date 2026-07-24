@@ -41,7 +41,8 @@ export default function AdminPanelScreen({
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
   const pumpkin = colors.accent;
-  const white = '#fff';
+  const lookupNum = Number(lookupId);
+  const isInvalid = lookupId.length > 0 && (isNaN(lookupNum) || lookupNum <= 0);
 
   const { today } = useFormattedDate();
 
@@ -187,16 +188,27 @@ export default function AdminPanelScreen({
                       color: fg,
                       borderRadius: 12,
                       borderWidth: 1,
-                      borderColor: border,
+                      borderColor: isInvalid ? colors.brandRedCoral : border,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
                       fontSize: 15,
-                      marginBottom: 12,
+                      marginBottom: 4,
                     }}
                   />
+                  {isInvalid ? (
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.brandRedCoral,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Ingresá un ID de pedido válido (número positivo)
+                    </Text>
+                  ) : null}
                   <Pressable
                     onPress={() => {
-                      const id = Number.parseInt(lookupId, 10);
+                      const id = Number(lookupId);
                       if (id > 0) {
                         navigation.navigate('OrderDetail', { orderId: id });
                         setShowLookup(false);
@@ -214,7 +226,7 @@ export default function AdminPanelScreen({
                       style={{
                         fontSize: 15,
                         fontWeight: '700',
-                        color: white,
+                        color: colors.iconWhite,
                       }}
                     >
                       Ver historial

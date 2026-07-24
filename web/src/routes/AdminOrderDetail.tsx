@@ -85,19 +85,48 @@ export function AdminOrderDetail() {
     minHeight: 24,
   };
 
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 24,
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: surface,
+    borderRadius: 16,
+    border: `1px solid ${border}`,
+    overflow: 'hidden',
+  };
+
+  const centeredStyle = (): React.CSSProperties => ({
+    display: 'grid',
+    placeItems: 'center',
+    padding: '64px 24px',
+    color: muted,
+  });
+
+  const timelineEntryStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: 14,
+    minHeight: 64,
+  };
+
+  const timeStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    fontSize: 12,
+    color: muted,
+  };
+
   // ── Render ──
 
   return (
     <div>
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
+      <div style={headerStyle}>
         <button
           onClick={() => navigate(-1)}
           style={{
@@ -124,24 +153,10 @@ export function AdminOrderDetail() {
       </div>
 
       {/* Content */}
-      <div
-        style={{
-          background: surface,
-          borderRadius: 16,
-          border: `1px solid ${border}`,
-          overflow: 'hidden',
-        }}
-      >
+      <div style={cardStyle}>
         {/* Loading */}
         {isLoading && (
-          <div
-            style={{
-              display: 'grid',
-              placeItems: 'center',
-              padding: '64px 24px',
-              color: muted,
-            }}
-          >
+          <div style={centeredStyle()}>
             <div
               style={{
                 width: 32,
@@ -159,14 +174,7 @@ export function AdminOrderDetail() {
 
         {/* Error */}
         {isError && (
-          <div
-            style={{
-              display: 'grid',
-              placeItems: 'center',
-              padding: '64px 24px',
-              color: muted,
-            }}
-          >
+          <div style={centeredStyle()}>
             <span style={{ fontSize: 40 }}>⚠️</span>
             <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
               {error instanceof Error
@@ -190,14 +198,7 @@ export function AdminOrderDetail() {
 
         {/* Empty */}
         {!isLoading && !isError && entries.length === 0 && (
-          <div
-            style={{
-              display: 'grid',
-              placeItems: 'center',
-              padding: '64px 24px',
-              color: muted,
-            }}
-          >
+          <div style={centeredStyle()}>
             <span style={{ fontSize: 40 }}>📋</span>
             <p style={{ marginTop: 12, fontSize: 14 }}>
               Sin historial de cambios
@@ -221,7 +222,7 @@ export function AdminOrderDetail() {
               return (
                 <div
                   key={entry.id_historial}
-                  style={{ display: 'flex', gap: 14, minHeight: 64 }}
+                  style={timelineEntryStyle}
                 >
                   {/* Gutter */}
                   <div
@@ -255,16 +256,7 @@ export function AdminOrderDetail() {
                     >
                       {description}
                     </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        marginTop: 4,
-                        fontSize: 12,
-                        color: muted,
-                      }}
-                    >
+                    <div style={timeStyle}>
                       <span>🕐</span>
                       <span>{formatTimestamp(entry.creado_en)}</span>
                       {entry.cambiado_por_nombre !== null && (
