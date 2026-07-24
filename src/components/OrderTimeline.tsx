@@ -215,7 +215,11 @@ export default function OrderTimeline({
   if (isLoading) {
     return (
       <View style={[styles.centeredContainer, { backgroundColor: bg }]}>
-        <ActivityIndicator size="large" color={brand} />
+        <ActivityIndicator
+          size="large"
+          color={brand}
+          testID="loading-indicator"
+        />
       </View>
     );
   }
