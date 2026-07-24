@@ -279,7 +279,10 @@ export function usePublicationWizard({
         try {
           await removeItemMutation.mutateAsync({ pubId, itemId: id });
         } catch (err) {
-          console.error('[usePublicationWizard] compensateCreatedItems failed:', err);
+          console.error(
+            '[usePublicationWizard] compensateCreatedItems failed:',
+            err,
+          );
         }
       }
     },
@@ -292,7 +295,10 @@ export function usePublicationWizard({
         await deletePublicationMutation.mutateAsync(pub.id_publicacion);
         publicationRef.current = undefined;
       } catch (err) {
-        console.error('[usePublicationWizard] compensateAutoCreatedPub failed:', err);
+        console.error(
+          '[usePublicationWizard] compensateAutoCreatedPub failed:',
+          err,
+        );
       }
     },
     [deletePublicationMutation],
