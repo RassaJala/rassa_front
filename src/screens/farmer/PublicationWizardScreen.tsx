@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import { usePreventRemove } from '@react-navigation/native';
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
 import WizardItemCard from '@/components/wizard/WizardItemCard';
 import { colors, themeColors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
 import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
 import {
@@ -98,8 +99,8 @@ export default function PublicationWizardScreen({
   const white = colors.iconWhite;
   const accentBg = theme.accentBg;
   const errorBg = theme.errorBg;
-  const shadowBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
-  const subtleBg = isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)';
+  const shadowBg = theme.shadowBg;
+  const subtleBg = theme.subtleBg;
 
   const isMutating = wizard.isPublishing || wizard.isCreating;
 
@@ -162,16 +163,9 @@ export default function PublicationWizardScreen({
     }
   }, [wizard, navigation]);
 
-  const publicationDate = useMemo(() => {
-    const d = new Date();
-    const dayOfWeek = d.getDay();
-    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
-    d.setDate(d.getDate() + daysUntilMonday);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
+  const { nextMondayDate } = useFormattedDate();
 
-  const weekNumber = getWeekNumber(publicationDate);
+  const weekNumber = getWeekNumber(nextMondayDate);
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -210,6 +204,7 @@ export default function PublicationWizardScreen({
           </View>
           <Pressable
             onPress={() => navigation.goBack()}
+            disabled={isMutating}
             style={({ pressed }) => ({
               width: 44,
               height: 44,
@@ -219,7 +214,7 @@ export default function PublicationWizardScreen({
               borderColor: border,
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
+              opacity: isMutating ? 0.3 : pressed ? 0.6 : 1,
             })}
           >
             <MaterialCommunityIcons name="close" size={22} color={fg} />
@@ -319,7 +314,7 @@ export default function PublicationWizardScreen({
                   marginBottom: 4,
                 }}
               >
-                {publicationDate.toLocaleDateString('es-AR', {
+                {nextMondayDate.toLocaleDateString('es-AR', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -379,10 +374,7 @@ export default function PublicationWizardScreen({
                   key={item.tempId}
                   item={item}
                   allProductos={allProductos}
-                  unidades={unidades.map((u) => ({
-                    id_unidad: u.id_unidad,
-                    tipo: u.tipo,
-                  }))}
+                  unidades={unidades}
                   validation={wizard.itemValidations.get(item.tempId)}
                   onUpdate={wizard.updateItem}
                   onRemove={wizard.removeItem}

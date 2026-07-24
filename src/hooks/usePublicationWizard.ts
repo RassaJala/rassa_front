@@ -215,16 +215,12 @@ export function usePublicationWizard({
   }, []);
 
   const nextStep = useCallback(() => {
-    if (stepIndex < WIZARD_STEPS.length - 1) {
-      setStepIndex((prev) => prev + 1);
-    }
-  }, [stepIndex]);
+    setStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
+  }, []);
 
   const prevStep = useCallback(() => {
-    if (stepIndex > 0) {
-      setStepIndex((prev) => prev - 1);
-    }
-  }, [stepIndex]);
+    setStepIndex((prev) => Math.max(prev - 1, 0));
+  }, []);
 
   const addItem = useCallback((producto: Producto) => {
     const newItem: WizardItemDraft = {

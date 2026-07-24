@@ -18,6 +18,8 @@ import type { PublicacionList } from '@/services/publications';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse, FarmerStackParamList, Producto } from '@/types';
+import { colors, themeColors } from '@/constants/colors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
 
 type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerHome'>;
 
@@ -81,46 +83,22 @@ export default function FarmerHomeScreen({
   const activePublications =
     pubsData?.results?.filter((p) => p.estado === 'publicado').length ?? 0;
 
-  const bg = isDark ? '#1A211B' : '#F5F7F0';
-  const surface = isDark ? '#263028' : '#FFFFFF';
-  const fg = isDark ? '#E8EAE4' : '#2D3328';
-  const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const border = isDark ? '#353D35' : '#E2E6DF';
-  const sidebarBorder = isDark ? '#353D35' : '#E8ECE4';
-  const brand = isDark ? '#4A8A63' : '#24563C';
-  const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
-  const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
-  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
-  const coral = '#DE393A';
-  const pumpkin = '#F2A900';
+  const { today } = useFormattedDate();
+  const theme = themeColors(isDark);
+  const bg = theme.bg;
+  const surface = theme.surface;
+  const fg = theme.fg;
+  const muted = theme.muted;
+  const border = theme.border;
+  const brand = theme.brand;
+  const accentBg = theme.accentBg;
+  const coralBg = theme.coralBg;
+  const coral = colors.brandRedCoral;
+  const pumpkin = colors.warning;
   const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
-  const overlayBg = '#000';
-
-  const days = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
-  const months = [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ];
-  const d = new Date();
-  const today = `${days[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]}`;
+  const overlayBg = colors.shadow;
+  const sidebarBorder = isDark ? theme.border : '#E8ECE4';
+  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
 
   const openDrawer = useCallback(() => {
     setDrawerOpen(true);

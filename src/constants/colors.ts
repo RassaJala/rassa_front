@@ -82,6 +82,8 @@ export interface ThemeColors {
   readonly coralBg: string;
   readonly brand: string;
   readonly segBg: string;
+  readonly shadowBg: string;
+  readonly subtleBg: string;
 }
 
 export function themeColors(isDark: boolean): ThemeColors {
@@ -97,5 +99,7 @@ export function themeColors(isDark: boolean): ThemeColors {
     coralBg: isDark ? 'rgba(222,57,58,0.07)' : 'rgba(222,57,58,0.07)',
     brand: isDark ? '#4A8A63' : '#24563C',
     segBg: isDark ? '#263028' : '#E8ECE4',
+    shadowBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    subtleBg: isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)',
   };
 }

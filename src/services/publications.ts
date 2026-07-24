@@ -164,18 +164,6 @@ export async function deleteProductoSemanal(
   return data;
 }
 
-export async function restoreProductoSemanal(
-  pubId: number,
-  itemId: number,
-): Promise<ApiResponse<ProductoSemanal>> {
-  assertValidId(pubId, 'publicacionId');
-  assertValidId(itemId, 'productoSemanalId');
-  const { data } = await api.post<ApiResponse<ProductoSemanal>>(
-    `/publicaciones/${String(pubId)}/productos/${String(itemId)}/restore/`,
-  );
-  return data;
-}
-
 export async function uploadProductoSemanalImagen(
   pubId: number,
   itemId: number,

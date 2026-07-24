@@ -177,7 +177,7 @@ function PublicationCard({
           <MaterialCommunityIcons
             name="pencil-outline"
             size={14}
-            color="#F2A900"
+            color={colors.warning}
           />
           <Text
             style={{ fontSize: 12, color: colors.warning, fontWeight: '500' }}

@@ -94,23 +94,6 @@ export function usePublishPublicacion(): UseMutationResult<
   });
 }
 
-export function useClosePublicacion(): UseMutationResult<
-  ApiResponse<Publicacion>,
-  Error,
-  number
-> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: publicationsApi.closePublicacion,
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['publicaciones'] });
-      void queryClient.invalidateQueries({
-        queryKey: ['publicaciones', variables],
-      });
-    },
-  });
-}
-
 // ── ProductoSemanal mutations ──────────────────────────────
 
 export function useAddProductoSemanal(): UseMutationResult<
