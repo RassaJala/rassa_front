@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
+import { isAxiosError } from 'axios';
+
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
 
@@ -14,7 +16,7 @@ interface HistoryEntry {
 
 import {
   formatTimestamp,
-  STATUS_COLORS,
+  getStatusColor,
   STATUS_LABELS,
 } from '../../src/constants/orderTimeline';
 import type { ApiResponse } from '../types';
@@ -35,11 +37,17 @@ export function AdminOrderDetail() {
           `/pedidos/${orderId}/historial`,
         );
         if (Array.isArray(res.data)) return res.data;
-        return (res.data as ApiResponse<HistoryEntry[]>).data;
+        if (res.data && Array.isArray((res.data as ApiResponse<HistoryEntry[]>).data)) {
+          return (res.data as ApiResponse<HistoryEntry[]>).data;
+        }
+        return [];
       },
       enabled: isValidId,
       staleTime: 30_000,
-      retry: 2,
+      retry: (failureCount, error) => {
+        if (isAxiosError(error) && error.response?.status === 404) return false;
+        return failureCount < 2;
+      },
     },
   );
 
@@ -177,22 +185,24 @@ export function AdminOrderDetail() {
           <div style={centeredStyle()}>
             <span style={{ fontSize: 40 }}>⚠️</span>
             <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
-              {error instanceof Error
-                ? error.message
+              {isAxiosError(error) && error.response?.status === 404
+                ? 'Pedido no encontrado'
                 : 'Error al cargar el historial'}
             </p>
-            <button
-              onClick={() => void refetch()}
-              style={{
-                ...btnStyle,
-                marginTop: 16,
-                background: surface,
-                border: `1.5px solid ${border}`,
-                color: brand,
-              }}
-            >
-              🔄 Reintentar
-            </button>
+            {(!isAxiosError(error) || error.response?.status !== 404) && (
+              <button
+                onClick={() => void refetch()}
+                style={{
+                  ...btnStyle,
+                  marginTop: 16,
+                  background: surface,
+                  border: `1.5px solid ${border}`,
+                  color: brand,
+                }}
+              >
+                🔄 Reintentar
+              </button>
+            )}
           </div>
         )}
 
@@ -211,7 +221,7 @@ export function AdminOrderDetail() {
           <div style={{ padding: 24 }}>
             {entries.map((entry, index) => {
               const isLast = index === entries.length - 1;
-              const dotColor = STATUS_COLORS[entry.estado_nuevo] ?? border;
+              const dotColor = getStatusColor(entry.estado_nuevo, border);
               const label =
                 STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
               const description =

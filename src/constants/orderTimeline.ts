@@ -1,5 +1,3 @@
-import { colors } from '@/constants/colors';
-
 export const STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   confirmado: 'Confirmado',
@@ -13,39 +11,30 @@ export function formatTimestamp(iso: string): string {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const min = String(d.getUTCMinutes()).padStart(2, '0');
     return `${dd}/${mm} ${hh}:${min}`;
   } catch {
     return '—';
   }
 }
 
-export function getStatusColor(status: string, border: string): string {
+export function getStatusColor(status: string, fallback: string): string {
   switch (status) {
     case 'pendiente':
-      return colors.accent;
+      return '#f59e0b';
     case 'confirmado':
-      return colors.success;
+      return '#22c55e';
     case 'en_preparacion':
     case 'listo_para_retirar':
-      return colors.info;
+      return '#3b82f6';
     case 'entregado':
-      return colors.success;
+      return '#22c55e';
     case 'cancelado':
-      return colors.brandRedCoral;
+      return '#DE393A';
     default:
-      return border;
+      return fallback;
   }
 }
-
-export const STATUS_COLORS: Record<string, string> = {
-  pendiente: '#f59e0b',
-  confirmado: '#22c55e',
-  en_preparacion: '#3b82f6',
-  listo_para_retirar: '#3b82f6',
-  entregado: '#22c55e',
-  cancelado: '#DE393A',
-};
