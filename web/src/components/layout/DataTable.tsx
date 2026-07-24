@@ -23,15 +23,18 @@ export function DataTable<T>({
 
   const sorted = useMemo(() => {
     if (!sort) return data;
+    const sortColumn = columns.find((c) => c.key === sort.key);
     return [...data].sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sort.key];
-      const bVal = (b as Record<string, unknown>)[sort.key];
+      const aVal =
+        sortColumn?.sortValue?.(a) ?? (a as Record<string, unknown>)[sort.key];
+      const bVal =
+        sortColumn?.sortValue?.(b) ?? (b as Record<string, unknown>)[sort.key];
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sort.direction === 'asc' ? cmp : -cmp;
     });
-  }, [data, sort]);
+  }, [data, sort, columns]);
 
   if (data.length === 0) {
     return (

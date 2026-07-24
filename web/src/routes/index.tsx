@@ -4,7 +4,8 @@ import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
 import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen, RegisterScreen } from './auth';
 import { FarmerProducts, FarmerOrders } from './farmer';
-import { SellerOrders, SellerSales } from './seller';
+import { SellerSales } from './seller';
+import { VendorPanelScreen } from './VendorPanelScreen';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminFamilies } from './AdminFamilies';
@@ -96,7 +97,7 @@ export function AppRouter() {
             <DashboardLayout role="vendedor">
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
-                <Route path="pedidos" element={<SellerOrders />} />
+                <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route
                   path="*"
