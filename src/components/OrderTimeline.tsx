@@ -102,77 +102,6 @@ const styles = StyleSheet.create({
   },
 });
 
-interface TimelineEntryProps {
-  readonly entry: {
-    readonly id_historial: number;
-    readonly estado_anterior: string | null;
-    readonly estado_nuevo: string;
-    readonly creado_en: string;
-    readonly cambiado_por_nombre: string | null;
-  };
-  readonly isLast: boolean;
-  readonly lineColor: string;
-  readonly dotColor: string;
-  readonly fg: string;
-  readonly mutedColor: string;
-}
-
-function TimelineEntry({
-  entry,
-  isLast,
-  lineColor,
-  dotColor,
-  fg,
-  mutedColor,
-}: TimelineEntryProps): React.JSX.Element {
-  return (
-    <View style={styles.row}>
-      {/* Timeline gutter */}
-      <View style={styles.gutter}>
-        {/* Dot */}
-        <View style={[styles.dot, { backgroundColor: dotColor }]} />
-        {/* Vertical line */}
-        {!isLast && (
-          <View style={[styles.gutterLine, { backgroundColor: lineColor }]} />
-        )}
-      </View>
-
-      {/* Content */}
-      <View style={[styles.content, { paddingBottom: isLast ? 0 : 20 }]}>
-        <Text style={[styles.title, { color: fg }]}>
-          {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
-        </Text>
-        <Text style={[styles.subtitle, { color: mutedColor }]}>
-          {buildDescription(entry)}
-        </Text>
-        <View style={styles.metaRow}>
-          <MaterialCommunityIcons
-            name="clock-outline"
-            size={DOT_SIZE}
-            color={mutedColor}
-          />
-          <Text style={[styles.metaText, { color: mutedColor }]}>
-            {formatTimestamp(entry.creado_en)}
-          </Text>
-          {entry.cambiado_por_nombre !== null && (
-            <>
-              <Text style={[styles.metaText, { color: mutedColor }]}>·</Text>
-              <MaterialCommunityIcons
-                name="account-outline"
-                size={DOT_SIZE}
-                color={mutedColor}
-              />
-              <Text style={[styles.metaText, { color: mutedColor }]}>
-                {entry.cambiado_por_nombre}
-              </Text>
-            </>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 interface OrderTimelineProps {
   readonly orderId: number;
 }
@@ -249,15 +178,54 @@ export default function OrderTimeline({
           const dotColor = getStatusColor(entry.estado_nuevo, border);
 
           return (
-            <TimelineEntry
-              key={entry.id_historial}
-              entry={entry}
-              isLast={isLast}
-              lineColor={border}
-              dotColor={dotColor}
-              fg={fg}
-              mutedColor={muted}
-            />
+            <View key={entry.id_historial} style={styles.row}>
+              <View style={styles.gutter}>
+                <View style={[styles.dot, { backgroundColor: dotColor }]} />
+                {!isLast && (
+                  <View
+                    style={[
+                      styles.gutterLine,
+                      { backgroundColor: border },
+                    ]}
+                  />
+                )}
+              </View>
+              <View
+                style={[styles.content, { paddingBottom: isLast ? 0 : 20 }]}
+              >
+                <Text style={[styles.title, { color: fg }]}>
+                  {STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo}
+                </Text>
+                <Text style={[styles.subtitle, { color: muted }]}>
+                  {buildDescription(entry)}
+                </Text>
+                <View style={styles.metaRow}>
+                  <MaterialCommunityIcons
+                    name="clock-outline"
+                    size={DOT_SIZE}
+                    color={muted}
+                  />
+                  <Text style={[styles.metaText, { color: muted }]}>
+                    {formatTimestamp(entry.creado_en)}
+                  </Text>
+                  {entry.cambiado_por_nombre !== null && (
+                    <>
+                      <Text style={[styles.metaText, { color: muted }]}>
+                        ·
+                      </Text>
+                      <MaterialCommunityIcons
+                        name="account-outline"
+                        size={DOT_SIZE}
+                        color={muted}
+                      />
+                      <Text style={[styles.metaText, { color: muted }]}>
+                        {entry.cambiado_por_nombre}
+                      </Text>
+                    </>
+                  )}
+                </View>
+              </View>
+            </View>
           );
         })}
       </View>

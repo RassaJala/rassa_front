@@ -1,13 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-import { isAxiosError } from 'axios';
-
-// ponytail: cross-package import from src/ is intentional for this sprint;
-// extract to packages/shared/ when a third consumer appears (rassa#33)
 import {
   buildDescription,
-  createOrderHistoryQueryOptions,
   formatTimestamp,
   getStatusColor,
   STATUS_LABELS,
@@ -17,6 +12,14 @@ import { useAppColors } from '../hooks/useAppColors';
 import type { OrderStatusHistory } from '../../src/types';
 
 const DOT_SIZE = 12;
+const STALE_TIME = 30_000;
+
+// ponytail: inline check instead of pulling isAxiosError into a constants file
+function isNotFoundError(error: unknown): boolean {
+  if (error == null || typeof error !== 'object') return false;
+  const err = error as { response?: { status?: number } };
+  return err.response?.status === 404;
+}
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,14 +29,30 @@ export function AdminOrderDetail() {
   const isValidId = !isNaN(orderId) && orderId > 0;
 
   const { data, isLoading, isError, error, refetch } = useQuery<
-    OrderStatusHistory[]
-  >(
-    createOrderHistoryQueryOptions<OrderStatusHistory>(
-      orderId,
-      (url) => api.get(url),
-      isValidId,
-    ),
-  );
+    OrderStatusHistory[],
+    Error
+  >({
+    queryKey: ['order-history', orderId] as const,
+    queryFn: async () => {
+      const { data } = await api.get(`/pedidos/${orderId}/historial`);
+      if (Array.isArray(data)) return data;
+      if (
+        data &&
+        typeof data === 'object' &&
+        'data' in data &&
+        Array.isArray(data.data)
+      )
+        return data.data;
+      return [];
+    },
+    enabled: isValidId,
+    staleTime: STALE_TIME,
+    refetchOnWindowFocus: false,
+    retry: (failureCount: number, error: unknown) => {
+      if (isNotFoundError(error)) return false;
+      return failureCount < 2;
+    },
+  });
 
   const entries = data ?? [];
 
@@ -169,11 +188,11 @@ export function AdminOrderDetail() {
           <div style={centeredStyle}>
             <span style={{ fontSize: 40 }}>⚠️</span>
             <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
-              {isAxiosError(error) && error.response?.status === 404
+              {isNotFoundError(error)
                 ? 'Pedido no encontrado'
                 : 'Error al cargar el historial'}
             </p>
-            {(!isAxiosError(error) || error.response?.status !== 404) && (
+            {!isNotFoundError(error) && (
               <button
                 onClick={() => void refetch()}
                 style={{

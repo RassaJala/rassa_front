@@ -481,10 +481,6 @@ function AdminScreens() {
         component={LocalidadTrashScreen}
       />
       <AdminStack.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-      />
-      <AdminStack.Screen
         name="OrderDetail"
         component={OrderDetailScreen}
         options={{ title: 'Detalle del Pedido' }}

@@ -1,7 +1,3 @@
-import { isAxiosError } from 'axios';
-
-import type { ApiResponse } from '@/types';
-
 export const STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   confirmado: 'Confirmado',
@@ -26,42 +22,6 @@ export function formatTimestamp(iso: string): string {
   }
 }
 
-export function createOrderHistoryQueryOptions<T>(
-  orderId: number,
-  fetcher: (url: string) => Promise<{ data: ApiResponse<T[]> | T[] }>,
-  enabled?: boolean,
-): {
-  queryKey: readonly ['order-history', number];
-  queryFn: () => Promise<T[]>;
-  enabled: boolean;
-  staleTime: number;
-  refetchOnWindowFocus: boolean;
-  retry: (failureCount: number, error: Error) => boolean;
-} {
-  return {
-    queryKey: ['order-history', orderId] as const,
-    queryFn: async (): Promise<T[]> => {
-      const { data } = await fetcher(`/pedidos/${orderId}/historial`);
-      if (Array.isArray(data)) return data;
-      if (
-        data &&
-        typeof data === 'object' &&
-        'data' in data &&
-        Array.isArray(data.data)
-      )
-        return data.data;
-      return [];
-    },
-    enabled: enabled ?? orderId > 0,
-    staleTime: 30_000,
-    refetchOnWindowFocus: false,
-    retry: (failureCount: number, error: Error) => {
-      if (isAxiosError(error) && error.response?.status === 404) return false;
-      return failureCount < 2;
-    },
-  };
-}
-
 export function buildDescription(entry: {
   readonly estado_anterior: string | null;
   readonly estado_nuevo: string;
@@ -75,20 +35,15 @@ export function buildDescription(entry: {
   return `${fromLabel} → ${toLabel}`;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  pendiente: '#f59e0b',
+  confirmado: '#22c55e',
+  en_preparacion: '#3b82f6',
+  listo_para_retirar: '#3b82f6',
+  entregado: '#22c55e',
+  cancelado: '#DE393A',
+};
+
 export function getStatusColor(status: string, fallback: string): string {
-  switch (status) {
-    case 'pendiente':
-      return '#f59e0b';
-    case 'confirmado':
-      return '#22c55e';
-    case 'en_preparacion':
-    case 'listo_para_retirar':
-      return '#3b82f6';
-    case 'entregado':
-      return '#22c55e';
-    case 'cancelado':
-      return '#DE393A';
-    default:
-      return fallback;
-  }
+  return STATUS_COLORS[status] ?? fallback;
 }
