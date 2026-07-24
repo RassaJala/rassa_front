@@ -68,6 +68,11 @@ export const colors = {
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
   admErrorBgL: '#FDEDEE',
   admErrorBgD: '#3D2023',
+  // ── Cart-specific tokens ──
+  cartRowBg: 'rgba(128,128,128,0.08)',
+  cartPlaceholderBg: 'rgba(128,128,128,0.1)',
+  cartBtnBg: 'rgba(128,128,128,0.15)',
+  cartBtnDisabledBg: 'rgba(128,128,128,0.08)',
 };
 
 export interface ThemeColors {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, Image, Pressable, Text, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -17,11 +17,11 @@ function mediaUrl(path: string | null | undefined): string | null {
   return `${base}${path}`;
 }
 
-// ponytail: cart-specific color tokens — reuse when moving to a shared theme
-const rowBg = 'rgba(128,128,128,0.08)';
-const placeholderBg = 'rgba(128,128,128,0.1)';
-const btnBg = 'rgba(128,128,128,0.15)';
-const btnDisabledBg = 'rgba(128,128,128,0.08)';
+// Cart color tokens from theme
+const rowBg = colors.cartRowBg;
+const placeholderBg = colors.cartPlaceholderBg;
+const btnBg = colors.cartBtnBg;
+const btnDisabledBg = colors.cartBtnDisabledBg;
 
 function CartRow({
   item,
@@ -250,6 +250,9 @@ export default function CarritoScreen(): React.JSX.Element {
           <Pressable
             className="items-center justify-center rounded-xl py-3.5"
             style={{ backgroundColor: colors.primary }}
+            onPress={() =>
+              Alert.alert('Próximamente', 'El flujo de pago estará disponible pronto.')
+            }
           >
             <Text
               className="text-base font-bold"
