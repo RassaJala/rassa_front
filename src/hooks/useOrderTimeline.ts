@@ -12,6 +12,18 @@ function isNotFoundError(error: unknown): boolean {
   return err.response?.status === 404;
 }
 
+interface WrappedData {
+  data: unknown;
+}
+
+function isWrappedData(value: unknown): value is WrappedData {
+  return (
+    value != null &&
+    typeof value === 'object' &&
+    'data' in value
+  );
+}
+
 export function useOrderTimeline(orderId: number): {
   entries: OrderStatusHistory[];
   isLoading: boolean;
@@ -28,15 +40,11 @@ export function useOrderTimeline(orderId: number): {
   } = useQuery<OrderStatusHistory[], Error>({
     queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
-      const { data } = await api.get(`/pedidos/${orderId}/historial`);
-      if (Array.isArray(data)) return data;
-      if (
-        data &&
-        typeof data === 'object' &&
-        'data' in data &&
-        Array.isArray(data.data)
-      )
-        return data.data;
+      const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
+      const body = res.data;
+      // ponytail: backend usually returns array directly, fallback for wrapped response
+      if (Array.isArray(body)) return body as OrderStatusHistory[];
+      if (isWrappedData(body)) return body.data as OrderStatusHistory[];
       return [];
     },
     enabled: orderId > 0,
