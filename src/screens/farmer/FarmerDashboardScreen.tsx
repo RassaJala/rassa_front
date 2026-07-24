@@ -311,11 +311,7 @@ export default function FarmerDashboardScreen({
                   opacity: pressed ? 0.6 : 1,
                 })}
               >
-                <MaterialCommunityIcons
-                  name="plus"
-                  size={24}
-                  color={fg}
-                />
+                <MaterialCommunityIcons name="plus" size={24} color={fg} />
               </Pressable>
             )}
             <Pressable
