@@ -36,7 +36,8 @@
     // Alias — @/* y ~/* apuntan a src/
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@rassa/chat": ["./packages/chat/src"]
     }
   },
   "include": [
