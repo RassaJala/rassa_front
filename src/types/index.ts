@@ -174,6 +174,8 @@ export type FarmerStackParamList = {
   Profile: undefined;
   ProductList: undefined;
   ProductForm: { productoId?: number };
+  FarmerDashboard: undefined;
+  PublicationWizard: { publicacionId?: number };
 };
 
 export type SellerTabsParamList = {

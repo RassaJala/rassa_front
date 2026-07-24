@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/services/api';
+import type { PublicacionList } from '@/services/publications';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse, FarmerStackParamList, Producto } from '@/types';
@@ -55,7 +56,6 @@ export default function FarmerHomeScreen({
   const { data: productsData } = useQuery({
     queryKey: ['productos-count'],
     queryFn: async () => {
-      // Pedimos los productos (idealmente el backend tendría un endpoint ligero para conteo, pero esto sirve por ahora)
       const { data } =
         await api.get<ApiResponse<{ results: Producto[]; count?: number }>>(
           '/productos/',
@@ -65,8 +65,21 @@ export default function FarmerHomeScreen({
     staleTime: 30_000,
   });
 
+  const { data: pubsData } = useQuery({
+    queryKey: ['publicaciones-count'],
+    queryFn: async () => {
+      const { data } =
+        await api.get<ApiResponse<PublicacionList>>('/publicaciones/');
+      return data.data;
+    },
+    staleTime: 30_000,
+  });
+
   const totalProducts =
     productsData?.count ?? productsData?.results?.length ?? 0;
+  const totalPublications = pubsData?.count ?? 0;
+  const activePublications =
+    pubsData?.results?.filter((p) => p.estado === 'publicado').length ?? 0;
 
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const surface = isDark ? '#263028' : '#FFFFFF';
@@ -371,7 +384,7 @@ export default function FarmerHomeScreen({
                     color: coral,
                   }}
                 >
-                  {0}
+                  {activePublications}
                 </Text>
                 <Text
                   style={{
@@ -387,7 +400,7 @@ export default function FarmerHomeScreen({
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Activos
+                  Publicadas
                 </Text>
               </View>
               <View
@@ -428,7 +441,7 @@ export default function FarmerHomeScreen({
                     color: pumpkin,
                   }}
                 >
-                  {0}
+                  {totalPublications}
                 </Text>
                 <Text
                   style={{
@@ -444,12 +457,71 @@ export default function FarmerHomeScreen({
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
-                  Pedidos
+                  Total pubs
                 </Text>
               </View>
             </View>
 
             {/* QUICK ACTIONS */}
+            <Pressable
+              onPress={() => navigation.navigate('FarmerDashboard')}
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: surface,
+                  borderWidth: 1,
+                  borderColor: border,
+                  borderRadius: 16,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  marginBottom: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: coralBg,
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="bullhorn-outline"
+                    size={22}
+                    color={coral}
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '600',
+                      color: fg,
+                      marginBottom: 2,
+                    }}
+                    numberOfLines={1}
+                  >
+                    Publicaciones
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: muted,
+                    }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    Creá y gestioná publicaciones semanales
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+
             <Pressable
               onPress={() => navigation.navigate('ProductList')}
               style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
