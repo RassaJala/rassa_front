@@ -91,6 +91,8 @@ export interface Order {
   total: string;
   estado_actual: PedidoEstado;
   creado_en: string;
+  productos?: string[];
+  has_more_productos?: boolean;
 }
 
 export interface OrderDetail extends Order {
@@ -227,12 +229,14 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
+  Pedidos: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
   Catalog: undefined;
+  OrderDetail: { orderId: number };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {

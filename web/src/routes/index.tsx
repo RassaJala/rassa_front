@@ -18,6 +18,7 @@ import { AdminUsers } from './AdminUsers';
 import { BuyerHome } from './BuyerHome';
 import { BuyerCatalog } from './BuyerCatalog';
 import { BuyerCart } from './BuyerCart';
+import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
 import { ProfilePage } from './ProfilePage';
 import { useAuth } from '../hooks/useAuth';
@@ -148,6 +149,7 @@ export function AppRouter() {
                 <Route path="catalogo" element={<BuyerCatalog />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
+                <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
