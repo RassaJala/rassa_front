@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useAppColors } from '../hooks/useAppColors';
 import { useTheme } from '~/providers/ThemeProvider';
 import { getColors } from '~/constants/colors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
@@ -12,6 +13,7 @@ interface Product {
   unidad: string;
   descripcion: string;
   estado: boolean;
+  imagen_url?: string | null;
 }
 
 const initialData: Product[] = [
@@ -98,7 +100,7 @@ const unitLabels: Record<string, string> = {
 
 export function AdminProducts() {
   const colors = useAppColors();
-  const { fg, muted, border, surface, bg, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Product[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
@@ -380,17 +382,43 @@ export function AdminProducts() {
                             color: fg,
                           }}
                         >
-                          <span
+                          <div
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 8,
+                              gap: 10,
                             }}
                           >
-                            <span>
-                              {catEmoji[item.categoria] ?? '📦'} {item.nombre}
-                            </span>
-                          </span>
+                            <div
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                flexShrink: 0,
+                                display: 'grid',
+                                placeItems: 'center',
+                                background: isDark ? '#1C2D22' : '#E8F5E9',
+                              }}
+                            >
+                              {item.imagen_url ? (
+                                <img
+                                  src={item.imagen_url}
+                                  alt={item.nombre}
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                  }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: 18 }}>
+                                  {catEmoji[item.categoria] ?? '📦'}
+                                </span>
+                              )}
+                            </div>
+                            <span>{item.nombre}</span>
+                          </div>
                         </td>
                         <td
                           style={{

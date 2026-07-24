@@ -13,6 +13,7 @@ interface SaleRow {
   total: string;
   fecha: string;
   estado: 'Completada' | 'Pendiente' | 'Cancelada';
+  imagen_url?: string | null;
 }
 
 interface SellerOrderRow {
@@ -23,6 +24,7 @@ interface SellerOrderRow {
   total: string;
   fecha: string;
   estado: 'Pendiente' | 'En camino' | 'Entregado';
+  imagen_url?: string | null;
 }
 
 // --- Mock Data ---
@@ -121,7 +123,38 @@ const saleStatusVariant: Record<
 };
 
 const saleColumns: Column<SaleRow>[] = [
-  { key: 'producto', label: 'Producto', sortable: true },
+  {
+    key: 'producto',
+    label: 'Producto',
+    sortable: true,
+    render: (s) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            overflow: 'hidden',
+            flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
+            background: '#E8F5E9',
+          }}
+        >
+          {s.imagen_url ? (
+            <img
+              src={s.imagen_url}
+              alt={s.producto}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span style={{ fontSize: 16 }}>📦</span>
+          )}
+        </span>
+        {s.producto}
+      </span>
+    ),
+  },
   { key: 'cantidad', label: 'Cantidad', sortable: true },
   {
     key: 'total',
@@ -150,7 +183,38 @@ const sellerOrderStatusVariant: Record<
 
 const sellerOrderColumns: Column<SellerOrderRow>[] = [
   { key: 'comprador', label: 'Comprador', sortable: true },
-  { key: 'producto', label: 'Producto', sortable: true },
+  {
+    key: 'producto',
+    label: 'Producto',
+    sortable: true,
+    render: (o) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            overflow: 'hidden',
+            flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
+            background: '#E8F5E9',
+          }}
+        >
+          {o.imagen_url ? (
+            <img
+              src={o.imagen_url}
+              alt={o.producto}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span style={{ fontSize: 16 }}>📦</span>
+          )}
+        </span>
+        {o.producto}
+      </span>
+    ),
+  },
   { key: 'cantidad', label: 'Cantidad', sortable: true },
   {
     key: 'total',

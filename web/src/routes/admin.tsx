@@ -23,6 +23,7 @@ interface AdminProductRow {
   categoria: string;
   agricultor: string;
   estado: 'Activo' | 'Inactivo';
+  imagen_url?: string | null;
 }
 
 interface AdminOrderRow {
@@ -203,7 +204,38 @@ const userColumns: Column<UserRow>[] = [
 ];
 
 const adminProductColumns: Column<AdminProductRow>[] = [
-  { key: 'nombre', label: 'Nombre', sortable: true },
+  {
+    key: 'nombre',
+    label: 'Nombre',
+    sortable: true,
+    render: (p) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            overflow: 'hidden',
+            flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
+            background: '#E8F5E9',
+          }}
+        >
+          {p.imagen_url ? (
+            <img
+              src={p.imagen_url}
+              alt={p.nombre}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <span style={{ fontSize: 16 }}>📦</span>
+          )}
+        </span>
+        {p.nombre}
+      </span>
+    ),
+  },
   {
     key: 'precio',
     label: 'Precio',

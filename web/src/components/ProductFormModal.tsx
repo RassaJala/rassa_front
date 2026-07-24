@@ -122,15 +122,6 @@ function buildPayload(form: FormState) {
 
 // ── Image helpers ──────────────────────────────────────────
 
-async function toBase64(file: File): Promise<string> {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res((reader.result as string).split(',')[1] ?? '');
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
-  });
-}
-
 async function deleteOldImages(productId: number): Promise<void> {
   const { data: detailRes } = await api.get<ApiResponse<Producto>>(
     `/productos/${productId}/`,
@@ -148,15 +139,15 @@ async function deleteOldImages(productId: number): Promise<void> {
 }
 
 async function uploadImage(productId: number, file: File): Promise<void> {
-  const base64 = await toBase64(file);
-  let uploaded = false;
-  for (let attempt = 0; attempt < 2 && !uploaded; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await api.post(`/productos/${productId}/imagen/`, {
-        imagen_base64: base64,
-        es_principal: true,
+      const fd = new FormData();
+      fd.append('imagen', file);
+      fd.append('es_principal', 'true');
+      await api.post(`/productos/${productId}/imagen/`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      uploaded = true;
+      return;
     } catch (imgErr) {
       if (attempt === 1) throw imgErr;
     }
@@ -283,7 +274,15 @@ export function ProductFormModal({
       }
 
       if (form.imageFile) {
-        await uploadImage(saved.id_producto, form.imageFile);
+        try {
+          await uploadImage(saved.id_producto, form.imageFile);
+        } catch (imgErr) {
+          setGeneralError(
+            imgErr instanceof Error
+              ? `Producto guardado, pero imagen no subida: ${imgErr.message}`
+              : 'Producto guardado, pero no se pudo subir la imagen.',
+          );
+        }
       }
 
       await qc.invalidateQueries({ queryKey: ['farmer-productos'] });
@@ -486,7 +485,7 @@ export function ProductFormModal({
                 }
               >
                 <option value="">Seleccioná una categoría</option>
-                {categories.map((c) => (
+                {Array.isArray(categories) && categories.map((c) => (
                   <option key={c.id_categoria} value={c.id_categoria}>
                     {c.nombre}
                   </option>
@@ -506,7 +505,7 @@ export function ProductFormModal({
                 }
               >
                 <option value="">Seleccioná una unidad</option>
-                {unidades.map((u) => (
+                {Array.isArray(unidades) && unidades.map((u) => (
                   <option key={u.id_unidad} value={u.id_unidad}>
                     {u.tipo}
                   </option>
