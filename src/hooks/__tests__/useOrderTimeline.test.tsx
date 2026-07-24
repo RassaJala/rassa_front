@@ -12,7 +12,8 @@ jest.mock('@/services/api', () => ({
 }));
 
 jest.mock('axios', () => ({
-  isAxiosError: (error: unknown) => (error as Record<string, unknown>)?.isAxiosError === true,
+  isAxiosError: (error: unknown) =>
+    (error as Record<string, unknown>)?.isAxiosError === true,
 }));
 
 jest.mock('@/store/ThemeContext', () => ({
@@ -52,7 +53,15 @@ describe('useOrderTimeline', () => {
   });
 
   it('returns entries from a flat array response', async () => {
-    const data = [{ id_historial: 1, estado_nuevo: 'pendiente', creado_en: '2025-01-01T00:00:00Z', estado_anterior: null, cambiado_por_nombre: null }];
+    const data = [
+      {
+        id_historial: 1,
+        estado_nuevo: 'pendiente',
+        creado_en: '2025-01-01T00:00:00Z',
+        estado_anterior: null,
+        cambiado_por_nombre: null,
+      },
+    ];
     mockGet.mockResolvedValue({ data });
 
     const { result } = renderHook(() => useOrderTimeline(1), {
@@ -63,7 +72,15 @@ describe('useOrderTimeline', () => {
   });
 
   it('returns entries from wrapped { data: [...] } response', async () => {
-    const entries = [{ id_historial: 1, estado_nuevo: 'pendiente', creado_en: '2025-01-01T00:00:00Z', estado_anterior: null, cambiado_por_nombre: null }];
+    const entries = [
+      {
+        id_historial: 1,
+        estado_nuevo: 'pendiente',
+        creado_en: '2025-01-01T00:00:00Z',
+        estado_anterior: null,
+        cambiado_por_nombre: null,
+      },
+    ];
     mockGet.mockResolvedValue({ data: { data: entries } });
 
     const { result } = renderHook(() => useOrderTimeline(1), {
@@ -97,7 +114,9 @@ describe('useOrderTimeline', () => {
     const { result } = renderHook(() => useOrderTimeline(1), {
       wrapper: createWrapper(),
     });
-    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 });
+    await waitFor(() => expect(result.current.isError).toBe(true), {
+      timeout: 5000,
+    });
     expect(result.current.entries).toEqual([]);
   }, 10000);
 });

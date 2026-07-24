@@ -25,7 +25,9 @@ export function AdminOrderDetail() {
   const orderId = Number(id);
   const isValidId = !isNaN(orderId) && orderId > 0;
 
-  const { data, isLoading, isError, error, refetch } = useQuery<OrderStatusHistory[]>(
+  const { data, isLoading, isError, error, refetch } = useQuery<
+    OrderStatusHistory[]
+  >(
     createOrderHistoryQueryOptions<OrderStatusHistory>(
       orderId,
       (url) => api.get(url),

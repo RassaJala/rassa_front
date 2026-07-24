@@ -62,9 +62,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
         >
           <MaterialCommunityIcons name="arrow-left" size={28} color={fg} />
         </Pressable>
-        <Text style={[styles.title, { color: fg }]}>
-          Pedido #{orderId}
-        </Text>
+        <Text style={[styles.title, { color: fg }]}>Pedido #{orderId}</Text>
       </View>
       <View
         style={[styles.card, { backgroundColor: surface, borderColor: border }]}

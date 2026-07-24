@@ -18,9 +18,8 @@ export function useOrderTimeline(orderId: number): {
     error,
     refetch,
   } = useQuery<OrderStatusHistory[]>(
-    createOrderHistoryQueryOptions<OrderStatusHistory>(
-      orderId,
-      (url) => api.get(url),
+    createOrderHistoryQueryOptions<OrderStatusHistory>(orderId, (url) =>
+      api.get(url),
     ),
   );
 

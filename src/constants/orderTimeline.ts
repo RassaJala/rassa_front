@@ -43,7 +43,13 @@ export function createOrderHistoryQueryOptions<T>(
     queryFn: async (): Promise<T[]> => {
       const { data } = await fetcher(`/pedidos/${orderId}/historial`);
       if (Array.isArray(data)) return data;
-      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) return data.data;
+      if (
+        data &&
+        typeof data === 'object' &&
+        'data' in data &&
+        Array.isArray(data.data)
+      )
+        return data.data;
       return [];
     },
     enabled: enabled ?? orderId > 0,
@@ -63,7 +69,8 @@ export function buildDescription(entry: {
   if (entry.estado_anterior === null) {
     return 'Pedido creado';
   }
-  const fromLabel = STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
+  const fromLabel =
+    STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
   const toLabel = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
   return `${fromLabel} → ${toLabel}`;
 }
