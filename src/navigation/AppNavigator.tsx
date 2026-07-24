@@ -22,13 +22,15 @@ import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
 import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
-import OrderDetailScreen from '@/screens/admin/OrderDetailScreen';
+import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
+import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
+import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
@@ -252,6 +254,20 @@ function BuyerTabs() {
         }}
       />
       <BuyerTab.Screen
+        name="Pedidos"
+        component={OrderHistoryScreen}
+        options={{
+          tabBarLabel: 'Pedidos',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="truck-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <BuyerTab.Screen
         name="Carrito"
         component={CarritoScreen}
         options={{
@@ -294,6 +310,7 @@ function BuyerNavigator() {
   return (
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
+      <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
@@ -482,7 +499,7 @@ function AdminScreens() {
       />
       <AdminStack.Screen
         name="OrderDetail"
-        component={OrderDetailScreen}
+        component={AdminOrderDetailScreen}
         options={{ title: 'Detalle del Pedido' }}
       />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />

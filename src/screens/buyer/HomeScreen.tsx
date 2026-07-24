@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import {
   ProfileDrawerProvider,
@@ -13,9 +13,9 @@ import { colors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { getAllProducts } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
-import type { BuyerStackParamList } from '@/types';
+import type { BuyerTabsParamList } from '@/types';
 
-type Nav = NativeStackNavigationProp<BuyerStackParamList, 'BuyerTabs'>;
+type Nav = BottomTabNavigationProp<BuyerTabsParamList>;
 
 interface Props {
   readonly navigation: Nav;
@@ -135,16 +135,21 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
                   iconBg={coralBg}
                   iconColor={coral}
                 />
-                <StatCard
-                  icon="truck-outline"
-                  value={0}
-                  label="Pedidos"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
-                  iconBg={pumpkinBg}
-                  iconColor={pumpkin}
-                />
+                <Pressable
+                  onPress={() => navigation.navigate('Pedidos')}
+                  style={{ flex: 1 }}
+                >
+                  <StatCard
+                    icon="truck-outline"
+                    value={0}
+                    label="Pedidos"
+                    surface={surface}
+                    border={border}
+                    muted={muted}
+                    iconBg={pumpkinBg}
+                    iconColor={pumpkin}
+                  />
+                </Pressable>
               </View>
             </View>
           </ScrollView>
