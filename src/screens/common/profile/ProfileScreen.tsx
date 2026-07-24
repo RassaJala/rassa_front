@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
+import DatePickerModal from '@/components/DatePickerModal';
 import { useAuth } from '@/store/AuthContext';
 
 import { useProfileColors } from './profileColors';
@@ -20,6 +22,9 @@ export default function ProfileScreen(): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [pickerInitialDate, setPickerInitialDate] = useState('');
+  const onDatePickedRef = useRef<(date: string) => void>(() => {});
 
   // ── Render helpers ─────────────────────────────────────
   function renderViewMode(): React.JSX.Element {
@@ -38,6 +43,13 @@ export default function ProfileScreen(): React.JSX.Element {
           setIsEditing(false);
           setErrorMessage(null);
           setSuccessMessage(null);
+        }}
+        onOpenDatePicker={(currentDate) => {
+          setPickerInitialDate(currentDate);
+          setIsDatePickerVisible(true);
+        }}
+        registerDatePicked={(fn) => {
+          onDatePickedRef.current = fn;
         }}
       />
     );
@@ -91,24 +103,18 @@ export default function ProfileScreen(): React.JSX.Element {
           {isEditing ? 'Editar Perfil' : 'Mi Perfil'}
         </Text>
         {!isEditing ? (
-          <Pressable
+          <IconButton
+            icon="pencil"
+            size={22}
+            mode="contained"
+            containerColor={c.brand}
+            iconColor={c.white}
             onPress={() => {
               setIsEditing(true);
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              backgroundColor: c.brand,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name="pencil" size={22} color={c.white} />
-          </Pressable>
+          />
         ) : null}
       </View>
     );
@@ -177,6 +183,15 @@ export default function ProfileScreen(): React.JSX.Element {
         {renderFeedback()}
         {isEditing ? renderEditForm() : renderViewMode()}
       </ScrollView>
+
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={(date) => {
+          onDatePickedRef.current(date);
+        }}
+        initialDate={pickerInitialDate}
+      />
     </View>
   );
 }

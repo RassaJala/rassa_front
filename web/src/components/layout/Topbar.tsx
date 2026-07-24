@@ -1,6 +1,7 @@
-import type { Role } from '../../types';
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../providers/ThemeProvider';
+import type { Role } from '~/types';
+import { useAuth } from '~/hooks/useAuth';
+import { useTheme } from '~/providers/ThemeProvider';
+import { getColors } from '~/constants/colors';
 
 export function Topbar({ role }: { role: Role }) {
   const { logout } = useAuth();

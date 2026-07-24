@@ -6,6 +6,7 @@ export function useAppColors() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   return {
+    isDark,
     brand: isDark ? '#4A8A63' : '#24563C',
     coral: '#DE393A',
     muted: isDark ? '#9DA89D' : '#5E6B5E',

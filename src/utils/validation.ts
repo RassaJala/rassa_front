@@ -1,18 +1,21 @@
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 export const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export const NAME_REGEX = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
 export const MIN_PASSWORD_LENGTH = 8;
+const MAX_NOMBRE = 100;
 
 export function cleanName(val: string): string {
-  return val.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  // Solo letras (con acentos), espacios — sin apóstrofes ni guiones
+  return val.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '');
 }
 
 export function cleanPhoneNumber(val: string): string {
-  // Strip non-digit characters; preserve all digits — validation rejects invalid lengths
-  return val.replace(/\D/g, '');
+  // Match web: strip spaces, hyphens, parentheses — preserve digits
+  return val.replace(/[\s\-()]+/g, '');
 }
 
 export function formatPhoneNumber(val: string): string {
-  const cleaned = cleanPhoneNumber(val);
+  const cleaned = val.replace(/\D/g, '');
   const hasPlus = val.trim().startsWith('+');
   if (cleaned.length === 0) {
     return hasPlus ? '+' : '';
@@ -34,7 +37,8 @@ export function formatPhoneNumber(val: string): string {
 }
 
 export function cleanAddress(val: string): string {
-  return val.replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  // Match web: no character filter, only max length enforced at submit
+  return val;
 }
 
 export function isAdult(birthDate: string): boolean {
@@ -72,13 +76,26 @@ export function validatePassword(password: string): string | null {
   return null;
 }
 
+export function validateName(value: string, fieldName: string): string | null {
+  if (!value.trim()) {
+    return `El ${fieldName} es obligatorio.`;
+  }
+  if (value.length > MAX_NOMBRE) {
+    return `El ${fieldName} no puede exceder ${MAX_NOMBRE} caracteres.`;
+  }
+  if (!NAME_REGEX.test(value)) {
+    return `El ${fieldName} solo puede contener letras.`;
+  }
+  return null;
+}
+
 export function validatePhone(phone: string): string | null {
   const cleaned = cleanPhoneNumber(phone);
   if (!cleaned) {
     return 'Por favor, completa todos los campos obligatorios.';
   }
-  if (cleaned.length !== 10 && cleaned.length !== 12) {
-    return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
+  if (cleaned.length !== 10) {
+    return 'El teléfono debe tener exactamente 10 dígitos.';
   }
   return null;
 }

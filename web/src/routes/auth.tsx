@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import axios from 'axios';
-
-import { AuthLayout } from '../components/layout/AuthLayout';
-import { Button } from '../components/ui/Button';
-import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
-import type { Role, User } from '../types';
+import { AuthLayout } from '~/components/layout/AuthLayout';
+import { Button } from '~/components/ui/Button';
+import { useAuth } from '~/hooks/useAuth';
+import api from '~/services/api';
+import type { Role, User } from '~/types';
+import { normalizeRole } from '~/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -15,30 +14,13 @@ import type { Role, User } from '../types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const ROLE_MAP: Record<string, Role> = {
-  admin: 'admin',
-  administrador: 'admin',
-  farmer: 'agricultor',
-  agricultor: 'agricultor',
-  productor: 'agricultor',
-  seller: 'vendedor',
-  vendedor: 'vendedor',
-  buyer: 'comprador',
-  comprador: 'comprador',
-  cliente: 'comprador',
-};
-
-// ponytail: normalize backend role strings to web Role type
-function normalizeRole(raw: string): Role {
-  return ROLE_MAP[raw.toLowerCase()] ?? 'comprador';
-}
-
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: normalizeRole(raw.role as string),
+    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 
@@ -47,7 +29,17 @@ function mapMeUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: normalizeRole(raw.role as string),
+    apellido_paterno: raw.apellido_paterno as string,
+    apellido_materno: raw.apellido_materno as string | undefined,
+    telefono: raw.telefono as string | undefined,
+    fecha_nacimiento: raw.fecha_nacimiento as string | undefined,
+    genero: raw.genero as string | undefined,
+    direccion: raw.direccion as string | undefined,
+    municipio_id: raw.municipio_id as number | undefined,
+    municipio_nombre: raw.municipio_nombre as string | undefined,
+    localidad: raw.localidad as number | undefined,
+    localidad_nombre: raw.localidad_nombre as string | undefined,
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 
@@ -127,7 +119,10 @@ export function LoginScreen() {
         refresh: string;
       }>('/token/', { email: email.trim(), password });
 
-      // ponytail: pasar token explícitamente porque AuthProvider aún no guardó (#21)
+      localStorage.setItem('token', tokens.access);
+      if (tokens.refresh)
+        sessionStorage.setItem('refresh_token', tokens.refresh);
+
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
         { headers: { Authorization: `Bearer ${tokens.access}` } },
@@ -454,10 +449,12 @@ export function RegisterScreen() {
 
       const raw = body.data ?? body;
       const access = raw.access as string;
+      const refresh = raw.refresh as string | undefined;
       const user = mapRegisterUser(raw);
 
       if (!access) throw new Error('No se recibió el token de acceso.');
 
+      if (refresh) sessionStorage.setItem('refresh_token', refresh);
       login(access, user);
 
       const roleRoutes: Record<string, string> = {

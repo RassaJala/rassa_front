@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   Text,
   TouchableOpacity,
   View,
@@ -18,7 +17,6 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 
-import DatePickerModal from '@/components/DatePickerModal';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { User } from '@/types';
@@ -29,6 +27,7 @@ import {
   cleanPhoneNumber,
   formatPhoneNumber,
   validateBirthdate,
+  validateName,
   validatePhone,
 } from '@/utils/validation';
 
@@ -54,6 +53,12 @@ function validateProfileEdit(
     return 'Por favor, completa todos los campos obligatorios.';
   }
 
+  const nameErr = validateName(nombre, 'nombre');
+  if (nameErr) return nameErr;
+
+  const lastNameErr = validateName(apellidoPaterno, 'apellido paterno');
+  if (lastNameErr) return lastNameErr;
+
   const phoneErr = validatePhone(rawTelefono);
   if (phoneErr) return phoneErr;
 
@@ -68,6 +73,8 @@ interface ProfileEditFormProps {
   readonly user: User | null;
   readonly onUpdateSuccess: (message: string) => void;
   readonly onCancel: () => void;
+  readonly onOpenDatePicker: (currentDate: string) => void;
+  readonly registerDatePicked: (fn: (date: string) => void) => void;
 }
 
 // ── Component ──────────────────────────────────────────
@@ -75,6 +82,8 @@ export default function ProfileEditForm({
   user,
   onUpdateSuccess,
   onCancel,
+  onOpenDatePicker,
+  registerDatePicked,
 }: ProfileEditFormProps): React.JSX.Element {
   const c = useProfileColors();
   const { updateProfile } = useAuth();
@@ -110,7 +119,6 @@ export default function ProfileEditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [showMunicipioDialog, setShowMunicipioDialog] = useState(false);
   const [showLocalidadDialog, setShowLocalidadDialog] = useState(false);
 
@@ -137,6 +145,11 @@ export default function ProfileEditForm({
       isMounted.current = false;
     };
   }, []);
+
+  // Expose fechaNacimiento setter to parent (for native date picker)
+  useEffect(() => {
+    registerDatePicked(setFechaNacimiento);
+  }, [registerDatePicked]);
 
   // Sync state if user data loads late
   const syncLocalidadId = catalog.setLocalidadId;
@@ -568,7 +581,13 @@ export default function ProfileEditForm({
           placeholderTextColor={c.placeholderColor}
           keyboardType="phone-pad"
           value={telefono}
-          onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
+          onChangeText={(val) => {
+            // Match web: only digits allowed, max 10
+            const digitsOnly = val.replace(/\D/g, '');
+            if (digitsOnly.length <= 10) {
+              setTelefono(formatPhoneNumber(val));
+            }
+          }}
           style={{ marginBottom: 14, backgroundColor: c.inputBg }}
           theme={{
             colors: {
@@ -593,24 +612,35 @@ export default function ProfileEditForm({
         >
           Fecha de Nacimiento *
         </Text>
-        <TouchableOpacity onPress={() => setIsDatePickerVisible(true)}>
-          <TextInput
-            mode="outlined"
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor={c.placeholderColor}
-            value={fechaNacimiento}
-            showSoftInputOnFocus={false}
-            onChangeText={setFechaNacimiento}
-            style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-            theme={{
-              colors: {
-                text: c.inputText,
-                primary: c.brand,
-                outline: c.border,
-                placeholder: c.placeholderColor,
-              },
-            }}
+        <TouchableOpacity
+          onPress={() => onOpenDatePicker(fechaNacimiento)}
+          activeOpacity={0.7}
+          style={{
+            marginBottom: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.border,
+            backgroundColor: c.inputBg,
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <MaterialCommunityIcons
+            name="calendar"
+            size={20}
+            color={c.muted}
+            style={{ marginRight: 10 }}
           />
+          <Text
+            style={{
+              fontSize: 16,
+              color: fechaNacimiento ? c.inputText : c.placeholderColor,
+            }}
+          >
+            {fechaNacimiento || 'AAAA-MM-DD'}
+          </Text>
         </TouchableOpacity>
 
         {/* Género */}
@@ -853,63 +883,33 @@ export default function ProfileEditForm({
 
         {/* Botones */}
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
-          <Pressable
+          <Button
+            mode="outlined"
             onPress={handleCancel}
-            style={({ pressed }) => ({
-              flex: 1,
-              paddingVertical: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.7 : 1,
-            })}
+            textColor={c.muted}
+            style={{ flex: 1, borderRadius: 12 }}
+            contentStyle={{ paddingVertical: 8 }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: c.muted }}>
-              Cancelar
-            </Text>
-          </Pressable>
-          <Pressable
+            Cancelar
+          </Button>
+          <Button
+            mode="contained"
             onPress={handleUpdateProfile}
+            loading={isSubmitting}
             disabled={isSubmitting}
-            style={({ pressed }) => ({
-              flex: 1,
-              paddingVertical: 14,
-              borderRadius: 12,
-              backgroundColor: c.brand,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed || isSubmitting ? 0.7 : 1,
-            })}
+            buttonColor={c.brand}
+            textColor={c.white}
+            style={{ flex: 1, borderRadius: 12 }}
+            contentStyle={{ paddingVertical: 8 }}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color={c.white} size="small" />
-            ) : (
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '700',
-                  color: c.white,
-                }}
-              >
-                Guardar
-              </Text>
-            )}
-          </Pressable>
+            Guardar
+          </Button>
         </View>
       </View>
 
       {/* Dialogs */}
       {renderMunicipioDialog()}
       {renderLocalidadDialog()}
-
-      <DatePickerModal
-        visible={isDatePickerVisible}
-        onClose={() => setIsDatePickerVisible(false)}
-        onSelectDate={setFechaNacimiento}
-        initialDate={fechaNacimiento}
-      />
     </>
   );
 }

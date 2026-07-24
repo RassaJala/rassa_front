@@ -8,6 +8,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { colors } from '@/constants/colors';
+import ChatListScreen from '@/features/chat/screens/ChatListScreen';
+import ChatScreen from '@/features/chat/screens/ChatScreen';
+import CreateGroupScreen from '@/features/chat/screens/CreateGroupScreen';
+import GroupDetailScreen from '@/features/chat/screens/GroupDetailScreen';
+import StartChatScreen from '@/features/chat/screens/StartChatScreen';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
@@ -30,7 +35,9 @@ import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/profile/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
-// Farmer screens
+import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
+import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
+import FamilyListScreen from '@/screens/families/FamilyListScreen';
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
@@ -43,16 +50,19 @@ import { useTheme } from '@/store/ThemeContext';
 import type {
   AdminStackParamList,
   AuthStackParamList,
+  BuyerStackParamList,
   FarmerStackParamList,
+  SellerStackParamList,
   SellerTabsParamList,
 } from '@/types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 const BuyerTab = createBottomTabNavigator();
 const SellerTab = createBottomTabNavigator<SellerTabsParamList>();
-const BuyerStack = createNativeStackNavigator();
+const BuyerStack = createNativeStackNavigator<BuyerStackParamList>();
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
+const SellerStack = createNativeStackNavigator<SellerStackParamList>();
 const AdminTab = createBottomTabNavigator();
 
 function AdminTabs() {
@@ -108,6 +118,7 @@ function AdminTabs() {
           ),
         }}
       />
+
       <AdminTab.Screen
         name="CategoryList"
         component={CategoryListScreen}
@@ -153,7 +164,35 @@ function AdminTabs() {
           tabBarLabel: 'Usuarios',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
+              name="account-multiple-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
+        name="FamilyList"
+        component={FamilyListScreen}
+        options={{
+          tabBarLabel: 'Familias',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
               name="account-group-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
               size={size}
               color={color}
             />
@@ -233,6 +272,20 @@ function BuyerTabs() {
           tabBarButton: () => null,
         }}
       />
+      <BuyerTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </BuyerTab.Navigator>
   );
 }
@@ -243,6 +296,16 @@ function BuyerNavigator() {
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
+      <BuyerStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <BuyerStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
     </BuyerStack.Navigator>
   );
 }
@@ -258,6 +321,21 @@ function FarmerScreens() {
         options={{ presentation: 'transparentModal' }}
       />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} />
+      <FarmerStack.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{ headerShown: true, title: 'Chats' }}
+      />
+      <FarmerStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <FarmerStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
     </FarmerStack.Navigator>
   );
 }
@@ -329,7 +407,39 @@ function SellerTabs() {
           tabBarButton: () => null,
         }}
       />
+      <SellerTab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </SellerTab.Navigator>
+  );
+}
+
+function SellerNavigator() {
+  return (
+    <SellerStack.Navigator screenOptions={{ headerShown: false }}>
+      <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <SellerStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+    </SellerStack.Navigator>
   );
 }
 
@@ -338,6 +448,28 @@ function AdminScreens() {
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
       <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
+      <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
+      <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
+      <AdminStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ headerShown: true, title: 'Chat' }}
+      />
+      <AdminStack.Screen
+        name="GroupDetail"
+        component={GroupDetailScreen}
+        options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <AdminStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <AdminStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
+      />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
       <AdminStack.Screen
@@ -349,10 +481,7 @@ function AdminScreens() {
         name="LocalidadTrash"
         component={LocalidadTrashScreen}
       />
-      <AdminStack.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-      />
+      <AdminStack.Screen name="Profile" component={ProfileScreen} />
     </AdminStack.Navigator>
   );
 }
@@ -435,7 +564,7 @@ export default function AppNavigator(): React.JSX.Element {
     case 'farmer':
       return <FarmerScreens />;
     case 'seller':
-      return <SellerTabs />;
+      return <SellerNavigator />;
     case 'admin':
       return <AdminScreens />;
     case 'buyer':

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { TextInput } from 'react-native-paper';
+import { Pressable, Text, View } from 'react-native';
+import { Button, TextInput } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
@@ -16,7 +16,12 @@ interface ChangePasswordProps {
 
 const PASSWORD_ALPHANUMERIC = /^[a-zA-Z0-9]+$/;
 const PASSWORD_HAS_UPPER = /[A-Z]/;
+const FILTER_PASSWORD = /[^a-zA-Z0-9]/g;
 const MIN_PASSWORD_LENGTH = 8;
+
+function filterPasswordInput(value: string): string {
+  return value.replace(FILTER_PASSWORD, '');
+}
 
 function validatePasswordChange(
   oldPass: string,
@@ -231,7 +236,7 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={oldPassword}
-            onChangeText={setOldPassword}
+            onChangeText={(val) => setOldPassword(filterPasswordInput(val))}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
             theme={{
               colors: {
@@ -263,7 +268,7 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={newPassword}
-            onChangeText={setNewPassword}
+            onChangeText={(val) => setNewPassword(filterPasswordInput(val))}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
             theme={{
               colors: {
@@ -294,7 +299,7 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            onChangeText={(val) => setConfirmPassword(filterPasswordInput(val))}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
             theme={{
               colors: {
@@ -307,32 +312,18 @@ export default function ChangePassword({
           />
 
           {/* Submit Button */}
-          <Pressable
+          <Button
+            mode="contained"
             onPress={handleChangePassword}
+            loading={isChanging}
             disabled={isChanging}
-            style={({ pressed }) => ({
-              paddingVertical: 14,
-              borderRadius: 12,
-              backgroundColor: c.errorColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed || isChanging ? 0.7 : 1,
-            })}
+            buttonColor={c.errorColor}
+            textColor={c.white}
+            style={{ borderRadius: 12 }}
+            contentStyle={{ paddingVertical: 8 }}
           >
-            {isChanging ? (
-              <ActivityIndicator color={c.white} size="small" />
-            ) : (
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '700',
-                  color: c.white,
-                }}
-              >
-                Cambiar Contraseña
-              </Text>
-            )}
-          </Pressable>
+            Cambiar Contraseña
+          </Button>
         </>
       ) : null}
     </View>
