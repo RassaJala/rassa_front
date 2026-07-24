@@ -6,21 +6,17 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CategoryFilter from '@/components/catalog/CategoryFilter';
 import ProductCard from '@/components/catalog/ProductCard';
 import SearchBar from '@/components/catalog/SearchBar';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
-import {
-  getCurrentPublications,
-  getCategorias,
-  type Categoria,
-  type CatalogProduct,
-} from '@/services/catalog';
+import type { CatalogProduct, Categoria } from '@/services/catalog';
+import { getCategorias, getCurrentPublications } from '@/services/catalog';
 import { useCartStore } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
 
@@ -60,7 +56,7 @@ export default function CatalogScreen(): React.JSX.Element {
         );
         setProducts(flat);
         setCategories(cats);
-      } catch (e) {
+      } catch {
         if (!cancelled) setError('No se pudieron cargar los productos.');
       } finally {
         if (!cancelled) setLoading(false);

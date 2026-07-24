@@ -4,8 +4,8 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
-import type { CatalogProduct } from '@/services/catalog';
 import { mediaUrl } from '@/services/api';
+import type { CatalogProduct } from '@/services/catalog';
 import { useTheme } from '@/store/ThemeContext';
 
 interface Props {
@@ -43,7 +43,8 @@ export default function ProductCard({
       {/* Image */}
       <View
         className="h-40 w-full items-center justify-center"
-        style={{ backgroundColor: isDark ? colors.admBgD : '#f3f4f6' }}
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- colors is a plain object with string values
+        style={{ backgroundColor: isDark ? colors.admBgD : colors.iconBg }}
       >
         {imageUri ? (
           <Image
