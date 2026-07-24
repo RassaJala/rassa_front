@@ -44,9 +44,7 @@ describe('CarritoScreen', () => {
     const { getByText } = render(<CarritoScreen />);
     expect(getByText('Carrito vacío')).toBeTruthy();
     expect(
-      getByText(
-        'Agregá productos desde el catálogo para comenzar tu compra.',
-      ),
+      getByText('Agregá productos desde el catálogo para comenzar tu compra.'),
     ).toBeTruthy();
   });
 
