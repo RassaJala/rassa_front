@@ -1,14 +1,8 @@
 import React from 'react';
-import {
-  FlatList,
-  Image,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Image, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import { useCartStore } from '@/store/cartStore';
@@ -47,27 +41,39 @@ function CartRow({
   const uri = mediaUrl(item.foto);
   return (
     <View
-      className="flex-row items-center rounded-2xl px-4 py-3 mb-3"
+      className="mb-3 flex-row items-center rounded-2xl px-4 py-3"
       style={{ backgroundColor: rowBg }}
     >
       {/* Image */}
       <View
-        className="items-center justify-center rounded-xl overflow-hidden"
+        className="items-center justify-center overflow-hidden rounded-xl"
         style={{ width: 60, height: 60, backgroundColor: placeholderBg }}
       >
         {uri ? (
-          <Image source={{ uri }} style={{ width: 60, height: 60 }} resizeMode="cover" />
+          <Image
+            source={{ uri }}
+            style={{ width: 60, height: 60 }}
+            resizeMode="cover"
+          />
         ) : (
-          <MaterialCommunityIcons name="image-off-outline" size={28} color={muted} />
+          <MaterialCommunityIcons
+            name="image-off-outline"
+            size={28}
+            color={muted}
+          />
         )}
       </View>
 
       {/* Info */}
-      <View className="flex-1 ml-3">
-        <Text className="text-sm font-semibold" style={{ color: fg }} numberOfLines={1}>
+      <View className="ml-3 flex-1">
+        <Text
+          className="text-sm font-semibold"
+          style={{ color: fg }}
+          numberOfLines={1}
+        >
           {item.producto}
         </Text>
-        <Text className="text-xs mt-0.5" style={{ color: muted }}>
+        <Text className="mt-0.5 text-xs" style={{ color: muted }}>
           ${item.precio}/{item.unidad}
         </Text>
       </View>
@@ -82,7 +88,10 @@ function CartRow({
           <MaterialCommunityIcons name="minus" size={16} color={fg} />
         </Pressable>
 
-        <Text className="mx-2 text-sm font-bold" style={{ color: fg, minWidth: 20, textAlign: 'center' }}>
+        <Text
+          className="mx-2 text-sm font-bold"
+          style={{ color: fg, minWidth: 20, textAlign: 'center' }}
+        >
           {item.cantidad}
         </Text>
 
@@ -93,7 +102,8 @@ function CartRow({
           style={{
             width: 28,
             height: 28,
-            backgroundColor: item.cantidad >= item.stock ? btnDisabledBg : btnBg,
+            backgroundColor:
+              item.cantidad >= item.stock ? btnDisabledBg : btnBg,
           }}
         >
           <MaterialCommunityIcons
@@ -105,12 +115,16 @@ function CartRow({
       </View>
 
       {/* Subtotal + remove */}
-      <View className="items-end ml-3" style={{ minWidth: 60 }}>
+      <View className="ml-3 items-end" style={{ minWidth: 60 }}>
         <Text className="text-sm font-bold" style={{ color: colors.primary }}>
           ${(item.precio * item.cantidad).toFixed(2)}
         </Text>
         <Pressable onPress={onRemove} className="mt-1">
-          <MaterialCommunityIcons name="trash-can-outline" size={16} color={colors.error} />
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={16}
+            color={colors.error}
+          />
         </Pressable>
       </View>
     </View>
@@ -134,12 +148,33 @@ export default function CarritoScreen(): React.JSX.Element {
   if (items.length === 0) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
           <MaterialCommunityIcons name="cart-outline" size={64} color={muted} />
-          <Text style={{ marginTop: 16, fontSize: 22, fontWeight: '700', color: fg }}>
+          <Text
+            style={{
+              marginTop: 16,
+              fontSize: 22,
+              fontWeight: '700',
+              color: fg,
+            }}
+          >
             Carrito vacío
           </Text>
-          <Text style={{ marginTop: 8, fontSize: 14, color: muted, textAlign: 'center' }}>
+          <Text
+            style={{
+              marginTop: 8,
+              fontSize: 14,
+              color: muted,
+              textAlign: 'center',
+            }}
+          >
             Agregá productos desde el catálogo para comenzar tu compra.
           </Text>
         </View>
@@ -151,12 +186,18 @@ export default function CarritoScreen(): React.JSX.Element {
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={['top']}>
       <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: 16 }}>
         {/* Header */}
-        <View className="flex-row items-center justify-between mb-4" style={{ paddingTop: 12 }}>
+        <View
+          className="mb-4 flex-row items-center justify-between"
+          style={{ paddingTop: 12 }}
+        >
           <Text className="text-2xl font-bold" style={{ color: fg }}>
             Mi Carrito
           </Text>
           <Pressable onPress={clearCart}>
-            <Text className="text-sm font-semibold" style={{ color: colors.error }}>
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: colors.error }}
+            >
               Vaciar
             </Text>
           </Pressable>
@@ -172,8 +213,12 @@ export default function CarritoScreen(): React.JSX.Element {
               fg={fg}
               muted={muted}
               onRemove={() => removeItem(item.id_producto_semanal)}
-              onInc={() => updateQuantity(item.id_producto_semanal, item.cantidad + 1)}
-              onDec={() => updateQuantity(item.id_producto_semanal, item.cantidad - 1)}
+              onInc={() =>
+                updateQuantity(item.id_producto_semanal, item.cantidad + 1)
+              }
+              onDec={() =>
+                updateQuantity(item.id_producto_semanal, item.cantidad - 1)
+              }
             />
           )}
           contentContainerStyle={{ paddingBottom: 100 }}
@@ -182,19 +227,21 @@ export default function CarritoScreen(): React.JSX.Element {
 
         {/* Total + Checkout */}
         <View
-          className="rounded-2xl px-5 py-4 mb-4"
+          className="mb-4 rounded-2xl px-5 py-4"
           style={{
             backgroundColor: isDark ? colors.admSurfaceD : colors.surface,
             borderTopWidth: 1,
             borderTopColor: border,
           }}
         >
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-base" style={{ color: muted }}>
               {items.reduce((s, i) => s + i.cantidad, 0)} productos
             </Text>
             <View className="flex-row items-baseline">
-              <Text className="text-xs mr-1" style={{ color: muted }}>Total</Text>
+              <Text className="mr-1 text-xs" style={{ color: muted }}>
+                Total
+              </Text>
               <Text className="text-xl font-bold" style={{ color: fg }}>
                 ${total().toFixed(2)}
               </Text>
@@ -204,7 +251,10 @@ export default function CarritoScreen(): React.JSX.Element {
             className="items-center justify-center rounded-xl py-3.5"
             style={{ backgroundColor: colors.primary }}
           >
-            <Text className="text-base font-bold" style={{ color: colors.iconWhite }}>
+            <Text
+              className="text-base font-bold"
+              style={{ color: colors.iconWhite }}
+            >
               Continuar compra
             </Text>
           </Pressable>
