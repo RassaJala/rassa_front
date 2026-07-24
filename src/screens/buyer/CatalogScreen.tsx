@@ -36,7 +36,10 @@ export default function CatalogScreen(): React.JSX.Element {
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +66,9 @@ export default function CatalogScreen(): React.JSX.Element {
       }
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -90,7 +95,10 @@ export default function CatalogScreen(): React.JSX.Element {
         agricultor: prod?.agricultor ?? '',
         stock: producto.stock,
       });
-      setToast({ message: `${producto.producto} agregado al carrito`, type: 'success' });
+      setToast({
+        message: `${producto.producto} agregado al carrito`,
+        type: 'success',
+      });
     },
     [addItem, products],
   );

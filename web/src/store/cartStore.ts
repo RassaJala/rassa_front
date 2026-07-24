@@ -44,7 +44,10 @@ export const useCartStore = create<CartState>()(
           }
 
           return {
-            items: [...state.items, { ...item, cantidad: Math.min(cantidad, item.stock) }],
+            items: [
+              ...state.items,
+              { ...item, cantidad: Math.min(cantidad, item.stock) },
+            ],
           };
         });
       },

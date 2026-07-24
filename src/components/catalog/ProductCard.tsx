@@ -33,7 +33,7 @@ export default function ProductCard({
 
   return (
     <View
-      className="rounded-2xl overflow-hidden"
+      className="overflow-hidden rounded-2xl"
       style={{
         backgroundColor: surface,
         borderWidth: 1,
@@ -76,9 +76,7 @@ export default function ProductCard({
         </Text>
 
         <View className="mt-1 flex-row items-center gap-1">
-          <Text style={{ fontSize: 12, color: muted }}>
-            Stock:
-          </Text>
+          <Text style={{ fontSize: 12, color: muted }}>Stock:</Text>
           <Text style={{ fontSize: 14, fontWeight: '700', color: fg }}>
             {producto.stock}
           </Text>
@@ -108,7 +106,10 @@ export default function ProductCard({
             size={18}
             color={colors.iconWhite}
           />
-          <Text className="text-sm font-semibold" style={{ color: colors.iconWhite }}>
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: colors.iconWhite }}
+          >
             {producto.stock === 0 ? 'Sin stock' : 'Agregar'}
           </Text>
         </Pressable>

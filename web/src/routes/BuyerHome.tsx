@@ -25,14 +25,19 @@ interface CatalogPublication {
 function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/api\/?$/, '');
+  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(
+    /\/api\/?$/,
+    '',
+  );
   return `${base}${path}`;
 }
 
 export function BuyerHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
+  const cartCount = useCartStore((s) =>
+    s.items.reduce((sum, i) => sum + i.cantidad, 0),
+  );
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');
 
@@ -43,7 +48,9 @@ export function BuyerHome() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await api.get<{ data: CatalogPublication[] }>('/publicaciones/current/');
+        const res = await api.get<{ data: CatalogPublication[] }>(
+          '/publicaciones/current/',
+        );
         if (cancelled) return;
         const products = res.data.data
           .flatMap((p) => p.productos)
@@ -57,7 +64,9 @@ export function BuyerHome() {
       }
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const firstName = user?.nombre ?? '';
@@ -101,8 +110,12 @@ export function BuyerHome() {
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 28 }}>🛒</span>
             <div>
-              <p className="text-sm font-medium" style={{ color: c.muted }}>Productos en el carrito</p>
-              <p className="text-2xl font-bold" style={{ color: c.fg }}>{cartCount}</p>
+              <p className="text-sm font-medium" style={{ color: c.muted }}>
+                Productos en el carrito
+              </p>
+              <p className="text-2xl font-bold" style={{ color: c.fg }}>
+                {cartCount}
+              </p>
             </div>
           </div>
           {cartCount > 0 && (
@@ -118,18 +131,24 @@ export function BuyerHome() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div
           style={quickLinkStyle}
           onClick={() => navigate('/cliente/catalogo')}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') navigate('/cliente/catalogo'); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') navigate('/cliente/catalogo');
+          }}
         >
           <span style={{ fontSize: 32 }}>🛍️</span>
           <div>
-            <p className="text-base font-bold" style={{ color: c.fg }}>Catálogo</p>
-            <p className="text-xs" style={{ color: c.muted }}>Explorá productos frescos</p>
+            <p className="text-base font-bold" style={{ color: c.fg }}>
+              Catálogo
+            </p>
+            <p className="text-xs" style={{ color: c.muted }}>
+              Explorá productos frescos
+            </p>
           </div>
         </div>
         <div
@@ -137,24 +156,34 @@ export function BuyerHome() {
           onClick={() => navigate('/cliente/carrito')}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') navigate('/cliente/carrito'); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') navigate('/cliente/carrito');
+          }}
         >
           <span style={{ fontSize: 32 }}>🛒</span>
           <div>
-            <p className="text-base font-bold" style={{ color: c.fg }}>Mi Carrito</p>
-            <p className="text-xs" style={{ color: c.muted }}>{cartCount} {cartCount === 1 ? 'producto' : 'productos'}</p>
+            <p className="text-base font-bold" style={{ color: c.fg }}>
+              Mi Carrito
+            </p>
+            <p className="text-xs" style={{ color: c.muted }}>
+              {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Featured products */}
-      <h3 className="mb-4 text-lg font-bold" style={{ color: c.fg }}>Productos destacados</h3>
+      <h3 className="mb-4 text-lg font-bold" style={{ color: c.fg }}>
+        Productos destacados
+      </h3>
       {loadingFeatured ? (
         <div className="flex items-center justify-center py-10">
           <div className="h-6 w-6 animate-spin rounded-full border-4 border-gray-200 border-t-brand-green-forest" />
         </div>
       ) : featured.length === 0 ? (
-        <p className="py-6 text-center text-sm" style={{ color: c.muted }}>No hay productos disponibles por el momento.</p>
+        <p className="py-6 text-center text-sm" style={{ color: c.muted }}>
+          No hay productos disponibles por el momento.
+        </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {featured.map((item) => {
@@ -173,18 +202,42 @@ export function BuyerHome() {
                 onClick={() => navigate('/cliente/catalogo')}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') navigate('/cliente/catalogo'); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') navigate('/cliente/catalogo');
+                }}
               >
-                <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg }}>
+                <div
+                  style={{
+                    height: 100,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: c.bg,
+                  }}
+                >
                   {imageUri ? (
-                    <img src={imageUri} alt={item.producto} className="h-full w-full object-cover" />
+                    <img
+                      src={imageUri}
+                      alt={item.producto}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span style={{ fontSize: 32, color: c.muted }}>🥬</span>
                   )}
                 </div>
                 <div className="p-2.5">
-                  <p className="truncate text-xs font-bold" style={{ color: c.fg }}>{item.producto}</p>
-                  <p className="mt-0.5 text-xs font-bold" style={{ color: c.brand }}>${precio.toFixed(2)}</p>
+                  <p
+                    className="truncate text-xs font-bold"
+                    style={{ color: c.fg }}
+                  >
+                    {item.producto}
+                  </p>
+                  <p
+                    className="mt-0.5 text-xs font-bold"
+                    style={{ color: c.brand }}
+                  >
+                    ${precio.toFixed(2)}
+                  </p>
                 </div>
               </div>
             );

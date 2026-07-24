@@ -43,6 +43,7 @@ export async function getCategorias(): Promise<Categoria[]> {
   const { data } = await api.get<{ data: Categoria[] }>('/categorias/');
   // Handle both { data: T[] } and { results: T[] } shapes
   if (Array.isArray(data.data)) return data.data;
-  if ('results' in data.data) return (data.data as unknown as { results: Categoria[] }).results;
+  if ('results' in data.data)
+    return (data.data as unknown as { results: Categoria[] }).results;
   return [];
 }

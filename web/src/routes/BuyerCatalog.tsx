@@ -30,7 +30,10 @@ interface FlatProduct extends CatalogProduct {
 function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/api\/?$/, '');
+  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(
+    /\/api\/?$/,
+    '',
+  );
   return `${base}${path}`;
 }
 
@@ -77,7 +80,9 @@ export function BuyerCatalog() {
       }
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -99,7 +104,10 @@ export function BuyerCatalog() {
         agricultor: prod?.agricultor ?? '',
         stock: producto.stock,
       });
-      setToast({ message: `${producto.producto} agregado al carrito`, type: 'success' });
+      setToast({
+        message: `${producto.producto} agregado al carrito`,
+        type: 'success',
+      });
     },
     [addItem, products],
   );
@@ -117,7 +125,8 @@ export function BuyerCatalog() {
     transition: 'border-color 0.15s',
   };
 
-  const inputFocusClass = 'focus:border-brand-green-forest focus:ring-1 focus:ring-brand-green-forest';
+  const inputFocusClass =
+    'focus:border-brand-green-forest focus:ring-1 focus:ring-brand-green-forest';
 
   const chipBase: React.CSSProperties = {
     borderRadius: 9999,
@@ -151,7 +160,9 @@ export function BuyerCatalog() {
         <PageHeader title="Catálogo" />
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-green-forest" />
-          <span className="ml-3 text-sm" style={{ color: c.muted }}>Cargando productos...</span>
+          <span className="ml-3 text-sm" style={{ color: c.muted }}>
+            Cargando productos...
+          </span>
         </div>
       </>
     );
@@ -163,7 +174,9 @@ export function BuyerCatalog() {
         <PageHeader title="Catálogo" />
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <span className="mb-4 text-5xl">⚠️</span>
-          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>{error}</h3>
+          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>
+            {error}
+          </h3>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 rounded-xl bg-brand-green-forest px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
@@ -200,7 +213,11 @@ export function BuyerCatalog() {
               ...chipBase,
               ...(selectedCategory === null
                 ? { backgroundColor: c.brand, color: '#fff' }
-                : { border: `1px solid ${c.border}`, backgroundColor: c.surface, color: c.fg }),
+                : {
+                    border: `1px solid ${c.border}`,
+                    backgroundColor: c.surface,
+                    color: c.fg,
+                  }),
             }}
           >
             Todos
@@ -213,7 +230,11 @@ export function BuyerCatalog() {
                 ...chipBase,
                 ...(selectedCategory === cat.id_categoria
                   ? { backgroundColor: c.brand, color: '#fff' }
-                  : { border: `1px solid ${c.border}`, backgroundColor: c.surface, color: c.fg }),
+                  : {
+                      border: `1px solid ${c.border}`,
+                      backgroundColor: c.surface,
+                      color: c.fg,
+                    }),
               }}
             >
               {cat.nombre}
@@ -225,7 +246,9 @@ export function BuyerCatalog() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <span className="mb-4 text-5xl">📦</span>
-          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>No se encontraron productos</h3>
+          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>
+            No se encontraron productos
+          </h3>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -237,25 +260,45 @@ export function BuyerCatalog() {
                 {/* Image */}
                 <div style={imgPlaceholderStyle}>
                   {imageUri ? (
-                    <img src={imageUri} alt={item.producto} className="h-full w-full object-cover" />
+                    <img
+                      src={imageUri}
+                      alt={item.producto}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    <span className="text-4xl" style={{ color: c.muted }}>🥬</span>
+                    <span className="text-4xl" style={{ color: c.muted }}>
+                      🥬
+                    </span>
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex flex-1 flex-col p-4">
-                  <h3 className="text-base font-bold" style={{ color: c.fg }}>{item.producto}</h3>
-                  <p className="mt-1 text-lg font-bold" style={{ color: c.brand }}>
+                  <h3 className="text-base font-bold" style={{ color: c.fg }}>
+                    {item.producto}
+                  </h3>
+                  <p
+                    className="mt-1 text-lg font-bold"
+                    style={{ color: c.brand }}
+                  >
                     ${precio.toFixed(2)}/{item.unidad}
                   </p>
                   <p className="mt-1" style={{ fontSize: 12, color: c.muted }}>
                     Stock:{' '}
-                    <span style={{ fontWeight: 700, fontSize: 14, color: c.fg }}>{item.stock}</span>{' '}
-                    <span style={{ fontSize: 11 }}>{item.unidad} disponibles</span>
+                    <span
+                      style={{ fontWeight: 700, fontSize: 14, color: c.fg }}
+                    >
+                      {item.stock}
+                    </span>{' '}
+                    <span style={{ fontSize: 11 }}>
+                      {item.unidad} disponibles
+                    </span>
                   </p>
                   {item.agricultor ? (
-                    <p className="mt-1" style={{ fontSize: 12, color: c.muted }}>
+                    <p
+                      className="mt-1"
+                      style={{ fontSize: 12, color: c.muted }}
+                    >
                       🌱 {item.agricultor}
                     </p>
                   ) : null}
@@ -265,7 +308,9 @@ export function BuyerCatalog() {
                       onClick={() => handleAddToCart(item)}
                       disabled={item.stock === 0}
                       className="w-full rounded-xl py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                      style={{ backgroundColor: item.stock === 0 ? c.muted : c.brand }}
+                      style={{
+                        backgroundColor: item.stock === 0 ? c.muted : c.brand,
+                      }}
                     >
                       {item.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
                     </button>
