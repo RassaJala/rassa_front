@@ -85,22 +85,45 @@ export interface Producto {
 }
 
 export interface Order {
-  id: number;
-  buyer: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  id_pedido: number;
+  cliente_nombre: string | null;
+  vendedor_nombre: string | null;
   total: string;
-  items: OrderItem[];
-  created_at: string;
-  updated_at: string;
+  estado_actual: PedidoEstado;
+  creado_en: string;
+}
+
+export interface OrderDetail extends Order {
+  subtotal: string;
+  iva: string;
+  fecha_expiracion: string | null;
+  detalles: OrderItem[];
+  historial: OrderHistoryEntry[];
 }
 
 export interface OrderItem {
-  id: number;
-  order: number;
-  product: number | null;
-  quantity: number;
-  price: string;
+  id_detalle: number;
+  nombre_producto: string;
+  precio_unitario: string;
+  cantidad: number;
+  importe: string;
 }
+
+export interface OrderHistoryEntry {
+  id_historial: number;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  cambiado_por_nombre: string | null;
+  creado_en: string;
+}
+
+export type PedidoEstado =
+  | 'pendiente'
+  | 'confirmado'
+  | 'en_preparacion'
+  | 'listo_para_retirar'
+  | 'entregado'
+  | 'cancelado';
 
 export interface Category {
   id_categoria: number;
@@ -136,6 +159,37 @@ export interface OrderStatusHistory {
   readonly cambiado_por_nombre: string | null;
 }
 
+// ── Familias ──────────────────────────────────────────────
+
+export interface Family {
+  id_familia: number;
+  fk_jefe_familia: number | null;
+  jefe_nombre: string | null;
+  nombre_familia: string;
+  nombre: string;
+  detalle_familia: string | null;
+  creado_en: string;
+  estado: boolean;
+}
+
+export interface FamilyMember {
+  id_familia_usuario: number;
+  fk_usuario: number;
+  usuario_nombre: string;
+  usuario_correo: string;
+  fk_familia: number;
+  estado: boolean;
+  creado_en: string;
+}
+
+export interface CreditLimit {
+  id_limite: number;
+  fk_usuario: number;
+  monto: string;
+  creado_en: string;
+}
+
+// ── Navigation param lists ────────────────────────────────
 export type AdminStackParamList = {
   AdminPanel: undefined;
   OrderDetail: { readonly orderId: number };
@@ -158,6 +212,10 @@ export type AdminStackParamList = {
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  FamilyList: undefined;
+  FamilyDetail: { readonly familyId: number };
+  FamilyForm: { readonly familyId?: number } | undefined;
+  Profile: undefined;
   MunicipioList: undefined;
   MunicipioTrash: undefined;
   LocalidadList: {
@@ -226,6 +284,14 @@ export type FarmerStackParamList = {
   };
 };
 
+export interface SearchUserResult {
+  id_usuario: number;
+  email: string;
+  correo?: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+}
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;

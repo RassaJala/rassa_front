@@ -35,7 +35,9 @@ import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
-// Farmer screens
+import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
+import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
+import FamilyListScreen from '@/screens/families/FamilyListScreen';
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
@@ -116,6 +118,7 @@ function AdminTabs() {
           ),
         }}
       />
+
       <AdminTab.Screen
         name="CategoryList"
         component={CategoryListScreen}
@@ -159,6 +162,20 @@ function AdminTabs() {
         component={UserManagementScreen}
         options={{
           tabBarLabel: 'Usuarios',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-multiple-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <AdminTab.Screen
+        name="FamilyList"
+        component={FamilyListScreen}
+        options={{
+          tabBarLabel: 'Familias',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="account-group-outline"
@@ -430,6 +447,8 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
+      <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen
         name="Chat"
         component={ChatScreen}
@@ -470,6 +489,7 @@ function AdminScreens() {
         component={OrderDetailScreen}
         options={{ title: 'Detalle del Pedido' }}
       />
+      <AdminStack.Screen name="Profile" component={ProfileScreen} />
     </AdminStack.Navigator>
   );
 }

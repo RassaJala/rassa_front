@@ -21,6 +21,7 @@ const adminNav: NavItem[] = [
     path: '/admin/categorias',
   },
   { key: 'units', label: 'Unidades', icon: '📏', path: '/admin/unidades' },
+  { key: 'families', label: 'Familias', icon: '👥', path: '/admin/familias' },
   {
     key: 'municipios',
     label: 'Municipios',

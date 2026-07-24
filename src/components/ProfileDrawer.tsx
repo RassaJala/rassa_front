@@ -55,6 +55,7 @@ export function ProfileDrawerProvider({
 }: ProfileDrawerProviderProps): React.JSX.Element {
   const { colorScheme, toggleColorScheme } = useTheme();
   const { user, logout } = useAuth();
+
   const isDark = colorScheme === 'dark';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -114,6 +115,7 @@ export function ProfileDrawerProvider({
         onProfilePress?.();
       },
     },
+
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
       label: `Tema ${isDark ? 'claro' : 'oscuro'}`,

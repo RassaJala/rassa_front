@@ -1,0 +1,27 @@
+import axios from 'axios';
+
+/**
+ * Extract a readable error message from an API error response.
+ * @param error - The caught error (unknown type)
+ * @param fieldKeys - Backend field names to check for validation errors
+ */
+export function extractApiError(error: unknown, fieldKeys: string[]): string {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Error desconocido.';
+  }
+
+  const data = error.response?.data;
+  if (!data) return 'Error del servidor. Intenta de nuevo.';
+
+  if (typeof data === 'string') return data;
+  if (typeof data.detail === 'string') return data.detail;
+  if (typeof data.message === 'string') return data.message;
+
+  for (const key of fieldKeys) {
+    const value = data[key];
+    if (Array.isArray(value) && value[0]) return String(value[0]);
+    if (typeof value === 'string') return value;
+  }
+
+  return 'Error del servidor. Intenta de nuevo.';
+}
