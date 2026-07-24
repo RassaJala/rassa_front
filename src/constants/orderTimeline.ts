@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios';
+
 import type { ApiResponse } from '@/types';
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -29,13 +30,20 @@ export function createOrderHistoryQueryOptions<T>(
   orderId: number,
   fetcher: (url: string) => Promise<{ data: ApiResponse<T[]> | T[] }>,
   enabled?: boolean,
-) {
+): {
+  queryKey: readonly ['order-history', number];
+  queryFn: () => Promise<T[]>;
+  enabled: boolean;
+  staleTime: number;
+  refetchOnWindowFocus: boolean;
+  retry: (failureCount: number, error: Error) => boolean;
+} {
   return {
     queryKey: ['order-history', orderId] as const,
     queryFn: async (): Promise<T[]> => {
       const { data } = await fetcher(`/pedidos/${orderId}/historial`);
       if (Array.isArray(data)) return data;
-      if (data?.data && Array.isArray((data as ApiResponse<T[]>).data)) return (data as ApiResponse<T[]>).data;
+      if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) return data.data;
       return [];
     },
     enabled: enabled ?? orderId > 0,

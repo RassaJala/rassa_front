@@ -1,7 +1,14 @@
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/store/ThemeContext';
 
-export function useAdminColors() {
+export function useAdminColors(): {
+  bg: string;
+  surface: string;
+  fg: string;
+  muted: string;
+  border: string;
+  brand: string;
+} {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
