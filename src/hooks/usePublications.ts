@@ -18,6 +18,8 @@ export function usePublicaciones(
   return useQuery({
     queryKey: ['publicaciones', { estado }],
     queryFn: () => publicationsApi.getPublicaciones({ estado }),
+    staleTime: 30_000,
+    retry: 1,
   });
 }
 
@@ -28,6 +30,8 @@ export function usePublicacion(
     queryKey: ['publicaciones', id],
     queryFn: () => publicationsApi.getPublicacion(id),
     enabled: id > 0,
+    staleTime: 30_000,
+    retry: 1,
   });
 }
 
@@ -38,6 +42,8 @@ export function useProductosSemanales(
     queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
+    staleTime: 30_000,
+    retry: 1,
   });
 }
 
