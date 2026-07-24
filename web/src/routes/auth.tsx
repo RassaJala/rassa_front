@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { AuthLayout } from '../components/layout/AuthLayout';
-import { Button } from '../components/ui/Button';
-import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
-import type { Role, User } from '../types';
+import { AuthLayout } from '~/components/layout/AuthLayout';
+import { Button } from '~/components/ui/Button';
+import { useAuth } from '~/hooks/useAuth';
+import api from '~/services/api';
+import type { Role, User } from '~/types';
+import { normalizeRole } from '~/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -13,27 +14,13 @@ import type { Role, User } from '../types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function normalizeRole(apiRole: string | undefined): Role {
-  switch (apiRole) {
-    case 'admin':
-      return 'admin';
-    case 'farmer':
-      return 'agricultor';
-    case 'seller':
-      return 'vendedor';
-    case 'buyer':
-      return 'cliente';
-    default:
-      return 'cliente';
-  }
-}
-
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: normalizeRole(raw.role as string | undefined),
+    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 
@@ -42,7 +29,17 @@ function mapMeUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    rol: normalizeRole(raw.role as string | undefined),
+    apellido_paterno: raw.apellido_paterno as string,
+    apellido_materno: raw.apellido_materno as string | undefined,
+    telefono: raw.telefono as string | undefined,
+    fecha_nacimiento: raw.fecha_nacimiento as string | undefined,
+    genero: raw.genero as string | undefined,
+    direccion: raw.direccion as string | undefined,
+    municipio_id: raw.municipio_id as number | undefined,
+    municipio_nombre: raw.municipio_nombre as string | undefined,
+    localidad: raw.localidad as number | undefined,
+    localidad_nombre: raw.localidad_nombre as string | undefined,
+    rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
 
@@ -57,7 +54,7 @@ function loginErrors(
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
   else if (password.length < 6)
-    errs.password = 'La contraseña debe tener al menos 6 caracteres';
+    errs.password = 'La contraseña debe tener al menos 6 caracteres.';
   return errs;
 }
 
@@ -76,8 +73,8 @@ function registerErrors(
     return 'Nombre, apellido, email y contraseña son obligatorios.';
   }
   if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8)
-    return 'La contraseña debe tener al menos 8 caracteres.';
+  if (password.length < 6)
+    return 'La contraseña debe tener al menos 6 caracteres.';
   if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
   if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
@@ -123,9 +120,12 @@ export function LoginScreen() {
       }>('/token/', { email: email.trim(), password });
 
       localStorage.setItem('token', tokens.access);
+      if (tokens.refresh)
+        sessionStorage.setItem('refresh_token', tokens.refresh);
 
       const { data: meData } = await api.get<{ data: Record<string, unknown> }>(
         '/auth/me/',
+        { headers: { Authorization: `Bearer ${tokens.access}` } },
       );
       const user = mapMeUser(meData.data);
 
@@ -141,8 +141,15 @@ export function LoginScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setGeneralError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo (puede filtrar infra)
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 401) setGeneralError('Credenciales inválidas.');
+        else if (status === 429)
+          setGeneralError('Límite de peticiones excedido. Intentá más tarde.');
+        else if (status && status >= 500)
+          setGeneralError('Error del servidor. Intentá más tarde.');
+        else setGeneralError('Error al iniciar sesión.');
       } else {
         setGeneralError('Error al iniciar sesión.');
       }
@@ -442,10 +449,12 @@ export function RegisterScreen() {
 
       const raw = body.data ?? body;
       const access = raw.access as string;
+      const refresh = raw.refresh as string | undefined;
       const user = mapRegisterUser(raw);
 
       if (!access) throw new Error('No se recibió el token de acceso.');
 
+      if (refresh) sessionStorage.setItem('refresh_token', refresh);
       login(access, user);
 
       const roleRoutes: Record<string, string> = {
@@ -458,8 +467,23 @@ export function RegisterScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
+      // ponytail: sanitizar — no exponer err.message crudo
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data;
+        const backendMsg =
+          data && typeof data === 'object' && typeof data.detail === 'string'
+            ? data.detail
+            : null;
+        if (backendMsg) {
+          setError(backendMsg);
+        } else if (status === 409) {
+          setError('Ya existe una cuenta con ese correo.');
+        } else if (status && status >= 500) {
+          setError('Error del servidor. Intentá más tarde.');
+        } else {
+          setError('Error al registrarse.');
+        }
       } else {
         setError('Error al registrarse.');
       }
@@ -524,7 +548,7 @@ export function RegisterScreen() {
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 6 caracteres"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

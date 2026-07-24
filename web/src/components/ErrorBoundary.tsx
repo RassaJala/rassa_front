@@ -13,6 +13,9 @@ export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
+  private errorHandler?: (event: ErrorEvent) => void;
+  private rejectionHandler?: (event: PromiseRejectionEvent) => void;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -22,8 +25,32 @@ export class ErrorBoundary extends Component<
     return { hasError: true };
   }
 
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary]', error, errorInfo);
+  override componentDidMount(): void {
+    // ponytail: captura errores async (useMutation, setTimeout, promesas)
+    this.errorHandler = (event: ErrorEvent) => {
+      event.preventDefault();
+      this.setState({ hasError: true });
+    };
+    this.rejectionHandler = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      this.setState({ hasError: true });
+    };
+    window.addEventListener('error', this.errorHandler);
+    window.addEventListener('unhandledrejection', this.rejectionHandler);
+  }
+
+  override componentWillUnmount(): void {
+    if (this.errorHandler) {
+      window.removeEventListener('error', this.errorHandler);
+    }
+    if (this.rejectionHandler) {
+      window.removeEventListener('unhandledrejection', this.rejectionHandler);
+    }
+  }
+
+  override componentDidCatch(error: Error, _errorInfo: ErrorInfo) {
+    // ponytail: sanitize — only log message, not stack/user data
+    console.error('[ErrorBoundary]', error.message);
   }
 
   override render() {
