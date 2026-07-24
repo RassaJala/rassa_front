@@ -24,36 +24,41 @@ beforeEach(() => {
   useCartStore.setState({ items: [] });
 });
 
+function getFirst() {
+  const item = useCartStore.getState().items[0];
+  expect(item).toBeDefined();
+  return item!;
+}
+
 describe('cartStore', () => {
   describe('addItem', () => {
     it('adds a new item with default quantity 1', () => {
       useCartStore.getState().addItem(mockItem);
-      const { items } = useCartStore.getState();
-      expect(items).toHaveLength(1);
-      expect(items[0].cantidad).toBe(1);
+      expect(useCartStore.getState().items).toHaveLength(1);
+      expect(getFirst().cantidad).toBe(1);
     });
 
     it('adds a new item with custom quantity', () => {
       useCartStore.getState().addItem(mockItem, 5);
-      expect(useCartStore.getState().items[0].cantidad).toBe(5);
+      expect(getFirst().cantidad).toBe(5);
     });
 
     it('increments quantity when adding the same item', () => {
       useCartStore.getState().addItem(mockItem, 2);
       useCartStore.getState().addItem(mockItem, 3);
       expect(useCartStore.getState().items).toHaveLength(1);
-      expect(useCartStore.getState().items[0].cantidad).toBe(5);
+      expect(getFirst().cantidad).toBe(5);
     });
 
     it('does not exceed stock when adding existing item', () => {
       useCartStore.getState().addItem(mockItem, 40);
       useCartStore.getState().addItem(mockItem, 20);
-      expect(useCartStore.getState().items[0].cantidad).toBe(50);
+      expect(getFirst().cantidad).toBe(50);
     });
 
     it('caps initial quantity to stock', () => {
       useCartStore.getState().addItem(mockItem, 100);
-      expect(useCartStore.getState().items[0].cantidad).toBe(50);
+      expect(getFirst().cantidad).toBe(50);
     });
 
     it('adds multiple different items', () => {
@@ -70,7 +75,7 @@ describe('cartStore', () => {
       useCartStore.getState().removeItem(1);
       const { items } = useCartStore.getState();
       expect(items).toHaveLength(1);
-      expect(items[0].id_producto_semanal).toBe(2);
+      expect(items[0]!.id_producto_semanal).toBe(2);
     });
 
     it('does nothing if id does not exist', () => {
@@ -84,13 +89,13 @@ describe('cartStore', () => {
     it('updates quantity for an item', () => {
       useCartStore.getState().addItem(mockItem);
       useCartStore.getState().updateQuantity(1, 10);
-      expect(useCartStore.getState().items[0].cantidad).toBe(10);
+      expect(getFirst().cantidad).toBe(10);
     });
 
     it('does not exceed stock', () => {
       useCartStore.getState().addItem(mockItem);
       useCartStore.getState().updateQuantity(1, 999);
-      expect(useCartStore.getState().items[0].cantidad).toBe(50);
+      expect(getFirst().cantidad).toBe(50);
     });
 
     it('removes item when quantity <= 0', () => {
