@@ -3,55 +3,34 @@ import { useQuery } from '@tanstack/react-query';
 
 import { isAxiosError } from 'axios';
 
-import api from '../services/api';
-import { useAppColors } from '../hooks/useAppColors';
-
-interface HistoryEntry {
-  readonly id_historial: number;
-  readonly estado_anterior: string | null;
-  readonly estado_nuevo: string;
-  readonly creado_en: string;
-  readonly cambiado_por_nombre: string | null;
-}
-
+// ponytail: cross-package import from src/ is intentional for this sprint;
+// extract to packages/shared/ when a third consumer appears (rassa#33)
 import {
+  buildDescription,
+  createOrderHistoryQueryOptions,
   formatTimestamp,
   getStatusColor,
   STATUS_LABELS,
 } from '../../src/constants/orderTimeline';
-import type { ApiResponse } from '../types';
+import api from '../services/api';
+import { useAppColors } from '../hooks/useAppColors';
+import type { OrderStatusHistory } from '../../src/types';
+
+const DOT_SIZE = 12;
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const colors = useAppColors();
-  const { fg, muted, border, surface, brand } = colors;
+  const { fg, muted, border, surface, brand } = useAppColors();
   const orderId = Number(id);
   const isValidId = !isNaN(orderId) && orderId > 0;
 
-  const { data, isLoading, isError, error, refetch } = useQuery<HistoryEntry[]>(
-    {
-      queryKey: ['order-history', orderId],
-      queryFn: async () => {
-        const res = await api.get<ApiResponse<HistoryEntry[]> | HistoryEntry[]>(
-          `/pedidos/${orderId}/historial`,
-        );
-        if (Array.isArray(res.data)) return res.data;
-        if (
-          res.data &&
-          Array.isArray((res.data as ApiResponse<HistoryEntry[]>).data)
-        ) {
-          return (res.data as ApiResponse<HistoryEntry[]>).data;
-        }
-        return [];
-      },
-      enabled: isValidId,
-      staleTime: 30_000,
-      retry: (failureCount, error) => {
-        if (isAxiosError(error) && error.response?.status === 404) return false;
-        return failureCount < 2;
-      },
-    },
+  const { data, isLoading, isError, error, refetch } = useQuery<OrderStatusHistory[]>(
+    createOrderHistoryQueryOptions<OrderStatusHistory>(
+      orderId,
+      (url) => api.get(url),
+      isValidId,
+    ),
   );
 
   const entries = data ?? [];
@@ -81,8 +60,8 @@ export function AdminOrderDetail() {
   };
 
   const dotStyle = (color: string): React.CSSProperties => ({
-    width: 12,
-    height: 12,
+    width: DOT_SIZE,
+    height: DOT_SIZE,
     borderRadius: '50%',
     backgroundColor: color,
     flexShrink: 0,
@@ -110,12 +89,12 @@ export function AdminOrderDetail() {
     overflow: 'hidden',
   };
 
-  const centeredStyle = (): React.CSSProperties => ({
+  const centeredStyle: React.CSSProperties = {
     display: 'grid',
     placeItems: 'center',
     padding: '64px 24px',
     color: muted,
-  });
+  };
 
   const timelineEntryStyle: React.CSSProperties = {
     display: 'flex',
@@ -167,7 +146,7 @@ export function AdminOrderDetail() {
       <div style={cardStyle}>
         {/* Loading */}
         {isLoading && (
-          <div style={centeredStyle()}>
+          <div style={centeredStyle}>
             <div
               style={{
                 width: 32,
@@ -185,7 +164,7 @@ export function AdminOrderDetail() {
 
         {/* Error */}
         {isError && (
-          <div style={centeredStyle()}>
+          <div style={centeredStyle}>
             <span style={{ fontSize: 40 }}>⚠️</span>
             <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
               {isAxiosError(error) && error.response?.status === 404
@@ -211,7 +190,7 @@ export function AdminOrderDetail() {
 
         {/* Empty */}
         {!isLoading && !isError && entries.length === 0 && (
-          <div style={centeredStyle()}>
+          <div style={centeredStyle}>
             <span style={{ fontSize: 40 }}>📋</span>
             <p style={{ marginTop: 12, fontSize: 14 }}>
               Sin historial de cambios
@@ -227,10 +206,7 @@ export function AdminOrderDetail() {
               const dotColor = getStatusColor(entry.estado_nuevo, border);
               const label =
                 STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
-              const description =
-                entry.estado_anterior === null
-                  ? 'Pedido creado'
-                  : `${STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior} → ${label}`;
+              const description = buildDescription(entry);
 
               return (
                 <div key={entry.id_historial} style={timelineEntryStyle}>

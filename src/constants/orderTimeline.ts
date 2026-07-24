@@ -1,3 +1,6 @@
+import { isAxiosError } from 'axios';
+import type { ApiResponse } from '@/types';
+
 export const STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   confirmado: 'Confirmado',
@@ -17,8 +20,44 @@ export function formatTimestamp(iso: string): string {
     const min = String(d.getUTCMinutes()).padStart(2, '0');
     return `${dd}/${mm} ${hh}:${min}`;
   } catch {
+    console.warn('[orderTimeline] Invalid timestamp:', iso);
     return '—';
   }
+}
+
+export function createOrderHistoryQueryOptions<T>(
+  orderId: number,
+  fetcher: (url: string) => Promise<{ data: ApiResponse<T[]> | T[] }>,
+  enabled?: boolean,
+) {
+  return {
+    queryKey: ['order-history', orderId] as const,
+    queryFn: async (): Promise<T[]> => {
+      const { data } = await fetcher(`/pedidos/${orderId}/historial`);
+      if (Array.isArray(data)) return data;
+      if (data?.data && Array.isArray((data as ApiResponse<T[]>).data)) return (data as ApiResponse<T[]>).data;
+      return [];
+    },
+    enabled: enabled ?? orderId > 0,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    retry: (failureCount: number, error: Error) => {
+      if (isAxiosError(error) && error.response?.status === 404) return false;
+      return failureCount < 2;
+    },
+  };
+}
+
+export function buildDescription(entry: {
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+}): string {
+  if (entry.estado_anterior === null) {
+    return 'Pedido creado';
+  }
+  const fromLabel = STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
+  const toLabel = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
+  return `${fromLabel} → ${toLabel}`;
 }
 
 export function getStatusColor(status: string, fallback: string): string {

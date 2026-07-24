@@ -10,14 +10,14 @@ import {
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from '@/constants/colors';
 import {
+  buildDescription,
   formatTimestamp,
   getStatusColor,
   STATUS_LABELS,
 } from '@/constants/orderTimeline';
+import { useAdminColors } from '@/hooks/useAdminColors';
 import { useOrderTimeline } from '@/hooks/useOrderTimeline';
-import { useTheme } from '@/store/ThemeContext';
 
 const DOT_SIZE = 12;
 const GUTTER_WIDTH = 28;
@@ -102,19 +102,6 @@ const styles = StyleSheet.create({
   },
 });
 
-function buildDescription(entry: {
-  readonly estado_anterior: string | null;
-  readonly estado_nuevo: string;
-}): string {
-  if (entry.estado_anterior === null) {
-    return 'Pedido creado';
-  }
-  const fromLabel =
-    STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior;
-  const toLabel = STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
-  return `${fromLabel} → ${toLabel}`;
-}
-
 interface TimelineEntryProps {
   readonly entry: {
     readonly id_historial: number;
@@ -193,14 +180,7 @@ interface OrderTimelineProps {
 export default function OrderTimeline({
   orderId,
 }: OrderTimelineProps): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const { bg, surface, fg, muted, border, brand } = useAdminColors();
 
   const { entries, isLoading, isError, refetch } = useOrderTimeline(orderId);
 

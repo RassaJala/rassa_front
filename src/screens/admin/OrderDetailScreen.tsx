@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,18 +8,40 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import OrderTimeline from '@/components/OrderTimeline';
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/store/ThemeContext';
+import { useAdminColors } from '@/hooks/useAdminColors';
 import type { AdminStackParamList } from '@/types';
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.02,
+  },
+  card: {
+    flex: 1,
+    marginHorizontal: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+});
+
 export default function OrderDetailScreen(): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const { bg, surface, fg, border } = useAdminColors();
   const insets = useSafeAreaInsets();
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
 
   const route = useRoute<RouteProp<AdminStackParamList, 'OrderDetail'>>();
   const { orderId } = route.params;
@@ -29,47 +51,23 @@ export default function OrderDetailScreen(): React.JSX.Element {
     >();
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingTop: insets.top,
-          paddingHorizontal: 20,
-          paddingBottom: 8,
-        }}
-      >
+    <View style={[styles.container, { backgroundColor: bg }]}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={({ pressed }) => ({
             opacity: pressed ? 0.5 : 1,
-            marginRight: 12,
-            padding: 4,
+            ...styles.backButton,
           })}
         >
           <MaterialCommunityIcons name="arrow-left" size={28} color={fg} />
         </Pressable>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
-          }}
-        >
+        <Text style={[styles.title, { color: fg }]}>
           Pedido #{orderId}
         </Text>
       </View>
       <View
-        style={{
-          flex: 1,
-          backgroundColor: surface,
-          marginHorizontal: 20,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: border,
-          overflow: 'hidden',
-        }}
+        style={[styles.card, { backgroundColor: surface, borderColor: border }]}
       >
         <OrderTimeline orderId={orderId} />
       </View>

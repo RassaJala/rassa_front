@@ -95,6 +95,30 @@ describe('OrderTimeline', () => {
     expect(getByText('Sin historial de cambios')).toBeTruthy();
   });
 
+  it('renders entries with partial data (null optional fields)', () => {
+    const entries: OrderStatusHistory[] = [
+      {
+        ...baseEntry,
+        id_historial: 1,
+        estado_anterior: null,
+        estado_nuevo: 'pendiente',
+        cambiado_por_nombre: null,
+      },
+    ];
+
+    mockUseOrderTimeline.mockReturnValue({
+      entries,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    const { getByText, queryByText } = render(<OrderTimeline orderId={1} />);
+    expect(getByText('Pedido creado')).toBeTruthy();
+    expect(queryByText('Admin')).toBeNull();
+  });
+
   it('renders timeline entries', () => {
     const entries: OrderStatusHistory[] = [
       {
