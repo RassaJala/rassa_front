@@ -24,11 +24,12 @@ export function useOrderTimeline(orderId: number): {
       >(`/pedidos/${orderId}/historial`);
       // Handle both wrapped { data: [...] } and flat [...] responses
       if (Array.isArray(data)) return data;
-      return data.data;
+      if (data?.data && Array.isArray(data.data)) return data.data;
+      return [];
     },
     enabled: orderId > 0,
     staleTime: 30_000,
-    retry: false,
+    retry: 2,
   });
 
   return { entries, isLoading, isError, error, refetch };

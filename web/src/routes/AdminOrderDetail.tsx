@@ -25,6 +25,7 @@ export function AdminOrderDetail() {
   const colors = useAppColors();
   const { fg, muted, border, surface, brand } = colors;
   const orderId = Number(id);
+  const isValidId = !isNaN(orderId) && orderId > 0;
 
   const { data, isLoading, isError, error, refetch } = useQuery<HistoryEntry[]>(
     {
@@ -36,12 +37,21 @@ export function AdminOrderDetail() {
         if (Array.isArray(res.data)) return res.data;
         return (res.data as ApiResponse<HistoryEntry[]>).data;
       },
-      enabled: orderId > 0,
-      retry: false,
+      enabled: isValidId,
+      staleTime: 30_000,
+      retry: 2,
     },
   );
 
   const entries = data ?? [];
+
+  if (!isValidId) {
+    return (
+      <div>
+        <p style={{ color: muted }}>ID de pedido inválido</p>
+      </div>
+    );
+  }
 
   // ── Styles ──
 
