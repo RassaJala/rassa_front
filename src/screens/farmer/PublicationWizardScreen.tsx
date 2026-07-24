@@ -602,7 +602,7 @@ export default function PublicationWizardScreen({
           borderTopColor: border,
         }}
       >
-        <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
           {wizard.stepIndex > 0 ? (
             <Pressable
               onPress={wizard.prevStep}
@@ -648,14 +648,14 @@ export default function PublicationWizardScreen({
               })}
             >
               <Text
-                style={{ fontSize: 15, fontWeight: '600', color: '#FFFFFF' }}
+                style={{ fontSize: 15, fontWeight: '600', color: isDark ? '#FFFFFF' : fg }}
               >
                 Siguiente
               </Text>
               <MaterialCommunityIcons
                 name="arrow-right"
                 size={18}
-                color="#FFFFFF"
+                color={isDark ? '#FFFFFF' : fg}
               />
             </Pressable>
           ) : (
@@ -722,7 +722,7 @@ export default function PublicationWizardScreen({
                     style={{
                       fontSize: 15,
                       fontWeight: '600',
-                      color: '#FFFFFF',
+                      color: isDark ? '#FFFFFF' : fg,
                     }}
                   >
                     Publicar
