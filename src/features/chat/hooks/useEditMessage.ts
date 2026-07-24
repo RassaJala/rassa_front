@@ -1,7 +1,7 @@
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { editMessage } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 type EditMessageVariables = { messageId: number; contenido: string };
@@ -12,7 +12,8 @@ export function useEditMessage(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, contenido }) => editMessage(messageId, contenido),
+    mutationFn: ({ messageId, contenido }) =>
+      chatApi.editMessage(messageId, contenido),
     onMutate: async ({ messageId, contenido }) => {
       await queryClient.cancelQueries({
         queryKey: ['messages', conversationId],

@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { createGroup } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type {
   ChatStackParamList,
   Conversation,
@@ -20,7 +20,7 @@ export function useCreateGroup(): UseMutationResult<
     useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
 
   return useMutation({
-    mutationFn: createGroup,
+    mutationFn: (payload) => chatApi.createGroup(payload),
     onSuccess: (conversation) => {
       void queryClient.invalidateQueries({
         queryKey: ['conversations'],

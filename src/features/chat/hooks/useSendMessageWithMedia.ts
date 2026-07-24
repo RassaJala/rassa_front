@@ -1,7 +1,7 @@
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { sendMessageWithMedia } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import { useAuth } from '@/store/AuthContext';
 import type {
   Message,
@@ -16,7 +16,7 @@ export function useSendMessageWithMedia(
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: sendMessageWithMedia,
+    mutationFn: (payload) => chatApi.sendMessageWithMedia(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({
         queryKey: ['messages', conversationId],

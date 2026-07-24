@@ -1,7 +1,7 @@
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { deleteMessage } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 export function useDeleteMessage(
@@ -10,7 +10,7 @@ export function useDeleteMessage(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteMessage,
+    mutationFn: (messageId) => chatApi.deleteMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({
         queryKey: ['messages', conversationId],

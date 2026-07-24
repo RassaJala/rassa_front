@@ -5,7 +5,7 @@ import type {
 } from '@tanstack/react-query';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-import { getMessages } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 const BASE_POLL_MS = 5_000;
@@ -18,7 +18,8 @@ export function useChatMessages(
 
   return useInfiniteQuery({
     queryKey: ['messages', conversationId],
-    queryFn: ({ pageParam = 1 }) => getMessages(conversationId, pageParam),
+    queryFn: ({ pageParam = 1 }) =>
+      chatApi.getMessages(conversationId, pageParam),
     getNextPageParam: (lastPage) => {
       if (lastPage.next) {
         const url = new URL(lastPage.next);
