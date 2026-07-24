@@ -12,8 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePreventRemove } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
 import WizardItemCard from '@/components/wizard/WizardItemCard';
@@ -656,10 +656,11 @@ export default function PublicationWizardScreen({
           {wizard.stepIndex < WIZARD_STEPS.length - 1 ? (
             <Pressable
               onPress={() => {
-                if (wizard.currentStep === 'productos') {
-                  if (!wizard.validateItems()) {
-                    return;
-                  }
+                if (
+                  wizard.currentStep === 'productos' &&
+                  !wizard.validateItems()
+                ) {
+                  return;
                 }
                 wizard.nextStep();
               }}
