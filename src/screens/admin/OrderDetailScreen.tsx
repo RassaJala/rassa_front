@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
@@ -14,6 +15,7 @@ import type { AdminStackParamList } from '@/types';
 export default function OrderDetailScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -32,7 +34,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingTop: 60,
+          paddingTop: insets.top,
           paddingHorizontal: 20,
           paddingBottom: 8,
         }}

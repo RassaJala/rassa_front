@@ -12,36 +12,12 @@ interface HistoryEntry {
   readonly cambiado_por_nombre: string | null;
 }
 
-interface ApiResponse<T> {
-  data: T;
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  pendiente: 'Pendiente',
-  confirmado: 'Confirmado',
-  en_preparacion: 'En preparación',
-  listo_para_retirar: 'Listo para retirar',
-  entregado: 'Entregado',
-  cancelado: 'Cancelado',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pendiente: '#f59e0b',
-  confirmado: '#22c55e',
-  en_preparacion: '#3b82f6',
-  listo_para_retirar: '#3b82f6',
-  entregado: '#22c55e',
-  cancelado: '#DE393A',
-};
-
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}/${mm} ${hh}:${min}`;
-}
+import {
+  formatTimestamp,
+  STATUS_COLORS,
+  STATUS_LABELS,
+} from '../../src/constants/orderTimeline';
+import type { ApiResponse } from '../types';
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();

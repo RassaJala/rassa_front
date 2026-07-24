@@ -10,48 +10,13 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
+import {
+  formatTimestamp,
+  getStatusColor,
+  STATUS_LABELS,
+} from '@/constants/orderTimeline';
 import { useOrderTimeline } from '@/hooks/useOrderTimeline';
 import { useTheme } from '@/store/ThemeContext';
-
-const STATUS_LABELS: Record<string, string> = {
-  pendiente: 'Pendiente',
-  confirmado: 'Confirmado',
-  en_preparacion: 'En preparación',
-  listo_para_retirar: 'Listo para retirar',
-  entregado: 'Entregado',
-  cancelado: 'Cancelado',
-};
-
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}/${mm} ${hh}:${min}`;
-}
-
-function getStatusDot(
-  status: string,
-  _isDark: boolean,
-  border: string,
-): string {
-  switch (status) {
-    case 'pendiente':
-      return colors.accent; // 🟡 amber — esperando acción
-    case 'confirmado':
-      return colors.success; // 🟢 verde — confirmado
-    case 'en_preparacion':
-    case 'listo_para_retirar':
-      return colors.info; // 🔵 azul — en proceso
-    case 'entregado':
-      return colors.success; // 🟢 verde — completado
-    case 'cancelado':
-      return colors.brandRedCoral; // 🔴 rojo — cancelado
-    default:
-      return border;
-  }
-}
 
 function buildDescription(entry: {
   readonly estado_anterior: string | null;
@@ -291,7 +256,7 @@ export default function OrderTimeline({
       >
         {entries.map((entry, index) => {
           const isLast = index === entries.length - 1;
-          const dotColor = getStatusDot(entry.estado_nuevo, isDark, border);
+          const dotColor = getStatusColor(entry.estado_nuevo, border);
 
           return (
             <TimelineEntry
