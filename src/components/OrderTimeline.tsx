@@ -183,10 +183,7 @@ export default function OrderTimeline({
                 <View style={[styles.dot, { backgroundColor: dotColor }]} />
                 {!isLast && (
                   <View
-                    style={[
-                      styles.gutterLine,
-                      { backgroundColor: border },
-                    ]}
+                    style={[styles.gutterLine, { backgroundColor: border }]}
                   />
                 )}
               </View>
@@ -210,9 +207,7 @@ export default function OrderTimeline({
                   </Text>
                   {entry.cambiado_por_nombre !== null && (
                     <>
-                      <Text style={[styles.metaText, { color: muted }]}>
-                        ·
-                      </Text>
+                      <Text style={[styles.metaText, { color: muted }]}>·</Text>
                       <MaterialCommunityIcons
                         name="account-outline"
                         size={DOT_SIZE}

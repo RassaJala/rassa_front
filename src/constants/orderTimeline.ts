@@ -1,3 +1,20 @@
+export const DOT_SIZE = 12;
+export const STALE_TIME = 30_000;
+
+export function isNotFoundError(error: unknown): boolean {
+  if (error == null || typeof error !== 'object') return false;
+  const err = error as { response?: { status?: number } };
+  return err.response?.status === 404;
+}
+
+interface WrappedData {
+  data: unknown;
+}
+
+export function isWrappedData(value: unknown): value is WrappedData {
+  return value != null && typeof value === 'object' && 'data' in value;
+}
+
 export const STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   confirmado: 'Confirmado',

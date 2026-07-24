@@ -1,28 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { isWrappedData, STALE_TIME } from '@/constants/orderTimeline';
 import api from '@/services/api';
 import type { OrderStatusHistory } from '@/types';
-
-const STALE_TIME = 30_000;
-
-// ponytail: inline helper instead of pulling isAxiosError into a constants file
-function isNotFoundError(error: unknown): boolean {
-  if (error == null || typeof error !== 'object') return false;
-  const err = error as { response?: { status?: number } };
-  return err.response?.status === 404;
-}
-
-interface WrappedData {
-  data: unknown;
-}
-
-function isWrappedData(value: unknown): value is WrappedData {
-  return (
-    value != null &&
-    typeof value === 'object' &&
-    'data' in value
-  );
-}
 
 export function useOrderTimeline(orderId: number): {
   entries: OrderStatusHistory[];
@@ -50,10 +30,8 @@ export function useOrderTimeline(orderId: number): {
     enabled: orderId > 0,
     staleTime: STALE_TIME,
     refetchOnWindowFocus: false,
-    retry: (failureCount: number, error: unknown) => {
-      if (isNotFoundError(error)) return false;
-      return failureCount < 2;
-    },
+    // ponytail: axios-retry handles retries globally, no amplification needed
+    retry: false,
   });
 
   return { entries, isLoading, isError, error, refetch };
