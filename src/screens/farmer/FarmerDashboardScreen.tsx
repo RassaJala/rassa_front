@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -253,7 +254,7 @@ export default function FarmerDashboardScreen({
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: insets.top + 16,
-          paddingBottom: 16,
+          paddingBottom: 100,
           paddingHorizontal: 20,
         }}
         refreshControl={
@@ -289,22 +290,40 @@ export default function FarmerDashboardScreen({
               Gestioná tus publicaciones semanales
             </Text>
           </View>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: surface,
-              borderWidth: 1,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {Platform.OS !== 'web' && (
+              <Pressable
+                onPress={() => navigation.navigate('PublicationWizard', {})}
+                style={({ pressed }) => ({
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: coral,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: pressed ? 0.6 : 1,
+                })}
+              >
+                <MaterialCommunityIcons name="plus" size={24} color={isDark ? '#FFFFFF' : fg} />
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: surface,
+                borderWidth: 1,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Tabs */}
@@ -380,26 +399,28 @@ export default function FarmerDashboardScreen({
         )}
       </ScrollView>
 
-      {/* FAB — new publication */}
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingTop: 8,
-          backgroundColor: bg,
-        }}
-      >
+      {/* FAB — new publication (web only) */}
+      {Platform.OS === 'web' && (
         <Pressable
           onPress={() => navigation.navigate('PublicationWizard', {})}
           style={({ pressed }) => ({
+            position: 'absolute',
+            bottom: insets.bottom + 24,
+            left: 20,
+            right: 20,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
             backgroundColor: coral,
             borderRadius: 16,
-            paddingVertical: 14,
+            paddingVertical: 16,
             opacity: pressed ? 0.7 : 1,
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.25,
+            shadowRadius: 6,
           })}
         >
           <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
@@ -407,7 +428,7 @@ export default function FarmerDashboardScreen({
             Nueva publicación
           </Text>
         </Pressable>
-      </View>
+      )}
     </View>
   );
 }
