@@ -1,4 +1,4 @@
-/* globals console */
+// globals console is unnecessary — console is a built-in global
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,

@@ -143,7 +143,6 @@ export default function ProfileScreen(): React.JSX.Element {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  // eslint-disable-next-line no-undef -- setTimeout is global in RN
   const logoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -151,7 +150,6 @@ export default function ProfileScreen(): React.JSX.Element {
     return () => {
       isMounted.current = false;
       if (logoutTimeoutRef.current) {
-        // eslint-disable-next-line no-undef -- clearTimeout is global in RN
         clearTimeout(logoutTimeoutRef.current);
         void logout();
       }
@@ -268,7 +266,6 @@ export default function ProfileScreen(): React.JSX.Element {
           'Contraseña cambiada exitosamente. Cerrando sesión...',
         );
       }
-      // eslint-disable-next-line no-undef -- setTimeout is global in RN
       logoutTimeoutRef.current = setTimeout(() => {
         void logout();
       }, PASSWORD_CHANGE_LOGOUT_DELAY_MS);
