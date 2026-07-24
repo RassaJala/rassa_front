@@ -47,6 +47,7 @@ describe('OrderTimeline', () => {
       entries: [],
       isLoading: true,
       isError: false,
+      error: null,
       refetch: mockRefetch,
     });
 
@@ -59,6 +60,7 @@ describe('OrderTimeline', () => {
       entries: [],
       isLoading: false,
       isError: true,
+      error: new Error('test'),
       refetch: mockRefetch,
     });
 
@@ -72,6 +74,7 @@ describe('OrderTimeline', () => {
       entries: [],
       isLoading: false,
       isError: true,
+      error: new Error('test'),
       refetch: mockRefetch,
     });
 
@@ -85,6 +88,7 @@ describe('OrderTimeline', () => {
       entries: [],
       isLoading: false,
       isError: false,
+      error: null,
       refetch: mockRefetch,
     });
 
@@ -108,6 +112,7 @@ describe('OrderTimeline', () => {
       entries,
       isLoading: false,
       isError: false,
+      error: null,
       refetch: mockRefetch,
     });
 
