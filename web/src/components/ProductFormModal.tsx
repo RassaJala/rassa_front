@@ -485,11 +485,12 @@ export function ProductFormModal({
                 }
               >
                 <option value="">Seleccioná una categoría</option>
-                {Array.isArray(categories) && categories.map((c) => (
-                  <option key={c.id_categoria} value={c.id_categoria}>
-                    {c.nombre}
-                  </option>
-                ))}
+                {Array.isArray(categories) &&
+                  categories.map((c) => (
+                    <option key={c.id_categoria} value={c.id_categoria}>
+                      {c.nombre}
+                    </option>
+                  ))}
               </FormSelect>
             </FormField>
 
@@ -505,11 +506,12 @@ export function ProductFormModal({
                 }
               >
                 <option value="">Seleccioná una unidad</option>
-                {Array.isArray(unidades) && unidades.map((u) => (
-                  <option key={u.id_unidad} value={u.id_unidad}>
-                    {u.tipo}
-                  </option>
-                ))}
+                {Array.isArray(unidades) &&
+                  unidades.map((u) => (
+                    <option key={u.id_unidad} value={u.id_unidad}>
+                      {u.tipo}
+                    </option>
+                  ))}
               </FormSelect>
             </FormField>
           </div>

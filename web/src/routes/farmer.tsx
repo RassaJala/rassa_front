@@ -176,7 +176,7 @@ export function FarmerProducts() {
     queryFn: async () => {
       const { data } = await api.get('/categorias/');
       const result = data.data;
-      return Array.isArray(result) ? result : result?.results ?? [];
+      return Array.isArray(result) ? result : (result?.results ?? []);
     },
     staleTime: 60_000,
   });
@@ -186,7 +186,7 @@ export function FarmerProducts() {
     queryFn: async () => {
       const { data } = await api.get('/unidades/');
       const result = data.data;
-      return Array.isArray(result) ? result : result?.results ?? [];
+      return Array.isArray(result) ? result : (result?.results ?? []);
     },
     staleTime: 60_000,
   });
