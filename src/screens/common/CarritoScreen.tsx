@@ -251,7 +251,10 @@ export default function CarritoScreen(): React.JSX.Element {
             className="items-center justify-center rounded-xl py-3.5"
             style={{ backgroundColor: colors.primary }}
             onPress={() =>
-              Alert.alert('Próximamente', 'El flujo de pago estará disponible pronto.')
+              Alert.alert(
+                'Próximamente',
+                'El flujo de pago estará disponible pronto.',
+              )
             }
           >
             <Text
