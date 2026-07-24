@@ -232,6 +232,7 @@ export type BuyerTabsParamList = {
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
+  Catalog: undefined;
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {

@@ -27,6 +27,7 @@ import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import CatalogScreen from '@/screens/buyer/CatalogScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
@@ -244,6 +245,20 @@ function BuyerTabs() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="home-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <BuyerTab.Screen
+        name="Catalog"
+        component={CatalogScreen}
+        options={{
+          tabBarLabel: 'Catálogo',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="storefront-outline"
               size={size}
               color={color}
             />
