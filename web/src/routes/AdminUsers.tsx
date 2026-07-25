@@ -2,9 +2,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../providers/ThemeProvider';
+import { useCatalogs } from '../hooks/useCatalogs';
 import api from '../services/api';
 import { Toast } from '../components/ui/Toast';
 import type { ToastState } from '../components/ui/Toast';
+import WebDatePickerModal from '../components/WebDatePickerModal';
 
 // ── Types ────────────────────────────────────────────────
 
@@ -190,6 +192,300 @@ function StatusBadge({
   );
 }
 
+// ── Nuevo usuario form (lazy catalogs) ───────────────────
+
+interface NuevoUsuarioFormProps {
+  readonly fg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly bg: string;
+  readonly brand: string;
+  readonly coral: string;
+  readonly surface: string;
+  readonly isDark: boolean;
+  readonly onCreated: () => void;
+  readonly showToast: (message: string, type: 'success' | 'error') => void;
+}
+
+function NuevoUsuarioForm({
+  fg, muted, border, bg, brand, coral, surface, isDark, onCreated, showToast,
+}: NuevoUsuarioFormProps) {
+  const queryClient = useQueryClient();
+  const catalogs = useCatalogs();
+  const [formNombre, setFormNombre] = useState('');
+  const [formApePat, setFormApePat] = useState('');
+  const [formApeMat, setFormApeMat] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPassword, setFormPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [formTelefono, setFormTelefono] = useState('');
+  const [formFechaNac, setFormFechaNac] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [formSexo, setFormSexo] = useState<'M' | 'F' | 'O'>('M');
+  const [formDomicilio, setFormDomicilio] = useState('');
+  const [formRole, setFormRole] = useState<'farmer' | 'seller' | 'buyer'>('buyer');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formFocused, setFormFocused] = useState<string | null>(null);
+
+  function cleanName(v: string): string {
+    return v.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  }
+  function cleanPhoneNumber(v: string): string {
+    const digits = v.replace(/\D/g, '');
+    return v.trim().startsWith('+') ? digits.slice(0, 12) : digits.slice(0, 10);
+  }
+  function cleanAddress(v: string): string {
+    return v.replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
+  }
+  function isAdult(dateStr: string): boolean {
+    if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dateStr)) return false;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const today = new Date();
+    let age = today.getFullYear() - y;
+    if (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d)) age--;
+    return age >= 18;
+  }
+
+  const createMutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      api.post(formRole === 'farmer' ? '/auth/create-farmer/' : '/auth/register/', payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      showToast('Usuario creado correctamente', 'success');
+      onCreated();
+    },
+    onError: (err: unknown) => {
+      const respData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      let msg = (err as Error)?.message ?? 'Error al crear el usuario.';
+      if (respData?.detail && typeof respData.detail === 'string') {
+        msg = respData.detail;
+      } else if (respData && typeof respData === 'object') {
+        const fieldErrors: string[] = [];
+        for (const [key, val] of Object.entries(respData)) {
+          if (key === 'non_field_errors') {
+            const arr = Array.isArray(val) ? val : [val];
+            fieldErrors.push(...arr.map(String));
+          } else if (Array.isArray(val)) {
+            fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+          }
+        }
+        if (fieldErrors.length > 0) msg = fieldErrors.join('\n');
+      }
+      setFormError(msg);
+    },
+  });
+
+  function handleCreateUser() {
+    setFormError(null);
+
+    if (!formEmail.trim()) return setFormError('El email es obligatorio.');
+    if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formEmail.trim()))
+      return setFormError('Ingresa un correo electrónico válido.');
+    if (!formPassword) return setFormError('La contraseña es obligatoria.');
+    if (formPassword.length < 6) return setFormError('La contraseña debe tener al menos 6 caracteres.');
+    if (!formTelefono.trim()) return setFormError('El teléfono es obligatorio.');
+    const cleanedPhone = cleanPhoneNumber(formTelefono);
+    if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12)
+      return setFormError('El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).');
+    if (!formNombre.trim()) return setFormError('El nombre es obligatorio.');
+    if (!formApePat.trim()) return setFormError('El apellido paterno es obligatorio.');
+    if (!formFechaNac.trim()) return setFormError('La fecha de nacimiento es obligatoria.');
+    if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(formFechaNac))
+      return setFormError('La fecha de nacimiento debe tener el formato AAAA-MM-DD.');
+    if (!isAdult(formFechaNac)) return setFormError('Debes ser mayor de 18 años para registrarte.');
+    if (!formDomicilio.trim()) return setFormError('La dirección es obligatoria.');
+    if (!formSexo) return setFormError('Seleccioná un género.');
+    if (catalogs.localidadId === null) return setFormError('Seleccioná una localidad.');
+
+    const basePayload: Record<string, unknown> = {
+      email: formEmail.trim(),
+      password: formPassword,
+      nombre: cleanName(formNombre),
+      apellido_paterno: cleanName(formApePat),
+      apellido_materno: formApeMat.trim() ? cleanName(formApeMat) : null,
+      telefono: cleanPhoneNumber(formTelefono),
+      fecha_nacimiento: formFechaNac,
+      sexo: formSexo,
+      domicilio: cleanAddress(formDomicilio),
+      fk_localidad: catalogs.localidadId,
+    };
+    if (formRole !== 'farmer') basePayload.role = formRole;
+    createMutation.mutate(basePayload);
+  }
+
+  const formLabel: React.CSSProperties = {
+    fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: muted,
+  };
+  function formInputStyle(field: string): React.CSSProperties {
+    return {
+      width: '100%', height: 38, border: `1.5px solid ${formFocused === field ? brand : border}`,
+      borderRadius: 8, padding: '0 12px', fontSize: 14, fontFamily: 'inherit',
+      background: bg, color: fg, outline: 'none', boxSizing: 'border-box',
+    };
+  }
+
+  return (
+    <div style={{ background: surface, borderRadius: 16, border: `1px solid ${border}`, padding: 20 }}>
+      <h3 style={{ fontSize: 18, fontWeight: 700, color: fg, marginBottom: 16 }}>Nuevo usuario</h3>
+
+      {formError && (
+        <div style={{
+          padding: '10px 14px', borderRadius: 10,
+          background: isDark ? 'rgba(222,57,58,0.12)' : '#FEF2F2',
+          border: `1px solid ${isDark ? 'rgba(222,57,58,0.3)' : '#FECACA'}`,
+          color: coral, fontSize: 13, fontWeight: 500, marginBottom: 16,
+        }}>
+          {formError}
+        </div>
+      )}
+
+      {/* Role selector */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ ...formLabel, marginBottom: 6, display: 'block' }}>Rol</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['farmer', 'seller', 'buyer'] as const).map((r) => {
+            const labels = { farmer: 'Agricultor', seller: 'Vendedor', buyer: 'Cliente' };
+            const colors = { farmer: '#16a34a', seller: '#f59e0b', buyer: '#3b82f6' };
+            const active = formRole === r;
+            return (
+              <button key={r} type="button" onClick={() => setFormRole(r)} style={{
+                flex: 1, height: 38, borderRadius: 8, border: `1.5px solid ${active ? colors[r] : border}`,
+                background: active ? `${colors[r]}12` : 'transparent', color: active ? colors[r] : muted,
+                fontSize: 13, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+              }}>
+                {labels[r]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Nombre *</label>
+          <input type="text" placeholder="Juan" value={formNombre} onChange={(e) => setFormNombre(e.target.value)}
+            style={formInputStyle('nombre')} onFocus={() => setFormFocused('nombre')} onBlur={() => setFormFocused(null)} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Apellido Paterno *</label>
+          <input type="text" placeholder="Pérez" value={formApePat} onChange={(e) => setFormApePat(e.target.value)}
+            style={formInputStyle('apePat')} onFocus={() => setFormFocused('apePat')} onBlur={() => setFormFocused(null)} />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Apellido Materno</label>
+          <input type="text" placeholder="Opcional" value={formApeMat} onChange={(e) => setFormApeMat(e.target.value)}
+            style={formInputStyle('apeMat')} onFocus={() => setFormFocused('apeMat')} onBlur={() => setFormFocused(null)} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Correo electrónico *</label>
+          <input type="email" placeholder="tu@correo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
+            style={formInputStyle('email')} onFocus={() => setFormFocused('email')} onBlur={() => setFormFocused(null)} />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Contraseña *</label>
+          <div style={{ position: 'relative' }}>
+            <input type={showPassword ? 'text' : 'password'} placeholder="Mínimo 6 caracteres" value={formPassword}
+              onChange={(e) => setFormPassword(e.target.value)} style={{ ...formInputStyle('password'), paddingRight: 36 }}
+              onFocus={() => setFormFocused('password')} onBlur={() => setFormFocused(null)} />
+            <button type="button" onClick={() => setShowPassword((v) => !v)} style={{
+              position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 4, color: muted,
+            }} title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+              {showPassword ? '🙈' : '👁'}
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Teléfono *</label>
+          <input type="tel" placeholder="10 dígitos" value={formTelefono} onChange={(e) => setFormTelefono(e.target.value)}
+            style={formInputStyle('telefono')} onFocus={() => setFormFocused('telefono')} onBlur={() => setFormFocused(null)} />
+          <span style={{ fontSize: 10, color: muted, lineHeight: '1.2' }}>
+            Para números extranjeros inicia con + (ej. +1...)
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Fecha de nacimiento *</label>
+          <button type="button" onClick={() => setShowDatePicker(true)} style={{
+            ...formInputStyle('fechaNac'), textAlign: 'left', cursor: 'pointer', color: formFechaNac ? fg : muted,
+          }}>
+            {formFechaNac || 'AAAA-MM-DD'}
+          </button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Género *</label>
+          <select value={formSexo} onChange={(e) => { const v = e.target.value; if (v === 'M' || v === 'F' || v === 'O') setFormSexo(v); }}
+            style={formInputStyle('sexo')}>
+            <option value="" disabled>Seleccionar</option>
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+            <option value="O">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <label style={formLabel}>Dirección *</label>
+        <input type="text" placeholder="Calle, número, colonia" value={formDomicilio}
+          onChange={(e) => setFormDomicilio(e.target.value)}
+          style={formInputStyle('domicilio')} onFocus={() => setFormFocused('domicilio')} onBlur={() => setFormFocused(null)} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Municipio *</label>
+          <select value={catalogs.selectedMunicipioId ?? ''}
+            onChange={(e) => { const id = e.target.value ? Number(e.target.value) : null; if (id) catalogs.handleSelectMunicipio(id); }}
+            style={formInputStyle('municipio')}>
+            <option value="">{catalogs.isLoadingMunicipios ? 'Cargando...' : 'Seleccionar'}</option>
+            {catalogs.municipios.map((m) => <option key={m.id_municipio} value={m.id_municipio}>{m.nombre}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <label style={formLabel}>Localidad *</label>
+          <select value={catalogs.localidadId ?? ''} disabled={!catalogs.selectedMunicipioId}
+            onChange={(e) => { const id = e.target.value ? Number(e.target.value) : null; if (id) catalogs.setLocalidadId(id); }}
+            style={formInputStyle('localidad')}>
+            <option value="">
+              {catalogs.isLoadingLocalidades ? 'Cargando...' : !catalogs.selectedMunicipioId ? 'Elegí un municipio' : 'Seleccionar'}
+            </option>
+            {catalogs.localidades.map((l) => <option key={l.id_localidad} value={l.id_localidad}>{l.nombre}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+        <button type="button" onClick={handleCreateUser} disabled={createMutation.isPending} style={{
+          flex: 1, height: 38, borderRadius: 8, border: 'none',
+          background: createMutation.isPending ? `${coral}99` : coral, color: '#fff',
+          fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+          cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          Guardar
+        </button>
+        <button type="button" onClick={onCreated} style={{
+          height: 38, padding: '0 18px', borderRadius: 8, border: `1.5px solid ${border}`,
+          background: 'transparent', color: fg, fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+        }}>
+          Cancelar
+        </button>
+      </div>
+
+      <WebDatePickerModal visible={showDatePicker} onClose={() => setShowDatePicker(false)}
+        onSelectDate={(date) => setFormFechaNac(date)} initialDate={formFechaNac} />
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────
 
 export function AdminUsers() {
@@ -281,6 +577,7 @@ export function AdminUsers() {
   const PAGE_SIZE = 10;
 
   // ── State ──
+  const [tab, setTab] = useState<'lista' | 'nuevo'>('lista');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -473,6 +770,44 @@ export function AdminUsers() {
         </h2>
       </div>
 
+      {/* ═══ Tab bar ═══ */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 2,
+          background: border,
+          borderRadius: 12,
+          padding: 3,
+          marginBottom: 20,
+          width: 'fit-content',
+        }}
+      >
+        {(['lista', 'nuevo'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: tab === t ? surface : 'transparent',
+              color: tab === t ? fg : muted,
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              boxShadow:
+                tab === t ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            }}
+          >
+            {t === 'lista' ? '📋 Lista de usuarios' : '➕ Nuevo usuario'}
+          </button>
+        ))}
+      </div>
+
+      {/* ═══ Lista tab ═══ */}
+      {tab === 'lista' && (
+        <>
       {/* ═══ Search + Filters ═══ */}
       <div
         style={{
@@ -521,7 +856,7 @@ export function AdminUsers() {
                   padding: '0 14px',
                   borderRadius: 999,
                   background:
-                    roleFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
+                    roleFilter === opt.value ? brand : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
                   color: roleFilter === opt.value ? '#fff' : muted,
                   border: 'none',
                 }}
@@ -560,7 +895,7 @@ export function AdminUsers() {
                   padding: '0 14px',
                   borderRadius: 999,
                   background:
-                    statusFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
+                    statusFilter === opt.value ? brand : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
                   color: statusFilter === opt.value ? '#fff' : muted,
                   border: 'none',
                 }}
@@ -893,6 +1228,19 @@ export function AdminUsers() {
             Siguiente →
           </button>
         </div>
+      )}
+
+        </>
+      )}
+
+      {/* ═══ Nuevo tab ═══ */}
+      {tab === 'nuevo' && (
+        <NuevoUsuarioForm
+          fg={fg} muted={muted} border={border} bg={bg} brand={brand}
+          coral={coral} surface={surface} isDark={isDark}
+          onCreated={() => setTab('lista')}
+          showToast={showToast}
+        />
       )}
 
       {/* ═══ Role Change Modal ═══ */}

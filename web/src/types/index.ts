@@ -25,6 +25,19 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export type BadgeVariant = 'default' | 'success' | 'warning' | 'error';
 
+export interface Municipio {
+  id_municipio: number;
+  nombre: string;
+  estado: boolean;
+}
+
+export interface Localidad {
+  id_localidad: number;
+  nombre: string;
+  municipio_id: number;
+  estado: boolean;
+}
+
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortConfig {
