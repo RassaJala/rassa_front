@@ -799,13 +799,13 @@ export default function UserManagementScreen(): React.JSX.Element {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: surface,
+            backgroundColor: segBg,
             borderRadius: 10,
             padding: 3,
           }}
         >
           <TouchableOpacity
-            onPress={() => {
+              onPress={() => {
               if (!isFormActive) return;
               switchToList();
             }}
@@ -826,7 +826,7 @@ export default function UserManagementScreen(): React.JSX.Element {
                 letterSpacing: 0.01,
               }}
             >
-              Lista
+              📋 Lista
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -853,7 +853,7 @@ export default function UserManagementScreen(): React.JSX.Element {
                 letterSpacing: 0.01,
               }}
             >
-              Nuevo
+              ➕ Nuevo
             </Text>
           </TouchableOpacity>
         </View>
