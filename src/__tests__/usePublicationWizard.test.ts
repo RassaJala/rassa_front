@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string, @typescript-eslint/no-unsafe-argument -- Test files are less strict */
 import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
 import {
-  generateTempId,
+  generateLocalTempId,
   isLocalFileUri,
   validateItem,
   withTimeout,
@@ -32,14 +32,14 @@ jest.mock('axios', () => {
 
 // ── generateTempId ─────────────────────────────────────────
 
-describe('generateTempId', () => {
-  it('returns string starting with temp_', () => {
-    const id = generateTempId();
-    expect(id).toMatch(/^temp_\d+_/);
+describe('generateLocalTempId', () => {
+  it('returns string starting with local_', () => {
+    const id = generateLocalTempId();
+    expect(id).toMatch(/^local_\d+_/);
   });
 
   it('generates unique ids', () => {
-    const ids = new Set(Array.from({ length: 50 }, () => generateTempId()));
+    const ids = new Set(Array.from({ length: 50 }, () => generateLocalTempId()));
     expect(ids.size).toBe(50);
   });
 });

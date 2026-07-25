@@ -69,11 +69,11 @@ interface UsePublicationWizardResult {
   saveDraft: () => Promise<void>;
 }
 
-function generateLocalTempId(): string {
+export function generateLocalTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function validateItem(item: WizardItemDraft): WizardItemValidation {
+export function validateItem(item: WizardItemDraft): WizardItemValidation {
   const errors: WizardItemValidation = {};
 
   const stockNum = Number(item.stock);
@@ -96,7 +96,7 @@ function validateItem(item: WizardItemDraft): WizardItemValidation {
   return errors;
 }
 
-function isLocalFileUri(uri: string): boolean {
+export function isLocalFileUri(uri: string): boolean {
   return uri.startsWith('file://');
 }
 
@@ -177,7 +177,7 @@ async function persistItem(
 
 const PUBLISH_TIMEOUT_MS = 120_000;
 
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return await Promise.race([
     promise,
     new Promise<T>((_, reject) => {
