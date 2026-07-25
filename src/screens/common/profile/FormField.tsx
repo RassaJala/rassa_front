@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { TextInput } from 'react-native-paper';
 
 import type { ProfileColors } from './profileColors';

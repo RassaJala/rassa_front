@@ -270,7 +270,7 @@ describe('ChangePassword', () => {
     jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
     mockChangePassword.mockRejectedValueOnce({
       response: { status: 401, data: {} },
-    } as Error);
+    } as unknown as Error);
 
     const rt = render(
       <ChangePassword onPasswordChanged={mockOnPasswordChanged} />,

@@ -270,7 +270,7 @@ describe('ProfileScreen', () => {
       jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
       mockAuth.changePassword.mockRejectedValueOnce({
         response: { status: 401, data: {} },
-      } as Error);
+      } as unknown as Error);
       const rt = renderAndExpand();
       fireEvent.changeText(rt.getByTestId('old-password-input'), 'wrongpassword');
       fireEvent.changeText(rt.getByTestId('new-password-input'), 'newpassword1');

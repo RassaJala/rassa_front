@@ -28,7 +28,7 @@ export function useProfileColors(): ProfileColors {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
-  const textInputTheme: ThemeProp = {
+  const textInputTheme = {
     colors: {
       text: isDark ? '#E8EAE4' : '#2D3328',
       primary: isDark ? '#4A8A63' : '#24563C',
