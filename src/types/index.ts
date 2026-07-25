@@ -93,6 +93,8 @@ export interface Order {
   total: string;
   estado_actual: PedidoEstado;
   creado_en: string;
+  productos?: string[];
+  has_more_productos?: boolean;
 }
 
 export interface OrderDetail extends Order {
@@ -153,6 +155,14 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface OrderStatusHistory {
+  readonly id_historial: number;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+  readonly creado_en: string; // ISO datetime
+  readonly cambiado_por_nombre: string | null;
+}
+
 // ── Familias ──────────────────────────────────────────────
 
 export interface Family {
@@ -184,10 +194,10 @@ export interface CreditLimit {
 }
 
 // ── Navigation param lists ────────────────────────────────
-
 export type AdminStackParamList = {
   AdminPanel: undefined;
   AdminProfile: undefined;
+  OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
   Chat: {
     conversationId: number;
@@ -230,11 +240,13 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
+  Pedidos: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
+  OrderDetail: { orderId: number };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {

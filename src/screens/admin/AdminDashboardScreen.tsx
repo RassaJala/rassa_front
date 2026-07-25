@@ -21,10 +21,10 @@ export default function AdminDashboardScreen(): React.JSX.Element {
     <View className="flex-1 bg-gray-50 px-4 py-6 dark:bg-gray-950">
       <View className="mb-6 flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink text-2xl font-bold dark:text-gray-100">
             RASSA
           </Text>
-          <Text className="text-xl font-semibold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink text-xl font-semibold dark:text-gray-100">
             Dashboard
           </Text>
         </View>
@@ -35,7 +35,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Productos
           </Text>
-          <Text className="mt-1 text-2xl font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink mt-1 text-2xl font-bold dark:text-gray-100">
             1,248
           </Text>
         </View>
@@ -44,7 +44,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Usuarios
           </Text>
-          <Text className="mt-1 text-2xl font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink mt-1 text-2xl font-bold dark:text-gray-100">
             856
           </Text>
         </View>
@@ -53,7 +53,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Total Pedidos
           </Text>
-          <Text className="mt-1 text-2xl font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink mt-1 text-2xl font-bold dark:text-gray-100">
             432
           </Text>
         </View>
@@ -62,7 +62,7 @@ export default function AdminDashboardScreen(): React.JSX.Element {
           <Text className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Ingresos
           </Text>
-          <Text className="mt-1 text-2xl font-bold text-brand-orange">
+          <Text className="text-brand-orange mt-1 text-2xl font-bold">
             $12,450.00
           </Text>
         </View>

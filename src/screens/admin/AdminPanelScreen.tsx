@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,6 +27,8 @@ export default function AdminPanelScreen({
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const stats = getAdminStats();
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupId, setLookupId] = useState('');
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
@@ -39,6 +41,8 @@ export default function AdminPanelScreen({
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
   const pumpkin = colors.accent;
+  const lookupNum = Number(lookupId);
+  const isInvalid = lookupId.length > 0 && (isNaN(lookupNum) || lookupNum <= 0);
 
   const { today } = useFormattedDate();
 
@@ -136,17 +140,101 @@ export default function AdminPanelScreen({
                   iconBg={coralBg}
                   iconColor={coral}
                 />
-                <StatCard
-                  icon="clipboard-list"
-                  value={stats.totalOrders.toLocaleString()}
-                  label="Pedidos"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
-                  iconBg={pumpkinBg}
-                  iconColor={pumpkin}
-                />
+                <Pressable
+                  onPress={() => setShowLookup((v) => !v)}
+                  style={{ flex: 1 }}
+                >
+                  <StatCard
+                    icon="clipboard-list"
+                    value={stats.totalOrders.toLocaleString()}
+                    label="Pedidos"
+                    surface={surface}
+                    border={border}
+                    muted={muted}
+                    iconBg={pumpkinBg}
+                    iconColor={pumpkin}
+                  />
+                </Pressable>
               </View>
+
+              {showLookup ? (
+                <View
+                  style={{
+                    backgroundColor: surface,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: border,
+                    padding: 20,
+                    marginBottom: 24,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: fg,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Buscar historial de pedido
+                  </Text>
+                  <TextInput
+                    placeholder="ID del pedido"
+                    placeholderTextColor={muted}
+                    value={lookupId}
+                    onChangeText={setLookupId}
+                    keyboardType="number-pad"
+                    style={{
+                      backgroundColor: bg,
+                      color: fg,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: isInvalid ? colors.brandRedCoral : border,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      marginBottom: 4,
+                    }}
+                  />
+                  {isInvalid ? (
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.brandRedCoral,
+                        marginBottom: 12,
+                      }}
+                    >
+                      Ingresá un ID de pedido válido (número positivo)
+                    </Text>
+                  ) : null}
+                  <Pressable
+                    onPress={() => {
+                      const id = Number(lookupId);
+                      if (id > 0) {
+                        navigation.navigate('OrderDetail', { orderId: id });
+                        setShowLookup(false);
+                        setLookupId('');
+                      }
+                    }}
+                    style={{
+                      backgroundColor: brand,
+                      borderRadius: 12,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '700',
+                        color: colors.iconWhite,
+                      }}
+                    >
+                      Ver historial
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
           </ScrollView>
         </View>
