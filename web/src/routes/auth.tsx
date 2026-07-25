@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { AuthLayout } from '../components/layout/AuthLayout';
+import WebDatePickerModal from '../components/WebDatePickerModal';
 import { getColors } from '../constants/colors';
 import { useAuth } from '../hooks/useAuth';
+import { useCatalogs } from '../hooks/useCatalogs';
+import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { Role, User } from '../types';
 
@@ -61,25 +64,36 @@ function loginErrors(
   return errs;
 }
 
-function registerErrors(
-  fields: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    password: string;
-    telefono: string;
-  },
-  passwordConfirm: string,
-): string | null {
-  const { nombre, apellido, email, password, telefono } = fields;
-  if (!nombre.trim() || !apellido.trim() || !email.trim() || !password) {
-    return 'Nombre, apellido, email y contraseña son obligatorios.';
-  }
-  if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 8)
-    return 'La contraseña debe tener al menos 8 caracteres.';
-  if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
-  if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
+function registerErrors(fields: {
+  readonly nombre: string;
+  readonly apellido: string;
+  readonly email: string;
+  readonly password: string;
+  readonly telefono: string;
+  readonly fechaNacimiento: string;
+  readonly sexo: string;
+  readonly domicilio: string;
+  readonly localidadId: number | null;
+}): string | null {
+  const { nombre, apellido, email, password, telefono, fechaNacimiento, sexo, domicilio, localidadId } = fields;
+
+  if (!email.trim()) return 'El email es obligatorio.';
+  if (!EMAIL_RE.test(email.trim())) return 'Ingresa un correo electrónico válido.';
+  if (!password) return 'La contraseña es obligatoria.';
+  if (password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (!telefono.trim()) return 'El teléfono es obligatorio.';
+  const digits = telefono.replace(/\D/g, '');
+  const cleanedPhone = telefono.trim().startsWith('+')
+    ? digits.slice(0, 12)
+    : digits.slice(0, 10);
+  if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12) return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
+  if (!nombre.trim()) return 'El nombre es obligatorio.';
+  if (!apellido.trim()) return 'El apellido paterno es obligatorio.';
+  if (!fechaNacimiento.trim()) return 'La fecha de nacimiento es obligatoria.';
+  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(fechaNacimiento)) return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
+  if (!sexo) return 'Seleccioná un género.';
+  if (!domicilio.trim()) return 'La dirección es obligatoria.';
+  if (localidadId === null) return 'Seleccioná una localidad.';
   return null;
 }
 
@@ -95,6 +109,8 @@ const errColor = '#DE393A';
 export function LoginScreen() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { resolved } = useTheme();
+  const theme = getColors(resolved === 'dark');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -141,11 +157,12 @@ export function LoginScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setGeneralError(err.message);
-      } else {
-        setGeneralError('Error al iniciar sesión.');
+      const respData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      let msg = (err as Error)?.message ?? 'Error al iniciar sesión.';
+      if (respData?.detail && typeof respData.detail === 'string') {
+        msg = respData.detail;
       }
+      setGeneralError(msg);
     } finally {
       setLoading(false);
     }
@@ -179,7 +196,7 @@ export function LoginScreen() {
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#5E6B5E',
+              color: theme.muted,
             }}
           >
             Correo electrónico
@@ -221,15 +238,15 @@ export function LoginScreen() {
               required
               style={{
                 ...inputBase,
-                borderColor: errors.email ? errColor : '#D6DAD4',
-                background: '#FFFFFF',
-                color: '#2D3328',
+                borderColor: errors.email ? errColor : theme.border,
+                background: theme.surface,
+                color: theme.fg,
               }}
               onFocus={(e) => {
-                if (!errors.email) e.target.style.borderColor = brand;
+                if (!errors.email) e.target.style.borderColor = theme.brand;
               }}
               onBlur={(e) => {
-                if (!errors.email) e.target.style.borderColor = '#D6DAD4';
+                if (!errors.email) e.target.style.borderColor = theme.border;
               }}
             />
           </div>
@@ -248,7 +265,7 @@ export function LoginScreen() {
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#5E6B5E',
+              color: theme.muted,
             }}
           >
             Contraseña
@@ -290,15 +307,15 @@ export function LoginScreen() {
               minLength={6}
               style={{
                 ...inputBase,
-                borderColor: errors.password ? errColor : '#D6DAD4',
-                background: '#FFFFFF',
-                color: '#2D3328',
+                borderColor: errors.password ? errColor : theme.border,
+                background: theme.surface,
+                color: theme.fg,
               }}
               onFocus={(e) => {
-                if (!errors.password) e.target.style.borderColor = brand;
+                if (!errors.password) e.target.style.borderColor = theme.brand;
               }}
               onBlur={(e) => {
-                if (!errors.password) e.target.style.borderColor = '#D6DAD4';
+                if (!errors.password) e.target.style.borderColor = theme.border;
               }}
             />
             <button
@@ -312,7 +329,7 @@ export function LoginScreen() {
                 cursor: 'pointer',
                 fontSize: 18,
                 padding: 10,
-                color: '#5E6B5E',
+                color: theme.muted,
                 minWidth: 44,
                 minHeight: 44,
                 display: 'grid',
@@ -382,6 +399,23 @@ export function LoginScreen() {
             'Iniciar sesión'
           )}
         </button>
+
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 14,
+            color: theme.muted,
+            marginTop: 4,
+          }}
+        >
+          ¿No tenés cuenta?{' '}
+          <Link
+            to="/register"
+            style={{ color: theme.brand, fontWeight: 600, textDecoration: 'none' }}
+          >
+            Crear cuenta
+          </Link>
+        </p>
       </form>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -392,30 +426,40 @@ export function LoginScreen() {
 export function RegisterScreen() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { resolved } = useTheme();
+  const theme = getColors(resolved === 'dark');
 
   const [nombre, setNombre] = useState('');
   const [apellidoPaterno, setApellidoPaterno] = useState('');
   const [apellidoMaterno, setApellidoMaterno] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [telefono, setTelefono] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [sexo, setSexo] = useState('');
   const [domicilio, setDomicilio] = useState('');
-  const [localidad, setLocalidad] = useState('');
+
+  const catalogs = useCatalogs();
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const err = registerErrors(
-      { nombre, apellido: apellidoPaterno, email, password, telefono },
-      passwordConfirm,
-    );
+    const err = registerErrors({
+      nombre,
+      apellido: apellidoPaterno,
+      email,
+      password,
+      telefono,
+      fechaNacimiento,
+      sexo,
+      domicilio,
+      localidadId: catalogs.localidadId,
+    });
     if (err) {
       setError(err);
       return;
@@ -426,14 +470,16 @@ export function RegisterScreen() {
     const payload = {
       email: email.trim(),
       password,
-      nombre: nombre.trim(),
-      apellido_paterno: apellidoPaterno.trim(),
-      apellido_materno: apellidoMaterno.trim() || null,
-      telefono: telefono.trim() || null,
-      fecha_nacimiento: fechaNacimiento || null,
-      sexo: sexo || null,
-      domicilio: domicilio.trim() || null,
-      fk_localidad: localidad ? Number(localidad) : null,
+      nombre: nombre.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+      apellido_paterno: apellidoPaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+      apellido_materno: apellidoMaterno.trim() ? apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '') : null,
+      telefono: telefono.trim().startsWith('+')
+        ? telefono.replace(/\D/g, '').slice(0, 12)
+        : telefono.replace(/\D/g, '').slice(0, 10),
+      fecha_nacimiento: fechaNacimiento,
+      sexo,
+      domicilio: domicilio.trim().replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+      fk_localidad: catalogs.localidadId,
       role: 'buyer',
     };
 
@@ -460,24 +506,35 @@ export function RegisterScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error al registrarse.');
+      const respData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      let msg = (err as Error)?.message ?? 'Error al registrarse.';
+      if (respData?.detail && typeof respData.detail === 'string') {
+        msg = respData.detail;
+      } else if (respData && typeof respData === 'object') {
+        const fieldErrors: string[] = [];
+        for (const [key, val] of Object.entries(respData)) {
+          if (key === 'non_field_errors') {
+            const arr = Array.isArray(val) ? val : [val];
+            fieldErrors.push(...arr.map(String));
+          } else if (Array.isArray(val)) {
+            fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+          }
+        }
+        if (fieldErrors.length > 0) msg = fieldErrors.join('\n');
       }
+      setError(msg);
     } finally {
       setLoading(false);
     }
   }
 
-  const theme = getColors(false);
   const inputStyle = (field: string): React.CSSProperties => ({
     width: '100%',
-    height: 44,
+    height: 38,
     border: `1.5px solid ${focusedField === field ? theme.brand : theme.border}`,
-    borderRadius: 10,
-    padding: '0 14px',
-    fontSize: 15,
+    borderRadius: 8,
+    padding: '0 12px',
+    fontSize: 14,
     fontFamily: 'inherit',
     background: theme.bg,
     color: theme.fg,
@@ -487,9 +544,9 @@ export function RegisterScreen() {
   });
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 600,
-    letterSpacing: '0.08em',
+    letterSpacing: '0.06em',
     textTransform: 'uppercase',
     color: theme.muted,
   };
@@ -497,15 +554,15 @@ export function RegisterScreen() {
   const fieldWrapperStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    gap: 5,
+    gap: 3,
   };
 
   const btnBaseStyle: React.CSSProperties = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
+    height: 36,
+    padding: '0 16px',
+    borderRadius: 8,
     border: 'none',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 600,
     fontFamily: 'inherit',
     cursor: 'pointer',
@@ -517,9 +574,9 @@ export function RegisterScreen() {
 
   return (
     <AuthLayout title="Crear cuenta">
-      <form className="flex flex-col gap-[18px]" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-[10px]" onSubmit={handleSubmit}>
         <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
         >
           <div style={fieldWrapperStyle}>
             <label style={labelStyle}>Nombre *</label>
@@ -551,162 +608,274 @@ export function RegisterScreen() {
           </div>
         </div>
 
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Apellido Materno</label>
-          <input
-            type="text"
-            placeholder="Opcional"
-            autoComplete="additional-name"
-            value={apellidoMaterno}
-            onChange={(e) => setApellidoMaterno(e.target.value)}
-            style={inputStyle('apellidoMaterno')}
-            onFocus={() => setFocusedField('apellidoMaterno')}
-            onBlur={() => setFocusedField(null)}
-          />
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
+        >
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Apellido Materno</label>
+            <input
+              type="text"
+              placeholder="Opcional"
+              autoComplete="additional-name"
+              value={apellidoMaterno}
+              onChange={(e) => setApellidoMaterno(e.target.value)}
+              style={inputStyle('apellidoMaterno')}
+              onFocus={() => setFocusedField('apellidoMaterno')}
+              onBlur={() => setFocusedField(null)}
+            />
+          </div>
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Correo electrónico *</label>
+            <input
+              type="email"
+              placeholder="tu@correo.com"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={inputStyle('email')}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+            />
+          </div>
         </div>
 
         <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Correo electrónico *</label>
-          <input
-            type="email"
-            placeholder="tu@correo.com"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={inputStyle('email')}
-            onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </div>
-
-        <div style={{ ...fieldWrapperStyle, position: 'relative' }}>
           <label style={labelStyle}>Contraseña *</label>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Mínimo 6 caracteres"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{ ...inputStyle('password'), paddingRight: 48 }}
-            onFocus={() => setFocusedField('password')}
-            onBlur={() => setFocusedField(null)}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            style={{
-              position: 'absolute',
-              right: 6,
-              top: 30,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              padding: 10,
-              color: theme.muted,
-            }}
-            tabIndex={-1}
-          >
-            {showPassword ? '🙈' : '👁'}
-          </button>
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Mínimo 6 caracteres"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              style={{ ...inputStyle('password'), paddingRight: 40 }}
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: 'absolute',
+                right: 4,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                padding: 8,
+                color: theme.muted,
+              }}
+              tabIndex={-1}
+            >
+              {showPassword ? '🙈' : '👁'}
+            </button>
+          </div>
         </div>
 
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Confirmar contraseña *</label>
-          <input
-            type="password"
-            placeholder="Repetí la contraseña"
-            autoComplete="new-password"
-            value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            required
-            style={inputStyle('passwordConfirm')}
-            onFocus={() => setFocusedField('passwordConfirm')}
-            onBlur={() => setFocusedField(null)}
-          />
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
+        >
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Teléfono *</label>
+            <input
+              type="tel"
+              placeholder="10 dígitos"
+              autoComplete="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              required
+              style={inputStyle('telefono')}
+              onFocus={() => setFocusedField('telefono')}
+              onBlur={() => setFocusedField(null)}
+            />
+            <span style={{ fontSize: 10, color: theme.muted, lineHeight: '1.2' }}>
+              Para números extranjeros inicia con + (ej. +1...)
+            </span>
+          </div>
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Fecha de nacimiento *</label>
+            <button
+              type="button"
+              onClick={() => setShowDatePicker(true)}
+              style={{
+                ...inputStyle('fechaNacimiento'),
+                textAlign: 'left',
+                cursor: 'pointer',
+                color: fechaNacimiento ? theme.fg : theme.muted,
+              }}
+            >
+              {fechaNacimiento || 'AAAA-MM-DD'}
+            </button>
+          </div>
         </div>
 
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Teléfono *</label>
-          <input
-            type="tel"
-            placeholder="10 dígitos"
-            autoComplete="tel"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            required
-            style={inputStyle('telefono')}
-            onFocus={() => setFocusedField('telefono')}
-            onBlur={() => setFocusedField(null)}
-          />
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
+        >
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Género *</label>
+            <select
+              value={sexo}
+              onChange={(e) => setSexo(e.target.value)}
+              required
+              style={inputStyle('sexo')}
+            >
+              <option value="">Seleccionar</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+              <option value="O">Otro</option>
+            </select>
+          </div>
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Dirección *</label>
+            <input
+              type="text"
+              placeholder="Calle, número, colonia"
+              autoComplete="street-address"
+              value={domicilio}
+              onChange={(e) => setDomicilio(e.target.value)}
+              required
+              style={inputStyle('domicilio')}
+              onFocus={() => setFocusedField('domicilio')}
+              onBlur={() => setFocusedField(null)}
+            />
+          </div>
         </div>
 
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Fecha de nacimiento *</label>
-          <input
-            type="date"
-            value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
-            required
-            style={inputStyle('fechaNacimiento')}
-            onFocus={() => setFocusedField('fechaNacimiento')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </div>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
+        >
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Municipio *</label>
+            {catalogs.errorMunicipios ? (
+              <div
+                style={{
+                  ...inputStyle('municipio'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderColor: theme.coral,
+                }}
+              >
+                <span style={{ fontSize: 13, color: theme.coral }}>
+                  {catalogs.errorMunicipios}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void catalogs.refetchMunicipios()}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.brand,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : (
+              <select
+                value={catalogs.selectedMunicipioId ?? ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  if (id) catalogs.handleSelectMunicipio(id);
+                }}
+                disabled={catalogs.isLoadingMunicipios}
+                style={inputStyle('municipio')}
+                onFocus={() => setFocusedField('municipio')}
+                onBlur={() => setFocusedField(null)}
+              >
+                <option value="">
+                  {catalogs.isLoadingMunicipios
+                    ? 'Cargando...'
+                    : 'Seleccionar'}
+                </option>
+                {catalogs.municipios.map((m) => (
+                  <option key={m.id_municipio} value={m.id_municipio}>
+                    {m.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Género *</label>
-          <select
-            value={sexo}
-            onChange={(e) => setSexo(e.target.value)}
-            required
-            style={inputStyle('sexo')}
-          >
-            <option value="">Seleccionar</option>
-            <option value="M">Masculino</option>
-            <option value="F">Femenino</option>
-            <option value="O">Otro</option>
-          </select>
-        </div>
-
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>Dirección *</label>
-          <input
-            type="text"
-            placeholder="Calle, número, colonia"
-            autoComplete="street-address"
-            value={domicilio}
-            onChange={(e) => setDomicilio(e.target.value)}
-            required
-            style={inputStyle('domicilio')}
-            onFocus={() => setFocusedField('domicilio')}
-            onBlur={() => setFocusedField(null)}
-          />
-        </div>
-
-        <div style={fieldWrapperStyle}>
-          <label style={labelStyle}>ID Localidad</label>
-          <input
-            type="number"
-            placeholder="Opcional"
-            value={localidad}
-            onChange={(e) => setLocalidad(e.target.value)}
-            style={inputStyle('localidad')}
-            onFocus={() => setFocusedField('localidad')}
-            onBlur={() => setFocusedField(null)}
-          />
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Localidad *</label>
+            {catalogs.errorLocalidades ? (
+              <div
+                style={{
+                  ...inputStyle('localidad'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderColor: theme.coral,
+                }}
+              >
+                <span style={{ fontSize: 13, color: theme.coral }}>
+                  {catalogs.errorLocalidades}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void catalogs.refetchLocalidades()}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.brand,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : (
+              <select
+                value={catalogs.localidadId ?? ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  if (id) catalogs.setLocalidadId(id);
+                }}
+                disabled={
+                  !catalogs.selectedMunicipioId || catalogs.isLoadingLocalidades
+                }
+                style={inputStyle('localidad')}
+                onFocus={() => setFocusedField('localidad')}
+                onBlur={() => setFocusedField(null)}
+              >
+                <option value="">
+                  {catalogs.isLoadingLocalidades
+                    ? 'Cargando...'
+                    : !catalogs.selectedMunicipioId
+                      ? 'Elegí un municipio'
+                      : 'Seleccionar'}
+                </option>
+                {catalogs.localidades.map((l) => (
+                  <option key={l.id_localidad} value={l.id_localidad}>
+                    {l.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         {error && (
-          <p style={{ textAlign: 'center', fontSize: 14, color: errColor }}>
+          <p style={{ textAlign: 'center', fontSize: 13, color: errColor }}>
             {error}
           </p>
         )}
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="submit"
             disabled={loading}
@@ -717,9 +886,7 @@ export function RegisterScreen() {
               opacity: loading ? 0.7 : 1,
               cursor: loading ? 'not-allowed' : 'pointer',
               flex: 1,
-              height: 44,
-              borderRadius: 12,
-              fontSize: 15,
+              height: 38,
             }}
           >
             {loading ? (
@@ -741,24 +908,31 @@ export function RegisterScreen() {
               'Registrarse'
             )}
           </button>
-          <a
-            href="/login"
-            style={{
-              ...btnBaseStyle,
-              background: 'transparent',
-              border: `1.5px solid ${brand}`,
-              color: brand,
-              textDecoration: 'none',
-              height: 44,
-              borderRadius: 12,
-              fontSize: 15,
-              justifyContent: 'center',
-            }}
-          >
-            Cancelar
-          </a>
         </div>
+
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 13,
+            color: theme.muted,
+          }}
+        >
+          ¿Ya tenés cuenta?{' '}
+          <Link
+            to="/login"
+            style={{ color: theme.brand, fontWeight: 600, textDecoration: 'none' }}
+          >
+            Iniciar sesión
+          </Link>
+        </p>
       </form>
+
+      <WebDatePickerModal
+        visible={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onSelectDate={(date) => setFechaNacimiento(date)}
+        initialDate={fechaNacimiento}
+      />
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AuthLayout>
