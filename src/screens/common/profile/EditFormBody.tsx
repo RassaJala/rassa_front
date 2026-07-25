@@ -3,7 +3,12 @@ import { Button, SegmentedButtons } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { cleanAddress, cleanName, formatPhoneNumber, MAX_NOMBRE } from '@/utils/validation';
+import {
+  cleanAddress,
+  cleanName,
+  formatPhoneNumber,
+  MAX_NOMBRE,
+} from '@/utils/validation';
 
 import CatalogSelector from './CatalogSelector';
 import FormField from './FormField';

@@ -511,7 +511,7 @@ export default function ProductFormScreen({
                         className="h-48 w-48 rounded-xl"
                         resizeMode="cover"
                       />
-                      <View className="absolute right-0 bottom-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
+                      <View className="absolute bottom-0 right-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
                         <Pressable
                           onPress={() => handleRemoveImage(activeIndex)}
                           hitSlop={8}

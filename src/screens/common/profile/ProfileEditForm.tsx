@@ -6,7 +6,11 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { User } from '@/types';
-import { cleanPhoneNumber, formatPhoneNumber, validateProfileEdit } from '@/utils/validation';
+import {
+  cleanPhoneNumber,
+  formatPhoneNumber,
+  validateProfileEdit,
+} from '@/utils/validation';
 
 import CatalogDialogs from './CatalogDialogs';
 import EditFormBody from './EditFormBody';
@@ -38,11 +42,21 @@ export default function ProfileEditForm({
 
   // ── Form state ─────────────────────────────────────
   const [nombre, setNombre] = useState(user?.nombre ?? '');
-  const [apellidoPaterno, setApellidoPaterno] = useState(user?.apellido_paterno ?? '');
-  const [apellidoMaterno, setApellidoMaterno] = useState(user?.apellido_materno ?? '');
-  const [telefono, setTelefono] = useState(formatPhoneNumber(user?.telefono ?? ''));
-  const [fechaNacimiento, setFechaNacimiento] = useState(user?.fecha_nacimiento ?? '');
-  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>((user?.genero as 'M' | 'F' | 'O') ?? 'M');
+  const [apellidoPaterno, setApellidoPaterno] = useState(
+    user?.apellido_paterno ?? '',
+  );
+  const [apellidoMaterno, setApellidoMaterno] = useState(
+    user?.apellido_materno ?? '',
+  );
+  const [telefono, setTelefono] = useState(
+    formatPhoneNumber(user?.telefono ?? ''),
+  );
+  const [fechaNacimiento, setFechaNacimiento] = useState(
+    user?.fecha_nacimiento ?? '',
+  );
+  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>(
+    (user?.genero as 'M' | 'F' | 'O') ?? 'M',
+  );
   const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
 
   const catalog = useCatalogs(
@@ -60,7 +74,9 @@ export default function ProfileEditForm({
 
   useEffect(() => {
     isMounted.current = true;
-    return () => { isMounted.current = false; };
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -101,7 +117,12 @@ export default function ProfileEditForm({
 
     const rawTelefono = cleanPhoneNumber(telefono);
     const validationError = validateProfileEdit(
-      nombre, apellidoPaterno, rawTelefono, fechaNacimiento, domicilio, catalog.localidadId,
+      nombre,
+      apellidoPaterno,
+      rawTelefono,
+      fechaNacimiento,
+      domicilio,
+      catalog.localidadId,
     );
 
     if (validationError) {
@@ -127,7 +148,11 @@ export default function ProfileEditForm({
       }
     } catch (error) {
       if (isMounted.current) {
-        setErrorMessage(error instanceof Error ? error.message : 'Error al actualizar perfil.');
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Error al actualizar perfil.',
+        );
       }
     } finally {
       if (isMounted.current) setIsSubmitting(false);
@@ -143,8 +168,20 @@ export default function ProfileEditForm({
   // ── Render ─────────────────────────────────────────
   return (
     <>
-      <ProfileHeader user={user} colors={c} avatarSize={64} paddingVertical={24}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: c.fg, letterSpacing: -0.2 }}>
+      <ProfileHeader
+        user={user}
+        colors={c}
+        avatarSize={64}
+        paddingVertical={24}
+      >
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: '700',
+            color: c.fg,
+            letterSpacing: -0.2,
+          }}
+        >
           {user?.email}
         </Text>
       </ProfileHeader>

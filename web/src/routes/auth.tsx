@@ -557,7 +557,7 @@ export function RegisterScreen() {
           </div>
           <button
             type="button"
-            className="absolute top-[34px] right-3 text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="absolute right-3 top-[34px] text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={-1}
           >
@@ -664,7 +664,7 @@ export function RegisterScreen() {
         ¿Ya tienes cuenta?{' '}
         <a
           href="/login"
-          className="text-brand-red-coral font-medium hover:underline"
+          className="font-medium text-brand-red-coral hover:underline"
         >
           Inicia sesión
         </a>

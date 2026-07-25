@@ -23,11 +23,7 @@ describe('DatePickerModal', () => {
 
   it('renderiza el modal cuando es visible', () => {
     const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     expect(getByTestId('modal-overlay')).toBeTruthy();
@@ -38,11 +34,7 @@ describe('DatePickerModal', () => {
 
   it('comienza en el paso de año cuando no hay initialDate', () => {
     const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     expect(getByTestId('years-list')).toBeTruthy();
@@ -53,11 +45,7 @@ describe('DatePickerModal', () => {
     const onClose = jest.fn();
 
     const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={onClose}
-        onSelectDate={onSelectDate}
-      />,
+      <DatePickerModal visible onClose={onClose} onSelectDate={onSelectDate} />,
     );
 
     // Step 1: Select year
@@ -97,11 +85,7 @@ describe('DatePickerModal', () => {
     const onClose = jest.fn();
 
     const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={onClose}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
     );
 
     fireEvent.press(getByTestId('modal-overlay'));
@@ -112,11 +96,7 @@ describe('DatePickerModal', () => {
     const onClose = jest.fn();
 
     const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={onClose}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
     );
 
     fireEvent.press(getByTestId('btn-cancel'));

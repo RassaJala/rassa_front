@@ -67,7 +67,14 @@ export default function ProfileView({
   return (
     <>
       <ProfileHeader user={user} colors={c}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: c.fg, letterSpacing: -0.2 }}>
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: '700',
+            color: c.fg,
+            letterSpacing: -0.2,
+          }}
+        >
           {user?.nombre} {user?.apellido_paterno}
         </Text>
         <Text style={{ fontSize: 15, color: c.muted, marginTop: 4 }}>

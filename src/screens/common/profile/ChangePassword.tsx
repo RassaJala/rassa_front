@@ -57,7 +57,9 @@ export default function ChangePassword({
   const [isChanging, setIsChanging] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const logoutTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const logoutTimeoutRef = useRef<ReturnType<
+    typeof globalThis.setTimeout
+  > | null>(null);
 
   useEffect(() => {
     // Cleanup logout timeout on unmount to prevent unexpected logout
@@ -97,7 +99,9 @@ export default function ChangePassword({
         new_password: newPassword,
       });
 
-      setPasswordSuccess('Contraseña cambiada exitosamente. Cerrando sesión...');
+      setPasswordSuccess(
+        'Contraseña cambiada exitosamente. Cerrando sesión...',
+      );
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -166,8 +170,20 @@ export default function ChangePassword({
       {showForm ? (
         <>
           {/* Feedback messages */}
-          <FeedbackBanner type="success" message={passwordSuccess} colors={c} marginTop={20} marginBottom={12} />
-          <FeedbackBanner type="error" message={passwordError} colors={c} marginTop={20} marginBottom={12} />
+          <FeedbackBanner
+            type="success"
+            message={passwordSuccess}
+            colors={c}
+            marginTop={20}
+            marginBottom={12}
+          />
+          <FeedbackBanner
+            type="error"
+            message={passwordError}
+            colors={c}
+            marginTop={20}
+            marginBottom={12}
+          />
 
           {/* Current Password */}
           <Text
@@ -206,8 +222,7 @@ export default function ChangePassword({
               letterSpacing: 0.04,
             }}
           >
-            Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres)
-            *
+            Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres) *
           </Text>
           <TextInput
             mode="outlined"

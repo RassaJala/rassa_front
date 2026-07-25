@@ -32,7 +32,8 @@ jest.mock('@/hooks/useCatalogs');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ goBack: jest.fn() }),
   useRoute: () => ({ params: {} }),
-  NavigationContainer: ({ children }: { children: React.ReactNode }) => children,
+  NavigationContainer: ({ children }: { children: React.ReactNode }) =>
+    children,
 }));
 
 const mockUseNetInfo = useNetInfo as jest.Mock;
@@ -122,7 +123,9 @@ describe('ProfileScreen', () => {
       fireEvent.changeText(getByPlaceholderText('Nombre'), '');
       fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
-        expect(getByText('Por favor, completa todos los campos obligatorios.')).toBeTruthy();
+        expect(
+          getByText('Por favor, completa todos los campos obligatorios.'),
+        ).toBeTruthy();
       });
     });
 
@@ -183,7 +186,9 @@ describe('ProfileScreen', () => {
       const rt = renderAndExpand();
       pressChangePassword(rt);
       await waitFor(() => {
-        expect(rt.getByText('Por favor, completa todos los campos.')).toBeTruthy();
+        expect(
+          rt.getByText('Por favor, completa todos los campos.'),
+        ).toBeTruthy();
       });
     });
 
@@ -203,8 +208,14 @@ describe('ProfileScreen', () => {
     it('validates password confirmation matches', async () => {
       const rt = renderAndExpand();
       fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
-      fireEvent.changeText(rt.getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(rt.getByTestId('confirm-password-input'), 'different');
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'different',
+      );
       pressChangePassword(rt);
       await waitFor(() => {
         expect(
@@ -215,9 +226,18 @@ describe('ProfileScreen', () => {
 
     it('validates new password different from old', async () => {
       const rt = renderAndExpand();
-      fireEvent.changeText(rt.getByTestId('old-password-input'), 'samepassword');
-      fireEvent.changeText(rt.getByTestId('new-password-input'), 'samepassword');
-      fireEvent.changeText(rt.getByTestId('confirm-password-input'), 'samepassword');
+      fireEvent.changeText(
+        rt.getByTestId('old-password-input'),
+        'samepassword',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'samepassword',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'samepassword',
+      );
       pressChangePassword(rt);
       await waitFor(() => {
         expect(
@@ -232,8 +252,14 @@ describe('ProfileScreen', () => {
       mockAuth.logout.mockResolvedValueOnce(undefined);
       const rt = renderAndExpand();
       fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
-      fireEvent.changeText(rt.getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(rt.getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       pressChangePassword(rt);
 
       // Success message visible before timer fires
@@ -258,8 +284,14 @@ describe('ProfileScreen', () => {
       );
       const rt = renderAndExpand();
       fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
-      fireEvent.changeText(rt.getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(rt.getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       pressChangePassword(rt);
       await waitFor(() => {
         expect(rt.getByText('Contraseña actual incorrecta.')).toBeTruthy();
@@ -272,9 +304,18 @@ describe('ProfileScreen', () => {
         response: { status: 401, data: {} },
       } as unknown as Error);
       const rt = renderAndExpand();
-      fireEvent.changeText(rt.getByTestId('old-password-input'), 'wrongpassword');
-      fireEvent.changeText(rt.getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(rt.getByTestId('confirm-password-input'), 'newpassword1');
+      fireEvent.changeText(
+        rt.getByTestId('old-password-input'),
+        'wrongpassword',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
       pressChangePassword(rt);
       await waitFor(() => {
         expect(rt.getByText('Sesión expirada o no autorizada.')).toBeTruthy();

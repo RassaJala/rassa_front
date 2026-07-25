@@ -216,9 +216,7 @@ describe('ChangePassword', () => {
 
     await waitFor(() => {
       expect(
-        rt.getByText(
-          'Contraseña cambiada exitosamente. Cerrando sesión...',
-        ),
+        rt.getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
       ).toBeTruthy();
     });
   });
@@ -236,9 +234,7 @@ describe('ChangePassword', () => {
     // Wait for success message to appear (API resolved)
     await waitFor(() => {
       expect(
-        rt.getByText(
-          'Contraseña cambiada exitosamente. Cerrando sesión...',
-        ),
+        rt.getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
       ).toBeTruthy();
     });
 
@@ -279,9 +275,7 @@ describe('ChangePassword', () => {
     fillAndSubmit(rt);
 
     await waitFor(() => {
-      expect(
-        rt.getByText('Sesión expirada o no autorizada.'),
-      ).toBeTruthy();
+      expect(rt.getByText('Sesión expirada o no autorizada.')).toBeTruthy();
     });
 
     jest.restoreAllMocks();
@@ -299,9 +293,7 @@ describe('ChangePassword', () => {
 
     await waitFor(() => {
       expect(
-        rt.getByText(
-          'Contraseña cambiada exitosamente. Cerrando sesión...',
-        ),
+        rt.getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
       ).toBeTruthy();
     });
 

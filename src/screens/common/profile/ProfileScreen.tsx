@@ -30,12 +30,9 @@ export default function ProfileScreen(): React.JSX.Element {
   const onDatePickedRef = useRef<(date: string) => void>(() => {});
 
   // Stable callback — prevents unnecessary re-execution of ProfileEditForm's useEffect
-  const handleRegisterDatePicked = useCallback(
-    (fn: (date: string) => void) => {
-      onDatePickedRef.current = fn;
-    },
-    [],
-  );
+  const handleRegisterDatePicked = useCallback((fn: (date: string) => void) => {
+    onDatePickedRef.current = fn;
+  }, []);
 
   // ── Render helpers ─────────────────────────────────────
   function renderEditForm(): React.JSX.Element {

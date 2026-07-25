@@ -68,9 +68,13 @@ describe('API Interceptors', () => {
     const result = await responseInterceptor(axiosError);
 
     expect(SecureStore.getItemAsync).toHaveBeenCalledWith('refresh_token');
-    expect(api.post).toHaveBeenCalledWith('/token/refresh/', {
-      refresh: 'old_refresh_token',
-    }, expect.anything());
+    expect(api.post).toHaveBeenCalledWith(
+      '/token/refresh/',
+      {
+        refresh: 'old_refresh_token',
+      },
+      expect.anything(),
+    );
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'access_token',
       'new_access',
@@ -180,9 +184,13 @@ describe('API Interceptors', () => {
 
     // Single flight: refreshTokens called exactly once
     expect(api.post).toHaveBeenCalledTimes(1);
-    expect(api.post).toHaveBeenCalledWith('/token/refresh/', {
-      refresh: 'refresh_token',
-    }, expect.anything());
+    expect(api.post).toHaveBeenCalledWith(
+      '/token/refresh/',
+      {
+        refresh: 'refresh_token',
+      },
+      expect.anything(),
+    );
 
     // Both original requests retried with the new token
     expect(api).toHaveBeenCalledTimes(2);

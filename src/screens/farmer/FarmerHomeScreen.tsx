@@ -198,7 +198,8 @@ export default function FarmerHomeScreen({
                       textAlign: 'center',
                     }}
                   >
-                    No se pudieron cargar los datos. Los valores pueden no estar actualizados.
+                    No se pudieron cargar los datos. Los valores pueden no estar
+                    actualizados.
                   </Text>
                 </View>
               ) : null}

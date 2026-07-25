@@ -67,7 +67,9 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 jest.mock('@/utils/validation', () => {
-  const real = jest.requireActual('@/utils/validation') as typeof import('@/utils/validation');
+  const real = jest.requireActual(
+    '@/utils/validation',
+  ) as typeof import('@/utils/validation');
   return {
     ...real,
     formatPhoneNumber: (val: string) => val,
@@ -114,61 +116,117 @@ const mockUser = {
 describe('validateProfileEdit', () => {
   it('retorna null cuando todos los campos son válidos', () => {
     expect(
-      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit(
+        'Admin',
+        'Sistema',
+        '5551234567',
+        '1990-01-15',
+        'Calle 123',
+        1,
+      ),
     ).toBeNull();
   });
 
   it('retorna error genérico cuando nombre está vacío (primer filtro de campos requeridos)', () => {
     expect(
-      validateProfileEdit('', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit(
+        '',
+        'Sistema',
+        '5551234567',
+        '1990-01-15',
+        'Calle 123',
+        1,
+      ),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error genérico cuando apellidoPaterno está vacío (primer filtro de campos requeridos)', () => {
     expect(
-      validateProfileEdit('Admin', '', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit(
+        'Admin',
+        '',
+        '5551234567',
+        '1990-01-15',
+        'Calle 123',
+        1,
+      ),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando teléfono está vacío', () => {
-    expect(validateProfileEdit('Admin', 'Sistema', '', '1990-01-15', 'Calle 123', 1)).toBe(
-      'Por favor, completa todos los campos obligatorios.',
-    );
+    expect(
+      validateProfileEdit('Admin', 'Sistema', '', '1990-01-15', 'Calle 123', 1),
+    ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando fecha de nacimiento está vacía', () => {
-    expect(validateProfileEdit('Admin', 'Sistema', '5551234567', '', 'Calle 123', 1)).toBe(
-      'Por favor, completa todos los campos obligatorios.',
-    );
+    expect(
+      validateProfileEdit('Admin', 'Sistema', '5551234567', '', 'Calle 123', 1),
+    ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando domicilio está vacío', () => {
     expect(
-      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', '', 1),
+      validateProfileEdit(
+        'Admin',
+        'Sistema',
+        '5551234567',
+        '1990-01-15',
+        '',
+        1,
+      ),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando localidadId es null', () => {
     expect(
-      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', null),
+      validateProfileEdit(
+        'Admin',
+        'Sistema',
+        '5551234567',
+        '1990-01-15',
+        'Calle 123',
+        null,
+      ),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error genérico con espacios en blanco en nombre (primer filtro)', () => {
     expect(
-      validateProfileEdit('   ', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit(
+        '   ',
+        'Sistema',
+        '5551234567',
+        '1990-01-15',
+        'Calle 123',
+        1,
+      ),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando teléfono no tiene 10 dígitos', () => {
     expect(
-      validateProfileEdit('Admin', 'Sistema', '555', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit(
+        'Admin',
+        'Sistema',
+        '555',
+        '1990-01-15',
+        'Calle 123',
+        1,
+      ),
     ).toBe('El teléfono debe tener exactamente 10 dígitos.');
   });
 
   it('retorna error cuando la fecha es inválida', () => {
     expect(
-      validateProfileEdit('Admin', 'Sistema', '5551234567', 'invalid', 'Calle 123', 1),
+      validateProfileEdit(
+        'Admin',
+        'Sistema',
+        '5551234567',
+        'invalid',
+        'Calle 123',
+        1,
+      ),
     ).toBe('La fecha de nacimiento debe tener el formato AAAA-MM-DD.');
   });
 });

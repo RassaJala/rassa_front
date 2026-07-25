@@ -210,7 +210,7 @@ function TrashItemCard<T extends { nombre: string; estado: boolean }>({
   return (
     <View className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
       <View className="flex-row items-start">
-        <View className="mt-0.5 mr-3 h-10 w-10 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-900/20">
+        <View className="mr-3 mt-0.5 h-10 w-10 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-900/20">
           <MaterialCommunityIcons
             name="delete-restore"
             size={20}
@@ -218,7 +218,7 @@ function TrashItemCard<T extends { nombre: string; estado: boolean }>({
           />
         </View>
         <View className="flex-1">
-          <Text className="text-brand-ink text-lg font-medium dark:text-gray-100">
+          <Text className="text-lg font-medium text-brand-ink dark:text-gray-100">
             {item.nombre}
           </Text>
           {secondValue ? (
@@ -245,7 +245,7 @@ function TrashItemCard<T extends { nombre: string; estado: boolean }>({
             size={14}
             color={colors.brandGreenForest}
           />
-          <Text className="text-brand-green-forest text-xs font-medium">
+          <Text className="text-xs font-medium text-brand-green-forest">
             Restaurar
           </Text>
         </Pressable>
