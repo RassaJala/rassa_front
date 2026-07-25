@@ -179,12 +179,13 @@ const PUBLISH_TIMEOUT_MS = 120_000;
 
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
+  const cleanup = () => clearTimeout(timeoutId);
+  const tracked = promise.then(
+    (value) => { cleanup(); return value; },
+  ).catch((err) => { cleanup(); throw err; });
   return Promise.race([
-    promise.then(
-      (value) => { clearTimeout(timeoutId); return value; },
-      (err) => { clearTimeout(timeoutId); throw err; },
-    ),
-    new Promise<T>((_, reject) => {
+    tracked,
+    new Promise<T>((_resolve, reject) => {
       timeoutId = setTimeout(() => {
         reject(new Error(`tardó más de ${String(ms)}ms`));
       }, ms);
