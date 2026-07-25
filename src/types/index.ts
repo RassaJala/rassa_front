@@ -68,37 +68,64 @@ export interface Localidad {
   estado: boolean;
 }
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
+export interface Producto {
+  id_producto: number;
+  nombre_producto: string;
+  descripcion: string;
+  precio: string;
   stock: number;
-  image: string;
-  farmer: number;
-  category: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  es_perecedero: boolean;
+  imagen: string | null;
+  estado: boolean;
+  categoria: Category;
+  unidad: Unidad | null;
+  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
+  imagen_principal: string | null;
+  creado_en: string;
 }
 
 export interface Order {
-  id: number;
-  buyer: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  id_pedido: number;
+  cliente_nombre: string | null;
+  vendedor_nombre: string | null;
   total: string;
-  items: OrderItem[];
-  created_at: string;
-  updated_at: string;
+  estado_actual: PedidoEstado;
+  creado_en: string;
+  productos?: string[];
+  has_more_productos?: boolean;
+}
+
+export interface OrderDetail extends Order {
+  subtotal: string;
+  iva: string;
+  fecha_expiracion: string | null;
+  detalles: OrderItem[];
+  historial: OrderHistoryEntry[];
 }
 
 export interface OrderItem {
-  id: number;
-  order: number;
-  product: number | null;
-  quantity: number;
-  price: string;
+  id_detalle: number;
+  nombre_producto: string;
+  precio_unitario: string;
+  cantidad: number;
+  importe: string;
 }
+
+export interface OrderHistoryEntry {
+  id_historial: number;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  cambiado_por_nombre: string | null;
+  creado_en: string;
+}
+
+export type PedidoEstado =
+  | 'pendiente'
+  | 'confirmado'
+  | 'en_preparacion'
+  | 'listo_para_retirar'
+  | 'entregado'
+  | 'cancelado';
 
 export interface Category {
   id_categoria: number;
@@ -106,6 +133,11 @@ export interface Category {
   descripcion: string;
   estado: boolean;
   creado_en: string;
+}
+
+export interface Unidad {
+  id_unidad: number;
+  tipo: string;
 }
 
 export interface Unit {
@@ -121,15 +153,64 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+// ── Familias ──────────────────────────────────────────────
+
+export interface Family {
+  id_familia: number;
+  fk_jefe_familia: number | null;
+  jefe_nombre: string | null;
+  nombre_familia: string;
+  nombre: string;
+  detalle_familia: string | null;
+  creado_en: string;
+  estado: boolean;
+}
+
+export interface FamilyMember {
+  id_familia_usuario: number;
+  fk_usuario: number;
+  usuario_nombre: string;
+  usuario_correo: string;
+  fk_familia: number;
+  estado: boolean;
+  creado_en: string;
+}
+
+export interface CreditLimit {
+  id_limite: number;
+  fk_usuario: number;
+  monto: string;
+  creado_en: string;
+}
+
+// ── Navigation param lists ────────────────────────────────
+
 export type AdminStackParamList = {
   AdminPanel: undefined;
   UserManagement: undefined;
   UserForm: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
+  CreateGroup: undefined;
+  StartChat: undefined;
   CategoryList: undefined;
   UnitList: undefined;
   CategoryTrash: undefined;
   UnitTrash: undefined;
   Notificaciones: undefined;
+  FamilyList: undefined;
+  FamilyDetail: { readonly familyId: number };
+  FamilyForm: { readonly familyId?: number } | undefined;
+  Profile: undefined;
   MunicipioList: undefined;
   MunicipioTrash: undefined;
   LocalidadList: {
@@ -149,28 +230,84 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
-  ProductDetail: undefined;
+  Pedidos: undefined;
+  ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
+  OrderDetail: { orderId: number };
   Profile: undefined;
+  ProductDetail: { productId: number; farmerId: number };
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
-export type FarmerTabsParamList = {
-  HomeFarmer: undefined;
-  MyProducts: undefined;
-  AddProduct: undefined;
+export type AdminTabsParamList = {
+  AdminPanel: undefined;
+  AdminProducts: undefined;
+  CategoryList: undefined;
+  UnitList: undefined;
+  CategoryTrash: undefined;
+  UnitTrash: undefined;
+  ChatList: undefined;
 };
 
 export type FarmerStackParamList = {
-  FarmerTabs: undefined;
+  FarmerHome: undefined;
   Profile: undefined;
+  ProductList: undefined;
+  ProductForm: { productoId?: number };
+  ChatList: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };
 
+export interface SearchUserResult {
+  id_usuario: number;
+  email: string;
+  correo?: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string | null;
+}
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
   Notificaciones: undefined;
   Perfil: undefined;
+  ChatList: undefined;
+};
+
+export type SellerStackParamList = {
+  SellerTabs: undefined;
+  Chat: {
+    conversationId: number;
+    title: string;
+    tipo?: 'privada' | 'grupal';
+    isFamily?: boolean | undefined;
+  };
+  GroupDetail: {
+    conversationId: number;
+    title: string;
+    isFamily?: boolean | undefined;
+  };
 };

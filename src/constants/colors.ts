@@ -27,14 +27,20 @@ export const colors = {
     mountainMid: '#B2C2B2',
     mountainBot: '#A19FB6',
   },
+  brandPrimary: '#24563C', // redesign palette brand green (light)
+  brandPrimaryDark: '#4A8A63', // redesign palette brand green (dark)
   brandGreenForest: '#3A6D56',
   brandRedCoral: '#DE393A',
+  brandOrange: '#E46C38',
+  mutedDark: '#9DA89D', // redesign dark mode muted text
   iconDark: '#1D1D1D',
   brandInk: '#1f2937',
   iconMuted: '#9ca3af',
   iconWhite: '#ffffff',
   transparent: 'transparent',
   shadow: '#000000',
+  overlayBg: 'rgba(0, 0, 0, 0.4)',
+  modalOverlayBg: 'rgba(0, 0, 0, 0.5)',
   activeGreenBg: 'rgba(74, 138, 99, 0.1)',
   inactiveGrayBg: 'rgba(0, 0, 0, 0.03)',
   // ── Redesign/Admin palette ──
@@ -68,4 +74,36 @@ export const colors = {
   admErrorTextD: '#f87171',
   admErrorActionL: '#b91c1c',
   admErrorActionD: '#fca5a5',
+  admErrorBgL: '#FDEDEE',
+  admErrorBgD: '#3D2023',
 };
+
+export interface ThemeColors {
+  readonly bg: string;
+  readonly surface: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly input: string;
+  readonly errorBg: string;
+  readonly accentBg: string;
+  readonly coralBg: string;
+  readonly brand: string;
+  readonly segBg: string;
+}
+
+export function themeColors(isDark: boolean): ThemeColors {
+  return {
+    bg: isDark ? '#1A211B' : '#F5F7F0',
+    surface: isDark ? '#263028' : '#FFFFFF',
+    fg: isDark ? '#E8EAE4' : '#2D3328',
+    muted: isDark ? '#9DA89D' : '#5E6B5E',
+    border: isDark ? '#353D35' : '#E2E6DF',
+    input: isDark ? '#263028' : '#F5F7F0',
+    errorBg: isDark ? '#3D2023' : '#FDEDEE',
+    accentBg: isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)',
+    coralBg: isDark ? 'rgba(222,57,58,0.07)' : 'rgba(222,57,58,0.07)',
+    brand: isDark ? '#4A8A63' : '#24563C',
+    segBg: isDark ? '#263028' : '#E8ECE4',
+  };
+}

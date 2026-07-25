@@ -1,6 +1,7 @@
 /* globals console */
 import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCatalogs } from '../hooks/useCatalogs';
 import api from '../services/api';
@@ -714,20 +715,7 @@ export function AdminUsers() {
     );
   }
 
-  const btnStyle = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex' as const,
-    alignItems: 'center',
-    gap: 6,
-  };
+  const btnStyle = sharedBtnStyle;
 
   const inputStyle = (focused: boolean) => ({
     width: '100%',

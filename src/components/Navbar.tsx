@@ -18,6 +18,7 @@ interface NavItem {
 const NAV_CONFIG: Record<UserRole, NavItem[]> = {
   admin: [
     { label: 'Panel', screen: 'AdminPanel', icon: 'view-dashboard' },
+    { label: 'Familias', screen: 'FamilyList', icon: 'account-group' },
     { label: 'Categorías', screen: 'CategoryList', icon: 'folder' },
     { label: 'Unidades', screen: 'UnitList', icon: 'ruler' },
   ],

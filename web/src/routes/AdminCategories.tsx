@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { getColors } from '../constants/colors';
-import { useTheme } from '../providers/ThemeProvider';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Category {
   id: number;
@@ -27,10 +27,8 @@ const initialData: Category[] = [
 ];
 
 export function AdminCategories() {
-  const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
-  const c = getColors(isDark);
-  const { fg, muted, border, surface, bg, brand, coral } = c;
+  const colors = useAppColors();
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Category[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
@@ -105,20 +103,7 @@ export function AdminCategories() {
     );
   }
 
-  const btnStyle = {
-    height: 40,
-    padding: '0 18px',
-    borderRadius: 10,
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    letterSpacing: '0.01em',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-  } as const;
+  const btnStyle = sharedBtnStyle;
 
   return (
     <div>
