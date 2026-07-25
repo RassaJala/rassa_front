@@ -7,6 +7,7 @@ import { Input } from './ui/Input';
 import { TextArea } from './ui/TextArea';
 import type { AppColors, useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
+import { uploadImage } from '../services/productImageUpload';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -135,22 +136,6 @@ async function deleteOldImages(productId: number): Promise<void> {
           .catch(console.error),
       ),
     );
-  }
-}
-
-async function uploadImage(productId: number, file: File): Promise<void> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const fd = new FormData();
-      fd.append('imagen', file);
-      fd.append('es_principal', 'true');
-      await api.post(`/productos/${productId}/imagen/`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return;
-    } catch (imgErr) {
-      if (attempt === 1) throw imgErr;
-    }
   }
 }
 
