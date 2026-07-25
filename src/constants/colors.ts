@@ -74,8 +74,6 @@ export const colors = {
   admErrorTextD: '#f87171',
   admErrorActionL: '#b91c1c',
   admErrorActionD: '#fca5a5',
-  admErrorBgL: '#FDEDEE',
-  admErrorBgD: '#3D2023',
 };
 
 export interface ThemeColors {
