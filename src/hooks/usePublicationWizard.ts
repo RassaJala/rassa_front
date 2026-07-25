@@ -177,12 +177,16 @@ async function persistItem(
 
 const PUBLISH_TIMEOUT_MS = 120_000;
 
-export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return await Promise.race([
-    promise,
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return Promise.race([
+    promise.then(
+      (value) => { clearTimeout(timeoutId); return value; },
+      (err) => { clearTimeout(timeoutId); throw err; },
+    ),
     new Promise<T>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Operation timed out after ${String(ms)}ms`));
+      timeoutId = setTimeout(() => {
+        reject(new Error(`tardó más de ${String(ms)}ms`));
       }, ms);
     }),
   ]);

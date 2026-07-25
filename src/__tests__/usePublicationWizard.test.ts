@@ -155,7 +155,7 @@ describe('withTimeout', () => {
 
     jest.advanceTimersByTime(1000);
 
-    await expect(promise).rejects.toThrow('tardó más de 1s');
+    await expect(promise).rejects.toThrow('tardó más de 1000ms');
   });
 
   it('clears timeout on success', async () => {
