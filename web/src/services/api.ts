@@ -1,8 +1,11 @@
 import axios from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+const API_URL =
+  (import.meta as unknown as { env: { VITE_API_URL?: string } }).env
+    .VITE_API_URL ?? '/api';
 
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 
@@ -48,7 +51,7 @@ let pendingRequests: Array<{
 }> = [];
 
 async function refreshAccessToken(
-  originalRequest: ReturnType<typeof api>['config'],
+  originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
   const refreshToken = sessionStorage.getItem('refresh_token');
   if (!refreshToken) throw new Error('No refresh token');
