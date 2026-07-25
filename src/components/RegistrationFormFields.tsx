@@ -6,18 +6,10 @@ import type { CatalogColors } from '@/components/CatalogSelector';
 import type { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
 
-interface FormColors {
-  readonly muted: string;
-  readonly border: string;
-  readonly surface: string;
-  readonly fg: string;
+interface FormColors extends CatalogColors {
   readonly brand: string;
   readonly accentBg: string;
   readonly segBg: string;
-  readonly errorBg: string;
-  readonly errorBorder: string;
-  readonly errorText: string;
-  readonly errorAction: string;
 }
 
 interface RegistrationFormFieldsProps {
@@ -236,18 +228,7 @@ export default function RegistrationFormFields({
         refetchMunicipios={catalog.refetchMunicipios}
         refetchLocalidades={catalog.refetchLocalidades}
         setErrorMessage={setErrorMessage}
-        catalogColors={
-          {
-            muted: t.muted,
-            border: t.border,
-            surface: t.surface,
-            fg: t.fg,
-            errorBg: t.errorBg,
-            errorBorder: t.errorBorder,
-            errorText: t.errorText,
-            errorAction: t.errorAction,
-          } satisfies CatalogColors
-        }
+        catalogColors={t}
       />
     </View>
   );

@@ -42,6 +42,7 @@ import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
 const TRANSPARENT = 'transparent';
 const WHITE = '#FFFFFF';
+const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : undefined;
 
 const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
   { value: 'buyer', label: 'Cliente' },
@@ -55,6 +56,346 @@ const ROLE_LABELS: Record<string, string> = {
   seller: 'Vendedor',
   buyer: 'Cliente',
 };
+
+function getAdminColors(isDark: boolean) {
+  return {
+    bg: isDark ? colors.admBgD : colors.admBgL,
+    fg: isDark ? colors.admFgD : colors.admFgL,
+    muted: isDark ? colors.admMutedD : colors.admMutedL,
+    border: isDark ? colors.admBorderD : colors.admBorderL,
+    brand: isDark ? colors.admBrandD : colors.admBrandL,
+    inputBg: isDark ? colors.admSurfaceD : colors.admBgL,
+    surface: isDark ? colors.admSurfaceD : colors.admSurfaceL,
+    accentBg: isDark ? colors.admActiveBgD : colors.admActiveBgL,
+    coralBg: isDark ? colors.admCoralBgD : colors.admCoralBgL,
+    segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
+    errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
+    errorBorder: isDark ? colors.admErrorBorderD : colors.admErrorBorderL,
+    errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
+    errorAction: isDark ? colors.admErrorActionD : colors.admErrorActionL,
+  };
+}
+
+function handleToggleSuccess(
+  userId: number,
+  users: AdminUser[],
+  queryClient: ReturnType<typeof useQueryClient>,
+  setConfirmUser: (user: AdminUser | null) => void,
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+) {
+  const u = users.find((x) => x.id_usuario === userId);
+  const name = u ? getFullName(u) : `#${userId}`;
+  const label = u && !u.estado ? 'activado' : 'desactivado';
+  void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  setConfirmUser(null);
+  showToast(`${name} fue ${label} correctamente`, 'success');
+}
+
+function handleToggleError(
+  queryClient: ReturnType<typeof useQueryClient>,
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+) {
+  return (error: unknown) => {
+    const detail =
+      (error as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail ?? 'Error al cambiar estado';
+    showToast(detail, 'error');
+    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  };
+}
+
+function handleRoleSuccess(
+  userId: number,
+  role: string,
+  users: AdminUser[],
+  queryClient: ReturnType<typeof useQueryClient>,
+  closeRoleModal: () => void,
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+) {
+  const u = users.find((x) => x.id_usuario === userId);
+  const name = u ? getFullName(u) : `#${userId}`;
+  const oldRole = ROLE_LABELS[u?.role ?? ''] ?? u?.role ?? '?';
+  const newRoleLabel = ROLE_LABELS[role] ?? role;
+  void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  closeRoleModal();
+  showToast(`${name} cambió de ${oldRole} a ${newRoleLabel}`, 'success');
+}
+
+function handleRoleError(
+  queryClient: ReturnType<typeof useQueryClient>,
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+) {
+  return (error: unknown) => {
+    const detail =
+      (error as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail ?? 'Error al cambiar rol';
+    showToast(detail, 'error');
+    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  };
+}
+
+async function submitNewUser(params: {
+  form: ReturnType<typeof useRegistrationForm>;
+  isSubmitting: boolean;
+  setFormErrorMessage: (msg: string | null) => void;
+  setFormServerError: (msg: string) => void;
+  setIsSubmitting: (v: boolean) => void;
+  queryClient: ReturnType<typeof useQueryClient>;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  switchToList: () => void;
+  isMounted: React.MutableRefObject<boolean>;
+}) {
+  const { form, isSubmitting, setFormErrorMessage, setFormServerError, setIsSubmitting, queryClient, showToast, switchToList, isMounted } = params;
+  if (isSubmitting) return;
+  setFormErrorMessage(null);
+  setFormServerError('');
+
+  const validationError = validateRegistrationForm({
+    email: form.email,
+    password: form.password,
+    telefono: form.telefono,
+    nombre: form.nombre,
+    apellidoPaterno: form.apellidoPaterno,
+    fechaNacimiento: form.fechaNacimiento,
+    domicilio: form.domicilio,
+    localidadId: form.catalog.localidadId,
+  });
+
+  if (validationError) {
+    setFormErrorMessage(validationError);
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const payload = {
+      email: form.email.trim(),
+      password: form.password,
+      telefono: cleanPhoneNumber(form.telefono),
+      role: form.role,
+      nombre: form.nombre.trim(),
+      apellido_paterno: form.apellidoPaterno.trim(),
+      apellido_materno: form.apellidoMaterno.trim() || null,
+      fecha_nacimiento: form.fechaNacimiento,
+      sexo: form.sexo,
+      domicilio: form.domicilio.trim(),
+      fk_localidad: form.catalog.localidadId as number,
+    };
+
+    const endpoint =
+      form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
+
+    await api.post(endpoint, payload);
+
+    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    showToast('Usuario creado correctamente', 'success');
+    switchToList();
+  } catch (error) {
+    if (isMounted.current) {
+      const detail =
+        (error as { response?: { data?: { detail?: string } } })?.response
+          ?.data?.detail ??
+        (error as Error)?.message ??
+        'Error al crear el usuario.';
+      setFormServerError(detail);
+    }
+  } finally {
+    if (isMounted.current) {
+      setIsSubmitting(false);
+    }
+  }
+}
+
+function saveUserRole(params: {
+  roleModalUser: AdminUser | null;
+  newRole: string;
+  roleMutation: { isPending: boolean; mutate: (vars: { userId: number; role: string }) => void };
+  closeRoleModal: () => void;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  isSelf: (user: AdminUser) => boolean;
+}) {
+  const { roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf } = params;
+  if (!roleModalUser || !newRole) return;
+  if (roleMutation.isPending) return;
+
+  if (isSelf(roleModalUser)) {
+    closeRoleModal();
+    showToast('No puedes cambiar tu propio rol.', 'info');
+    return;
+  }
+
+  if (newRole === roleModalUser.role) {
+    closeRoleModal();
+    return;
+  }
+
+  roleMutation.mutate({ userId: roleModalUser.id_usuario, role: newRole });
+}
+
+function handleToggleUser(params: {
+  targetUser: AdminUser;
+  toggleMutation: { isPending: boolean; mutate: (id: number) => void };
+  isSelf: (user: AdminUser) => boolean;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  setConfirmUser: (user: AdminUser | null) => void;
+}) {
+  const { targetUser, toggleMutation, isSelf, showToast, setConfirmUser } = params;
+  if (toggleMutation.isPending) return;
+
+  if (isSelf(targetUser)) {
+    showToast('No puedes desactivar tu propia cuenta.', 'info');
+    return;
+  }
+
+  if (targetUser.estado) {
+    setConfirmUser(targetUser);
+  } else {
+    toggleMutation.mutate(targetUser.id_usuario);
+  }
+}
+
+function filterUsers(
+  users: AdminUser[],
+  search: string,
+  roleFilter: string,
+  statusFilter: string,
+): AdminUser[] {
+  return users.filter((u) => {
+    const fullName = getFullName(u).toLowerCase();
+    const email = u.email.toLowerCase();
+    const q = search.toLowerCase();
+    if (search && !fullName.includes(q) && !email.includes(q)) return false;
+
+    if (roleFilter) {
+      const roleLabel = ROLE_LABELS[u.role] ?? u.role;
+      if (roleLabel !== roleFilter) return false;
+    }
+
+    if (statusFilter === 'true' && !u.estado) return false;
+    if (statusFilter === 'false' && u.estado) return false;
+
+    return true;
+  });
+}
+
+function Paginator({
+  totalPages,
+  safePage,
+  setPage,
+  border,
+  fg,
+  muted,
+  brand,
+}: {
+  totalPages: number;
+  safePage: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  border: string;
+  fg: string;
+  muted: string;
+  brand: string;
+}): React.JSX.Element | null {
+  if (totalPages <= 1) return null;
+
+  const pages: number[] = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 20,
+      }}
+    >
+      <Pressable
+        onPress={() => setPage((p) => Math.max(1, p - 1))}
+        disabled={safePage <= 1}
+        style={{
+          height: 36,
+          paddingHorizontal: 12,
+          borderRadius: 8,
+          borderWidth: 1.5,
+          borderColor: border,
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: safePage <= 1 ? 0.4 : 1,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: safePage <= 1 ? muted : fg,
+          }}
+        >
+          ← Anterior
+        </Text>
+      </Pressable>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 4 }}
+      >
+        {pages.map((p) => (
+          <Pressable
+            key={p}
+            onPress={() => setPage(p)}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: p === safePage ? brand : TRANSPARENT,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: p === safePage ? '700' : '500',
+                color: p === safePage ? WHITE : fg,
+              }}
+            >
+              {p}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      <Pressable
+        onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+        disabled={safePage >= totalPages}
+        style={{
+          height: 36,
+          paddingHorizontal: 12,
+          borderRadius: 8,
+          borderWidth: 1.5,
+          borderColor: border,
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: safePage >= totalPages ? 0.4 : 1,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: safePage >= totalPages ? muted : fg,
+          }}
+        >
+          Siguiente →
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function getFullName(u: AdminUser): string {
   return [u.nombre, u.apellido_paterno, u.apellido_materno]
@@ -107,15 +448,8 @@ async function fetchAllPages(
 export default function UserManagementScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const inputBg = isDark ? colors.admSurfaceD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
-  const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
+  const { bg, fg, muted, border, brand, inputBg, surface, accentBg, coralBg, segBg, errorBg, errorBorder, errorText, errorAction } =
+    getAdminColors(isDark);
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -146,10 +480,10 @@ export default function UserManagementScreen(): React.JSX.Element {
   // Reset page when filters change
   const filterKey = `${search}|${roleFilter}|${statusFilter}`;
   const prevKeyRef = useRef(filterKey);
-  if (prevKeyRef.current !== filterKey) {
+
+  useEffect(() => {
     prevKeyRef.current = filterKey;
-    // Don't setState during render — use effect
-  }
+  }, [filterKey]);
 
   useEffect(() => {
     setPage(1);
@@ -189,24 +523,10 @@ export default function UserManagementScreen(): React.JSX.Element {
     'Error al cargar usuarios';
 
   // ── Client-side filtering (like web) ──
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
-      const fullName = getFullName(u).toLowerCase();
-      const email = u.email.toLowerCase();
-      const q = search.toLowerCase();
-      if (search && !fullName.includes(q) && !email.includes(q)) return false;
-
-      if (roleFilter) {
-        const roleLabel = ROLE_LABELS[u.role] ?? u.role;
-        if (roleLabel !== roleFilter) return false;
-      }
-
-      if (statusFilter === 'true' && !u.estado) return false;
-      if (statusFilter === 'false' && u.estado) return false;
-
-      return true;
-    });
-  }, [users, search, roleFilter, statusFilter]);
+  const filtered = useMemo(
+    () => filterUsers(users, search, roleFilter, statusFilter),
+    [users, search, roleFilter, statusFilter],
+  );
 
   // ── Client-side pagination (like web) ──
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -215,63 +535,6 @@ export default function UserManagementScreen(): React.JSX.Element {
     () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
     [filtered, safePage],
   );
-
-  // ── Toggle estado mutation ──
-  const toggleMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      const { data } = await api.patch<ApiResponse<AdminUser>>(
-        `/admin/usuarios/${userId}/toggle-estado/`,
-      );
-
-      return data;
-    },
-    onSuccess: (_data, userId) => {
-      const u = users.find((x) => x.id_usuario === userId);
-      const name = u ? getFullName(u) : `#${userId}`;
-      const newState = u ? !u.estado : false;
-      const label = newState ? 'activado' : 'desactivado';
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      setConfirmUser(null);
-      showToast(`${name} fue ${label} correctamente`, 'success');
-    },
-    onError: (error: unknown) => {
-      const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? 'Error al cambiar estado';
-
-      showToast(detail, 'error');
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
-
-  // ── Role change mutation ──
-  const roleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
-      const { data } = await api.patch<ApiResponse<AdminUser>>(
-        `/admin/usuarios/${userId}/`,
-        { role },
-      );
-
-      return data;
-    },
-    onSuccess: (_data, { userId, role }) => {
-      const u = users.find((x) => x.id_usuario === userId);
-      const name = u ? getFullName(u) : `#${userId}`;
-      const oldRole = u ? (ROLE_LABELS[u.role] ?? u.role) : '?';
-      const newRole = ROLE_LABELS[role] ?? role;
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      closeRoleModal();
-      showToast(`${name} cambió de ${oldRole} a ${newRole}`, 'success');
-    },
-    onError: (error: unknown) => {
-      const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? 'Error al cambiar rol';
-
-      showToast(detail, 'error');
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    },
-  });
 
   // ── Handlers ──
   const showToast = useCallback(
@@ -292,68 +555,6 @@ export default function UserManagementScreen(): React.JSX.Element {
     form.resetForm();
   }, [form]);
 
-  const handleCreateUser = useCallback(async () => {
-    if (isSubmitting) return;
-    setFormErrorMessage(null);
-    setFormServerError('');
-
-    const validationError = validateRegistrationForm({
-      email: form.email,
-      password: form.password,
-      telefono: form.telefono,
-      nombre: form.nombre,
-      apellidoPaterno: form.apellidoPaterno,
-      fechaNacimiento: form.fechaNacimiento,
-      domicilio: form.domicilio,
-      localidadId: form.catalog.localidadId,
-    });
-
-    if (validationError) {
-      setFormErrorMessage(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        email: form.email.trim(),
-        password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
-        role: form.role,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
-        sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId as number,
-      };
-
-      const endpoint =
-        form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
-
-      await api.post(endpoint, payload);
-
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      showToast('Usuario creado correctamente', 'success');
-      switchToList();
-    } catch (error) {
-      if (isMounted.current) {
-        const detail =
-          (error as { response?: { data?: { detail?: string } } })?.response
-            ?.data?.detail ??
-          (error as Error)?.message ??
-          'Error al crear el usuario.';
-        setFormServerError(detail);
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
-    }
-  }, [form, isSubmitting, queryClient, showToast, switchToList]);
-
   const openRoleModal = useCallback((targetUser: AdminUser) => {
     setRoleModalUser(targetUser);
     setNewRole(targetUser.role);
@@ -365,43 +566,59 @@ export default function UserManagementScreen(): React.JSX.Element {
   }, []);
 
   const isSelf = useCallback(
-    (targetUser: AdminUser): boolean =>
-      currentUser?.id_usuario === targetUser.id_usuario,
+    (targetUser: AdminUser | null): boolean =>
+      targetUser !== null && currentUser?.id_usuario === targetUser.id_usuario,
     [currentUser?.id_usuario],
   );
 
+  // ── Toggle estado mutation ──
+  const toggleMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const { data } = await api.patch<ApiResponse<AdminUser>>(
+        `/admin/usuarios/${userId}/toggle-estado/`,
+      );
+
+      return data;
+    },
+    onSuccess: (_data, userId) => handleToggleSuccess(userId, users, queryClient, setConfirmUser, showToast),
+    onError: handleToggleError(queryClient, showToast),
+  });
+
+  // ── Role change mutation ──
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
+      const { data } = await api.patch<ApiResponse<AdminUser>>(
+        `/admin/usuarios/${userId}/`,
+        { role },
+      );
+
+      return data;
+    },
+    onSuccess: (_data, { userId, role }) => handleRoleSuccess(userId, role, users, queryClient, closeRoleModal, showToast),
+    onError: handleRoleError(queryClient, showToast),
+  });
+
+  const handleCreateUser = useCallback(() => {
+    void submitNewUser({
+      form,
+      isSubmitting,
+      setFormErrorMessage,
+      setFormServerError,
+      setIsSubmitting,
+      queryClient,
+      showToast,
+      switchToList,
+      isMounted,
+    });
+  }, [form, isSubmitting, queryClient, showToast, switchToList]);
+
   const handleRoleSave = useCallback(() => {
-    if (!roleModalUser || !newRole) return;
-    if (roleMutation.isPending) return;
-
-    if (isSelf(roleModalUser)) {
-      closeRoleModal();
-      showToast('No puedes cambiar tu propio rol.', 'info');
-      return;
-    }
-
-    if (newRole === roleModalUser.role) {
-      closeRoleModal();
-      return;
-    }
-
-    roleMutation.mutate({ userId: roleModalUser.id_usuario, role: newRole });
+    saveUserRole({ roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf });
   }, [roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf]);
 
   const handleTogglePress = useCallback(
     (targetUser: AdminUser) => {
-      if (toggleMutation.isPending) return;
-
-      if (isSelf(targetUser)) {
-        showToast('No puedes desactivar tu propia cuenta.', 'info');
-        return;
-      }
-
-      if (targetUser.estado) {
-        setConfirmUser(targetUser);
-      } else {
-        toggleMutation.mutate(targetUser.id_usuario);
-      }
+      handleToggleUser({ targetUser, toggleMutation, isSelf, showToast, setConfirmUser });
     },
     [toggleMutation, isSelf, showToast],
   );
@@ -430,112 +647,6 @@ export default function UserManagementScreen(): React.JSX.Element {
     ),
     [handleTogglePress, isSelf, openRoleModal],
   );
-
-  // ── Paginator ──
-  const renderPaginator = useCallback(() => {
-    if (totalPages <= 1) return null;
-
-    const pages: number[] = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 6,
-          paddingVertical: 20,
-        }}
-      >
-        {/* Prev */}
-        <Pressable
-          onPress={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={safePage <= 1}
-          style={{
-            height: 36,
-            paddingHorizontal: 12,
-            borderRadius: 8,
-            borderWidth: 1.5,
-            borderColor: border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            opacity: safePage <= 1 ? 0.4 : 1,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '600',
-              color: safePage <= 1 ? muted : fg,
-            }}
-          >
-            ← Anterior
-          </Text>
-        </Pressable>
-
-        {/* Page numbers */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 4 }}
-        >
-          {pages.map((p) => (
-            <Pressable
-              key={p}
-              onPress={() => setPage(p)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: p === safePage ? brand : TRANSPARENT,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: p === safePage ? '700' : '500',
-                  color: p === safePage ? WHITE : fg,
-                }}
-              >
-                {p}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Next */}
-        <Pressable
-          onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={safePage >= totalPages}
-          style={{
-            height: 36,
-            paddingHorizontal: 12,
-            borderRadius: 8,
-            borderWidth: 1.5,
-            borderColor: border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            opacity: safePage >= totalPages ? 0.4 : 1,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '600',
-              color: safePage >= totalPages ? muted : fg,
-            }}
-          >
-            Siguiente →
-          </Text>
-        </Pressable>
-      </View>
-    );
-  }, [totalPages, safePage, border, fg, muted, brand]);
 
   // ── Error state ──
   if (isError) {
@@ -625,7 +736,7 @@ export default function UserManagementScreen(): React.JSX.Element {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: isDark ? colors.admSegBgD : colors.admSegBgL,
+            backgroundColor: surface,
             borderRadius: 10,
             padding: 3,
           }}
@@ -782,7 +893,17 @@ export default function UserManagementScreen(): React.JSX.Element {
                 hasFilters={!!(search || roleFilter || statusFilter)}
               />
             }
-            ListFooterComponent={renderPaginator}
+            ListFooterComponent={
+              <Paginator
+                totalPages={totalPages}
+                safePage={safePage}
+                setPage={setPage}
+                border={border}
+                fg={fg}
+                muted={muted}
+                brand={brand}
+              />
+            }
             contentContainerStyle={{
               padding: 20,
               paddingBottom: 40,
@@ -803,7 +924,7 @@ export default function UserManagementScreen(): React.JSX.Element {
       ) : (
         /* ── Form tab (Nuevo) ── */
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={KEYBOARD_BEHAVIOR}
           style={{ flex: 1 }}
         >
           <ScrollView
@@ -900,15 +1021,11 @@ export default function UserManagementScreen(): React.JSX.Element {
                 border,
                 brand,
                 accentBg,
-                segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
-                errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-                errorBorder: isDark
-                  ? colors.admErrorBorderD
-                  : colors.admErrorBorderL,
-                errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-                errorAction: isDark
-                  ? colors.admErrorActionD
-                  : colors.admErrorActionL,
+                segBg,
+                errorBg,
+                errorBorder,
+                errorText,
+                errorAction,
               }}
               setErrorMessage={setFormErrorMessage}
               onOpenDatePicker={() => setIsDatePickerVisible(true)}
@@ -995,7 +1112,7 @@ export default function UserManagementScreen(): React.JSX.Element {
       <ConfirmDeactivationDialog
         user={confirmUser}
         isPending={toggleMutation.isPending}
-        isSelf={confirmUser !== null ? isSelf(confirmUser) : false}
+        isSelf={isSelf(confirmUser)}
         onConfirm={confirmDeactivation}
         onDismiss={() => setConfirmUser(null)}
       />

@@ -26,6 +26,19 @@ const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
   { value: 'farmer', label: 'Agricultor' },
 ];
 
+function getFormColors(isDark: boolean) {
+  return {
+    bg: isDark ? colors.admBgD : colors.admBgL,
+    surface: isDark ? colors.admSurfaceD : colors.admSurfaceL,
+    fg: isDark ? colors.admFgD : colors.admFgL,
+    muted: isDark ? colors.admMutedD : colors.admMutedL,
+    border: isDark ? colors.admBorderD : colors.admBorderL,
+    brand: isDark ? colors.admBrandD : colors.admBrandL,
+    segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
+    accentBg: isDark ? colors.admActiveBgD : colors.admActiveBgL,
+  };
+}
+
 function FormHeader({
   isDark,
   onBack,
@@ -79,14 +92,8 @@ export default function UserFormScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
-  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
+    getFormColors(isDark);
   const queryClient = useQueryClient();
 
   const form = useRegistrationForm({ initialRole: 'buyer' });
