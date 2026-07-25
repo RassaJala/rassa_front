@@ -218,7 +218,7 @@ export default function CatalogSelector({
                   }}
                   className="border-b border-gray-100 py-4 dark:border-gray-800"
                 >
-                  <Text className="text-brand-ink text-base dark:text-gray-200">
+                  <Text className="text-base text-brand-ink dark:text-gray-200">
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
@@ -251,7 +251,7 @@ export default function CatalogSelector({
                   }}
                   className="border-b border-gray-100 py-4 dark:border-gray-800"
                 >
-                  <Text className="text-brand-ink text-base dark:text-gray-200">
+                  <Text className="text-base text-brand-ink dark:text-gray-200">
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>

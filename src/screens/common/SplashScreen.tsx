@@ -24,7 +24,7 @@ export default function SplashScreen(): React.JSX.Element {
   }, [opacity, scale]);
 
   return (
-    <View className="bg-brand-green-forest dark:bg-brand-green-forest flex-1 items-center justify-center">
+    <View className="flex-1 items-center justify-center bg-brand-green-forest dark:bg-brand-green-forest">
       <Animated.View
         style={{
           transform: [

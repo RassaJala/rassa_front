@@ -376,7 +376,7 @@ export default function ProductListScreen({
             <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
           </Pressable>
           <View
-            className="absolute right-0 left-0 items-center"
+            className="absolute left-0 right-0 items-center"
             pointerEvents="none"
           >
             <Text style={{ fontSize: 20, fontWeight: '700', color: fg }}>
