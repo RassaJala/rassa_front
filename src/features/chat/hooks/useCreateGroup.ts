@@ -1,3 +1,4 @@
+import { conversationsKey } from '@rassa/chat';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { UseMutationResult } from '@tanstack/react-query';
@@ -23,7 +24,7 @@ export function useCreateGroup(): UseMutationResult<
     mutationFn: (payload) => chatApi.createGroup(payload),
     onSuccess: (conversation) => {
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
       navigation.navigate('Chat', {
         conversationId: conversation.id,

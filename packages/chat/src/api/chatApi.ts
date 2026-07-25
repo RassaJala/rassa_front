@@ -116,6 +116,9 @@ export function createChatApi(http: AxiosInstance): ChatApi {
           ? data.id_conversacion
           : data.id;
 
+      // TODO(backend): a second GET is fired to fetch participant metadata.
+      // Have /chat/conversaciones/crear-privada/ return the full Conversation
+      // so this extra request can be removed.
       const conversations = await api.getConversations();
       const existing = conversations.results.find((c) => c.id === id);
       if (existing) {

@@ -1,3 +1,4 @@
+import { conversationsKey, groupMembersKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -13,10 +14,10 @@ export function useAddGroupMember(
     mutationFn: (payload) => chatApi.addGroupMember(conversationId, payload),
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['groupMembers', conversationId],
+        queryKey: groupMembersKey(conversationId),
       });
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
     },
   });

@@ -1,3 +1,4 @@
+import { messagesKey } from '@rassa/chat';
 import { useIsFocused } from '@react-navigation/native';
 import type {
   InfiniteData,
@@ -17,7 +18,7 @@ export function useChatMessages(
   const isFocused = useIsFocused();
 
   return useInfiniteQuery({
-    queryKey: ['messages', conversationId],
+    queryKey: messagesKey(conversationId),
     queryFn: ({ pageParam = 1 }) =>
       chatApi.getMessages(conversationId, pageParam),
     getNextPageParam: (lastPage) => {
@@ -33,8 +34,7 @@ export function useChatMessages(
     refetchInterval: (query) => {
       if (!isFocused) return false;
       const failureCount = query.state.errorUpdateCount;
-      const backoff = Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
-      return backoff;
+      return Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
     },
     refetchIntervalInBackground: false,
     staleTime: 5_000,

@@ -1,4 +1,6 @@
 // Pure date formatters — previously duplicated in ChatBubble / ConversationItem (D4).
+// NOTE: uses new Date() with the host timezone; RN and browser may differ.
+// Inherited behavior — if cross-platform parity is needed, pin an explicit TZ.
 
 export function formatTime(dateString: string): string {
   return new Date(dateString).toLocaleTimeString('es-MX', {

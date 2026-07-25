@@ -1,3 +1,4 @@
+import { conversationsKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -11,7 +12,7 @@ export function useMarkAsRead(): UseMutationResult<Message, Error, number> {
     mutationFn: (messageId) => chatApi.markMessageAsRead(messageId),
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
     },
   });
