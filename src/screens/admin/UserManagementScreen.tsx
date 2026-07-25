@@ -145,7 +145,17 @@ async function submitNewUser(params: {
   switchToList: () => void;
   isMounted: React.MutableRefObject<boolean>;
 }) {
-  const { form, isSubmitting, setFormErrorMessage, setFormServerError, setIsSubmitting, queryClient, showToast, switchToList, isMounted } = params;
+  const {
+    form,
+    isSubmitting,
+    setFormErrorMessage,
+    setFormServerError,
+    setIsSubmitting,
+    queryClient,
+    showToast,
+    switchToList,
+    isMounted,
+  } = params;
   if (isSubmitting) return;
   setFormErrorMessage(null);
   setFormServerError('');
@@ -194,8 +204,8 @@ async function submitNewUser(params: {
   } catch (error) {
     if (isMounted.current) {
       const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response
-          ?.data?.detail ??
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ??
         (error as Error)?.message ??
         'Error al crear el usuario.';
       setFormServerError(detail);
@@ -210,12 +220,22 @@ async function submitNewUser(params: {
 function saveUserRole(params: {
   roleModalUser: AdminUser | null;
   newRole: string;
-  roleMutation: { isPending: boolean; mutate: (vars: { userId: number; role: string }) => void };
+  roleMutation: {
+    isPending: boolean;
+    mutate: (vars: { userId: number; role: string }) => void;
+  };
   closeRoleModal: () => void;
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   isSelf: (user: AdminUser) => boolean;
 }) {
-  const { roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf } = params;
+  const {
+    roleModalUser,
+    newRole,
+    roleMutation,
+    closeRoleModal,
+    showToast,
+    isSelf,
+  } = params;
   if (!roleModalUser || !newRole) return;
   if (roleMutation.isPending) return;
 
@@ -240,7 +260,8 @@ function handleToggleUser(params: {
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   setConfirmUser: (user: AdminUser | null) => void;
 }) {
-  const { targetUser, toggleMutation, isSelf, showToast, setConfirmUser } = params;
+  const { targetUser, toggleMutation, isSelf, showToast, setConfirmUser } =
+    params;
   if (toggleMutation.isPending) return;
 
   if (isSelf(targetUser)) {
@@ -448,8 +469,22 @@ async function fetchAllPages(
 export default function UserManagementScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const { bg, fg, muted, border, brand, inputBg, surface, accentBg, coralBg, segBg, errorBg, errorBorder, errorText, errorAction } =
-    getAdminColors(isDark);
+  const {
+    bg,
+    fg,
+    muted,
+    border,
+    brand,
+    inputBg,
+    surface,
+    accentBg,
+    coralBg,
+    segBg,
+    errorBg,
+    errorBorder,
+    errorText,
+    errorAction,
+  } = getAdminColors(isDark);
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -580,7 +615,14 @@ export default function UserManagementScreen(): React.JSX.Element {
 
       return data;
     },
-    onSuccess: (_data, userId) => handleToggleSuccess(userId, users, queryClient, setConfirmUser, showToast),
+    onSuccess: (_data, userId) =>
+      handleToggleSuccess(
+        userId,
+        users,
+        queryClient,
+        setConfirmUser,
+        showToast,
+      ),
     onError: handleToggleError(queryClient, showToast),
   });
 
@@ -594,7 +636,15 @@ export default function UserManagementScreen(): React.JSX.Element {
 
       return data;
     },
-    onSuccess: (_data, { userId, role }) => handleRoleSuccess(userId, role, users, queryClient, closeRoleModal, showToast),
+    onSuccess: (_data, { userId, role }) =>
+      handleRoleSuccess(
+        userId,
+        role,
+        users,
+        queryClient,
+        closeRoleModal,
+        showToast,
+      ),
     onError: handleRoleError(queryClient, showToast),
   });
 
@@ -613,12 +663,25 @@ export default function UserManagementScreen(): React.JSX.Element {
   }, [form, isSubmitting, queryClient, showToast, switchToList]);
 
   const handleRoleSave = useCallback(() => {
-    saveUserRole({ roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf });
+    saveUserRole({
+      roleModalUser,
+      newRole,
+      roleMutation,
+      closeRoleModal,
+      showToast,
+      isSelf,
+    });
   }, [roleModalUser, newRole, roleMutation, closeRoleModal, showToast, isSelf]);
 
   const handleTogglePress = useCallback(
     (targetUser: AdminUser) => {
-      handleToggleUser({ targetUser, toggleMutation, isSelf, showToast, setConfirmUser });
+      handleToggleUser({
+        targetUser,
+        toggleMutation,
+        isSelf,
+        showToast,
+        setConfirmUser,
+      });
     },
     [toggleMutation, isSelf, showToast],
   );
@@ -923,10 +986,7 @@ export default function UserManagementScreen(): React.JSX.Element {
         )
       ) : (
         /* ── Form tab (Nuevo) ── */
-        <KeyboardAvoidingView
-          behavior={KEYBOARD_BEHAVIOR}
-          style={{ flex: 1 }}
-        >
+        <KeyboardAvoidingView behavior={KEYBOARD_BEHAVIOR} style={{ flex: 1 }}>
           <ScrollView
             contentContainerStyle={{ padding: 20, gap: 18 }}
             keyboardShouldPersistTaps="handled"

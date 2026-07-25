@@ -3,8 +3,18 @@ import { useTheme } from '../providers/ThemeProvider';
 import { getColors } from '../constants/colors';
 
 const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 const YEARS_BACK = 103;
@@ -102,7 +112,10 @@ export default function WebDatePickerModal({
     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
   };
 
-  const tabBtn = (active: boolean, disabled?: boolean): React.CSSProperties => ({
+  const tabBtn = (
+    active: boolean,
+    disabled?: boolean,
+  ): React.CSSProperties => ({
     flex: 1,
     textAlign: 'center',
     padding: '8px 0',
@@ -120,7 +133,11 @@ export default function WebDatePickerModal({
     cursor: 'pointer',
     fontWeight: 600,
     fontSize: 15,
-    background: selected ? (isDark ? `${coral}22` : `${coral}11`) : 'transparent',
+    background: selected
+      ? isDark
+        ? `${coral}22`
+        : `${coral}11`
+      : 'transparent',
     color: selected ? coral : fg,
     borderRadius: selected ? 8 : 0,
   });
@@ -144,42 +161,99 @@ export default function WebDatePickerModal({
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-        <p style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, color: fg, marginBottom: 16 }}>
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 18,
+            fontWeight: 700,
+            color: fg,
+            marginBottom: 16,
+          }}
+        >
           Fecha de Nacimiento
         </p>
 
-        <div style={{ display: 'flex', gap: 4, background: bg, borderRadius: 10, padding: 4, marginBottom: 16 }}>
-          <button type="button" style={tabBtn(step === 'year')} onClick={() => setStep('year')}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            background: bg,
+            borderRadius: 10,
+            padding: 4,
+            marginBottom: 16,
+          }}
+        >
+          <button
+            type="button"
+            style={tabBtn(step === 'year')}
+            onClick={() => setStep('year')}
+          >
             <div style={{ fontSize: 11, color: muted }}>Año</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>{selectedYear ?? '----'}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>
+              {selectedYear ?? '----'}
+            </div>
           </button>
-          <button type="button" style={tabBtn(step === 'month', !selectedYear)} disabled={!selectedYear} onClick={() => setStep('month')}>
+          <button
+            type="button"
+            style={tabBtn(step === 'month', !selectedYear)}
+            disabled={!selectedYear}
+            onClick={() => setStep('month')}
+          >
             <div style={{ fontSize: 11, color: muted }}>Mes</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>{selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>
+              {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
+            </div>
           </button>
-          <button type="button" style={tabBtn(step === 'day', selectedMonth === null)} disabled={selectedMonth === null} onClick={() => setStep('day')}>
+          <button
+            type="button"
+            style={tabBtn(step === 'day', selectedMonth === null)}
+            disabled={selectedMonth === null}
+            onClick={() => setStep('day')}
+          >
             <div style={{ fontSize: 11, color: muted }}>Día</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>{selectedDay ?? '--'}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: coral }}>
+              {selectedDay ?? '--'}
+            </div>
           </button>
         </div>
 
         <div style={{ height: 240, overflowY: 'auto' }}>
-          {step === 'year' && years.map((y) => (
-            <div key={y} style={listItemStyle(selectedYear === y)} onClick={() => handleSelectYear(y)}>
-              {y}
-            </div>
-          ))}
+          {step === 'year' &&
+            years.map((y) => (
+              <div
+                key={y}
+                style={listItemStyle(selectedYear === y)}
+                onClick={() => handleSelectYear(y)}
+              >
+                {y}
+              </div>
+            ))}
 
-          {step === 'month' && MONTH_NAMES.map((name, idx) => (
-            <div key={name} style={listItemStyle(selectedMonth === idx)} onClick={() => handleSelectMonth(idx)}>
-              {name}
-            </div>
-          ))}
+          {step === 'month' &&
+            MONTH_NAMES.map((name, idx) => (
+              <div
+                key={name}
+                style={listItemStyle(selectedMonth === idx)}
+                onClick={() => handleSelectMonth(idx)}
+              >
+                {name}
+              </div>
+            ))}
 
           {step === 'day' && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-start',
+              }}
+            >
               {daysArray.map((d) => (
-                <div key={d} style={dayBoxStyle(selectedDay === d)} onClick={() => handleSelectDay(d)}>
+                <div
+                  key={d}
+                  style={dayBoxStyle(selectedDay === d)}
+                  onClick={() => handleSelectDay(d)}
+                >
                   {d}
                 </div>
               ))}
@@ -187,8 +261,28 @@ export default function WebDatePickerModal({
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16, borderTop: `1px solid ${border}`, paddingTop: 12 }}>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 500, color: muted, cursor: 'pointer', padding: '4px 8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: 16,
+            borderTop: `1px solid ${border}`,
+            paddingTop: 12,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: 14,
+              fontWeight: 500,
+              color: muted,
+              cursor: 'pointer',
+              padding: '4px 8px',
+            }}
+          >
             Cancelar
           </button>
         </div>

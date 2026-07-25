@@ -118,7 +118,15 @@ export default function DatePickerModal({
   const daysCount = getDaysInMonth();
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
 
-  const tabBtnBase = (active: boolean): { flex: number; alignItems: 'center'; paddingVertical: number; borderRadius: number; backgroundColor: string } => ({
+  const tabBtnBase = (
+    active: boolean,
+  ): {
+    flex: number;
+    alignItems: 'center';
+    paddingVertical: number;
+    borderRadius: number;
+    backgroundColor: string;
+  } => ({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
@@ -126,12 +134,24 @@ export default function DatePickerModal({
     backgroundColor: active ? surface : 'transparent',
   });
 
-  const listItemStyle = (selected: boolean): { alignItems: 'center'; borderBottomWidth: number; borderBottomColor: string; paddingVertical: number; backgroundColor: string } => ({
+  const listItemStyle = (
+    selected: boolean,
+  ): {
+    alignItems: 'center';
+    borderBottomWidth: number;
+    borderBottomColor: string;
+    paddingVertical: number;
+    backgroundColor: string;
+  } => ({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: border,
     paddingVertical: 12,
-    backgroundColor: selected ? (isDark ? `${coral}33` : `${coral}1A`) : 'transparent',
+    backgroundColor: selected
+      ? isDark
+        ? `${coral}33`
+        : `${coral}1A`
+      : 'transparent',
   });
 
   const dayBoxStyle = (selected: boolean) => ({
@@ -176,12 +196,29 @@ export default function DatePickerModal({
           onPress={(e) => e.stopPropagation()} // Prevent closing when tapping card
         >
           {/* Modal Header */}
-          <Text style={{ marginBottom: 16, textAlign: 'center', fontSize: 20, fontWeight: '700', color: fg }}>
+          <Text
+            style={{
+              marginBottom: 16,
+              textAlign: 'center',
+              fontSize: 20,
+              fontWeight: '700',
+              color: fg,
+            }}
+          >
             Fecha de Nacimiento
           </Text>
 
           {/* Current Selection Indicators */}
-          <View style={{ marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', borderRadius: 12, backgroundColor: bg, padding: 8 }}>
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              borderRadius: 12,
+              backgroundColor: bg,
+              padding: 8,
+            }}
+          >
             <TouchableOpacity
               testID="tab-year-selector"
               onPress={() => setStep('year')}
@@ -275,7 +312,11 @@ export default function DatePickerModal({
             {step === 'day' && (
               <ScrollView
                 testID="days-grid"
-                contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}
+                contentContainerStyle={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-start',
+                }}
               >
                 {daysArray.map((item) => (
                   <TouchableOpacity
@@ -300,7 +341,16 @@ export default function DatePickerModal({
           </View>
 
           {/* Action Buttons */}
-          <View style={{ marginTop: 16, flexDirection: 'row', justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: border, paddingTop: 12 }}>
+          <View
+            style={{
+              marginTop: 16,
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              borderTopWidth: 1,
+              borderTopColor: border,
+              paddingTop: 12,
+            }}
+          >
             <TouchableOpacity
               testID="btn-cancel"
               onPress={onClose}

@@ -1,17 +1,14 @@
+import axios from 'axios';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { AuthLayout } from '../components/layout/AuthLayout';
-import WebDatePickerModal from '../components/WebDatePickerModal';
-import { getColors } from '../constants/colors';
-import { useAuth } from '../hooks/useAuth';
-import { useCatalogs } from '../hooks/useCatalogs';
-import { useTheme } from '../providers/ThemeProvider';
-import api from '../services/api';
-import type { Role, User } from '../types';
 import { AuthLayout } from '~/components/layout/AuthLayout';
 import { Button } from '~/components/ui/Button';
+import WebDatePickerModal from '~/components/WebDatePickerModal';
+import { getColors } from '~/constants/colors';
 import { useAuth } from '~/hooks/useAuth';
+import { useCatalogs } from '~/hooks/useCatalogs';
+import { useTheme } from '~/providers/ThemeProvider';
 import api from '~/services/api';
 import type { Role, User } from '~/types';
 import { normalizeRole } from '~/types';
@@ -77,44 +74,39 @@ function registerErrors(fields: {
   readonly domicilio: string;
   readonly localidadId: number | null;
 }): string | null {
-  const { nombre, apellido, email, password, telefono, fechaNacimiento, sexo, domicilio, localidadId } = fields;
+  const {
+    nombre,
+    apellido,
+    email,
+    password,
+    telefono,
+    fechaNacimiento,
+    sexo,
+    domicilio,
+    localidadId,
+  } = fields;
 
   if (!email.trim()) return 'El email es obligatorio.';
-  if (!EMAIL_RE.test(email.trim())) return 'Ingresa un correo electrónico válido.';
+  if (!EMAIL_RE.test(email.trim()))
+    return 'Ingresa un correo electrónico válido.';
   if (!password) return 'La contraseña es obligatoria.';
-  if (password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (password.length < 6)
+    return 'La contraseña debe tener al menos 6 caracteres.';
   if (!telefono.trim()) return 'El teléfono es obligatorio.';
   const digits = telefono.replace(/\D/g, '');
   const cleanedPhone = telefono.trim().startsWith('+')
     ? digits.slice(0, 12)
     : digits.slice(0, 10);
-  if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12) return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
+  if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12)
+    return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
   if (!nombre.trim()) return 'El nombre es obligatorio.';
   if (!apellido.trim()) return 'El apellido paterno es obligatorio.';
   if (!fechaNacimiento.trim()) return 'La fecha de nacimiento es obligatoria.';
-  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(fechaNacimiento)) return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
+  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(fechaNacimiento))
+    return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
   if (!sexo) return 'Seleccioná un género.';
   if (!domicilio.trim()) return 'La dirección es obligatoria.';
   if (localidadId === null) return 'Seleccioná una localidad.';
-function registerErrors(
-  fields: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    password: string;
-    telefono: string;
-  },
-  passwordConfirm: string,
-): string | null {
-  const { nombre, apellido, email, password, telefono } = fields;
-  if (!nombre.trim() || !apellido.trim() || !email.trim() || !password) {
-    return 'Nombre, apellido, email y contraseña son obligatorios.';
-  }
-  if (!EMAIL_RE.test(email.trim())) return 'Email inválido.';
-  if (password.length < 6)
-    return 'La contraseña debe tener al menos 6 caracteres.';
-  if (password !== passwordConfirm) return 'Las contraseñas no coinciden.';
-  if (telefono && telefono.length < 7) return 'Número de teléfono inválido.';
   return null;
 }
 
@@ -181,10 +173,13 @@ export function LoginScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      const respData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      const respData = (
+        err as { response?: { data?: Record<string, unknown> } }
+      )?.response?.data;
       let msg = (err as Error)?.message ?? 'Error al iniciar sesión.';
       if (respData?.detail && typeof respData.detail === 'string') {
         msg = respData.detail;
+      }
       // ponytail: sanitizar — no exponer err.message crudo (puede filtrar infra)
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
@@ -446,7 +441,11 @@ export function LoginScreen() {
           ¿No tenés cuenta?{' '}
           <Link
             to="/register"
-            style={{ color: theme.brand, fontWeight: 600, textDecoration: 'none' }}
+            style={{
+              color: theme.brand,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
           >
             Crear cuenta
           </Link>
@@ -506,14 +505,20 @@ export function RegisterScreen() {
       email: email.trim(),
       password,
       nombre: nombre.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-      apellido_paterno: apellidoPaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-      apellido_materno: apellidoMaterno.trim() ? apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '') : null,
+      apellido_paterno: apellidoPaterno
+        .trim()
+        .replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+      apellido_materno: apellidoMaterno.trim()
+        ? apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '')
+        : null,
       telefono: telefono.trim().startsWith('+')
         ? telefono.replace(/\D/g, '').slice(0, 12)
         : telefono.replace(/\D/g, '').slice(0, 10),
       fecha_nacimiento: fechaNacimiento,
       sexo,
-      domicilio: domicilio.trim().replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+      domicilio: domicilio
+        .trim()
+        .replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
       fk_localidad: catalogs.localidadId,
       role: 'buyer',
     };
@@ -543,7 +548,9 @@ export function RegisterScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      const respData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      const respData = (
+        err as { response?: { data?: Record<string, unknown> } }
+      )?.response?.data;
       let msg = (err as Error)?.message ?? 'Error al registrarse.';
       if (respData?.detail && typeof respData.detail === 'string') {
         msg = respData.detail;
@@ -558,6 +565,7 @@ export function RegisterScreen() {
           }
         }
         if (fieldErrors.length > 0) msg = fieldErrors.join('\n');
+      }
       // ponytail: sanitizar — no exponer err.message crudo
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
@@ -749,7 +757,9 @@ export function RegisterScreen() {
               onFocus={() => setFocusedField('telefono')}
               onBlur={() => setFocusedField(null)}
             />
-            <span style={{ fontSize: 10, color: theme.muted, lineHeight: '1.2' }}>
+            <span
+              style={{ fontSize: 10, color: theme.muted, lineHeight: '1.2' }}
+            >
               Para números extranjeros inicia con + (ej. +1...)
             </span>
           </div>
@@ -850,9 +860,7 @@ export function RegisterScreen() {
                 onBlur={() => setFocusedField(null)}
               >
                 <option value="">
-                  {catalogs.isLoadingMunicipios
-                    ? 'Cargando...'
-                    : 'Seleccionar'}
+                  {catalogs.isLoadingMunicipios ? 'Cargando...' : 'Seleccionar'}
                 </option>
                 {catalogs.municipios.map((m) => (
                   <option key={m.id_municipio} value={m.id_municipio}>
@@ -976,7 +984,11 @@ export function RegisterScreen() {
           ¿Ya tenés cuenta?{' '}
           <Link
             to="/login"
-            style={{ color: theme.brand, fontWeight: 600, textDecoration: 'none' }}
+            style={{
+              color: theme.brand,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
           >
             Iniciar sesión
           </Link>
