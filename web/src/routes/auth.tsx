@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { AuthLayout } from '../components/layout/AuthLayout';
-import { Button } from '../components/ui/Button';
+import { getColors } from '../constants/colors';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import type { Role, User } from '../types';
@@ -394,7 +394,8 @@ export function RegisterScreen() {
   const navigate = useNavigate();
 
   const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
+  const [apellidoPaterno, setApellidoPaterno] = useState('');
+  const [apellidoMaterno, setApellidoMaterno] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -407,11 +408,12 @@ export function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const err = registerErrors(
-      { nombre, apellido, email, password, telefono },
+      { nombre, apellido: apellidoPaterno, email, password, telefono },
       passwordConfirm,
     );
     if (err) {
@@ -425,14 +427,14 @@ export function RegisterScreen() {
       email: email.trim(),
       password,
       nombre: nombre.trim(),
-      apellido_paterno: apellido.trim(),
-      apellido_materno: null,
+      apellido_paterno: apellidoPaterno.trim(),
+      apellido_materno: apellidoMaterno.trim() || null,
       telefono: telefono.trim() || null,
       fecha_nacimiento: fechaNacimiento || null,
       sexo: sexo || null,
       domicilio: domicilio.trim() || null,
       fk_localidad: localidad ? Number(localidad) : null,
-      role: 'comprador',
+      role: 'buyer',
     };
 
     try {
@@ -468,127 +470,200 @@ export function RegisterScreen() {
     }
   }
 
-  const inputClass =
-    'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-brand-ink placeholder:text-gray-400 focus:border-brand-red-coral focus:outline-none focus:ring-1 focus:ring-brand-red-coral dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500';
+  const theme = getColors(false);
+  const inputStyle = (field: string): React.CSSProperties => ({
+    width: '100%',
+    height: 44,
+    border: `1.5px solid ${focusedField === field ? theme.brand : theme.border}`,
+    borderRadius: 10,
+    padding: '0 14px',
+    fontSize: 15,
+    fontFamily: 'inherit',
+    background: theme.bg,
+    color: theme.fg,
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.15s',
+  });
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: theme.muted,
+  };
+
+  const fieldWrapperStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 5,
+  };
+
+  const btnBaseStyle: React.CSSProperties = {
+    height: 40,
+    padding: '0 18px',
+    borderRadius: 10,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  };
 
   return (
     <AuthLayout title="Crear cuenta">
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Nombre
-            </label>
+      <form className="flex flex-col gap-[18px]" onSubmit={handleSubmit}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}
+        >
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Nombre *</label>
             <input
               type="text"
               placeholder="Juan"
               autoComplete="given-name"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className={inputClass}
+              required
+              style={inputStyle('nombre')}
+              onFocus={() => setFocusedField('nombre')}
+              onBlur={() => setFocusedField(null)}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Apellido
-            </label>
+          <div style={fieldWrapperStyle}>
+            <label style={labelStyle}>Apellido Paterno *</label>
             <input
               type="text"
               placeholder="Pérez"
               autoComplete="family-name"
-              value={apellido}
-              onChange={(e) => setApellido(e.target.value)}
-              className={inputClass}
+              value={apellidoPaterno}
+              onChange={(e) => setApellidoPaterno(e.target.value)}
+              required
+              style={inputStyle('apellidoPaterno')}
+              onFocus={() => setFocusedField('apellidoPaterno')}
+              onBlur={() => setFocusedField(null)}
             />
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Email
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Apellido Materno</label>
           <input
-            type="email"
-            placeholder="tu@email.com"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputClass}
+            type="text"
+            placeholder="Opcional"
+            autoComplete="additional-name"
+            value={apellidoMaterno}
+            onChange={(e) => setApellidoMaterno(e.target.value)}
+            style={inputStyle('apellidoMaterno')}
+            onFocus={() => setFocusedField('apellidoMaterno')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        <div className="relative">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Contraseña
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 8 caracteres"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`${inputClass} w-full pr-10`}
-            />
-          </div>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Correo electrónico *</label>
+          <input
+            type="email"
+            placeholder="tu@correo.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={inputStyle('email')}
+            onFocus={() => setFocusedField('email')}
+            onBlur={() => setFocusedField(null)}
+          />
+        </div>
+
+        <div style={{ ...fieldWrapperStyle, position: 'relative' }}>
+          <label style={labelStyle}>Contraseña *</label>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Mínimo 6 caracteres"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            style={{ ...inputStyle('password'), paddingRight: 48 }}
+            onFocus={() => setFocusedField('password')}
+            onBlur={() => setFocusedField(null)}
+          />
           <button
             type="button"
-            className="absolute right-3 top-[34px] text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             onClick={() => setShowPassword((v) => !v)}
+            style={{
+              position: 'absolute',
+              right: 6,
+              top: 30,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: 10,
+              color: theme.muted,
+            }}
             tabIndex={-1}
           >
-            {showPassword ? 'Ocultar' : 'Mostrar'}
+            {showPassword ? '🙈' : '👁'}
           </button>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Confirmar contraseña
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Confirmar contraseña *</label>
           <input
             type="password"
             placeholder="Repetí la contraseña"
             autoComplete="new-password"
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            className={inputClass}
+            required
+            style={inputStyle('passwordConfirm')}
+            onFocus={() => setFocusedField('passwordConfirm')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Teléfono
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Teléfono *</label>
           <input
             type="tel"
-            placeholder="11 1234-5678"
+            placeholder="10 dígitos"
             autoComplete="tel"
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
-            className={inputClass}
+            required
+            style={inputStyle('telefono')}
+            onFocus={() => setFocusedField('telefono')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Fecha de nacimiento
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Fecha de nacimiento *</label>
           <input
             type="date"
-            className={inputClass}
             value={fechaNacimiento}
             onChange={(e) => setFechaNacimiento(e.target.value)}
+            required
+            style={inputStyle('fechaNacimiento')}
+            onFocus={() => setFocusedField('fechaNacimiento')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Sexo
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Género *</label>
           <select
-            className={inputClass}
             value={sexo}
             onChange={(e) => setSexo(e.target.value)}
+            required
+            style={inputStyle('sexo')}
           >
             <option value="">Seleccionar</option>
             <option value="M">Masculino</option>
@@ -597,54 +672,95 @@ export function RegisterScreen() {
           </select>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Domicilio
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>Dirección *</label>
           <input
             type="text"
-            placeholder="Calle 123"
+            placeholder="Calle, número, colonia"
             autoComplete="street-address"
             value={domicilio}
             onChange={(e) => setDomicilio(e.target.value)}
-            className={inputClass}
+            required
+            style={inputStyle('domicilio')}
+            onFocus={() => setFocusedField('domicilio')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Localidad (ID)
-          </label>
+        <div style={fieldWrapperStyle}>
+          <label style={labelStyle}>ID Localidad</label>
           <input
             type="number"
-            placeholder="1"
+            placeholder="Opcional"
             value={localidad}
             onChange={(e) => setLocalidad(e.target.value)}
-            className={inputClass}
+            style={inputStyle('localidad')}
+            onFocus={() => setFocusedField('localidad')}
+            onBlur={() => setFocusedField(null)}
           />
         </div>
 
-        {error && <p className="text-center text-sm text-red-500">{error}</p>}
+        {error && (
+          <p style={{ textAlign: 'center', fontSize: 14, color: errColor }}>
+            {error}
+          </p>
+        )}
 
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={loading}
-          className="w-full"
-        >
-          {loading ? 'Registrando…' : 'Registrarse'}
-        </Button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              ...btnBaseStyle,
+              background: loading ? `${coral}99` : coral,
+              color: '#fff',
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              flex: 1,
+              height: 44,
+              borderRadius: 12,
+              fontSize: 15,
+            }}
+          >
+            {loading ? (
+              <>
+                <span
+                  style={{
+                    width: 18,
+                    height: 18,
+                    border: '2.5px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.6s linear infinite',
+                    display: 'inline-block',
+                  }}
+                />
+                <span>Registrando…</span>
+              </>
+            ) : (
+              'Registrarse'
+            )}
+          </button>
+          <a
+            href="/login"
+            style={{
+              ...btnBaseStyle,
+              background: 'transparent',
+              border: `1.5px solid ${brand}`,
+              color: brand,
+              textDecoration: 'none',
+              height: 44,
+              borderRadius: 12,
+              fontSize: 15,
+              justifyContent: 'center',
+            }}
+          >
+            Cancelar
+          </a>
+        </div>
       </form>
 
-      <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        ¿Ya tienes cuenta?{' '}
-        <a
-          href="/login"
-          className="font-medium text-brand-red-coral hover:underline"
-        >
-          Inicia sesión
-        </a>
-      </p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AuthLayout>
   );
 }

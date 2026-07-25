@@ -19,6 +19,7 @@ import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserFormScreen from '@/screens/admin/UserFormScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -400,6 +401,7 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="UserForm" component={UserFormScreen} />
       <AdminStack.Screen name="CategoryTrash" component={CategoryTrashScreen} />
       <AdminStack.Screen name="UnitTrash" component={UnitTrashScreen} />
       <AdminStack.Screen

@@ -9,17 +9,22 @@ import React, {
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import DatePickerModal from '@/components/DatePickerModal';
+import RegistrationFormFields from '@/components/RegistrationFormFields';
 import Toast from '@/components/Toast';
 import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
 import EmptyState from '@/components/UserManagement/EmptyState';
@@ -27,14 +32,22 @@ import FilterBar from '@/components/UserManagement/FilterBar';
 import RoleDialog from '@/components/UserManagement/RoleDialog';
 import UserCard from '@/components/UserManagement/UserCard';
 import { colors } from '@/constants/colors';
+import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, RegisterRole } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
+import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
 const TRANSPARENT = 'transparent';
 const WHITE = '#FFFFFF';
+
+const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
+  { value: 'buyer', label: 'Cliente' },
+  { value: 'seller', label: 'Vendedor' },
+  { value: 'farmer', label: 'Agricultor' },
+];
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
@@ -101,9 +114,27 @@ export default function UserManagementScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const inputBg = isDark ? colors.admSurfaceD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
+  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+
+  // ── Tab state (Lista / Nuevo) ──
+  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [formServerError, setFormServerError] = useState('');
+  const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const form = useRegistrationForm({ initialRole: 'buyer' });
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // ── Search & filter state ──
   const [search, setSearch] = useState('');
@@ -253,6 +284,75 @@ export default function UserManagementScreen(): React.JSX.Element {
   const hideToast = useCallback(() => {
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
+
+  const switchToList = useCallback(() => {
+    setTab('list');
+    setFormErrorMessage(null);
+    setFormServerError('');
+    form.resetForm();
+  }, [form]);
+
+  const handleCreateUser = useCallback(async () => {
+    if (isSubmitting) return;
+    setFormErrorMessage(null);
+    setFormServerError('');
+
+    const validationError = validateRegistrationForm({
+      email: form.email,
+      password: form.password,
+      telefono: form.telefono,
+      nombre: form.nombre,
+      apellidoPaterno: form.apellidoPaterno,
+      fechaNacimiento: form.fechaNacimiento,
+      domicilio: form.domicilio,
+      localidadId: form.catalog.localidadId,
+    });
+
+    if (validationError) {
+      setFormErrorMessage(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        email: form.email.trim(),
+        password: form.password,
+        telefono: cleanPhoneNumber(form.telefono),
+        role: form.role,
+        nombre: form.nombre.trim(),
+        apellido_paterno: form.apellidoPaterno.trim(),
+        apellido_materno: form.apellidoMaterno.trim() || null,
+        fecha_nacimiento: form.fechaNacimiento,
+        sexo: form.sexo,
+        domicilio: form.domicilio.trim(),
+        fk_localidad: form.catalog.localidadId as number,
+      };
+
+      const endpoint =
+        form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
+
+      await api.post(endpoint, payload);
+
+      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      showToast('Usuario creado correctamente', 'success');
+      switchToList();
+    } catch (error) {
+      if (isMounted.current) {
+        const detail =
+          (error as { response?: { data?: { detail?: string } } })?.response
+            ?.data?.detail ??
+          (error as Error)?.message ??
+          'Error al crear el usuario.';
+        setFormServerError(detail);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsSubmitting(false);
+      }
+    }
+  }, [form, isSubmitting, queryClient, showToast, switchToList]);
 
   const openRoleModal = useCallback((targetUser: AdminUser) => {
     setRoleModalUser(targetUser);
@@ -489,136 +589,389 @@ export default function UserManagementScreen(): React.JSX.Element {
   }
 
   // ── Main render ──
+  const isFormActive = tab === 'form';
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* ═══ Header ═══ */}
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 4 }}>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
-          }}
-        >
-          Gestión de usuarios
-        </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 4,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
+          >
+            Gestión de usuarios
+          </Text>
+        </View>
       </View>
 
-      {/* ═══ User list ═══ */}
-      {isLoading ? (
-        <View style={{ flex: 1, alignItems: 'center', paddingTop: 60 }}>
-          <ActivityIndicator size="large" color={brand} />
+      {/* ═══ Segmented tab bar ═══ */}
+      <View
+        style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: isDark ? colors.admSegBgD : colors.admSegBgL,
+            borderRadius: 10,
+            padding: 3,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => {
+              if (!isFormActive) return;
+              switchToList();
+            }}
+            style={{
+              flex: 1,
+              paddingVertical: 8,
+              borderRadius: 8,
+              backgroundColor: isFormActive ? TRANSPARENT : surface,
+              alignItems: 'center',
+            }}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: isFormActive ? muted : fg,
+                letterSpacing: 0.01,
+              }}
+            >
+              Lista
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (isFormActive) return;
+              setTab('form');
+              setFormErrorMessage(null);
+              setFormServerError('');
+            }}
+            style={{
+              flex: 1,
+              paddingVertical: 8,
+              borderRadius: 8,
+              backgroundColor: isFormActive ? surface : TRANSPARENT,
+              alignItems: 'center',
+            }}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: isFormActive ? fg : muted,
+                letterSpacing: 0.01,
+              }}
+            >
+              Nuevo
+            </Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={paginated}
-          renderItem={renderUser}
-          keyExtractor={keyExtractor}
-          ListHeaderComponent={
-            <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 12 }}>
-              {/* Search + Filters card (like web) */}
-              <View
-                style={{
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  padding: 16,
-                }}
-              >
-                {/* Search */}
+      </View>
+
+      {/* ═══ Content ═══ */}
+      {!isFormActive ? (
+        /* ── List tab ── */
+        isLoading ? (
+          <View style={{ flex: 1, alignItems: 'center', paddingTop: 60 }}>
+            <ActivityIndicator size="large" color={brand} />
+          </View>
+        ) : (
+          <FlatList
+            data={paginated}
+            renderItem={renderUser}
+            keyExtractor={keyExtractor}
+            ListHeaderComponent={
+              <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 12 }}>
+                {/* Search + Filters card */}
                 <View
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: inputBg,
-                    borderRadius: 10,
+                    backgroundColor: surface,
+                    borderRadius: 16,
                     borderWidth: 1,
                     borderColor: border,
-                    paddingHorizontal: 14,
-                    height: 44,
-                    marginBottom: 14,
+                    padding: 16,
                   }}
                 >
-                  <MaterialCommunityIcons
-                    name="magnify"
-                    size={20}
-                    color={muted}
-                  />
-                  <TextInput
+                  <View
                     style={{
-                      flex: 1,
-                      marginLeft: 8,
-                      fontSize: 15,
-                      color: fg,
-                      paddingVertical: 0,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: inputBg,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: border,
+                      paddingHorizontal: 14,
+                      height: 44,
+                      marginBottom: 14,
                     }}
-                    placeholder="Buscar por nombre o correo..."
-                    placeholderTextColor={muted}
-                    value={search}
-                    onChangeText={setSearch}
-                    autoCapitalize="none"
-                    autoCorrect={false}
+                  >
+                    <MaterialCommunityIcons
+                      name="magnify"
+                      size={20}
+                      color={muted}
+                    />
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        marginLeft: 8,
+                        fontSize: 15,
+                        color: fg,
+                        paddingVertical: 0,
+                      }}
+                      placeholder="Buscar por nombre o correo..."
+                      placeholderTextColor={muted}
+                      value={search}
+                      onChangeText={setSearch}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    {search.length > 0 && (
+                      <Pressable
+                        onPress={() => setSearch('')}
+                        style={{ padding: 4 }}
+                        hitSlop={6}
+                      >
+                        <MaterialCommunityIcons
+                          name="close-circle"
+                          size={18}
+                          color={muted}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  <FilterBar
+                    roleFilter={roleFilter}
+                    statusFilter={statusFilter}
+                    onRoleFilterChange={setRoleFilter}
+                    onStatusFilterChange={setStatusFilter}
                   />
-                  {search.length > 0 && (
-                    <Pressable
-                      onPress={() => setSearch('')}
-                      style={{ padding: 4 }}
-                      hitSlop={6}
-                    >
-                      <MaterialCommunityIcons
-                        name="close-circle"
-                        size={18}
-                        color={muted}
-                      />
-                    </Pressable>
-                  )}
                 </View>
 
-                {/* Filters */}
-                <FilterBar
-                  roleFilter={roleFilter}
-                  statusFilter={statusFilter}
-                  onRoleFilterChange={setRoleFilter}
-                  onStatusFilterChange={setStatusFilter}
-                />
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: fg,
+                    paddingBottom: 4,
+                  }}
+                >
+                  {filtered.length} usuarios
+                </Text>
               </View>
+            }
+            ListEmptyComponent={
+              <EmptyState
+                hasFilters={!!(search || roleFilter || statusFilter)}
+              />
+            }
+            ListFooterComponent={renderPaginator}
+            contentContainerStyle={{
+              padding: 20,
+              paddingBottom: 40,
+              flexGrow: 1,
+              gap: 10,
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={() => void refetch()}
+                tintColor={brand}
+                colors={[brand]}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        )
+      ) : (
+        /* ── Form tab (Nuevo) ── */
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={{ padding: 20, gap: 18 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+              Nuevo usuario
+            </Text>
 
-              {/* Counter (like web) */}
-              <Text
+            {formErrorMessage || formServerError ? (
+              <View
                 style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: fg,
-                  paddingBottom: 4,
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  backgroundColor: coralBg,
+                  borderRadius: 12,
+                  padding: 12,
                 }}
               >
-                {filtered.length} usuarios
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={18}
+                  color={colors.brandRedCoral}
+                />
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    lineHeight: 20,
+                    color: colors.brandRedCoral,
+                  }}
+                >
+                  {formServerError || formErrorMessage}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Role selector */}
+            <View style={{ gap: 6 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  letterSpacing: 0.08,
+                  textTransform: 'uppercase',
+                  color: muted,
+                }}
+              >
+                Rol
               </Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {ROLE_OPTIONS.map((opt) => {
+                  const isActive = form.role === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      activeOpacity={0.7}
+                      onPress={() => form.setRole(opt.value)}
+                      disabled={isSubmitting}
+                      style={{
+                        flex: 1,
+                        height: 46,
+                        borderRadius: 12,
+                        borderWidth: 1.5,
+                        borderColor: isActive ? brand : border,
+                        backgroundColor: isActive ? accentBg : surface,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: '600',
+                          color: isActive ? brand : muted,
+                        }}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          }
-          ListEmptyComponent={
-            <EmptyState hasFilters={!!(search || roleFilter || statusFilter)} />
-          }
-          ListFooterComponent={renderPaginator}
-          contentContainerStyle={{
-            padding: 20,
-            paddingBottom: 40,
-            flexGrow: 1,
-            gap: 10,
-          }}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={() => void refetch()}
-              tintColor={brand}
-              colors={[brand]}
+
+            <RegistrationFormFields
+              form={form}
+              t={{
+                surface,
+                fg,
+                muted,
+                border,
+                brand,
+                accentBg,
+                segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
+              }}
+              setErrorMessage={setFormErrorMessage}
+              onOpenDatePicker={() => setIsDatePickerVisible(true)}
+              disabled={isSubmitting}
             />
-          }
-          showsVerticalScrollIndicator={false}
-        />
+          </ScrollView>
+
+          <View
+            style={{
+              padding: 20,
+              gap: 10,
+              borderTopWidth: 1,
+              borderTopColor: border,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => void handleCreateUser()}
+              disabled={isSubmitting}
+              activeOpacity={0.8}
+              style={{
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: colors.brandRedCoral,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: isSubmitting ? 0.6 : 1,
+              }}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Guardar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={switchToList}
+              disabled={isSubmitting}
+              activeOpacity={0.8}
+              style={{
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       )}
+
+      {/* ═══ Date Picker ═══ */}
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={form.setFechaNacimiento}
+        initialDate={form.fechaNacimiento}
+      />
 
       {/* ═══ Role Change Modal ═══ */}
       <RoleDialog

@@ -1,21 +1,34 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { SegmentedButtons, TextInput } from 'react-native-paper';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import type { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
 
+interface FormColors {
+  readonly muted: string;
+  readonly border: string;
+  readonly surface: string;
+  readonly fg: string;
+  readonly brand: string;
+  readonly accentBg: string;
+  readonly segBg: string;
+}
+
 interface RegistrationFormFieldsProps {
   readonly form: ReturnType<typeof useRegistrationForm>;
+  readonly t: FormColors;
   readonly setErrorMessage: (msg: string | null) => void;
   readonly onOpenDatePicker: () => void;
+  readonly disabled?: boolean;
 }
 
 export default function RegistrationFormFields({
   form,
+  t,
   setErrorMessage,
   onOpenDatePicker,
+  disabled = false,
 }: RegistrationFormFieldsProps): React.JSX.Element {
   const {
     email,
@@ -39,104 +52,167 @@ export default function RegistrationFormFields({
     catalog,
   } = form;
 
+  const labelStyle = {
+    marginBottom: 6,
+    marginTop: 16,
+    fontSize: 12,
+    fontWeight: '600' as const,
+    letterSpacing: 0.08,
+    textTransform: 'uppercase' as const,
+    color: t.muted,
+  };
+
+  const inputStyle = {
+    borderWidth: 1.5,
+    borderColor: t.border,
+    borderRadius: 12,
+    backgroundColor: t.surface,
+    color: t.fg,
+    fontSize: 15,
+    paddingHorizontal: 14,
+    height: 46,
+  };
+
+  const placeholderColor = t.muted;
+
+  const sexoOptions = [
+    { value: 'M' as const, label: 'Masculino' },
+    { value: 'F' as const, label: 'Femenino' },
+    { value: 'O' as const, label: 'Otro' },
+  ];
+
   return (
     <View>
+      <Text style={labelStyle}>Correo electrónico *</Text>
       <TextInput
-        mode="outlined"
-        label="Correo electrónico *"
+        style={inputStyle}
+        placeholder="ejemplo@correo.com"
+        placeholderTextColor={placeholderColor}
         autoCapitalize="none"
         keyboardType="email-address"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="ejemplo@correo.com"
         value={email}
         onChangeText={setEmail}
+        editable={!disabled}
       />
 
+      <Text style={labelStyle}>Contraseña *</Text>
       <TextInput
-        mode="outlined"
-        label="Contraseña (mínimo 6 caracteres) *"
-        className="mb-4 bg-white dark:bg-gray-900"
-        placeholder="••••••••"
+        style={inputStyle}
+        placeholder="Mínimo 6 caracteres"
+        placeholderTextColor={placeholderColor}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        editable={!disabled}
       />
 
+      <Text style={labelStyle}>Nombre *</Text>
       <TextInput
-        mode="outlined"
-        label="Nombre *"
-        className="mb-4 bg-white dark:bg-gray-900"
+        style={inputStyle}
         placeholder="Nombre(s)"
+        placeholderTextColor={placeholderColor}
         value={nombre}
         onChangeText={(val) => setNombre(cleanName(val))}
+        editable={!disabled}
       />
 
+      <Text style={labelStyle}>Apellido Paterno *</Text>
       <TextInput
-        mode="outlined"
-        label="Apellido Paterno *"
-        className="mb-4 bg-white dark:bg-gray-900"
+        style={inputStyle}
         placeholder="Apellido Paterno"
+        placeholderTextColor={placeholderColor}
         value={apellidoPaterno}
         onChangeText={(val) => setApellidoPaterno(cleanName(val))}
+        editable={!disabled}
       />
 
+      <Text style={labelStyle}>Apellido Materno</Text>
       <TextInput
-        mode="outlined"
-        label="Apellido Materno"
-        className="mb-4 bg-white dark:bg-gray-900"
+        style={inputStyle}
         placeholder="Apellido Materno"
+        placeholderTextColor={placeholderColor}
         value={apellidoMaterno}
         onChangeText={(val) => setApellidoMaterno(cleanName(val))}
+        editable={!disabled}
       />
 
+      <Text style={labelStyle}>Teléfono *</Text>
       <TextInput
-        mode="outlined"
-        label="Teléfono *"
-        className="mb-1 bg-white dark:bg-gray-900"
+        style={inputStyle}
         placeholder="10 dígitos"
+        placeholderTextColor={placeholderColor}
         keyboardType="phone-pad"
         value={telefono}
         onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
+        editable={!disabled}
       />
-      <Text className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+      <Text style={{ marginTop: 4, fontSize: 12, color: t.muted }}>
         Para números extranjeros inicia con + (ej. +1...)
       </Text>
 
-      <TouchableOpacity testID="birthdate-pressable" onPress={onOpenDatePicker}>
+      <TouchableOpacity
+        testID="birthdate-pressable"
+        onPress={onOpenDatePicker}
+        disabled={disabled}
+        activeOpacity={0.7}
+      >
+        <Text style={labelStyle}>Fecha de Nacimiento *</Text>
         <View pointerEvents="none">
           <TextInput
-            mode="outlined"
-            label="Fecha de Nacimiento *"
-            className="mb-4 bg-white dark:bg-gray-900"
+            style={inputStyle}
             placeholder="AAAA-MM-DD"
+            placeholderTextColor={placeholderColor}
             value={fechaNacimiento}
             showSoftInputOnFocus={false}
             onChangeText={setFechaNacimiento}
+            editable={false}
           />
         </View>
       </TouchableOpacity>
 
-      <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-        Género *
-      </Text>
-      <SegmentedButtons
-        value={sexo}
-        onValueChange={setSexo}
-        buttons={[
-          { value: 'M', label: 'Masculino' },
-          { value: 'F', label: 'Femenino' },
-          { value: 'O', label: 'Otro' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
+      <Text style={labelStyle}>Género *</Text>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {sexoOptions.map((opt) => {
+          const isActive = sexo === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              activeOpacity={0.7}
+              onPress={() => setSexo(opt.value)}
+              disabled={disabled}
+              style={{
+                flex: 1,
+                height: 40,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: isActive ? t.brand : t.border,
+                backgroundColor: isActive ? t.accentBg : t.segBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: isActive ? t.brand : t.muted,
+                }}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
+      <Text style={labelStyle}>Dirección *</Text>
       <TextInput
-        mode="outlined"
-        label="Dirección *"
-        className="mb-4 bg-white dark:bg-gray-900"
+        style={inputStyle}
         placeholder="Calle, número, colonia"
+        placeholderTextColor={placeholderColor}
         value={domicilio}
         onChangeText={(val) => setDomicilio(cleanAddress(val))}
+        editable={!disabled}
       />
 
       <CatalogSelector

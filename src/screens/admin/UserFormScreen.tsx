@@ -8,29 +8,77 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
-import { BRAND_GREEN_FOREST } from '@/constants/brandColors';
 import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
-import { useAuth } from '@/store/AuthContext';
+import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import type { RegisterRole } from '@/types';
 import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
-const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
+const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
+  { value: 'buyer', label: 'Cliente' },
+  { value: 'seller', label: 'Vendedor' },
+  { value: 'farmer', label: 'Agricultor' },
+];
 
-export default function RegisterScreen(): React.JSX.Element {
-  const { register } = useAuth();
+function FormHeader({
+  isDark,
+  onBack,
+}: {
+  readonly isDark: boolean;
+  readonly onBack: () => void;
+}): React.JSX.Element {
+  const fg = isDark ? colors.admFgD : colors.admFgL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+
+  return (
+    <View
+      style={{
+        paddingHorizontal: 20,
+        paddingTop: 60,
+        paddingBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      <Pressable
+        onPress={onBack}
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.6 : 1,
+        })}
+        hitSlop={8}
+      >
+        <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
+      </Pressable>
+      <View>
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: '700',
+            letterSpacing: -0.02,
+            color: fg,
+          }}
+        >
+          Nuevo usuario
+        </Text>
+        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+          Completa los datos para crear un nuevo usuario
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+export default function UserFormScreen(): React.JSX.Element {
   const navigation = useNavigation();
-  const netInfo = useNetInfo();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const isMounted = useRef(true);
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -39,12 +87,16 @@ export default function RegisterScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const queryClient = useQueryClient();
 
-  const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
+  const form = useRegistrationForm({ initialRole: 'buyer' });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [serverError, setServerError] = useState('');
+
+  const isMounted = useRef(true);
 
   useEffect(() => {
     isMounted.current = true;
@@ -53,14 +105,10 @@ export default function RegisterScreen(): React.JSX.Element {
     };
   }, []);
 
-  async function handleRegister() {
+  async function handleSubmit() {
     if (isSubmitting) return;
     setErrorMessage(null);
-
-    if (netInfo.isConnected === false) {
-      setErrorMessage('Sin conexión a Internet.');
-      return;
-    }
+    setServerError('');
 
     const validationError = validateRegistrationForm({
       email: form.email,
@@ -85,7 +133,7 @@ export default function RegisterScreen(): React.JSX.Element {
         email: form.email.trim(),
         password: form.password,
         telefono: cleanPhoneNumber(form.telefono),
-        role: DEFAULT_REGISTER_ROLE,
+        role: form.role,
         nombre: form.nombre.trim(),
         apellido_paterno: form.apellidoPaterno.trim(),
         apellido_materno: form.apellidoMaterno.trim() || null,
@@ -95,16 +143,22 @@ export default function RegisterScreen(): React.JSX.Element {
         fk_localidad: form.catalog.localidadId as number,
       };
 
-      await register(payload);
+      const endpoint =
+        form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
+
+      await api.post(endpoint, payload);
+
+      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      navigation.goBack();
     } catch (error) {
       if (isMounted.current) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Error al registrar usuario.',
-        );
+        const detail =
+          (error as { response?: { data?: { detail?: string } } })?.response
+            ?.data?.detail ??
+          (error as Error)?.message ??
+          'Error al crear el usuario.';
+        setServerError(detail);
       }
-      Sentry.captureException(error);
     } finally {
       if (isMounted.current) {
         setIsSubmitting(false);
@@ -116,41 +170,7 @@ export default function RegisterScreen(): React.JSX.Element {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 60,
-          paddingBottom: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-          })}
-          hitSlop={8}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
-        </Pressable>
-        <View>
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: '700',
-              letterSpacing: -0.02,
-              color: fg,
-            }}
-          >
-            Crear cuenta
-          </Text>
-          <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
-            Completa los siguientes datos para registrarte.
-          </Text>
-        </View>
-      </View>
+      <FormHeader isDark={isDark} onBack={() => navigation.goBack()} />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -166,6 +186,50 @@ export default function RegisterScreen(): React.JSX.Element {
             padding: 20,
           }}
         >
+          {/* ── Role selector ──────────────────────────── */}
+          <Text
+            style={{
+              marginBottom: 6,
+              fontSize: 14,
+              fontWeight: '500',
+              color: fg,
+            }}
+          >
+            Rol *
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {ROLE_OPTIONS.map((opt) => {
+              const isActive = form.role === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => form.setRole(opt.value)}
+                  disabled={isSubmitting}
+                  style={{
+                    flex: 1,
+                    height: 40,
+                    borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: isActive ? brand : border,
+                    backgroundColor: isActive ? accentBg : segBg,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: isActive ? brand : muted,
+                    }}
+                  >
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <RegistrationFormFields
             form={form}
             t={{ muted, border, surface, fg, brand, accentBg, segBg }}
@@ -174,6 +238,7 @@ export default function RegisterScreen(): React.JSX.Element {
             disabled={isSubmitting}
           />
 
+          {/* ── Error messages ──────────────────────────── */}
           {errorMessage ? (
             <View
               style={{
@@ -193,9 +258,29 @@ export default function RegisterScreen(): React.JSX.Element {
             </View>
           ) : null}
 
+          {serverError ? (
+            <View
+              style={{
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle"
+                size={16}
+                color={errorColor}
+              />
+              <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
+                {serverError}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* ── Actions ──────────────────────────────────── */}
           <View style={{ marginTop: 24, gap: 10 }}>
             <Pressable
-              onPress={() => void handleRegister()}
+              onPress={() => void handleSubmit()}
               disabled={isSubmitting}
               style={{
                 height: 50,
@@ -218,7 +303,7 @@ export default function RegisterScreen(): React.JSX.Element {
                   color: colors.iconWhite,
                 }}
               >
-                Registrarse
+                Guardar
               </Text>
             </Pressable>
 
@@ -234,15 +319,7 @@ export default function RegisterScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
-                ¿Ya tienes cuenta?{' '}
-                <Text
-                  style={{
-                    color: BRAND_GREEN_FOREST,
-                    fontWeight: '700',
-                  }}
-                >
-                  Inicia sesión
-                </Text>
+                Cancelar
               </Text>
             </Pressable>
           </View>

@@ -11,6 +11,8 @@ import { Button, Dialog, Portal } from 'react-native-paper';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
 import type { Localidad, Municipio } from '@/types';
 
+const DIALOG_MAX_HEIGHT = 400;
+
 interface CatalogSelectorProps {
   readonly selectedMunicipioId: number | null;
   readonly selectedMunicipioNombre: string;
@@ -204,12 +206,14 @@ export default function CatalogSelector({
         <Dialog
           visible={showMunicipioDialog}
           onDismiss={() => setShowMunicipioDialog(false)}
+          style={{ maxHeight: DIALOG_MAX_HEIGHT }}
         >
           <Dialog.Title>Seleccionar Municipio</Dialog.Title>
           <Dialog.Content>
             <FlatList
               data={municipios}
               keyExtractor={(item) => String(item.id_municipio)}
+              style={{ maxHeight: 300 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
@@ -237,12 +241,14 @@ export default function CatalogSelector({
         <Dialog
           visible={showLocalidadDialog}
           onDismiss={() => setShowLocalidadDialog(false)}
+          style={{ maxHeight: DIALOG_MAX_HEIGHT }}
         >
           <Dialog.Title>Seleccionar Localidad</Dialog.Title>
           <Dialog.Content>
             <FlatList
               data={localidades}
               keyExtractor={(item) => String(item.id_localidad)}
+              style={{ maxHeight: 300 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
