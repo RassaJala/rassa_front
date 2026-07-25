@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -39,7 +39,12 @@ export default function DatePickerModal({
     [onSelectDate, onClose],
   );
 
-  if (!visible) return null;
+  if (!visible) {
+    // On Android, keep mounted with hidden container to prevent
+    // "Unable to add window" crash on rapid show/hide of the native DialogFragment
+    if (Platform.OS === 'android') return <View />;
+    return null;
+  }
 
   return (
     <DateTimePicker

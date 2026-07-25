@@ -2,9 +2,11 @@
 
 import React from 'react';
 
+import { useNetInfo } from '@react-native-community/netinfo';
 import { render } from '@testing-library/react-native';
 
 import ProfileView from '@/screens/common/profile/ProfileView';
+import { validateProfileEdit } from '@/utils/validation';
 
 // ── Mock Animated ──────────────────────────────────────
 const emptyAnimation = { start: () => {}, stop: () => {}, reset: () => {} };
@@ -49,13 +51,28 @@ jest.mock('react-native/Libraries/Animated/Animated', () => {
 });
 
 // ── Mock dependencies ──────────────────────────────────
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(),
+  fetch: jest.fn(),
+  addListener: jest.fn(),
+  removeListeners: jest.fn(),
+}));
+
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: () => ({ logout: jest.fn() }),
+}));
+
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
-jest.mock('@/utils/validation', () => ({
-  formatPhoneNumber: (val: string) => val,
-}));
+jest.mock('@/utils/validation', () => {
+  const real = jest.requireActual('@/utils/validation') as typeof import('@/utils/validation');
+  return {
+    ...real,
+    formatPhoneNumber: (val: string) => val,
+  };
+});
 
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light' }),
@@ -65,6 +82,13 @@ jest.mock('@/utils/labels', () => ({
   getGenderLabel: (val?: string) => val ?? 'No especificado',
   getRoleLabel: (val?: string) => val ?? 'Desconocido',
 }));
+
+const mockUseNetInfo = useNetInfo as jest.Mock;
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseNetInfo.mockReturnValue({ isConnected: true });
+});
 
 // ── Fixtures ───────────────────────────────────────────
 const mockUser = {
@@ -88,80 +112,64 @@ const mockUser = {
 
 // ── validateProfileEdit ────────────────────────────────
 describe('validateProfileEdit', () => {
-  const validate = (
-    nombre: string,
-    apellidoPaterno: string,
-    rawTelefono: string,
-    fechaNacimiento: string,
-    domicilio: string,
-    localidadId: number | null,
-  ): string | null => {
-    if (
-      !nombre.trim() ||
-      !apellidoPaterno.trim() ||
-      !rawTelefono ||
-      !fechaNacimiento.trim() ||
-      !domicilio.trim() ||
-      localidadId === null
-    ) {
-      return 'Por favor, completa todos los campos obligatorios.';
-    }
-    return null;
-  };
-
   it('retorna null cuando todos los campos son válidos', () => {
     expect(
-      validate('Admin', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
     ).toBeNull();
   });
 
-  it('retorna error cuando nombre está vacío', () => {
+  it('retorna error genérico cuando nombre está vacío (primer filtro de campos requeridos)', () => {
     expect(
-      validate('', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit('', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
-  it('retorna error cuando apellidoPaterno está vacío', () => {
+  it('retorna error genérico cuando apellidoPaterno está vacío (primer filtro de campos requeridos)', () => {
     expect(
-      validate('Admin', '', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit('Admin', '', '5551234567', '1990-01-15', 'Calle 123', 1),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando teléfono está vacío', () => {
-    expect(validate('Admin', 'Sistema', '', '1990-01-15', 'Calle 123', 1)).toBe(
+    expect(validateProfileEdit('Admin', 'Sistema', '', '1990-01-15', 'Calle 123', 1)).toBe(
       'Por favor, completa todos los campos obligatorios.',
     );
   });
 
   it('retorna error cuando fecha de nacimiento está vacía', () => {
-    expect(validate('Admin', 'Sistema', '5551234567', '', 'Calle 123', 1)).toBe(
+    expect(validateProfileEdit('Admin', 'Sistema', '5551234567', '', 'Calle 123', 1)).toBe(
       'Por favor, completa todos los campos obligatorios.',
     );
   });
 
   it('retorna error cuando domicilio está vacío', () => {
     expect(
-      validate('Admin', 'Sistema', '5551234567', '1990-01-15', '', 1),
+      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', '', 1),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
   it('retorna error cuando localidadId es null', () => {
     expect(
-      validate(
-        'Admin',
-        'Sistema',
-        '5551234567',
-        '1990-01-15',
-        'Calle 123',
-        null,
-      ),
+      validateProfileEdit('Admin', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', null),
     ).toBe('Por favor, completa todos los campos obligatorios.');
   });
 
-  it('retorna error con espacios en blanco en campos requeridos', () => {
+  it('retorna error genérico con espacios en blanco en nombre (primer filtro)', () => {
     expect(
-      validate('   ', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
+      validateProfileEdit('   ', 'Sistema', '5551234567', '1990-01-15', 'Calle 123', 1),
     ).toBe('Por favor, completa todos los campos obligatorios.');
+  });
+
+  it('retorna error cuando teléfono no tiene 10 dígitos', () => {
+    expect(
+      validateProfileEdit('Admin', 'Sistema', '555', '1990-01-15', 'Calle 123', 1),
+    ).toBe('El teléfono debe tener exactamente 10 dígitos.');
+  });
+
+  it('retorna error cuando la fecha es inválida', () => {
+    expect(
+      validateProfileEdit('Admin', 'Sistema', '5551234567', 'invalid', 'Calle 123', 1),
+    ).toBe('La fecha de nacimiento debe tener el formato AAAA-MM-DD.');
   });
 });
 

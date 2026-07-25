@@ -1,72 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Button,
-  Dialog,
-  Portal,
-  SegmentedButtons,
-  TextInput,
-} from 'react-native-paper';
+import { useEffect, useRef, useState } from 'react';
+import { Text, View } from 'react-native';
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 
 import { useCatalogs } from '@/hooks/useCatalogs';
 import { useAuth } from '@/store/AuthContext';
 import type { User } from '@/types';
-import { getRoleLabel } from '@/utils/labels';
-import {
-  cleanAddress,
-  cleanName,
-  cleanPhoneNumber,
-  formatPhoneNumber,
-  validateBirthdate,
-  validateName,
-  validatePhone,
-} from '@/utils/validation';
+import { cleanPhoneNumber, formatPhoneNumber, validateProfileEdit } from '@/utils/validation';
 
+import CatalogDialogs from './CatalogDialogs';
+import EditFormBody from './EditFormBody';
+import FeedbackBanner from './FeedbackBanner';
+import ProfileHeader from './ProfileHeader';
 import { useProfileColors } from './profileColors';
-
-// ── Validation ──────────────────────────────────────────
-function validateProfileEdit(
-  nombre: string,
-  apellidoPaterno: string,
-  rawTelefono: string,
-  fechaNacimiento: string,
-  domicilio: string,
-  localidadId: number | null,
-): string | null {
-  if (
-    !nombre.trim() ||
-    !apellidoPaterno.trim() ||
-    !rawTelefono ||
-    !fechaNacimiento.trim() ||
-    !domicilio.trim() ||
-    localidadId === null
-  ) {
-    return 'Por favor, completa todos los campos obligatorios.';
-  }
-
-  const nameErr = validateName(nombre, 'nombre');
-  if (nameErr) return nameErr;
-
-  const lastNameErr = validateName(apellidoPaterno, 'apellido paterno');
-  if (lastNameErr) return lastNameErr;
-
-  const phoneErr = validatePhone(rawTelefono);
-  if (phoneErr) return phoneErr;
-
-  const birthdateErr = validateBirthdate(fechaNacimiento);
-  if (birthdateErr) return birthdateErr;
-
-  return null;
-}
 
 // ── Props ───────────────────────────────────────────────
 interface ProfileEditFormProps {
@@ -92,21 +38,11 @@ export default function ProfileEditForm({
 
   // ── Form state ─────────────────────────────────────
   const [nombre, setNombre] = useState(user?.nombre ?? '');
-  const [apellidoPaterno, setApellidoPaterno] = useState(
-    user?.apellido_paterno ?? '',
-  );
-  const [apellidoMaterno, setApellidoMaterno] = useState(
-    user?.apellido_materno ?? '',
-  );
-  const [telefono, setTelefono] = useState(
-    formatPhoneNumber(user?.telefono ?? ''),
-  );
-  const [fechaNacimiento, setFechaNacimiento] = useState(
-    user?.fecha_nacimiento ?? '',
-  );
-  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>(
-    (user?.genero as 'M' | 'F' | 'O') ?? 'M',
-  );
+  const [apellidoPaterno, setApellidoPaterno] = useState(user?.apellido_paterno ?? '');
+  const [apellidoMaterno, setApellidoMaterno] = useState(user?.apellido_materno ?? '');
+  const [telefono, setTelefono] = useState(formatPhoneNumber(user?.telefono ?? ''));
+  const [fechaNacimiento, setFechaNacimiento] = useState(user?.fecha_nacimiento ?? '');
+  const [sexo, setSexo] = useState<'M' | 'F' | 'O'>((user?.genero as 'M' | 'F' | 'O') ?? 'M');
   const [domicilio, setDomicilio] = useState(user?.direccion ?? '');
 
   const catalog = useCatalogs(
@@ -122,41 +58,19 @@ export default function ProfileEditForm({
   const [showMunicipioDialog, setShowMunicipioDialog] = useState(false);
   const [showLocalidadDialog, setShowLocalidadDialog] = useState(false);
 
-  const locationFields = {
-    selectedMunicipioId: catalog.selectedMunicipioId,
-    selectedMunicipioNombre: catalog.selectedMunicipioNombre,
-    localidadId: catalog.localidadId,
-    localidadNombre: catalog.localidadNombre,
-    municipios: catalog.municipios,
-    localidades: catalog.localidades,
-    isLoadingMunicipios: catalog.isLoadingMunicipios,
-    isLoadingLocalidades: catalog.isLoadingLocalidades,
-    errorMunicipios: catalog.errorMunicipios,
-    errorLocalidades: catalog.errorLocalidades,
-    refetchMunicipios: catalog.refetchMunicipios,
-    refetchLocalidades: catalog.refetchLocalidades,
-    handleSelectMunicipio: catalog.handleSelectMunicipio,
-    handleSelectLocalidad: catalog.handleSelectLocalidad,
-  };
-
   useEffect(() => {
     isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
+    return () => { isMounted.current = false; };
   }, []);
 
-  // Expose fechaNacimiento setter to parent (for native date picker)
   useEffect(() => {
     registerDatePicked(setFechaNacimiento);
   }, [registerDatePicked]);
 
-  // Sync state if user data loads late
-  const syncLocalidadId = catalog.setLocalidadId;
-  const syncLocalidadNombre = catalog.setLocalidadNombre;
-
+  const prevUserRef = useRef(user);
   useEffect(() => {
-    if (user) {
+    if (user && user !== prevUserRef.current) {
+      prevUserRef.current = user;
       setNombre(user.nombre ?? '');
       setApellidoPaterno(user.apellido_paterno ?? '');
       setApellidoMaterno(user.apellido_materno ?? '');
@@ -165,11 +79,14 @@ export default function ProfileEditForm({
       setSexo((user.genero as 'M' | 'F' | 'O') ?? 'M');
       setDomicilio(user.direccion ?? '');
       if (user.localidad) {
-        syncLocalidadId(user.localidad);
-        syncLocalidadNombre(user.localidad_nombre ?? '');
+        catalog.setLocalidadId(user.localidad);
+        catalog.setLocalidadNombre(user.localidad_nombre ?? '');
       }
     }
-  }, [user, syncLocalidadId, syncLocalidadNombre]);
+    // Only re-sync when the user object identity changes (e.g. after save).
+    // `catalog` reference changes every render and must NOT be a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // ── Handlers ───────────────────────────────────────
   async function handleUpdateProfile(): Promise<void> {
@@ -184,12 +101,7 @@ export default function ProfileEditForm({
 
     const rawTelefono = cleanPhoneNumber(telefono);
     const validationError = validateProfileEdit(
-      nombre,
-      apellidoPaterno,
-      rawTelefono,
-      fechaNacimiento,
-      domicilio,
-      catalog.localidadId,
+      nombre, apellidoPaterno, rawTelefono, fechaNacimiento, domicilio, catalog.localidadId,
     );
 
     if (validationError) {
@@ -200,7 +112,7 @@ export default function ProfileEditForm({
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      await updateProfile({
         nombre: nombre.trim(),
         apellido_paterno: apellidoPaterno.trim(),
         apellido_materno: apellidoMaterno.trim() || null,
@@ -209,24 +121,16 @@ export default function ProfileEditForm({
         sexo,
         domicilio: domicilio.trim(),
         fk_localidad: catalog.localidadId ?? null,
-      };
-
-      await updateProfile(payload);
+      });
       if (isMounted.current) {
         onUpdateSuccess('Perfil actualizado exitosamente.');
       }
     } catch (error) {
       if (isMounted.current) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Error al actualizar perfil.',
-        );
+        setErrorMessage(error instanceof Error ? error.message : 'Error al actualizar perfil.');
       }
     } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
+      if (isMounted.current) setIsSubmitting(false);
     }
   }
 
@@ -236,221 +140,18 @@ export default function ProfileEditForm({
     onCancel();
   }
 
-  // ── Render feedback ─────────────────────────────────
-  function renderFeedback(): React.JSX.Element | null {
-    return (
-      <>
-        {successMessage ? (
-          <View
-            style={{
-              marginBottom: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.brand,
-              backgroundColor: c.accentBg,
-              padding: 14,
-            }}
-          >
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: 14,
-                fontWeight: '600',
-                color: c.brand,
-              }}
-            >
-              {successMessage}
-            </Text>
-          </View>
-        ) : null}
-        {errorMessage ? (
-          <View
-            style={{
-              marginBottom: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.errorColor,
-              backgroundColor: c.errorBg,
-              padding: 14,
-            }}
-          >
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: 14,
-                fontWeight: '600',
-                color: c.errorColor,
-              }}
-            >
-              {errorMessage}
-            </Text>
-          </View>
-        ) : null}
-      </>
-    );
-  }
-
-  // ── Municipio dialog ────────────────────────────────
-  function renderMunicipioDialog(): React.JSX.Element {
-    return (
-      <Portal>
-        <Dialog
-          visible={showMunicipioDialog}
-          onDismiss={() => setShowMunicipioDialog(false)}
-          style={{ backgroundColor: c.surface }}
-        >
-          <Dialog.Title style={{ color: c.fg }}>
-            Seleccionar Municipio
-          </Dialog.Title>
-          <Dialog.Content>
-            <FlatList
-              data={locationFields.municipios}
-              keyExtractor={(item) => String(item.id_municipio)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    locationFields.handleSelectMunicipio(
-                      item.id_municipio,
-                      item.nombre,
-                    );
-                    setShowMunicipioDialog(false);
-                  }}
-                  style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: c.border,
-                    paddingVertical: 16,
-                  }}
-                >
-                  <Text style={{ fontSize: 16, color: c.fg }}>
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={() => setShowMunicipioDialog(false)}
-              textColor={c.brand}
-            >
-              Cerrar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    );
-  }
-
-  // ── Localidad dialog ────────────────────────────────
-  function renderLocalidadDialog(): React.JSX.Element {
-    return (
-      <Portal>
-        <Dialog
-          visible={showLocalidadDialog}
-          onDismiss={() => setShowLocalidadDialog(false)}
-          style={{ backgroundColor: c.surface }}
-        >
-          <Dialog.Title style={{ color: c.fg }}>
-            Seleccionar Localidad
-          </Dialog.Title>
-          <Dialog.Content>
-            <FlatList
-              data={locationFields.localidades}
-              keyExtractor={(item) => String(item.id_localidad)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    locationFields.handleSelectLocalidad(
-                      item.id_localidad,
-                      item.nombre,
-                    );
-                    setShowLocalidadDialog(false);
-                  }}
-                  style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: c.border,
-                    paddingVertical: 16,
-                  }}
-                >
-                  <Text style={{ fontSize: 16, color: c.fg }}>
-                    {item.nombre}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={() => setShowLocalidadDialog(false)}
-              textColor={c.brand}
-            >
-              Cerrar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    );
-  }
-
-  // ── Main render ─────────────────────────────────────
+  // ── Render ─────────────────────────────────────────
   return (
     <>
-      {/* Avatar + Rol (read-only) */}
-      <View
-        style={{
-          alignItems: 'center',
-          backgroundColor: c.surface,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: c.border,
-          paddingVertical: 24,
-          paddingHorizontal: 20,
-          marginBottom: 16,
-        }}
-      >
-        <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            backgroundColor: c.accentBg,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 10,
-          }}
-        >
-          <Text style={{ fontSize: 28, fontWeight: '700', color: c.brand }}>
-            {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'A'}
-          </Text>
-        </View>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: '700',
-            color: c.fg,
-            letterSpacing: -0.2,
-          }}
-        >
+      <ProfileHeader user={user} colors={c} avatarSize={64} paddingVertical={24}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: c.fg, letterSpacing: -0.2 }}>
           {user?.email}
         </Text>
-        <View
-          style={{
-            marginTop: 8,
-            backgroundColor: c.accentBg,
-            paddingHorizontal: 12,
-            paddingVertical: 4,
-            borderRadius: 20,
-          }}
-        >
-          <Text style={{ fontSize: 12, fontWeight: '700', color: c.brand }}>
-            {getRoleLabel(user?.role)}
-          </Text>
-        </View>
-      </View>
+      </ProfileHeader>
 
-      {renderFeedback()}
+      <FeedbackBanner type="success" message={successMessage} colors={c} />
+      <FeedbackBanner type="error" message={errorMessage} colors={c} />
 
-      {/* Formulario */}
       <View
         style={{
           backgroundColor: c.surface,
@@ -460,456 +161,51 @@ export default function ProfileEditForm({
           padding: 20,
         }}
       >
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '700',
-            color: c.fg,
-            letterSpacing: -0.15,
-            marginBottom: 20,
-          }}
-        >
-          Editar Información
-        </Text>
-
-        {/* Nombre */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Nombre *
-        </Text>
-        <TextInput
-          mode="outlined"
-          placeholder="Nombre"
-          placeholderTextColor={c.placeholderColor}
-          value={nombre}
-          onChangeText={(val) => setNombre(cleanName(val))}
-          style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-          theme={{
-            colors: {
-              text: c.inputText,
-              primary: c.brand,
-              outline: c.border,
-              placeholder: c.placeholderColor,
-            },
-          }}
+        <EditFormBody
+          colors={c}
+          nombre={nombre}
+          apellidoPaterno={apellidoPaterno}
+          apellidoMaterno={apellidoMaterno}
+          telefono={telefono}
+          fechaNacimiento={fechaNacimiento}
+          sexo={sexo}
+          domicilio={domicilio}
+          isSubmitting={isSubmitting}
+          selectedMunicipioNombre={catalog.selectedMunicipioNombre}
+          isLoadingMunicipios={catalog.isLoadingMunicipios}
+          errorMunicipios={catalog.errorMunicipios}
+          localidadNombre={catalog.localidadNombre}
+          isLoadingLocalidades={catalog.isLoadingLocalidades}
+          errorLocalidades={catalog.errorLocalidades}
+          selectedMunicipioId={catalog.selectedMunicipioId}
+          onNombreChange={setNombre}
+          onApellidoPaternoChange={setApellidoPaterno}
+          onApellidoMaternoChange={setApellidoMaterno}
+          onTelefonoChange={setTelefono}
+          onSexoChange={setSexo}
+          onDomicilioChange={setDomicilio}
+          onOpenDatePicker={onOpenDatePicker}
+          onOpenMunicipioDialog={() => setShowMunicipioDialog(true)}
+          onOpenLocalidadDialog={() => setShowLocalidadDialog(true)}
+          onRetryMunicipios={() => void catalog.refetchMunicipios()}
+          onRetryLocalidades={() => void catalog.refetchLocalidades()}
+          onSetError={setErrorMessage}
+          onCancel={handleCancel}
+          onSave={handleUpdateProfile}
         />
-
-        {/* Apellido Paterno */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Apellido Paterno *
-        </Text>
-        <TextInput
-          mode="outlined"
-          placeholder="Apellido Paterno"
-          placeholderTextColor={c.placeholderColor}
-          value={apellidoPaterno}
-          onChangeText={(val) => setApellidoPaterno(cleanName(val))}
-          style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-          theme={{
-            colors: {
-              text: c.inputText,
-              primary: c.brand,
-              outline: c.border,
-              placeholder: c.placeholderColor,
-            },
-          }}
-        />
-
-        {/* Apellido Materno */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Apellido Materno
-        </Text>
-        <TextInput
-          mode="outlined"
-          placeholder="Apellido Materno"
-          placeholderTextColor={c.placeholderColor}
-          value={apellidoMaterno}
-          onChangeText={(val) => setApellidoMaterno(cleanName(val))}
-          style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-          theme={{
-            colors: {
-              text: c.inputText,
-              primary: c.brand,
-              outline: c.border,
-              placeholder: c.placeholderColor,
-            },
-          }}
-        />
-
-        {/* Teléfono */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Teléfono *
-        </Text>
-        <TextInput
-          mode="outlined"
-          placeholder="xxx-xxx-xx-xx"
-          placeholderTextColor={c.placeholderColor}
-          keyboardType="phone-pad"
-          value={telefono}
-          onChangeText={(val) => {
-            // Match web: only digits allowed, max 10
-            const digitsOnly = val.replace(/\D/g, '');
-            if (digitsOnly.length <= 10) {
-              setTelefono(formatPhoneNumber(val));
-            }
-          }}
-          style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-          theme={{
-            colors: {
-              text: c.inputText,
-              primary: c.brand,
-              outline: c.border,
-              placeholder: c.placeholderColor,
-            },
-          }}
-        />
-
-        {/* Fecha de Nacimiento */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Fecha de Nacimiento *
-        </Text>
-        <TouchableOpacity
-          onPress={() => onOpenDatePicker(fechaNacimiento)}
-          activeOpacity={0.7}
-          style={{
-            marginBottom: 14,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: c.border,
-            backgroundColor: c.inputBg,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <MaterialCommunityIcons
-            name="calendar"
-            size={20}
-            color={c.muted}
-            style={{ marginRight: 10 }}
-          />
-          <Text
-            style={{
-              fontSize: 16,
-              color: fechaNacimiento ? c.inputText : c.placeholderColor,
-            }}
-          >
-            {fechaNacimiento || 'AAAA-MM-DD'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Género */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 8,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Género *
-        </Text>
-        <View style={{ marginBottom: 14, alignItems: 'flex-start' }}>
-          <SegmentedButtons
-            value={sexo}
-            onValueChange={(val) => setSexo(val)}
-            buttons={[
-              { value: 'M', label: 'Masculino' },
-              { value: 'F', label: 'Femenino' },
-              { value: 'O', label: 'Otro' },
-            ]}
-            theme={{
-              colors: {
-                secondaryContainer: c.accentBg,
-                onSecondaryContainer: c.brand,
-                outline: c.border,
-              },
-            }}
-          />
-        </View>
-
-        {/* Dirección */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Dirección *
-        </Text>
-        <TextInput
-          mode="outlined"
-          placeholder="Calle, número, colonia"
-          placeholderTextColor={c.placeholderColor}
-          value={domicilio}
-          onChangeText={(val) => setDomicilio(cleanAddress(val))}
-          style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-          theme={{
-            colors: {
-              text: c.inputText,
-              primary: c.brand,
-              outline: c.border,
-              placeholder: c.placeholderColor,
-            },
-          }}
-        />
-
-        {/* Selector de Municipio */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Municipio *
-        </Text>
-        {locationFields.errorMunicipios ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.errorColor,
-              backgroundColor: c.errorBg,
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: c.errorColor, flex: 1 }}>
-              {locationFields.errorMunicipios}
-            </Text>
-            <TouchableOpacity
-              onPress={() => void locationFields.refetchMunicipios()}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: c.errorColor,
-                }}
-              >
-                Reintentar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            onPress={() => setShowMunicipioDialog(true)}
-            disabled={locationFields.isLoadingMunicipios}
-            style={{
-              marginBottom: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.border,
-              backgroundColor: c.inputBg,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-            }}
-          >
-            {locationFields.isLoadingMunicipios ? (
-              <ActivityIndicator size="small" color={c.brand} />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <MaterialCommunityIcons
-                  name="map-marker-radius-outline"
-                  size={20}
-                  color={c.muted}
-                  style={{ marginRight: 10 }}
-                />
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: locationFields.selectedMunicipioNombre
-                      ? c.inputText
-                      : c.placeholderColor,
-                  }}
-                >
-                  {locationFields.selectedMunicipioNombre ||
-                    'Seleccionar Municipio'}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* Selector de Localidad */}
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: c.muted,
-            marginBottom: 4,
-            textTransform: 'uppercase',
-            letterSpacing: 0.04,
-          }}
-        >
-          Localidad *
-        </Text>
-        {locationFields.selectedMunicipioId &&
-        locationFields.errorLocalidades ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.errorColor,
-              backgroundColor: c.errorBg,
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: c.errorColor, flex: 1 }}>
-              {locationFields.errorLocalidades}
-            </Text>
-            <TouchableOpacity
-              onPress={() => void locationFields.refetchLocalidades()}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: c.errorColor,
-                }}
-              >
-                Reintentar
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              if (!locationFields.selectedMunicipioId) {
-                setErrorMessage('Selecciona primero un municipio.');
-                return;
-              }
-              setShowLocalidadDialog(true);
-            }}
-            disabled={locationFields.isLoadingLocalidades}
-            style={{
-              marginBottom: 14,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.border,
-              backgroundColor: c.inputBg,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-            }}
-          >
-            {locationFields.isLoadingLocalidades ? (
-              <ActivityIndicator size="small" color={c.brand} />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <MaterialCommunityIcons
-                  name="city-variant-outline"
-                  size={20}
-                  color={c.muted}
-                  style={{ marginRight: 10 }}
-                />
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: locationFields.localidadNombre
-                      ? c.inputText
-                      : c.placeholderColor,
-                  }}
-                >
-                  {locationFields.localidadNombre || 'Seleccionar Localidad'}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* Botones */}
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
-          <Button
-            mode="outlined"
-            onPress={handleCancel}
-            textColor={c.muted}
-            style={{ flex: 1, borderRadius: 12 }}
-            contentStyle={{ paddingVertical: 8 }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleUpdateProfile}
-            loading={isSubmitting}
-            disabled={isSubmitting}
-            buttonColor={c.brand}
-            textColor={c.white}
-            style={{ flex: 1, borderRadius: 12 }}
-            contentStyle={{ paddingVertical: 8 }}
-          >
-            Guardar
-          </Button>
-        </View>
       </View>
 
-      {/* Dialogs */}
-      {renderMunicipioDialog()}
-      {renderLocalidadDialog()}
+      <CatalogDialogs
+        showMunicipioDialog={showMunicipioDialog}
+        showLocalidadDialog={showLocalidadDialog}
+        onCloseMunicipio={() => setShowMunicipioDialog(false)}
+        onCloseLocalidad={() => setShowLocalidadDialog(false)}
+        municipios={catalog.municipios}
+        localidades={catalog.localidades}
+        onSelectMunicipio={catalog.handleSelectMunicipio}
+        onSelectLocalidad={catalog.handleSelectLocalidad}
+        colors={c}
+      />
     </>
   );
 }

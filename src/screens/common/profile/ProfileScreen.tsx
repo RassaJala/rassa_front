@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import DatePickerModal from '@/components/DatePickerModal';
 import { useAuth } from '@/store/AuthContext';
 
+import FeedbackBanner from './FeedbackBanner';
 import { useProfileColors } from './profileColors';
 import ProfileEditForm from './ProfileEditForm';
 import ProfileView from './ProfileView';
@@ -17,6 +19,7 @@ export default function ProfileScreen(): React.JSX.Element {
   const { user } = useAuth();
   const c = useProfileColors();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   // ── UI state ───────────────────────────────────────────
   const [isEditing, setIsEditing] = useState(false);
@@ -26,11 +29,15 @@ export default function ProfileScreen(): React.JSX.Element {
   const [pickerInitialDate, setPickerInitialDate] = useState('');
   const onDatePickedRef = useRef<(date: string) => void>(() => {});
 
-  // ── Render helpers ─────────────────────────────────────
-  function renderViewMode(): React.JSX.Element {
-    return <ProfileView user={user} />;
-  }
+  // Stable callback — prevents unnecessary re-execution of ProfileEditForm's useEffect
+  const handleRegisterDatePicked = useCallback(
+    (fn: (date: string) => void) => {
+      onDatePickedRef.current = fn;
+    },
+    [],
+  );
 
+  // ── Render helpers ─────────────────────────────────────
   function renderEditForm(): React.JSX.Element {
     return (
       <ProfileEditForm
@@ -48,9 +55,7 @@ export default function ProfileScreen(): React.JSX.Element {
           setPickerInitialDate(currentDate);
           setIsDatePickerVisible(true);
         }}
-        registerDatePicked={(fn) => {
-          onDatePickedRef.current = fn;
-        }}
+        registerDatePicked={handleRegisterDatePicked}
       />
     );
   }
@@ -59,7 +64,7 @@ export default function ProfileScreen(): React.JSX.Element {
     return (
       <View
         style={{
-          paddingTop: 56,
+          paddingTop: insets.top + 16,
           paddingHorizontal: 20,
           paddingBottom: 16,
           flexDirection: 'row',
@@ -109,6 +114,7 @@ export default function ProfileScreen(): React.JSX.Element {
             mode="contained"
             containerColor={c.brand}
             iconColor={c.white}
+            testID="edit-profile-button"
             onPress={() => {
               setIsEditing(true);
               setErrorMessage(null);
@@ -123,52 +129,8 @@ export default function ProfileScreen(): React.JSX.Element {
   function renderFeedback(): React.JSX.Element | null {
     return (
       <>
-        {successMessage ? (
-          <View
-            style={{
-              marginBottom: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.brand,
-              backgroundColor: c.accentBg,
-              padding: 14,
-            }}
-          >
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: 14,
-                fontWeight: '600',
-                color: c.brand,
-              }}
-            >
-              {successMessage}
-            </Text>
-          </View>
-        ) : null}
-        {errorMessage ? (
-          <View
-            style={{
-              marginBottom: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: c.errorColor,
-              backgroundColor: c.errorBg,
-              padding: 14,
-            }}
-          >
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: 14,
-                fontWeight: '600',
-                color: c.errorColor,
-              }}
-            >
-              {errorMessage}
-            </Text>
-          </View>
-        ) : null}
+        <FeedbackBanner type="success" message={successMessage} colors={c} />
+        <FeedbackBanner type="error" message={errorMessage} colors={c} />
       </>
     );
   }
@@ -181,7 +143,7 @@ export default function ProfileScreen(): React.JSX.Element {
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
       >
         {renderFeedback()}
-        {isEditing ? renderEditForm() : renderViewMode()}
+        {isEditing ? renderEditForm() : <ProfileView user={user} />}
       </ScrollView>
 
       <DatePickerModal

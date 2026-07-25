@@ -45,7 +45,7 @@ export default function FarmerHomeScreen({
   const screenWidth = useScreenWidth();
   const isCompact = screenWidth < 400;
 
-  const { data: productsData } = useQuery({
+  const { data: productsData, isError: isProductsError } = useQuery({
     queryKey: ['productos-count'],
     queryFn: async () => {
       const { data } =
@@ -179,6 +179,29 @@ export default function FarmerHomeScreen({
                   <ProfileDrawerTrigger />
                 </View>
               </View>
+
+              {/* Error feedback for stats */}
+              {isProductsError ? (
+                <View
+                  style={{
+                    backgroundColor: coralBg,
+                    borderRadius: 12,
+                    padding: 12,
+                    marginTop: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: coral,
+                      textAlign: 'center',
+                    }}
+                  >
+                    No se pudieron cargar los datos. Los valores pueden no estar actualizados.
+                  </Text>
+                </View>
+              ) : null}
 
               {/* STATS */}
               <View

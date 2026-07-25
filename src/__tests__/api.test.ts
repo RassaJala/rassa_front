@@ -70,7 +70,7 @@ describe('API Interceptors', () => {
     expect(SecureStore.getItemAsync).toHaveBeenCalledWith('refresh_token');
     expect(api.post).toHaveBeenCalledWith('/token/refresh/', {
       refresh: 'old_refresh_token',
-    });
+    }, expect.anything());
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'access_token',
       'new_access',
@@ -182,7 +182,7 @@ describe('API Interceptors', () => {
     expect(api.post).toHaveBeenCalledTimes(1);
     expect(api.post).toHaveBeenCalledWith('/token/refresh/', {
       refresh: 'refresh_token',
-    });
+    }, expect.anything());
 
     // Both original requests retried with the new token
     expect(api).toHaveBeenCalledTimes(2);

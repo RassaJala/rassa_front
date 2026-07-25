@@ -2,7 +2,7 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 export const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const NAME_REGEX = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
 export const MIN_PASSWORD_LENGTH = 8;
-const MAX_NOMBRE = 100;
+export const MAX_NOMBRE = 100;
 
 export function cleanName(val: string): string {
   // Solo letras (con acentos), espacios — sin apóstrofes ni guiones
@@ -10,8 +10,8 @@ export function cleanName(val: string): string {
 }
 
 export function cleanPhoneNumber(val: string): string {
-  // Match web: strip spaces, hyphens, parentheses — preserve digits
-  return val.replace(/[\s\-()]+/g, '');
+  // Match web: strip spaces, hyphens, parentheses, plus — preserve digits
+  return val.replace(/[\s\-()+]+/g, '');
 }
 
 export function formatPhoneNumber(val: string): string {
@@ -113,6 +113,40 @@ export function validateBirthdate(
   if (!isAdult(dateStr)) {
     return customMsg || 'Debes ser mayor de 18 años.';
   }
+  return null;
+}
+
+export function validateProfileEdit(
+  nombre: string,
+  apellidoPaterno: string,
+  rawTelefono: string,
+  fechaNacimiento: string,
+  domicilio: string,
+  localidadId: number | null,
+): string | null {
+  if (
+    !nombre.trim() ||
+    !apellidoPaterno.trim() ||
+    !rawTelefono ||
+    !fechaNacimiento.trim() ||
+    !domicilio.trim() ||
+    localidadId === null
+  ) {
+    return 'Por favor, completa todos los campos obligatorios.';
+  }
+
+  const nameErr = validateName(nombre, 'nombre');
+  if (nameErr) return nameErr;
+
+  const lastNameErr = validateName(apellidoPaterno, 'apellido paterno');
+  if (lastNameErr) return lastNameErr;
+
+  const phoneErr = validatePhone(rawTelefono);
+  if (phoneErr) return phoneErr;
+
+  const birthdateErr = validateBirthdate(fechaNacimiento);
+  if (birthdateErr) return birthdateErr;
+
   return null;
 }
 

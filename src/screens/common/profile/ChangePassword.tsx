@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 
@@ -8,20 +8,15 @@ import axios from 'axios';
 
 import { parseAuthError, useAuth } from '@/store/AuthContext';
 
+import FeedbackBanner from './FeedbackBanner';
 import { useProfileColors } from './profileColors';
 
 interface ChangePasswordProps {
   readonly onPasswordChanged: () => void;
 }
 
-const PASSWORD_ALPHANUMERIC = /^[a-zA-Z0-9]+$/;
-const PASSWORD_HAS_UPPER = /[A-Z]/;
-const FILTER_PASSWORD = /[^a-zA-Z0-9]/g;
 const MIN_PASSWORD_LENGTH = 8;
-
-function filterPasswordInput(value: string): string {
-  return value.replace(FILTER_PASSWORD, '');
-}
+const SUCCESS_TIMEOUT_MS = 1500;
 
 function validatePasswordChange(
   oldPass: string,
@@ -34,14 +29,6 @@ function validatePasswordChange(
 
   if (newPass.length < MIN_PASSWORD_LENGTH) {
     return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-  }
-
-  if (!PASSWORD_ALPHANUMERIC.test(newPass)) {
-    return 'La nueva contraseña solo puede contener letras y números (sin caracteres especiales).';
-  }
-
-  if (!PASSWORD_HAS_UPPER.test(newPass)) {
-    return 'La nueva contraseña debe contener al menos una mayúscula.';
   }
 
   if (newPass !== confirmPass) {
@@ -70,6 +57,17 @@ export default function ChangePassword({
   const [isChanging, setIsChanging] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const logoutTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Cleanup logout timeout on unmount to prevent unexpected logout
+    return () => {
+      if (logoutTimeoutRef.current !== null) {
+        globalThis.clearTimeout(logoutTimeoutRef.current);
+        logoutTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // ── Handlers ─────────────────────────────────────────
   async function handleChangePassword() {
@@ -99,18 +97,19 @@ export default function ChangePassword({
         new_password: newPassword,
       });
 
-      setPasswordSuccess('Contraseña cambiada exitosamente.');
+      setPasswordSuccess('Contraseña cambiada exitosamente. Cerrando sesión...');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
 
       // Close form after a brief delay so user sees success
-      globalThis.setTimeout(() => {
+      logoutTimeoutRef.current = globalThis.setTimeout(() => {
+        logoutTimeoutRef.current = null;
         setShowForm(false);
         setPasswordSuccess(null);
         setPasswordError(null);
         onPasswordChanged();
-      }, 1500);
+      }, SUCCESS_TIMEOUT_MS);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setPasswordError(parseAuthError(error, 'changePassword'));
@@ -167,54 +166,8 @@ export default function ChangePassword({
       {showForm ? (
         <>
           {/* Feedback messages */}
-          {passwordSuccess ? (
-            <View
-              style={{
-                marginTop: 20,
-                marginBottom: 12,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: c.brand,
-                backgroundColor: c.accentBg,
-                padding: 14,
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: 'center',
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: c.brand,
-                }}
-              >
-                {passwordSuccess}
-              </Text>
-            </View>
-          ) : null}
-          {passwordError ? (
-            <View
-              style={{
-                marginTop: 20,
-                marginBottom: 12,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: c.errorColor,
-                backgroundColor: c.errorBg,
-                padding: 14,
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: 'center',
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: c.errorColor,
-                }}
-              >
-                {passwordError}
-              </Text>
-            </View>
-          ) : null}
+          <FeedbackBanner type="success" message={passwordSuccess} colors={c} marginTop={20} marginBottom={12} />
+          <FeedbackBanner type="error" message={passwordError} colors={c} marginTop={20} marginBottom={12} />
 
           {/* Current Password */}
           <Text
@@ -236,16 +189,10 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={oldPassword}
-            onChangeText={(val) => setOldPassword(filterPasswordInput(val))}
+            onChangeText={setOldPassword}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-            theme={{
-              colors: {
-                text: c.inputText,
-                primary: c.brand,
-                outline: c.border,
-                placeholder: c.placeholderColor,
-              },
-            }}
+            theme={c.textInputTheme}
+            testID="old-password-input"
           />
 
           {/* New Password */}
@@ -259,7 +206,7 @@ export default function ChangePassword({
               letterSpacing: 0.04,
             }}
           >
-            Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula)
+            Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres)
             *
           </Text>
           <TextInput
@@ -268,16 +215,10 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={newPassword}
-            onChangeText={(val) => setNewPassword(filterPasswordInput(val))}
+            onChangeText={setNewPassword}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-            theme={{
-              colors: {
-                text: c.inputText,
-                primary: c.brand,
-                outline: c.border,
-                placeholder: c.placeholderColor,
-              },
-            }}
+            theme={c.textInputTheme}
+            testID="new-password-input"
           />
 
           {/* Confirm Password */}
@@ -299,31 +240,27 @@ export default function ChangePassword({
             placeholderTextColor={c.placeholderColor}
             secureTextEntry
             value={confirmPassword}
-            onChangeText={(val) => setConfirmPassword(filterPasswordInput(val))}
+            onChangeText={setConfirmPassword}
             style={{ marginBottom: 14, backgroundColor: c.inputBg }}
-            theme={{
-              colors: {
-                text: c.inputText,
-                primary: c.brand,
-                outline: c.border,
-                placeholder: c.placeholderColor,
-              },
-            }}
+            theme={c.textInputTheme}
+            testID="confirm-password-input"
           />
 
           {/* Submit Button */}
-          <Button
-            mode="contained"
-            onPress={handleChangePassword}
-            loading={isChanging}
-            disabled={isChanging}
-            buttonColor={c.errorColor}
-            textColor={c.white}
-            style={{ borderRadius: 12 }}
-            contentStyle={{ paddingVertical: 8 }}
-          >
-            Cambiar Contraseña
-          </Button>
+          <View testID="change-password-button">
+            <Button
+              mode="contained"
+              onPress={handleChangePassword}
+              loading={isChanging}
+              disabled={isChanging}
+              buttonColor={c.errorColor}
+              textColor={c.white}
+              style={{ borderRadius: 12 }}
+              contentStyle={{ paddingVertical: 8 }}
+            >
+              Cambiar Contraseña
+            </Button>
+          </View>
         </>
       ) : null}
     </View>
