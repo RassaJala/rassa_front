@@ -34,5 +34,5 @@ export function useOrderTimeline(orderId: number): {
     retry: false,
   });
 
-  return { entries, isLoading, isError, error, refetch };
+  return { entries: entries ?? [], isLoading, isError, error, refetch };
 }
