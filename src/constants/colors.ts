@@ -70,9 +70,13 @@ export const colors = {
   admErrorBgD: '#3D2023',
   // ── Cart-specific tokens ──
   cartRowBg: 'rgba(128,128,128,0.08)',
+  cartRowBgD: 'rgba(255,255,255,0.05)',
   cartPlaceholderBg: 'rgba(128,128,128,0.1)',
+  cartPlaceholderBgD: 'rgba(255,255,255,0.08)',
   cartBtnBg: 'rgba(128,128,128,0.15)',
+  cartBtnBgD: 'rgba(255,255,255,0.1)',
   cartBtnDisabledBg: 'rgba(128,128,128,0.08)',
+  cartBtnDisabledBgD: 'rgba(255,255,255,0.04)',
 };
 
 export interface ThemeColors {
