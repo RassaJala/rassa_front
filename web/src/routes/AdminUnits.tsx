@@ -18,7 +18,7 @@ const initialData: Unit[] = [
 
 export function AdminUnits() {
   const colors = useAppColors();
-  const { fg, muted, border, surface, bg, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Unit[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');

@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { useAppColors } from '../hooks/useAppColors';
 
 const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -5,7 +8,9 @@ const weekSales = [90, 130, 70, 150, 110, 60, 40];
 
 export function AdminDashboard() {
   const colors = useAppColors();
-  const { isDark, fg, muted, border, surface, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, brand, coral, bg } = colors;
+  const navigate = useNavigate();
+  const [lookupId, setLookupId] = useState('');
 
   const days = [
     'Domingo',
@@ -88,6 +93,66 @@ export function AdminDashboard() {
         >
           {today}
         </p>
+      </div>
+
+      {/* Order lookup */}
+      <div
+        style={{
+          background: surface,
+          borderRadius: 16,
+          border: `1px solid ${border}`,
+          padding: '16px 20px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+          📦 Ver historial de pedido
+        </span>
+        <input
+          type="number"
+          placeholder="ID del pedido"
+          value={lookupId}
+          onChange={(e) => setLookupId(e.target.value)}
+          style={{
+            height: 40,
+            border: `1.5px solid ${border}`,
+            borderRadius: 10,
+            padding: '0 14px',
+            fontSize: 15,
+            fontFamily: 'inherit',
+            background: bg,
+            color: fg,
+            outline: 'none',
+            width: 160,
+          }}
+        />
+        <button
+          onClick={() => {
+            const id = Number(lookupId);
+            if (id > 0) navigate(`/admin/pedidos/${id}`);
+          }}
+          disabled={!lookupId || Number(lookupId) <= 0}
+          style={{
+            height: 40,
+            padding: '0 18px',
+            borderRadius: 10,
+            border: 'none',
+            background: brand,
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            cursor:
+              lookupId && Number(lookupId) > 0 ? 'pointer' : 'not-allowed',
+            opacity: lookupId && Number(lookupId) > 0 ? 1 : 0.5,
+          }}
+        >
+          Ver historial
+        </button>
       </div>
 
       {/* Stats row */}

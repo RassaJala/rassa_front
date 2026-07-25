@@ -1,0 +1,37 @@
+name: Auto-Format
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to auto-format'
+        required: true
+        default: 'feat/order-history-timeline'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Validate branch pattern
+        run: |
+          BRANCH="${{ github.event.inputs.branch }}"
+          if ! echo "$BRANCH" | grep -qE '^(feat|fix|chore)/'; then
+            echo "::error::Branch '$BRANCH' does not match allowed patterns (feat/*, fix/*, chore/*)"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run format
+      - name: Commit formatted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "style: auto-format with prettier"
+          git push

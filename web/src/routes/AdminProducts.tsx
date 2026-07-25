@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
+
+import { useAppColors } from '../hooks/useAppColors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 
 interface Product {
@@ -98,7 +98,7 @@ const unitLabels: Record<string, string> = {
 
 export function AdminProducts() {
   const colors = useAppColors();
-  const { fg, muted, border, surface, bg, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Product[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
