@@ -34,7 +34,7 @@ export function AuthLayout({ children, title }: AuthLayoutProps) {
         {/* Theme toggle */}
         <button
           onClick={toggle}
-          className="absolute left-6 top-6 z-10 grid h-10 w-10 place-items-center rounded-full border text-lg backdrop-blur-sm transition-colors"
+          className="absolute top-6 left-6 z-10 grid h-10 w-10 place-items-center rounded-full border text-lg backdrop-blur-sm transition-colors"
           style={{
             borderColor: 'rgba(255,255,255,0.4)',
             background: 'rgba(0,0,0,0.12)',
@@ -91,7 +91,7 @@ export function AuthLayout({ children, title }: AuthLayoutProps) {
 
         {/* Hills */}
         <div
-          className="absolute bottom-0 left-0 right-0"
+          className="absolute right-0 bottom-0 left-0"
           style={{ height: 280 }}
         >
           <div
