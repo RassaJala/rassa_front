@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Producto } from '@/services/productos';
 import { uploadProductoSemanalImagen } from '@/services/publications';
 import type { ProductoSemanal, Publicacion } from '@/services/publications';
+import { buildImageFormData } from '@/utils/uploadImage';
 
 import {
   useAddProductoSemanal,
@@ -104,15 +105,7 @@ async function uploadLocalPhoto(
   itemId: number,
   fotoUri: string,
 ): Promise<void> {
-  const formData = new FormData();
-  const filename = fotoUri.split('/').pop() ?? 'photo.jpg';
-  const ext = (filename.split('.').pop() ?? 'jpg').toLowerCase();
-  const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
-  formData.append('imagen', {
-    uri: fotoUri,
-    name: filename,
-    type: mimeType,
-  } as unknown as Blob);
+  const formData = buildImageFormData(fotoUri);
   await uploadProductoSemanalImagen(pubId, itemId, formData);
 }
 
@@ -222,17 +215,25 @@ export function usePublicationWizard({
     setStepIndex((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  const addItem = useCallback((producto: Producto) => {
-    const newItem: WizardItemDraft = {
-      tempId: generateTempId(),
-      fk_producto: producto.id_producto,
-      fk_unidad: 0,
-      stock: '',
-      precio: '',
-      foto: null,
-    };
-    setLocalItems((prev) => [...prev, newItem]);
-  }, []);
+  const addItem = useCallback(
+    (producto: Producto) => {
+      const alreadyAdded = activeItems.some(
+        (i) => i.fk_producto === producto.id_producto,
+      );
+      if (alreadyAdded) return;
+
+      const newItem: WizardItemDraft = {
+        tempId: generateTempId(),
+        fk_producto: producto.id_producto,
+        fk_unidad: 0,
+        stock: '',
+        precio: '',
+        foto: null,
+      };
+      setLocalItems((prev) => [...prev, newItem]);
+    },
+    [activeItems],
+  );
 
   const removeItem = useCallback((tempId: string) => {
     setLocalItems((prev) => prev.filter((i) => i.tempId !== tempId));
@@ -383,14 +384,18 @@ export function usePublicationWizard({
 
       for (const id of existingIds) {
         if (!currentIds.has(id)) {
-          try {
-            await removeItemMutation.mutateAsync({
-              pubId: pub.id_publicacion,
-              itemId: Number(id),
-            });
-          } catch (err) {
-            console.error('[usePublicationWizard] removeItem failed:', err);
+          const itemId = Number(id);
+          if (!Number.isInteger(itemId) || itemId <= 0) {
+            console.error(
+              '[usePublicationWizard] invalid item id for removal:',
+              id,
+            );
+            continue;
           }
+          await removeItemMutation.mutateAsync({
+            pubId: pub.id_publicacion,
+            itemId,
+          });
         }
       }
 

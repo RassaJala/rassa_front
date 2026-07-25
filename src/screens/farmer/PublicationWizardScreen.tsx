@@ -76,10 +76,13 @@ export default function PublicationWizardScreen({
 
   const [showProductPicker, setShowProductPicker] = useState(false);
 
-  const { data: pubData } = usePublicacion(publicacionId ?? 0);
-  const { data: semanalData } = useProductosSemanales(publicacionId ?? 0);
-  const { data: allProducts } = useProductos();
-  const { data: unidadesData } = useUnidades();
+  const { data: pubData, isLoading: isPubLoading } = usePublicacion(
+    publicacionId ?? 0,
+  );
+  const { data: semanalData, isLoading: isSemanalLoading } =
+    useProductosSemanales(publicacionId ?? 0);
+  const { data: allProducts, isLoading: isProductsLoading } = useProductos();
+  const { data: unidadesData, isLoading: isUnidadesLoading } = useUnidades();
 
   const publicacion = pubData?.data;
   const productos = semanalData?.data ?? [];
@@ -103,6 +106,26 @@ export default function PublicationWizardScreen({
   const subtleBg = theme.subtleBg;
 
   const isMutating = wizard.isPublishing || wizard.isCreating;
+  const isLoadingData =
+    isPubLoading || isSemanalLoading || isProductsLoading || isUnidadesLoading;
+
+  if (isLoadingData) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <ActivityIndicator size="large" color={brand} />
+        <Text style={{ color: muted, marginTop: 12, fontSize: 14 }}>
+          Cargando publicación...
+        </Text>
+      </View>
+    );
+  }
 
   usePreventRemove(isMutating, ({ data: { action: _action } }) => {
     Alert.alert(

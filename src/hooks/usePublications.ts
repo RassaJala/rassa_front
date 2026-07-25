@@ -10,6 +10,8 @@ import type {
 } from '@/services/publications';
 import * as publicationsApi from '@/services/publications';
 
+const STALE_TIME = 30_000;
+
 // ── Queries ────────────────────────────────────────────────
 
 export function usePublicaciones(
@@ -18,7 +20,7 @@ export function usePublicaciones(
   return useQuery({
     queryKey: ['publicaciones', { estado }],
     queryFn: () => publicationsApi.getPublicaciones({ estado }),
-    staleTime: 30_000,
+    staleTime: STALE_TIME,
     retry: 1,
   });
 }
@@ -30,7 +32,7 @@ export function usePublicacion(
     queryKey: ['publicaciones', id],
     queryFn: () => publicationsApi.getPublicacion(id),
     enabled: id > 0,
-    staleTime: 30_000,
+    staleTime: STALE_TIME,
     retry: 1,
   });
 }
@@ -42,7 +44,7 @@ export function useProductosSemanales(
     queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
-    staleTime: 30_000,
+    staleTime: STALE_TIME,
     retry: 1,
   });
 }

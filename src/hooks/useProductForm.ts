@@ -15,6 +15,7 @@ import type {
   Unidad,
 } from '@/services/productos';
 import type { ApiResponse } from '@/types';
+import { buildImageFormData } from '@/utils/uploadImage';
 
 interface FormErrors {
   nombre_producto?: string;
@@ -129,6 +130,10 @@ export function useProductForm(productoId?: number): UseProductFormResult {
     }
   }, [isEditing, productoResponse]);
 
+  useEffect(() => {
+    isInitialized.current = false;
+  }, [productoId]);
+
   const updateField = <K extends keyof FormState>(
     key: K,
     value: FormState[K],
@@ -156,14 +161,7 @@ export function useProductForm(productoId?: number): UseProductFormResult {
 
     const onMutationSuccess = async (result: ApiResponse<ProductoDetail>) => {
       if (form.imagenUri && !form.imagenUri.startsWith('http')) {
-        const formData = new FormData();
-        const filename = form.imagenUri.split('/').pop() ?? 'photo.jpg';
-        const ext = filename.split('.').pop() ?? 'jpg';
-        formData.append('imagen', {
-          uri: form.imagenUri,
-          name: filename,
-          type: `image/${ext}`,
-        } as unknown as Blob);
+        const formData = buildImageFormData(form.imagenUri);
         await productosApi.uploadProductoImagen(
           result.data.id_producto,
           formData,
