@@ -60,4 +60,12 @@ export const colors = {
   admCoralBgD: 'rgba(232,74,74,0.12)',
   admPumpkinBgL: 'rgba(242,169,0,0.07)',
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
+  admErrorBgL: 'rgba(254,242,242,1)',
+  admErrorBgD: 'rgba(127,29,29,0.2)',
+  admErrorBorderL: '#fca5a5',
+  admErrorBorderD: 'rgba(153,27,27,0.5)',
+  admErrorTextL: '#dc2626',
+  admErrorTextD: '#f87171',
+  admErrorActionL: '#b91c1c',
+  admErrorActionD: '#fca5a5',
 };

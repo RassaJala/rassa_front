@@ -168,7 +168,23 @@ export default function RegisterScreen(): React.JSX.Element {
         >
           <RegistrationFormFields
             form={form}
-            t={{ muted, border, surface, fg, brand, accentBg, segBg }}
+            t={{
+              muted,
+              border,
+              surface,
+              fg,
+              brand,
+              accentBg,
+              segBg,
+              errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
+              errorBorder: isDark
+                ? colors.admErrorBorderD
+                : colors.admErrorBorderL,
+              errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
+              errorAction: isDark
+                ? colors.admErrorActionD
+                : colors.admErrorActionL,
+            }}
             setErrorMessage={setErrorMessage}
             onOpenDatePicker={() => setIsDatePickerVisible(true)}
             disabled={isSubmitting}

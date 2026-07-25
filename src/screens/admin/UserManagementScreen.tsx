@@ -901,6 +901,14 @@ export default function UserManagementScreen(): React.JSX.Element {
                 brand,
                 accentBg,
                 segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
+                errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
+                errorBorder: isDark
+                  ? colors.admErrorBorderD
+                  : colors.admErrorBorderL,
+                errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
+                errorAction: isDark
+                  ? colors.admErrorActionD
+                  : colors.admErrorActionL,
               }}
               setErrorMessage={setFormErrorMessage}
               onOpenDatePicker={() => setIsDatePickerVisible(true)}

@@ -40,6 +40,16 @@ const defaultProps = {
   refetchMunicipios: jest.fn(),
   refetchLocalidades: jest.fn(),
   setErrorMessage: jest.fn(),
+  catalogColors: {
+    muted: '#5E6B5E',
+    border: '#E2E6DF',
+    surface: '#FFFFFF',
+    fg: '#2D3328',
+    errorBg: 'rgba(254,242,242,1)',
+    errorBorder: '#fca5a5',
+    errorText: '#dc2626',
+    errorAction: '#b91c1c',
+  },
 };
 
 beforeEach(() => {

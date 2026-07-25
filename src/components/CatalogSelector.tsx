@@ -8,10 +8,21 @@ import {
 } from 'react-native';
 import { Button, Dialog, Portal } from 'react-native-paper';
 
-import { BRAND_RED_CORAL } from '@/constants/brandColors';
+import { colors } from '@/constants/colors';
 import type { Localidad, Municipio } from '@/types';
 
 const DIALOG_MAX_HEIGHT = 400;
+
+export interface CatalogColors {
+  readonly muted: string;
+  readonly border: string;
+  readonly surface: string;
+  readonly fg: string;
+  readonly errorBg: string;
+  readonly errorBorder: string;
+  readonly errorText: string;
+  readonly errorAction: string;
+}
 
 interface CatalogSelectorProps {
   readonly selectedMunicipioId: number | null;
@@ -29,6 +40,7 @@ interface CatalogSelectorProps {
   readonly refetchMunicipios: () => void;
   readonly refetchLocalidades: () => void;
   readonly setErrorMessage: (msg: string | null) => void;
+  readonly catalogColors: CatalogColors;
 }
 
 interface MunicipioSelectorProps {
@@ -37,6 +49,7 @@ interface MunicipioSelectorProps {
   readonly selectedMunicipioNombre: string;
   readonly refetchMunicipios: () => void;
   readonly onPress: () => void;
+  readonly catalogColors: CatalogColors;
 }
 
 function MunicipioSelector({
@@ -45,21 +58,43 @@ function MunicipioSelector({
   selectedMunicipioNombre,
   refetchMunicipios,
   onPress,
+  catalogColors,
 }: MunicipioSelectorProps): React.JSX.Element {
+  const c = catalogColors;
   return (
     <>
-      <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <Text
+        style={{
+          marginBottom: 4,
+          fontSize: 14,
+          fontWeight: '500',
+          color: c.muted,
+        }}
+      >
         Municipio *
       </Text>
       {errorMunicipios ? (
-        <View className="mb-3 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
-          <Text className="text-sm text-red-600 dark:text-red-400">
+        <View
+          style={{
+            marginBottom: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.errorBorder,
+            backgroundColor: c.errorBg,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ fontSize: 14, color: c.errorText }}>
             {errorMunicipios !== 'API Error'
               ? errorMunicipios
               : 'Error al cargar municipios'}
           </Text>
           <TouchableOpacity onPress={() => void refetchMunicipios()}>
-            <Text className="font-semibold text-red-700 dark:text-red-300">
+            <Text style={{ fontWeight: '600', color: c.errorAction }}>
               Reintentar
             </Text>
           </TouchableOpacity>
@@ -68,21 +103,28 @@ function MunicipioSelector({
         <TouchableOpacity
           onPress={onPress}
           disabled={isLoadingMunicipios}
-          className="dark:bg-gray-955 mb-3 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800"
+          style={{
+            marginBottom: 12,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.border,
+            backgroundColor: c.surface,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+          }}
         >
           {isLoadingMunicipios ? (
             <ActivityIndicator
               testID="loading-municipios"
               size="small"
-              color={BRAND_RED_CORAL}
+              color={colors.brand.redCoral}
             />
           ) : (
             <Text
-              className={`text-base ${
-                selectedMunicipioNombre
-                  ? 'text-brand-ink dark:text-gray-100'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
+              style={{
+                fontSize: 16,
+                color: selectedMunicipioNombre ? c.fg : c.muted,
+              }}
             >
               {selectedMunicipioNombre || 'Seleccionar Municipio'}
             </Text>
@@ -100,6 +142,7 @@ interface LocalidadSelectorProps {
   readonly localidadNombre: string;
   readonly refetchLocalidades: () => void;
   readonly onPress: () => void;
+  readonly catalogColors: CatalogColors;
 }
 
 function LocalidadSelector({
@@ -109,21 +152,43 @@ function LocalidadSelector({
   localidadNombre,
   refetchLocalidades,
   onPress,
+  catalogColors,
 }: LocalidadSelectorProps): React.JSX.Element {
+  const c = catalogColors;
   return (
     <>
-      <Text className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <Text
+        style={{
+          marginBottom: 4,
+          fontSize: 14,
+          fontWeight: '500',
+          color: c.muted,
+        }}
+      >
         Localidad *
       </Text>
       {selectedMunicipioId && errorLocalidades ? (
-        <View className="mb-4 flex-row items-center justify-between rounded-xl border border-red-300 bg-red-50 px-4 py-2 dark:border-red-900/50 dark:bg-red-950/20">
-          <Text className="text-sm text-red-600 dark:text-red-400">
+        <View
+          style={{
+            marginBottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.errorBorder,
+            backgroundColor: c.errorBg,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ fontSize: 14, color: c.errorText }}>
             {errorLocalidades !== 'API Error'
               ? errorLocalidades
               : 'Error al cargar localidades'}
           </Text>
           <TouchableOpacity onPress={() => void refetchLocalidades()}>
-            <Text className="font-semibold text-red-700 dark:text-red-300">
+            <Text style={{ fontWeight: '600', color: c.errorAction }}>
               Reintentar
             </Text>
           </TouchableOpacity>
@@ -132,21 +197,28 @@ function LocalidadSelector({
         <TouchableOpacity
           onPress={onPress}
           disabled={isLoadingLocalidades}
-          className="mb-4 rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900"
+          style={{
+            marginBottom: 16,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.border,
+            backgroundColor: c.surface,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+          }}
         >
           {isLoadingLocalidades ? (
             <ActivityIndicator
               testID="loading-localidades"
               size="small"
-              color={BRAND_RED_CORAL}
+              color={colors.brand.redCoral}
             />
           ) : (
             <Text
-              className={`text-base ${
-                localidadNombre
-                  ? 'text-brand-ink dark:text-gray-100'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
+              style={{
+                fontSize: 16,
+                color: localidadNombre ? c.fg : c.muted,
+              }}
             >
               {localidadNombre || 'Seleccionar Localidad'}
             </Text>
@@ -173,6 +245,7 @@ export default function CatalogSelector({
   refetchMunicipios,
   refetchLocalidades,
   setErrorMessage,
+  catalogColors,
 }: CatalogSelectorProps): React.JSX.Element {
   const [showMunicipioDialog, setShowMunicipioDialog] = useState(false);
   const [showLocalidadDialog, setShowLocalidadDialog] = useState(false);
@@ -185,6 +258,7 @@ export default function CatalogSelector({
         selectedMunicipioNombre={selectedMunicipioNombre}
         refetchMunicipios={refetchMunicipios}
         onPress={() => setShowMunicipioDialog(true)}
+        catalogColors={catalogColors}
       />
 
       <LocalidadSelector
@@ -200,6 +274,7 @@ export default function CatalogSelector({
           }
           setShowLocalidadDialog(true);
         }}
+        catalogColors={catalogColors}
       />
 
       <Portal>
@@ -220,9 +295,13 @@ export default function CatalogSelector({
                     onSelectMunicipio(item.id_municipio, item.nombre);
                     setShowMunicipioDialog(false);
                   }}
-                  className="border-b border-gray-100 py-4 dark:border-gray-800"
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: catalogColors.border,
+                    paddingVertical: 16,
+                  }}
                 >
-                  <Text className="text-base text-brand-ink dark:text-gray-200">
+                  <Text style={{ fontSize: 16, color: catalogColors.fg }}>
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
@@ -255,9 +334,13 @@ export default function CatalogSelector({
                     onSelectLocalidad(item.id_localidad, item.nombre);
                     setShowLocalidadDialog(false);
                   }}
-                  className="border-b border-gray-100 py-4 dark:border-gray-800"
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: catalogColors.border,
+                    paddingVertical: 16,
+                  }}
                 >
-                  <Text className="text-base text-brand-ink dark:text-gray-200">
+                  <Text style={{ fontSize: 16, color: catalogColors.fg }}>
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
