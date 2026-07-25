@@ -193,7 +193,7 @@ export default function EditFormBody({
       <View style={{ marginBottom: 14, alignItems: 'flex-start' }}>
         <SegmentedButtons
           value={sexo}
-          onValueChange={(val) => onSexoChange(val as 'M' | 'F' | 'O')}
+          onValueChange={(val) => onSexoChange(val)}
           buttons={[
             { value: 'M', label: 'Masculino' },
             { value: 'F', label: 'Femenino' },

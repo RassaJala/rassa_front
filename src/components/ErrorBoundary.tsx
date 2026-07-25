@@ -106,7 +106,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback as React.JSX.Element;
       }
 
-      // eslint-disable-next-line no-undef -- __DEV__ is global in React Native
+       
       const isDev = __DEV__;
 
       return (

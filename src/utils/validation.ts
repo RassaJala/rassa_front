@@ -1,17 +1,17 @@
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
 export const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-export const NAME_REGEX = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
+export const NAME_REGEX = /^[\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]+$/;
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_NOMBRE = 100;
 
 export function cleanName(val: string): string {
   // Solo letras (con acentos), espacios — sin apóstrofes ni guiones
-  return val.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '');
+  return val.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
 }
 
 export function cleanPhoneNumber(val: string): string {
   // Match web: strip spaces, hyphens, parentheses, plus — preserve digits
-  return val.replace(/[\s\-()+]+/g, '');
+  return val.replace(/[\s()+-]+/g, '');
 }
 
 export function formatPhoneNumber(val: string): string {

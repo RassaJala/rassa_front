@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { getRoleLabel } from '@/utils/labels';
 import type { User } from '@/types';
+import { getRoleLabel } from '@/utils/labels';
 
 import ProfileAvatar from './ProfileAvatar';
 import type { ProfileColors } from './profileColors';

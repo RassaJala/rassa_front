@@ -3,15 +3,14 @@ import { Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { useAuth } from '@/store/AuthContext';
 import type { User } from '@/types';
 import { getGenderLabel } from '@/utils/labels';
 import { formatPhoneNumber } from '@/utils/validation';
 
-import { useAuth } from '@/store/AuthContext';
-
 import ChangePassword from './ChangePassword';
-import ProfileHeader from './ProfileHeader';
 import { useProfileColors } from './profileColors';
+import ProfileHeader from './ProfileHeader';
 
 interface InfoRowProps {
   readonly label: string;

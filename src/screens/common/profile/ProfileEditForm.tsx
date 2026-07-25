@@ -11,8 +11,8 @@ import { cleanPhoneNumber, formatPhoneNumber, validateProfileEdit } from '@/util
 import CatalogDialogs from './CatalogDialogs';
 import EditFormBody from './EditFormBody';
 import FeedbackBanner from './FeedbackBanner';
-import ProfileHeader from './ProfileHeader';
 import { useProfileColors } from './profileColors';
+import ProfileHeader from './ProfileHeader';
 
 // ── Props ───────────────────────────────────────────────
 interface ProfileEditFormProps {
