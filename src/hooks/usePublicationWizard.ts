@@ -180,9 +180,15 @@ const PUBLISH_TIMEOUT_MS = 120_000;
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
   const cleanup = () => clearTimeout(timeoutId);
-  const tracked = promise.then(
-    (value) => { cleanup(); return value; },
-  ).catch((err) => { cleanup(); throw err; });
+  const tracked = promise
+    .then((value) => {
+      cleanup();
+      return value;
+    })
+    .catch((err) => {
+      cleanup();
+      throw err;
+    });
   return Promise.race([
     tracked,
     new Promise<T>((_resolve, reject) => {

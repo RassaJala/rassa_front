@@ -39,7 +39,9 @@ describe('generateLocalTempId', () => {
   });
 
   it('generates unique ids', () => {
-    const ids = new Set(Array.from({ length: 50 }, () => generateLocalTempId()));
+    const ids = new Set(
+      Array.from({ length: 50 }, () => generateLocalTempId()),
+    );
     expect(ids.size).toBe(50);
   });
 });
