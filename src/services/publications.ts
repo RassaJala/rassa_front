@@ -1,3 +1,4 @@
+import { API_TIMEOUT } from '@/constants/api';
 import type { ApiResponse } from '@/types';
 import { assertValidId } from '@/utils/ids';
 
@@ -167,7 +168,7 @@ export async function uploadProductoSemanalImagen(
     formData,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 60_000,
+      timeout: API_TIMEOUT,
     },
   );
   return data;

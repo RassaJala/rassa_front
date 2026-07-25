@@ -23,12 +23,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
 import { useTheme } from '@/store/ThemeContext';
 import type {
   ApiResponse,
   Category,
   FarmerStackParamList,
-  Producto,
   Unidad,
 } from '@/types';
 import { extractApiError } from '@/utils/apiError';

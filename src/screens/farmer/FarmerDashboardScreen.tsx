@@ -42,49 +42,50 @@ function formatDate(iso: string): string {
   });
 }
 
+const STATUS_LABELS: Record<PublicacionEstado, string> = {
+  borrador: 'Borrador',
+  publicado: 'Publicado',
+  cerrado: 'Cerrado',
+  cancelado: 'Cancelado',
+};
+
 function StatusBadge({
   estado,
+  isDark,
 }: {
   estado: PublicacionEstado;
+  isDark: boolean;
 }): React.JSX.Element {
-  const map: Record<
-    PublicacionEstado,
-    { bg: string; fg: string; label: string }
-  > = {
-    borrador: {
-      bg: colors.statusBorradorBg,
-      fg: colors.statusBorradorFg,
-      label: 'Borrador',
-    },
-    publicado: {
-      bg: colors.statusPublicadoBg,
-      fg: colors.statusPublicadoFg,
-      label: 'Publicado',
-    },
-    cerrado: {
-      bg: colors.statusCerradoBg,
-      fg: colors.statusCerradoFg,
-      label: 'Cerrado',
-    },
-    cancelado: {
-      bg: colors.statusCanceladoBg,
-      fg: colors.statusCanceladoFg,
-      label: 'Cancelado',
-    },
+  const theme = themeColors(isDark);
+  const bgMap: Record<PublicacionEstado, string> = {
+    borrador: theme.statusBorradorBg,
+    publicado: theme.statusPublicadoBg,
+    cerrado: theme.statusCerradoBg,
+    cancelado: theme.statusCanceladoBg,
   };
-  const c = map[estado] ?? map.borrador;
+  const fgMap: Record<PublicacionEstado, string> = {
+    borrador: theme.statusBorradorFg,
+    publicado: theme.statusPublicadoFg,
+    cerrado: theme.statusCerradoFg,
+    cancelado: theme.statusCanceladoFg,
+  };
+
+  const cBg = bgMap[estado] ?? bgMap.borrador;
+  const cFg = fgMap[estado] ?? fgMap.borrador;
+  const label = STATUS_LABELS[estado] ?? 'Borrador';
+
   return (
     <View
       style={{
-        backgroundColor: c.bg,
+        backgroundColor: cBg,
         borderRadius: 8,
         paddingHorizontal: 8,
         paddingVertical: 3,
         alignSelf: 'flex-start',
       }}
     >
-      <Text style={{ fontSize: 11, fontWeight: '600', color: c.fg }}>
-        {c.label}
+      <Text style={{ fontSize: 11, fontWeight: '600', color: cFg }}>
+        {label}
       </Text>
     </View>
   );
@@ -142,7 +143,7 @@ function PublicationCard({
             {formatDate(pub.fecha_publicacion)}
           </Text>
         </View>
-        <StatusBadge estado={pub.estado} />
+        <StatusBadge estado={pub.estado} isDark={isDark} />
       </View>
 
       <View
@@ -228,7 +229,6 @@ function EmptyState({
   );
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function FarmerDashboardScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -249,7 +249,6 @@ export default function FarmerDashboardScreen({
   const surface = theme.surface;
   const border = theme.border;
   const brand = theme.brand;
-  const coral = colors.brandRedCoral;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -257,7 +256,7 @@ export default function FarmerDashboardScreen({
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: insets.top + 16,
-          paddingBottom: 100,
+          paddingBottom: Math.max(insets.bottom, 24),
           paddingHorizontal: 20,
         }}
         refreshControl={
@@ -269,7 +268,6 @@ export default function FarmerDashboardScreen({
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View
           style={{
             flexDirection: 'row',
@@ -331,7 +329,6 @@ export default function FarmerDashboardScreen({
           </View>
         </View>
 
-        {/* Tabs */}
         <View
           style={{
             flexDirection: 'row',
@@ -381,7 +378,6 @@ export default function FarmerDashboardScreen({
           })}
         </View>
 
-        {/* Content */}
         {isLoading ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
             <ActivityIndicator size="large" color={brand} />
@@ -436,7 +432,6 @@ export default function FarmerDashboardScreen({
         )}
       </ScrollView>
 
-      {/* FAB — new publication (web only) */}
       {Platform.OS === 'web' && (
         <Pressable
           onPress={() => navigation.navigate('PublicationWizard', {})}
@@ -449,7 +444,7 @@ export default function FarmerDashboardScreen({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            backgroundColor: coral,
+            backgroundColor: colors.brandRedCoral,
             borderRadius: 16,
             paddingVertical: 16,
             opacity: pressed ? 0.7 : 1,

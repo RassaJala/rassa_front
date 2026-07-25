@@ -68,22 +68,6 @@ export interface Localidad {
   estado: boolean;
 }
 
-export interface Producto {
-  id_producto: number;
-  nombre_producto: string;
-  descripcion: string;
-  precio: string;
-  stock: number;
-  es_perecedero: boolean;
-  imagen: string | null;
-  estado: boolean;
-  categoria: Category;
-  unidad: Unidad | null;
-  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
-  imagen_principal: string | null;
-  creado_en: string;
-}
-
 export interface Order {
   id_pedido: number;
   cliente_nombre: string | null;

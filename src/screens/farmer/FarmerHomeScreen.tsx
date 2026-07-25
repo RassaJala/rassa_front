@@ -1,27 +1,20 @@
 import React, { useCallback, useRef, useState } from 'react';
-import {
-  Animated,
-  Dimensions,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
 
-import QuickActionCard from '@/components/farmer/QuickActionCard';
-import StatCard from '@/components/farmer/StatCard';
-import { colors, themeColors } from '@/constants/colors';
+import FarmerDrawer from '@/components/farmer/FarmerDrawer';
+import FarmerQuickActions from '@/components/farmer/FarmerQuickActions';
+import FarmerStats from '@/components/farmer/FarmerStats';
+import { farmerTheme } from '@/constants/theme';
+import { useFarmerHomeStats } from '@/hooks/useFarmerHomeStats';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
-import api from '@/services/api';
-import type { PublicacionList } from '@/services/publications';
+import { useScreenWidth } from '@/hooks/useScreenWidth';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { ApiResponse, FarmerStackParamList, Producto } from '@/types';
+import type { FarmerStackParamList } from '@/types';
 
 type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerHome'>;
 
@@ -29,22 +22,9 @@ interface Props {
   readonly navigation: Nav;
 }
 
-const DRAWER_WIDTH = 0.55;
+const DRAWER_WIDTH_RATIO = 0.55;
+const COMPACT_BREAKPOINT = 400;
 
-function useScreenWidth(): number {
-  const [width, setWidth] = useState(() => Dimensions.get('window').width);
-
-  React.useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setWidth(window.width);
-    });
-    return () => subscription.remove();
-  }, []);
-
-  return width;
-}
-
-// eslint-disable-next-line sonarjs/cognitive-complexity -- farmer home with stats/grid/drawer logic
 export default function FarmerHomeScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -53,54 +33,15 @@ export default function FarmerHomeScreen({
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const screenWidth = useScreenWidth();
-  const isCompact = screenWidth < 400;
+  const isCompact = screenWidth < COMPACT_BREAKPOINT;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const { data: productsData } = useQuery({
-    queryKey: ['productos-count'],
-    queryFn: async () => {
-      const { data } =
-        await api.get<ApiResponse<{ results: Producto[]; count?: number }>>(
-          '/productos/',
-        );
-      return data.data;
-    },
-    staleTime: 30_000,
-  });
-
-  const { data: pubsData } = useQuery({
-    queryKey: ['publicaciones-count'],
-    queryFn: async () => {
-      const { data } =
-        await api.get<ApiResponse<PublicacionList>>('/publicaciones/');
-      return data.data;
-    },
-    staleTime: 30_000,
-  });
-
-  const totalProducts =
-    productsData?.count ?? productsData?.results?.length ?? 0;
-  const totalPublications = pubsData?.count ?? 0;
-  const activePublications =
-    pubsData?.results?.filter((p) => p.estado === 'publicado').length ?? 0;
+  const theme = farmerTheme(isDark);
+  const { totalProducts, totalPublications, activePublications } =
+    useFarmerHomeStats();
 
   const { today } = useFormattedDate();
-  const theme = themeColors(isDark);
-  const bg = theme.bg;
-  const surface = theme.surface;
-  const fg = theme.fg;
-  const muted = theme.muted;
-  const border = theme.border;
-  const brand = theme.brand;
-  const accentBg = theme.accentBg;
-  const coralBg = theme.coralBg;
-  const coral = colors.brandRedCoral;
-  const pumpkin = colors.warning;
-  const drawerBg = isDark ? '#1A211B' : '#FFFFFF';
-  const overlayBg = colors.shadow;
-  const sidebarBorder = isDark ? theme.border : '#E8ECE4';
-  const pumpkinBg = isDark ? 'rgba(212,160,32,0.12)' : 'rgba(242,169,0,0.07)';
 
   const openDrawer = useCallback(() => {
     setDrawerOpen(true);
@@ -121,16 +62,6 @@ export default function FarmerHomeScreen({
     });
   }, [slideAnim]);
 
-  const drawerTranslate = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [screenWidth * DRAWER_WIDTH, 0],
-  });
-
-  const overlayOpacity = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.35],
-  });
-
   interface MenuItem {
     icon: string;
     label: string;
@@ -144,28 +75,28 @@ export default function FarmerHomeScreen({
       icon: 'account-circle-outline',
       label: 'Perfil',
       desc: 'Tu información personal',
-      color: fg,
+      color: theme.fg,
       action: closeDrawer,
     },
     {
       icon: isDark ? 'weather-sunny' : 'weather-night',
       label: `Tema ${isDark ? 'claro' : 'oscuro'}`,
       desc: 'Alternar apariencia',
-      color: fg,
+      color: theme.fg,
       action: toggleColorScheme,
     },
     {
       icon: 'cog-outline',
       label: 'Configuración',
       desc: 'Preferencias del sistema',
-      color: fg,
+      color: theme.fg,
       action: closeDrawer,
     },
     {
       icon: 'logout',
       label: 'Cerrar sesión',
       desc: '',
-      color: coral,
+      color: theme.coral,
       action: () => {
         closeDrawer();
         void logout();
@@ -174,7 +105,7 @@ export default function FarmerHomeScreen({
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <View style={{ flex: 1 }}>
         <ScrollView
           style={{ flex: 1 }}
@@ -189,7 +120,6 @@ export default function FarmerHomeScreen({
               paddingHorizontal: 20,
             }}
           >
-            {/* HEADER */}
             <View
               style={{
                 flexDirection: 'row',
@@ -206,7 +136,7 @@ export default function FarmerHomeScreen({
                     fontWeight: '600',
                     letterSpacing: 0.06,
                     textTransform: 'uppercase',
-                    color: muted,
+                    color: theme.muted,
                   }}
                   numberOfLines={2}
                 >
@@ -217,7 +147,7 @@ export default function FarmerHomeScreen({
                     fontSize: isCompact ? 28 : 32,
                     fontWeight: '700',
                     letterSpacing: -0.3,
-                    color: fg,
+                    color: theme.fg,
                   }}
                 >
                   Inicio
@@ -226,7 +156,7 @@ export default function FarmerHomeScreen({
                   style={{
                     fontSize: isCompact ? 17 : 20,
                     fontWeight: '700',
-                    color: muted,
+                    color: theme.muted,
                     marginTop: 4,
                   }}
                   numberOfLines={2}
@@ -243,9 +173,9 @@ export default function FarmerHomeScreen({
                     width: 52,
                     height: 52,
                     borderRadius: 26,
-                    backgroundColor: surface,
+                    backgroundColor: theme.surface,
                     borderWidth: 1,
-                    borderColor: border,
+                    borderColor: theme.border,
                     alignItems: 'center',
                     justifyContent: 'center',
                     opacity: pressed ? 0.6 : 1,
@@ -254,215 +184,36 @@ export default function FarmerHomeScreen({
                   <MaterialCommunityIcons
                     name="account-circle"
                     size={28}
-                    color={fg}
+                    color={theme.fg}
                   />
                 </Pressable>
               </View>
             </View>
 
-            {/* STATS */}
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                paddingVertical: 24,
-                gap: isCompact ? 8 : 10,
-              }}
-            >
-              <StatCard
-                icon="package-variant"
-                value={totalProducts}
-                label="Productos"
-                iconBg={accentBg}
-                iconColor={brand}
-                valueColor={brand}
-                isCompact={isCompact}
-                isDark={isDark}
-              />
-              <StatCard
-                icon="check-circle-outline"
-                value={activePublications}
-                label="Publicadas"
-                iconBg={coralBg}
-                iconColor={coral}
-                valueColor={coral}
-                isCompact={isCompact}
-                isDark={isDark}
-              />
-              <StatCard
-                icon="clipboard-list"
-                value={totalPublications}
-                label="Total pubs"
-                iconBg={pumpkinBg}
-                iconColor={pumpkin}
-                valueColor={pumpkin}
-                isCompact={isCompact}
-                isDark={isDark}
-              />
-            </View>
+            <FarmerStats
+              isCompact={isCompact}
+              theme={theme}
+              totalProducts={totalProducts}
+              activePublications={activePublications}
+              totalPublications={totalPublications}
+            />
 
-            {/* QUICK ACTIONS */}
-            <QuickActionCard
-              icon="bullhorn-outline"
-              title="Publicaciones"
-              description="Creá y gestioná publicaciones semanales"
-              iconBg={coralBg}
-              iconColor={coral}
-              isDark={isDark}
-              onPress={() => navigation.navigate('FarmerDashboard')}
-            />
-            <QuickActionCard
-              icon="format-list-bulleted"
-              title="Mis Productos"
-              description="Ver y gestionar tu catálogo"
-              iconBg={accentBg}
-              iconColor={brand}
-              isDark={isDark}
-              onPress={() => navigation.navigate('ProductList')}
-            />
+            <FarmerQuickActions navigation={navigation} theme={theme} />
           </View>
         </ScrollView>
       </View>
 
-      {/* OVERLAY */}
-      {drawerOpen ? (
-        <Animated.View
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            right: 0,
-            opacity: overlayOpacity,
-            backgroundColor: overlayBg,
-            zIndex: 10,
-          }}
-        >
-          <Pressable onPress={closeDrawer} style={{ flex: 1 }} />
-        </Animated.View>
-      ) : null}
-
-      {/* DRAWER */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: `${DRAWER_WIDTH * 100}%`,
-          backgroundColor: drawerBg,
-          transform: [{ translateX: drawerTranslate }],
-          borderLeftWidth: 1,
-          borderLeftColor: sidebarBorder,
-          zIndex: 11,
-        }}
-      >
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View
-            style={{
-              alignItems: 'center',
-              paddingTop: 60,
-              paddingHorizontal: 20,
-              paddingBottom: 24,
-              marginBottom: 20,
-              borderBottomWidth: 1,
-              borderBottomColor: sidebarBorder,
-            }}
-          >
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                backgroundColor: accentBg,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="account-circle"
-                size={40}
-                color={brand}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: '700',
-                color: fg,
-                letterSpacing: -0.2,
-              }}
-            >
-              {user?.nombre ?? 'Agricultor'}
-            </Text>
-            <Text style={{ fontSize: 15, color: muted, marginTop: 4 }}>
-              {user?.email ?? ''}
-            </Text>
-          </View>
-
-          <View style={{ paddingHorizontal: 16, gap: 6 }}>
-            {menuItems.map((item, i) => {
-              const isLast = i === menuItems.length - 1;
-              return (
-                <Pressable
-                  key={i}
-                  onPress={item.action}
-                  style={({ pressed }) => ({
-                    backgroundColor: isLast
-                      ? isDark
-                        ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)'
-                      : isDark
-                        ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)',
-                    borderRadius: 16,
-                    borderWidth: isLast ? 1 : 0,
-                    borderColor: isLast
-                      ? isDark
-                        ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)'
-                      : 'transparent',
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 12,
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
-                      minHeight: 56,
-                    }}
-                  >
-                    <MaterialCommunityIcons
-                      name={
-                        item.icon as keyof typeof MaterialCommunityIcons.glyphMap
-                      }
-                      size={28}
-                      color={item.color}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: '600',
-                        color: item.color,
-                        letterSpacing: -0.15,
-                        flexShrink: 1,
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={{ height: 32 }} />
-        </ScrollView>
-      </Animated.View>
+      <FarmerDrawer
+        isOpen={drawerOpen}
+        isDark={isDark}
+        user={user}
+        slideAnim={slideAnim}
+        screenWidth={screenWidth}
+        drawerWidthRatio={DRAWER_WIDTH_RATIO}
+        theme={theme}
+        menuItems={menuItems}
+        onClose={closeDrawer}
+      />
     </View>
   );
 }
