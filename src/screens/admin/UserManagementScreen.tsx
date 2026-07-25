@@ -805,7 +805,7 @@ export default function UserManagementScreen(): React.JSX.Element {
           }}
         >
           <TouchableOpacity
-              onPress={() => {
+            onPress={() => {
               if (!isFormActive) return;
               switchToList();
             }}
