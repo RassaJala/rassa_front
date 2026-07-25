@@ -104,7 +104,7 @@ export default function ChatBubble({
           isOwn ? 'self-end' : 'self-start'
         }`}
       >
-        <Text className="text-sm italic text-gray-400 dark:text-gray-500">
+        <Text className="text-sm text-gray-400 italic dark:text-gray-500">
           Mensaje eliminado
         </Text>
       </View>
