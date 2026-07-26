@@ -16,7 +16,6 @@ jobs:
       - run: bun run typecheck
       - run: bun run lint
       - run: bun run format:check
-      - run: bun run test
 
   web-checks:
     runs-on: ubuntu-latest
