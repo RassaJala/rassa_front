@@ -158,9 +158,10 @@ export function useProductForm(productoId?: number): UseProductFormResult {
     };
 
     try {
-      const result = isEditing && productoId
-        ? await updateMutation.mutateAsync({ id: productoId, payload })
-        : await createMutation.mutateAsync(payload);
+      const result =
+        isEditing && productoId
+          ? await updateMutation.mutateAsync({ id: productoId, payload })
+          : await createMutation.mutateAsync(payload);
 
       if (form.imagenUri && !form.imagenUri.startsWith('http')) {
         const formData = buildImageFormData(form.imagenUri);

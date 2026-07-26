@@ -79,7 +79,11 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_resolve, reject) => {
     timeoutId = setTimeout(() => {
-      reject(new Error(`La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`));
+      reject(
+        new Error(
+          `La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`,
+        ),
+      );
     }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
@@ -391,45 +395,50 @@ export function usePublicationWizard({
     publishingRef.current = true;
 
     try {
-      await withTimeout((async () => {
-        const pub = await ensurePublicationAndPersist();
-        if (!pub) return;
+      await withTimeout(
+        (async () => {
+          const pub = await ensurePublicationAndPersist();
+          if (!pub) return;
 
-        const existingIds = new Set(
-          productos.map((p) => String(p.id_producto_semanal)),
-        );
-        const currentIds = new Set(activeItems.map((i) => i.tempId));
+          const existingIds = new Set(
+            productos.map((p) => String(p.id_producto_semanal)),
+          );
+          const currentIds = new Set(activeItems.map((i) => i.tempId));
 
-        for (const id of existingIds) {
-          if (!currentIds.has(id)) {
-            const itemId = Number(id);
-            if (!Number.isInteger(itemId) || itemId <= 0) {
-              console.error(
-                '[usePublicationWizard] invalid item id for removal:',
-                id,
-              );
-              continue;
-            }
-            try {
-              await removeItemMutation.mutateAsync({
-                pubId: pub.id_publicacion,
-                itemId,
-              });
-            } catch (removeErr) {
-              console.error(
-                '[usePublicationWizard] failed to remove item:',
-                itemId,
-                removeErr instanceof Error ? removeErr.message : String(removeErr),
-              );
-              throw new Error(
-                `No se pudo eliminar el producto #${String(itemId)}. La publicación no se publicó.`,
-              );
+          for (const id of existingIds) {
+            if (!currentIds.has(id)) {
+              const itemId = Number(id);
+              if (!Number.isInteger(itemId) || itemId <= 0) {
+                console.error(
+                  '[usePublicationWizard] invalid item id for removal:',
+                  id,
+                );
+                continue;
+              }
+              try {
+                await removeItemMutation.mutateAsync({
+                  pubId: pub.id_publicacion,
+                  itemId,
+                });
+              } catch (removeErr) {
+                console.error(
+                  '[usePublicationWizard] failed to remove item:',
+                  itemId,
+                  removeErr instanceof Error
+                    ? removeErr.message
+                    : String(removeErr),
+                );
+                throw new Error(
+                  `No se pudo eliminar el producto #${String(itemId)}. La publicación no se publicó.`,
+                );
+              }
             }
           }
-        }
 
-        await publishMutation.mutateAsync(pub.id_publicacion);
-      })(), PUBLISH_TIMEOUT_MS);
+          await publishMutation.mutateAsync(pub.id_publicacion);
+        })(),
+        PUBLISH_TIMEOUT_MS,
+      );
     } finally {
       publishingRef.current = false;
     }

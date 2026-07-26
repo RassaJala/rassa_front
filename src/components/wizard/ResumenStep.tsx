@@ -4,7 +4,10 @@ import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors, themeColors } from '@/constants/colors';
-import type { WizardItemDraft, WizardItemValidation } from '@/hooks/usePublicationWizard';
+import type {
+  WizardItemDraft,
+  WizardItemValidation,
+} from '@/hooks/usePublicationWizard';
 import type { Producto, Unidad } from '@/services/productos';
 
 interface ResumenStepProps {

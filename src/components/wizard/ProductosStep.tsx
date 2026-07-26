@@ -5,7 +5,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import WizardItemCard from '@/components/wizard/WizardItemCard';
 import { themeColors } from '@/constants/colors';
-import type { WizardItemDraft, WizardItemValidation } from '@/hooks/usePublicationWizard';
+import type {
+  WizardItemDraft,
+  WizardItemValidation,
+} from '@/hooks/usePublicationWizard';
 import type { Producto, Unidad } from '@/services/productos';
 
 interface ProductosStepProps {
@@ -112,9 +115,7 @@ export default function ProductosStep({
         })}
       >
         <MaterialCommunityIcons name="plus" size={20} color={theme.brand} />
-        <Text
-          style={{ fontSize: 15, fontWeight: '600', color: theme.brand }}
-        >
+        <Text style={{ fontSize: 15, fontWeight: '600', color: theme.brand }}>
           Agregar producto
         </Text>
       </Pressable>
