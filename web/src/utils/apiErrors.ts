@@ -1,5 +1,52 @@
 import axios from 'axios';
 
+const STATUS_MESSAGES: Record<number, string> = {
+  401: 'Credenciales inválidas o sesión expirada.',
+  403: 'No tienes permiso para realizar esta acción.',
+  404: 'El recurso solicitado no fue encontrado.',
+  409: 'Conflicto: Ya existe un registro con esos datos.',
+  429: 'Límite de peticiones excedido. Intenta más tarde.',
+};
+
+function extractFieldErrors(data: Record<string, unknown>): string | null {
+  const fieldErrors: string[] = [];
+
+  for (const [key, val] of Object.entries(data)) {
+    if (key === 'non_field_errors') {
+      const arr = Array.isArray(val) ? val : [val];
+      fieldErrors.push(...arr.map(String));
+    } else if (Array.isArray(val)) {
+      fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+    }
+  }
+
+  return fieldErrors.length > 0 ? fieldErrors.join('\n') : null;
+}
+
+function parseAxiosError(error: unknown): string | null {
+  if (!axios.isAxiosError(error)) return null;
+
+  const status = error.response?.status;
+  const data = error.response?.data as unknown;
+
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    if (typeof record.detail === 'string') {
+      return record.detail;
+    }
+    const fieldsErr = extractFieldErrors(record);
+    if (fieldsErr !== null) return fieldsErr;
+  }
+
+  if (status !== undefined) {
+    const mapped = STATUS_MESSAGES[status];
+    if (mapped !== undefined) return mapped;
+    if (status >= 500) return 'Error del servidor. Intenta más tarde.';
+  }
+
+  return null;
+}
+
 /**
  * Parsea un error de Axios (o estándar) de la API y devuelve un mensaje seguro
  * y amigable para el usuario, evitando filtrar información técnica sensible.
@@ -12,34 +59,6 @@ export function parseApiError(
   error: unknown,
   defaultMessage = 'Ocurrió un error inesperado.',
 ): string {
-  if (axios.isAxiosError(error)) {
-    const status = error.response?.status;
-    const data = error.response?.data;
-
-    if (data && typeof data === 'object' && typeof data.detail === 'string') {
-      return data.detail;
-    }
-
-    if (data && typeof data === 'object') {
-      const fieldErrors: string[] = [];
-      for (const [key, val] of Object.entries(data)) {
-        if (key === 'non_field_errors') {
-          const arr = Array.isArray(val) ? val : [val];
-          fieldErrors.push(...arr.map(String));
-        } else if (Array.isArray(val)) {
-          fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
-        }
-      }
-      if (fieldErrors.length > 0) return fieldErrors.join('\n');
-    }
-
-    if (status === 401) return 'Credenciales inválidas o sesión expirada.';
-    if (status === 403) return 'No tienes permiso para realizar esta acción.';
-    if (status === 404) return 'El recurso solicitado no fue encontrado.';
-    if (status === 409) return 'Conflicto: Ya existe un registro con esos datos.';
-    if (status === 429) return 'Límite de peticiones excedido. Intenta más tarde.';
-    if (status && status >= 500) return 'Error del servidor. Intenta más tarde.';
-  }
-
-  return defaultMessage;
+  const parsed = parseAxiosError(error);
+  return parsed ?? defaultMessage;
 }

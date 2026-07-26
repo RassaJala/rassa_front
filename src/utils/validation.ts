@@ -44,9 +44,9 @@ export function cleanAddress(val: string): string {
 export function isAdult(birthDate: string): boolean {
   if (!DATE_REGEX.test(birthDate)) return false;
   const parts = birthDate.split('-');
-  const year = parseInt(parts[0] || '0', 10);
-  const month = parseInt(parts[1] || '0', 10) - 1;
-  const day = parseInt(parts[2] || '0', 10);
+  const year = parseInt(parts[0] ?? '0', 10);
+  const month = parseInt(parts[1] ?? '0', 10) - 1;
+  const day = parseInt(parts[2] ?? '0', 10);
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - month;

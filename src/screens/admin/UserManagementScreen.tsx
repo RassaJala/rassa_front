@@ -350,9 +350,9 @@ async function fetchAllPages(
     typeof payload === 'object' &&
     'results' in (payload as Record<string, unknown>)
       ? (payload as { results: AdminUser[] }).results
-      : Array.isArray(payload)
+      : (Array.isArray(payload)
         ? (payload as AdminUser[])
-        : [];
+        : []);
 
   const all = [...accumulated, ...results];
   const next: string | null =
@@ -497,7 +497,7 @@ export default function UserManagementScreen(): React.JSX.Element {
     setFormErrorMessage(null);
     setFormServerError('');
     form.resetForm();
-  }, [form]);
+  }, [form, setFormErrorMessage, setFormServerError]);
 
   const openRoleModal = useCallback((targetUser: AdminUser) => {
     setRoleModalUser(targetUser);

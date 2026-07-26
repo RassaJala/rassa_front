@@ -1,17 +1,29 @@
 import { useRef, useState } from 'react';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import api from '@/services/api';
 import type { UseRegistrationFormReturn } from '@/hooks/useRegistrationForm';
+import api from '@/services/api';
 import { parseApiError } from '@/utils/apiErrors';
 import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
 interface SubmitNewUserOptions {
-  onSuccess?: () => void;
-  onError?: (errorMsg: string) => void;
+  readonly onSuccess?: () => void;
+  readonly onError?: (errorMsg: string) => void;
 }
 
-export function useSubmitNewUser(options?: SubmitNewUserOptions) {
+export interface UseSubmitNewUserReturn {
+  readonly submit: (form: UseRegistrationFormReturn) => Promise<void>;
+  readonly isSubmitting: boolean;
+  readonly errorMessage: string | null;
+  readonly serverError: string;
+  readonly setErrorMessage: (msg: string | null) => void;
+  readonly setServerError: (msg: string) => void;
+}
+
+export function useSubmitNewUser(
+  options?: SubmitNewUserOptions,
+): UseSubmitNewUserReturn {
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string>('');
