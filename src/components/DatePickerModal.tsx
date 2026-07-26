@@ -32,7 +32,10 @@ const YEARS_BACK = 103;
 function parseInitialDate(dateStr?: string): { year: number; month: number; day: number } | null {
   if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
   const parts = dateStr.split('-').map(Number);
-  return { year: parts[0]!, month: parts[1]! - 1, day: parts[2]! };
+  const year = parts[0] ?? 2000;
+  const month = parts[1] !== undefined ? parts[1] - 1 : 0;
+  const day = parts[2] ?? 1;
+  return { year, month, day };
 }
 
 function toDateString(year: number, month: number, day: number): string {
