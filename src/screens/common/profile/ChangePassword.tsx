@@ -7,7 +7,6 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import axios from 'axios';
 
 import { parseAuthError, useAuth } from '@/store/AuthContext';
-
 import {
   MIN_PASSWORD_LENGTH,
   validatePasswordChange,
