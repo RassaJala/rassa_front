@@ -1,366 +1,153 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/store/ThemeContext';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
-const OVERLAY_BG = 'rgba(0,0,0,0.5)';
-const SELECTED_DAY_TEXT = colors.iconWhite;
+// ── Helpers ──────────────────────────────────────────
 
-const MONTH_NAMES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+function parseInitialDate(dateStr?: string): Date {
+  if (!dateStr) return new Date();
+  // Force local-time parsing so getFullYear/getMonth/getDate are correct
+  const d = new Date(dateStr + 'T00:00:00');
+  return Number.isNaN(d.getTime()) ? new Date() : d;
+}
 
-// Years back from 18 years ago (allows ages 18 to ~121)
-const YEARS_BACK = 103;
+function toDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getBounds(): { min: Date; max: Date } {
+  const now = new Date();
+  const maxAdultYear = now.getFullYear() - 18;
+  const maxAdult = new Date(maxAdultYear, now.getMonth(), now.getDate());
+  // 103 years back from the max adult date → allows ages ~18 to ~121
+  const min = new Date(maxAdult);
+  min.setFullYear(min.getFullYear() - 103);
+  return { min, max: maxAdult };
+}
+
+// ── Props ────────────────────────────────────────────
 
 interface DatePickerModalProps {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelectDate: (dateString: string) => void;
-  readonly initialDate?: string; // Expects "YYYY-MM-DD"
+  readonly initialDate?: string;
 }
+
+// ── Component ────────────────────────────────────────
 
 export default function DatePickerModal({
   visible,
   onClose,
   onSelectDate,
   initialDate,
-}: DatePickerModalProps): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+}: DatePickerModalProps): React.JSX.Element | null {
+  const [internalDate, setInternalDate] = useState(() =>
+    parseInitialDate(initialDate),
+  );
+  const bounds = getBounds();
 
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const coral = colors.brand.redCoral;
-
-  const currentYear = new Date().getFullYear();
-  // Only allow birth years that correspond to age >= 18
-  const maxAdultYear = currentYear - 18;
-  const years = Array.from({ length: YEARS_BACK }, (_, i) => maxAdultYear - i);
-
-  const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-indexed: 0 = Enero, 11 = Diciembre
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-
-  // Initialize from initialDate if provided
+  // Sync internal date when modal opens with a new initialDate
   useEffect(() => {
     if (visible) {
-      if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-        const parts = initialDate.split('-').map(Number);
-        if (parts.length === 3) {
-          const y = parts[0] ?? currentYear;
-          const m = parts[1] ?? 1;
-          const d = parts[2] ?? 1;
-          setSelectedYear(y);
-          setSelectedMonth(m - 1);
-          setSelectedDay(d);
-          setStep('day'); // Jump to day selection if we have full date
-        }
-      } else {
-        setSelectedYear(null);
-        setSelectedMonth(null);
-        setSelectedDay(null);
-        setStep('year');
+      setInternalDate(parseInitialDate(initialDate));
+    }
+  }, [visible, initialDate]);
+
+  const handleChange = useCallback(
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (selectedDate) {
+        setInternalDate(selectedDate);
       }
-    }
-  }, [visible, initialDate, currentYear]);
+      if (Platform.OS === 'android') {
+        // Android dialog closes automatically after selection or dismiss
+        if (selectedDate && event.type !== 'dismissed') {
+          onSelectDate(toDateString(selectedDate));
+        }
+        onClose();
+      }
+      // iOS: just update the internal date, user taps "Hecho" to confirm
+    },
+    [onSelectDate, onClose],
+  );
 
-  const handleSelectYear = (year: number) => {
-    setSelectedYear(year);
-    setStep('month');
-  };
+  const handleDone = useCallback(() => {
+    onSelectDate(toDateString(internalDate));
+    onClose();
+  }, [internalDate, onSelectDate, onClose]);
 
-  const handleSelectMonth = (monthIndex: number) => {
-    setSelectedMonth(monthIndex);
-    setStep('day');
-  };
+  // ── Android: native dialog ─────────────────────────
+  if (Platform.OS === 'android') {
+    // Render nothing when not visible so the dialog lifecycle is clean
+    if (!visible) return null;
 
-  const handleSelectDay = (day: number) => {
-    setSelectedDay(day);
-    if (selectedYear !== null && selectedMonth !== null) {
-      const monthStr = String(selectedMonth + 1).padStart(2, '0');
-      const dayStr = String(day).padStart(2, '0');
-      onSelectDate(`${selectedYear}-${monthStr}-${dayStr}`);
-      onClose();
-    }
-  };
+    return (
+      <DateTimePicker
+        testID="dateTimePicker"
+        value={internalDate}
+        mode="date"
+        display="default"
+        minimumDate={bounds.min}
+        maximumDate={bounds.max}
+        onChange={handleChange}
+      />
+    );
+  }
 
-  // Get number of days in selected month & year
-  const getDaysInMonth = (): number => {
-    if (selectedYear === null || selectedMonth === null) return 31;
-    // selectedMonth + 1 gives the next month, day 0 gives the last day of the current month
-    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  };
-
-  const daysCount = getDaysInMonth();
-  const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
-
-  const tabBtnBase = (
-    active: boolean,
-  ): {
-    flex: number;
-    alignItems: 'center';
-    paddingVertical: number;
-    borderRadius: number;
-    backgroundColor: string;
-  } => ({
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: active ? surface : 'transparent',
-  });
-
-  const listItemStyle = (
-    selected: boolean,
-  ): {
-    alignItems: 'center';
-    borderBottomWidth: number;
-    borderBottomColor: string;
-    paddingVertical: number;
-    backgroundColor: string;
-  } => ({
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: border,
-    paddingVertical: 12,
-    backgroundColor: selected
-      ? isDark
-        ? `${coral}33`
-        : `${coral}1A`
-      : 'transparent',
-  });
-
-  const dayBoxStyle = (selected: boolean) => ({
-    width: 48,
-    height: 48,
-    margin: 2,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: selected ? coral : border,
-    backgroundColor: selected ? coral : bg,
-  });
-
+  // ── iOS: spinner inside a Modal ────────────────────
   return (
     <Modal
       transparent
-      animationType="fade"
+      animationType="slide"
       visible={visible}
       onRequestClose={onClose}
     >
       <Pressable
         testID="modal-overlay"
+        className="flex-1 justify-end bg-black/50"
         onPress={onClose}
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: OVERLAY_BG,
-        }}
       >
         <Pressable
-          style={{
-            width: '88%',
-            maxWidth: 380,
-            borderRadius: 16,
-            backgroundColor: surface,
-            padding: 24,
-            borderWidth: 1,
-            borderColor: border,
-          }}
-          onPress={(e) => e.stopPropagation()} // Prevent closing when tapping card
+          className="rounded-t-2xl bg-white p-6 dark:bg-gray-900"
+          onPress={(e) => e.stopPropagation()}
         >
-          {/* Modal Header */}
-          <Text
-            style={{
-              marginBottom: 16,
-              textAlign: 'center',
-              fontSize: 20,
-              fontWeight: '700',
-              color: fg,
-            }}
-          >
-            Fecha de Nacimiento
-          </Text>
-
-          {/* Current Selection Indicators */}
-          <View
-            style={{
-              marginBottom: 16,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              borderRadius: 12,
-              backgroundColor: bg,
-              padding: 8,
-            }}
-          >
+          {/* Header */}
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-lg font-bold text-brand-ink dark:text-gray-100">
+              Fecha de Nacimiento
+            </Text>
             <TouchableOpacity
-              testID="tab-year-selector"
-              onPress={() => setStep('year')}
-              style={tabBtnBase(step === 'year')}
+              testID="btn-done"
+              onPress={handleDone}
+              className="px-3 py-1"
             >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: muted }}>
-                Año
-              </Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: coral }}>
-                {selectedYear ?? '----'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-month-selector"
-              disabled={selectedYear === null}
-              onPress={() => setStep('month')}
-              style={tabBtnBase(step === 'month')}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: muted }}>
-                Mes
-              </Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: coral }}>
-                {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-day-selector"
-              disabled={selectedMonth === null}
-              onPress={() => setStep('day')}
-              style={tabBtnBase(step === 'day')}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '500', color: muted }}>
-                Día
-              </Text>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: coral }}>
-                {selectedDay ?? '--'}
+              <Text className="text-base font-semibold text-brand-red-coral">
+                Hecho
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Selector Content based on Step */}
-          <View style={{ height: 240, justifyContent: 'center' }}>
-            {step === 'year' && (
-              <ScrollView testID="years-list">
-                {years.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`year-option-${item}`}
-                    onPress={() => handleSelectYear(item)}
-                    style={listItemStyle(selectedYear === item)}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: '600',
-                        color: selectedYear === item ? coral : fg,
-                      }}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {step === 'month' && (
-              <ScrollView testID="months-list">
-                {MONTH_NAMES.map((item, index) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`month-option-${index}`}
-                    onPress={() => handleSelectMonth(index)}
-                    style={listItemStyle(selectedMonth === index)}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: '600',
-                        color: selectedMonth === index ? coral : fg,
-                      }}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {step === 'day' && (
-              <ScrollView
-                testID="days-grid"
-                contentContainerStyle={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'flex-start',
-                }}
-              >
-                {daysArray.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`day-option-${item}`}
-                    onPress={() => handleSelectDay(item)}
-                    style={dayBoxStyle(selectedDay === item)}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: '600',
-                        color: selectedDay === item ? SELECTED_DAY_TEXT : fg,
-                      }}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View
-            style={{
-              marginTop: 16,
-              flexDirection: 'row',
-              justifyContent: 'flex-end',
-              borderTopWidth: 1,
-              borderTopColor: border,
-              paddingTop: 12,
-            }}
-          >
-            <TouchableOpacity
-              testID="btn-cancel"
-              onPress={onClose}
-              style={{ paddingHorizontal: 16, paddingVertical: 8 }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '500', color: muted }}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={internalDate}
+            mode="date"
+            display="spinner"
+            minimumDate={bounds.min}
+            maximumDate={bounds.max}
+            onChange={handleChange}
+          />
         </Pressable>
       </Pressable>
     </Modal>

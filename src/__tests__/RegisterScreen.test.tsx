@@ -121,7 +121,10 @@ describe('RegisterScreen', () => {
       getByPlaceholderText('ejemplo@correo.com'),
       'correo-invalido',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 6 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -143,7 +146,7 @@ describe('RegisterScreen', () => {
       getByPlaceholderText('ejemplo@correo.com'),
       'juan@test.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), '123'); // Corta
+    fireEvent.changeText(getByPlaceholderText('Mínimo 6 caracteres'), '123'); // Corta
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -167,7 +170,10 @@ describe('RegisterScreen', () => {
       getByPlaceholderText('ejemplo@correo.com'),
       'juan@test.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 6 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -202,7 +208,10 @@ describe('RegisterScreen', () => {
       getByPlaceholderText('ejemplo@correo.com'),
       'test@reg.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 6 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'NombreTest');
     fireEvent.changeText(
       getByPlaceholderText('Apellido Paterno'),

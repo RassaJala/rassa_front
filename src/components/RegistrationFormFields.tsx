@@ -162,7 +162,7 @@ export default function RegistrationFormFields({
             value={fechaNacimiento}
             showSoftInputOnFocus={false}
             onChangeText={setFechaNacimiento}
-            editable={false}
+            editable={!disabled}
           />
         </View>
       </TouchableOpacity>
