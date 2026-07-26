@@ -69,26 +69,8 @@ interface UsePublicationWizardResult {
   saveDraft: () => Promise<void>;
 }
 
-export function generateTempId(): string {
-  return `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const PUBLISH_TIMEOUT_MS = 60_000;
-
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_resolve, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(
-        new Error(
-          `La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`,
-        ),
-      );
-    }, ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => {
-    clearTimeout(timeoutId);
-  });
+export function generateLocalTempId(): string {
+  return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export function validateItem(item: WizardItemDraft): WizardItemValidation {
@@ -137,6 +119,22 @@ interface PersistResult {
   isNew: boolean;
 }
 
+function isValidItemId(id: number): boolean {
+  return Number.isInteger(id) && id > 0;
+}
+
+function buildPayload(item: WizardItemDraft) {
+  const stockNum = Number(item.stock);
+  const precioNum = Number(item.precio);
+  return {
+    fk_producto: item.fk_producto,
+    fk_unidad: item.fk_unidad,
+    stock: Number.isNaN(stockNum) ? 0 : stockNum,
+    precio: Number.isNaN(precioNum) ? 0 : precioNum,
+    foto: isLocalFileUri(item.foto ?? '') ? null : item.foto,
+  };
+}
+
 async function persistItem(
   pubId: number,
   item: WizardItemDraft,
@@ -148,20 +146,20 @@ async function persistItem(
     (p) => String(p.id_producto_semanal) === item.tempId,
   );
 
-  const payload = {
-    fk_producto: item.fk_producto,
-    fk_unidad: item.fk_unidad,
-    stock: Number(item.stock),
-    precio: Number(item.precio),
-    foto: isLocalFileUri(item.foto ?? '') ? null : item.foto,
-  };
+  const payload = buildPayload(item);
 
   let itemId: number;
 
   if (isExisting) {
+    const serverId = Number(item.tempId);
+    if (!isValidItemId(serverId)) {
+      throw new Error(
+        `[usePublicationWizard] Invalid server id for update: ${item.tempId}`,
+      );
+    }
     const result = await updateMutateAsync({
       pubId,
-      itemId: Number(item.tempId),
+      itemId: serverId,
       payload,
     });
     itemId = result.data.id_producto_semanal;
@@ -177,6 +175,19 @@ async function persistItem(
   return { itemId, isNew: !isExisting };
 }
 
+const PUBLISH_TIMEOUT_MS = 120_000;
+
+export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Operation timed out after ${String(ms)}ms`));
+      }, ms);
+    }),
+  ]);
+}
+
 export function usePublicationWizard({
   publicacion,
   productos,
@@ -185,6 +196,13 @@ export function usePublicationWizard({
   const publicationRef = useRef(publicacion);
   publicationRef.current = publicacion;
   const publishingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const createMutation = useCreatePublicacion();
   const deletePublicationMutation = useDeletePublicacion();
@@ -208,15 +226,12 @@ export function usePublicationWizard({
     Map<string, WizardItemValidation>
   >(new Map());
 
-  // Initialize localItems from server data when editing an existing publication
   useEffect(() => {
     if (publicacion && !localItemsInitialized && items.length > 0) {
       setLocalItems(items);
       setLocalItemsInitialized(true);
     }
   }, [publicacion, localItemsInitialized, items]);
-
-  const activeItems = localItems;
 
   const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
 
@@ -235,13 +250,13 @@ export function usePublicationWizard({
 
   const addItem = useCallback(
     (producto: Producto) => {
-      const alreadyAdded = activeItems.some(
+      const alreadyAdded = localItems.some(
         (i) => i.fk_producto === producto.id_producto,
       );
       if (alreadyAdded) return;
 
       const newItem: WizardItemDraft = {
-        tempId: generateTempId(),
+        tempId: generateLocalTempId(),
         fk_producto: producto.id_producto,
         fk_unidad: 0,
         stock: '',
@@ -250,7 +265,7 @@ export function usePublicationWizard({
       };
       setLocalItems((prev) => [...prev, newItem]);
     },
-    [activeItems],
+    [localItems],
   );
 
   const removeItem = useCallback((tempId: string) => {
@@ -280,7 +295,7 @@ export function usePublicationWizard({
     const validations = new Map<string, WizardItemValidation>();
     let hasError = false;
 
-    for (const item of activeItems) {
+    for (const item of localItems) {
       const errors = validateItem(item);
       if (Object.keys(errors).length > 0) {
         validations.set(item.tempId, errors);
@@ -290,17 +305,19 @@ export function usePublicationWizard({
 
     setItemValidations(validations);
     return !hasError;
-  }, [activeItems]);
+  }, [localItems]);
 
   const compensateCreatedItems = useCallback(
     async (pubId: number, createdIds: number[]) => {
       for (const id of createdIds) {
+        if (!isValidItemId(id)) continue;
         try {
           await removeItemMutation.mutateAsync({ pubId, itemId: id });
         } catch (err) {
           console.error(
-            '[usePublicationWizard] compensateCreatedItems failed:',
-            err instanceof Error ? err.message : String(err),
+            '[usePublicationWizard] compensateCreatedItems failed for id',
+            id,
+            err,
           );
         }
       }
@@ -316,7 +333,7 @@ export function usePublicationWizard({
       } catch (err) {
         console.error(
           '[usePublicationWizard] compensateAutoCreatedPub failed:',
-          err instanceof Error ? err.message : String(err),
+          err,
         );
       }
     },
@@ -338,15 +355,17 @@ export function usePublicationWizard({
 
     if (!pub) return undefined;
 
+    const currentItems = localItems;
+    const currentProductos = productos;
     const createdIds: number[] = [];
     const tempIdRemap: Array<{ oldTempId: string; newTempId: string }> = [];
 
     try {
-      for (const item of activeItems) {
+      for (const item of currentItems) {
         const result = await persistItem(
           pub.id_publicacion,
           item,
-          productos,
+          currentProductos,
           addItemMutation.mutateAsync,
           updateItemMutation.mutateAsync,
         );
@@ -359,10 +378,7 @@ export function usePublicationWizard({
         }
       }
     } catch (error) {
-      console.error(
-        '[usePublicationWizard] persistItem failed:',
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error('[usePublicationWizard] persistItem failed:', error);
       await compensateCreatedItems(pub.id_publicacion, createdIds);
       if (autoCreatedPub) {
         await compensateAutoCreatedPub(pub);
@@ -370,7 +386,7 @@ export function usePublicationWizard({
       throw error;
     }
 
-    if (tempIdRemap.length > 0) {
+    if (tempIdRemap.length > 0 && mountedRef.current) {
       setLocalItems((prev) =>
         prev.map((item) => {
           const remap = tempIdRemap.find((r) => r.oldTempId === item.tempId);
@@ -381,7 +397,7 @@ export function usePublicationWizard({
 
     return pub;
   }, [
-    activeItems,
+    localItems,
     productos,
     createMutation,
     compensateCreatedItems,
@@ -395,55 +411,48 @@ export function usePublicationWizard({
     publishingRef.current = true;
 
     try {
-      await withTimeout(
-        (async () => {
-          const pub = await ensurePublicationAndPersist();
-          if (!pub) return;
-
-          const existingIds = new Set(
-            productos.map((p) => String(p.id_producto_semanal)),
-          );
-          const currentIds = new Set(activeItems.map((i) => i.tempId));
-
-          for (const id of existingIds) {
-            if (!currentIds.has(id)) {
-              const itemId = Number(id);
-              if (!Number.isInteger(itemId) || itemId <= 0) {
-                console.error(
-                  '[usePublicationWizard] invalid item id for removal:',
-                  id,
-                );
-                continue;
-              }
-              try {
-                await removeItemMutation.mutateAsync({
-                  pubId: pub.id_publicacion,
-                  itemId,
-                });
-              } catch (removeErr) {
-                console.error(
-                  '[usePublicationWizard] failed to remove item:',
-                  itemId,
-                  removeErr instanceof Error
-                    ? removeErr.message
-                    : String(removeErr),
-                );
-                throw new Error(
-                  `No se pudo eliminar el producto #${String(itemId)}. La publicación no se publicó.`,
-                );
-              }
-            }
-          }
-
-          await publishMutation.mutateAsync(pub.id_publicacion);
-        })(),
+      const pub = await withTimeout(
+        ensurePublicationAndPersist(),
         PUBLISH_TIMEOUT_MS,
       );
+      if (!pub) return;
+
+      const existingIds = new Set(
+        productos.map((p) => String(p.id_producto_semanal)),
+      );
+      const currentIds = new Set(localItems.map((i) => i.tempId));
+
+      for (const id of existingIds) {
+        if (!currentIds.has(id)) {
+          const itemId = Number(id);
+          if (!isValidItemId(itemId)) {
+            console.error(
+              '[usePublicationWizard] invalid item id for removal:',
+              id,
+            );
+            continue;
+          }
+          try {
+            await removeItemMutation.mutateAsync({
+              pubId: pub.id_publicacion,
+              itemId,
+            });
+          } catch (err) {
+            console.error(
+              '[usePublicationWizard] failed to delete stale item',
+              id,
+              err,
+            );
+          }
+        }
+      }
+
+      await publishMutation.mutateAsync(pub.id_publicacion);
     } finally {
       publishingRef.current = false;
     }
   }, [
-    activeItems,
+    localItems,
     productos,
     ensurePublicationAndPersist,
     removeItemMutation,
@@ -464,7 +473,7 @@ export function usePublicationWizard({
   return {
     currentStep,
     stepIndex,
-    items: activeItems,
+    items: localItems,
     itemValidations,
     hasItemErrors: itemValidations.size > 0,
     isCreating: createMutation.isPending,

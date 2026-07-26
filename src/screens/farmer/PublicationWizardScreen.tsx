@@ -1,31 +1,25 @@
 import React, { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as ImagePicker from 'expo-image-picker';
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePreventRemove } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import ProductosStep from '@/components/wizard/ProductosStep';
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
-import ResumenStep from '@/components/wizard/ResumenStep';
+import StepFecha from '@/components/wizard/StepFecha';
+import StepIndicator from '@/components/wizard/StepIndicator';
+import StepProductos from '@/components/wizard/StepProductos';
+import StepPublicar from '@/components/wizard/StepPublicar';
+import StepResumen from '@/components/wizard/StepResumen';
+import WizardBottomActions from '@/components/wizard/WizardBottomActions';
+import WizardHeader from '@/components/wizard/WizardHeader';
 import { colors, themeColors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
 import { useProductosSemanales, usePublicacion } from '@/hooks/usePublications';
-import {
-  usePublicationWizard,
-  WIZARD_STEPS,
-} from '@/hooks/usePublicationWizard';
+import { usePublicationWizard } from '@/hooks/usePublicationWizard';
 import type { WizardStep } from '@/hooks/usePublicationWizard';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
@@ -65,7 +59,6 @@ const STEP_META: Record<
   },
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function PublicationWizardScreen({
   navigation,
   route,
@@ -103,14 +96,13 @@ export default function PublicationWizardScreen({
   const white = colors.iconWhite;
   const accentBg = theme.accentBg;
   const errorBg = theme.errorBg;
-  const shadowBg = theme.shadowBg;
   const subtleBg = theme.subtleBg;
 
   const isMutating = wizard.isPublishing || wizard.isCreating;
   const isLoadingData =
     isPubLoading || isSemanalLoading || isProductsLoading || isUnidadesLoading;
 
-  usePreventRemove(isMutating, ({ data: { action: _action } }) => {
+  usePreventRemove(isMutating, () => {
     Alert.alert(
       'Operación en curso',
       'Esperá a que termine la operación actual.',
@@ -131,10 +123,7 @@ export default function PublicationWizardScreen({
           wizard.updateItem(tempId, 'foto', result.assets[0].uri);
         }
       } catch (error) {
-        console.error(
-          '[PublicationWizard] ImagePicker failed:',
-          error instanceof Error ? error.message : String(error),
-        );
+        console.error('[PublicationWizard] ImagePicker failed:', error);
         Alert.alert('Error', 'No se pudo seleccionar la imagen.');
       }
     },
@@ -155,10 +144,7 @@ export default function PublicationWizardScreen({
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error(
-        '[PublicationWizard] publish failed:',
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error('[PublicationWizard] publish failed:', error);
       Alert.alert('Error', 'No se pudo publicar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
@@ -170,17 +156,19 @@ export default function PublicationWizardScreen({
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error(
-        '[PublicationWizard] saveDraft failed:',
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error('[PublicationWizard] saveDraft failed:', error);
       Alert.alert('Error', 'No se pudo guardar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
 
-  const { nextMondayDate } = useFormattedDate();
+  const handleNext = useCallback(() => {
+    if (wizard.currentStep === 'productos' && !wizard.validateItems()) {
+      return;
+    }
+    wizard.nextStep();
+  }, [wizard]);
 
-  const weekNumber = getWeekNumber(nextMondayDate);
+  const { nextMondayDate } = useFormattedDate();
 
   if (isLoadingData) {
     return (
@@ -211,158 +199,39 @@ export default function PublicationWizardScreen({
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 20,
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: '700',
-                letterSpacing: -0.3,
-                color: fg,
-              }}
-            >
-              {STEP_META[wizard.currentStep].title}
-            </Text>
-            <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-              {STEP_META[wizard.currentStep].description}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            disabled={isMutating}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: surface,
-              borderWidth: 1,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: isMutating ? 0.3 : pressed ? 0.6 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name="close" size={22} color={fg} />
-          </Pressable>
-        </View>
+        <WizardHeader
+          currentStep={wizard.currentStep}
+          isMutating={isMutating}
+          fg={fg}
+          muted={muted}
+          surface={surface}
+          border={border}
+          onBack={() => navigation.goBack()}
+          stepMeta={STEP_META}
+        />
 
-        {/* Step indicator */}
-        <View
-          style={{
-            flexDirection: 'row',
-            marginBottom: 24,
-            gap: 6,
-          }}
-        >
-          {WIZARD_STEPS.map((step, i) => {
-            const isActive = i === wizard.stepIndex;
-            const isDone = i < wizard.stepIndex;
-            return (
-              <Pressable
-                key={step}
-                onPress={() => wizard.goToStep(step)}
-                style={{
-                  flex: 1,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: isActive
-                    ? brand
-                    : isDone
-                      ? brand
-                      : isDark
-                        ? shadowBg
-                        : colors.transparent,
-                  opacity: isDone && !isActive ? 0.5 : 1,
-                }}
-              />
-            );
-          })}
-        </View>
+        <StepIndicator
+          stepIndex={wizard.stepIndex}
+          isDark={isDark}
+          brand={brand}
+          onStepPress={wizard.goToStep}
+        />
 
-        {/* Step content */}
         {wizard.currentStep === 'fecha' && (
-          <View
-            style={{
-              backgroundColor: surface,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: border,
-              padding: 20,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                marginBottom: 16,
-              }}
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  backgroundColor: accentBg,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="calendar"
-                  size={24}
-                  color={brand}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>
-                  Fecha de publicación
-                </Text>
-                <Text style={{ fontSize: 13, color: muted }}>
-                  Se asigna automáticamente
-                </Text>
-              </View>
-            </View>
-
-            <View
-              style={{
-                backgroundColor: subtleBg,
-                borderRadius: 12,
-                padding: 16,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '500',
-                  color: fg,
-                  marginBottom: 4,
-                }}
-              >
-                {nextMondayDate.toLocaleDateString('es-AR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </Text>
-              <Text style={{ fontSize: 13, color: muted }}>
-                Semana {weekNumber}
-              </Text>
-            </View>
-          </View>
+          <StepFecha
+            nextMondayDate={nextMondayDate}
+            accentBg={accentBg}
+            brand={brand}
+            fg={fg}
+            muted={muted}
+            surface={surface}
+            border={border}
+            subtleBg={subtleBg}
+          />
         )}
 
         {wizard.currentStep === 'productos' && (
-          <ProductosStep
+          <StepProductos
             items={wizard.items}
             allProductos={allProductos}
             unidades={unidades}
@@ -371,241 +240,60 @@ export default function PublicationWizardScreen({
             onRemove={wizard.removeItem}
             onPickImage={handlePickImage}
             onAddProduct={() => setShowProductPicker(true)}
-            isDark={isDark}
+            surface={surface}
+            border={border}
+            fg={fg}
+            muted={muted}
+            brand={brand}
           />
         )}
 
         {wizard.currentStep === 'resumen' && (
-          <ResumenStep
+          <StepResumen
             items={wizard.items}
             allProductos={allProductos}
             unidades={unidades}
             itemValidations={wizard.itemValidations}
-            isDark={isDark}
+            surface={surface}
+            border={border}
+            fg={fg}
+            muted={muted}
+            brand={brand}
           />
         )}
 
         {wizard.currentStep === 'publicar' && (
-          <View>
-            <View
-              style={{
-                backgroundColor: surface,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: border,
-                padding: 20,
-                marginBottom: 16,
-                alignItems: 'center',
-              }}
-            >
-              <MaterialCommunityIcons
-                name="send-check"
-                size={48}
-                color={brand}
-              />
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: '700',
-                  color: fg,
-                  marginTop: 12,
-                  textAlign: 'center',
-                }}
-              >
-                ¿Listo para publicar?
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: muted,
-                  textAlign: 'center',
-                  marginTop: 4,
-                }}
-              >
-                {wizard.items.length}{' '}
-                {wizard.items.length === 1 ? 'producto' : 'productos'} en esta
-                publicación
-              </Text>
-
-              {wizard.hasItemErrors ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: 12,
-                    backgroundColor: errorBg,
-                    borderRadius: 8,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="alert-circle-outline"
-                    size={16}
-                    color={coral}
-                  />
-                  <Text style={{ fontSize: 13, color: coral }}>
-                    Hay errores de validación
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
+          <StepPublicar
+            items={wizard.items}
+            hasItemErrors={wizard.hasItemErrors}
+            surface={surface}
+            border={border}
+            fg={fg}
+            muted={muted}
+            brand={brand}
+            errorBg={errorBg}
+            coral={coral}
+          />
         )}
       </ScrollView>
 
-      {/* Bottom actions */}
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingTop: 12,
-          backgroundColor: bg,
-          borderTopWidth: 1,
-          borderTopColor: border,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          {wizard.stepIndex > 0 ? (
-            <Pressable
-              onPress={wizard.prevStep}
-              style={({ pressed }) => ({
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                backgroundColor: surface,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: border,
-                paddingVertical: 14,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name="arrow-left" size={18} color={fg} />
-              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
-                Anterior
-              </Text>
-            </Pressable>
-          ) : null}
+      <WizardBottomActions
+        stepIndex={wizard.stepIndex}
+        isPublishing={wizard.isPublishing}
+        isCreating={wizard.isCreating}
+        hasItemErrors={wizard.hasItemErrors}
+        bg={bg}
+        surface={surface}
+        border={border}
+        fg={fg}
+        brand={brand}
+        white={white}
+        onPrev={wizard.prevStep}
+        onNext={handleNext}
+        onSaveDraft={() => void handleSaveDraft()}
+        onPublish={() => void handlePublish()}
+      />
 
-          {wizard.stepIndex < WIZARD_STEPS.length - 1 ? (
-            <Pressable
-              onPress={() => {
-                if (
-                  wizard.currentStep === 'productos' &&
-                  !wizard.validateItems()
-                ) {
-                  return;
-                }
-                wizard.nextStep();
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                backgroundColor: brand,
-                borderRadius: 14,
-                paddingVertical: 14,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <Text style={{ fontSize: 15, fontWeight: '600', color: white }}>
-                Siguiente
-              </Text>
-              <MaterialCommunityIcons
-                name="arrow-right"
-                size={18}
-                color={white}
-              />
-            </Pressable>
-          ) : (
-            <>
-              <Pressable
-                onPress={() => void handleSaveDraft()}
-                disabled={wizard.isPublishing || wizard.isCreating}
-                style={({ pressed }) => ({
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: surface,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: border,
-                  paddingVertical: 14,
-                  opacity:
-                    pressed || wizard.isPublishing || wizard.isCreating
-                      ? 0.5
-                      : 1,
-                })}
-              >
-                {wizard.isCreating ? (
-                  <ActivityIndicator size="small" color={fg} />
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: '600',
-                      color: fg,
-                    }}
-                  >
-                    Borrador
-                  </Text>
-                )}
-              </Pressable>
-              <Pressable
-                onPress={() => void handlePublish()}
-                disabled={
-                  wizard.isPublishing ||
-                  wizard.isCreating ||
-                  wizard.hasItemErrors
-                }
-                style={({ pressed }) => ({
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: coral,
-                  borderRadius: 14,
-                  paddingVertical: 14,
-                  opacity:
-                    pressed ||
-                    wizard.isPublishing ||
-                    wizard.isCreating ||
-                    wizard.hasItemErrors
-                      ? 0.5
-                      : 1,
-                })}
-              >
-                {wizard.isPublishing ? (
-                  <ActivityIndicator size="small" color={white} />
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: '600',
-                      color: white,
-                    }}
-                  >
-                    Publicar
-                  </Text>
-                )}
-              </Pressable>
-            </>
-          )}
-        </View>
-      </View>
-
-      {/* Product picker modal */}
       {showProductPicker ? (
         <ProductPickerModal
           allProductos={allProductos}
@@ -618,14 +306,4 @@ export default function PublicationWizardScreen({
       ) : null}
     </View>
   );
-}
-
-function getWeekNumber(date: Date): number {
-  const d = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-  );
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }

@@ -1,3 +1,4 @@
+import { API_TIMEOUT } from '@/constants/api';
 import type { ApiResponse } from '@/types';
 import { assertValidId } from '@/utils/ids';
 
@@ -35,6 +36,7 @@ export interface Producto {
   estado: boolean;
   categoria: Categoria;
   unidad: Unidad | null;
+  imagenes?: ProductoImagen[];
   imagen_principal: string | null;
   creado_en: string;
 }
@@ -122,7 +124,7 @@ export async function uploadProductoImagen(
     formData,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 60_000,
+      timeout: API_TIMEOUT,
     },
   );
   return data;
