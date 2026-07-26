@@ -50,6 +50,7 @@ export default function AdminPanelScreen({
     <ProfileDrawerProvider
       defaultName="Administrador"
       defaultEmail="admin@rassa.com"
+      onProfilePress={() => navigation.navigate('AdminProfile')}
     >
       <View style={{ flex: 1, backgroundColor: bg }}>
         <View style={{ flex: 1 }}>

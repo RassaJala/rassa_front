@@ -18,7 +18,7 @@ export async function getItemAsync(key: string): Promise<string | null> {
       // and refresh-token rotation works across tabs. The storage event listener
       // in AuthProvider syncs logout across tabs. Real XSS mitigation requires
       // httpOnly cookies served from the backend + CSP.
-      // eslint-disable-next-line no-undef -- web only
+
       return window.localStorage.getItem(key);
     } catch {
       return null;
@@ -30,7 +30,6 @@ export async function getItemAsync(key: string): Promise<string | null> {
 export async function setItemAsync(key: string, value: string): Promise<void> {
   if (isWeb()) {
     try {
-      // eslint-disable-next-line no-undef -- web only
       window.localStorage.setItem(key, value);
     } catch {
       // Silently ignore storage errors; upstream handles auth failures
@@ -43,7 +42,6 @@ export async function setItemAsync(key: string, value: string): Promise<void> {
 export async function deleteItemAsync(key: string): Promise<void> {
   if (isWeb()) {
     try {
-      // eslint-disable-next-line no-undef -- web only
       window.localStorage.removeItem(key);
     } catch {
       // Silently ignore storage errors
