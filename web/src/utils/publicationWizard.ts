@@ -30,7 +30,14 @@ export function getWeekNumber(date: Date): number {
   );
 }
 
-export function formatDate(iso: Date): string {
+export function formatDate(iso: Date, opts?: { short?: boolean }): string {
+  if (opts?.short) {
+    return iso.toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
   return iso.toLocaleDateString("es-AR", {
     weekday: "long",
     day: "numeric",

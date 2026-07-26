@@ -124,6 +124,7 @@ export async function addProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, "publicacion");
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/`,
     payload,
@@ -142,6 +143,8 @@ export async function updateProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.patch<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
     payload,
@@ -153,6 +156,8 @@ export async function deleteProductoSemanal(
   pubId: number,
   itemId: number,
 ): Promise<ApiResponse<null>> {
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.delete<ApiResponse<null>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
   );
@@ -164,6 +169,8 @@ export async function uploadProductoSemanalImagen(
   itemId: number,
   formData: FormData,
 ): Promise<ApiResponse<ProductoSemanal>> {
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/imagen/`,
     formData,

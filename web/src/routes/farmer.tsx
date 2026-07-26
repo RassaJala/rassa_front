@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ProductFormModal } from "../components/ProductFormModal";
 import type { Producto } from "../components/ProductFormModal";
-import { mediaUrl as sharedMediaUrl } from "../components/ProductFormModal";
+import { mediaUrl as sharedMediaUrl } from "../utils/mediaUrl";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";

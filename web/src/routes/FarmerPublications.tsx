@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppColors } from "../hooks/useAppColors";
 import {
@@ -8,7 +8,8 @@ import {
   usePublishPublicacion,
 } from "../hooks/usePublications";
 import type { PublicacionEstado } from "../services/publications";
-import { mediaUrl } from "../components/ProductFormModal";
+import { formatDate } from "../utils/publicationWizard";
+import { mediaUrl } from "../utils/mediaUrl";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -38,14 +39,6 @@ function getStatusBadge(estado: string) {
   return statusBadge[estado] ?? { variant: "default" as const, label: estado };
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-AR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 // ── FarmerPublications ─────────────────────────────────────
 
 export function FarmerPublications() {
@@ -53,6 +46,13 @@ export function FarmerPublications() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PublicacionEstado | "all">("all");
   const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const { data, isLoading, isError, refetch } = usePublicaciones(
     activeTab === "all" ? undefined : activeTab,
@@ -62,8 +62,9 @@ export function FarmerPublications() {
   const closeMutation = useClosePublicacion();
 
   const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(msg);
-    setTimeout(() => setToast(null), 4000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
   }, []);
 
   const publications = data?.data?.results ?? [];
@@ -233,7 +234,9 @@ export function FarmerPublications() {
                         className="px-[18px] py-4 text-[14px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(pub.fecha_publicacion)}
+                        {formatDate(new Date(pub.fecha_publicacion), {
+                          short: true,
+                        })}
                       </td>
                       <td
                         className="px-[18px] py-4 text-[14px]"
@@ -366,7 +369,9 @@ export function FarmerPublications() {
                         className="text-[13px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(pub.fecha_publicacion)}
+                        {formatDate(new Date(pub.fecha_publicacion), {
+                          short: true,
+                        })}
                       </p>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>

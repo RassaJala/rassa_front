@@ -63,8 +63,8 @@ export function useUnidades() {
   return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
     queryKey: ["unidades"],
     queryFn: publicationsApi.getUnidades,
-    staleTime: 60_000,
-    retry: 1,
+    staleTime: QUERY_STALE_TIME,
+    retry: QUERY_RETRY,
   });
 }
 

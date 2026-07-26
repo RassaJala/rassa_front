@@ -18,7 +18,6 @@ import type { Producto } from "../services/publications";
 import {
   type ItemValidation,
   type WizardItemDraft,
-  computePersistTimeout,
   formatDate,
   generateTempId,
   getNextMonday,
@@ -26,7 +25,7 @@ import {
   validateItem,
 } from "../utils/publicationWizard";
 import { MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from "../constants/api";
-import { mediaUrl } from "../components/ProductFormModal";
+import { mediaUrl } from "../utils/mediaUrl";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -428,7 +427,13 @@ export function PublicationWizard() {
         itemId = result.data.id_producto_semanal;
       }
 
+      // Sync immediately so retry after partial failure sees server IDs
       tempIdToServerId.set(item.tempId, itemId);
+      setItems((prev) =>
+        prev.map((i) =>
+          i.tempId === item.tempId ? { ...i, tempId: String(itemId) } : i,
+        ),
+      );
 
       // Upload image if there's a new file
       if (item.imageFile) {
@@ -441,14 +446,6 @@ export function PublicationWizard() {
         });
       }
     }
-
-    // Sync tempIds to server IDs
-    setItems((prev) =>
-      prev.map((i) => {
-        const serverId = tempIdToServerId.get(i.tempId);
-        return serverId !== undefined ? { ...i, tempId: String(serverId) } : i;
-      }),
-    );
 
     // Refresh pubRef snapshot for future delete detection
     const refreshed = await qc.fetchQuery({

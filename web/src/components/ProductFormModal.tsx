@@ -40,19 +40,6 @@ interface ApiResponse<T> {
   data: T;
 }
 
-// ── Helpers ────────────────────────────────────────────────
-
-const BASE = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"
-).replace(/\/api\/?$/, "");
-
-export function mediaUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith("http")) return path;
-  const clean = path.replace(/\.\./g, "").replace(/^\/+/, "/");
-  return `${BASE}${clean}`;
-}
-
 // ── Form State ─────────────────────────────────────────────
 
 interface FormState {
