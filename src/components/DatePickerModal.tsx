@@ -29,7 +29,9 @@ const YEARS_BACK = 103;
 
 // ── Helpers ──────────────────────────────────────────
 
-function parseInitialDate(dateStr?: string): { year: number; month: number; day: number } | null {
+function parseInitialDate(
+  dateStr?: string,
+): { year: number; month: number; day: number } | null {
   if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
   const parts = dateStr.split('-').map(Number);
   const year = parts[0] ?? 2000;
@@ -164,7 +166,11 @@ export default function DatePickerModal({
             />
             <TabButton
               label="Mes"
-              value={selectedMonth != null ? (MONTH_NAMES[selectedMonth] ?? '---') : '---'}
+              value={
+                selectedMonth != null
+                  ? (MONTH_NAMES[selectedMonth] ?? '---')
+                  : '---'
+              }
               active={step === 'month'}
               disabled={selectedYear == null}
               onPress={() => setStep('month')}
@@ -272,8 +278,14 @@ export default function DatePickerModal({
             <TouchableOpacity
               testID="btn-done"
               onPress={() => {
-                if (selectedYear !== null && selectedMonth !== null && selectedDay !== null) {
-                  onSelectDate(toDateString(selectedYear, selectedMonth, selectedDay));
+                if (
+                  selectedYear !== null &&
+                  selectedMonth !== null &&
+                  selectedDay !== null
+                ) {
+                  onSelectDate(
+                    toDateString(selectedYear, selectedMonth, selectedDay),
+                  );
                   onClose();
                 }
               }}
@@ -311,7 +323,13 @@ interface TabButtonProps {
   readonly onPress: () => void;
 }
 
-function TabButton({ label, value, active, disabled, onPress }: TabButtonProps) {
+function TabButton({
+  label,
+  value,
+  active,
+  disabled,
+  onPress,
+}: TabButtonProps) {
   return (
     <TouchableOpacity
       activeOpacity={0.6}
@@ -326,9 +344,7 @@ function TabButton({ label, value, active, disabled, onPress }: TabButtonProps) 
       </Text>
       <Text
         className={`text-xs font-semibold ${
-          active
-            ? 'text-brand-red-coral'
-            : 'text-gray-900 dark:text-gray-100'
+          active ? 'text-brand-red-coral' : 'text-gray-900 dark:text-gray-100'
         }`}
       >
         {value}

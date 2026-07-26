@@ -23,11 +23,7 @@ describe('DatePickerModal', () => {
 
   it('muestra paso de años al abrir sin initialDate', () => {
     const { getByText } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     expect(getByText('Fecha de Nacimiento')).toBeTruthy();
@@ -60,11 +56,7 @@ describe('DatePickerModal', () => {
     const onClose = jest.fn();
 
     const { getByText } = render(
-      <DatePickerModal
-        visible
-        onClose={onClose}
-        onSelectDate={onSelectDate}
-      />,
+      <DatePickerModal visible onClose={onClose} onSelectDate={onSelectDate} />,
     );
 
     // Step 1: Select year
@@ -152,11 +144,7 @@ describe('DatePickerModal', () => {
 
   it('muestra años en rango correcto (18-120 años atrás)', () => {
     const { getByText, queryByText } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     const currentYear = new Date().getFullYear();
@@ -170,11 +158,7 @@ describe('DatePickerModal', () => {
 
   it('meses están en español', () => {
     const { getByText } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     // Select any year to advance to month step
@@ -182,8 +166,18 @@ describe('DatePickerModal', () => {
 
     // All 12 months in Spanish
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     for (const m of months) {
       expect(getByText(m)).toBeTruthy();
@@ -192,11 +186,7 @@ describe('DatePickerModal', () => {
 
   it('días correctos para febrero en año bisiesto', () => {
     const { getByText, queryByText } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
     );
 
     // Select a known leap year
