@@ -530,15 +530,17 @@ export function PublicationWizard() {
     pubRef.current = refreshed.data;
 
     // Remove items that were deleted
-    const currentIds = new Set(tempIdToServerId.values());
+    const currentIds = new Set<string>(
+      [...tempIdToServerId.values()].map(String),
+    );
     // Also include items that were already synced (not in tempIdToServerId)
     for (const item of items) {
       const syncedId = tempIdToServerId.get(item.tempId);
       if (syncedId !== undefined) {
-        currentIds.add(syncedId);
+        currentIds.add(String(syncedId));
       } else {
         const parsed = Number(item.tempId);
-        if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(parsed);
+        if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(String(parsed));
       }
     }
     for (const existing of pubRef.current.productos) {
