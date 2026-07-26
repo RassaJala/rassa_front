@@ -8,6 +8,7 @@ import { Input } from "./ui/Input";
 import { TextArea } from "./ui/TextArea";
 import type { AppColors, useAppColors } from "../hooks/useAppColors";
 import api from "../services/api";
+import { mediaUrl } from "../utils/mediaUrl";
 
 // ── Types ──────────────────────────────────────────────────
 
