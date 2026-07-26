@@ -2,6 +2,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { DataTable } from '../components/layout/DataTable';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 import type { Column, Role } from '../types';
 
 // --- Types ---
@@ -210,28 +211,7 @@ const adminProductColumns: Column<AdminProductRow>[] = [
     sortable: true,
     render: (p) => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'grid',
-            placeItems: 'center',
-            background: '#E8F5E9',
-          }}
-        >
-          {p.imagen_url ? (
-            <img
-              src={p.imagen_url}
-              alt={p.nombre}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <span style={{ fontSize: 16 }}>📦</span>
-          )}
-        </span>
+        <ProductThumbnail src={p.imagen_url} alt={p.nombre} />
         {p.nombre}
       </span>
     ),

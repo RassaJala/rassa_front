@@ -2,6 +2,7 @@ import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 import type { Column } from '../types';
 
 // --- Types ---
@@ -129,28 +130,7 @@ const saleColumns: Column<SaleRow>[] = [
     sortable: true,
     render: (s) => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'grid',
-            placeItems: 'center',
-            background: '#E8F5E9',
-          }}
-        >
-          {s.imagen_url ? (
-            <img
-              src={s.imagen_url}
-              alt={s.producto}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <span style={{ fontSize: 16 }}>📦</span>
-          )}
-        </span>
+        <ProductThumbnail src={s.imagen_url} alt={s.producto} />
         {s.producto}
       </span>
     ),
@@ -189,28 +169,7 @@ const sellerOrderColumns: Column<SellerOrderRow>[] = [
     sortable: true,
     render: (o) => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'grid',
-            placeItems: 'center',
-            background: '#E8F5E9',
-          }}
-        >
-          {o.imagen_url ? (
-            <img
-              src={o.imagen_url}
-              alt={o.producto}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            <span style={{ fontSize: 16 }}>📦</span>
-          )}
-        </span>
+        <ProductThumbnail src={o.imagen_url} alt={o.producto} />
         {o.producto}
       </span>
     ),

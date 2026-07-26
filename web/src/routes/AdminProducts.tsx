@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 import { useAppColors } from '../hooks/useAppColors';
-import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 
 interface Product {
@@ -389,34 +388,14 @@ export function AdminProducts() {
                               gap: 10,
                             }}
                           >
-                            <div
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 10,
-                                overflow: 'hidden',
-                                flexShrink: 0,
-                                display: 'grid',
-                                placeItems: 'center',
-                                background: isDark ? '#1C2D22' : '#E8F5E9',
-                              }}
-                            >
-                              {item.imagen_url ? (
-                                <img
-                                  src={item.imagen_url}
-                                  alt={item.nombre}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                  }}
-                                />
-                              ) : (
-                                <span style={{ fontSize: 18 }}>
-                                  {catEmoji[item.categoria] ?? '📦'}
-                                </span>
-                              )}
-                            </div>
+                            <ProductThumbnail
+                              src={item.imagen_url}
+                              alt={item.nombre}
+                              fallbackEmoji={
+                                catEmoji[item.categoria] ?? '\u{1F4E6}'
+                              }
+                              size={40}
+                            />
                             <span>{item.nombre}</span>
                           </div>
                         </td>

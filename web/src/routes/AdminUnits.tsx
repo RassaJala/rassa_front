@@ -18,7 +18,7 @@ const initialData: Unit[] = [
 
 export function AdminUnits() {
   const colors = useAppColors();
-  const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
+  const { fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Unit[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
@@ -295,12 +295,8 @@ export function AdminUnits() {
                             padding: '3px 10px',
                             borderRadius: 6,
                             background: item.estado
-                              ? isDark
-                                ? 'rgba(74,138,99,0.15)'
-                                : 'rgba(36,86,60,0.07)'
-                              : isDark
-                                ? 'rgba(212,160,32,0.12)'
-                                : 'rgba(242,169,0,0.1)',
+                              ? 'rgba(36,86,60,0.07)'
+                              : 'rgba(242,169,0,0.1)',
                             color: item.estado ? brand : '#F2A900',
                           }}
                         >

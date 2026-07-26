@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test file */
-import api from '../../web/src/services/api';
-import { uploadImage } from '../../web/src/services/productImageUpload';
+import api from '../services/api';
+import { uploadImage } from '../services/productImageUpload';
 
-jest.mock('../../web/src/services/api', () => ({
+jest.mock('../services/api', () => ({
   __esModule: true,
   default: { post: jest.fn() },
 }));
