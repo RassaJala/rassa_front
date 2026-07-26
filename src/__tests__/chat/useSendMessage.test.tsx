@@ -2,6 +2,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { messagesKey } from '@rassa/chat';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
@@ -66,7 +67,7 @@ describe('useSendMessage', () => {
         mutations: { retry: false },
       },
     });
-    queryClient.setQueryData(['messages', 1], existingMessages);
+    queryClient.setQueryData(messagesKey(1), existingMessages);
   });
 
   const TestComponent = () => {
@@ -104,7 +105,7 @@ describe('useSendMessage', () => {
 
     const cached = queryClient.getQueryData<{
       pages: { results: { id: number; contenido: string }[] }[];
-    }>(['messages', 1]);
+    }>(messagesKey(1));
 
     const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
     expect(allMessages.some((m) => m.contenido === 'Hello!')).toBe(true);
@@ -137,7 +138,7 @@ describe('useSendMessage', () => {
     await waitFor(() => {
       const cached = queryClient.getQueryData<{
         pages: { results: { id: number; contenido: string }[] }[];
-      }>(['messages', 1]);
+      }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
       const hello = allMessages.find((m) => m.contenido === 'Hello!');
       expect(hello).toBeDefined();
@@ -157,7 +158,7 @@ describe('useSendMessage', () => {
     await waitFor(() => {
       const cached = queryClient.getQueryData<{
         pages: { results: { id: number; contenido: string }[] }[];
-      }>(['messages', 1]);
+      }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
       expect(allMessages.some((m) => m.contenido === 'Hello!')).toBe(false);
     });

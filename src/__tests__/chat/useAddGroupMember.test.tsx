@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { conversationsKey, groupMembersKey } from '@rassa/chat';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
@@ -84,10 +85,10 @@ describe('useAddGroupMember', () => {
 
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ['groupMembers', 1],
+        queryKey: groupMembersKey(1),
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
     });
   });
