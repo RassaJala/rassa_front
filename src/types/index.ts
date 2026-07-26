@@ -153,6 +153,14 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface OrderStatusHistory {
+  readonly id_historial: number;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+  readonly creado_en: string; // ISO datetime
+  readonly cambiado_por_nombre: string | null;
+}
+
 // ── Familias ──────────────────────────────────────────────
 
 export interface Family {
@@ -187,6 +195,8 @@ export interface CreditLimit {
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  AdminProfile: undefined;
+  OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
   UserForm: undefined;
   Chat: {
