@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppColors } from '../hooks/useAppColors';
 import {
@@ -267,6 +268,7 @@ function ProductPickerModal({
 
 export function PublicationWizard() {
   const colors = useAppColors();
+  const qc = useQueryClient();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
@@ -336,12 +338,20 @@ export function PublicationWizard() {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      for (const item of items) {
+        if (item.imagePreview) URL.revokeObjectURL(item.imagePreview);
+      }
     };
-  }, []);
+  }, [items]);
 
   // ── Date helpers ──
-  const nextMonday = getNextMonday();
-  const weekNumber = getWeekNumber(nextMonday);
+  const pubData = isEditing ? pubQuery.data?.data : undefined;
+  const nextMonday = isEditing && pubData
+    ? new Date(pubData.fecha_publicacion)
+    : getNextMonday();
+  const weekNumber = isEditing && pubData
+    ? pubData.semana
+    : getWeekNumber(nextMonday);
 
   // ── Navigation ──
   function nextStep() {
@@ -450,6 +460,8 @@ export function PublicationWizard() {
 
   // ── Persist items to server (via hooks) ──
   async function persistItems(pubNumber: number): Promise<void> {
+    const tempIdToServerId = new Map<string, number>();
+
     for (const item of items) {
       const serverId = Number(item.tempId);
       const isExisting =
@@ -479,6 +491,8 @@ export function PublicationWizard() {
         itemId = result.data.id_producto_semanal;
       }
 
+      tempIdToServerId.set(item.tempId, itemId);
+
       // Upload image if there's a new file
       if (item.imageFile) {
         const formData = new FormData();
@@ -491,17 +505,36 @@ export function PublicationWizard() {
       }
     }
 
+    // Sync tempIds to server IDs
+    setItems((prev) =>
+      prev.map((i) => {
+        const serverId = tempIdToServerId.get(i.tempId);
+        return serverId !== undefined
+          ? { ...i, tempId: String(serverId) }
+          : i;
+      }),
+    );
+
+    // Refresh pubRef snapshot for future delete detection
+    const refreshed = await qc.fetchQuery({
+      queryKey: ['publicaciones', pubNumber],
+      queryFn: () =>
+        import('../services/publications').then((m) =>
+          m.getPublicacion(pubNumber),
+        ),
+      staleTime: 0,
+    });
+    pubRef.current = refreshed.data;
+
     // Remove items that were deleted
-    if (pubRef.current) {
-      const currentIds = new Set(items.map((i) => i.tempId));
-      for (const existing of pubRef.current.productos) {
-        const existingId = String(existing.id_producto_semanal);
-        if (!currentIds.has(existingId)) {
-          await removeItemMutation.mutateAsync({
-            pubId: pubNumber,
-            itemId: existing.id_producto_semanal,
-          });
-        }
+    const currentIds = new Set(items.map((i) => i.tempId));
+    for (const existing of pubRef.current.productos) {
+      const existingId = String(existing.id_producto_semanal);
+      if (!currentIds.has(existingId)) {
+        await removeItemMutation.mutateAsync({
+          pubId: pubNumber,
+          itemId: existing.id_producto_semanal,
+        });
       }
     }
   }

@@ -133,6 +133,7 @@ export function useAddProductoSemanal() {
       };
     }) => publicationsApi.addProductoSemanal(pubId, payload),
     onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
@@ -159,6 +160,7 @@ export function useUpdateProductoSemanal() {
       };
     }) => publicationsApi.updateProductoSemanal(pubId, itemId, payload),
     onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
@@ -177,6 +179,7 @@ export function useDeleteProductoSemanal() {
       itemId: number;
     }) => publicationsApi.deleteProductoSemanal(pubId, itemId),
     onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
@@ -198,6 +201,7 @@ export function useUploadProductoSemanalImagen() {
     }) =>
       publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
     onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });

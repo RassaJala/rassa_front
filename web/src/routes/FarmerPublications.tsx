@@ -70,6 +70,11 @@ export function FarmerPublications() {
 
   const publications = data?.data?.results ?? [];
 
+  const isMutating =
+    deleteMutation.isPending ||
+    publishMutation.isPending ||
+    closeMutation.isPending;
+
   async function handleDelete(id: number) {
     if (!window.confirm('¿Eliminar esta publicación?')) return;
     try {
@@ -284,6 +289,7 @@ export function FarmerPublications() {
                                 onClick={() =>
                                   void handlePublish(pub.id_publicacion)
                                 }
+                                disabled={isMutating}
                                 title="Publicar"
                                 className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
                                 style={{
@@ -298,6 +304,7 @@ export function FarmerPublications() {
                                 onClick={() =>
                                   void handleDelete(pub.id_publicacion)
                                 }
+                                disabled={isMutating}
                                 title="Eliminar"
                                 className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
                                 style={{
@@ -315,6 +322,7 @@ export function FarmerPublications() {
                               onClick={() =>
                                 void handleClose(pub.id_publicacion)
                               }
+                              disabled={isMutating}
                               title="Cerrar"
                               className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
                               style={{
@@ -385,6 +393,7 @@ export function FarmerPublications() {
                         <Button
                           variant="secondary"
                           className="!px-3 !py-1.5 !text-[13px]"
+                          disabled={isMutating}
                           onClick={() =>
                             void handlePublish(pub.id_publicacion)
                           }
@@ -394,6 +403,7 @@ export function FarmerPublications() {
                         <Button
                           variant="ghost"
                           className="!px-3 !py-1.5 !text-[13px]"
+                          disabled={isMutating}
                           onClick={() =>
                             void handleDelete(pub.id_publicacion)
                           }
@@ -406,6 +416,7 @@ export function FarmerPublications() {
                       <Button
                         variant="secondary"
                         className="!px-3 !py-1.5 !text-[13px]"
+                        disabled={isMutating}
                         onClick={() => void handleClose(pub.id_publicacion)}
                       >
                         🔒 Cerrar
