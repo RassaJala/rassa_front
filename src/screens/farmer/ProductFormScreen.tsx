@@ -191,7 +191,10 @@ export default function ProductFormScreen({
   }, [nombreProducto, precio, categoriaId]);
 
   const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } =
+      (await ImagePicker.requestMediaLibraryPermissionsAsync()) as {
+        status: string;
+      };
     if (status !== 'granted') {
       setToastMessage('Se necesita permiso para acceder a la galería.');
       setToastType('error');

@@ -94,3 +94,7 @@ export interface SearchUserResult {
   apellido_paterno: string;
   apellido_materno: string | null;
 }
+
+export interface ApiResponse<T> {
+  data: T;
+}

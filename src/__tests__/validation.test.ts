@@ -7,7 +7,10 @@ import {
   EMAIL_REGEX,
   formatPhoneNumber,
   isAdult,
+  MAX_NOMBRE,
   MIN_PASSWORD_LENGTH,
+  validateBirthdate,
+  validateName,
 } from '@/utils/validation';
 
 describe('validation utilities', () => {
@@ -64,11 +67,11 @@ describe('validation utilities', () => {
   });
 
   describe('cleanPhoneNumber', () => {
-    it('extracts only digits up to 10', () => {
+    it('extracts only digits, no truncation', () => {
       expect(cleanPhoneNumber('555-123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('(555) 123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('+52 555 123 4567')).toBe('525551234567');
-      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567'); // max 10
+      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567890'); // no truncation
     });
 
     it('handles empty string', () => {
@@ -99,17 +102,18 @@ describe('validation utilities', () => {
   });
 
   describe('cleanAddress', () => {
-    it('preserves allowed characters (#, ,, -, ., /, numbers, letters, accents)', () => {
+    it('returns the input unchanged (passthrough, matching web)', () => {
       expect(cleanAddress('Calle 123, Col. Centro')).toBe(
         'Calle 123, Col. Centro',
       );
       expect(cleanAddress('Av. Principal #45-B')).toBe('Av. Principal #45-B');
-      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2A');
+      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2ºA');
+      expect(cleanAddress('Calle @#$%')).toBe('Calle @#$%');
+      expect(cleanAddress('Dirección!')).toBe('Dirección!');
     });
 
-    it('removes disallowed characters', () => {
-      expect(cleanAddress('Calle @#$%')).toBe('Calle #');
-      expect(cleanAddress('Dirección!')).toBe('Dirección');
+    it('handles empty string', () => {
+      expect(cleanAddress('')).toBe('');
     });
   });
 
@@ -167,8 +171,104 @@ describe('validation utilities', () => {
   });
 
   describe('MIN_PASSWORD_LENGTH', () => {
-    it('is 6', () => {
-      expect(MIN_PASSWORD_LENGTH).toBe(6);
+    it('is 8', () => {
+      expect(MIN_PASSWORD_LENGTH).toBe(8);
+    });
+  });
+
+  describe('validateName', () => {
+    it('retorna error si el valor está vacío', () => {
+      expect(validateName('', 'nombre')).toBe('El nombre es obligatorio.');
+    });
+
+    it('retorna error si excede MAX_NOMBRE caracteres', () => {
+      const longName = 'a'.repeat(MAX_NOMBRE + 1);
+      expect(validateName(longName, 'nombre')).toBe(
+        `El nombre no puede exceder ${MAX_NOMBRE} caracteres.`,
+      );
+    });
+
+    it('retorna error si contiene números', () => {
+      expect(validateName('Juan123', 'nombre')).toBe(
+        'El nombre solo puede contener letras.',
+      );
+    });
+
+    it('retorna null para un nombre válido con acentos', () => {
+      expect(validateName('José María', 'nombre')).toBeNull();
+    });
+
+    it('usa el parámetro fieldName en el mensaje de error', () => {
+      expect(validateName('', 'apellido paterno')).toBe(
+        'El apellido paterno es obligatorio.',
+      );
+      expect(validateName('Ana123', 'apellido paterno')).toBe(
+        'El apellido paterno solo puede contener letras.',
+      );
+    });
+  });
+
+  describe('validateBirthdate', () => {
+    const today = new Date();
+    const eighteenYearsAgo = new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate(),
+    );
+    const toDateStr = (date: Date): string =>
+      date.toISOString().split('T')[0] ?? '';
+
+    it('retorna error si la fecha está vacía', () => {
+      expect(validateBirthdate('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+    });
+
+    it('retorna error si el formato es inválido', () => {
+      expect(validateBirthdate('15-01-2000')).toBe(
+        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
+      );
+      expect(validateBirthdate('2000/01/15')).toBe(
+        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
+      );
+    });
+
+    it('retorna error si es menor de 18 años', () => {
+      const seventeenYearsAgo = new Date(
+        today.getFullYear() - 17,
+        today.getMonth(),
+        today.getDate(),
+      );
+      expect(validateBirthdate(toDateStr(seventeenYearsAgo))).toBe(
+        'Debes ser mayor de 18 años.',
+      );
+    });
+
+    it('retorna null para una fecha adulta válida', () => {
+      const nineteenYearsAgo = new Date(
+        today.getFullYear() - 19,
+        today.getMonth(),
+        today.getDate(),
+      );
+      expect(validateBirthdate(toDateStr(nineteenYearsAgo))).toBeNull();
+    });
+
+    it('usa customMsg cuando se proporciona', () => {
+      const seventeenYearsAgo = new Date(
+        today.getFullYear() - 17,
+        today.getMonth(),
+        today.getDate(),
+      );
+      expect(
+        validateBirthdate(
+          toDateStr(seventeenYearsAgo),
+          'Debes ser mayor de 18 años para registrarte.',
+        ),
+      ).toBe('Debes ser mayor de 18 años para registrarte.');
+    });
+
+    it('retorna null para exactamente 18 años atrás (caso límite)', () => {
+      expect(validateBirthdate(toDateStr(eighteenYearsAgo))).toBeNull();
     });
   });
 });

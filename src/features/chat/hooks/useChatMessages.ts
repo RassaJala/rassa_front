@@ -32,8 +32,7 @@ export function useChatMessages(
     refetchInterval: (query) => {
       if (!isFocused) return false;
       const failureCount = query.state.errorUpdateCount;
-      const backoff = Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
-      return backoff;
+      return Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
     },
     refetchIntervalInBackground: false,
     staleTime: 5_000,
