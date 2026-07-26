@@ -77,9 +77,9 @@ async function fetchAllPages(
     typeof payload === 'object' &&
     'results' in (payload as Record<string, unknown>)
       ? (payload as { results: AdminUser[] }).results
-      : (Array.isArray(payload)
+      : Array.isArray(payload)
         ? (payload as AdminUser[])
-        : []);
+        : [];
 
   const all = [...accumulated, ...results];
   const next: string | null =
