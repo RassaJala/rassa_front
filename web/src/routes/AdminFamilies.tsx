@@ -1,19 +1,19 @@
-import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
-import { colors, themeColors } from "@/constants/colors";
-import { btnStyle as sharedBtnStyle } from "@/constants/styles";
-import { useJefeSearch } from "../hooks/useJefeSearch";
-import { useTheme } from "../providers/ThemeProvider";
-import api from "../services/api";
-import { createFamilyWithHead } from "../services/families";
-import type { Family, SearchUserResult } from "../types";
-import { extractApiError } from "../utils/apiError";
+import { colors, themeColors } from '@/constants/colors';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useJefeSearch } from '../hooks/useJefeSearch';
+import { useTheme } from '../providers/ThemeProvider';
+import api from '../services/api';
+import { createFamilyWithHead } from '../services/families';
+import type { Family, SearchUserResult } from '../types';
+import { extractApiError } from '../utils/apiError';
 
 export function AdminFamilies() {
   const { resolved } = useTheme();
-  const isDark = resolved === "dark";
+  const isDark = resolved === 'dark';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -26,28 +26,28 @@ export function AdminFamilies() {
   const brand = t.brand;
   const coral = colors.brandRedCoral;
   const warning = {
-    background: isDark ? "rgba(242,169,0,0.12)" : "rgba(242,169,0,0.1)",
+    background: isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)',
     color: colors.warning,
   };
   const success = {
-    background: isDark ? "rgba(74,138,99,0.15)" : "rgba(36,86,60,0.07)",
+    background: isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)',
     color: colors.primary,
   };
   const primaryGreen = colors.primary;
   const iconWhite = colors.iconWhite;
 
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"list" | "form" | "trash">("list");
+  const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre_familia: "", detalle_familia: "" });
-  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({ nombre_familia: '', detalle_familia: '' });
+  const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Family | null>(null);
   const [permDelTarget, setPermDelTarget] = useState<Family | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<Family | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const [jefeQuery, setJefeQuery] = useState("");
+  const [jefeQuery, setJefeQuery] = useState('');
   const [selectedJefe, setSelectedJefe] = useState<SearchUserResult | null>(
     null,
   );
@@ -61,19 +61,19 @@ export function AdminFamilies() {
     isLoading: loading,
     isError: isFetchError,
   } = useQuery<Family[]>({
-    queryKey: ["admin-families"],
+    queryKey: ['admin-families'],
     queryFn: async () => {
-      const { data } = await api.get("/familias/grupos/");
+      const { data } = await api.get('/familias/grupos/');
       let families: Family[] = [];
       if (Array.isArray(data)) {
         families = data as Family[];
-      } else if (data && typeof data === "object") {
+      } else if (data && typeof data === 'object') {
         const payload = (data as { data?: unknown }).data ?? data;
         if (Array.isArray(payload)) {
           families = payload as Family[];
         } else if (
           payload &&
-          typeof payload === "object" &&
+          typeof payload === 'object' &&
           Array.isArray((payload as { results?: unknown }).results)
         ) {
           families = (payload as { results: Family[] }).results;
@@ -85,9 +85,9 @@ export function AdminFamilies() {
   });
 
   const { data: trashItems = [] } = useQuery<Family[]>({
-    queryKey: ["admin-families-trash"],
+    queryKey: ['admin-families-trash'],
     queryFn: async () => {
-      const { data } = await api.get("/familias/grupos/trash/");
+      const { data } = await api.get('/familias/grupos/trash/');
       const payload = (data as { results?: unknown }).results ?? data;
       if (Array.isArray(payload)) return payload as Family[];
       return [];
@@ -103,17 +103,17 @@ export function AdminFamilies() {
       await api.post(`/familias/grupos/${restoreTarget.id_familia}/restore/`, {
         fk_jefe_familia: selectedJefe.id_usuario,
       });
-      await queryClient.invalidateQueries({ queryKey: ["admin-families"] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
       await queryClient.invalidateQueries({
-        queryKey: ["admin-families-trash"],
+        queryKey: ['admin-families-trash'],
       });
       setRestoreTarget(null);
       setSelectedJefe(null);
-      setJefeQuery("");
+      setJefeQuery('');
     } catch (err: unknown) {
       console.error(err);
-      const apiErr = extractApiError(err, ["fk_jefe_familia", "detail"]);
-      setError(apiErr || "Error al restaurar la familia.");
+      const apiErr = extractApiError(err, ['fk_jefe_familia', 'detail']);
+      setError(apiErr || 'Error al restaurar la familia.');
     } finally {
       setSaving(false);
     }
@@ -125,37 +125,37 @@ export function AdminFamilies() {
     try {
       await api.post(`/familias/grupos/${permDelTarget.id_familia}/permanent/`);
       await queryClient.invalidateQueries({
-        queryKey: ["admin-families-trash"],
+        queryKey: ['admin-families-trash'],
       });
       setPermDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
-      setError("Error al eliminar permanentemente la familia.");
+      setError('Error al eliminar permanentemente la familia.');
     }
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre_familia: "", detalle_familia: "" });
+    setForm({ nombre_familia: '', detalle_familia: '' });
     setSelectedJefe(null);
-    setJefeQuery("");
-    setTab("form");
+    setJefeQuery('');
+    setTab('form');
   }
 
   function startEdit(item: Family) {
     setEditId(item.id_familia);
     setForm({
       nombre_familia: item.nombre_familia,
-      detalle_familia: item.detalle_familia ?? "",
+      detalle_familia: item.detalle_familia ?? '',
     });
-    setTab("form");
+    setTab('form');
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre_familia.trim()) return;
     if (!editId && !selectedJefe) {
-      setError("Debes seleccionar un jefe de familia.");
+      setError('Debes seleccionar un jefe de familia.');
       return;
     }
     setSaving(true);
@@ -180,18 +180,18 @@ export function AdminFamilies() {
           selectedJefe.id_usuario,
         );
       }
-      await queryClient.invalidateQueries({ queryKey: ["admin-families"] });
-      setTab("list");
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
+      setTab('list');
     } catch (err: unknown) {
       console.error(err);
       const apiErr = extractApiError(err, [
-        "nombre_familia",
-        "fk_usuario",
-        "fk_jefe_familia",
-        "jefe",
-        "detail",
+        'nombre_familia',
+        'fk_usuario',
+        'fk_jefe_familia',
+        'jefe',
+        'detail',
       ]);
-      setError(apiErr || "Error al guardar la familia.");
+      setError(apiErr || 'Error al guardar la familia.');
     } finally {
       setSaving(false);
     }
@@ -202,15 +202,15 @@ export function AdminFamilies() {
     setError(null);
     try {
       await api.delete(`/familias/grupos/${delTarget.id_familia}/`);
-      await queryClient.invalidateQueries({ queryKey: ["admin-families"] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-families'] });
       await queryClient.invalidateQueries({
-        queryKey: ["admin-families-trash"],
+        queryKey: ['admin-families-trash'],
       });
       setDelTarget(null);
     } catch (err: unknown) {
       console.error(err);
-      const apiErr = extractApiError(err, ["detail"]);
-      setError(apiErr || "Error al eliminar la familia.");
+      const apiErr = extractApiError(err, ['detail']);
+      setError(apiErr || 'Error al eliminar la familia.');
     }
   }
 
@@ -231,10 +231,10 @@ export function AdminFamilies() {
       <div style={{ marginBottom: 20 }}>
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
             gap: 12,
           }}
         >
@@ -242,7 +242,7 @@ export function AdminFamilies() {
             style={{
               fontSize: 24,
               fontWeight: 700,
-              letterSpacing: "-0.01em",
+              letterSpacing: '-0.01em',
               color: fg,
             }}
           >
@@ -250,7 +250,7 @@ export function AdminFamilies() {
           </h2>
           <button
             onClick={startNew}
-            style={{ ...btnStyle, background: coral, color: "#fff" }}
+            style={{ ...btnStyle, background: coral, color: '#fff' }}
           >
             ＋ Nueva familia
           </button>
@@ -260,28 +260,28 @@ export function AdminFamilies() {
       {/* Tabs */}
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           gap: 2,
           background: border,
           borderRadius: 12,
           padding: 3,
           marginBottom: 20,
-          width: "fit-content",
+          width: 'fit-content',
         }}
       >
         <button
-          onClick={() => setTab("list")}
+          onClick={() => setTab('list')}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "list" ? surface : "transparent",
-            color: tab === "list" ? fg : muted,
-            boxShadow: tab === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'list' ? surface : 'transparent',
+            color: tab === 'list' ? fg : muted,
+            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           📋 Lista de familias
@@ -289,33 +289,33 @@ export function AdminFamilies() {
         <button
           onClick={() => startNew()}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "form" ? surface : "transparent",
-            color: tab === "form" ? fg : muted,
-            boxShadow: tab === "form" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'form' ? surface : 'transparent',
+            color: tab === 'form' ? fg : muted,
+            boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           ➕ Agregar familia
         </button>
         <button
-          onClick={() => setTab("trash")}
+          onClick={() => setTab('trash')}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "trash" ? surface : "transparent",
-            color: tab === "trash" ? fg : muted,
-            boxShadow: tab === "trash" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'trash' ? surface : 'transparent',
+            color: tab === 'trash' ? fg : muted,
+            boxShadow: tab === 'trash' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           🗑️ Papelera ({trashItems.length})
@@ -325,44 +325,44 @@ export function AdminFamilies() {
       {(error || isFetchError) && (
         <div
           style={{
-            padding: "12px 16px",
+            padding: '12px 16px',
             borderRadius: 10,
             background: isDark
-              ? "rgba(222,57,58,0.15)"
-              : "rgba(222,57,58,0.07)",
+              ? 'rgba(222,57,58,0.15)'
+              : 'rgba(222,57,58,0.07)',
             color: coral,
             fontSize: 14,
             marginBottom: 20,
             border: `1px solid ${coral}`,
           }}
         >
-          ⚠️ {error || "Error al cargar las familias."}
+          ⚠️ {error || 'Error al cargar las familias.'}
         </div>
       )}
 
       {/* TAB: List */}
-      {tab === "list" && (
+      {tab === 'list' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 20px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
               borderBottom: `1px solid ${border}`,
-              flexWrap: "wrap",
+              flexWrap: 'wrap',
               gap: 8,
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {loading ? "Cargando..." : `${filtered.length} familias`}
+              {loading ? 'Cargando...' : `${filtered.length} familias`}
             </span>
             <input
               type="search"
@@ -373,38 +373,38 @@ export function AdminFamilies() {
                 height: 36,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
-                padding: "0 12px",
+                padding: '0 12px',
                 fontSize: 13,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
                 width: 220,
                 background: bg,
                 color: fg,
-                outline: "none",
+                outline: 'none',
               }}
             />
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
                   {[
-                    "Nombre de Familia",
-                    "Jefe de Familia",
-                    "Detalle",
-                    "Estado",
-                    "Miembros",
-                    "Acciones",
+                    'Nombre de Familia',
+                    'Jefe de Familia',
+                    'Detalle',
+                    'Estado',
+                    'Miembros',
+                    'Acciones',
                   ].map((h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: "left",
+                        textAlign: 'left',
                         fontSize: 11,
                         color: muted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
                         fontWeight: 600,
-                        padding: "12px 20px",
+                        padding: '12px 20px',
                         background: bg,
                         borderBottom: `1px solid ${border}`,
                       }}
@@ -420,8 +420,8 @@ export function AdminFamilies() {
                     <td
                       colSpan={6}
                       style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
+                        textAlign: 'center',
+                        padding: '48px 24px',
                         color: muted,
                         fontSize: 14,
                       }}
@@ -434,8 +434,8 @@ export function AdminFamilies() {
                     <td
                       colSpan={6}
                       style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
+                        textAlign: 'center',
+                        padding: '48px 24px',
                         color: muted,
                         fontSize: 14,
                       }}
@@ -448,7 +448,7 @@ export function AdminFamilies() {
                     <tr key={item.id_familia} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           fontWeight: 600,
@@ -459,31 +459,31 @@ export function AdminFamilies() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           color: fg,
                         }}
                       >
                         {item.jefe_nombre ?? (
-                          <span style={{ fontStyle: "italic", color: muted }}>
+                          <span style={{ fontStyle: 'italic', color: muted }}>
                             Sin asignar
                           </span>
                         )}
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           color: muted,
                         }}
                       >
-                        {item.detalle_familia ?? "-"}
+                        {item.detalle_familia ?? '-'}
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -491,24 +491,24 @@ export function AdminFamilies() {
                           style={{
                             fontSize: 12,
                             fontWeight: 600,
-                            padding: "3px 10px",
+                            padding: '3px 10px',
                             borderRadius: 6,
                             background: item.estado
                               ? isDark
-                                ? "rgba(74,138,99,0.15)"
-                                : "rgba(36,86,60,0.07)"
+                                ? 'rgba(74,138,99,0.15)'
+                                : 'rgba(36,86,60,0.07)'
                               : isDark
-                                ? "rgba(242,169,0,0.12)"
-                                : "rgba(242,169,0,0.1)",
+                                ? 'rgba(242,169,0,0.12)'
+                                : 'rgba(242,169,0,0.1)',
                             color: item.estado ? brand : warning.color,
                           }}
                         >
-                          {item.estado ? "Activo" : "Inactivo"}
+                          {item.estado ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -519,13 +519,13 @@ export function AdminFamilies() {
                             )
                           }
                           style={{
-                            background: "transparent",
+                            background: 'transparent',
                             border: `1px solid ${border}`,
                             borderRadius: 8,
-                            padding: "6px 12px",
+                            padding: '6px 12px',
                             fontSize: 13,
                             color: brand,
-                            cursor: "pointer",
+                            cursor: 'pointer',
                             fontWeight: 600,
                           }}
                         >
@@ -534,11 +534,11 @@ export function AdminFamilies() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => startEdit(item)}
                             aria-label="Editar"
@@ -548,10 +548,10 @@ export function AdminFamilies() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -566,10 +566,10 @@ export function AdminFamilies() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -587,30 +587,30 @@ export function AdminFamilies() {
       )}
 
       {/* TAB: Form */}
-      {tab === "form" && (
+      {tab === 'form' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              padding: "20px 24px",
+              padding: '20px 24px',
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? "Editar familia" : "Nueva familia"}
+              {editId ? 'Editar familia' : 'Nueva familia'}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               gap: 18,
               padding: 24,
               maxWidth: 500,
@@ -618,8 +618,8 @@ export function AdminFamilies() {
           >
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 5,
               }}
             >
@@ -627,8 +627,8 @@ export function AdminFamilies() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -643,36 +643,36 @@ export function AdminFamilies() {
                 placeholder="ej. Familia Pérez"
                 required
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === "nombre_familia" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre_familia' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "0 14px",
+                  padding: '0 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
+                  outline: 'none',
                 }}
-                onFocus={() => setFocusedField("nombre_familia")}
+                onFocus={() => setFocusedField('nombre_familia')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
             {!editId && (
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 5,
-                  position: "relative",
+                  position: 'relative',
                 }}
               >
                 <label
                   style={{
                     fontSize: 13,
                     fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
                     color: muted,
                   }}
                 >
@@ -680,9 +680,9 @@ export function AdminFamilies() {
                 </label>
                 <div
                   style={{
-                    display: "flex",
-                    position: "relative",
-                    alignItems: "center",
+                    display: 'flex',
+                    position: 'relative',
+                    alignItems: 'center',
                   }}
                 >
                   <input
@@ -695,18 +695,18 @@ export function AdminFamilies() {
                     placeholder="Buscar por nombre o correo..."
                     required={!selectedJefe}
                     style={{
-                      width: "100%",
+                      width: '100%',
                       height: 44,
-                      border: `1.5px solid ${focusedField === "jefe" ? brand : border}`,
+                      border: `1.5px solid ${focusedField === 'jefe' ? brand : border}`,
                       borderRadius: 10,
-                      padding: "0 40px 0 14px",
+                      padding: '0 40px 0 14px',
                       fontSize: 15,
-                      fontFamily: "inherit",
+                      fontFamily: 'inherit',
                       background: bg,
                       color: fg,
-                      outline: "none",
+                      outline: 'none',
                     }}
-                    onFocus={() => setFocusedField("jefe")}
+                    onFocus={() => setFocusedField('jefe')}
                     onBlur={() => setTimeout(() => setFocusedField(null), 200)}
                   />
                   {(selectedJefe || jefeQuery) && (
@@ -714,14 +714,14 @@ export function AdminFamilies() {
                       type="button"
                       onClick={() => {
                         setSelectedJefe(null);
-                        setJefeQuery("");
+                        setJefeQuery('');
                       }}
                       style={{
-                        position: "absolute",
+                        position: 'absolute',
                         right: 12,
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
                         fontSize: 16,
                         color: muted,
                       }}
@@ -740,8 +740,8 @@ export function AdminFamilies() {
                 {jefeResults.length > 0 && (
                   <div
                     style={{
-                      position: "absolute",
-                      top: "100%",
+                      position: 'absolute',
+                      top: '100%',
                       left: 0,
                       right: 0,
                       zIndex: 50,
@@ -749,9 +749,9 @@ export function AdminFamilies() {
                       border: `1px solid ${border}`,
                       borderRadius: 10,
                       marginTop: 4,
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                       maxHeight: 200,
-                      overflowY: "auto",
+                      overflowY: 'auto',
                     }}
                   >
                     {jefeResults.map((user) => (
@@ -764,12 +764,12 @@ export function AdminFamilies() {
                           );
                         }}
                         style={{
-                          padding: "10px 14px",
-                          cursor: "pointer",
+                          padding: '10px 14px',
+                          cursor: 'pointer',
                           borderBottom: `1px solid ${border}`,
                           fontSize: 14,
-                          display: "flex",
-                          flexDirection: "column",
+                          display: 'flex',
+                          flexDirection: 'column',
                           gap: 2,
                         }}
                         onMouseEnter={(e) => {
@@ -778,7 +778,7 @@ export function AdminFamilies() {
                             : bg;
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.background = 'transparent';
                         }}
                       >
                         <span style={{ fontWeight: 600, color: fg }}>
@@ -795,8 +795,8 @@ export function AdminFamilies() {
             )}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 5,
               }}
             >
@@ -804,8 +804,8 @@ export function AdminFamilies() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -818,23 +818,23 @@ export function AdminFamilies() {
                 }
                 placeholder="Descripción del grupo familiar..."
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 90,
-                  border: `1.5px solid ${focusedField === "detalle_familia" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'detalle_familia' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "12px 14px",
+                  padding: '12px 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
-                  resize: "vertical",
+                  outline: 'none',
+                  resize: 'vertical',
                 }}
-                onFocus={() => setFocusedField("detalle_familia")}
+                onFocus={() => setFocusedField('detalle_familia')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="submit"
                 disabled={saving}
@@ -849,10 +849,10 @@ export function AdminFamilies() {
               </button>
               <button
                 type="button"
-                onClick={() => setTab("list")}
+                onClick={() => setTab('list')}
                 style={{
                   ...btnStyle,
-                  background: "transparent",
+                  background: 'transparent',
                   border: `1.5px solid ${border}`,
                   color: fg,
                 }}
@@ -865,22 +865,22 @@ export function AdminFamilies() {
       )}
 
       {/* TAB: Trash (Papelera) */}
-      {tab === "trash" && (
+      {tab === 'trash' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              padding: "16px 24px",
+              padding: '16px 24px',
               borderBottom: `1px solid ${border}`,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
@@ -891,12 +891,12 @@ export function AdminFamilies() {
             </span>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: 'auto' }}>
             <table
               style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "left",
+                width: '100%',
+                borderCollapse: 'collapse',
+                textAlign: 'left',
               }}
             >
               <thead>
@@ -908,44 +908,44 @@ export function AdminFamilies() {
                 >
                   <th
                     style={{
-                      padding: "12px 20px",
+                      padding: '12px 20px',
                       fontSize: 12,
                       fontWeight: 600,
                       color: muted,
-                      textTransform: "uppercase",
+                      textTransform: 'uppercase',
                     }}
                   >
                     Nombre de la familia
                   </th>
                   <th
                     style={{
-                      padding: "12px 20px",
+                      padding: '12px 20px',
                       fontSize: 12,
                       fontWeight: 600,
                       color: muted,
-                      textTransform: "uppercase",
+                      textTransform: 'uppercase',
                     }}
                   >
                     Detalle
                   </th>
                   <th
                     style={{
-                      padding: "12px 20px",
+                      padding: '12px 20px',
                       fontSize: 12,
                       fontWeight: 600,
                       color: muted,
-                      textTransform: "uppercase",
+                      textTransform: 'uppercase',
                     }}
                   >
                     Estado
                   </th>
                   <th
                     style={{
-                      padding: "12px 20px",
+                      padding: '12px 20px',
                       fontSize: 12,
                       fontWeight: 600,
                       color: muted,
-                      textTransform: "uppercase",
+                      textTransform: 'uppercase',
                     }}
                   >
                     Acciones
@@ -958,8 +958,8 @@ export function AdminFamilies() {
                     <td
                       colSpan={4}
                       style={{
-                        padding: "40px 20px",
-                        textAlign: "center",
+                        padding: '40px 20px',
+                        textAlign: 'center',
                         color: muted,
                         fontSize: 14,
                       }}
@@ -972,7 +972,7 @@ export function AdminFamilies() {
                     <tr key={item.id_familia} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           fontWeight: 600,
@@ -983,17 +983,17 @@ export function AdminFamilies() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           color: muted,
                         }}
                       >
-                        {item.detalle_familia ?? "-"}
+                        {item.detalle_familia ?? '-'}
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -1001,11 +1001,11 @@ export function AdminFamilies() {
                           style={{
                             fontSize: 12,
                             fontWeight: 600,
-                            padding: "3px 10px",
+                            padding: '3px 10px',
                             borderRadius: 6,
                             background: isDark
-                              ? "rgba(242,169,0,0.12)"
-                              : "rgba(242,169,0,0.1)",
+                              ? 'rgba(242,169,0,0.12)'
+                              : 'rgba(242,169,0,0.1)',
                             color: warning.color,
                           }}
                         >
@@ -1014,16 +1014,16 @@ export function AdminFamilies() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => {
                               setRestoreTarget(item);
                               setSelectedJefe(null);
-                              setJefeQuery("");
+                              setJefeQuery('');
                             }}
                             aria-label="Restaurar / Asignar Jefe"
                             title="Restaurar / Asignar Jefe"
@@ -1033,10 +1033,10 @@ export function AdminFamilies() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -1052,10 +1052,10 @@ export function AdminFamilies() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -1076,14 +1076,14 @@ export function AdminFamilies() {
       {restoreTarget && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
-            backdropFilter: "blur(4px)",
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setRestoreTarget(null)}
         >
@@ -1093,9 +1093,9 @@ export function AdminFamilies() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 480,
-              width: "90%",
+              width: '90%',
               border: `1px solid ${border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1110,25 +1110,25 @@ export function AdminFamilies() {
               🔄 Restaurar "{restoreTarget.nombre_familia}"
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 16 }}>
-              Para reactivar esta familia es <strong>obligatorio</strong>{" "}
+              Para reactivar esta familia es <strong>obligatorio</strong>{' '}
               asignar un nuevo jefe de familia.
             </p>
 
-            <div style={{ marginBottom: 20, position: "relative" }}>
+            <div style={{ marginBottom: 20, position: 'relative' }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
-                  display: "block",
+                  display: 'block',
                   marginBottom: 6,
                 }}
               >
                 Buscar Jefe de Familia *
               </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input
                   type="text"
                   value={jefeQuery}
@@ -1142,11 +1142,11 @@ export function AdminFamilies() {
                     height: 44,
                     border: `1.5px solid ${selectedJefe ? brand : border}`,
                     borderRadius: 10,
-                    padding: "0 14px",
+                    padding: '0 14px',
                     fontSize: 15,
                     background: bg,
                     color: fg,
-                    outline: "none",
+                    outline: 'none',
                   }}
                 />
               </div>
@@ -1160,8 +1160,8 @@ export function AdminFamilies() {
               {jefeResults.length > 0 && (
                 <div
                   style={{
-                    position: "absolute",
-                    top: "100%",
+                    position: 'absolute',
+                    top: '100%',
                     left: 0,
                     right: 0,
                     zIndex: 60,
@@ -1169,9 +1169,9 @@ export function AdminFamilies() {
                     border: `1px solid ${border}`,
                     borderRadius: 10,
                     marginTop: 4,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     maxHeight: 200,
-                    overflowY: "auto",
+                    overflowY: 'auto',
                   }}
                 >
                   {jefeResults.map((user) => (
@@ -1184,12 +1184,12 @@ export function AdminFamilies() {
                         );
                       }}
                       style={{
-                        padding: "10px 14px",
-                        cursor: "pointer",
+                        padding: '10px 14px',
+                        cursor: 'pointer',
                         borderBottom: `1px solid ${border}`,
                         fontSize: 14,
-                        display: "flex",
-                        flexDirection: "column",
+                        display: 'flex',
+                        flexDirection: 'column',
                       }}
                     >
                       <span style={{ fontWeight: 600, color: fg }}>
@@ -1205,20 +1205,20 @@ export function AdminFamilies() {
             </div>
 
             <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setRestoreTarget(null)}
                 style={{
                   height: 36,
-                  padding: "0 16px",
+                  padding: '0 16px',
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
                 Cancelar
@@ -1228,18 +1228,18 @@ export function AdminFamilies() {
                 disabled={!selectedJefe || saving}
                 style={{
                   height: 36,
-                  padding: "0 16px",
+                  padding: '0 16px',
                   borderRadius: 8,
-                  border: "none",
+                  border: 'none',
                   background: primaryGreen,
                   color: iconWhite,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: selectedJefe && !saving ? "pointer" : "not-allowed",
+                  cursor: selectedJefe && !saving ? 'pointer' : 'not-allowed',
                   opacity: selectedJefe && !saving ? 1 : 0.5,
                 }}
               >
-                {saving ? "Restaurando..." : "Reactivar Familia"}
+                {saving ? 'Restaurando...' : 'Reactivar Familia'}
               </button>
             </div>
           </div>
@@ -1250,14 +1250,14 @@ export function AdminFamilies() {
       {delTarget && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
-            backdropFilter: "blur(4px)",
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setDelTarget(null)}
         >
@@ -1267,9 +1267,9 @@ export function AdminFamilies() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: "90%",
+              width: '90%',
               border: `1px solid ${border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1288,21 +1288,21 @@ export function AdminFamilies() {
               quedará inactiva, sin jefe y sin miembros.
             </p>
             <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Cancelar
@@ -1311,15 +1311,15 @@ export function AdminFamilies() {
                 onClick={handleDelete}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
                   border: `1.5px solid ${coral}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: coral,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Mover a papelera
@@ -1333,14 +1333,14 @@ export function AdminFamilies() {
       {permDelTarget && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
-            backdropFilter: "blur(4px)",
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setPermDelTarget(null)}
         >
@@ -1350,9 +1350,9 @@ export function AdminFamilies() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: "90%",
+              width: '90%',
               border: `1px solid ${border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1371,21 +1371,21 @@ export function AdminFamilies() {
               {permDelTarget.nombre_familia}" de la base de datos.
             </p>
             <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setPermDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Cancelar
@@ -1394,15 +1394,15 @@ export function AdminFamilies() {
                 onClick={handlePermanentDelete}
                 style={{
                   height: 32,
-                  padding: "0 14px",
+                  padding: '0 14px',
                   borderRadius: 8,
-                  border: "none",
+                  border: 'none',
                   background: coral,
                   color: colors.iconWhite,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Eliminar definitivamente

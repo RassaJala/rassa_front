@@ -1,7 +1,7 @@
-import { useEffect } from "react";
-import { BrowserRouter, useNavigate } from "react-router-dom";
-import { AppRouter } from "./routes";
-import { setNavigate } from "./services/navigate";
+import { useEffect } from 'react';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
+import { AppRouter } from './routes';
+import { setNavigate } from './services/navigate';
 
 function NavigateProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();

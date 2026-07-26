@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from "react";
-import { btnStyle as sharedBtnStyle } from "@/constants/styles";
-import { useAppColors } from "../hooks/useAppColors";
+import { useMemo, useRef, useState } from 'react';
+import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useAppColors } from '../hooks/useAppColors';
 
 interface Unit {
   id: number;
@@ -10,10 +10,10 @@ interface Unit {
 }
 
 const initialData: Unit[] = [
-  { id: 1, nombre: "Kilogramo", abreviatura: "kg", estado: true },
-  { id: 2, nombre: "Unidad", abreviatura: "pz", estado: true },
-  { id: 3, nombre: "Litro", abreviatura: "lt", estado: true },
-  { id: 4, nombre: "Libra", abreviatura: "lb", estado: false },
+  { id: 1, nombre: 'Kilogramo', abreviatura: 'kg', estado: true },
+  { id: 2, nombre: 'Unidad', abreviatura: 'pz', estado: true },
+  { id: 3, nombre: 'Litro', abreviatura: 'lt', estado: true },
+  { id: 4, nombre: 'Libra', abreviatura: 'lb', estado: false },
 ];
 
 export function AdminUnits() {
@@ -21,10 +21,10 @@ export function AdminUnits() {
   const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Unit[]>(initialData);
-  const [tab, setTab] = useState<"list" | "form">("list");
+  const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: "", abreviatura: "" });
-  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({ nombre: '', abreviatura: '' });
+  const [search, setSearch] = useState('');
   const [delTarget, setDelTarget] = useState<Unit | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -42,14 +42,14 @@ export function AdminUnits() {
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: "", abreviatura: "" });
-    setTab("form");
+    setForm({ nombre: '', abreviatura: '' });
+    setTab('form');
   }
 
   function startEdit(item: Unit) {
     setEditId(item.id);
     setForm({ nombre: item.nombre, abreviatura: item.abreviatura });
-    setTab("form");
+    setTab('form');
   }
 
   function handleSave(e: React.FormEvent) {
@@ -79,7 +79,7 @@ export function AdminUnits() {
         },
       ]);
     }
-    setTab("list");
+    setTab('list');
     setSaving(false);
   }
 
@@ -102,11 +102,11 @@ export function AdminUnits() {
       {/* Header */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 20,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
           gap: 12,
         }}
       >
@@ -114,7 +114,7 @@ export function AdminUnits() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: "-0.01em",
+            letterSpacing: '-0.01em',
             color: fg,
           }}
         >
@@ -122,7 +122,7 @@ export function AdminUnits() {
         </h2>
         <button
           onClick={startNew}
-          style={{ ...btnStyle, background: coral, color: "#fff" }}
+          style={{ ...btnStyle, background: coral, color: '#fff' }}
         >
           ＋ Nueva unidad
         </button>
@@ -131,28 +131,28 @@ export function AdminUnits() {
       {/* Tabs */}
       <div
         style={{
-          display: "flex",
+          display: 'flex',
           gap: 2,
           background: border,
           borderRadius: 12,
           padding: 3,
           marginBottom: 20,
-          width: "fit-content",
+          width: 'fit-content',
         }}
       >
         <button
-          onClick={() => setTab("list")}
+          onClick={() => setTab('list')}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "list" ? surface : "transparent",
-            color: tab === "list" ? fg : muted,
-            boxShadow: tab === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'list' ? surface : 'transparent',
+            color: tab === 'list' ? fg : muted,
+            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           📋 Lista de unidades
@@ -160,16 +160,16 @@ export function AdminUnits() {
         <button
           onClick={() => startNew()}
           style={{
-            padding: "8px 20px",
-            border: "none",
+            padding: '8px 20px',
+            border: 'none',
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            background: tab === "form" ? surface : "transparent",
-            color: tab === "form" ? fg : muted,
-            boxShadow: tab === "form" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            background: tab === 'form' ? surface : 'transparent',
+            color: tab === 'form' ? fg : muted,
+            boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
           }}
         >
           ➕ Agregar unidad
@@ -177,23 +177,23 @@ export function AdminUnits() {
       </div>
 
       {/* TAB: List */}
-      {tab === "list" && (
+      {tab === 'list' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "16px 20px",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
               borderBottom: `1px solid ${border}`,
-              flexWrap: "wrap",
+              flexWrap: 'wrap',
               gap: 8,
             }}
           >
@@ -209,31 +209,31 @@ export function AdminUnits() {
                 height: 36,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
-                padding: "0 12px",
+                padding: '0 12px',
                 fontSize: 13,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
                 width: 220,
                 background: bg,
                 color: fg,
-                outline: "none",
+                outline: 'none',
               }}
             />
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {["Nombre", "Abreviatura", "Estado", "Acciones"].map((h) => (
+                  {['Nombre', 'Abreviatura', 'Estado', 'Acciones'].map((h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: "left",
+                        textAlign: 'left',
                         fontSize: 11,
                         color: muted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
                         fontWeight: 600,
-                        padding: "12px 20px",
+                        padding: '12px 20px',
                         background: bg,
                         borderBottom: `1px solid ${border}`,
                       }}
@@ -249,8 +249,8 @@ export function AdminUnits() {
                     <td
                       colSpan={4}
                       style={{
-                        textAlign: "center",
-                        padding: "48px 24px",
+                        textAlign: 'center',
+                        padding: '48px 24px',
                         color: muted,
                         fontSize: 14,
                       }}
@@ -263,7 +263,7 @@ export function AdminUnits() {
                     <tr key={item.id} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           fontWeight: 600,
@@ -274,7 +274,7 @@ export function AdminUnits() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           color: muted,
@@ -284,7 +284,7 @@ export function AdminUnits() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
@@ -292,45 +292,45 @@ export function AdminUnits() {
                           style={{
                             fontSize: 12,
                             fontWeight: 600,
-                            padding: "3px 10px",
+                            padding: '3px 10px',
                             borderRadius: 6,
                             background: item.estado
                               ? isDark
-                                ? "rgba(74,138,99,0.15)"
-                                : "rgba(36,86,60,0.07)"
+                                ? 'rgba(74,138,99,0.15)'
+                                : 'rgba(36,86,60,0.07)'
                               : isDark
-                                ? "rgba(212,160,32,0.12)"
-                                : "rgba(242,169,0,0.1)",
-                            color: item.estado ? brand : "#F2A900",
+                                ? 'rgba(212,160,32,0.12)'
+                                : 'rgba(242,169,0,0.1)',
+                            color: item.estado ? brand : '#F2A900',
                           }}
                         >
-                          {item.estado ? "Activo" : "Inactivo"}
+                          {item.estado ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td
                         style={{
-                          padding: "14px 20px",
+                          padding: '14px 20px',
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
                           <button
                             onClick={() => toggleStatus(item)}
-                            aria-label={item.estado ? "Desactivar" : "Activar"}
+                            aria-label={item.estado ? 'Desactivar' : 'Activar'}
                             style={{
                               width: 32,
                               height: 32,
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
-                            {item.estado ? "⏸" : "▶️"}
+                            {item.estado ? '⏸' : '▶️'}
                           </button>
                           <button
                             onClick={() => startEdit(item)}
@@ -341,10 +341,10 @@ export function AdminUnits() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -359,10 +359,10 @@ export function AdminUnits() {
                               borderRadius: 8,
                               border: `1px solid ${border}`,
                               background: surface,
-                              cursor: "pointer",
+                              cursor: 'pointer',
                               fontSize: 14,
-                              display: "grid",
-                              placeItems: "center",
+                              display: 'grid',
+                              placeItems: 'center',
                               color: fg,
                             }}
                           >
@@ -380,41 +380,41 @@ export function AdminUnits() {
       )}
 
       {/* TAB: Form */}
-      {tab === "form" && (
+      {tab === 'form' && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           <div
             style={{
-              padding: "20px 24px",
+              padding: '20px 24px',
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? "Editar unidad" : "Nueva unidad"}
+              {editId ? 'Editar unidad' : 'Nueva unidad'}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
               gap: 18,
               padding: 24,
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -429,28 +429,28 @@ export function AdminUnits() {
                 placeholder="ej. Kilogramo"
                 required
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === "nombre" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "0 14px",
+                  padding: '0 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
+                  outline: 'none',
                 }}
-                onFocus={() => setFocusedField("nombre")}
+                onFocus={() => setFocusedField('nombre')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   color: muted,
                 }}
               >
@@ -465,29 +465,29 @@ export function AdminUnits() {
                 placeholder="ej. kg"
                 required
                 style={{
-                  width: "100%",
+                  width: '100%',
                   height: 44,
-                  border: `1.5px solid ${focusedField === "abreviatura" ? brand : border}`,
+                  border: `1.5px solid ${focusedField === 'abreviatura' ? brand : border}`,
                   borderRadius: 10,
-                  padding: "0 14px",
+                  padding: '0 14px',
                   fontSize: 15,
-                  fontFamily: "inherit",
+                  fontFamily: 'inherit',
                   background: bg,
                   color: fg,
-                  outline: "none",
+                  outline: 'none',
                 }}
-                onFocus={() => setFocusedField("abreviatura")}
+                onFocus={() => setFocusedField('abreviatura')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="submit"
                 disabled={saving}
                 style={{
                   ...btnStyle,
                   background: coral,
-                  color: "#fff",
+                  color: '#fff',
                   opacity: saving ? 0.6 : 1,
                 }}
               >
@@ -495,10 +495,10 @@ export function AdminUnits() {
               </button>
               <button
                 type="button"
-                onClick={() => setTab("list")}
+                onClick={() => setTab('list')}
                 style={{
                   ...btnStyle,
-                  background: "transparent",
+                  background: 'transparent',
                   border: `1.5px solid ${border}`,
                   color: fg,
                 }}
@@ -514,14 +514,14 @@ export function AdminUnits() {
       {delTarget && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
-            backdropFilter: "blur(4px)",
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setDelTarget(null)}
         >
@@ -531,9 +531,9 @@ export function AdminUnits() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: "90%",
+              width: '90%',
               border: `1px solid ${border}`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -552,21 +552,21 @@ export function AdminUnits() {
               Esta acción no se puede deshacer.
             </p>
             <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: "transparent",
+                  background: 'transparent',
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Cancelar
@@ -575,15 +575,15 @@ export function AdminUnits() {
                 onClick={handleDelete}
                 style={{
                   height: 32,
-                  padding: "0 12px",
+                  padding: '0 12px',
                   borderRadius: 8,
-                  border: "1.5px solid #DE393A",
-                  background: "transparent",
-                  color: "#DE393A",
+                  border: '1.5px solid #DE393A',
+                  background: 'transparent',
+                  color: '#DE393A',
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Eliminar

@@ -25,14 +25,14 @@ export interface ProfileFormData {
 }
 
 export const generoOptions = [
-  { value: "M", label: "Masculino" },
-  { value: "F", label: "Femenino" },
-  { value: "O", label: "Otro" },
+  { value: 'M', label: 'Masculino' },
+  { value: 'F', label: 'Femenino' },
+  { value: 'O', label: 'Otro' },
 ] as const;
 
 export function getGeneroLabel(value: string | undefined): string {
   return (
-    generoOptions.find((o) => o.value === value)?.label ?? "No especificado"
+    generoOptions.find((o) => o.value === value)?.label ?? 'No especificado'
   );
 }
 

@@ -8,7 +8,7 @@ export const QUERY_RETRY = 1 as const;
 
 // ── ID validation guard ────────────────────────────────────
 
-export function assertValidId(id: number, label = "ID"): asserts id is number {
+export function assertValidId(id: number, label = 'ID'): asserts id is number {
   if (!Number.isFinite(id) || id <= 0 || !Number.isInteger(id)) {
     throw new Error(`Invalid ${label}: ${String(id)}`);
   }
