@@ -1,20 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppColors } from '../hooks/useAppColors';
 import {
+  useAddProductoSemanal,
+  useCatalogProductos,
   useCreatePublicacion,
+  useDeleteProductoSemanal,
+  useProductosSemanales,
+  usePublicacion,
   usePublishPublicacion,
+  useUnidades,
+  useUpdateProductoSemanal,
+  useUploadProductoSemanalImagen,
 } from '../hooks/usePublications';
-import type { Publicacion } from '../services/publications';
-import {
-  addProductoSemanal,
-  deleteProductoSemanal,
-  getCatalogProductos,
-  getPublicacion,
-  getUnidades,
-  updateProductoSemanal,
-  uploadProductoSemanalImagen,
-} from '../services/publications';
 import type { Producto } from '../services/publications';
 import { mediaUrl } from '../components/ProductFormModal';
 import { Badge } from '../components/ui/Badge';
@@ -135,14 +133,12 @@ function ProductPickerModal({
 }) {
   const [search, setSearch] = useState('');
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return catalog.filter(
-      (p) =>
-        p.nombre_producto.toLowerCase().includes(q) &&
-        !selectedIds.has(p.id_producto),
-    );
-  }, [catalog, search, selectedIds]);
+  const q = search.toLowerCase();
+  const filtered = catalog.filter(
+    (p) =>
+      p.nombre_producto.toLowerCase().includes(q) &&
+      !selectedIds.has(p.id_producto),
+  );
 
   return (
     <div
@@ -162,19 +158,13 @@ function ProductPickerModal({
           className="flex items-center justify-between px-5 py-4"
           style={{ borderBottom: `1px solid ${colors.border}` }}
         >
-          <h3
-            className="text-lg font-bold"
-            style={{ color: colors.fg }}
-          >
+          <h3 className="text-lg font-bold" style={{ color: colors.fg }}>
             Seleccionar producto
           </h3>
           <button
             onClick={onClose}
             className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border-none text-[15px]"
-            style={{
-              background: colors.accentBg,
-              color: colors.fg,
-            }}
+            style={{ background: colors.accentBg, color: colors.fg }}
           >
             ✕
           </button>
@@ -280,6 +270,7 @@ export function PublicationWizard() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
+  const pubId = isEditing ? Number(id) : 0;
 
   // ── Step state ──
   const [stepIndex, setStepIndex] = useState(0);
@@ -291,81 +282,40 @@ export function PublicationWizard() {
     Map<string, ItemValidation>
   >(new Map());
 
-  // ── Catalog ──
-  const [catalog, setCatalog] = useState<Producto[]>([]);
-  const [unidades, setUnidades] = useState<
-    Array<{ id_unidad: number; tipo: string }>
-  >([]);
-  const [showPicker, setShowPicker] = useState(false);
-  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  // ── Hooks (all data via TanStack Query) ──
+  const catalogQuery = useCatalogProductos();
+  const unidadesQuery = useUnidades();
+  const pubQuery = usePublicacion(pubId);
+  const itemsQuery = useProductosSemanales(pubId);
 
-  // ── Publication ──
-  const [publication, setPublication] = useState<Publicacion | null>(null);
-  const [loadingPub, setLoadingPub] = useState(isEditing);
-
-  // ── Mutations ──
   const createMutation = useCreatePublicacion();
   const publishMutation = usePublishPublicacion();
+  const addItemMutation = useAddProductoSemanal();
+  const updateItemMutation = useUpdateProductoSemanal();
+  const removeItemMutation = useDeleteProductoSemanal();
+  const uploadMutation = useUploadProductoSemanalImagen();
 
   // ── UI state ──
+  const [showPicker, setShowPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
-  const pubRef = useRef<Publicacion | null>(null);
+  const pubRef = useRef<import('../services/publications').Publicacion | null>(
+    null,
+  );
   const mountedRef = useRef(true);
 
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // ── Initialize items from server data (editing mode) ──
+  const [itemsInitialized, setItemsInitialized] = useState(false);
 
-  // ── Load catalog + units ──
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const [catRes, uniRes] = await Promise.all([
-          getCatalogProductos(),
-          getUnidades(),
-        ]);
-        if (!cancelled) {
-          setCatalog(catRes.data.results);
-          setUnidades(uniRes.data);
-        }
-      } catch {
-        // catalog load failure is non-fatal
-      } finally {
-        if (!cancelled) setLoadingCatalog(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (!isEditing || itemsInitialized) return;
+    if (pubQuery.data && itemsQuery.data) {
+      const pub = pubQuery.data.data;
+      pubRef.current = pub;
 
-  // ── Load existing publication for editing ──
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    async function load() {
-      try {
-        setLoadingPub(true);
-        const pubId = Number(id);
-        if (Number.isNaN(pubId) || pubId <= 0) return;
-        const [pubRes, itemsRes] = await Promise.all([
-          getPublicacion(pubId),
-          import('../services/publications').then((m) =>
-            m.getProductosSemanales(pubId),
-          ),
-        ]);
-        if (cancelled) return;
-        const pub = pubRes.data;
-        setPublication(pub);
-        pubRef.current = pub;
-
-        const existingItems: WizardItemDraft[] = itemsRes.data.map((p) => ({
+      const existingItems: WizardItemDraft[] = itemsQuery.data.data.map(
+        (p) => ({
           tempId: String(p.id_producto_semanal),
           fk_producto: p.fk_producto,
           nombre_producto: '',
@@ -375,23 +325,23 @@ export function PublicationWizard() {
           foto: p.foto,
           imageFile: null,
           imagePreview: null,
-        }));
-        setItems(existingItems);
-      } catch {
-        if (!cancelled) setError('No se pudo cargar la publicación.');
-      } finally {
-        if (!cancelled) setLoadingPub(false);
-      }
+        }),
+      );
+      setItems(existingItems);
+      setItemsInitialized(true);
     }
-    void load();
+  }, [isEditing, itemsInitialized, pubQuery.data, itemsQuery.data]);
+
+  // ── Cleanup on unmount ──
+  useEffect(() => {
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
-  }, [id]);
+  }, []);
 
   // ── Date helpers ──
-  const nextMonday = useMemo(() => getNextMonday(), []);
-  const weekNumber = useMemo(() => getWeekNumber(nextMonday), [nextMonday]);
+  const nextMonday = getNextMonday();
+  const weekNumber = getWeekNumber(nextMonday);
 
   // ── Navigation ──
   function nextStep() {
@@ -423,6 +373,10 @@ export function PublicationWizard() {
   }
 
   function removeItem(tempId: string) {
+    // Revoke blob URL if it exists
+    const item = items.find((i) => i.tempId === tempId);
+    if (item?.imagePreview) URL.revokeObjectURL(item.imagePreview);
+
     setItems((prev) => prev.filter((i) => i.tempId !== tempId));
     setValidations((prev) => {
       const next = new Map(prev);
@@ -466,9 +420,14 @@ export function PublicationWizard() {
       setError('La imagen no puede superar 5 MB.');
       return;
     }
+
+    // Revoke previous blob URL if replacing
+    const prev = items.find((i) => i.tempId === tempId);
+    if (prev?.imagePreview) URL.revokeObjectURL(prev.imagePreview);
+
     const preview = URL.createObjectURL(file);
-    setItems((prev) =>
-      prev.map((i) =>
+    setItems((prevItems) =>
+      prevItems.map((i) =>
         i.tempId === tempId
           ? { ...i, imageFile: file, imagePreview: preview }
           : i,
@@ -477,6 +436,9 @@ export function PublicationWizard() {
   }
 
   function handleImageRemove(tempId: string) {
+    const item = items.find((i) => i.tempId === tempId);
+    if (item?.imagePreview) URL.revokeObjectURL(item.imagePreview);
+
     setItems((prev) =>
       prev.map((i) =>
         i.tempId === tempId
@@ -486,14 +448,12 @@ export function PublicationWizard() {
     );
   }
 
-  // ── Persist items to server ──
-  async function persistItems(
-    pubId: number,
-  ): Promise<void> {
+  // ── Persist items to server (via hooks) ──
+  async function persistItems(pubNumber: number): Promise<void> {
     for (const item of items) {
       const serverId = Number(item.tempId);
       const isExisting =
-        !Number.isNaN(serverId) && serverId > 0 && publication !== null;
+        !Number.isNaN(serverId) && serverId > 0 && pubRef.current !== null;
 
       const payload = {
         fk_producto: item.fk_producto,
@@ -505,10 +465,17 @@ export function PublicationWizard() {
       let itemId: number;
 
       if (isExisting) {
-        const result = await updateProductoSemanal(pubId, serverId, payload);
+        const result = await updateItemMutation.mutateAsync({
+          pubId: pubNumber,
+          itemId: serverId,
+          payload,
+        });
         itemId = result.data.id_producto_semanal;
       } else {
-        const result = await addProductoSemanal(pubId, payload);
+        const result = await addItemMutation.mutateAsync({
+          pubId: pubNumber,
+          payload,
+        });
         itemId = result.data.id_producto_semanal;
       }
 
@@ -516,17 +483,24 @@ export function PublicationWizard() {
       if (item.imageFile) {
         const formData = new FormData();
         formData.append('imagen', item.imageFile);
-        await uploadProductoSemanalImagen(pubId, itemId, formData);
+        await uploadMutation.mutateAsync({
+          pubId: pubNumber,
+          itemId,
+          formData,
+        });
       }
     }
 
     // Remove items that were deleted
-    if (publication) {
+    if (pubRef.current) {
       const currentIds = new Set(items.map((i) => i.tempId));
-      for (const existing of publication.productos) {
+      for (const existing of pubRef.current.productos) {
         const existingId = String(existing.id_producto_semanal);
         if (!currentIds.has(existingId)) {
-          await deleteProductoSemanal(pubId, existing.id_producto_semanal);
+          await removeItemMutation.mutateAsync({
+            pubId: pubNumber,
+            itemId: existing.id_producto_semanal,
+          });
         }
       }
     }
@@ -545,13 +519,12 @@ export function PublicationWizard() {
         const result = await createMutation.mutateAsync();
         pub = result.data;
         pubRef.current = pub;
-        if (mountedRef.current) setPublication(pub);
       }
       if (!pub) return;
 
       await persistItems(pub.id_publicacion);
       if (mountedRef.current) {
-        showToast('Borrador guardado.');
+        setToastMsg('Borrador guardado.');
       }
     } catch (err) {
       if (mountedRef.current) {
@@ -578,7 +551,6 @@ export function PublicationWizard() {
         const result = await createMutation.mutateAsync();
         pub = result.data;
         pubRef.current = pub;
-        if (mountedRef.current) setPublication(pub);
       }
       if (!pub) return;
 
@@ -586,7 +558,7 @@ export function PublicationWizard() {
       await publishMutation.mutateAsync(pub.id_publicacion);
 
       if (mountedRef.current) {
-        showToast('¡Publicación publicada!');
+        setToastMsg('¡Publicación publicada!');
         void navigate('/agricultor/publicaciones');
       }
     } catch (err) {
@@ -601,23 +573,27 @@ export function PublicationWizard() {
     }
   }
 
-  // ── Toast ──
-  const [toast, setToast] = useState<string | null>(null);
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 4000);
-  }, []);
+  // ── Toast with cleanup ──
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMsg) return;
+    const timer = setTimeout(() => {
+      if (mountedRef.current) setToastMsg(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toastMsg]);
 
   // ── Loading state ──
-  if (loadingPub) {
+  if (isEditing && (pubQuery.isLoading || itemsQuery.isLoading)) {
     return <LoadingSpinner className="py-20" />;
   }
 
-  if (error && !publication && isEditing) {
+  if (isEditing && pubQuery.isError) {
     return (
       <div className="py-12 text-center">
         <p className="mb-3" style={{ color: colors.coral }}>
-          {error}
+          No se pudo cargar la publicación.
         </p>
         <Button
           variant="secondary"
@@ -629,30 +605,31 @@ export function PublicationWizard() {
     );
   }
 
+  const catalog = catalogQuery.data?.data?.results ?? [];
+  const unidades = unidadesQuery.data?.data ?? [];
+  const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
   const selectedIds = new Set(items.map((i) => i.fk_producto));
 
   return (
     <div className="relative mx-auto max-w-3xl">
       {/* Toast */}
-      {toast && (
+      {toastMsg && (
         <div
-          className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
+          className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold"
           style={{
+            color: '#fff',
             background: colors.brand,
             boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
           }}
         >
-          ✓ {toast}
+          ✓ {toastMsg}
         </div>
       )}
 
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1
-            className="text-2xl font-bold"
-            style={{ color: colors.fg }}
-          >
+          <h1 className="text-2xl font-bold" style={{ color: colors.fg }}>
             {isEditing
               ? `Editar Publicación — Semana ${weekNumber}`
               : `Nueva Publicación — Semana ${weekNumber}`}
@@ -778,10 +755,7 @@ export function PublicationWizard() {
               >
                 Productos ({items.length})
               </h2>
-              <Button
-                variant="secondary"
-                onClick={() => setShowPicker(true)}
-              >
+              <Button variant="secondary" onClick={() => setShowPicker(true)}>
                 + Agregar producto
               </Button>
             </div>
@@ -874,8 +848,11 @@ export function PublicationWizard() {
                           {displayImage && (
                             <button
                               onClick={() => handleImageRemove(item.tempId)}
-                              className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px] text-white"
-                              style={{ background: colors.coral }}
+                              className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px]"
+                              style={{
+                                background: colors.coral,
+                                color: '#fff',
+                              }}
                             >
                               ✕
                             </button>
@@ -950,10 +927,7 @@ export function PublicationWizard() {
                             >
                               <option value="">Seleccionar unidad</option>
                               {unidades.map((u) => (
-                                <option
-                                  key={u.id_unidad}
-                                  value={u.id_unidad}
-                                >
+                                <option key={u.id_unidad} value={u.id_unidad}>
                                   {u.tipo}
                                 </option>
                               ))}
@@ -1046,15 +1020,12 @@ export function PublicationWizard() {
                           className="text-[13px]"
                           style={{ color: colors.muted }}
                         >
-                          {item.stock} {unidad?.tipo ?? ''} · $
-                          {item.precio}
+                          {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
                         </p>
                       </div>
                       <Badge
                         variant={
-                          item.foto || item.imageFile
-                            ? 'success'
-                            : 'warning'
+                          item.foto || item.imageFile ? 'success' : 'warning'
                         }
                       >
                         {item.foto || item.imageFile ? 'Con foto' : 'Sin foto'}
@@ -1139,9 +1110,7 @@ export function PublicationWizard() {
             <Button
               variant="primary"
               onClick={nextStep}
-              disabled={
-                currentStep === 'productos' && items.length === 0
-              }
+              disabled={currentStep === 'productos' && items.length === 0}
             >
               Siguiente →
             </Button>

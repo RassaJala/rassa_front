@@ -2,11 +2,15 @@ import api from './api';
 
 // ── Types ──────────────────────────────────────────────────
 
+export const PUBLICACION_ESTADOS = {
+  BORRADOR: 'borrador',
+  PUBLICADO: 'publicado',
+  CERRADO: 'cerrado',
+  CANCELADO: 'cancelado',
+} as const;
+
 export type PublicacionEstado =
-  | 'borrador'
-  | 'publicado'
-  | 'cerrado'
-  | 'cancelado';
+  (typeof PUBLICACION_ESTADOS)[keyof typeof PUBLICACION_ESTADOS];
 
 export interface ProductoSemanal {
   id_producto_semanal: number;

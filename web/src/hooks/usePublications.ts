@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
   ApiResponse,
+  Producto,
   ProductoSemanal,
   Publicacion,
   PublicacionEstado,
@@ -16,7 +17,10 @@ const STALE_TIME = 30_000;
 export function usePublicaciones(estado?: PublicacionEstado) {
   return useQuery<ApiResponse<PublicacionList>>({
     queryKey: ['publicaciones', { estado }],
-    queryFn: () => publicationsApi.getPublicaciones({ estado }),
+    queryFn: () =>
+      publicationsApi.getPublicaciones(
+        estado ? { estado } : undefined,
+      ),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -38,6 +42,26 @@ export function useProductosSemanales(pubId: number) {
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
     staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useCatalogProductos() {
+  return useQuery<ApiResponse<{ results: Producto[] }>>({
+    queryKey: ['productos-catalog'],
+    queryFn: publicationsApi.getCatalogProductos,
+    staleTime: STALE_TIME,
+    retry: 1,
+  });
+}
+
+export function useUnidades() {
+  return useQuery<
+    ApiResponse<Array<{ id_unidad: number; tipo: string }>>
+  >({
+    queryKey: ['unidades'],
+    queryFn: publicationsApi.getUnidades,
+    staleTime: 60_000,
     retry: 1,
   });
 }
@@ -152,6 +176,27 @@ export function useDeleteProductoSemanal() {
       pubId: number;
       itemId: number;
     }) => publicationsApi.deleteProductoSemanal(pubId, itemId),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({
+        queryKey: ['publicaciones', variables.pubId, 'productos'],
+      });
+    },
+  });
+}
+
+export function useUploadProductoSemanalImagen() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      pubId,
+      itemId,
+      formData,
+    }: {
+      pubId: number;
+      itemId: number;
+      formData: FormData;
+    }) =>
+      publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({
         queryKey: ['publicaciones', variables.pubId, 'productos'],
