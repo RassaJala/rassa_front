@@ -15,6 +15,16 @@ import {
   useUploadProductoSemanalImagen,
 } from '../hooks/usePublications';
 import type { Producto } from '../services/publications';
+import {
+  type ItemValidation,
+  type WizardItemDraft,
+  computePersistTimeout,
+  formatDate,
+  generateTempId,
+  getNextMonday,
+  getWeekNumber,
+  validateItem,
+} from '../utils/publicationWizard';
 import { mediaUrl } from '../components/ProductFormModal';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -41,81 +51,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
   resumen: 'Resumen',
   publicar: 'Publicar',
 };
-
-interface WizardItemDraft {
-  tempId: string;
-  fk_producto: number;
-  nombre_producto: string;
-  fk_unidad: number;
-  stock: string;
-  precio: string;
-  foto: string | null;
-  imageFile: File | null;
-  imagePreview: string | null;
-}
-
-interface ItemValidation {
-  stock?: string;
-  precio?: string;
-  fk_unidad?: string;
-}
-
-// ── Helpers ────────────────────────────────────────────────
-
-function generateTempId(): string {
-  return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function getNextMonday(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? 1 : day <= 1 ? 0 : 8 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
-
-function getWeekNumber(date: Date): number {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  return (
-    1 +
-    Math.round(
-      ((d.getTime() - week1.getTime()) / 86_400_000 -
-        3 +
-        ((week1.getDay() + 6) % 7)) /
-        7,
-    )
-  );
-}
-
-function formatDate(iso: Date): string {
-  return iso.toLocaleDateString('es-AR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function validateItem(item: WizardItemDraft): ItemValidation {
-  const errors: ItemValidation = {};
-  const stockNum = Number(item.stock);
-  if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
-    errors.stock = 'Stock debe ser mayor a 0.';
-  }
-  const precioNum = Number(item.precio);
-  if (!item.precio || Number.isNaN(precioNum) || precioNum <= 0) {
-    errors.precio = 'Precio debe ser mayor a 0.';
-  }
-  if (!item.fk_unidad) {
-    errors.fk_unidad = 'Seleccioná una unidad.';
-  }
-  return errors;
-}
 
 // ── ProductPickerModal ─────────────────────────────────────
 

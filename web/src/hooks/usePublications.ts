@@ -12,6 +12,13 @@ import * as publicationsApi from '../services/publications';
 
 const STALE_TIME = 30_000;
 
+// ── Error logging helper ──────────────────────────────────
+
+function logMutationError(context: string, error: unknown): void {
+  const msg = error instanceof Error ? error.message : String(error);
+  console.error(`[publications] ${context}:`, msg);
+}
+
 // ── Queries ────────────────────────────────────────────────
 
 export function usePublicaciones(estado?: PublicacionEstado) {
@@ -71,6 +78,7 @@ export function useCreatePublicacion() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['publicaciones'] });
     },
+    onError: (err) => logMutationError('createPublicacion', err),
   });
 }
 
@@ -81,6 +89,7 @@ export function useDeletePublicacion() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['publicaciones'] });
     },
+    onError: (err) => logMutationError('deletePublicacion', err),
   });
 }
 
@@ -94,6 +103,7 @@ export function usePublishPublicacion() {
         queryKey: ['publicaciones', variables],
       });
     },
+    onError: (err) => logMutationError('publishPublicacion', err),
   });
 }
 
@@ -107,6 +117,7 @@ export function useClosePublicacion() {
         queryKey: ['publicaciones', variables],
       });
     },
+    onError: (err) => logMutationError('closePublicacion', err),
   });
 }
 
@@ -134,6 +145,7 @@ export function useAddProductoSemanal() {
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
     },
+    onError: (err) => logMutationError('addProductoSemanal', err),
   });
 }
 
@@ -161,6 +173,7 @@ export function useUpdateProductoSemanal() {
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
     },
+    onError: (err) => logMutationError('updateProductoSemanal', err),
   });
 }
 
@@ -175,6 +188,7 @@ export function useDeleteProductoSemanal() {
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
     },
+    onError: (err) => logMutationError('deleteProductoSemanal', err),
   });
 }
 
@@ -196,5 +210,6 @@ export function useUploadProductoSemanalImagen() {
         queryKey: ['publicaciones', variables.pubId, 'productos'],
       });
     },
+    onError: (err) => logMutationError('uploadProductoSemanalImagen', err),
   });
 }
