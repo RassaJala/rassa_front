@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAppColors } from '../hooks/useAppColors';
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAppColors } from "../hooks/useAppColors";
 import {
   useAddProductoSemanal,
   useCatalogProductos,
@@ -13,8 +13,8 @@ import {
   useUnidades,
   useUpdateProductoSemanal,
   useUploadProductoSemanalImagen,
-} from '../hooks/usePublications';
-import type { Producto } from '../services/publications';
+} from "../hooks/usePublications";
+import type { Producto } from "../services/publications";
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -24,32 +24,33 @@ import {
   getNextMonday,
   getWeekNumber,
   validateItem,
-} from '../utils/publicationWizard';
-import { mediaUrl } from '../components/ProductFormModal';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { EmptyState } from '../components/ui/EmptyState';
-import { FormField } from '../components/ui/FormField';
-import { FormSelect } from '../components/ui/FormSelect';
-import { Input } from '../components/ui/Input';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+} from "../utils/publicationWizard";
+import { MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from "../constants/api";
+import { mediaUrl } from "../components/ProductFormModal";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { EmptyState } from "../components/ui/EmptyState";
+import { FormField } from "../components/ui/FormField";
+import { FormSelect } from "../components/ui/FormSelect";
+import { Input } from "../components/ui/Input";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 
 // ── Types ──────────────────────────────────────────────────
 
-type WizardStep = 'fecha' | 'productos' | 'resumen' | 'publicar';
+type WizardStep = "fecha" | "productos" | "resumen" | "publicar";
 
 const WIZARD_STEPS: WizardStep[] = [
-  'fecha',
-  'productos',
-  'resumen',
-  'publicar',
+  "fecha",
+  "productos",
+  "resumen",
+  "publicar",
 ];
 
 const STEP_LABELS: Record<WizardStep, string> = {
-  fecha: 'Fecha',
-  productos: 'Productos',
-  resumen: 'Resumen',
-  publicar: 'Publicar',
+  fecha: "Fecha",
+  productos: "Productos",
+  resumen: "Resumen",
+  publicar: "Publicar",
 };
 
 // ── ProductPickerModal ─────────────────────────────────────
@@ -67,7 +68,7 @@ function ProductPickerModal({
   onClose: () => void;
   colors: ReturnType<typeof useAppColors>;
 }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const q = search.toLowerCase();
   const filtered = catalog.filter(
@@ -79,14 +80,14 @@ function ProductPickerModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
+      style={{ background: "rgba(0,0,0,0.5)" }}
       onClick={onClose}
     >
       <div
         className="flex max-h-[80vh] w-full max-w-[480px] flex-col overflow-hidden rounded-2xl"
         style={{
           background: colors.surface,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -144,8 +145,8 @@ function ProductPickerModal({
                     style={{
                       border: `1px solid ${colors.border}`,
                       background: colors.surface,
-                      cursor: 'pointer',
-                      transition: 'background 0.15s',
+                      cursor: "pointer",
+                      transition: "background 0.15s",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = colors.accentBg;
@@ -211,7 +212,7 @@ export function PublicationWizard() {
 
   // ── Step state ──
   const [stepIndex, setStepIndex] = useState(0);
-  const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
+  const currentStep = WIZARD_STEPS[stepIndex] ?? "fecha";
 
   // ── Items ──
   const [items, setItems] = useState<WizardItemDraft[]>([]);
@@ -237,7 +238,7 @@ export function PublicationWizard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
-  const pubRef = useRef<import('../services/publications').Publicacion | null>(
+  const pubRef = useRef<import("../services/publications").Publicacion | null>(
     null,
   );
   const mountedRef = useRef(true);
@@ -255,7 +256,7 @@ export function PublicationWizard() {
         (p) => ({
           tempId: String(p.id_producto_semanal),
           fk_producto: p.fk_producto,
-          nombre_producto: '',
+          nombre_producto: "",
           fk_unidad: p.fk_unidad,
           stock: String(p.stock),
           precio: p.precio,
@@ -293,7 +294,7 @@ export function PublicationWizard() {
 
   // ── Navigation ──
   function nextStep() {
-    if (currentStep === 'productos' && !validateAllItems()) return;
+    if (currentStep === "productos" && !validateAllItems()) return;
     setStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
   }
 
@@ -311,7 +312,7 @@ export function PublicationWizard() {
       fk_producto: producto.id_producto,
       nombre_producto: producto.nombre_producto,
       fk_unidad: 0,
-      stock: '',
+      stock: "",
       precio: String(producto.precio),
       foto: null,
       imageFile: null,
@@ -364,8 +365,8 @@ export function PublicationWizard() {
 
   // ── Image handling ──
   function handleImageSelect(tempId: string, file: File) {
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen no puede superar 5 MB.');
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setError(`La imagen no puede superar ${String(MAX_IMAGE_SIZE_MB)} MB.`);
       return;
     }
 
@@ -432,7 +433,7 @@ export function PublicationWizard() {
       // Upload image if there's a new file
       if (item.imageFile) {
         const formData = new FormData();
-        formData.append('imagen', item.imageFile);
+        formData.append("imagen", item.imageFile);
         await uploadMutation.mutateAsync({
           pubId: pubNumber,
           itemId,
@@ -451,9 +452,9 @@ export function PublicationWizard() {
 
     // Refresh pubRef snapshot for future delete detection
     const refreshed = await qc.fetchQuery({
-      queryKey: ['publicaciones', pubNumber],
+      queryKey: ["publicaciones", pubNumber],
       queryFn: () =>
-        import('../services/publications').then((m) =>
+        import("../services/publications").then((m) =>
           m.getPublicacion(pubNumber),
         ),
       staleTime: 0,
@@ -503,11 +504,11 @@ export function PublicationWizard() {
 
       await persistItems(pub.id_publicacion);
       if (mountedRef.current) {
-        setToastMsg('Borrador guardado.');
+        setToastMsg("Borrador guardado.");
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Error al guardar.');
+        setError(err instanceof Error ? err.message : "Error al guardar.");
       }
     } finally {
       savingRef.current = false;
@@ -535,12 +536,12 @@ export function PublicationWizard() {
       await publishMutation.mutateAsync(pub.id_publicacion);
 
       if (mountedRef.current) {
-        setToastMsg('¡Publicación publicada!');
-        void navigate('/agricultor/publicaciones');
+        setToastMsg("¡Publicación publicada!");
+        void navigate("/agricultor/publicaciones");
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Error al publicar.');
+        setError(err instanceof Error ? err.message : "Error al publicar.");
       }
     } finally {
       savingRef.current = false;
@@ -572,7 +573,7 @@ export function PublicationWizard() {
         </p>
         <Button
           variant="secondary"
-          onClick={() => void navigate('/agricultor/publicaciones')}
+          onClick={() => void navigate("/agricultor/publicaciones")}
         >
           Volver
         </Button>
@@ -592,9 +593,9 @@ export function PublicationWizard() {
         <div
           className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold"
           style={{
-            color: '#fff',
+            color: "#fff",
             background: colors.brand,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
           }}
         >
           ✓ {toastMsg}
@@ -615,7 +616,7 @@ export function PublicationWizard() {
         </div>
         <Button
           variant="ghost"
-          onClick={() => void navigate('/agricultor/publicaciones')}
+          onClick={() => void navigate("/agricultor/publicaciones")}
         >
           ✕ Cerrar
         </Button>
@@ -640,18 +641,18 @@ export function PublicationWizard() {
               className="flex-1 cursor-pointer px-3 py-2.5 font-[inherit] text-[13px] font-semibold"
               style={{
                 borderRadius: 10,
-                border: 'none',
-                background: isActive ? colors.surface : 'transparent',
+                border: "none",
+                background: isActive ? colors.surface : "transparent",
                 color: isActive
                   ? colors.fg
                   : isDone
                     ? colors.brand
                     : colors.muted,
-                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                transition: 'background 0.15s, color 0.15s',
+                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                transition: "background 0.15s, color 0.15s",
               }}
             >
-              {isDone ? '✓ ' : ''}
+              {isDone ? "✓ " : ""}
               {STEP_LABELS[step]}
             </button>
           );
@@ -663,8 +664,8 @@ export function PublicationWizard() {
         <div
           className="mb-4 rounded-xl px-4 py-3 text-[14px]"
           style={{
-            background: 'rgba(222,57,58,0.08)',
-            border: '1px solid rgba(222,57,58,0.2)',
+            background: "rgba(222,57,58,0.08)",
+            border: "1px solid rgba(222,57,58,0.2)",
             color: colors.coral,
           }}
         >
@@ -681,7 +682,7 @@ export function PublicationWizard() {
         }}
       >
         {/* Step 1: Fecha */}
-        {currentStep === 'fecha' && (
+        {currentStep === "fecha" && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -718,7 +719,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 2: Productos */}
-        {currentStep === 'productos' && (
+        {currentStep === "productos" && (
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h2
@@ -783,16 +784,16 @@ export function PublicationWizard() {
                             className="relative grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-xl"
                             style={{
                               border: displayImage
-                                ? 'none'
+                                ? "none"
                                 : `2px dashed ${colors.inputBorder}`,
                               background: displayImage
-                                ? 'transparent'
+                                ? "transparent"
                                 : colors.accentBg,
                             }}
                             onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = 'image/*';
+                              const input = document.createElement("input");
+                              input.type = "file";
+                              input.accept = "image/*";
                               input.onchange = (e) => {
                                 const file = (e.target as HTMLInputElement)
                                   .files?.[0];
@@ -817,7 +818,7 @@ export function PublicationWizard() {
                               className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px]"
                               style={{
                                 background: colors.coral,
-                                color: '#fff',
+                                color: "#fff",
                               }}
                             >
                               ✕
@@ -842,7 +843,7 @@ export function PublicationWizard() {
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
-                                      'stock',
+                                      "stock",
                                       e.target.value,
                                     )
                                   }
@@ -865,7 +866,7 @@ export function PublicationWizard() {
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
-                                      'precio',
+                                      "precio",
                                       e.target.value,
                                     )
                                   }
@@ -882,11 +883,11 @@ export function PublicationWizard() {
                             <FormSelect
                               colors={colors}
                               hasError={!!errs.fk_unidad}
-                              value={item.fk_unidad || ''}
+                              value={item.fk_unidad || ""}
                               onChange={(e) =>
                                 updateItem(
                                   item.tempId,
-                                  'fk_unidad',
+                                  "fk_unidad",
                                   Number(e.target.value),
                                 )
                               }
@@ -910,7 +911,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 3: Resumen */}
-        {currentStep === 'resumen' && (
+        {currentStep === "resumen" && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -932,7 +933,7 @@ export function PublicationWizard() {
                 className="mt-1 text-[15px] font-semibold"
                 style={{ color: colors.fg }}
               >
-                {items.length} producto{items.length !== 1 ? 's' : ''} en la
+                {items.length} producto{items.length !== 1 ? "s" : ""} en la
                 publicación
               </p>
             </div>
@@ -985,15 +986,15 @@ export function PublicationWizard() {
                           className="text-[13px]"
                           style={{ color: colors.muted }}
                         >
-                          {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
+                          {item.stock} {unidad?.tipo ?? ""} · ${item.precio}
                         </p>
                       </div>
                       <Badge
                         variant={
-                          item.foto || item.imageFile ? 'success' : 'warning'
+                          item.foto || item.imageFile ? "success" : "warning"
                         }
                       >
-                        {item.foto || item.imageFile ? 'Con foto' : 'Sin foto'}
+                        {item.foto || item.imageFile ? "Con foto" : "Sin foto"}
                       </Badge>
                     </div>
                   );
@@ -1004,7 +1005,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 4: Publicar */}
-        {currentStep === 'publicar' && (
+        {currentStep === "publicar" && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -1027,7 +1028,7 @@ export function PublicationWizard() {
                 ¿Publicar la semana {weekNumber}?
               </p>
               <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
-                {items.length} producto{items.length !== 1 ? 's' : ''} serán
+                {items.length} producto{items.length !== 1 ? "s" : ""} serán
                 publicados y visibles para los compradores.
               </p>
             </div>
@@ -1051,28 +1052,28 @@ export function PublicationWizard() {
           )}
         </div>
         <div className="flex gap-2">
-          {currentStep === 'publicar' ? (
+          {currentStep === "publicar" ? (
             <>
               <Button
                 variant="secondary"
                 onClick={() => void handleSaveDraft()}
                 disabled={saving || items.length === 0}
               >
-                {saving ? 'Guardando…' : 'Guardar borrador'}
+                {saving ? "Guardando…" : "Guardar borrador"}
               </Button>
               <Button
                 variant="primary"
                 onClick={() => void handlePublish()}
                 disabled={saving || items.length === 0}
               >
-                {saving ? 'Publicando…' : '🚀 Publicar'}
+                {saving ? "Publicando…" : "🚀 Publicar"}
               </Button>
             </>
           ) : (
             <Button
               variant="primary"
               onClick={nextStep}
-              disabled={currentStep === 'productos' && items.length === 0}
+              disabled={currentStep === "productos" && items.length === 0}
             >
               Siguiente →
             </Button>

@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { QUERY_RETRY, QUERY_STALE_TIME } from "../constants/api";
 import type {
   ApiResponse,
   Producto,
@@ -7,10 +8,8 @@ import type {
   Publicacion,
   PublicacionEstado,
   PublicacionList,
-} from '../services/publications';
-import * as publicationsApi from '../services/publications';
-
-const STALE_TIME = 30_000;
+} from "../services/publications";
+import * as publicationsApi from "../services/publications";
 
 // ── Error logging helper ──────────────────────────────────
 
@@ -23,46 +22,46 @@ function logMutationError(context: string, error: unknown): void {
 
 export function usePublicaciones(estado?: PublicacionEstado) {
   return useQuery<ApiResponse<PublicacionList>>({
-    queryKey: ['publicaciones', { estado }],
+    queryKey: ["publicaciones", { estado }],
     queryFn: () =>
       publicationsApi.getPublicaciones(estado ? { estado } : undefined),
-    staleTime: STALE_TIME,
-    retry: 1,
+    staleTime: QUERY_STALE_TIME,
+    retry: QUERY_RETRY,
   });
 }
 
 export function usePublicacion(id: number) {
   return useQuery<ApiResponse<Publicacion>>({
-    queryKey: ['publicaciones', id],
+    queryKey: ["publicaciones", id],
     queryFn: () => publicationsApi.getPublicacion(id),
     enabled: id > 0,
-    staleTime: STALE_TIME,
-    retry: 1,
+    staleTime: QUERY_STALE_TIME,
+    retry: QUERY_RETRY,
   });
 }
 
 export function useProductosSemanales(pubId: number) {
   return useQuery<ApiResponse<ProductoSemanal[]>>({
-    queryKey: ['publicaciones', pubId, 'productos'],
+    queryKey: ["publicaciones", pubId, "productos"],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
-    staleTime: STALE_TIME,
-    retry: 1,
+    staleTime: QUERY_STALE_TIME,
+    retry: QUERY_RETRY,
   });
 }
 
 export function useCatalogProductos() {
   return useQuery<ApiResponse<{ results: Producto[] }>>({
-    queryKey: ['productos-catalog'],
+    queryKey: ["productos-catalog"],
     queryFn: publicationsApi.getCatalogProductos,
-    staleTime: STALE_TIME,
-    retry: 1,
+    staleTime: QUERY_STALE_TIME,
+    retry: QUERY_RETRY,
   });
 }
 
 export function useUnidades() {
   return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
-    queryKey: ['unidades'],
+    queryKey: ["unidades"],
     queryFn: publicationsApi.getUnidades,
     staleTime: 60_000,
     retry: 1,
@@ -76,9 +75,9 @@ export function useCreatePublicacion() {
   return useMutation({
     mutationFn: publicationsApi.createPublicacion,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
     },
-    onError: (err) => logMutationError('createPublicacion', err),
+    onError: (err) => logMutationError("createPublicacion", err),
   });
 }
 
@@ -87,9 +86,9 @@ export function useDeletePublicacion() {
   return useMutation({
     mutationFn: publicationsApi.deletePublicacion,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
     },
-    onError: (err) => logMutationError('deletePublicacion', err),
+    onError: (err) => logMutationError("deletePublicacion", err),
   });
 }
 
@@ -98,12 +97,12 @@ export function usePublishPublicacion() {
   return useMutation({
     mutationFn: publicationsApi.publishPublicacion,
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables],
+        queryKey: ["publicaciones", variables],
       });
     },
-    onError: (err) => logMutationError('publishPublicacion', err),
+    onError: (err) => logMutationError("publishPublicacion", err),
   });
 }
 
@@ -112,12 +111,12 @@ export function useClosePublicacion() {
   return useMutation({
     mutationFn: publicationsApi.closePublicacion,
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables],
+        queryKey: ["publicaciones", variables],
       });
     },
-    onError: (err) => logMutationError('closePublicacion', err),
+    onError: (err) => logMutationError("closePublicacion", err),
   });
 }
 
@@ -140,12 +139,12 @@ export function useAddProductoSemanal() {
       };
     }) => publicationsApi.addProductoSemanal(pubId, payload),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables.pubId, 'productos'],
+        queryKey: ["publicaciones", variables.pubId, "productos"],
       });
     },
-    onError: (err) => logMutationError('addProductoSemanal', err),
+    onError: (err) => logMutationError("addProductoSemanal", err),
   });
 }
 
@@ -168,12 +167,12 @@ export function useUpdateProductoSemanal() {
       };
     }) => publicationsApi.updateProductoSemanal(pubId, itemId, payload),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables.pubId, 'productos'],
+        queryKey: ["publicaciones", variables.pubId, "productos"],
       });
     },
-    onError: (err) => logMutationError('updateProductoSemanal', err),
+    onError: (err) => logMutationError("updateProductoSemanal", err),
   });
 }
 
@@ -183,12 +182,12 @@ export function useDeleteProductoSemanal() {
     mutationFn: ({ pubId, itemId }: { pubId: number; itemId: number }) =>
       publicationsApi.deleteProductoSemanal(pubId, itemId),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables.pubId, 'productos'],
+        queryKey: ["publicaciones", variables.pubId, "productos"],
       });
     },
-    onError: (err) => logMutationError('deleteProductoSemanal', err),
+    onError: (err) => logMutationError("deleteProductoSemanal", err),
   });
 }
 
@@ -205,11 +204,11 @@ export function useUploadProductoSemanalImagen() {
       formData: FormData;
     }) => publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ['publicaciones'] });
+      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
       void qc.invalidateQueries({
-        queryKey: ['publicaciones', variables.pubId, 'productos'],
+        queryKey: ["publicaciones", variables.pubId, "productos"],
       });
     },
-    onError: (err) => logMutationError('uploadProductoSemanalImagen', err),
+    onError: (err) => logMutationError("uploadProductoSemanalImagen", err),
   });
 }
