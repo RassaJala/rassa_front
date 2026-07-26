@@ -44,33 +44,31 @@ function formatDate(iso: string): string {
 
 function StatusBadge({
   estado,
-  isDark,
 }: {
   estado: PublicacionEstado;
-  isDark: boolean;
 }): React.JSX.Element {
   const map: Record<
     PublicacionEstado,
     { bg: string; fg: string; label: string }
   > = {
     borrador: {
-      bg: isDark ? 'rgba(242,169,0,0.15)' : 'rgba(242,169,0,0.1)',
-      fg: '#F2A900',
+      bg: colors.statusBorradorBg,
+      fg: colors.statusBorradorFg,
       label: 'Borrador',
     },
     publicado: {
-      bg: isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.1)',
-      fg: '#4A8A63',
+      bg: colors.statusPublicadoBg,
+      fg: colors.statusPublicadoFg,
       label: 'Publicado',
     },
     cerrado: {
-      bg: isDark ? 'rgba(156,163,175,0.15)' : 'rgba(107,114,128,0.1)',
-      fg: '#6B7280',
+      bg: colors.statusCerradoBg,
+      fg: colors.statusCerradoFg,
       label: 'Cerrado',
     },
     cancelado: {
-      bg: isDark ? 'rgba(232,74,74,0.15)' : 'rgba(222,57,58,0.1)',
-      fg: '#DE393A',
+      bg: colors.statusCanceladoBg,
+      fg: colors.statusCanceladoFg,
       label: 'Cancelado',
     },
   };
@@ -144,7 +142,7 @@ function PublicationCard({
             {formatDate(pub.fecha_publicacion)}
           </Text>
         </View>
-        <StatusBadge estado={pub.estado} isDark={isDark} />
+        <StatusBadge estado={pub.estado} />
       </View>
 
       <View

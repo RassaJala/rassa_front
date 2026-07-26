@@ -13,6 +13,8 @@ import * as productosApi from '@/services/productos';
 
 export { productosApi };
 
+const STALE_TIME = 30_000;
+
 export function useProductos(params?: {
   categoria?: number | undefined;
   nombre?: string | undefined;
@@ -25,6 +27,8 @@ export function useProductos(params?: {
   return useQuery({
     queryKey: ['productos', params],
     queryFn: () => productosApi.getProductos(params),
+    staleTime: STALE_TIME,
+    retry: 1,
   });
 }
 
@@ -35,6 +39,8 @@ export function useProducto(
     queryKey: ['productos', id],
     queryFn: () => productosApi.getProducto(id),
     enabled: id > 0,
+    staleTime: STALE_TIME,
+    retry: 1,
   });
 }
 
@@ -42,6 +48,8 @@ export function useCategorias(): UseQueryResult<ApiResponse<Categoria[]>> {
   return useQuery({
     queryKey: ['categorias'],
     queryFn: productosApi.getCategorias,
+    staleTime: STALE_TIME,
+    retry: 1,
   });
 }
 
@@ -49,6 +57,8 @@ export function useUnidades(): UseQueryResult<ApiResponse<Unidad[]>> {
   return useQuery({
     queryKey: ['unidades'],
     queryFn: productosApi.getUnidades,
+    staleTime: STALE_TIME,
+    retry: 1,
   });
 }
 

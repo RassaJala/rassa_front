@@ -68,6 +68,15 @@ export const colors = {
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
   admErrorBgL: '#FDEDEE',
   admErrorBgD: '#3D2023',
+  // ── Status badge tokens ──
+  statusBorradorBg: 'rgba(242,169,0,0.12)',
+  statusBorradorFg: '#F2A900',
+  statusPublicadoBg: 'rgba(74,138,99,0.12)',
+  statusPublicadoFg: '#4A8A63',
+  statusCerradoBg: 'rgba(156,163,175,0.12)',
+  statusCerradoFg: '#6B7280',
+  statusCanceladoBg: 'rgba(222,57,58,0.12)',
+  statusCanceladoFg: '#DE393A',
 };
 
 export interface ThemeColors {

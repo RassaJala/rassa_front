@@ -15,8 +15,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePreventRemove } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import ProductosStep from '@/components/wizard/ProductosStep';
 import ProductPickerModal from '@/components/wizard/ProductPickerModal';
-import WizardItemCard from '@/components/wizard/WizardItemCard';
+import ResumenStep from '@/components/wizard/ResumenStep';
 import { colors, themeColors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { useProductos, useUnidades } from '@/hooks/useProductos';
@@ -109,24 +110,6 @@ export default function PublicationWizardScreen({
   const isLoadingData =
     isPubLoading || isSemanalLoading || isProductsLoading || isUnidadesLoading;
 
-  if (isLoadingData) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <ActivityIndicator size="large" color={brand} />
-        <Text style={{ color: muted, marginTop: 12, fontSize: 14 }}>
-          Cargando publicación...
-        </Text>
-      </View>
-    );
-  }
-
   usePreventRemove(isMutating, ({ data: { action: _action } }) => {
     Alert.alert(
       'Operación en curso',
@@ -148,7 +131,10 @@ export default function PublicationWizardScreen({
           wizard.updateItem(tempId, 'foto', result.assets[0].uri);
         }
       } catch (error) {
-        console.error('[PublicationWizard] ImagePicker failed:', error);
+        console.error(
+          '[PublicationWizard] ImagePicker failed:',
+          error instanceof Error ? error.message : String(error),
+        );
         Alert.alert('Error', 'No se pudo seleccionar la imagen.');
       }
     },
@@ -169,7 +155,10 @@ export default function PublicationWizardScreen({
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error('[PublicationWizard] publish failed:', error);
+      console.error(
+        '[PublicationWizard] publish failed:',
+        error instanceof Error ? error.message : String(error),
+      );
       Alert.alert('Error', 'No se pudo publicar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
@@ -181,7 +170,10 @@ export default function PublicationWizardScreen({
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error('[PublicationWizard] saveDraft failed:', error);
+      console.error(
+        '[PublicationWizard] saveDraft failed:',
+        error instanceof Error ? error.message : String(error),
+      );
       Alert.alert('Error', 'No se pudo guardar. Intentá de nuevo.');
     }
   }, [wizard, navigation]);
@@ -189,6 +181,24 @@ export default function PublicationWizardScreen({
   const { nextMondayDate } = useFormattedDate();
 
   const weekNumber = getWeekNumber(nextMondayDate);
+
+  if (isLoadingData) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <ActivityIndicator size="large" color={brand} />
+        <Text style={{ color: muted, marginTop: 12, fontSize: 14 }}>
+          Cargando publicación...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -352,216 +362,27 @@ export default function PublicationWizardScreen({
         )}
 
         {wizard.currentStep === 'productos' && (
-          <View>
-            {wizard.items.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  padding: 32,
-                  alignItems: 'center',
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="package-variant"
-                  size={48}
-                  color={muted}
-                />
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '500',
-                    color: fg,
-                    marginTop: 12,
-                    textAlign: 'center',
-                  }}
-                >
-                  No hay productos agregados
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: muted,
-                    textAlign: 'center',
-                    marginTop: 4,
-                  }}
-                >
-                  Tocá el botón para agregar tu primer producto
-                </Text>
-              </View>
-            ) : (
-              wizard.items.map((item) => (
-                <WizardItemCard
-                  key={item.tempId}
-                  item={item}
-                  allProductos={allProductos}
-                  unidades={unidades}
-                  validation={wizard.itemValidations.get(item.tempId)}
-                  onUpdate={wizard.updateItem}
-                  onRemove={wizard.removeItem}
-                  onPickImage={handlePickImage}
-                />
-              ))
-            )}
-
-            <Pressable
-              onPress={() => setShowProductPicker(true)}
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                backgroundColor: surface,
-                borderRadius: 16,
-                borderWidth: 2,
-                borderColor: brand,
-                borderStyle: 'dashed',
-                paddingVertical: 16,
-                marginTop: 12,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <MaterialCommunityIcons name="plus" size={20} color={brand} />
-              <Text style={{ fontSize: 15, fontWeight: '600', color: brand }}>
-                Agregar producto
-              </Text>
-            </Pressable>
-          </View>
+          <ProductosStep
+            items={wizard.items}
+            allProductos={allProductos}
+            unidades={unidades}
+            itemValidations={wizard.itemValidations}
+            onUpdate={wizard.updateItem}
+            onRemove={wizard.removeItem}
+            onPickImage={handlePickImage}
+            onAddProduct={() => setShowProductPicker(true)}
+            isDark={isDark}
+          />
         )}
 
         {wizard.currentStep === 'resumen' && (
-          <View>
-            {wizard.items.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  padding: 32,
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '500',
-                    color: fg,
-                    textAlign: 'center',
-                  }}
-                >
-                  No hay productos para revisar
-                </Text>
-              </View>
-            ) : (
-              wizard.items.map((item) => {
-                const producto = allProductos.find(
-                  (p) => p.id_producto === item.fk_producto,
-                );
-                const nombre =
-                  producto?.nombre_producto ??
-                  `Producto #${String(item.fk_producto)}`;
-                const unidad = unidades.find(
-                  (u) => u.id_unidad === item.fk_unidad,
-                );
-                const hasErrors = wizard.itemValidations.has(item.tempId);
-
-                return (
-                  <View
-                    key={item.tempId}
-                    style={{
-                      backgroundColor: surface,
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      borderColor: hasErrors ? coral : border,
-                      padding: 16,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 8,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 15,
-                          fontWeight: '600',
-                          color: fg,
-                          flex: 1,
-                        }}
-                      >
-                        {nombre}
-                      </Text>
-                      {hasErrors ? (
-                        <MaterialCommunityIcons
-                          name="alert-circle"
-                          size={18}
-                          color={coral}
-                        />
-                      ) : (
-                        <MaterialCommunityIcons
-                          name="check-circle"
-                          size={18}
-                          color={brand}
-                        />
-                      )}
-                    </View>
-
-                    <View style={{ flexDirection: 'row', gap: 16 }}>
-                      <Text style={{ fontSize: 13, color: muted }}>
-                        Stock:{' '}
-                        <Text style={{ color: fg, fontWeight: '500' }}>
-                          {item.stock || '—'}
-                        </Text>
-                      </Text>
-                      <Text style={{ fontSize: 13, color: muted }}>
-                        Precio:{' '}
-                        <Text style={{ color: fg, fontWeight: '500' }}>
-                          ${item.precio || '0'}
-                        </Text>
-                      </Text>
-                      <Text style={{ fontSize: 13, color: muted }}>
-                        Unidad:{' '}
-                        <Text style={{ color: fg, fontWeight: '500' }}>
-                          {unidad?.tipo ?? '—'}
-                        </Text>
-                      </Text>
-                    </View>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        marginTop: 8,
-                      }}
-                    >
-                      <MaterialCommunityIcons
-                        name={item.foto ? 'image' : 'image-off'}
-                        size={14}
-                        color={item.foto ? brand : coral}
-                      />
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: item.foto ? brand : coral,
-                          fontWeight: '500',
-                        }}
-                      >
-                        {item.foto ? 'Foto adjunta' : 'Sin foto'}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </View>
+          <ResumenStep
+            items={wizard.items}
+            allProductos={allProductos}
+            unidades={unidades}
+            itemValidations={wizard.itemValidations}
+            isDark={isDark}
+          />
         )}
 
         {wizard.currentStep === 'publicar' && (

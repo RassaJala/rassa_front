@@ -11,10 +11,8 @@ import {
 import type {
   Categoria,
   CreateProductoPayload,
-  ProductoDetail,
   Unidad,
 } from '@/services/productos';
-import type { ApiResponse } from '@/types';
 import { buildImageFormData } from '@/utils/uploadImage';
 
 interface FormErrors {
@@ -141,7 +139,7 @@ export function useProductForm(productoId?: number): UseProductFormResult {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = (onSuccess: () => void, onError: () => void) => {
+  const handleSubmit = async (onSuccess: () => void, onError: () => void) => {
     const validationErrors = validateForm(form);
 
     if (Object.keys(validationErrors).length > 0) {
@@ -159,7 +157,11 @@ export function useProductForm(productoId?: number): UseProductFormResult {
       es_perecedero: form.esPerecedero,
     };
 
-    const onMutationSuccess = async (result: ApiResponse<ProductoDetail>) => {
+    try {
+      const result = isEditing && productoId
+        ? await updateMutation.mutateAsync({ id: productoId, payload })
+        : await createMutation.mutateAsync(payload);
+
       if (form.imagenUri && !form.imagenUri.startsWith('http')) {
         const formData = buildImageFormData(form.imagenUri);
         await productosApi.uploadProductoImagen(
@@ -168,18 +170,8 @@ export function useProductForm(productoId?: number): UseProductFormResult {
         );
       }
       onSuccess();
-    };
-
-    if (isEditing && productoId) {
-      updateMutation.mutate(
-        { id: productoId, payload },
-        { onSuccess: onMutationSuccess, onError },
-      );
-    } else {
-      createMutation.mutate(payload, {
-        onSuccess: onMutationSuccess,
-        onError,
-      });
+    } catch {
+      onError();
     }
   };
 

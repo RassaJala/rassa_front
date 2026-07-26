@@ -13,6 +13,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import QuickActionCard from '@/components/farmer/QuickActionCard';
+import StatCard from '@/components/farmer/StatCard';
 import { colors, themeColors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import api from '@/services/api';
@@ -267,296 +269,57 @@ export default function FarmerHomeScreen({
                 gap: isCompact ? 8 : 10,
               }}
             >
-              <View
-                style={{
-                  flex: 1,
-                  minWidth: isCompact ? '45%' : 0,
-                  alignItems: 'center',
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  paddingVertical: isCompact ? 14 : 18,
-                  paddingHorizontal: isCompact ? 6 : 10,
-                }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: accentBg,
-                    marginBottom: 10,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="package-variant"
-                    size={24}
-                    color={brand}
-                  />
-                </View>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontWeight: '700',
-                    letterSpacing: -0.2,
-                    color: brand,
-                  }}
-                >
-                  {totalProducts}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: isCompact ? 11 : 13,
-                    fontWeight: '600',
-                    letterSpacing: 0.06,
-                    textTransform: 'uppercase',
-                    color: muted,
-                    marginTop: 4,
-                    textAlign: 'center',
-                  }}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                >
-                  Productos
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  minWidth: isCompact ? '45%' : 0,
-                  alignItems: 'center',
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  paddingVertical: isCompact ? 14 : 18,
-                  paddingHorizontal: isCompact ? 6 : 10,
-                }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: coralBg,
-                    marginBottom: 10,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="check-circle-outline"
-                    size={24}
-                    color={coral}
-                  />
-                </View>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontWeight: '700',
-                    letterSpacing: -0.2,
-                    color: coral,
-                  }}
-                >
-                  {activePublications}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: isCompact ? 11 : 13,
-                    fontWeight: '600',
-                    letterSpacing: 0.06,
-                    textTransform: 'uppercase',
-                    color: muted,
-                    marginTop: 4,
-                    textAlign: 'center',
-                  }}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                >
-                  Publicadas
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  minWidth: isCompact ? '45%' : 0,
-                  alignItems: 'center',
-                  backgroundColor: surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: border,
-                  paddingVertical: isCompact ? 14 : 18,
-                  paddingHorizontal: isCompact ? 6 : 10,
-                }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: pumpkinBg,
-                    marginBottom: 10,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="clipboard-list"
-                    size={24}
-                    color={pumpkin}
-                  />
-                </View>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontWeight: '700',
-                    letterSpacing: -0.2,
-                    color: pumpkin,
-                  }}
-                >
-                  {totalPublications}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: isCompact ? 11 : 13,
-                    fontWeight: '600',
-                    letterSpacing: 0.06,
-                    textTransform: 'uppercase',
-                    color: muted,
-                    marginTop: 4,
-                    textAlign: 'center',
-                  }}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                >
-                  Total pubs
-                </Text>
-              </View>
+              <StatCard
+                icon="package-variant"
+                value={totalProducts}
+                label="Productos"
+                iconBg={accentBg}
+                iconColor={brand}
+                valueColor={brand}
+                isCompact={isCompact}
+                isDark={isDark}
+              />
+              <StatCard
+                icon="check-circle-outline"
+                value={activePublications}
+                label="Publicadas"
+                iconBg={coralBg}
+                iconColor={coral}
+                valueColor={coral}
+                isCompact={isCompact}
+                isDark={isDark}
+              />
+              <StatCard
+                icon="clipboard-list"
+                value={totalPublications}
+                label="Total pubs"
+                iconBg={pumpkinBg}
+                iconColor={pumpkin}
+                valueColor={pumpkin}
+                isCompact={isCompact}
+                isDark={isDark}
+              />
             </View>
 
             {/* QUICK ACTIONS */}
-            <Pressable
+            <QuickActionCard
+              icon="bullhorn-outline"
+              title="Publicaciones"
+              description="Creá y gestioná publicaciones semanales"
+              iconBg={coralBg}
+              iconColor={coral}
+              isDark={isDark}
               onPress={() => navigation.navigate('FarmerDashboard')}
-              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: surface,
-                  borderWidth: 1,
-                  borderColor: border,
-                  borderRadius: 16,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  marginBottom: 10,
-                }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: coralBg,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="bullhorn-outline"
-                    size={22}
-                    color={coral}
-                  />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: '600',
-                      color: fg,
-                      marginBottom: 2,
-                    }}
-                    numberOfLines={1}
-                  >
-                    Publicaciones
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: muted,
-                    }}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    Creá y gestioná publicaciones semanales
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-
-            <Pressable
+            />
+            <QuickActionCard
+              icon="format-list-bulleted"
+              title="Mis Productos"
+              description="Ver y gestionar tu catálogo"
+              iconBg={accentBg}
+              iconColor={brand}
+              isDark={isDark}
               onPress={() => navigation.navigate('ProductList')}
-              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: surface,
-                  borderWidth: 1,
-                  borderColor: border,
-                  borderRadius: 16,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: accentBg,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="format-list-bulleted"
-                    size={22}
-                    color={brand}
-                  />
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: '600',
-                      color: fg,
-                      marginBottom: 2,
-                    }}
-                    numberOfLines={1}
-                  >
-                    Mis Productos
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: muted,
-                    }}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    Ver y gestionar tu catálogo
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
+            />
           </View>
         </ScrollView>
       </View>

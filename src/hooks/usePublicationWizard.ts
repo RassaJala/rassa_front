@@ -69,11 +69,25 @@ interface UsePublicationWizardResult {
   saveDraft: () => Promise<void>;
 }
 
-function generateTempId(): string {
+export function generateTempId(): string {
   return `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function validateItem(item: WizardItemDraft): WizardItemValidation {
+const PUBLISH_TIMEOUT_MS = 60_000;
+
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`));
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
+export function validateItem(item: WizardItemDraft): WizardItemValidation {
   const errors: WizardItemValidation = {};
 
   const stockNum = Number(item.stock);
@@ -96,7 +110,7 @@ function validateItem(item: WizardItemDraft): WizardItemValidation {
   return errors;
 }
 
-function isLocalFileUri(uri: string): boolean {
+export function isLocalFileUri(uri: string): boolean {
   return uri.startsWith('file://');
 }
 
@@ -282,7 +296,7 @@ export function usePublicationWizard({
         } catch (err) {
           console.error(
             '[usePublicationWizard] compensateCreatedItems failed:',
-            err,
+            err instanceof Error ? err.message : String(err),
           );
         }
       }
@@ -298,7 +312,7 @@ export function usePublicationWizard({
       } catch (err) {
         console.error(
           '[usePublicationWizard] compensateAutoCreatedPub failed:',
-          err,
+          err instanceof Error ? err.message : String(err),
         );
       }
     },
@@ -341,7 +355,10 @@ export function usePublicationWizard({
         }
       }
     } catch (error) {
-      console.error('[usePublicationWizard] persistItem failed:', error);
+      console.error(
+        '[usePublicationWizard] persistItem failed:',
+        error instanceof Error ? error.message : String(error),
+      );
       await compensateCreatedItems(pub.id_publicacion, createdIds);
       if (autoCreatedPub) {
         await compensateAutoCreatedPub(pub);
@@ -374,32 +391,45 @@ export function usePublicationWizard({
     publishingRef.current = true;
 
     try {
-      const pub = await ensurePublicationAndPersist();
-      if (!pub) return;
+      await withTimeout((async () => {
+        const pub = await ensurePublicationAndPersist();
+        if (!pub) return;
 
-      const existingIds = new Set(
-        productos.map((p) => String(p.id_producto_semanal)),
-      );
-      const currentIds = new Set(activeItems.map((i) => i.tempId));
+        const existingIds = new Set(
+          productos.map((p) => String(p.id_producto_semanal)),
+        );
+        const currentIds = new Set(activeItems.map((i) => i.tempId));
 
-      for (const id of existingIds) {
-        if (!currentIds.has(id)) {
-          const itemId = Number(id);
-          if (!Number.isInteger(itemId) || itemId <= 0) {
-            console.error(
-              '[usePublicationWizard] invalid item id for removal:',
-              id,
-            );
-            continue;
+        for (const id of existingIds) {
+          if (!currentIds.has(id)) {
+            const itemId = Number(id);
+            if (!Number.isInteger(itemId) || itemId <= 0) {
+              console.error(
+                '[usePublicationWizard] invalid item id for removal:',
+                id,
+              );
+              continue;
+            }
+            try {
+              await removeItemMutation.mutateAsync({
+                pubId: pub.id_publicacion,
+                itemId,
+              });
+            } catch (removeErr) {
+              console.error(
+                '[usePublicationWizard] failed to remove item:',
+                itemId,
+                removeErr instanceof Error ? removeErr.message : String(removeErr),
+              );
+              throw new Error(
+                `No se pudo eliminar el producto #${String(itemId)}. La publicación no se publicó.`,
+              );
+            }
           }
-          await removeItemMutation.mutateAsync({
-            pubId: pub.id_publicacion,
-            itemId,
-          });
         }
-      }
 
-      await publishMutation.mutateAsync(pub.id_publicacion);
+        await publishMutation.mutateAsync(pub.id_publicacion);
+      })(), PUBLISH_TIMEOUT_MS);
     } finally {
       publishingRef.current = false;
     }
@@ -416,7 +446,7 @@ export function usePublicationWizard({
     publishingRef.current = true;
 
     try {
-      await ensurePublicationAndPersist();
+      await withTimeout(ensurePublicationAndPersist(), PUBLISH_TIMEOUT_MS);
     } finally {
       publishingRef.current = false;
     }
