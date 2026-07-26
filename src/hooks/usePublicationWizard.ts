@@ -175,28 +175,22 @@ async function persistItem(
   return { itemId, isNew: !isExisting };
 }
 
-const PUBLISH_TIMEOUT_MS = 120_000;
+const PUBLISH_TIMEOUT_MS = 60_000;
 
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
-  const cleanup = () => clearTimeout(timeoutId);
-  const tracked = promise
-    .then((value) => {
-      cleanup();
-      return value;
-    })
-    .catch((err) => {
-      cleanup();
-      throw err;
-    });
-  return Promise.race([
-    tracked,
-    new Promise<T>((_resolve, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error(`tardó más de ${String(ms)}ms`));
-      }, ms);
-    }),
-  ]);
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(
+        new Error(
+          `La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`,
+        ),
+      );
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timeoutId);
+  });
 }
 
 export function usePublicationWizard({
