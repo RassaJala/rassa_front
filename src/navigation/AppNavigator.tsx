@@ -42,9 +42,11 @@ import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
 import FamilyListScreen from '@/screens/families/FamilyListScreen';
+import FarmerDashboardScreen from '@/screens/farmer/FarmerDashboardScreen';
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
+import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
@@ -338,6 +340,15 @@ function FarmerScreens() {
         name="ProductForm"
         component={ProductFormScreen}
         options={{ presentation: 'transparentModal' }}
+      />
+      <FarmerStack.Screen
+        name="FarmerDashboard"
+        component={FarmerDashboardScreen}
+      />
+      <FarmerStack.Screen
+        name="PublicationWizard"
+        component={PublicationWizardScreen}
+        options={{ presentation: 'fullScreenModal' }}
       />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} />
       <FarmerStack.Screen
