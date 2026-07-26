@@ -335,14 +335,17 @@ export function PublicationWizard() {
   }, [isEditing, itemsInitialized, pubQuery.data, itemsQuery.data]);
 
   // ── Cleanup on unmount ──
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+
   useEffect(() => {
     return () => {
       mountedRef.current = false;
-      for (const item of items) {
+      for (const item of itemsRef.current) {
         if (item.imagePreview) URL.revokeObjectURL(item.imagePreview);
       }
     };
-  }, [items]);
+  }, []);
 
   // ── Date helpers ──
   const pubData = isEditing ? pubQuery.data?.data : undefined;
@@ -527,7 +530,17 @@ export function PublicationWizard() {
     pubRef.current = refreshed.data;
 
     // Remove items that were deleted
-    const currentIds = new Set(items.map((i) => i.tempId));
+    const currentIds = new Set(tempIdToServerId.values());
+    // Also include items that were already synced (not in tempIdToServerId)
+    for (const item of items) {
+      const syncedId = tempIdToServerId.get(item.tempId);
+      if (syncedId !== undefined) {
+        currentIds.add(syncedId);
+      } else {
+        const parsed = Number(item.tempId);
+        if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(parsed);
+      }
+    }
     for (const existing of pubRef.current.productos) {
       const existingId = String(existing.id_producto_semanal);
       if (!currentIds.has(existingId)) {
