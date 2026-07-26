@@ -1,7 +1,6 @@
 import type { Role } from '~/types';
 import { useAuth } from '~/hooks/useAuth';
 import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
 
 export function Topbar({ role }: { role: Role }) {
   const { logout } = useAuth();
@@ -12,7 +11,6 @@ export function Topbar({ role }: { role: Role }) {
   const surface = isDark ? '#263028' : '#FFFFFF';
   const fg = isDark ? '#E8EAE4' : '#2D3328';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
-  const brand = isDark ? '#4A8A63' : '#24563C';
 
   return (
     <header

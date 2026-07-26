@@ -29,10 +29,6 @@ export function AdminFamilies() {
     background: isDark ? 'rgba(242,169,0,0.12)' : 'rgba(242,169,0,0.1)',
     color: colors.warning,
   };
-  const success = {
-    background: isDark ? 'rgba(74,138,99,0.15)' : 'rgba(36,86,60,0.07)',
-    color: colors.primary,
-  };
   const primaryGreen = colors.primary;
   const iconWhite = colors.iconWhite;
 

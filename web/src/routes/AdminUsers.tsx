@@ -252,7 +252,11 @@ function NuevoUsuarioForm({
   function isAdult(dateStr: string): boolean {
     if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dateStr))
       return false;
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const d = parts[2];
+    if (y === undefined || m === undefined || d === undefined) return false;
     const today = new Date();
     let age = today.getFullYear() - y;
     if (

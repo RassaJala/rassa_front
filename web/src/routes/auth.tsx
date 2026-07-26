@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { AuthLayout } from '~/components/layout/AuthLayout';
-import { Button } from '~/components/ui/Button';
+
 import WebDatePickerModal from '~/components/WebDatePickerModal';
 import { getColors } from '~/constants/colors';
 import { useAuth } from '~/hooks/useAuth';
 import { useCatalogs } from '~/hooks/useCatalogs';
 import { useTheme } from '~/providers/ThemeProvider';
 import api from '~/services/api';
-import type { Role, User } from '~/types';
+import type { User } from '~/types';
 import { normalizeRole } from '~/types';
 
 // ---------------------------------------------------------------------------
@@ -110,7 +110,6 @@ function registerErrors(fields: {
   return null;
 }
 
-const brand = '#24563C';
 const coral = '#DE393A';
 const errColor = '#DE393A';
 // ponytail: oklch equivalents — brand: oklch(42% 0.14 148), coral: oklch(60% 0.17 18)

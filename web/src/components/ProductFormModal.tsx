@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from './ui/Button';
 import { FormField } from './ui/FormField';
 import { FormSelect } from './ui/FormSelect';
 import { Input } from './ui/Input';
 import { TextArea } from './ui/TextArea';
-import type { AppColors, useAppColors } from '../hooks/useAppColors';
+import type { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
 
 // ── Types ──────────────────────────────────────────────────
@@ -186,7 +186,7 @@ export function ProductFormModal({
   onSaved,
 }: ProductFormModalProps) {
   const qc = useQueryClient();
-  const { brand, coral, muted, border, surface, bg, fg, accentBg } = colors;
+  const { brand, coral, muted, border, surface, fg, accentBg } = colors;
   const fileRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(producto);
 
