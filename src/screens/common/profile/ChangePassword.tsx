@@ -8,6 +8,11 @@ import axios from 'axios';
 
 import { parseAuthError, useAuth } from '@/store/AuthContext';
 
+import {
+  MIN_PASSWORD_LENGTH,
+  validatePasswordChange,
+} from '@/utils/validation';
+
 import FeedbackBanner from './FeedbackBanner';
 import { useProfileColors } from './profileColors';
 
@@ -15,32 +20,7 @@ interface ChangePasswordProps {
   readonly onPasswordChanged: () => void;
 }
 
-const MIN_PASSWORD_LENGTH = 8;
 const SUCCESS_TIMEOUT_MS = 1500;
-
-function validatePasswordChange(
-  oldPass: string,
-  newPass: string,
-  confirmPass: string,
-): string | null {
-  if (!oldPass || !newPass || !confirmPass) {
-    return 'Por favor, completa todos los campos.';
-  }
-
-  if (newPass.length < MIN_PASSWORD_LENGTH) {
-    return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-  }
-
-  if (newPass !== confirmPass) {
-    return 'La confirmación de la contraseña no coincide.';
-  }
-
-  if (oldPass === newPass) {
-    return 'La nueva contraseña debe ser diferente a la actual.';
-  }
-
-  return null;
-}
 
 export default function ChangePassword({
   onPasswordChanged,
@@ -129,16 +109,7 @@ export default function ChangePassword({
 
   // ── Render ───────────────────────────────────────────
   return (
-    <View
-      style={{
-        backgroundColor: c.surface,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: c.border,
-        padding: 20,
-        marginTop: 16,
-      }}
-    >
+    <View className="mt-4 rounded-2xl border border-rassa-border bg-rassa-surface p-5 dark:border-rassa-border-dark dark:bg-rassa-surface-dark">
       {/* Header */}
       <Pressable
         onPress={() => {
@@ -146,18 +117,10 @@ export default function ChangePassword({
           setPasswordError(null);
           setPasswordSuccess(null);
         }}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        className="flex-row items-center gap-2.5"
       >
         <MaterialCommunityIcons name="lock-outline" size={22} color={c.brand} />
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '700',
-            color: c.fg,
-            letterSpacing: -0.15,
-            flex: 1,
-          }}
-        >
+        <Text className="flex-1 text-base font-bold tracking-tight text-rassa-fg dark:text-rassa-fg-dark">
           Cambiar Contraseña
         </Text>
         <MaterialCommunityIcons
@@ -187,14 +150,9 @@ export default function ChangePassword({
 
           {/* Current Password */}
           <Text
+            className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark"
             style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: c.muted,
-              marginBottom: 4,
               marginTop: passwordSuccess || passwordError ? 4 : 20,
-              textTransform: 'uppercase',
-              letterSpacing: 0.04,
             }}
           >
             Contraseña Actual *
@@ -206,22 +164,14 @@ export default function ChangePassword({
             secureTextEntry
             value={oldPassword}
             onChangeText={setOldPassword}
-            style={{ marginBottom: 14, backgroundColor: c.inputBg }}
+            className="mb-3.5"
+            style={{ backgroundColor: c.inputBg }}
             theme={c.textInputTheme}
             testID="old-password-input"
           />
 
           {/* New Password */}
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: c.muted,
-              marginBottom: 4,
-              textTransform: 'uppercase',
-              letterSpacing: 0.04,
-            }}
-          >
+          <Text className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark">
             Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres) *
           </Text>
           <TextInput
@@ -231,22 +181,14 @@ export default function ChangePassword({
             secureTextEntry
             value={newPassword}
             onChangeText={setNewPassword}
-            style={{ marginBottom: 14, backgroundColor: c.inputBg }}
+            className="mb-3.5"
+            style={{ backgroundColor: c.inputBg }}
             theme={c.textInputTheme}
             testID="new-password-input"
           />
 
           {/* Confirm Password */}
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: c.muted,
-              marginBottom: 4,
-              textTransform: 'uppercase',
-              letterSpacing: 0.04,
-            }}
-          >
+          <Text className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark">
             Confirmar Nueva Contraseña *
           </Text>
           <TextInput
@@ -256,7 +198,8 @@ export default function ChangePassword({
             secureTextEntry
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            style={{ marginBottom: 14, backgroundColor: c.inputBg }}
+            className="mb-3.5"
+            style={{ backgroundColor: c.inputBg }}
             theme={c.textInputTheme}
             testID="confirm-password-input"
           />

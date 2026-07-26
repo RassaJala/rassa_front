@@ -211,3 +211,27 @@ export function validateRegistrationForm({
 
   return null;
 }
+
+export function validatePasswordChange(
+  oldPass: string,
+  newPass: string,
+  confirmPass: string,
+): string | null {
+  if (!oldPass || !newPass || !confirmPass) {
+    return 'Por favor, completa todos los campos.';
+  }
+
+  if (newPass.length < MIN_PASSWORD_LENGTH) {
+    return `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  }
+
+  if (newPass !== confirmPass) {
+    return 'La confirmación de la contraseña no coincide.';
+  }
+
+  if (oldPass === newPass) {
+    return 'La nueva contraseña debe ser diferente a la actual.';
+  }
+
+  return null;
+}

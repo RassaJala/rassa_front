@@ -9,6 +9,7 @@ import axios from 'axios';
 
 import ChangePassword from '@/screens/common/profile/ChangePassword';
 import { useAuth } from '@/store/AuthContext';
+import { validatePasswordChange } from '@/utils/validation';
 
 // ── Mocks ──────────────────────────────────────────────
 
@@ -42,27 +43,6 @@ const mockUseAuth = useAuth as jest.Mock;
 
 const mockChangePassword = jest.fn();
 const mockOnPasswordChanged = jest.fn();
-
-/** Mirrors the component's internal validatePasswordChange for focused unit testing. */
-function validatePasswordChange(
-  oldPass: string,
-  newPass: string,
-  confirmPass: string,
-): string | null {
-  if (!oldPass || !newPass || !confirmPass) {
-    return 'Por favor, completa todos los campos.';
-  }
-  if (newPass.length < 8) {
-    return 'La nueva contraseña debe tener al menos 8 caracteres.';
-  }
-  if (newPass !== confirmPass) {
-    return 'La confirmación de la contraseña no coincide.';
-  }
-  if (oldPass === newPass) {
-    return 'La nueva contraseña debe ser diferente a la actual.';
-  }
-  return null;
-}
 
 function expandForm(rt: ReturnType<typeof render>): void {
   fireEvent.press(rt.getByText('Cambiar Contraseña'));

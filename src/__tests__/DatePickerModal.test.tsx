@@ -1,105 +1,176 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
 
+// ── Mock DateTimePicker ─────────────────────────────
+const mockOnValueChange = jest.fn();
+let mockDateTimePickerValue = new Date(2000, 0, 15);
+
+jest.mock('@react-native-community/datetimepicker', () => ({
+  __esModule: true,
+  default: jest.fn(
+    ({
+      value,
+      onChange,
+      testID: _testID,
+    }: {
+      readonly value: Date;
+      readonly onChange: (e: unknown, d?: Date) => void;
+      readonly testID: string;
+    }) => {
+      mockDateTimePickerValue = value;
+      mockOnValueChange.mockImplementation(onChange);
+      return null;
+    },
+  ),
+}));
+
+// ── Helpers ─────────────────────────────────────────
+function mockAndroid(): void {
+  jest.replaceProperty(Platform, 'OS', 'android');
+}
+
+function mockIOS(): void {
+  jest.replaceProperty(Platform, 'OS', 'ios');
+}
+
+// ── Tests ───────────────────────────────────────────
 describe('DatePickerModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('no renderiza contenido cuando no es visible', () => {
-    const { queryByTestId } = render(
-      <DatePickerModal
-        visible={false}
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-      />,
-    );
-
-    expect(queryByTestId('modal-overlay')).toBeNull();
-  });
-
-  it('renderiza el modal cuando es visible', () => {
-    const { getByTestId } = render(
-      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
-    );
-
-    expect(getByTestId('modal-overlay')).toBeTruthy();
-    expect(getByTestId('tab-year-selector')).toBeTruthy();
-    expect(getByTestId('tab-month-selector')).toBeTruthy();
-    expect(getByTestId('tab-day-selector')).toBeTruthy();
-  });
-
-  it('comienza en el paso de año cuando no hay initialDate', () => {
-    const { getByTestId } = render(
-      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
-    );
-
-    expect(getByTestId('years-list')).toBeTruthy();
-  });
-
-  it('navega año → mes → día y llama a onSelectDate al completar', async () => {
-    const onSelectDate = jest.fn();
-    const onClose = jest.fn();
-
-    const { getByTestId } = render(
-      <DatePickerModal visible onClose={onClose} onSelectDate={onSelectDate} />,
-    );
-
-    // Step 1: Select year
-    fireEvent.press(getByTestId('year-option-2000'));
-    await waitFor(() => {
-      expect(getByTestId('months-list')).toBeTruthy();
+  describe('on Android', () => {
+    beforeEach(() => {
+      mockAndroid();
     });
 
-    // Step 2: Select month (Enero = index 0)
-    fireEvent.press(getByTestId('month-option-0'));
-    await waitFor(() => {
-      expect(getByTestId('days-grid')).toBeTruthy();
+    it('no renderiza nada cuando visible=false', () => {
+      const result = render(
+        <DatePickerModal
+          visible={false}
+          onClose={jest.fn()}
+          onSelectDate={jest.fn()}
+        />,
+      );
+      expect(result.toJSON()).toBeNull();
     });
 
-    // Step 3: Select day
-    fireEvent.press(getByTestId('day-option-15'));
+    it('renderiza DateTimePicker nativo cuando visible=true', () => {
+      const { getByTestId } = render(
+        <DatePickerModal
+          visible
+          onClose={jest.fn()}
+          onSelectDate={jest.fn()}
+        />,
+      );
 
-    expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
-    expect(onClose).toHaveBeenCalledTimes(1);
+      expect(getByTestId('dateTimePicker')).toBeTruthy();
+    });
+
+    it('llama onSelectDate y onClose al seleccionar fecha', () => {
+      const onSelectDate = jest.fn();
+      const onClose = jest.fn();
+
+      render(
+        <DatePickerModal
+          visible
+          onClose={onClose}
+          onSelectDate={onSelectDate}
+        />,
+      );
+
+      // Simulate native picker selection
+      mockOnValueChange.mock.calls[0]?.[1] &&
+        mockOnValueChange(
+          { type: 'set', nativeEvent: { timestamp: 0, utcOffset: 0 } },
+          new Date(2000, 0, 15),
+        );
+
+      expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('inicializa desde initialDate cuando se provee', () => {
-    const { getByTestId } = render(
-      <DatePickerModal
-        visible
-        onClose={jest.fn()}
-        onSelectDate={jest.fn()}
-        initialDate="1995-06-20"
-      />,
-    );
+  describe('on iOS', () => {
+    beforeEach(() => {
+      mockIOS();
+    });
 
-    // Should start at 'day' step since full date was provided
-    expect(getByTestId('days-grid')).toBeTruthy();
-  });
+    it('no renderiza overlay cuando visible=false', () => {
+      const { queryByTestId } = render(
+        <DatePickerModal
+          visible={false}
+          onClose={jest.fn()}
+          onSelectDate={jest.fn()}
+        />,
+      );
 
-  it('cierra al presionar el overlay', () => {
-    const onClose = jest.fn();
+      expect(queryByTestId('modal-overlay')).toBeNull();
+    });
 
-    const { getByTestId } = render(
-      <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
-    );
+    it('renderiza Modal con picker y botón Hecho cuando visible=true', () => {
+      const { getByTestId, getByText } = render(
+        <DatePickerModal
+          visible
+          onClose={jest.fn()}
+          onSelectDate={jest.fn()}
+        />,
+      );
 
-    fireEvent.press(getByTestId('modal-overlay'));
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
+      expect(getByTestId('modal-overlay')).toBeTruthy();
+      expect(getByTestId('dateTimePicker')).toBeTruthy();
+      expect(getByText('Hecho')).toBeTruthy();
+    });
 
-  it('cierra al presionar Cancelar', () => {
-    const onClose = jest.fn();
+    it('inicializa desde initialDate', () => {
+      const { getByTestId } = render(
+        <DatePickerModal
+          visible
+          onClose={jest.fn()}
+          onSelectDate={jest.fn()}
+          initialDate="1995-06-20"
+        />,
+      );
 
-    const { getByTestId } = render(
-      <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
-    );
+      // The picker should receive the parsed initialDate
+      const picker = getByTestId('dateTimePicker');
+      expect(picker).toBeTruthy();
+      // value prop was set from initialDate
+      expect(mockDateTimePickerValue.toISOString()).toContain('1995-06-20');
+    });
 
-    fireEvent.press(getByTestId('btn-cancel'));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    it('cierra al presionar el overlay', () => {
+      const onClose = jest.fn();
+
+      const { getByTestId } = render(
+        <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
+      );
+
+      fireEvent.press(getByTestId('modal-overlay'));
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('llama onSelectDate y onClose al presionar Hecho', () => {
+      const onSelectDate = jest.fn();
+      const onClose = jest.fn();
+
+      const { getByText } = render(
+        <DatePickerModal
+          visible
+          onClose={onClose}
+          onSelectDate={onSelectDate}
+          initialDate="2000-01-15"
+        />,
+      );
+
+      fireEvent.press(getByText('Hecho'));
+
+      expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 });
