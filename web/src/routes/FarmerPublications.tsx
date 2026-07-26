@@ -51,9 +51,7 @@ function formatDate(iso: string): string {
 export function FarmerPublications() {
   const colors = useAppColors();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<
-    PublicacionEstado | 'all'
-  >('all');
+  const [activeTab, setActiveTab] = useState<PublicacionEstado | 'all'>('all');
   const [toast, setToast] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = usePublicaciones(
@@ -364,14 +362,20 @@ export function FarmerPublications() {
                       >
                         Semana {pub.semana}
                       </p>
-                      <p className="text-[13px]" style={{ color: colors.muted }}>
+                      <p
+                        className="text-[13px]"
+                        style={{ color: colors.muted }}
+                      >
                         {formatDate(pub.fecha_publicacion)}
                       </p>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </div>
 
-                  <p className="mb-3 text-[13px]" style={{ color: colors.muted }}>
+                  <p
+                    className="mb-3 text-[13px]"
+                    style={{ color: colors.muted }}
+                  >
                     {pub.productos.length} producto
                     {pub.productos.length !== 1 ? 's' : ''}
                   </p>
@@ -394,9 +398,7 @@ export function FarmerPublications() {
                           variant="secondary"
                           className="!px-3 !py-1.5 !text-[13px]"
                           disabled={isMutating}
-                          onClick={() =>
-                            void handlePublish(pub.id_publicacion)
-                          }
+                          onClick={() => void handlePublish(pub.id_publicacion)}
                         >
                           🚀 Publicar
                         </Button>
@@ -404,9 +406,7 @@ export function FarmerPublications() {
                           variant="ghost"
                           className="!px-3 !py-1.5 !text-[13px]"
                           disabled={isMutating}
-                          onClick={() =>
-                            void handleDelete(pub.id_publicacion)
-                          }
+                          onClick={() => void handleDelete(pub.id_publicacion)}
                         >
                           🗑
                         </Button>

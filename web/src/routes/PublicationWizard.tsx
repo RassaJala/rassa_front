@@ -280,9 +280,9 @@ export function PublicationWizard() {
 
   // ── Items ──
   const [items, setItems] = useState<WizardItemDraft[]>([]);
-  const [validations, setValidations] = useState<
-    Map<string, ItemValidation>
-  >(new Map());
+  const [validations, setValidations] = useState<Map<string, ItemValidation>>(
+    new Map(),
+  );
 
   // ── Hooks (all data via TanStack Query) ──
   const catalogQuery = useCatalogProductos();
@@ -349,12 +349,12 @@ export function PublicationWizard() {
 
   // ── Date helpers ──
   const pubData = isEditing ? pubQuery.data?.data : undefined;
-  const nextMonday = isEditing && pubData
-    ? new Date(pubData.fecha_publicacion)
-    : getNextMonday();
-  const weekNumber = isEditing && pubData
-    ? pubData.semana
-    : getWeekNumber(nextMonday);
+  const nextMonday =
+    isEditing && pubData
+      ? new Date(pubData.fecha_publicacion)
+      : getNextMonday();
+  const weekNumber =
+    isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
 
   // ── Navigation ──
   function nextStep() {
@@ -454,9 +454,7 @@ export function PublicationWizard() {
 
     setItems((prev) =>
       prev.map((i) =>
-        i.tempId === tempId
-          ? { ...i, imageFile: null, imagePreview: null }
-          : i,
+        i.tempId === tempId ? { ...i, imageFile: null, imagePreview: null } : i,
       ),
     );
   }
@@ -512,9 +510,7 @@ export function PublicationWizard() {
     setItems((prev) =>
       prev.map((i) => {
         const serverId = tempIdToServerId.get(i.tempId);
-        return serverId !== undefined
-          ? { ...i, tempId: String(serverId) }
-          : i;
+        return serverId !== undefined ? { ...i, tempId: String(serverId) } : i;
       }),
     );
 
@@ -576,9 +572,7 @@ export function PublicationWizard() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(
-          err instanceof Error ? err.message : 'Error al guardar.',
-        );
+        setError(err instanceof Error ? err.message : 'Error al guardar.');
       }
     } finally {
       savingRef.current = false;
@@ -611,9 +605,7 @@ export function PublicationWizard() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(
-          err instanceof Error ? err.message : 'Error al publicar.',
-        );
+        setError(err instanceof Error ? err.message : 'Error al publicar.');
       }
     } finally {
       savingRef.current = false;
@@ -781,10 +773,7 @@ export function PublicationWizard() {
               >
                 {formatDate(nextMonday)}
               </p>
-              <p
-                className="mt-3 text-[13px]"
-                style={{ color: colors.muted }}
-              >
+              <p className="mt-3 text-[13px]" style={{ color: colors.muted }}>
                 La publicación correspondirá a esta semana. Los productos que
                 agregues en el siguiente paso estarán disponibles para los
                 compradores.
@@ -816,10 +805,7 @@ export function PublicationWizard() {
                 title="No hay productos"
                 message="Agregá productos para tu publicación semanal."
                 action={
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowPicker(true)}
-                  >
+                  <Button variant="primary" onClick={() => setShowPicker(true)}>
                     + Agregar producto
                   </Button>
                 }
@@ -828,8 +814,7 @@ export function PublicationWizard() {
               <div className="flex flex-col gap-3">
                 {items.map((item) => {
                   const errs = validations.get(item.tempId) ?? {};
-                  const displayImage =
-                    item.imagePreview ?? mediaUrl(item.foto);
+                  const displayImage = item.imagePreview ?? mediaUrl(item.foto);
                   return (
                     <div
                       key={item.tempId}
@@ -874,11 +859,9 @@ export function PublicationWizard() {
                               input.type = 'file';
                               input.accept = 'image/*';
                               input.onchange = (e) => {
-                                const file = (
-                                  e.target as HTMLInputElement
-                                ).files?.[0];
-                                if (file)
-                                  handleImageSelect(item.tempId, file);
+                                const file = (e.target as HTMLInputElement)
+                                  .files?.[0];
+                                if (file) handleImageSelect(item.tempId, file);
                               };
                               input.click();
                             }}
@@ -1031,8 +1014,7 @@ export function PublicationWizard() {
                   const unidad = unidades.find(
                     (u) => u.id_unidad === item.fk_unidad,
                   );
-                  const displayImage =
-                    item.imagePreview ?? mediaUrl(item.foto);
+                  const displayImage = item.imagePreview ?? mediaUrl(item.foto);
                   return (
                     <div
                       key={item.tempId}
@@ -1109,10 +1091,7 @@ export function PublicationWizard() {
               >
                 ¿Publicar la semana {weekNumber}?
               </p>
-              <p
-                className="mt-1 text-[14px]"
-                style={{ color: colors.muted }}
-              >
+              <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
                 {items.length} producto{items.length !== 1 ? 's' : ''} serán
                 publicados y visibles para los compradores.
               </p>

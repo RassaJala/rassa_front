@@ -65,12 +65,8 @@ export async function getPublicacion(
   return data;
 }
 
-export async function createPublicacion(): Promise<
-  ApiResponse<Publicacion>
-> {
-  const { data } = await api.post<ApiResponse<Publicacion>>(
-    '/publicaciones/',
-  );
+export async function createPublicacion(): Promise<ApiResponse<Publicacion>> {
+  const { data } = await api.post<ApiResponse<Publicacion>>('/publicaciones/');
   return data;
 }
 
@@ -187,17 +183,17 @@ export interface Producto {
 export async function getCatalogProductos(): Promise<
   ApiResponse<{ results: Producto[] }>
 > {
-  const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
-    '/productos/',
-  );
+  const { data } =
+    await api.get<ApiResponse<{ results: Producto[] }>>('/productos/');
   return data;
 }
 
 export async function getUnidades(): Promise<
   ApiResponse<{ id_unidad: number; tipo: string }[]>
 > {
-  const { data } = await api.get<
-    ApiResponse<{ id_unidad: number; tipo: string }[]>
-  >('/unidades/');
+  const { data } =
+    await api.get<ApiResponse<{ id_unidad: number; tipo: string }[]>>(
+      '/unidades/',
+    );
   return data;
 }

@@ -18,9 +18,7 @@ export function usePublicaciones(estado?: PublicacionEstado) {
   return useQuery<ApiResponse<PublicacionList>>({
     queryKey: ['publicaciones', { estado }],
     queryFn: () =>
-      publicationsApi.getPublicaciones(
-        estado ? { estado } : undefined,
-      ),
+      publicationsApi.getPublicaciones(estado ? { estado } : undefined),
     staleTime: STALE_TIME,
     retry: 1,
   });
@@ -56,9 +54,7 @@ export function useCatalogProductos() {
 }
 
 export function useUnidades() {
-  return useQuery<
-    ApiResponse<Array<{ id_unidad: number; tipo: string }>>
-  >({
+  return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
     queryKey: ['unidades'],
     queryFn: publicationsApi.getUnidades,
     staleTime: 60_000,
@@ -171,13 +167,8 @@ export function useUpdateProductoSemanal() {
 export function useDeleteProductoSemanal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      pubId,
-      itemId,
-    }: {
-      pubId: number;
-      itemId: number;
-    }) => publicationsApi.deleteProductoSemanal(pubId, itemId),
+    mutationFn: ({ pubId, itemId }: { pubId: number; itemId: number }) =>
+      publicationsApi.deleteProductoSemanal(pubId, itemId),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({
@@ -198,8 +189,7 @@ export function useUploadProductoSemanalImagen() {
       pubId: number;
       itemId: number;
       formData: FormData;
-    }) =>
-      publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
+    }) => publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ['publicaciones'] });
       void qc.invalidateQueries({

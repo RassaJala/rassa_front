@@ -83,8 +83,14 @@ export function AppRouter() {
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
                 <Route path="publicaciones" element={<FarmerPublications />} />
-                <Route path="publicaciones/nueva" element={<PublicationWizard />} />
-                <Route path="publicaciones/:id/editar" element={<PublicationWizard />} />
+                <Route
+                  path="publicaciones/nueva"
+                  element={<PublicationWizard />}
+                />
+                <Route
+                  path="publicaciones/:id/editar"
+                  element={<PublicationWizard />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route
                   path="*"
