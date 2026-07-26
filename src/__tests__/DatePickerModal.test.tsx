@@ -36,6 +36,7 @@ function mockAndroid(): void {
   jest.replaceProperty(Platform, 'OS', 'android');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function mockIOS(): void {
   jest.replaceProperty(Platform, 'OS', 'ios');
 }
