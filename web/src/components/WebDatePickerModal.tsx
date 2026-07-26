@@ -2,22 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from '../providers/ThemeProvider';
 import { getColors } from '../constants/colors';
 
-const MONTH_NAMES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
-
-const YEARS_BACK = 103;
+import { MONTH_NAMES, YEARS_BACK } from '~/constants/dates';
 
 interface WebDatePickerModalProps {
   readonly visible: boolean;

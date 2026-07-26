@@ -14,7 +14,7 @@ interface FormColors extends CatalogColors {
 
 interface RegistrationFormFieldsProps {
   readonly form: ReturnType<typeof useRegistrationForm>;
-  readonly t: FormColors;
+  readonly colors: FormColors;
   readonly setErrorMessage: (msg: string | null) => void;
   readonly onOpenDatePicker: () => void;
   readonly disabled?: boolean;
@@ -22,7 +22,7 @@ interface RegistrationFormFieldsProps {
 
 export default function RegistrationFormFields({
   form,
-  t,
+  colors: formColors,
   setErrorMessage,
   onOpenDatePicker,
   disabled = false,
@@ -56,21 +56,21 @@ export default function RegistrationFormFields({
     fontWeight: '600' as const,
     letterSpacing: 0.08,
     textTransform: 'uppercase' as const,
-    color: t.muted,
+    color: formColors.muted,
   };
 
   const inputStyle = {
     borderWidth: 1.5,
-    borderColor: t.border,
+    borderColor: formColors.border,
     borderRadius: 12,
-    backgroundColor: t.surface,
-    color: t.fg,
+    backgroundColor: formColors.surface,
+    color: formColors.fg,
     fontSize: 15,
     paddingHorizontal: 14,
     height: 46,
   };
 
-  const placeholderColor = t.muted;
+  const placeholderColor = formColors.muted;
 
   const sexoOptions = [
     { value: 'M' as const, label: 'Masculino' },
@@ -143,7 +143,7 @@ export default function RegistrationFormFields({
         onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
         editable={!disabled}
       />
-      <Text style={{ marginTop: 4, fontSize: 12, color: t.muted }}>
+      <Text style={{ marginTop: 4, fontSize: 12, color: formColors.muted }}>
         Para números extranjeros inicia con + (ej. +1...)
       </Text>
 
@@ -182,8 +182,8 @@ export default function RegistrationFormFields({
                 height: 40,
                 borderRadius: 10,
                 borderWidth: 1.5,
-                borderColor: isActive ? t.brand : t.border,
-                backgroundColor: isActive ? t.accentBg : t.segBg,
+                borderColor: isActive ? formColors.brand : formColors.border,
+                backgroundColor: isActive ? formColors.accentBg : formColors.segBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -192,7 +192,7 @@ export default function RegistrationFormFields({
                 style={{
                   fontSize: 13,
                   fontWeight: '600',
-                  color: isActive ? t.brand : t.muted,
+                  color: isActive ? formColors.brand : formColors.muted,
                 }}
               >
                 {opt.label}
@@ -228,7 +228,7 @@ export default function RegistrationFormFields({
         refetchMunicipios={catalog.refetchMunicipios}
         refetchLocalidades={catalog.refetchLocalidades}
         setErrorMessage={setErrorMessage}
-        catalogColors={t}
+        catalogColors={formColors}
       />
     </View>
   );

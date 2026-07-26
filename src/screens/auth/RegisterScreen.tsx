@@ -168,7 +168,7 @@ export default function RegisterScreen(): React.JSX.Element {
         >
           <RegistrationFormFields
             form={form}
-            t={{
+            colors={{
               muted,
               border,
               surface,

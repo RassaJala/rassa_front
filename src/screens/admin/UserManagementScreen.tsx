@@ -24,6 +24,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import DatePickerModal from '@/components/DatePickerModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
 import Toast from '@/components/Toast';
 import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
@@ -32,23 +33,20 @@ import FilterBar from '@/components/UserManagement/FilterBar';
 import RoleDialog from '@/components/UserManagement/RoleDialog';
 import UserCard from '@/components/UserManagement/UserCard';
 import { colors } from '@/constants/colors';
+import { ROLE_OPTIONS } from '@/constants/roles';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { ApiResponse, RegisterRole } from '@/types';
+import type { ApiResponse } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import { getAdminColors } from '@/utils/adminTheme';
 
 const TRANSPARENT = 'transparent';
 const WHITE = '#FFFFFF';
 const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : undefined;
 
-const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
-  { value: 'buyer', label: 'Cliente' },
-  { value: 'seller', label: 'Vendedor' },
-  { value: 'farmer', label: 'Agricultor' },
-];
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
@@ -57,24 +55,6 @@ const ROLE_LABELS: Record<string, string> = {
   buyer: 'Cliente',
 };
 
-function getAdminColors(isDark: boolean) {
-  return {
-    bg: isDark ? colors.admBgD : colors.admBgL,
-    fg: isDark ? colors.admFgD : colors.admFgL,
-    muted: isDark ? colors.admMutedD : colors.admMutedL,
-    border: isDark ? colors.admBorderD : colors.admBorderL,
-    brand: isDark ? colors.admBrandD : colors.admBrandL,
-    inputBg: isDark ? colors.admSurfaceD : colors.admBgL,
-    surface: isDark ? colors.admSurfaceD : colors.admSurfaceL,
-    accentBg: isDark ? colors.admActiveBgD : colors.admActiveBgL,
-    coralBg: isDark ? colors.admCoralBgD : colors.admCoralBgL,
-    segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
-    errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-    errorBorder: isDark ? colors.admErrorBorderD : colors.admErrorBorderL,
-    errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-    errorAction: isDark ? colors.admErrorActionD : colors.admErrorActionL,
-  };
-}
 
 function handleToggleSuccess(
   userId: number,
@@ -134,88 +114,6 @@ function handleRoleError(
   };
 }
 
-async function submitNewUser(params: {
-  form: ReturnType<typeof useRegistrationForm>;
-  isSubmitting: boolean;
-  setFormErrorMessage: (msg: string | null) => void;
-  setFormServerError: (msg: string) => void;
-  setIsSubmitting: (v: boolean) => void;
-  queryClient: ReturnType<typeof useQueryClient>;
-  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
-  switchToList: () => void;
-  isMounted: React.MutableRefObject<boolean>;
-}) {
-  const {
-    form,
-    isSubmitting,
-    setFormErrorMessage,
-    setFormServerError,
-    setIsSubmitting,
-    queryClient,
-    showToast,
-    switchToList,
-    isMounted,
-  } = params;
-  if (isSubmitting) return;
-  setFormErrorMessage(null);
-  setFormServerError('');
-
-  const validationError = validateRegistrationForm({
-    email: form.email,
-    password: form.password,
-    telefono: form.telefono,
-    nombre: form.nombre,
-    apellidoPaterno: form.apellidoPaterno,
-    fechaNacimiento: form.fechaNacimiento,
-    domicilio: form.domicilio,
-    localidadId: form.catalog.localidadId,
-  });
-
-  if (validationError) {
-    setFormErrorMessage(validationError);
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    const payload = {
-      email: form.email.trim(),
-      password: form.password,
-      telefono: cleanPhoneNumber(form.telefono),
-      role: form.role,
-      nombre: form.nombre.trim(),
-      apellido_paterno: form.apellidoPaterno.trim(),
-      apellido_materno: form.apellidoMaterno.trim() || null,
-      fecha_nacimiento: form.fechaNacimiento,
-      sexo: form.sexo,
-      domicilio: form.domicilio.trim(),
-      fk_localidad: form.catalog.localidadId as number,
-    };
-
-    const endpoint =
-      form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
-
-    await api.post(endpoint, payload);
-
-    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    showToast('Usuario creado correctamente', 'success');
-    switchToList();
-  } catch (error) {
-    if (isMounted.current) {
-      const detail =
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ??
-        (error as Error)?.message ??
-        'Error al crear el usuario.';
-      setFormServerError(detail);
-    }
-  } finally {
-    if (isMounted.current) {
-      setIsSubmitting(false);
-    }
-  }
-}
 
 function saveUserRole(params: {
   roleModalUser: AdminUser | null;
@@ -492,9 +390,6 @@ export default function UserManagementScreen(): React.JSX.Element {
   // ── Tab state (Lista / Nuevo) ──
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-  const [formServerError, setFormServerError] = useState('');
-  const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useRegistrationForm({ initialRole: 'buyer' });
   const isMounted = useRef(true);
 
@@ -583,6 +478,20 @@ export default function UserManagementScreen(): React.JSX.Element {
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const {
+    submit: handleSubmitNewUser,
+    isSubmitting,
+    errorMessage: formErrorMessage,
+    serverError: formServerError,
+    setErrorMessage: setFormErrorMessage,
+    setServerError: setFormServerError,
+  } = useSubmitNewUser({
+    onSuccess: () => {
+      showToast('Usuario creado correctamente', 'success');
+      switchToList();
+    },
+  });
+
   const switchToList = useCallback(() => {
     setTab('list');
     setFormErrorMessage(null);
@@ -649,18 +558,8 @@ export default function UserManagementScreen(): React.JSX.Element {
   });
 
   const handleCreateUser = useCallback(() => {
-    void submitNewUser({
-      form,
-      isSubmitting,
-      setFormErrorMessage,
-      setFormServerError,
-      setIsSubmitting,
-      queryClient,
-      showToast,
-      switchToList,
-      isMounted,
-    });
-  }, [form, isSubmitting, queryClient, showToast, switchToList]);
+    void handleSubmitNewUser(form);
+  }, [form, handleSubmitNewUser]);
 
   const handleRoleSave = useCallback(() => {
     saveUserRole({
@@ -1072,25 +971,27 @@ export default function UserManagementScreen(): React.JSX.Element {
               </View>
             </View>
 
-            <RegistrationFormFields
-              form={form}
-              t={{
-                surface,
-                fg,
-                muted,
-                border,
-                brand,
-                accentBg,
-                segBg,
-                errorBg,
-                errorBorder,
-                errorText,
-                errorAction,
-              }}
-              setErrorMessage={setFormErrorMessage}
-              onOpenDatePicker={() => setIsDatePickerVisible(true)}
-              disabled={isSubmitting}
-            />
+            <ErrorBoundary>
+              <RegistrationFormFields
+                form={form}
+                colors={{
+                  surface,
+                  fg,
+                  muted,
+                  border,
+                  brand,
+                  accentBg,
+                  segBg,
+                  errorBg,
+                  errorBorder,
+                  errorText,
+                  errorAction,
+                }}
+                setErrorMessage={setFormErrorMessage}
+                onOpenDatePicker={() => setIsDatePickerVisible(true)}
+                disabled={isSubmitting}
+              />
+            </ErrorBoundary>
           </ScrollView>
 
           <View

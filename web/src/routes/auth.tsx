@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -13,7 +12,8 @@ import api from '~/services/api';
 import type { User } from '~/types';
 import { normalizeRole } from '~/types';
 
-// ---------------------------------------------------------------------------
+import { parseApiError } from '~/utils/apiErrors';
+
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -172,26 +172,7 @@ export function LoginScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      const respData = (
-        err as { response?: { data?: Record<string, unknown> } }
-      )?.response?.data;
-      let msg = (err as Error)?.message ?? 'Error al iniciar sesión.';
-      if (respData?.detail && typeof respData.detail === 'string') {
-        msg = respData.detail;
-      }
-      // ponytail: sanitizar — no exponer err.message crudo (puede filtrar infra)
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        if (status === 401) setGeneralError('Credenciales inválidas.');
-        else if (status === 429)
-          setGeneralError('Límite de peticiones excedido. Intentá más tarde.');
-        else if (status && status >= 500)
-          setGeneralError('Error del servidor. Intentá más tarde.');
-        else setGeneralError('Error al iniciar sesión.');
-      } else {
-        setGeneralError('Error al iniciar sesión.');
-      }
-      setGeneralError(msg);
+      setGeneralError(parseApiError(err, 'Error al iniciar sesión.'));
     } finally {
       setLoading(false);
     }
@@ -547,45 +528,7 @@ export function RegisterScreen() {
         replace: true,
       });
     } catch (err: unknown) {
-      const respData = (
-        err as { response?: { data?: Record<string, unknown> } }
-      )?.response?.data;
-      let msg = (err as Error)?.message ?? 'Error al registrarse.';
-      if (respData?.detail && typeof respData.detail === 'string') {
-        msg = respData.detail;
-      } else if (respData && typeof respData === 'object') {
-        const fieldErrors: string[] = [];
-        for (const [key, val] of Object.entries(respData)) {
-          if (key === 'non_field_errors') {
-            const arr = Array.isArray(val) ? val : [val];
-            fieldErrors.push(...arr.map(String));
-          } else if (Array.isArray(val)) {
-            fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
-          }
-        }
-        if (fieldErrors.length > 0) msg = fieldErrors.join('\n');
-      }
-      // ponytail: sanitizar — no exponer err.message crudo
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const data = err.response?.data;
-        const backendMsg =
-          data && typeof data === 'object' && typeof data.detail === 'string'
-            ? data.detail
-            : null;
-        if (backendMsg) {
-          setError(backendMsg);
-        } else if (status === 409) {
-          setError('Ya existe una cuenta con ese correo.');
-        } else if (status && status >= 500) {
-          setError('Error del servidor. Intentá más tarde.');
-        } else {
-          setError('Error al registrarse.');
-        }
-      } else {
-        setError('Error al registrarse.');
-      }
-      setError(msg);
+      setError(parseApiError(err, 'Error al registrarse.'));
     } finally {
       setLoading(false);
     }

@@ -288,7 +288,7 @@ export default function CatalogSelector({
             <FlatList
               data={municipios}
               keyExtractor={(item) => String(item.id_municipio)}
-              style={{ maxHeight: 300 }}
+              style={{ maxHeight: DIALOG_MAX_HEIGHT }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {

@@ -5,6 +5,13 @@ import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCatalogs } from '../hooks/useCatalogs';
 import api from '../services/api';
+import { parseApiError } from '~/utils/apiErrors';
+import {
+  cleanAddress,
+  cleanName,
+  cleanPhoneNumber,
+  isAdult,
+} from '~/utils/validation';
 import { Toast } from '../components/ui/Toast';
 import type { ToastState } from '../components/ui/Toast';
 import WebDatePickerModal from '../components/WebDatePickerModal';
@@ -195,7 +202,7 @@ function StatusBadge({
 
 // ── Nuevo usuario form (lazy catalogs) ───────────────────
 
-interface NuevoUsuarioFormProps {
+interface FormColors {
   readonly fg: string;
   readonly muted: string;
   readonly border: string;
@@ -203,23 +210,22 @@ interface NuevoUsuarioFormProps {
   readonly brand: string;
   readonly coral: string;
   readonly surface: string;
+}
+
+interface NuevoUsuarioFormProps {
+  readonly colors: FormColors;
   readonly isDark: boolean;
   readonly onCreated: () => void;
   readonly showToast: (message: string, type: 'success' | 'error') => void;
 }
 
 function NuevoUsuarioForm({
-  fg,
-  muted,
-  border,
-  bg,
-  brand,
-  coral,
-  surface,
+  colors,
   isDark,
   onCreated,
   showToast,
 }: NuevoUsuarioFormProps) {
+  const { fg, muted, border, bg, brand, coral, surface } = colors;
   const queryClient = useQueryClient();
   const catalogs = useCatalogs();
   const [formNombre, setFormNombre] = useState('');
@@ -239,34 +245,6 @@ function NuevoUsuarioForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [formFocused, setFormFocused] = useState<string | null>(null);
 
-  function cleanName(v: string): string {
-    return v.replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
-  }
-  function cleanPhoneNumber(v: string): string {
-    const digits = v.replace(/\D/g, '');
-    return v.trim().startsWith('+') ? digits.slice(0, 12) : digits.slice(0, 10);
-  }
-  function cleanAddress(v: string): string {
-    return v.replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '');
-  }
-  function isAdult(dateStr: string): boolean {
-    if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dateStr))
-      return false;
-    const parts = dateStr.split('-').map(Number);
-    const y = parts[0];
-    const m = parts[1];
-    const d = parts[2];
-    if (y === undefined || m === undefined || d === undefined) return false;
-    const today = new Date();
-    let age = today.getFullYear() - y;
-    if (
-      today.getMonth() + 1 < m ||
-      (today.getMonth() + 1 === m && today.getDate() < d)
-    )
-      age--;
-    return age >= 18;
-  }
-
   const createMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) =>
       api.post(
@@ -279,25 +257,7 @@ function NuevoUsuarioForm({
       onCreated();
     },
     onError: (err: unknown) => {
-      const respData = (
-        err as { response?: { data?: Record<string, unknown> } }
-      )?.response?.data;
-      let msg = (err as Error)?.message ?? 'Error al crear el usuario.';
-      if (respData?.detail && typeof respData.detail === 'string') {
-        msg = respData.detail;
-      } else if (respData && typeof respData === 'object') {
-        const fieldErrors: string[] = [];
-        for (const [key, val] of Object.entries(respData)) {
-          if (key === 'non_field_errors') {
-            const arr = Array.isArray(val) ? val : [val];
-            fieldErrors.push(...arr.map(String));
-          } else if (Array.isArray(val)) {
-            fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
-          }
-        }
-        if (fieldErrors.length > 0) msg = fieldErrors.join('\n');
-      }
-      setFormError(msg);
+      setFormError(parseApiError(err, 'Error al crear el usuario.'));
     },
   });
 
@@ -1491,13 +1451,7 @@ export function AdminUsers() {
       {/* ═══ Nuevo tab ═══ */}
       {tab === 'nuevo' && (
         <NuevoUsuarioForm
-          fg={fg}
-          muted={muted}
-          border={border}
-          bg={bg}
-          brand={brand}
-          coral={coral}
-          surface={surface}
+          colors={{ fg, muted, border, bg, brand, coral, surface }}
           isDark={isDark}
           onCreated={() => setTab('lista')}
           showToast={showToast}

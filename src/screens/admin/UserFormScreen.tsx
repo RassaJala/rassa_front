@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,35 +9,17 @@ import {
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
 
 import DatePickerModal from '@/components/DatePickerModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { colors } from '@/constants/colors';
+import { ROLE_OPTIONS } from '@/constants/roles';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
-import api from '@/services/api';
+import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import { useTheme } from '@/store/ThemeContext';
-import type { RegisterRole } from '@/types';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import { getAdminColors } from '@/utils/adminTheme';
 
-const ROLE_OPTIONS: { value: RegisterRole; label: string }[] = [
-  { value: 'buyer', label: 'Cliente' },
-  { value: 'seller', label: 'Vendedor' },
-  { value: 'farmer', label: 'Agricultor' },
-];
-
-function getFormColors(isDark: boolean) {
-  return {
-    bg: isDark ? colors.admBgD : colors.admBgL,
-    surface: isDark ? colors.admSurfaceD : colors.admSurfaceL,
-    fg: isDark ? colors.admFgD : colors.admFgL,
-    muted: isDark ? colors.admMutedD : colors.admMutedL,
-    border: isDark ? colors.admBorderD : colors.admBorderL,
-    brand: isDark ? colors.admBrandD : colors.admBrandL,
-    segBg: isDark ? colors.admSegBgD : colors.admSegBgL,
-    accentBg: isDark ? colors.admActiveBgD : colors.admActiveBgL,
-  };
-}
 
 function FormHeader({
   isDark,
@@ -93,85 +75,21 @@ export default function UserFormScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
-    getFormColors(isDark);
-  const queryClient = useQueryClient();
+    getAdminColors(isDark);
 
   const form = useRegistrationForm({ initialRole: 'buyer' });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-  const [serverError, setServerError] = useState('');
+  const {
+    submit,
+    isSubmitting,
+    errorMessage,
+    serverError,
+    setErrorMessage,
+  } = useSubmitNewUser({
+    onSuccess: () => navigation.goBack(),
+  });
 
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  async function handleSubmit() {
-    if (isSubmitting) return;
-    setErrorMessage(null);
-    setServerError('');
-
-    const validationError = validateRegistrationForm({
-      email: form.email,
-      password: form.password,
-      telefono: form.telefono,
-      nombre: form.nombre,
-      apellidoPaterno: form.apellidoPaterno,
-      fechaNacimiento: form.fechaNacimiento,
-      domicilio: form.domicilio,
-      localidadId: form.catalog.localidadId,
-    });
-
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        email: form.email.trim(),
-        password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
-        role: form.role,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
-        sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId as number,
-      };
-
-      const endpoint =
-        form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
-
-      await api.post(endpoint, payload);
-
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      navigation.goBack();
-    } catch (error) {
-      if (isMounted.current) {
-        const detail =
-          (error as { response?: { data?: { detail?: string } } })?.response
-            ?.data?.detail ??
-          (error as Error)?.message ??
-          'Error al crear el usuario.';
-        setServerError(detail);
-      }
-    } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
-    }
-  }
+  const handleSubmit = () => submit(form);
 
   const errorColor = colors.brandRedCoral;
 
@@ -237,29 +155,27 @@ export default function UserFormScreen(): React.JSX.Element {
             })}
           </View>
 
-          <RegistrationFormFields
-            form={form}
-            t={{
-              muted,
-              border,
-              surface,
-              fg,
-              brand,
-              accentBg,
-              segBg,
-              errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-              errorBorder: isDark
-                ? colors.admErrorBorderD
-                : colors.admErrorBorderL,
-              errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-              errorAction: isDark
-                ? colors.admErrorActionD
-                : colors.admErrorActionL,
-            }}
-            setErrorMessage={setErrorMessage}
-            onOpenDatePicker={() => setIsDatePickerVisible(true)}
-            disabled={isSubmitting}
-          />
+          <ErrorBoundary>
+            <RegistrationFormFields
+              form={form}
+              colors={{
+                muted,
+                border,
+                surface,
+                fg,
+                brand,
+                accentBg,
+                segBg,
+                errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
+                errorBorder: isDark ? colors.admErrorBorderD : colors.admErrorBorderL,
+                errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
+                errorAction: isDark ? colors.admErrorActionD : colors.admErrorActionL,
+              }}
+              setErrorMessage={setErrorMessage}
+              onOpenDatePicker={() => setIsDatePickerVisible(true)}
+              disabled={isSubmitting}
+            />
+          </ErrorBoundary>
 
           {/* ── Error messages ──────────────────────────── */}
           {errorMessage ? (
