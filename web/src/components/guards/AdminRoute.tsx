@@ -1,5 +1,5 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '~/hooks/useAuth';
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "~/hooks/useAuth";
 
 export function AdminRoute() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -17,7 +17,7 @@ export function AdminRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.rol !== 'admin') {
+  if (user?.rol !== "admin") {
     return <Navigate to="/" replace />;
   }
 

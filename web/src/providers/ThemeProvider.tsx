@@ -4,45 +4,45 @@ import {
   useContext,
   useEffect,
   useState,
-} from 'react';
-import type { ReactNode } from 'react';
+} from "react";
+import type { ReactNode } from "react";
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = "light" | "dark" | "system";
 
 interface ThemeContextValue {
   theme: Theme;
-  resolved: 'light' | 'dark';
+  resolved: "light" | "dark";
   setTheme: (t: Theme) => void;
   toggle: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getSystemPreference(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
+function getSystemPreference(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
-function resolveTheme(theme: Theme): 'light' | 'dark' {
-  if (theme === 'system') return getSystemPreference();
+function resolveTheme(theme: Theme): "light" | "dark" {
+  if (theme === "system") return getSystemPreference();
   return theme;
 }
 
-function applyClass(mode: 'light' | 'dark') {
-  document.documentElement.classList.toggle('dark', mode === 'dark');
+function applyClass(mode: "light" | "dark") {
+  document.documentElement.classList.toggle("dark", mode === "dark");
 }
 
 // Sync on module load so the class is applied before React hydrates
 (function applyInitial() {
   try {
-    const stored = localStorage.getItem('theme');
+    const stored = localStorage.getItem("theme");
     const dark =
-      stored === 'dark' ||
-      (stored !== 'light' &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.classList.toggle('dark', dark);
+      stored === "dark" ||
+      (stored !== "light" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
   } catch {
     // localStorage no disponible
   }
@@ -50,26 +50,26 @@ function applyClass(mode: 'light' | 'dark') {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = localStorage.getItem('theme');
-    return stored === 'dark' || stored === 'light' || stored === 'system'
+    const stored = localStorage.getItem("theme");
+    return stored === "dark" || stored === "light" || stored === "system"
       ? stored
-      : 'system';
+      : "system";
   });
 
   const resolved = resolveTheme(theme);
 
   useEffect(() => {
     applyClass(resolved);
-    localStorage.setItem('theme', theme);
+    localStorage.setItem("theme", theme);
   }, [resolved, theme]);
 
   useEffect(() => {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = () => {
-      if (theme === 'system') applyClass(getSystemPreference());
+      if (theme === "system") applyClass(getSystemPreference());
     };
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, [theme]);
 
   const setTheme = useCallback((t: Theme) => setThemeState(t), []);
@@ -77,7 +77,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggle = useCallback(() => {
     setThemeState((prev) => {
       const current = resolveTheme(prev);
-      return current === 'dark' ? 'light' : 'dark';
+      return current === "dark" ? "light" : "dark";
     });
   }, []);
 
@@ -90,6 +90,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }

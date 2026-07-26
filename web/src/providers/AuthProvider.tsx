@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
-import axios from 'axios';
-import { AuthContext } from '../hooks/useAuth';
-import type { AuthState, User } from '../types';
-import { normalizeRole } from '../types';
-import api from '../services/api';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import axios from "axios";
+import { AuthContext } from "../hooks/useAuth";
+import type { AuthState, User } from "../types";
+import { normalizeRole } from "../types";
+import api from "../services/api";
 
 function loadInitialState(): { token: string | null } {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     return { token };
   } catch {
     // localStorage no disponible (private browsing, etc.)
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     api
-      .get<{ data: Record<string, unknown> }>('/auth/me/')
+      .get<{ data: Record<string, unknown> }>("/auth/me/")
       .then(({ data }) => {
         if (cancelled) return;
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: raw.email as string,
           nombre: raw.nombre as string,
           rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
-          apellido_paterno: (raw.apellido_paterno as string) ?? '',
+          apellido_paterno: (raw.apellido_paterno as string) ?? "",
           apellido_materno: raw.apellido_materno as string | undefined,
           telefono: raw.telefono as string | undefined,
           fecha_nacimiento: raw.fecha_nacimiento as string | undefined,
@@ -66,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Solo limpiamos la sesión si el token es inválido (401).
         // Errores de red transitorios (timeout, DNS, 5xx) NO destruyen la sesión.
         if (axios.isAxiosError(err) && err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('refresh_token');
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          sessionStorage.removeItem("refresh_token");
           setState({
             user: null,
             token: null,
@@ -93,19 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.token]);
 
   const login = useCallback((token: string, user: User) => {
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
     // Solo guardamos datos mínimos no sensibles en localStorage
     localStorage.setItem(
-      'user',
+      "user",
       JSON.stringify({ id: user.id, email: user.email, rol: user.rol }),
     );
     setState({ user, token, isAuthenticated: true, isLoading: false });
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('refresh_token');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("refresh_token");
     setState({
       user: null,
       token: null,
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // ponytail: sync logout across tabs
     const handler = (e: StorageEvent) => {
-      if (e.key === 'token' && !e.newValue) {
+      if (e.key === "token" && !e.newValue) {
         setState({
           user: null,
           token: null,
@@ -126,8 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
     };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
   }, []);
 
   const value = useMemo(

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
+import { useState } from "react";
+import { useTheme } from "~/providers/ThemeProvider";
+import { getColors } from "~/constants/colors";
 import type {
   FieldErrors,
   Localidad,
   Municipio,
-} from '~/components/profile/types';
+} from "~/components/profile/types";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -39,27 +39,27 @@ export function LocationSelector({
   onRetryMunicipios,
 }: LocationSelectorProps) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const isDark = resolved === "dark";
   const colors = getColors(isDark);
   const { fg, muted, border, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   function selectStyle(fieldName: string, hasError: boolean) {
     return {
-      width: '100%' as const,
+      width: "100%" as const,
       height: 44,
       border: `1.5px solid ${
-        hasError ? '#ef4444' : focusedField === fieldName ? coral : border
+        hasError ? "#ef4444" : focusedField === fieldName ? coral : border
       }`,
       borderRadius: 10,
-      padding: '0 14px',
+      padding: "0 14px",
       fontSize: 15,
-      fontFamily: 'inherit',
+      fontFamily: "inherit",
       background: bg,
       color: fg,
-      outline: 'none',
-      boxSizing: 'border-box' as const,
-      cursor: 'pointer' as const,
+      outline: "none",
+      boxSizing: "border-box" as const,
+      cursor: "pointer" as const,
     };
   }
 
@@ -68,31 +68,31 @@ export function LocationSelector({
       {catalogError && (
         <div
           style={{
-            gridColumn: '1 / -1',
+            gridColumn: "1 / -1",
             borderRadius: 10,
-            border: '1px solid #fca5a5',
-            background: isDark ? '#451a1a' : '#fef2f2',
+            border: "1px solid #fca5a5",
+            background: isDark ? "#451a1a" : "#fef2f2",
             padding: 12,
             fontSize: 14,
           }}
         >
-          <p style={{ margin: 0, color: isDark ? '#fca5a5' : '#dc2626' }}>
+          <p style={{ margin: 0, color: isDark ? "#fca5a5" : "#dc2626" }}>
             {catalogError}
           </p>
           <button
             type="button"
             onClick={onRetryMunicipios}
             style={{
-              background: 'none',
-              border: 'none',
+              background: "none",
+              border: "none",
               padding: 0,
               marginTop: 4,
               fontSize: 14,
               fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              color: isDark ? '#fca5a5' : '#dc2626',
-              textDecoration: 'underline',
+              fontFamily: "inherit",
+              cursor: "pointer",
+              color: isDark ? "#fca5a5" : "#dc2626",
+              textDecoration: "underline",
             }}
           >
             Reintentar
@@ -100,14 +100,14 @@ export function LocationSelector({
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <label
           htmlFor="municipio"
           style={{
             fontSize: 13,
             fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: muted,
           }}
         >
@@ -115,19 +115,19 @@ export function LocationSelector({
         </label>
         <select
           id="municipio"
-          value={selectedMunicipioId ?? ''}
+          value={selectedMunicipioId ?? ""}
           onChange={(e) => {
             const id = e.target.value ? Number(e.target.value) : null;
             onMunicipioChange(id);
           }}
-          style={selectStyle('municipio', !!fieldErrors.municipio_id)}
+          style={selectStyle("municipio", !!fieldErrors.municipio_id)}
           disabled={loadingMunicipios}
-          onFocus={() => setFocusedField('municipio')}
+          onFocus={() => setFocusedField("municipio")}
           onBlur={() => setFocusedField(null)}
           required
         >
           <option value="">
-            {loadingMunicipios ? 'Cargando...' : 'Seleccionar...'}
+            {loadingMunicipios ? "Cargando..." : "Seleccionar..."}
           </option>
           {municipios.map((m) => (
             <option key={m.id_municipio} value={m.id_municipio}>
@@ -136,20 +136,20 @@ export function LocationSelector({
           ))}
         </select>
         {fieldErrors.municipio_id && (
-          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>
+          <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>
             {fieldErrors.municipio_id}
           </p>
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <label
           htmlFor="localidad"
           style={{
             fontSize: 13,
             fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: muted,
           }}
         >
@@ -157,23 +157,23 @@ export function LocationSelector({
         </label>
         <select
           id="localidad"
-          value={selectedLocalidadId ?? ''}
+          value={selectedLocalidadId ?? ""}
           onChange={(e) => {
             const id = e.target.value ? Number(e.target.value) : null;
             onLocalidadChange(id);
           }}
-          style={selectStyle('localidad', !!fieldErrors.localidad_id)}
+          style={selectStyle("localidad", !!fieldErrors.localidad_id)}
           disabled={!selectedMunicipioId || loadingLocalidades}
-          onFocus={() => setFocusedField('localidad')}
+          onFocus={() => setFocusedField("localidad")}
           onBlur={() => setFocusedField(null)}
           required
         >
           <option value="">
             {loadingLocalidades
-              ? 'Cargando...'
+              ? "Cargando..."
               : selectedMunicipioId
-                ? 'Seleccionar...'
-                : 'Primero selecciona un municipio'}
+                ? "Seleccionar..."
+                : "Primero selecciona un municipio"}
           </option>
           {localidades.map((l) => (
             <option key={l.id_localidad} value={l.id_localidad}>
@@ -182,7 +182,7 @@ export function LocationSelector({
           ))}
         </select>
         {fieldErrors.localidad_id && (
-          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>
+          <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>
             {fieldErrors.localidad_id}
           </p>
         )}
