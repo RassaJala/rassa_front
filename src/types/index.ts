@@ -21,6 +21,8 @@ export interface User {
   direccion: string;
   localidad: number;
   localidad_nombre?: string | null;
+  municipio_id?: number | null;
+  municipio_nombre?: string | null;
 }
 
 export type RegisterRole = 'buyer' | 'farmer' | 'seller';
@@ -47,7 +49,7 @@ export interface UpdateProfilePayload {
   fecha_nacimiento: string;
   sexo: 'M' | 'F' | 'O';
   domicilio: string;
-  fk_localidad: number;
+  fk_localidad: number | null;
 }
 
 export interface ChangePasswordPayload {
@@ -192,7 +194,6 @@ export interface CreditLimit {
 }
 
 // ── Navigation param lists ────────────────────────────────
-
 export type AdminStackParamList = {
   AdminPanel: undefined;
   AdminProfile: undefined;
