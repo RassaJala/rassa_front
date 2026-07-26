@@ -47,14 +47,12 @@ const TRANSPARENT = 'transparent';
 const WHITE = '#FFFFFF';
 const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : undefined;
 
-
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
   farmer: 'Agricultor',
   seller: 'Vendedor',
   buyer: 'Cliente',
 };
-
 
 function handleToggleSuccess(
   userId: number,
@@ -113,7 +111,6 @@ function handleRoleError(
     void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
   };
 }
-
 
 function saveUserRole(params: {
   roleModalUser: AdminUser | null;
@@ -350,9 +347,9 @@ async function fetchAllPages(
     typeof payload === 'object' &&
     'results' in (payload as Record<string, unknown>)
       ? (payload as { results: AdminUser[] }).results
-      : (Array.isArray(payload)
+      : Array.isArray(payload)
         ? (payload as AdminUser[])
-        : []);
+        : [];
 
   const all = [...accumulated, ...results];
   const next: string | null =

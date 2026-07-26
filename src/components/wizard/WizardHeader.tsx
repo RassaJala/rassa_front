@@ -65,7 +65,7 @@ export default function WizardHeader({
           borderColor: border,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: isMutating ? 0.3 : (pressed ? 0.6 : 1),
+          opacity: isMutating ? 0.3 : pressed ? 0.6 : 1,
         })}
       >
         <MaterialCommunityIcons name="close" size={22} color={fg} />

@@ -183,7 +183,9 @@ export default function RegistrationFormFields({
                 borderRadius: 10,
                 borderWidth: 1.5,
                 borderColor: isActive ? formColors.brand : formColors.border,
-                backgroundColor: isActive ? formColors.accentBg : formColors.segBg,
+                backgroundColor: isActive
+                  ? formColors.accentBg
+                  : formColors.segBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

@@ -20,7 +20,6 @@ import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import { useTheme } from '@/store/ThemeContext';
 import { getAdminColors } from '@/utils/adminTheme';
 
-
 function FormHeader({
   isDark,
   onBack,
@@ -79,15 +78,10 @@ export default function UserFormScreen(): React.JSX.Element {
 
   const form = useRegistrationForm({ initialRole: 'buyer' });
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-  const {
-    submit,
-    isSubmitting,
-    errorMessage,
-    serverError,
-    setErrorMessage,
-  } = useSubmitNewUser({
-    onSuccess: () => navigation.goBack(),
-  });
+  const { submit, isSubmitting, errorMessage, serverError, setErrorMessage } =
+    useSubmitNewUser({
+      onSuccess: () => navigation.goBack(),
+    });
 
   const handleSubmit = () => submit(form);
 
@@ -167,9 +161,13 @@ export default function UserFormScreen(): React.JSX.Element {
                 accentBg,
                 segBg,
                 errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-                errorBorder: isDark ? colors.admErrorBorderD : colors.admErrorBorderL,
+                errorBorder: isDark
+                  ? colors.admErrorBorderD
+                  : colors.admErrorBorderL,
                 errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-                errorAction: isDark ? colors.admErrorActionD : colors.admErrorActionL,
+                errorAction: isDark
+                  ? colors.admErrorActionD
+                  : colors.admErrorActionL,
               }}
               setErrorMessage={setErrorMessage}
               onOpenDatePicker={() => setIsDatePickerVisible(true)}
