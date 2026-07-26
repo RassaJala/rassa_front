@@ -21,6 +21,8 @@ export interface User {
   direccion: string;
   localidad: number;
   localidad_nombre?: string | null;
+  municipio_id?: number | null;
+  municipio_nombre?: string | null;
 }
 
 export type RegisterRole = 'buyer' | 'farmer' | 'seller';
@@ -47,7 +49,7 @@ export interface UpdateProfilePayload {
   fecha_nacimiento: string;
   sexo: 'M' | 'F' | 'O';
   domicilio: string;
-  fk_localidad: number;
+  fk_localidad: number | null;
 }
 
 export interface ChangePasswordPayload {
@@ -68,22 +70,6 @@ export interface Localidad {
   estado: boolean;
 }
 
-export interface Producto {
-  id_producto: number;
-  nombre_producto: string;
-  descripcion: string;
-  precio: string;
-  stock: number;
-  es_perecedero: boolean;
-  imagen: string | null;
-  estado: boolean;
-  categoria: Category;
-  unidad: Unidad | null;
-  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
-  imagen_principal: string | null;
-  creado_en: string;
-}
-
 export interface Order {
   id_pedido: number;
   cliente_nombre: string | null;
@@ -91,6 +77,8 @@ export interface Order {
   total: string;
   estado_actual: PedidoEstado;
   creado_en: string;
+  productos?: string[];
+  has_more_productos?: boolean;
 }
 
 export interface OrderDetail extends Order {
@@ -151,6 +139,14 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface OrderStatusHistory {
+  readonly id_historial: number;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+  readonly creado_en: string; // ISO datetime
+  readonly cambiado_por_nombre: string | null;
+}
+
 // ── Familias ──────────────────────────────────────────────
 
 export interface Family {
@@ -182,9 +178,10 @@ export interface CreditLimit {
 }
 
 // ── Navigation param lists ────────────────────────────────
-
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  AdminProfile: undefined;
+  OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
   Chat: {
     conversationId: number;
@@ -227,11 +224,13 @@ export type AuthStackParamList = {
 
 export type BuyerTabsParamList = {
   Home: undefined;
+  Pedidos: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
+  OrderDetail: { orderId: number };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {
@@ -262,6 +261,8 @@ export type FarmerStackParamList = {
   Profile: undefined;
   ProductList: undefined;
   ProductForm: { productoId?: number };
+  FarmerDashboard: undefined;
+  PublicationWizard: { publicacionId?: number };
   ChatList: undefined;
   Chat: {
     conversationId: number;

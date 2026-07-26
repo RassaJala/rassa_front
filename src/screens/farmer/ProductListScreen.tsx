@@ -28,14 +28,10 @@ import {
 
 import Toast from '@/components/Toast';
 import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type {
-  ApiResponse,
-  Category,
-  FarmerStackParamList,
-  Producto,
-} from '@/types';
+import type { ApiResponse, Category, FarmerStackParamList } from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,

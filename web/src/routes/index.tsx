@@ -15,8 +15,10 @@ import { AdminProducts } from './AdminProducts';
 import { AdminMunicipios } from './AdminMunicipios';
 import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
+import { AdminOrderDetail } from './AdminOrderDetail';
 import { BuyerHome } from './BuyerHome';
 import { BuyerCart } from './BuyerCart';
+import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
 import { ProfilePage } from './ProfilePage';
 import { useAuth } from '../hooks/useAuth';
@@ -129,6 +131,7 @@ export function AppRouter() {
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
+                <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
@@ -137,7 +140,7 @@ export function AppRouter() {
       </Route>
 
       {/* Cliente */}
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute role="cliente" />}>
         <Route
           path="/cliente/*"
           element={
@@ -146,6 +149,7 @@ export function AppRouter() {
                 <Route index element={<BuyerHome />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
+                <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
