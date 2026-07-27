@@ -40,7 +40,7 @@ import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, RegisterRole } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
 import { getAdminColors } from '@/utils/adminTheme';
 import { parseApiError } from '@/utils/apiErrors';
@@ -906,7 +906,7 @@ function UserManagementScreenContent(): React.JSX.Element {
             {/* Role selector */}
             <RoleSelector
               role={form.role}
-              onChangeRole={form.setRole}
+              onChangeRole={(r) => form.setRole(r as RegisterRole)}
               isDark={isDark}
               disabled={isSubmitting}
             />

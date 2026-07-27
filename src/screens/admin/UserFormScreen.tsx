@@ -21,6 +21,7 @@ import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
+import type { RegisterRole } from '@/types';
 import { getAdminColors } from '@/utils/adminTheme';
 
 function FormHeader({
@@ -171,7 +172,7 @@ function UserFormScreenContent(): React.JSX.Element {
           {/* Selector de Rol */}
           <RoleSelector
             role={form.role}
-            onChangeRole={form.setRole}
+            onChangeRole={(r) => form.setRole(r as RegisterRole)}
             isDark={isDark}
             disabled={isSubmitting}
           />
