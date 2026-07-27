@@ -1,13 +1,13 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ProductFormModal } from '../components/ProductFormModal';
-import type { Producto } from '../components/ProductFormModal';
-import { mediaUrl as sharedMediaUrl } from '../utils/mediaUrl';
-import { PageHeader } from '../components/layout/PageHeader';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { useAppColors } from '../hooks/useAppColors';
-import api from '../services/api';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ProductFormModal } from "../components/ProductFormModal";
+import type { Producto } from "../components/ProductFormModal";
+import { mediaUrl as sharedMediaUrl } from "../utils/mediaUrl";
+import { PageHeader } from "../components/layout/PageHeader";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { useAppColors } from "../hooks/useAppColors";
+import api from "../services/api";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -28,8 +28,8 @@ interface ApiResponse<T> {
 // ── Helpers ────────────────────────────────────────────────
 
 function categoryName(cat: Category | number, categories: Category[]): string {
-  if (typeof cat === 'object' && cat !== null) return cat.nombre;
-  return categories.find((c) => c.id_categoria === cat)?.nombre ?? '';
+  if (typeof cat === "object" && cat !== null) return cat.nombre;
+  return categories.find((c) => c.id_categoria === cat)?.nombre ?? "";
 }
 
 const getActionBtnStyle = (
@@ -40,10 +40,10 @@ const getActionBtnStyle = (
   borderRadius: 10,
   border: `1px solid ${colors.inputBorder}`,
   background: colors.surface,
-  cursor: 'pointer',
+  cursor: "pointer",
   fontSize: 18,
-  display: 'grid',
-  placeItems: 'center',
+  display: "grid",
+  placeItems: "center",
 });
 
 // ── Delete confirm ─────────────────────────────────────────
@@ -73,21 +73,21 @@ function DeleteConfirm({
     setError(null);
 
     // ponytail: optimistic update — sacar producto del cache antes del request (#32)
-    const previous = qc.getQueryData<Producto[]>(['farmer-productos']);
+    const previous = qc.getQueryData<Producto[]>(["farmer-productos"]);
     if (previous) {
-      qc.setQueryData<Producto[]>(['farmer-productos'], (old) =>
+      qc.setQueryData<Producto[]>(["farmer-productos"], (old) =>
         (old ?? []).filter((p) => p.id_producto !== producto.id_producto),
       );
     }
 
     try {
       await api.delete(`/productos/${producto.id_producto}/`);
-      await qc.invalidateQueries({ queryKey: ['farmer-productos'] });
+      await qc.invalidateQueries({ queryKey: ["farmer-productos"] });
       onDeleted();
     } catch {
       // ponytail: rollback on error (#32)
-      if (previous) qc.setQueryData(['farmer-productos'], previous);
-      setError('No se pudo eliminar. Intentá de nuevo.');
+      if (previous) qc.setQueryData(["farmer-productos"], previous);
+      setError("No se pudo eliminar. Intentá de nuevo.");
     } finally {
       loadingRef.current = false;
       setLoading(false);
@@ -97,14 +97,14 @@ function DeleteConfirm({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
         className="w-[90%] max-w-[440px] rounded-[20px] p-7"
         style={{
           background: surface,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
           border: `1px solid ${border}`,
         }}
         onClick={(e) => e.stopPropagation()}
@@ -128,7 +128,7 @@ function DeleteConfirm({
             className="h-8 cursor-pointer rounded-lg px-3 font-[inherit] text-[13px] font-semibold"
             style={{
               border: `1.5px solid ${inputBorder}`,
-              background: 'transparent',
+              background: "transparent",
               color: fg,
               opacity: loading ? 0.5 : 1,
             }}
@@ -141,12 +141,12 @@ function DeleteConfirm({
             className="h-8 cursor-pointer rounded-lg px-3 font-[inherit] text-[13px] font-semibold"
             style={{
               border: `1.5px solid ${coral}`,
-              background: 'transparent',
+              background: "transparent",
               color: coral,
               opacity: loading ? 0.5 : 1,
             }}
           >
-            {loading ? 'Eliminando…' : 'Eliminar'}
+            {loading ? "Eliminando…" : "Eliminar"}
           </button>
         </div>
       </div>
@@ -159,10 +159,10 @@ function DeleteConfirm({
 export function FarmerProducts() {
   const colors = useAppColors();
   const { brand, coral, muted, border, surface, bg, fg, accentBg } = colors;
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState<number | null>(null);
-  const [formTarget, setFormTarget] = useState<Producto | null | 'new'>(null);
+  const [formTarget, setFormTarget] = useState<Producto | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<Producto | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -172,18 +172,18 @@ export function FarmerProducts() {
   }, [search]);
 
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
+      const { data } = await api.get<ApiResponse<Category[]>>("/categorias/");
       return data.data;
     },
     staleTime: 60_000,
   });
 
   const { data: unidades = [] } = useQuery<Unidad[]>({
-    queryKey: ['unidades'],
+    queryKey: ["unidades"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
+      const { data } = await api.get<ApiResponse<Unidad[]>>("/unidades/");
       return data.data;
     },
     staleTime: 60_000,
@@ -195,14 +195,14 @@ export function FarmerProducts() {
     isError,
     refetch,
   } = useQuery<Producto[]>({
-    queryKey: ['farmer-productos', debouncedSearch, selectedCat],
+    queryKey: ["farmer-productos", debouncedSearch, selectedCat],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (debouncedSearch) params.set('nombre', debouncedSearch);
-      if (selectedCat) params.set('categoria', String(selectedCat));
+      if (debouncedSearch) params.set("nombre", debouncedSearch);
+      if (selectedCat) params.set("categoria", String(selectedCat));
       const qs = params.toString();
       const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
-        `/productos/${qs ? `?${qs}` : ''}`,
+        `/productos/${qs ? `?${qs}` : ""}`,
       );
       return data.data.results;
     },
@@ -221,7 +221,7 @@ export function FarmerProducts() {
       {toast && (
         <div
           className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
-          style={{ background: brand, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
+          style={{ background: brand, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
         >
           ✓ {toast}
         </div>
@@ -230,7 +230,7 @@ export function FarmerProducts() {
       <PageHeader
         title="Mis Productos"
         action={
-          <Button variant="primary" onClick={() => setFormTarget('new')}>
+          <Button variant="primary" onClick={() => setFormTarget("new")}>
             + Agregar producto
           </Button>
         }
@@ -253,7 +253,7 @@ export function FarmerProducts() {
 
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {[{ id_categoria: 0, nombre: 'Todas' }, ...categories].map((c) => {
+            {[{ id_categoria: 0, nombre: "Todas" }, ...categories].map((c) => {
               const isActive =
                 c.id_categoria === 0
                   ? selectedCat === null
@@ -268,7 +268,7 @@ export function FarmerProducts() {
                   style={{
                     border: `1px solid ${isActive ? brand : border}`,
                     background: isActive ? brand : surface,
-                    color: isActive ? '#fff' : fg,
+                    color: isActive ? "#fff" : fg,
                   }}
                 >
                   {c.nombre}
@@ -328,12 +328,12 @@ export function FarmerProducts() {
                   }}
                 >
                   {[
-                    'Producto',
-                    'Precio',
-                    'Stock',
-                    'Categoría',
-                    'Estado',
-                    '',
+                    "Producto",
+                    "Precio",
+                    "Stock",
+                    "Categoría",
+                    "Estado",
+                    "",
                   ].map((h) => (
                     <th
                       key={h}
@@ -379,7 +379,7 @@ export function FarmerProducts() {
                           {p.es_perecedero && (
                             <span
                               className="text-xs font-semibold"
-                              style={{ color: '#F2A900' }}
+                              style={{ color: "#F2A900" }}
                             >
                               Perecedero
                             </span>
@@ -406,8 +406,8 @@ export function FarmerProducts() {
                       {categoryName(p.categoria, categories)}
                     </td>
                     <td className="px-[18px] py-4">
-                      <Badge variant={p.estado ? 'success' : 'default'}>
-                        {p.estado ? 'Activo' : 'Inactivo'}
+                      <Badge variant={p.estado ? "success" : "default"}>
+                        {p.estado ? "Activo" : "Inactivo"}
                       </Badge>
                     </td>
                     <td className="px-[18px] py-4">
@@ -468,14 +468,14 @@ export function FarmerProducts() {
                       {categoryName(p.categoria, categories)}
                     </p>
                     <Badge
-                      variant={p.estado ? 'success' : 'default'}
+                      variant={p.estado ? "success" : "default"}
                       className="!px-2 !py-0.5 !text-xs"
                     >
-                      {p.estado ? 'Activo' : 'Inactivo'}
+                      {p.estado ? "Activo" : "Inactivo"}
                     </Badge>
                   </div>
                   <p className="text-base font-bold" style={{ color: brand }}>
-                    ${p.precio}{' '}
+                    ${p.precio}{" "}
                     <span className="text-sm font-normal" style={{ color: fg }}>
                       · Stock: {p.stock}
                     </span>
@@ -502,7 +502,7 @@ export function FarmerProducts() {
       )}
 
       {/* Modals */}
-      {formTarget === 'new' && (
+      {formTarget === "new" && (
         <ProductFormModal
           categories={categories}
           unidades={unidades}
@@ -510,11 +510,11 @@ export function FarmerProducts() {
           onClose={() => setFormTarget(null)}
           onSaved={() => {
             setFormTarget(null);
-            showToast('Producto creado.');
+            showToast("Producto creado.");
           }}
         />
       )}
-      {formTarget !== null && formTarget !== 'new' && (
+      {formTarget !== null && formTarget !== "new" && (
         <ProductFormModal
           producto={formTarget}
           categories={categories}
@@ -523,7 +523,7 @@ export function FarmerProducts() {
           onClose={() => setFormTarget(null)}
           onSaved={() => {
             setFormTarget(null);
-            showToast('Producto actualizado.');
+            showToast("Producto actualizado.");
           }}
         />
       )}
@@ -535,7 +535,7 @@ export function FarmerProducts() {
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
             setDeleteTarget(null);
-            showToast('Producto eliminado.');
+            showToast("Producto eliminado.");
           }}
         />
       )}

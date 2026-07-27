@@ -1,8 +1,8 @@
-import { DataTable } from '../components/layout/DataTable';
-import { PageHeader } from '../components/layout/PageHeader';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import type { Column } from '../types';
+import { DataTable } from "../components/layout/DataTable";
+import { PageHeader } from "../components/layout/PageHeader";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import type { Column } from "../types";
 
 // --- Types ---
 
@@ -12,7 +12,7 @@ interface SaleRow {
   cantidad: number;
   total: string;
   fecha: string;
-  estado: 'Completada' | 'Pendiente' | 'Cancelada';
+  estado: "Completada" | "Pendiente" | "Cancelada";
 }
 
 interface SellerOrderRow {
@@ -22,7 +22,7 @@ interface SellerOrderRow {
   cantidad: number;
   total: string;
   fecha: string;
-  estado: 'Pendiente' | 'En camino' | 'Entregado';
+  estado: "Pendiente" | "En camino" | "Entregado";
 }
 
 // --- Mock Data ---
@@ -30,109 +30,109 @@ interface SellerOrderRow {
 const sampleSales: SaleRow[] = [
   {
     id: 1,
-    producto: 'Tomate orgánico',
+    producto: "Tomate orgánico",
     cantidad: 5,
-    total: '$750',
-    fecha: '15/07/2026',
-    estado: 'Completada',
+    total: "$750",
+    fecha: "15/07/2026",
+    estado: "Completada",
   },
   {
     id: 2,
-    producto: 'Lechuga hidropónica',
+    producto: "Lechuga hidropónica",
     cantidad: 10,
-    total: '$1.000',
-    fecha: '14/07/2026',
-    estado: 'Pendiente',
+    total: "$1.000",
+    fecha: "14/07/2026",
+    estado: "Pendiente",
   },
   {
     id: 3,
-    producto: 'Pimiento morrón',
+    producto: "Pimiento morrón",
     cantidad: 3,
-    total: '$255',
-    fecha: '12/07/2026',
-    estado: 'Cancelada',
+    total: "$255",
+    fecha: "12/07/2026",
+    estado: "Cancelada",
   },
   {
     id: 4,
-    producto: 'Zanahoria baby',
+    producto: "Zanahoria baby",
     cantidad: 8,
-    total: '$520',
-    fecha: '10/07/2026',
-    estado: 'Completada',
+    total: "$520",
+    fecha: "10/07/2026",
+    estado: "Completada",
   },
   {
     id: 5,
-    producto: 'Cebolla colorada',
+    producto: "Cebolla colorada",
     cantidad: 12,
-    total: '$480',
-    fecha: '08/07/2026',
-    estado: 'Completada',
+    total: "$480",
+    fecha: "08/07/2026",
+    estado: "Completada",
   },
 ];
 
 const sampleSellerOrders: SellerOrderRow[] = [
   {
     id: 1,
-    comprador: 'María García',
-    producto: 'Tomate orgánico',
+    comprador: "María García",
+    producto: "Tomate orgánico",
     cantidad: 3,
-    total: '$450',
-    fecha: '16/07/2026',
-    estado: 'Pendiente',
+    total: "$450",
+    fecha: "16/07/2026",
+    estado: "Pendiente",
   },
   {
     id: 2,
-    comprador: 'Carlos López',
-    producto: 'Lechuga hidropónica',
+    comprador: "Carlos López",
+    producto: "Lechuga hidropónica",
     cantidad: 5,
-    total: '$500',
-    fecha: '15/07/2026',
-    estado: 'En camino',
+    total: "$500",
+    fecha: "15/07/2026",
+    estado: "En camino",
   },
   {
     id: 3,
-    comprador: 'Ana Martínez',
-    producto: 'Zanahoria baby',
+    comprador: "Ana Martínez",
+    producto: "Zanahoria baby",
     cantidad: 8,
-    total: '$520',
-    fecha: '14/07/2026',
-    estado: 'Entregado',
+    total: "$520",
+    fecha: "14/07/2026",
+    estado: "Entregado",
   },
   {
     id: 4,
-    comprador: 'Juan Pérez',
-    producto: 'Pimiento morrón',
+    comprador: "Juan Pérez",
+    producto: "Pimiento morrón",
     cantidad: 2,
-    total: '$170',
-    fecha: '13/07/2026',
-    estado: 'Entregado',
+    total: "$170",
+    fecha: "13/07/2026",
+    estado: "Entregado",
   },
 ];
 
 // --- Columns ---
 
 const saleStatusVariant: Record<
-  SaleRow['estado'],
-  'success' | 'warning' | 'error'
+  SaleRow["estado"],
+  "success" | "warning" | "error"
 > = {
-  Completada: 'success',
-  Pendiente: 'warning',
-  Cancelada: 'error',
+  Completada: "success",
+  Pendiente: "warning",
+  Cancelada: "error",
 };
 
 const saleColumns: Column<SaleRow>[] = [
-  { key: 'producto', label: 'Producto', sortable: true },
-  { key: 'cantidad', label: 'Cantidad', sortable: true },
+  { key: "producto", label: "Producto", sortable: true },
+  { key: "cantidad", label: "Cantidad", sortable: true },
   {
-    key: 'total',
-    label: 'Total',
+    key: "total",
+    label: "Total",
     sortable: true,
-    className: 'font-semibold text-brand-orange',
+    className: "font-semibold text-brand-orange",
   },
-  { key: 'fecha', label: 'Fecha', sortable: true },
+  { key: "fecha", label: "Fecha", sortable: true },
   {
-    key: 'estado',
-    label: 'Estado',
+    key: "estado",
+    label: "Estado",
     render: (s) => (
       <Badge variant={saleStatusVariant[s.estado]}>{s.estado}</Badge>
     ),
@@ -140,28 +140,28 @@ const saleColumns: Column<SaleRow>[] = [
 ];
 
 const sellerOrderStatusVariant: Record<
-  SellerOrderRow['estado'],
-  'default' | 'success' | 'warning' | 'error'
+  SellerOrderRow["estado"],
+  "default" | "success" | "warning" | "error"
 > = {
-  Pendiente: 'warning',
-  'En camino': 'default',
-  Entregado: 'success',
+  Pendiente: "warning",
+  "En camino": "default",
+  Entregado: "success",
 };
 
 const sellerOrderColumns: Column<SellerOrderRow>[] = [
-  { key: 'comprador', label: 'Comprador', sortable: true },
-  { key: 'producto', label: 'Producto', sortable: true },
-  { key: 'cantidad', label: 'Cantidad', sortable: true },
+  { key: "comprador", label: "Comprador", sortable: true },
+  { key: "producto", label: "Producto", sortable: true },
+  { key: "cantidad", label: "Cantidad", sortable: true },
   {
-    key: 'total',
-    label: 'Total',
+    key: "total",
+    label: "Total",
     sortable: true,
-    className: 'font-semibold text-brand-orange',
+    className: "font-semibold text-brand-orange",
   },
-  { key: 'fecha', label: 'Fecha', sortable: true },
+  { key: "fecha", label: "Fecha", sortable: true },
   {
-    key: 'estado',
-    label: 'Estado',
+    key: "estado",
+    label: "Estado",
     render: (o) => (
       <Badge variant={sellerOrderStatusVariant[o.estado]}>{o.estado}</Badge>
     ),

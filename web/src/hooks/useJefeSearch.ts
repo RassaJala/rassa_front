@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-import api from '../services/api';
-import type { SearchUserResult } from '../types';
+import api from "../services/api";
+import type { SearchUserResult } from "../types";
 
 export function useJefeSearch(
   query: string,
@@ -13,7 +13,7 @@ export function useJefeSearch(
   const { data: results = [], isLoading: isSearching } = useQuery<
     SearchUserResult[]
   >({
-    queryKey: ['user-search', trimmed],
+    queryKey: ["user-search", trimmed],
     queryFn: async () => {
       const { data } = await api.get(
         `/auth/search-users/?q=${encodeURIComponent(trimmed)}&include_assigned=false`,

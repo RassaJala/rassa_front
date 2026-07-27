@@ -32,17 +32,17 @@ export function getWeekNumber(date: Date): number {
 
 export function formatDate(iso: Date, opts?: { short?: boolean }): string {
   if (opts?.short) {
-    return iso.toLocaleDateString('es-AR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return iso.toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   }
-  return iso.toLocaleDateString('es-AR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return iso.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
@@ -68,23 +68,14 @@ export function validateItem(item: WizardItemDraft): ItemValidation {
   const errors: ItemValidation = {};
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
-    errors.stock = 'Stock debe ser mayor a 0.';
+    errors.stock = "Stock debe ser mayor a 0.";
   }
   const precioNum = Number(item.precio);
   if (!item.precio || Number.isNaN(precioNum) || precioNum <= 0) {
-    errors.precio = 'Precio debe ser mayor a 0.';
+    errors.precio = "Precio debe ser mayor a 0.";
   }
   if (!item.fk_unidad) {
-    errors.fk_unidad = 'Seleccioná una unidad.';
+    errors.fk_unidad = "Seleccioná una unidad.";
   }
   return errors;
-}
-
-// ── Dynamic timeout based on item count ─────────────────────
-
-const BASE_TIMEOUT = 30_000;
-const PER_ITEM_TIMEOUT = 15_000;
-
-export function computePersistTimeout(itemCount: number): number {
-  return BASE_TIMEOUT + itemCount * PER_ITEM_TIMEOUT;
 }

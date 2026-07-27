@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
-import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useState } from "react";
+import { useTheme } from "~/providers/ThemeProvider";
+import { getColors } from "~/constants/colors";
+import { btnStyle as sharedBtnStyle } from "@/constants/styles";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -10,7 +10,7 @@ import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 const FILTER_PASSWORD = /[^a-zA-Z0-9]/g;
 
 function filterPasswordInput(value: string): string {
-  return value.replace(FILTER_PASSWORD, '');
+  return value.replace(FILTER_PASSWORD, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ export function ProfileChangePassword({
   onSubmit,
 }: ProfileChangePasswordProps) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const isDark = resolved === "dark";
   const colors = getColors(isDark);
   const { fg, muted, border, surface, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -54,34 +54,34 @@ export function ProfileChangePassword({
 
   function inputStyle(fieldName: string) {
     return {
-      width: '100%' as const,
+      width: "100%" as const,
       height: 44,
       border: `1.5px solid ${focusedField === fieldName ? coral : border}`,
       borderRadius: 10,
-      padding: '0 14px',
+      padding: "0 14px",
       fontSize: 15,
-      fontFamily: 'inherit',
+      fontFamily: "inherit",
       background: bg,
       color: fg,
-      outline: 'none',
-      boxSizing: 'border-box' as const,
+      outline: "none",
+      boxSizing: "border-box" as const,
     };
   }
 
   function renderField(label: string, fieldName: string) {
     const value =
-      fieldName === 'current'
+      fieldName === "current"
         ? currentPassword
-        : fieldName === 'new'
+        : fieldName === "new"
           ? newPassword
           : confirmPassword;
     const onChange =
-      fieldName === 'current'
+      fieldName === "current"
         ? (v: string) => {
             onCurrentPasswordChange(filterPasswordInput(v));
             onPasswordErrorClear();
           }
-        : fieldName === 'new'
+        : fieldName === "new"
           ? (v: string) => {
               onNewPasswordChange(filterPasswordInput(v));
               onPasswordErrorClear();
@@ -92,13 +92,13 @@ export function ProfileChangePassword({
             };
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <label
           style={{
             fontSize: 13,
             fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: muted,
           }}
         >
@@ -124,8 +124,8 @@ export function ProfileChangePassword({
         borderRadius: 16,
         border: `1px solid ${border}`,
         padding: 24,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 18,
       }}
     >
@@ -144,11 +144,11 @@ export function ProfileChangePassword({
         <div
           style={{
             borderRadius: 10,
-            border: '1px solid #fca5a5',
-            background: isDark ? '#451a1a' : '#fef2f2',
+            border: "1px solid #fca5a5",
+            background: isDark ? "#451a1a" : "#fef2f2",
             padding: 12,
             fontSize: 14,
-            color: isDark ? '#fca5a5' : '#dc2626',
+            color: isDark ? "#fca5a5" : "#dc2626",
           }}
         >
           {passwordError}
@@ -159,27 +159,27 @@ export function ProfileChangePassword({
         <div
           style={{
             borderRadius: 10,
-            border: '1px solid #86efac',
-            background: isDark ? '#052e16' : '#f0fdf4',
+            border: "1px solid #86efac",
+            background: isDark ? "#052e16" : "#f0fdf4",
             padding: 12,
             fontSize: 14,
-            color: isDark ? '#86efac' : '#16a34a',
+            color: isDark ? "#86efac" : "#16a34a",
           }}
         >
           {passwordSuccess}
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {renderField('Contraseña Actual *', 'current')}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {renderField("Contraseña Actual *", "current")}
         {renderField(
-          'Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *',
-          'new',
+          "Nueva Contraseña (8+ caracteres, solo letras y números, 1 mayúscula) *",
+          "new",
         )}
-        {renderField('Confirmar Nueva Contraseña *', 'confirm')}
+        {renderField("Confirmar Nueva Contraseña *", "confirm")}
       </div>
 
-      <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
+      <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
         <button
           type="button"
           disabled={passwordSubmitting}
@@ -187,11 +187,11 @@ export function ProfileChangePassword({
           style={{
             ...btnStyle,
             background: coral,
-            color: '#fff',
+            color: "#fff",
             opacity: passwordSubmitting ? 0.6 : 1,
           }}
         >
-          {passwordSubmitting ? 'Cambiando...' : 'Cambiar Contraseña'}
+          {passwordSubmitting ? "Cambiando..." : "Cambiar Contraseña"}
         </button>
       </div>
     </div>

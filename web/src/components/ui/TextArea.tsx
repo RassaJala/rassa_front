@@ -1,5 +1,5 @@
-import { forwardRef, type TextareaHTMLAttributes } from 'react';
-import type { AppColors } from '../../hooks/useAppColors';
+import { forwardRef, type TextareaHTMLAttributes } from "react";
+import type { AppColors } from "../../hooks/useAppColors";
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   colors: AppColors;
@@ -8,7 +8,7 @@ interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 // ponytail: textarea reutilizable (#28) — reemplaza HTML raw en ProductFormModal
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ colors, hasError, className = '', ...props }, ref) => {
+  ({ colors, hasError, className = "", ...props }, ref) => {
     return (
       <textarea
         ref={ref}
@@ -17,7 +17,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           borderColor: hasError ? colors.coral : colors.inputBorder,
           background: colors.surface,
           color: colors.fg,
-          borderWidth: '1.5px',
+          borderWidth: "1.5px",
         }}
         {...props}
       />
@@ -25,4 +25,4 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   },
 );
 
-TextArea.displayName = 'TextArea';
+TextArea.displayName = "TextArea";

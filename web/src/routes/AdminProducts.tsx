@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from "react";
 
-import { useAppColors } from '../hooks/useAppColors';
-import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import { useAppColors } from "../hooks/useAppColors";
+import { btnStyle as sharedBtnStyle } from "@/constants/styles";
 
 interface Product {
   id: number;
@@ -17,83 +17,83 @@ interface Product {
 const initialData: Product[] = [
   {
     id: 1,
-    nombre: 'Aguacate Hass',
-    categoria: 'Fruta',
+    nombre: "Aguacate Hass",
+    categoria: "Fruta",
     precio: 45,
     stock: 120,
-    unidad: 'kg',
-    descripcion: 'Aguacate Hass premium de Antioquia.',
+    unidad: "kg",
+    descripcion: "Aguacate Hass premium de Antioquia.",
     estado: true,
   },
   {
     id: 2,
-    nombre: 'Tomate orgánico',
-    categoria: 'Verdura',
+    nombre: "Tomate orgánico",
+    categoria: "Verdura",
     precio: 32,
     stock: 85,
-    unidad: 'kg',
-    descripcion: 'Tomate chonto sin pesticidas.',
+    unidad: "kg",
+    descripcion: "Tomate chonto sin pesticidas.",
     estado: true,
   },
   {
     id: 3,
-    nombre: 'Café especial',
-    categoria: 'Grano',
+    nombre: "Café especial",
+    categoria: "Grano",
     precio: 180,
     stock: 28,
-    unidad: 'kg',
-    descripcion: 'Café de altura, tostado medio.',
+    unidad: "kg",
+    descripcion: "Café de altura, tostado medio.",
     estado: true,
   },
   {
     id: 4,
-    nombre: 'Cebolla larga',
-    categoria: 'Verdura',
+    nombre: "Cebolla larga",
+    categoria: "Verdura",
     precio: 18,
     stock: 200,
-    unidad: 'kg',
-    descripcion: 'Cebolla larga fresca de la sabana.',
+    unidad: "kg",
+    descripcion: "Cebolla larga fresca de la sabana.",
     estado: true,
   },
   {
     id: 5,
-    nombre: 'Maíz criollo',
-    categoria: 'Grano',
+    nombre: "Maíz criollo",
+    categoria: "Grano",
     precio: 25,
     stock: 150,
-    unidad: 'kg',
-    descripcion: 'Maíz amarillo para arepas.',
+    unidad: "kg",
+    descripcion: "Maíz amarillo para arepas.",
     estado: true,
   },
   {
     id: 6,
-    nombre: 'Lechuga romana',
-    categoria: 'Verdura',
+    nombre: "Lechuga romana",
+    categoria: "Verdura",
     precio: 15,
     stock: 60,
-    unidad: 'unidad',
-    descripcion: 'Lechuga romana hidropónica.',
+    unidad: "unidad",
+    descripcion: "Lechuga romana hidropónica.",
     estado: false,
   },
 ];
 
 const catEmoji: Record<string, string> = {
-  Fruta: '🥑',
-  Verdura: '🥬',
-  Grano: '🌾',
-  Otro: '📦',
+  Fruta: "🥑",
+  Verdura: "🥬",
+  Grano: "🌾",
+  Otro: "📦",
 };
 const catClass: Record<string, { bg: string; color: string }> = {
-  Verdura: { bg: '#D9F0E0', color: '#3A7D5A' },
-  Fruta: { bg: '#F5E6C8', color: '#C48A20' },
-  Grano: { bg: '#E8E0C8', color: '#8A7A40' },
-  Otro: { bg: '#D0D8E8', color: '#4A5A7A' },
+  Verdura: { bg: "#D9F0E0", color: "#3A7D5A" },
+  Fruta: { bg: "#F5E6C8", color: "#C48A20" },
+  Grano: { bg: "#E8E0C8", color: "#8A7A40" },
+  Otro: { bg: "#D0D8E8", color: "#4A5A7A" },
 };
 const unitLabels: Record<string, string> = {
-  kg: 'kg',
-  unidad: 'unid.',
-  lb: 'lb',
-  arroba: '@',
+  kg: "kg",
+  unidad: "unid.",
+  lb: "lb",
+  arroba: "@",
 };
 
 export function AdminProducts() {
@@ -101,17 +101,17 @@ export function AdminProducts() {
   const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Product[]>(initialData);
-  const [tab, setTab] = useState<'list' | 'form'>('list');
+  const [tab, setTab] = useState<"list" | "form">("list");
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({
-    nombre: '',
-    categoria: '',
-    precio: '',
-    stock: '',
-    unidad: 'kg',
-    descripcion: '',
+    nombre: "",
+    categoria: "",
+    precio: "",
+    stock: "",
+    unidad: "kg",
+    descripcion: "",
   });
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [delTarget, setDelTarget] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -128,14 +128,14 @@ export function AdminProducts() {
   function startNew() {
     setEditId(null);
     setForm({
-      nombre: '',
-      categoria: '',
-      precio: '',
-      stock: '',
-      unidad: 'kg',
-      descripcion: '',
+      nombre: "",
+      categoria: "",
+      precio: "",
+      stock: "",
+      unidad: "kg",
+      descripcion: "",
     });
-    setTab('form');
+    setTab("form");
   }
 
   function startEdit(item: Product) {
@@ -148,7 +148,7 @@ export function AdminProducts() {
       unidad: item.unidad,
       descripcion: item.descripcion,
     });
-    setTab('form');
+    setTab("form");
   }
 
   function handleSave(e: React.FormEvent) {
@@ -189,7 +189,7 @@ export function AdminProducts() {
         },
       ]);
     }
-    setTab('list');
+    setTab("list");
     setSaving(false);
   }
 
@@ -212,11 +212,11 @@ export function AdminProducts() {
       {/* Header */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 20,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 12,
         }}
       >
@@ -224,7 +224,7 @@ export function AdminProducts() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
@@ -232,7 +232,7 @@ export function AdminProducts() {
         </h2>
         <button
           onClick={startNew}
-          style={{ ...btnStyle, background: coral, color: '#fff' }}
+          style={{ ...btnStyle, background: coral, color: "#fff" }}
         >
           ＋ Nuevo producto
         </button>
@@ -241,55 +241,55 @@ export function AdminProducts() {
       {/* Tabs */}
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 2,
           background: border,
           borderRadius: 12,
           padding: 3,
           marginBottom: 20,
-          width: 'fit-content',
+          width: "fit-content",
         }}
       >
-        {['list', 'form'].map((t) => (
+        {["list", "form"].map((t) => (
           <button
             key={t}
-            onClick={() => (t === 'form' ? startNew() : setTab('list'))}
+            onClick={() => (t === "form" ? startNew() : setTab("list"))}
             style={{
-              padding: '8px 20px',
-              border: 'none',
+              padding: "8px 20px",
+              border: "none",
               borderRadius: 10,
               fontSize: 14,
               fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              background: tab === t ? surface : 'transparent',
+              fontFamily: "inherit",
+              cursor: "pointer",
+              background: tab === t ? surface : "transparent",
               color: tab === t ? fg : muted,
-              boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+              boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
             }}
           >
-            {t === 'list' ? '📋 Lista de productos' : '➕ Agregar producto'}
+            {t === "list" ? "📋 Lista de productos" : "➕ Agregar producto"}
           </button>
         ))}
       </div>
 
       {/* TAB: List */}
-      {tab === 'list' && (
+      {tab === "list" && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "16px 20px",
               borderBottom: `1px solid ${border}`,
-              flexWrap: 'wrap',
+              flexWrap: "wrap",
               gap: 8,
             }}
           >
@@ -305,38 +305,38 @@ export function AdminProducts() {
                 height: 36,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
-                padding: '0 12px',
+                padding: "0 12px",
                 fontSize: 13,
-                fontFamily: 'inherit',
+                fontFamily: "inherit",
                 width: 220,
                 background: bg,
                 color: fg,
-                outline: 'none',
+                outline: "none",
               }}
             />
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
                   {[
-                    'Producto',
-                    'Categoría',
-                    'Precio',
-                    'Stock',
-                    'Estado',
-                    'Acciones',
+                    "Producto",
+                    "Categoría",
+                    "Precio",
+                    "Stock",
+                    "Estado",
+                    "Acciones",
                   ].map((h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: 'left',
+                        textAlign: "left",
                         fontSize: 11,
                         color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         fontWeight: 600,
-                        padding: '12px 20px',
+                        padding: "12px 20px",
                         background: bg,
                         borderBottom: `1px solid ${border}`,
                       }}
@@ -352,8 +352,8 @@ export function AdminProducts() {
                     <td
                       colSpan={6}
                       style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
+                        textAlign: "center",
+                        padding: "48px 24px",
                         color: muted,
                         fontSize: 14,
                       }}
@@ -364,16 +364,16 @@ export function AdminProducts() {
                 ) : (
                   filtered.map((item) => {
                     const catBg = isDark
-                      ? '#1C2D22'
-                      : (catClass[item.categoria]?.bg ?? '#D0D8E8');
+                      ? "#1C2D22"
+                      : (catClass[item.categoria]?.bg ?? "#D0D8E8");
                     const catColor = isDark
-                      ? '#4A8A63'
-                      : (catClass[item.categoria]?.color ?? '#4A5A7A');
+                      ? "#4A8A63"
+                      : (catClass[item.categoria]?.color ?? "#4A5A7A");
                     return (
                       <tr key={item.id}>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             fontSize: 14,
                             borderBottom: `1px solid ${border}`,
                             fontWeight: 600,
@@ -382,26 +382,26 @@ export function AdminProducts() {
                         >
                           <span
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               gap: 8,
                             }}
                           >
                             <span>
-                              {catEmoji[item.categoria] ?? '📦'} {item.nombre}
+                              {catEmoji[item.categoria] ?? "📦"} {item.nombre}
                             </span>
                           </span>
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
                           <span
                             style={{
                               fontSize: 12,
-                              padding: '3px 10px',
+                              padding: "3px 10px",
                               borderRadius: 6,
                               fontWeight: 600,
                               background: catBg,
@@ -413,18 +413,18 @@ export function AdminProducts() {
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             fontSize: 14,
                             borderBottom: `1px solid ${border}`,
                             color: fg,
                           }}
                         >
-                          ${item.precio} /{' '}
+                          ${item.precio} /{" "}
                           {unitLabels[item.unidad] ?? item.unidad}
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             fontSize: 14,
                             borderBottom: `1px solid ${border}`,
                             color: muted,
@@ -434,7 +434,7 @@ export function AdminProducts() {
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
@@ -442,32 +442,32 @@ export function AdminProducts() {
                             style={{
                               fontSize: 12,
                               fontWeight: 600,
-                              padding: '3px 10px',
+                              padding: "3px 10px",
                               borderRadius: 6,
                               background: item.estado
                                 ? isDark
-                                  ? 'rgba(74,138,99,0.15)'
-                                  : 'rgba(36,86,60,0.07)'
+                                  ? "rgba(74,138,99,0.15)"
+                                  : "rgba(36,86,60,0.07)"
                                 : isDark
-                                  ? 'rgba(212,160,32,0.12)'
-                                  : 'rgba(242,169,0,0.1)',
-                              color: item.estado ? brand : '#F2A900',
+                                  ? "rgba(212,160,32,0.12)"
+                                  : "rgba(242,169,0,0.1)",
+                              color: item.estado ? brand : "#F2A900",
                             }}
                           >
-                            {item.estado ? 'Activo' : 'Inactivo'}
+                            {item.estado ? "Activo" : "Inactivo"}
                           </span>
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
-                          <div style={{ display: 'flex', gap: 4 }}>
+                          <div style={{ display: "flex", gap: 4 }}>
                             <button
                               onClick={() => toggleStatus(item)}
                               aria-label={
-                                item.estado ? 'Desactivar' : 'Activar'
+                                item.estado ? "Desactivar" : "Activar"
                               }
                               style={{
                                 width: 32,
@@ -475,14 +475,14 @@ export function AdminProducts() {
                                 borderRadius: 8,
                                 border: `1px solid ${border}`,
                                 background: surface,
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
+                                display: "grid",
+                                placeItems: "center",
                                 color: fg,
                               }}
                             >
-                              {item.estado ? '⏸' : '▶️'}
+                              {item.estado ? "⏸" : "▶️"}
                             </button>
                             <button
                               onClick={() => startEdit(item)}
@@ -493,10 +493,10 @@ export function AdminProducts() {
                                 borderRadius: 8,
                                 border: `1px solid ${border}`,
                                 background: surface,
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
+                                display: "grid",
+                                placeItems: "center",
                                 color: fg,
                               }}
                             >
@@ -511,10 +511,10 @@ export function AdminProducts() {
                                 borderRadius: 8,
                                 border: `1px solid ${border}`,
                                 background: surface,
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
+                                display: "grid",
+                                placeItems: "center",
                                 color: fg,
                               }}
                             >
@@ -533,30 +533,30 @@ export function AdminProducts() {
       )}
 
       {/* TAB: Form */}
-      {tab === 'form' && (
+      {tab === "form" && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <div
             style={{
-              padding: '20px 24px',
+              padding: "20px 24px",
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? 'Editar producto' : 'Nuevo producto'}
+              {editId ? "Editar producto" : "Nuevo producto"}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
               gap: 18,
               padding: 24,
             }}
@@ -564,9 +564,9 @@ export function AdminProducts() {
             <div
               className="full"
               style={{
-                gridColumn: '1 / -1',
-                display: 'flex',
-                flexDirection: 'column',
+                gridColumn: "1 / -1",
+                display: "flex",
+                flexDirection: "column",
                 gap: 5,
               }}
             >
@@ -574,8 +574,8 @@ export function AdminProducts() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -594,19 +594,19 @@ export function AdminProducts() {
                   border,
                   brand,
                   fg,
-                  focusedField === 'nombre',
+                  focusedField === "nombre",
                 )}
-                onFocus={() => setFocusedField('nombre')}
+                onFocus={() => setFocusedField("nombre")}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -624,12 +624,12 @@ export function AdminProducts() {
                     border,
                     brand,
                     fg,
-                    focusedField === 'categoria',
+                    focusedField === "categoria",
                   ),
-                  appearance: 'none',
+                  appearance: "none",
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 14px center',
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 14px center",
                   paddingRight: 36,
                 }}
               >
@@ -640,13 +640,13 @@ export function AdminProducts() {
                 <option value="Otro">Otro</option>
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -663,12 +663,12 @@ export function AdminProducts() {
                     border,
                     brand,
                     fg,
-                    focusedField === 'unidad',
+                    focusedField === "unidad",
                   ),
-                  appearance: 'none',
+                  appearance: "none",
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 14px center',
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 14px center",
                   paddingRight: 36,
                 }}
               >
@@ -677,13 +677,13 @@ export function AdminProducts() {
                 <option value="lb">Libra (lb)</option>
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -704,19 +704,19 @@ export function AdminProducts() {
                   border,
                   brand,
                   fg,
-                  focusedField === 'precio',
+                  focusedField === "precio",
                 )}
-                onFocus={() => setFocusedField('precio')}
+                onFocus={() => setFocusedField("precio")}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -736,18 +736,18 @@ export function AdminProducts() {
                   border,
                   brand,
                   fg,
-                  focusedField === 'stock',
+                  focusedField === "stock",
                 )}
-                onFocus={() => setFocusedField('stock')}
+                onFocus={() => setFocusedField("stock")}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
             <div
               className="full"
               style={{
-                gridColumn: '1 / -1',
-                display: 'flex',
-                flexDirection: 'column',
+                gridColumn: "1 / -1",
+                display: "flex",
+                flexDirection: "column",
                 gap: 5,
               }}
             >
@@ -755,8 +755,8 @@ export function AdminProducts() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -774,24 +774,24 @@ export function AdminProducts() {
                     border,
                     brand,
                     fg,
-                    focusedField === 'descripcion',
+                    focusedField === "descripcion",
                   ),
                   height: 90,
-                  padding: '12px 14px',
-                  resize: 'vertical',
+                  padding: "12px 14px",
+                  resize: "vertical",
                 }}
-                onFocus={() => setFocusedField('descripcion')}
+                onFocus={() => setFocusedField("descripcion")}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 type="submit"
                 disabled={saving}
                 style={{
                   ...btnStyle,
                   background: coral,
-                  color: '#fff',
+                  color: "#fff",
                   opacity: saving ? 0.6 : 1,
                 }}
               >
@@ -799,10 +799,10 @@ export function AdminProducts() {
               </button>
               <button
                 type="button"
-                onClick={() => setTab('list')}
+                onClick={() => setTab("list")}
                 style={{
                   ...btnStyle,
-                  background: 'transparent',
+                  background: "transparent",
                   border: `1.5px solid ${border}`,
                   color: fg,
                 }}
@@ -818,14 +818,14 @@ export function AdminProducts() {
       {delTarget && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 50,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: "blur(4px)",
           }}
           onClick={() => setDelTarget(null)}
         >
@@ -835,9 +835,9 @@ export function AdminProducts() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: '90%',
+              width: "90%",
               border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -856,21 +856,21 @@ export function AdminProducts() {
               deshacer.
             </p>
             <div
-              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
             >
               <button
                 onClick={() => setDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: '0 12px',
+                  padding: "0 12px",
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: 'transparent',
+                  background: "transparent",
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Cancelar
@@ -879,15 +879,15 @@ export function AdminProducts() {
                 onClick={handleDelete}
                 style={{
                   height: 32,
-                  padding: '0 12px',
+                  padding: "0 12px",
                   borderRadius: 8,
-                  border: '1.5px solid #DE393A',
-                  background: 'transparent',
-                  color: '#DE393A',
+                  border: "1.5px solid #DE393A",
+                  background: "transparent",
+                  color: "#DE393A",
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Eliminar
@@ -908,16 +908,16 @@ function inputStyle(
   focused?: boolean,
 ): React.CSSProperties {
   return {
-    width: '100%',
+    width: "100%",
     height: 44,
     border: `1.5px solid ${focused ? brand : border}`,
     borderRadius: 10,
-    padding: '0 14px',
+    padding: "0 14px",
     fontSize: 15,
-    fontFamily: 'inherit',
+    fontFamily: "inherit",
     background: bg,
     color: fg,
-    outline: 'none',
-    boxSizing: 'border-box' as const,
+    outline: "none",
+    boxSizing: "border-box" as const,
   };
 }

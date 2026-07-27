@@ -1,11 +1,11 @@
-import type { Family } from '../types';
-import api from './api';
+import type { Family } from "../types";
+import api from "./api";
 
 export async function createFamilyWithHead(
   payload: { nombre_familia: string; detalle_familia?: string },
   jefeUserId: number,
 ): Promise<Family> {
-  const { data } = await api.post('/familias/grupos/', {
+  const { data } = await api.post("/familias/grupos/", {
     ...payload,
     estado: true,
   });
@@ -16,7 +16,7 @@ export async function createFamilyWithHead(
 
   let rollbackOk = true;
   try {
-    await api.post('/familias/miembros/', {
+    await api.post("/familias/miembros/", {
       fk_usuario: jefeUserId,
       fk_familia: familyId,
     });
@@ -30,13 +30,13 @@ export async function createFamilyWithHead(
     } catch (rollbackErr) {
       rollbackOk = false;
       console.error(
-        '[Rollback Error] Failed to delete empty family:',
+        "[Rollback Error] Failed to delete empty family:",
         rollbackErr,
       );
     }
     if (!rollbackOk) {
       throw new Error(
-        'Error al asignar el jefe de familia. La familia fue creada pero el rollback falló — contactá al administrador.',
+        "Error al asignar el jefe de familia. La familia fue creada pero el rollback falló — contactá al administrador.",
       );
     }
     throw err;

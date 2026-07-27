@@ -1,33 +1,33 @@
-import { PageHeader } from '../components/layout/PageHeader';
+import { PageHeader } from "../components/layout/PageHeader";
 
 const sampleItems = [
   {
     id: 1,
-    nombre: 'Tomate orgánico',
+    nombre: "Tomate orgánico",
     cantidad: 5,
-    precio: '$150 / kg',
-    subtotal: '$750',
+    precio: "$150 / kg",
+    subtotal: "$750",
   },
   {
     id: 2,
-    nombre: 'Lechuga hidropónica',
+    nombre: "Lechuga hidropónica",
     cantidad: 2,
-    precio: '$100 / unit',
-    subtotal: '$200',
+    precio: "$100 / unit",
+    subtotal: "$200",
   },
   {
     id: 3,
-    nombre: 'Zanahoria baby',
+    nombre: "Zanahoria baby",
     cantidad: 3,
-    precio: '$65 / kg',
-    subtotal: '$195',
+    precio: "$65 / kg",
+    subtotal: "$195",
   },
 ];
 
 export function BuyerCart() {
   const total = sampleItems.reduce(
     (acc, item) =>
-      acc + parseInt(item.subtotal.replace('$', '').replace('.', ''), 10),
+      acc + parseInt(item.subtotal.replace("$", "").replace(".", ""), 10),
     0,
   );
 

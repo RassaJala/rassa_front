@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useTheme } from '~/providers/ThemeProvider';
-import { getColors } from '~/constants/colors';
-import { btnStyle as sharedBtnStyle } from '@/constants/styles';
-import { LocationSelector } from '~/components/profile/LocationSelector';
+import { useEffect, useState } from "react";
+import { useTheme } from "~/providers/ThemeProvider";
+import { getColors } from "~/constants/colors";
+import { btnStyle as sharedBtnStyle } from "@/constants/styles";
+import { LocationSelector } from "~/components/profile/LocationSelector";
 import type {
   FieldErrors,
   Localidad,
   Municipio,
   ProfileFormData as ProfileFormType,
-} from '~/components/profile/types';
-import { generoOptions } from '~/components/profile/types';
+} from "~/components/profile/types";
+import { generoOptions } from "~/components/profile/types";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -26,15 +26,15 @@ const MAX_DATE = new Date(
   today.getDate(),
 )
   .toISOString()
-  .split('T')[0] as string;
-const MIN_DATE = '1900-01-01';
+  .split("T")[0] as string;
+const MIN_DATE = "1900-01-01";
 
 function filterNameInput(value: string): string {
-  return value.replace(FILTER_NAME, '');
+  return value.replace(FILTER_NAME, "");
 }
 
 function filterPhoneInput(value: string): string {
-  return value.replace(FILTER_PHONE, '');
+  return value.replace(FILTER_PHONE, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -75,7 +75,7 @@ export function ProfileForm({
   onFetchLocalidades,
 }: ProfileFormProps) {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const isDark = resolved === "dark";
   const colors = getColors(isDark);
   const { fg, muted, border, bg, coral } = colors;
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -93,14 +93,14 @@ export function ProfileForm({
 
   const handleMunicipioChange = (id: number | null) => {
     onChange({ ...profile, municipio_id: id, localidad_id: null });
-    onClearError('municipio_id');
-    onClearError('localidad_id');
+    onClearError("municipio_id");
+    onClearError("localidad_id");
     onFetchLocalidades(id);
   };
 
   const handleLocalidadChange = (id: number | null) => {
     onChange({ ...profile, localidad_id: id });
-    onClearError('localidad_id');
+    onClearError("localidad_id");
   };
 
   function renderField(
@@ -110,14 +110,14 @@ export function ProfileForm({
   ) {
     const err = fieldErrors[fieldName as keyof FieldErrors];
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <label
           htmlFor={fieldName}
           style={{
             fontSize: 13,
             fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             color: muted,
           }}
         >
@@ -125,7 +125,7 @@ export function ProfileForm({
         </label>
         {input}
         {err && (
-          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{err}</p>
+          <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>{err}</p>
         )}
       </div>
     );
@@ -134,26 +134,26 @@ export function ProfileForm({
   function inputStyle(fieldName: string) {
     const err = fieldErrors[fieldName as keyof FieldErrors];
     return {
-      width: '100%' as const,
+      width: "100%" as const,
       height: 44,
       border: `1.5px solid ${
-        err ? '#ef4444' : focusedField === fieldName ? coral : border
+        err ? "#ef4444" : focusedField === fieldName ? coral : border
       }`,
       borderRadius: 10,
-      padding: '0 14px',
+      padding: "0 14px",
       fontSize: 15,
-      fontFamily: 'inherit',
+      fontFamily: "inherit",
       background: bg,
       color: fg,
-      outline: 'none',
-      boxSizing: 'border-box' as const,
+      outline: "none",
+      boxSizing: "border-box" as const,
     };
   }
 
   return (
     <form
       onSubmit={onSave}
-      style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+      style={{ display: "flex", flexDirection: "column", gap: 18 }}
     >
       <h3
         style={{
@@ -168,14 +168,14 @@ export function ProfileForm({
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: 18,
         }}
       >
         {renderField(
-          'Nombre *',
-          'nombre',
+          "Nombre *",
+          "nombre",
           <input
             type="text"
             id="nombre"
@@ -183,18 +183,18 @@ export function ProfileForm({
             maxLength={100}
             onChange={(e) => {
               onChange({ ...profile, nombre: filterNameInput(e.target.value) });
-              onClearError('nombre');
+              onClearError("nombre");
             }}
-            style={inputStyle('nombre')}
-            onFocus={() => setFocusedField('nombre')}
+            style={inputStyle("nombre")}
+            onFocus={() => setFocusedField("nombre")}
             onBlur={() => setFocusedField(null)}
             required
           />,
         )}
 
         {renderField(
-          'Apellido Paterno *',
-          'apellido_paterno',
+          "Apellido Paterno *",
+          "apellido_paterno",
           <input
             type="text"
             id="apellido_paterno"
@@ -205,18 +205,18 @@ export function ProfileForm({
                 ...profile,
                 apellido_paterno: filterNameInput(e.target.value),
               });
-              onClearError('apellido_paterno');
+              onClearError("apellido_paterno");
             }}
-            style={inputStyle('apellido_paterno')}
-            onFocus={() => setFocusedField('apellido_paterno')}
+            style={inputStyle("apellido_paterno")}
+            onFocus={() => setFocusedField("apellido_paterno")}
             onBlur={() => setFocusedField(null)}
             required
           />,
         )}
 
         {renderField(
-          'Apellido Materno',
-          'apellido_materno',
+          "Apellido Materno",
+          "apellido_materno",
           <input
             type="text"
             id="apellido_materno"
@@ -227,17 +227,17 @@ export function ProfileForm({
                 ...profile,
                 apellido_materno: filterNameInput(e.target.value),
               });
-              onClearError('apellido_materno');
+              onClearError("apellido_materno");
             }}
-            style={inputStyle('apellido_materno')}
-            onFocus={() => setFocusedField('apellido_materno')}
+            style={inputStyle("apellido_materno")}
+            onFocus={() => setFocusedField("apellido_materno")}
             onBlur={() => setFocusedField(null)}
           />,
         )}
 
         {renderField(
-          'Teléfono *',
-          'telefono',
+          "Teléfono *",
+          "telefono",
           <input
             type="text"
             id="telefono"
@@ -248,18 +248,18 @@ export function ProfileForm({
                 ...profile,
                 telefono: filterPhoneInput(e.target.value),
               });
-              onClearError('telefono');
+              onClearError("telefono");
             }}
-            style={inputStyle('telefono')}
-            onFocus={() => setFocusedField('telefono')}
+            style={inputStyle("telefono")}
+            onFocus={() => setFocusedField("telefono")}
             onBlur={() => setFocusedField(null)}
             required
           />,
         )}
 
         {renderField(
-          'Fecha de Nacimiento *',
-          'fecha_nacimiento',
+          "Fecha de Nacimiento *",
+          "fecha_nacimiento",
           <input
             type="date"
             id="fecha_nacimiento"
@@ -268,30 +268,30 @@ export function ProfileForm({
             max={MAX_DATE}
             onChange={(e) => {
               onChange({ ...profile, fecha_nacimiento: e.target.value });
-              onClearError('fecha_nacimiento');
+              onClearError("fecha_nacimiento");
             }}
-            style={inputStyle('fecha_nacimiento')}
-            onFocus={() => setFocusedField('fecha_nacimiento')}
+            style={inputStyle("fecha_nacimiento")}
+            onFocus={() => setFocusedField("fecha_nacimiento")}
             onBlur={() => setFocusedField(null)}
             required
           />,
         )}
 
         {renderField(
-          'Género *',
-          'genero',
+          "Género *",
+          "genero",
           <select
             id="genero"
             value={profile.genero}
             onChange={(e) => {
               onChange({ ...profile, genero: e.target.value });
-              onClearError('genero');
+              onClearError("genero");
             }}
             style={{
-              ...inputStyle('genero'),
-              appearance: 'auto' as const,
+              ...inputStyle("genero"),
+              appearance: "auto" as const,
             }}
-            onFocus={() => setFocusedField('genero')}
+            onFocus={() => setFocusedField("genero")}
             onBlur={() => setFocusedField(null)}
             required
           >
@@ -304,10 +304,10 @@ export function ProfileForm({
           </select>,
         )}
 
-        <div style={{ gridColumn: '1 / -1' }}>
+        <div style={{ gridColumn: "1 / -1" }}>
           {renderField(
-            'Dirección *',
-            'direccion',
+            "Dirección *",
+            "direccion",
             <input
               type="text"
               id="direccion"
@@ -315,10 +315,10 @@ export function ProfileForm({
               maxLength={255}
               onChange={(e) => {
                 onChange({ ...profile, direccion: e.target.value });
-                onClearError('direccion');
+                onClearError("direccion");
               }}
-              style={inputStyle('direccion')}
-              onFocus={() => setFocusedField('direccion')}
+              style={inputStyle("direccion")}
+              onFocus={() => setFocusedField("direccion")}
               onBlur={() => setFocusedField(null)}
               required
             />,
@@ -329,8 +329,8 @@ export function ProfileForm({
       {/* --- Municipio / Localidad --- */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: 18,
         }}
       >
@@ -349,25 +349,25 @@ export function ProfileForm({
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 10, paddingTop: 8 }}>
+      <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
         <button
           type="submit"
           disabled={loading}
           style={{
             ...btnStyle,
             background: coral,
-            color: '#fff',
+            color: "#fff",
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? 'Guardando...' : 'Guardar cambios'}
+          {loading ? "Guardando..." : "Guardar cambios"}
         </button>
         <button
           type="button"
           onClick={onCancel}
           style={{
             ...btnStyle,
-            background: 'transparent',
+            background: "transparent",
             border: `1.5px solid ${border}`,
             color: fg,
           }}

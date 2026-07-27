@@ -1,13 +1,13 @@
-import { UPLOAD_TIMEOUT_MS, assertValidId } from '../constants/api';
-import api from './api';
+import { UPLOAD_TIMEOUT_MS, assertValidId } from "../constants/api";
+import api from "./api";
 
 // ── Types ──────────────────────────────────────────────────
 
 export const PUBLICACION_ESTADOS = {
-  BORRADOR: 'borrador',
-  PUBLICADO: 'publicado',
-  CERRADO: 'cerrado',
-  CANCELADO: 'cancelado',
+  BORRADOR: "borrador",
+  PUBLICADO: "publicado",
+  CERRADO: "cerrado",
+  CANCELADO: "cancelado",
 } as const;
 
 export type PublicacionEstado =
@@ -51,7 +51,7 @@ export async function getPublicaciones(params?: {
   estado?: PublicacionEstado;
 }): Promise<ApiResponse<PublicacionList>> {
   const { data } = await api.get<ApiResponse<PublicacionList>>(
-    '/publicaciones/',
+    "/publicaciones/",
     { params },
   );
   return data;
@@ -60,7 +60,7 @@ export async function getPublicaciones(params?: {
 export async function getPublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
-  assertValidId(id, 'publicacion');
+  assertValidId(id, "publicacion");
   const { data } = await api.get<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/`,
   );
@@ -68,14 +68,14 @@ export async function getPublicacion(
 }
 
 export async function createPublicacion(): Promise<ApiResponse<Publicacion>> {
-  const { data } = await api.post<ApiResponse<Publicacion>>('/publicaciones/');
+  const { data } = await api.post<ApiResponse<Publicacion>>("/publicaciones/");
   return data;
 }
 
 export async function deletePublicacion(
   id: number,
 ): Promise<ApiResponse<null>> {
-  assertValidId(id, 'publicacion');
+  assertValidId(id, "publicacion");
   const { data } = await api.delete<ApiResponse<null>>(
     `/publicaciones/${String(id)}/`,
   );
@@ -85,7 +85,7 @@ export async function deletePublicacion(
 export async function publishPublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
-  assertValidId(id, 'publicacion');
+  assertValidId(id, "publicacion");
   const { data } = await api.post<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/publish/`,
   );
@@ -95,7 +95,7 @@ export async function publishPublicacion(
 export async function closePublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
-  assertValidId(id, 'publicacion');
+  assertValidId(id, "publicacion");
   const { data } = await api.post<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/close/`,
   );
@@ -107,7 +107,7 @@ export async function closePublicacion(
 export async function getProductosSemanales(
   pubId: number,
 ): Promise<ApiResponse<ProductoSemanal[]>> {
-  assertValidId(pubId, 'publicacion');
+  assertValidId(pubId, "publicacion");
   const { data } = await api.get<ApiResponse<ProductoSemanal[]>>(
     `/publicaciones/${String(pubId)}/productos/`,
   );
@@ -124,7 +124,7 @@ export async function addProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
-  assertValidId(pubId, 'publicacion');
+  assertValidId(pubId, "publicacion");
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/`,
     payload,
@@ -143,8 +143,8 @@ export async function updateProductoSemanal(
     foto?: string | null;
   },
 ): Promise<ApiResponse<ProductoSemanal>> {
-  assertValidId(pubId, 'publicacion');
-  assertValidId(itemId, 'producto_semanal');
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.patch<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
     payload,
@@ -156,8 +156,8 @@ export async function deleteProductoSemanal(
   pubId: number,
   itemId: number,
 ): Promise<ApiResponse<null>> {
-  assertValidId(pubId, 'publicacion');
-  assertValidId(itemId, 'producto_semanal');
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.delete<ApiResponse<null>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/`,
   );
@@ -169,13 +169,13 @@ export async function uploadProductoSemanalImagen(
   itemId: number,
   formData: FormData,
 ): Promise<ApiResponse<ProductoSemanal>> {
-  assertValidId(pubId, 'publicacion');
-  assertValidId(itemId, 'producto_semanal');
+  assertValidId(pubId, "publicacion");
+  assertValidId(itemId, "producto_semanal");
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
     `/publicaciones/${String(pubId)}/productos/${String(itemId)}/imagen/`,
     formData,
     {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { "Content-Type": "multipart/form-data" },
       timeout: UPLOAD_TIMEOUT_MS,
     },
   );
@@ -197,7 +197,7 @@ export async function getCatalogProductos(): Promise<
   ApiResponse<{ results: Producto[] }>
 > {
   const { data } =
-    await api.get<ApiResponse<{ results: Producto[] }>>('/productos/');
+    await api.get<ApiResponse<{ results: Producto[] }>>("/productos/");
   return data;
 }
 
@@ -206,7 +206,7 @@ export async function getUnidades(): Promise<
 > {
   const { data } =
     await api.get<ApiResponse<{ id_unidad: number; tipo: string }[]>>(
-      '/unidades/',
+      "/unidades/",
     );
   return data;
 }

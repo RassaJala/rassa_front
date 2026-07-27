@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTheme } from '../providers/ThemeProvider';
-import { getColors } from '../constants/colors';
-import { btnStyle as sharedBtnStyle } from '@/constants/styles';
-import api from '../services/api';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTheme } from "../providers/ThemeProvider";
+import { getColors } from "../constants/colors";
+import { btnStyle as sharedBtnStyle } from "@/constants/styles";
+import api from "../services/api";
 
 interface Localidad {
   id_localidad: number;
@@ -23,7 +23,7 @@ interface ApiListResponse<T> {
 
 export function AdminLocalidades() {
   const { resolved } = useTheme();
-  const isDark = resolved === 'dark';
+  const isDark = resolved === "dark";
   const c = getColors(isDark);
   const { fg, muted, border, surface, bg, brand, coral } = c;
 
@@ -32,10 +32,10 @@ export function AdminLocalidades() {
   const [selectedMunId, setSelectedMunId] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'list' | 'form' | 'trash'>('list');
+  const [tab, setTab] = useState<"list" | "form" | "trash">("list");
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: '' });
-  const [search, setSearch] = useState('');
+  const [form, setForm] = useState({ nombre: "" });
+  const [search, setSearch] = useState("");
   const [delTarget, setDelTarget] = useState<Localidad | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -47,10 +47,10 @@ export function AdminLocalidades() {
     setError(null);
     try {
       const munRes =
-        await api.get<ApiListResponse<MunicipioOption>>('/municipios/');
+        await api.get<ApiListResponse<MunicipioOption>>("/municipios/");
       setMunicipios(munRes.data.data);
     } catch {
-      setError('Error al cargar datos');
+      setError("Error al cargar datos");
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export function AdminLocalidades() {
       );
       setItems(res.data.data ?? []);
     } catch {
-      setError('Error al cargar localidades');
+      setError("Error al cargar localidades");
     } finally {
       setLoading(false);
     }
@@ -93,11 +93,11 @@ export function AdminLocalidades() {
     setError(null);
     try {
       const res = await api.get<ApiListResponse<Localidad>>(
-        '/localidades/trash/',
+        "/localidades/trash/",
       );
       setTrashItems(res.data.data ?? []);
     } catch {
-      setError('Error al cargar papelera');
+      setError("Error al cargar papelera");
     } finally {
       setTrashLoading(false);
     }
@@ -108,7 +108,7 @@ export function AdminLocalidades() {
       await api.post(`/localidades/${id}/restore/`);
       setTrashItems((prev) => prev.filter((l) => l.id_localidad !== id));
     } catch {
-      setError('Error al restaurar localidad');
+      setError("Error al restaurar localidad");
     }
   }
 
@@ -117,7 +117,7 @@ export function AdminLocalidades() {
       await api.post(`/localidades/${id}/permanent/`);
       setTrashItems((prev) => prev.filter((l) => l.id_localidad !== id));
     } catch {
-      setError('Error al eliminar localidad definitivamente');
+      setError("Error al eliminar localidad definitivamente");
     }
   }
 
@@ -130,19 +130,19 @@ export function AdminLocalidades() {
   );
 
   function getMunicipioNombre(id: number) {
-    return municipios.find((m) => m.id_municipio === id)?.nombre ?? '—';
+    return municipios.find((m) => m.id_municipio === id)?.nombre ?? "—";
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ nombre: '' });
-    setTab('form');
+    setForm({ nombre: "" });
+    setTab("form");
   }
 
   function startEdit(item: Localidad) {
     setEditId(item.id_localidad);
     setForm({ nombre: item.nombre });
-    setTab('form');
+    setTab("form");
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -168,9 +168,9 @@ export function AdminLocalidades() {
         );
         setItems((prev) => [...prev, res.data.data as Localidad]);
       }
-      setTab('list');
+      setTab("list");
     } catch {
-      setError(editId ? 'Error al actualizar' : 'Error al crear');
+      setError(editId ? "Error al actualizar" : "Error al crear");
     } finally {
       setSaving(false);
     }
@@ -185,7 +185,7 @@ export function AdminLocalidades() {
       );
       setDelTarget(null);
     } catch {
-      setError('Error al eliminar');
+      setError("Error al eliminar");
     }
   }
 
@@ -203,7 +203,7 @@ export function AdminLocalidades() {
         ),
       );
     } catch {
-      setError('Error al cambiar estado');
+      setError("Error al cambiar estado");
     }
   }
 
@@ -213,11 +213,11 @@ export function AdminLocalidades() {
     <div>
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 20,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 12,
         }}
       >
@@ -225,7 +225,7 @@ export function AdminLocalidades() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: '-0.01em',
+            letterSpacing: "-0.01em",
             color: fg,
           }}
         >
@@ -237,7 +237,7 @@ export function AdminLocalidades() {
           style={{
             ...btnStyle,
             background: coral,
-            color: '#fff',
+            color: "#fff",
             opacity: municipios.length === 0 ? 0.5 : 1,
           }}
         >
@@ -248,26 +248,26 @@ export function AdminLocalidades() {
       {error && (
         <div
           style={{
-            background: 'rgba(222,57,58,0.1)',
-            border: '1px solid #DE393A',
+            background: "rgba(222,57,58,0.1)",
+            border: "1px solid #DE393A",
             borderRadius: 10,
-            padding: '10px 16px',
+            padding: "10px 16px",
             marginBottom: 16,
             color: coral,
             fontSize: 14,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
             style={{
-              background: 'none',
-              border: 'none',
+              background: "none",
+              border: "none",
               color: coral,
-              cursor: 'pointer',
+              cursor: "pointer",
               fontSize: 16,
               fontWeight: 700,
             }}
@@ -279,48 +279,48 @@ export function AdminLocalidades() {
 
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 2,
           background: border,
           borderRadius: 12,
           padding: 3,
           marginBottom: 20,
-          width: 'fit-content',
+          width: "fit-content",
         }}
       >
         <button
-          onClick={() => setTab('list')}
+          onClick={() => setTab("list")}
           style={{
-            padding: '8px 20px',
-            border: 'none',
+            padding: "8px 20px",
+            border: "none",
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            background: tab === 'list' ? surface : 'transparent',
-            color: tab === 'list' ? fg : muted,
-            boxShadow: tab === 'list' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            fontFamily: "inherit",
+            cursor: "pointer",
+            background: tab === "list" ? surface : "transparent",
+            color: tab === "list" ? fg : muted,
+            boxShadow: tab === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
           }}
         >
           📋 Lista
         </button>
         <button
           onClick={() => {
-            setTab('trash');
+            setTab("trash");
             void fetchTrash();
           }}
           style={{
-            padding: '8px 20px',
-            border: 'none',
+            padding: "8px 20px",
+            border: "none",
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            background: tab === 'trash' ? surface : 'transparent',
-            color: tab === 'trash' ? fg : muted,
-            boxShadow: tab === 'trash' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+            fontFamily: "inherit",
+            cursor: "pointer",
+            background: tab === "trash" ? surface : "transparent",
+            color: tab === "trash" ? fg : muted,
+            boxShadow: tab === "trash" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
           }}
         >
           🗑️ Papelera
@@ -329,17 +329,17 @@ export function AdminLocalidades() {
           onClick={() => startNew()}
           disabled={loading || municipios.length === 0}
           style={{
-            padding: '8px 20px',
-            border: 'none',
+            padding: "8px 20px",
+            border: "none",
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
-            fontFamily: 'inherit',
+            fontFamily: "inherit",
             cursor:
-              loading || municipios.length === 0 ? 'not-allowed' : 'pointer',
-            background: tab === 'form' ? surface : 'transparent',
-            color: tab === 'form' ? fg : muted,
-            boxShadow: tab === 'form' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+              loading || municipios.length === 0 ? "not-allowed" : "pointer",
+            background: tab === "form" ? surface : "transparent",
+            color: tab === "form" ? fg : muted,
+            boxShadow: tab === "form" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
           }}
         >
           ➕ Agregar localidad
@@ -347,13 +347,13 @@ export function AdminLocalidades() {
       </div>
 
       {/* Municipio filter for list */}
-      {tab === 'list' && (
+      {tab === "list" && (
         <>
           <div
             style={{
-              display: 'flex',
+              display: "flex",
               gap: 10,
-              alignItems: 'center',
+              alignItems: "center",
               marginBottom: 16,
             }}
           >
@@ -361,8 +361,8 @@ export function AdminLocalidades() {
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
                 color: muted,
               }}
             >
@@ -375,13 +375,13 @@ export function AdminLocalidades() {
                 height: 40,
                 border: `1.5px solid ${border}`,
                 borderRadius: 8,
-                padding: '0 12px',
+                padding: "0 12px",
                 fontSize: 14,
-                fontFamily: 'inherit',
+                fontFamily: "inherit",
                 background: bg,
                 color: fg,
-                outline: 'none',
-                cursor: 'pointer',
+                outline: "none",
+                cursor: "pointer",
                 minWidth: 200,
               }}
             >
@@ -398,22 +398,22 @@ export function AdminLocalidades() {
               background: surface,
               borderRadius: 16,
               border: `1px solid ${border}`,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '16px 20px',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "16px 20px",
                 borderBottom: `1px solid ${border}`,
-                flexWrap: 'wrap',
+                flexWrap: "wrap",
                 gap: 8,
               }}
             >
               <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-                {loading ? 'Cargando…' : `${filtered.length} localidades`}
+                {loading ? "Cargando…" : `${filtered.length} localidades`}
               </span>
               <input
                 type="search"
@@ -424,31 +424,31 @@ export function AdminLocalidades() {
                   height: 36,
                   border: `1.5px solid ${border}`,
                   borderRadius: 8,
-                  padding: '0 12px',
+                  padding: "0 12px",
                   fontSize: 13,
-                  fontFamily: 'inherit',
+                  fontFamily: "inherit",
                   width: 220,
                   background: bg,
                   color: fg,
-                  outline: 'none',
+                  outline: "none",
                 }}
               />
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
-                    {['Nombre', 'Estado', 'Acciones'].map((h) => (
+                    {["Nombre", "Estado", "Acciones"].map((h) => (
                       <th
                         key={h}
                         style={{
-                          textAlign: 'left',
+                          textAlign: "left",
                           fontSize: 11,
                           color: muted,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
                           fontWeight: 600,
-                          padding: '12px 20px',
+                          padding: "12px 20px",
                           background: bg,
                           borderBottom: `1px solid ${border}`,
                         }}
@@ -464,8 +464,8 @@ export function AdminLocalidades() {
                       <td
                         colSpan={3}
                         style={{
-                          textAlign: 'center',
-                          padding: '48px 24px',
+                          textAlign: "center",
+                          padding: "48px 24px",
                           color: muted,
                           fontSize: 14,
                         }}
@@ -478,13 +478,13 @@ export function AdminLocalidades() {
                       <td
                         colSpan={3}
                         style={{
-                          textAlign: 'center',
-                          padding: '48px 24px',
+                          textAlign: "center",
+                          padding: "48px 24px",
                           color: muted,
                           fontSize: 14,
                         }}
                       >
-                        {search ? 'Sin resultados' : 'No hay localidades'}
+                        {search ? "Sin resultados" : "No hay localidades"}
                       </td>
                     </tr>
                   ) : (
@@ -495,7 +495,7 @@ export function AdminLocalidades() {
                       >
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             fontSize: 14,
                             borderBottom: `1px solid ${border}`,
                             fontWeight: 600,
@@ -506,7 +506,7 @@ export function AdminLocalidades() {
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
@@ -514,32 +514,32 @@ export function AdminLocalidades() {
                             style={{
                               fontSize: 12,
                               fontWeight: 600,
-                              padding: '3px 10px',
+                              padding: "3px 10px",
                               borderRadius: 6,
                               background: item.estado
                                 ? isDark
-                                  ? 'rgba(74,138,99,0.15)'
-                                  : 'rgba(36,86,60,0.07)'
+                                  ? "rgba(74,138,99,0.15)"
+                                  : "rgba(36,86,60,0.07)"
                                 : isDark
-                                  ? 'rgba(212,160,32,0.12)'
-                                  : 'rgba(242,169,0,0.1)',
-                              color: item.estado ? brand : '#F2A900',
+                                  ? "rgba(212,160,32,0.12)"
+                                  : "rgba(242,169,0,0.1)",
+                              color: item.estado ? brand : "#F2A900",
                             }}
                           >
-                            {item.estado ? 'Activo' : 'Inactivo'}
+                            {item.estado ? "Activo" : "Inactivo"}
                           </span>
                         </td>
                         <td
                           style={{
-                            padding: '14px 20px',
+                            padding: "14px 20px",
                             borderBottom: `1px solid ${border}`,
                           }}
                         >
-                          <div style={{ display: 'flex', gap: 4 }}>
+                          <div style={{ display: "flex", gap: 4 }}>
                             <button
                               onClick={() => toggleStatus(item)}
                               aria-label={
-                                item.estado ? 'Desactivar' : 'Activar'
+                                item.estado ? "Desactivar" : "Activar"
                               }
                               style={{
                                 width: 32,
@@ -547,14 +547,14 @@ export function AdminLocalidades() {
                                 borderRadius: 8,
                                 border: `1px solid ${border}`,
                                 background: surface,
-                                cursor: 'pointer',
+                                cursor: "pointer",
                                 fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
+                                display: "grid",
+                                placeItems: "center",
                                 color: fg,
                               }}
                             >
-                              {item.estado ? '⏸' : '▶️'}
+                              {item.estado ? "⏸" : "▶️"}
                             </button>
                             {item.estado && (
                               <button
@@ -566,10 +566,10 @@ export function AdminLocalidades() {
                                   borderRadius: 8,
                                   border: `1px solid ${border}`,
                                   background: surface,
-                                  cursor: 'pointer',
+                                  cursor: "pointer",
                                   fontSize: 14,
-                                  display: 'grid',
-                                  placeItems: 'center',
+                                  display: "grid",
+                                  placeItems: "center",
                                   color: fg,
                                 }}
                               >
@@ -586,10 +586,10 @@ export function AdminLocalidades() {
                                   borderRadius: 8,
                                   border: `1px solid ${border}`,
                                   background: surface,
-                                  cursor: 'pointer',
+                                  cursor: "pointer",
                                   fontSize: 14,
-                                  display: 'grid',
-                                  placeItems: 'center',
+                                  display: "grid",
+                                  placeItems: "center",
                                   color: fg,
                                 }}
                               >
@@ -608,42 +608,42 @@ export function AdminLocalidades() {
         </>
       )}
 
-      {tab === 'trash' && (
+      {tab === "trash" && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <div
             style={{
-              padding: '16px 20px',
+              padding: "16px 20px",
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
               {trashLoading
-                ? 'Cargando…'
+                ? "Cargando…"
                 : `${trashItems.length} localidades en papelera`}
             </span>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {['Nombre', 'Acciones'].map((h) => (
+                  {["Nombre", "Acciones"].map((h) => (
                     <th
                       key={h}
                       style={{
-                        textAlign: 'left',
+                        textAlign: "left",
                         fontSize: 11,
                         color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
                         fontWeight: 600,
-                        padding: '12px 20px',
+                        padding: "12px 20px",
                         background: bg,
                         borderBottom: `1px solid ${border}`,
                       }}
@@ -659,8 +659,8 @@ export function AdminLocalidades() {
                     <td
                       colSpan={2}
                       style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
+                        textAlign: "center",
+                        padding: "48px 24px",
                         color: muted,
                         fontSize: 14,
                       }}
@@ -673,8 +673,8 @@ export function AdminLocalidades() {
                     <td
                       colSpan={2}
                       style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
+                        textAlign: "center",
+                        padding: "48px 24px",
                         color: muted,
                         fontSize: 14,
                       }}
@@ -687,7 +687,7 @@ export function AdminLocalidades() {
                     <tr key={item.id_localidad} style={{ background: surface }}>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           fontSize: 14,
                           borderBottom: `1px solid ${border}`,
                           fontWeight: 600,
@@ -698,11 +698,11 @@ export function AdminLocalidades() {
                       </td>
                       <td
                         style={{
-                          padding: '14px 20px',
+                          padding: "14px 20px",
                           borderBottom: `1px solid ${border}`,
                         }}
                       >
-                        <div style={{ display: 'flex', gap: 4 }}>
+                        <div style={{ display: "flex", gap: 4 }}>
                           <button
                             onClick={() =>
                               void restoreFromTrash(item.id_localidad)
@@ -710,17 +710,17 @@ export function AdminLocalidades() {
                             aria-label="Restaurar"
                             style={{
                               height: 32,
-                              padding: '0 12px',
+                              padding: "0 12px",
                               borderRadius: 8,
-                              border: '1.5px solid #24563C',
-                              background: 'transparent',
-                              color: '#24563C',
+                              border: "1.5px solid #24563C",
+                              background: "transparent",
+                              color: "#24563C",
                               fontSize: 13,
                               fontWeight: 600,
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                              display: 'inline-flex',
-                              alignItems: 'center',
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              display: "inline-flex",
+                              alignItems: "center",
                               gap: 4,
                             }}
                           >
@@ -733,17 +733,17 @@ export function AdminLocalidades() {
                             aria-label="Eliminar definitivamente"
                             style={{
                               height: 32,
-                              padding: '0 12px',
+                              padding: "0 12px",
                               borderRadius: 8,
-                              border: '1.5px solid #DE393A',
-                              background: 'transparent',
-                              color: '#DE393A',
+                              border: "1.5px solid #DE393A",
+                              background: "transparent",
+                              color: "#DE393A",
                               fontSize: 13,
                               fontWeight: 600,
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                              display: 'inline-flex',
-                              alignItems: 'center',
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              display: "inline-flex",
+                              alignItems: "center",
                               gap: 4,
                             }}
                           >
@@ -760,38 +760,38 @@ export function AdminLocalidades() {
         </div>
       )}
 
-      {tab === 'form' && (
+      {tab === "form" && (
         <div
           style={{
             background: surface,
             borderRadius: 16,
             border: `1px solid ${border}`,
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <div
             style={{
-              padding: '20px 24px',
+              padding: "20px 24px",
               borderBottom: `1px solid ${border}`,
             }}
           >
             <span style={{ fontSize: 16, fontWeight: 600, color: fg }}>
-              {editId ? 'Editar localidad' : 'Nueva localidad'}
+              {editId ? "Editar localidad" : "Nueva localidad"}
             </span>
           </div>
           <form
             onSubmit={handleSave}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr',
+              display: "grid",
+              gridTemplateColumns: "1fr",
               gap: 18,
               padding: 24,
             }}
           >
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'column',
+                display: "flex",
+                flexDirection: "column",
                 gap: 5,
               }}
             >
@@ -799,8 +799,8 @@ export function AdminLocalidades() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -815,25 +815,25 @@ export function AdminLocalidades() {
                 placeholder="ej. Centro"
                 required
                 style={{
-                  width: '100%',
+                  width: "100%",
                   height: 44,
-                  border: `1.5px solid ${focusedField === 'nombre' ? brand : border}`,
+                  border: `1.5px solid ${focusedField === "nombre" ? brand : border}`,
                   borderRadius: 10,
-                  padding: '0 14px',
+                  padding: "0 14px",
                   fontSize: 15,
-                  fontFamily: 'inherit',
+                  fontFamily: "inherit",
                   background: bg,
                   color: fg,
-                  outline: 'none',
+                  outline: "none",
                 }}
-                onFocus={() => setFocusedField('nombre')}
+                onFocus={() => setFocusedField("nombre")}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'column',
+                display: "flex",
+                flexDirection: "column",
                 gap: 5,
               }}
             >
@@ -841,8 +841,8 @@ export function AdminLocalidades() {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                   color: muted,
                 }}
               >
@@ -851,19 +851,19 @@ export function AdminLocalidades() {
               {editId ? (
                 <div
                   style={{
-                    width: '100%',
+                    width: "100%",
                     height: 44,
                     border: `1.5px solid ${border}`,
                     borderRadius: 10,
-                    padding: '0 14px',
+                    padding: "0 14px",
                     fontSize: 15,
-                    fontFamily: 'inherit',
+                    fontFamily: "inherit",
                     background: bg,
                     color: muted,
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     opacity: 0.6,
-                    cursor: 'not-allowed',
+                    cursor: "not-allowed",
                   }}
                 >
                   {getMunicipioNombre(
@@ -876,19 +876,19 @@ export function AdminLocalidades() {
                   value={selectedMunId}
                   onChange={(e) => setSelectedMunId(Number(e.target.value))}
                   style={{
-                    width: '100%',
+                    width: "100%",
                     height: 44,
-                    border: `1.5px solid ${focusedField === 'municipio_id' ? brand : border}`,
+                    border: `1.5px solid ${focusedField === "municipio_id" ? brand : border}`,
                     borderRadius: 10,
-                    padding: '0 14px',
+                    padding: "0 14px",
                     fontSize: 15,
-                    fontFamily: 'inherit',
+                    fontFamily: "inherit",
                     background: bg,
                     color: fg,
-                    outline: 'none',
-                    cursor: 'pointer',
+                    outline: "none",
+                    cursor: "pointer",
                   }}
-                  onFocus={() => setFocusedField('municipio_id')}
+                  onFocus={() => setFocusedField("municipio_id")}
                   onBlur={() => setFocusedField(null)}
                 >
                   {municipios.map((m) => (
@@ -899,14 +899,14 @@ export function AdminLocalidades() {
                 </select>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 type="submit"
                 disabled={saving || municipios.length === 0}
                 style={{
                   ...btnStyle,
                   background: coral,
-                  color: '#fff',
+                  color: "#fff",
                   opacity: saving || municipios.length === 0 ? 0.6 : 1,
                 }}
               >
@@ -914,10 +914,10 @@ export function AdminLocalidades() {
               </button>
               <button
                 type="button"
-                onClick={() => setTab('list')}
+                onClick={() => setTab("list")}
                 style={{
                   ...btnStyle,
-                  background: 'transparent',
+                  background: "transparent",
                   border: `1.5px solid ${border}`,
                   color: fg,
                 }}
@@ -932,14 +932,14 @@ export function AdminLocalidades() {
       {delTarget && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             zIndex: 50,
-            backdropFilter: 'blur(4px)',
+            backdropFilter: "blur(4px)",
           }}
           onClick={() => setDelTarget(null)}
         >
@@ -949,9 +949,9 @@ export function AdminLocalidades() {
               borderRadius: 20,
               padding: 28,
               maxWidth: 440,
-              width: '90%',
+              width: "90%",
               border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -969,21 +969,21 @@ export function AdminLocalidades() {
               Vas a eliminar "{delTarget.nombre}". Se moverá a la papelera.
             </p>
             <div
-              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
+              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
             >
               <button
                 onClick={() => setDelTarget(null)}
                 style={{
                   height: 32,
-                  padding: '0 12px',
+                  padding: "0 12px",
                   borderRadius: 8,
                   border: `1.5px solid ${border}`,
-                  background: 'transparent',
+                  background: "transparent",
                   color: fg,
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Cancelar
@@ -992,15 +992,15 @@ export function AdminLocalidades() {
                 onClick={handleDelete}
                 style={{
                   height: 32,
-                  padding: '0 12px',
+                  padding: "0 12px",
                   borderRadius: 8,
-                  border: '1.5px solid #DE393A',
-                  background: 'transparent',
-                  color: '#DE393A',
+                  border: "1.5px solid #DE393A",
+                  background: "transparent",
+                  color: "#DE393A",
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Enviar a papelera
