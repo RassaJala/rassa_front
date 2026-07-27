@@ -14,6 +14,7 @@ import {
   buildDescription,
   formatTimestamp,
   getStatusColor,
+  isNotFoundError,
   STATUS_LABELS,
 } from '@/constants/orderTimeline';
 import { useAdminColors } from '@/hooks/useAdminColors';
@@ -69,13 +70,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 48,
   },
-  centeredContainerWide: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-  },
   errorText: {
     marginTop: 12,
     textAlign: 'center',
@@ -111,7 +105,8 @@ export default function OrderTimeline({
 }: OrderTimelineProps): React.JSX.Element {
   const { bg, surface, fg, muted, border, brand } = useAdminColors();
 
-  const { entries, isLoading, isError, refetch } = useOrderTimeline(orderId);
+  const { entries, isLoading, isError, error, refetch } =
+    useOrderTimeline(orderId);
 
   // Loading
   if (isLoading) {
@@ -128,25 +123,28 @@ export default function OrderTimeline({
 
   // Error
   if (isError) {
+    const is404 = isNotFoundError(error);
     return (
-      <View style={[styles.centeredContainerWide, { backgroundColor: bg }]}>
+      <View style={[styles.centeredContainer, { backgroundColor: bg }]}>
         <MaterialCommunityIcons
-          name="alert-circle-outline"
+          name={is404 ? 'package-variant-closed' : 'alert-circle-outline'}
           size={40}
           color={muted}
         />
         <Text style={[styles.errorText, { color: muted }]}>
-          Error al cargar el historial
+          {is404 ? 'Pedido no encontrado' : 'Error al cargar el historial'}
         </Text>
-        <Pressable
-          onPress={() => void refetch()}
-          style={[styles.retryBtn, { borderColor: border }]}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={[styles.retryBtnText, { color: brand }]}>
-            Reintentar
-          </Text>
-        </Pressable>
+        {!is404 && (
+          <Pressable
+            onPress={() => void refetch()}
+            style={[styles.retryBtn, { borderColor: border }]}
+          >
+            <MaterialCommunityIcons name="refresh" size={18} color={brand} />
+            <Text style={[styles.retryBtnText, { color: brand }]}>
+              Reintentar
+            </Text>
+          </Pressable>
+        )}
       </View>
     );
   }

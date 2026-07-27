@@ -36,7 +36,9 @@ export function formatTimestamp(iso: string): string {
     const min = String(d.getUTCMinutes()).padStart(2, '0');
     return `${dd}/${mm} ${hh}:${min}`;
   } catch {
-    console.warn('[orderTimeline] Invalid timestamp:', iso);
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.warn('[orderTimeline] Invalid timestamp:', iso);
+    }
     return '—';
   }
 }

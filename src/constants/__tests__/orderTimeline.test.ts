@@ -1,4 +1,8 @@
-import { formatTimestamp, getStatusColor } from '../orderTimeline';
+import {
+  buildDescription,
+  formatTimestamp,
+  getStatusColor,
+} from '../orderTimeline';
 
 describe('formatTimestamp', () => {
   it('formats a valid ISO string in DD/MM HH:mm (UTC)', () => {
@@ -53,5 +57,43 @@ describe('getStatusColor', () => {
 
   it('returns fallback for unknown status', () => {
     expect(getStatusColor('unknown', fallback)).toBe(fallback);
+  });
+});
+
+describe('buildDescription', () => {
+  it('returns "Pedido creado" when estado_anterior is null', () => {
+    expect(
+      buildDescription({
+        estado_anterior: null,
+        estado_nuevo: 'pendiente',
+      }),
+    ).toBe('Pedido creado');
+  });
+
+  it('returns transition with labels for known statuses', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'pendiente',
+        estado_nuevo: 'confirmado',
+      }),
+    ).toBe('Pendiente → Confirmado');
+  });
+
+  it('uses raw status key as fallback when label is missing', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'unknown_from',
+        estado_nuevo: 'pendiente',
+      }),
+    ).toBe('unknown_from → Pendiente');
+  });
+
+  it('uses raw status key as fallback when both labels are missing', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'foo',
+        estado_nuevo: 'bar',
+      }),
+    ).toBe('foo → bar');
   });
 });

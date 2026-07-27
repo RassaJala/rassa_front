@@ -68,6 +68,24 @@ describe('OrderTimeline', () => {
     expect(getByText('Reintentar')).toBeTruthy();
   });
 
+  it('renders 404 state without retry button', () => {
+    const axios404 = new Error('Not found');
+    (axios404 as unknown as Record<string, unknown>).isAxiosError = true;
+    (axios404 as unknown as Record<string, unknown>).response = { status: 404 };
+
+    mockUseOrderTimeline.mockReturnValue({
+      entries: [],
+      isLoading: false,
+      isError: true,
+      error: axios404,
+      refetch: mockRefetch,
+    });
+
+    const { getByText, queryByText } = render(<OrderTimeline orderId={1} />);
+    expect(getByText('Pedido no encontrado')).toBeTruthy();
+    expect(queryByText('Reintentar')).toBeNull();
+  });
+
   it('calls refetch when retry is pressed', () => {
     mockUseOrderTimeline.mockReturnValue({
       entries: [],
