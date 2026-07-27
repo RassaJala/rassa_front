@@ -1,8 +1,9 @@
+import { conversationsKey } from '@rassa/chat';
 import { useIsFocused } from '@react-navigation/native';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 
-import { getConversations } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Conversation, PaginatedResponse } from '@/types/chat';
 
 const BASE_POLL_MS = 10_000;
@@ -14,8 +15,8 @@ export function useConversations(): UseQueryResult<
   const isFocused = useIsFocused();
 
   return useQuery({
-    queryKey: ['conversations'],
-    queryFn: getConversations,
+    queryKey: conversationsKey(),
+    queryFn: () => chatApi.getConversations(),
     refetchInterval: (query) => {
       if (!isFocused) return false;
       const failureCount = query.state.errorUpdateCount;

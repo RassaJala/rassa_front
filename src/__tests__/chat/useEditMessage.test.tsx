@@ -2,6 +2,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { messagesKey } from '@rassa/chat';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
@@ -46,7 +47,7 @@ describe('useEditMessage', () => {
         mutations: { retry: false },
       },
     });
-    queryClient.setQueryData(['messages', 1], existingMessages);
+    queryClient.setQueryData(messagesKey(1), existingMessages);
   });
 
   const TestComponent = () => {
@@ -99,7 +100,7 @@ describe('useEditMessage', () => {
       pages: {
         results: { id: number; contenido: string; editado: boolean }[];
       }[];
-    }>(['messages', 1]);
+    }>(messagesKey(1));
 
     const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
     const edited = allMessages.find((m) => m.id === 1);
