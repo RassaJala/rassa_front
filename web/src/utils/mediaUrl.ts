@@ -6,6 +6,6 @@ export function mediaUrl(path: string | null | undefined): string | null {
   const clean = path
     .replace(/\.\./g, "")
     .replace(/^\/+/, "/")
-    .replace(/[^a-zA-Z0-9_\-/.]/g, "");
+    .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑüÜ0-9_\-/.]/g, "");
   return `${BASE}${clean}`;
 }

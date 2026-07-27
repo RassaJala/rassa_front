@@ -419,8 +419,8 @@ export function PublicationWizard() {
       await refreshSnapshot(pubId);
       orphanFailures = await deleteOrphans(pubId, tempIdToServerId, signal);
     } catch (err) {
-      if (itemsSaved && newServerIds.length === 0) {
-        // Only updates were made — items are saved but snapshot/orphans failed
+      if (itemsSaved) {
+        // Items were saved to server but snapshot/orphans failed
         throw new Error(
           "Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.",
         );
@@ -461,6 +461,7 @@ export function PublicationWizard() {
     abortRef.current = controller;
 
     try {
+      setError(null);
       let pub = pubRef.current;
       if (!pub) {
         const result = await createMutation.mutateAsync();
