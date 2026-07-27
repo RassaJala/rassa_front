@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { formatTimestamp } from '@rassa/chat';
 import type { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -9,31 +10,6 @@ import type { ChatStackParamList, Conversation } from '@/types/chat';
 
 interface ConversationItemProps {
   conversation: Conversation;
-}
-
-const LOCAL_DATE = 'es-MX';
-
-function formatTimestamp(dateString: string | null): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return date.toLocaleTimeString(LOCAL_DATE, {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-  if (diffDays === 1) return 'Ayer';
-  if (diffDays < 7) {
-    return date.toLocaleDateString(LOCAL_DATE, { weekday: 'short' });
-  }
-  return date.toLocaleDateString(LOCAL_DATE, {
-    day: '2-digit',
-    month: '2-digit',
-  });
 }
 
 export default function ConversationItem({
