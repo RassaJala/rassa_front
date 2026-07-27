@@ -255,18 +255,14 @@ export function buildRegistrationPayload(form: RegistrationFormData) {
     ...(form.password ? { password: form.password } : {}),
     telefono: cleanPhoneNumber(form.telefono),
     role: form.role,
-    nombre: form.nombre.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-    apellido_paterno: form.apellidoPaterno
-      .trim()
-      .replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+    nombre: cleanName(form.nombre.trim()),
+    apellido_paterno: cleanName(form.apellidoPaterno.trim()),
     apellido_materno: form.apellidoMaterno?.trim()
-      ? form.apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '')
+      ? cleanName(form.apellidoMaterno.trim())
       : null,
     fecha_nacimiento: form.fechaNacimiento,
     sexo: form.sexo,
-    domicilio: form.domicilio
-      .trim()
-      .replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+    domicilio: cleanAddress(form.domicilio),
     fk_localidad: form.localidadId,
   };
 }
