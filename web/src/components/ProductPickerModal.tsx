@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { useAppColors } from "../hooks/useAppColors";
-import type { Producto } from "../services/publications";
-import { mediaUrl } from "../utils/mediaUrl";
-import { hideBrokenImage } from "../utils/imageHelpers";
+import { useEffect, useRef, useState } from 'react';
+import { useAppColors } from '../hooks/useAppColors';
+import type { Producto } from '../services/publications';
+import { mediaUrl } from '../utils/mediaUrl';
+import { hideBrokenImage } from '../utils/imageHelpers';
 
 export function ProductPickerModal({
   catalog,
@@ -21,7 +21,7 @@ export function ProductPickerModal({
   onClose: () => void;
   colors: ReturnType<typeof useAppColors>;
 }) {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,10 +30,10 @@ export function ProductPickerModal({
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
   const queryLower = search.toLowerCase();
@@ -46,14 +46,14 @@ export function ProductPickerModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)" }}
+      style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={onClose}
     >
       <div
         className="flex max-h-[80vh] w-full max-w-[480px] flex-col overflow-hidden rounded-2xl"
         style={{
           background: colors.surface,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -97,13 +97,13 @@ export function ProductPickerModal({
               style={{ color: colors.muted }}
             >
               {catalogError
-                ? "Error al cargar el catálogo."
-                : "No hay productos disponibles."}
+                ? 'Error al cargar el catálogo.'
+                : 'No hay productos disponibles.'}
               {catalogError && onRetryCatalog && (
                 <button
                   onClick={onRetryCatalog}
                   className="mt-2 cursor-pointer border-none text-[13px] font-semibold"
-                  style={{ color: colors.brand, background: "none" }}
+                  style={{ color: colors.brand, background: 'none' }}
                 >
                   Reintentar
                 </button>
@@ -124,8 +124,8 @@ export function ProductPickerModal({
                     style={{
                       border: `1px solid ${colors.border}`,
                       background: colors.surface,
-                      cursor: "pointer",
-                      transition: "background 0.15s",
+                      cursor: 'pointer',
+                      transition: 'background 0.15s',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = colors.accentBg;

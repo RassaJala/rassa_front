@@ -1,29 +1,29 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { AdminRoute } from "~/components/guards/AdminRoute";
-import { ProtectedRoute } from "~/components/guards/ProtectedRoute";
-import { DashboardLayout } from "~/components/layout/DashboardLayout";
-import { LoginScreen, RegisterScreen } from "./auth";
-import { FarmerProducts, FarmerOrders } from "./farmer";
-import { FarmerPublications } from "./FarmerPublications";
-import { PublicationWizard } from "./PublicationWizard";
-import { SellerSales } from "./seller";
-import { VendorPanelScreen } from "./VendorPanelScreen";
-import { AdminDashboard } from "./AdminDashboard";
-import { AdminCategories } from "./AdminCategories";
-import { AdminFamilies } from "./AdminFamilies";
-import { AdminFamilyDetail } from "./AdminFamilyDetail";
-import { AdminUnits } from "./AdminUnits";
-import { AdminProducts } from "./AdminProducts";
-import { AdminMunicipios } from "./AdminMunicipios";
-import { AdminLocalidades } from "./AdminLocalidades";
-import { AdminUsers } from "./AdminUsers";
-import { AdminOrderDetail } from "./AdminOrderDetail";
-import { BuyerHome } from "./BuyerHome";
-import { BuyerCart } from "./BuyerCart";
-import { BuyerOrderDetail } from "./BuyerOrderDetail";
-import { BuyerOrders } from "./BuyerOrders";
-import { ProfilePage } from "./ProfilePage";
-import { useAuth } from "../hooks/useAuth";
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminRoute } from '~/components/guards/AdminRoute';
+import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
+import { DashboardLayout } from '~/components/layout/DashboardLayout';
+import { LoginScreen, RegisterScreen } from './auth';
+import { FarmerProducts, FarmerOrders } from './farmer';
+import { FarmerPublications } from './FarmerPublications';
+import { PublicationWizard } from './PublicationWizard';
+import { SellerSales } from './seller';
+import { VendorPanelScreen } from './VendorPanelScreen';
+import { AdminDashboard } from './AdminDashboard';
+import { AdminCategories } from './AdminCategories';
+import { AdminFamilies } from './AdminFamilies';
+import { AdminFamilyDetail } from './AdminFamilyDetail';
+import { AdminUnits } from './AdminUnits';
+import { AdminProducts } from './AdminProducts';
+import { AdminMunicipios } from './AdminMunicipios';
+import { AdminLocalidades } from './AdminLocalidades';
+import { AdminUsers } from './AdminUsers';
+import { AdminOrderDetail } from './AdminOrderDetail';
+import { BuyerHome } from './BuyerHome';
+import { BuyerCart } from './BuyerCart';
+import { BuyerOrderDetail } from './BuyerOrderDetail';
+import { BuyerOrders } from './BuyerOrders';
+import { ProfilePage } from './ProfilePage';
+import { useAuth } from '../hooks/useAuth';
 
 function NotFound() {
   return (
@@ -54,13 +54,13 @@ function RootRedirect() {
   }
 
   const routes: Record<string, string> = {
-    admin: "/admin",
-    agricultor: "/agricultor/productos",
-    vendedor: "/vendedor/ventas",
-    cliente: "/cliente",
+    admin: '/admin',
+    agricultor: '/agricultor/productos',
+    vendedor: '/vendedor/ventas',
+    cliente: '/cliente',
   };
 
-  return <Navigate to={routes[user.rol] ?? "/login"} replace />;
+  return <Navigate to={routes[user.rol] ?? '/login'} replace />;
 }
 
 export function AppRouter() {

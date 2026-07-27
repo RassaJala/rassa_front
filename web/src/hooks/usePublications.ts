@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { UseMutationOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationOptions } from '@tanstack/react-query';
 
-import { QUERY_RETRY, QUERY_STALE_TIME } from "../constants/api";
+import { QUERY_RETRY, QUERY_STALE_TIME } from '../constants/api';
 
 const QUERY_OPTIONS = {
   staleTime: QUERY_STALE_TIME,
@@ -18,19 +18,19 @@ import type {
   PublicacionEstado,
   PublicacionList,
   UpdateProductoPayload as UpdateProductoServicePayload,
-} from "../services/publications";
-import * as publicationsApi from "../services/publications";
+} from '../services/publications';
+import * as publicationsApi from '../services/publications';
 
 // ── Error logging helper ──────────────────────────────────
 
 function logMutationError(context: string, error: unknown): void {
-  const name = error instanceof Error ? error.name : "UnknownError";
+  const name = error instanceof Error ? error.name : 'UnknownError';
   const msg = error instanceof Error ? error.message : String(error);
   if (import.meta.env.DEV) {
     const stack = error instanceof Error ? error.stack : undefined;
     console.error(
       `[publications] ${context}: ${name}: ${msg}`,
-      stack ? { stack } : "",
+      stack ? { stack } : '',
     );
   }
 }
@@ -38,9 +38,9 @@ function logMutationError(context: string, error: unknown): void {
 // ── Mutation factory ──────────────────────────────────────
 
 type InvalidateKeys =
-  | ["publicaciones"]
-  | ["publicaciones", number]
-  | ["publicaciones", number, "productos"];
+  | ['publicaciones']
+  | ['publicaciones', number]
+  | ['publicaciones', number, 'productos'];
 
 function usePubMutation<TData, TVariables>(
   context: string,
@@ -71,7 +71,7 @@ function usePubMutation<TData, TVariables>(
 
 export function usePublicaciones(estado?: PublicacionEstado) {
   return useQuery<ApiResponse<PublicacionList>>({
-    queryKey: ["publicaciones", { estado }],
+    queryKey: ['publicaciones', { estado }],
     queryFn: () =>
       publicationsApi.getPublicaciones(estado ? { estado } : undefined),
     ...QUERY_OPTIONS,
@@ -80,7 +80,7 @@ export function usePublicaciones(estado?: PublicacionEstado) {
 
 export function usePublicacion(id: number) {
   return useQuery<ApiResponse<Publicacion>>({
-    queryKey: ["publicaciones", id],
+    queryKey: ['publicaciones', id],
     queryFn: () => publicationsApi.getPublicacion(id),
     enabled: id > 0,
     ...QUERY_OPTIONS,
@@ -89,7 +89,7 @@ export function usePublicacion(id: number) {
 
 export function useProductosSemanales(pubId: number) {
   return useQuery<ApiResponse<ProductoSemanal[]>>({
-    queryKey: ["publicaciones", pubId, "productos"],
+    queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
     ...QUERY_OPTIONS,
@@ -98,7 +98,7 @@ export function useProductosSemanales(pubId: number) {
 
 export function useCatalogProductos() {
   return useQuery<ApiResponse<{ results: Producto[] }>>({
-    queryKey: ["productos-catalog"],
+    queryKey: ['productos-catalog'],
     queryFn: publicationsApi.getCatalogProductos,
     ...QUERY_OPTIONS,
   });
@@ -106,7 +106,7 @@ export function useCatalogProductos() {
 
 export function useUnidades() {
   return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
-    queryKey: ["unidades"],
+    queryKey: ['unidades'],
     queryFn: publicationsApi.getUnidades,
     ...QUERY_OPTIONS,
   });
@@ -116,33 +116,33 @@ export function useUnidades() {
 
 export function useCreatePublicacion() {
   return usePubMutation(
-    "createPublicacion",
+    'createPublicacion',
     publicationsApi.createPublicacion,
-    () => [["publicaciones"]],
+    () => [['publicaciones']],
   );
 }
 
 export function useDeletePublicacion() {
   return usePubMutation(
-    "deletePublicacion",
+    'deletePublicacion',
     publicationsApi.deletePublicacion,
-    () => [["publicaciones"]],
+    () => [['publicaciones']],
   );
 }
 
 export function usePublishPublicacion() {
   return usePubMutation(
-    "publishPublicacion",
+    'publishPublicacion',
     publicationsApi.publishPublicacion,
-    (id: number) => [["publicaciones"], ["publicaciones", id]],
+    (id: number) => [['publicaciones'], ['publicaciones', id]],
   );
 }
 
 export function useClosePublicacion() {
   return usePubMutation(
-    "closePublicacion",
+    'closePublicacion',
     publicationsApi.closePublicacion,
-    (id: number) => [["publicaciones"], ["publicaciones", id]],
+    (id: number) => [['publicaciones'], ['publicaciones', id]],
   );
 }
 
@@ -168,14 +168,14 @@ type UploadImagenPayload = {
 };
 
 const productoKeys = (pubId: number): InvalidateKeys[] => [
-  ["publicaciones"],
-  ["publicaciones", pubId],
-  ["publicaciones", pubId, "productos"],
+  ['publicaciones'],
+  ['publicaciones', pubId],
+  ['publicaciones', pubId, 'productos'],
 ];
 
 export function useAddProductoSemanal() {
   return usePubMutation(
-    "addProductoSemanal",
+    'addProductoSemanal',
     ({ pubId, payload }: AddProductoHookPayload) =>
       publicationsApi.addProductoSemanal(pubId, payload),
     (v) => productoKeys(v.pubId),
@@ -184,7 +184,7 @@ export function useAddProductoSemanal() {
 
 export function useUpdateProductoSemanal() {
   return usePubMutation(
-    "updateProductoSemanal",
+    'updateProductoSemanal',
     ({ pubId, itemId, payload }: UpdateProductoHookPayload) =>
       publicationsApi.updateProductoSemanal(pubId, itemId, payload),
     (v) => productoKeys(v.pubId),
@@ -193,7 +193,7 @@ export function useUpdateProductoSemanal() {
 
 export function useDeleteProductoSemanal() {
   return usePubMutation(
-    "deleteProductoSemanal",
+    'deleteProductoSemanal',
     ({ pubId, itemId }: DeleteProductoPayload) =>
       publicationsApi.deleteProductoSemanal(pubId, itemId),
     (v) => productoKeys(v.pubId),
@@ -202,7 +202,7 @@ export function useDeleteProductoSemanal() {
 
 export function useUploadProductoSemanalImagen() {
   return usePubMutation(
-    "uploadProductoSemanalImagen",
+    'uploadProductoSemanalImagen',
     ({ pubId, itemId, formData }: UploadImagenPayload) =>
       publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
     (v) => productoKeys(v.pubId),

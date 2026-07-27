@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAppColors } from "../hooks/useAppColors";
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAppColors } from '../hooks/useAppColors';
 import {
   useAddProductoSemanal,
   useCatalogProductos,
@@ -13,12 +13,12 @@ import {
   useUnidades,
   useUpdateProductoSemanal,
   useUploadProductoSemanalImagen,
-} from "../hooks/usePublications";
+} from '../hooks/usePublications';
 import {
   getPublicacion,
   type Producto,
   type Publicacion,
-} from "../services/publications";
+} from '../services/publications';
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -29,43 +29,43 @@ import {
   getWeekNumber,
   validateAllItems as validateAllItemsPure,
   validateItem,
-} from "../utils/publicationWizard";
-import { extractApiError } from "../utils/apiError";
+} from '../utils/publicationWizard';
+import { extractApiError } from '../utils/apiError';
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
   TOAST_ORPHAN_DELAY_MS,
-} from "../constants/api";
-import { productCountLabel } from "../components/PublicationActions";
-import { mediaUrl } from "../utils/mediaUrl";
-import { hideBrokenImage, revokeBlobUrl } from "../utils/imageHelpers";
-import { ProductPickerModal } from "../components/ProductPickerModal";
-import { Badge } from "../components/ui/Badge";
-import { Button } from "../components/ui/Button";
-import { EmptyState } from "../components/ui/EmptyState";
-import { FormField } from "../components/ui/FormField";
-import { FormSelect } from "../components/ui/FormSelect";
-import { Input } from "../components/ui/Input";
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
-import { Toast, type ToastState } from "../components/ui/Toast";
+} from '../constants/api';
+import { productCountLabel } from '../components/PublicationActions';
+import { mediaUrl } from '../utils/mediaUrl';
+import { hideBrokenImage, revokeBlobUrl } from '../utils/imageHelpers';
+import { ProductPickerModal } from '../components/ProductPickerModal';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
+import { FormField } from '../components/ui/FormField';
+import { FormSelect } from '../components/ui/FormSelect';
+import { Input } from '../components/ui/Input';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Toast, type ToastState } from '../components/ui/Toast';
 
 // ── Types ──────────────────────────────────────────────────
 
-type WizardStep = "fecha" | "productos" | "resumen" | "publicar";
+type WizardStep = 'fecha' | 'productos' | 'resumen' | 'publicar';
 
 const WIZARD_STEPS: WizardStep[] = [
-  "fecha",
-  "productos",
-  "resumen",
-  "publicar",
+  'fecha',
+  'productos',
+  'resumen',
+  'publicar',
 ];
 
 const STEP_LABELS: Record<WizardStep, string> = {
-  fecha: "Fecha",
-  productos: "Productos",
-  resumen: "Resumen",
-  publicar: "Publicar",
+  fecha: 'Fecha',
+  productos: 'Productos',
+  resumen: 'Resumen',
+  publicar: 'Publicar',
 };
 
 // ── PublicationWizard ──────────────────────────────────────
@@ -81,7 +81,7 @@ export function PublicationWizard() {
 
   // ── Step state ──
   const [stepIndex, setStepIndex] = useState(0);
-  const currentStep = WIZARD_STEPS[stepIndex] ?? "fecha";
+  const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
 
   // ── Items ──
   const [items, setItems] = useState<WizardItemDraft[]>([]);
@@ -131,7 +131,7 @@ export function PublicationWizard() {
         tempId: String(p.id_producto_semanal),
         isNew: false,
         fk_producto: p.fk_producto,
-        nombre_producto: catalogMap.get(p.fk_producto) ?? "",
+        nombre_producto: catalogMap.get(p.fk_producto) ?? '',
         fk_unidad: p.fk_unidad,
         stock: String(p.stock),
         precio: p.precio,
@@ -175,7 +175,7 @@ export function PublicationWizard() {
 
   // ── Navigation ──
   function nextStep() {
-    if (currentStep === "productos" && !validateAndMarkItems()) return;
+    if (currentStep === 'productos' && !validateAndMarkItems()) return;
     setStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
   }
 
@@ -199,7 +199,7 @@ export function PublicationWizard() {
       fk_producto: producto.id_producto,
       nombre_producto: producto.nombre_producto,
       fk_unidad: 0,
-      stock: "",
+      stock: '',
       precio: String(producto.precio),
       foto: null,
       imageFile: null,
@@ -257,7 +257,7 @@ export function PublicationWizard() {
     }
 
     if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
-      setError("Formato de imagen no válido. Usá JPG, PNG, WebP o GIF.");
+      setError('Formato de imagen no válido. Usá JPG, PNG, WebP o GIF.');
       return;
     }
 
@@ -298,7 +298,7 @@ export function PublicationWizard() {
     const tempIdToServerId = new Map<string, number>();
 
     for (const item of items) {
-      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+      if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
       const serverId = Number(item.tempId);
       const isExisting = !item.isNew && pubRef.current !== null;
 
@@ -337,9 +337,9 @@ export function PublicationWizard() {
       );
 
       if (item.imageFile) {
-        if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+        if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
         const formData = new FormData();
-        formData.append("imagen", item.imageFile);
+        formData.append('imagen', item.imageFile);
         await uploadMutation.mutateAsync({
           pubId,
           itemId,
@@ -354,7 +354,7 @@ export function PublicationWizard() {
   // ── Phase 2: Refresh pubRef snapshot ──
   async function refreshSnapshot(pubId: number): Promise<void> {
     const refreshed = await qc.fetchQuery({
-      queryKey: ["publicaciones", pubId],
+      queryKey: ['publicaciones', pubId],
       queryFn: () => getPublicacion(pubId),
       staleTime: 0,
     });
@@ -381,7 +381,7 @@ export function PublicationWizard() {
       }
     }
     for (const existing of pubRef.current.productos ?? []) {
-      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+      if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
       const existingId = String(existing.id_producto_semanal);
       if (!currentIds.has(existingId)) {
         try {
@@ -393,7 +393,7 @@ export function PublicationWizard() {
           failures++;
           if (import.meta.env.DEV) {
             console.error(
-              "[publications] failed to delete orphan item",
+              '[publications] failed to delete orphan item',
               existing.id_producto_semanal,
               err,
             );
@@ -426,7 +426,7 @@ export function PublicationWizard() {
       if (itemsSaved) {
         // Items were saved to server but snapshot/orphans failed
         throw new Error(
-          "Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.",
+          'Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.',
         );
       }
       if (newServerIds.length > 0) {
@@ -439,7 +439,7 @@ export function PublicationWizard() {
           } catch (cleanupErr) {
             if (import.meta.env.DEV) {
               console.error(
-                "[publications] rollback cleanup failed for item",
+                '[publications] rollback cleanup failed for item',
                 serverId,
                 cleanupErr,
               );
@@ -474,7 +474,7 @@ export function PublicationWizard() {
       }
       if (!pub) {
         if (mountedRef.current) {
-          setError("No se pudo crear la publicación.");
+          setError('No se pudo crear la publicación.');
         }
         return;
       }
@@ -486,13 +486,13 @@ export function PublicationWizard() {
       await opts.afterPersist?.(pub.id_publicacion);
 
       if (mountedRef.current) {
-        setToast({ message: opts.successMsg, type: "success" });
+        setToast({ message: opts.successMsg, type: 'success' });
         if (orphanFailures > 0) {
           setTimeout(() => {
             if (mountedRef.current) {
               setToast({
-                message: `${orphanFailures} producto${orphanFailures !== 1 ? "s" : ""} antiguo${orphanFailures !== 1 ? "s" : ""} no se pudo${orphanFailures !== 1 ? "ron" : ""} eliminar.`,
-                type: "error",
+                message: `${orphanFailures} producto${orphanFailures !== 1 ? 's' : ''} antiguo${orphanFailures !== 1 ? 's' : ''} no se pudo${orphanFailures !== 1 ? 'ron' : ''} eliminar.`,
+                type: 'error',
               });
             }
           }, TOAST_ORPHAN_DELAY_MS);
@@ -502,15 +502,15 @@ export function PublicationWizard() {
       if (controller.signal.aborted) {
         if (mountedRef.current) {
           setError(null);
-          setToast({ message: "Operación cancelada.", type: "error" });
+          setToast({ message: 'Operación cancelada.', type: 'error' });
         }
         return;
       }
       if (import.meta.env.DEV) {
-        console.error("[publications] persist failed:", err);
+        console.error('[publications] persist failed:', err);
       }
       if (mountedRef.current) {
-        setError(extractApiError(err, ["detail", "message"]));
+        setError(extractApiError(err, ['detail', 'message']));
       }
     } finally {
       abortRef.current = null;
@@ -521,22 +521,22 @@ export function PublicationWizard() {
 
   // ── Save draft ──
   function handleSaveDraft() {
-    void runPersist({ successMsg: "Borrador guardado." });
+    void runPersist({ successMsg: 'Borrador guardado.' });
   }
 
   // ── Publish ──
   function handlePublish() {
     void runPersist({
-      successMsg: "¡Publicación publicada!",
+      successMsg: '¡Publicación publicada!',
       afterPersist: async (pubId) => {
         try {
           await publishMutation.mutateAsync(pubId);
         } catch {
           throw new Error(
-            "Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.",
+            'Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.',
           );
         }
-        if (mountedRef.current) void navigate("/agricultor/publicaciones");
+        if (mountedRef.current) void navigate('/agricultor/publicaciones');
       },
     });
   }
@@ -553,7 +553,7 @@ export function PublicationWizard() {
         </p>
         <Button
           variant="secondary"
-          onClick={() => void navigate("/agricultor/publicaciones")}
+          onClick={() => void navigate('/agricultor/publicaciones')}
         >
           Volver
         </Button>
@@ -570,8 +570,8 @@ export function PublicationWizard() {
       <div className="py-12 text-center">
         <p className="mb-3" style={{ color: colors.coral }}>
           {itemsQuery.isError
-            ? "No se pudieron cargar los productos de la publicación."
-            : "No se pudo cargar la publicación."}
+            ? 'No se pudieron cargar los productos de la publicación.'
+            : 'No se pudo cargar la publicación.'}
         </p>
         <div className="flex justify-center gap-2">
           <Button
@@ -585,7 +585,7 @@ export function PublicationWizard() {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => void navigate("/agricultor/publicaciones")}
+            onClick={() => void navigate('/agricultor/publicaciones')}
           >
             Volver
           </Button>
@@ -619,7 +619,7 @@ export function PublicationWizard() {
         </div>
         <Button
           variant="ghost"
-          onClick={() => void navigate("/agricultor/publicaciones")}
+          onClick={() => void navigate('/agricultor/publicaciones')}
         >
           ✕ Cerrar
         </Button>
@@ -644,18 +644,18 @@ export function PublicationWizard() {
               className="flex-1 cursor-pointer px-3 py-2.5 font-[inherit] text-[13px] font-semibold"
               style={{
                 borderRadius: 10,
-                border: "none",
-                background: isActive ? colors.surface : "transparent",
+                border: 'none',
+                background: isActive ? colors.surface : 'transparent',
                 color: isActive
                   ? colors.fg
                   : isDone
                     ? colors.brand
                     : colors.muted,
-                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                transition: "background 0.15s, color 0.15s",
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'background 0.15s, color 0.15s',
               }}
             >
-              {isDone ? "✓ " : ""}
+              {isDone ? '✓ ' : ''}
               {STEP_LABELS[step]}
             </button>
           );
@@ -667,8 +667,8 @@ export function PublicationWizard() {
         <div
           className="mb-4 rounded-xl px-4 py-3 text-[14px]"
           style={{
-            background: "rgba(222,57,58,0.08)",
-            border: "1px solid rgba(222,57,58,0.2)",
+            background: 'rgba(222,57,58,0.08)',
+            border: '1px solid rgba(222,57,58,0.2)',
             color: colors.coral,
           }}
         >
@@ -685,7 +685,7 @@ export function PublicationWizard() {
         }}
       >
         {/* Step 1: Fecha */}
-        {currentStep === "fecha" && (
+        {currentStep === 'fecha' && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -722,7 +722,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 2: Productos */}
-        {currentStep === "productos" && (
+        {currentStep === 'productos' && (
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h2
@@ -788,17 +788,17 @@ export function PublicationWizard() {
                             className="relative grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-xl"
                             style={{
                               border: displayImage
-                                ? "none"
+                                ? 'none'
                                 : `2px dashed ${colors.inputBorder}`,
                               background: displayImage
-                                ? "transparent"
+                                ? 'transparent'
                                 : colors.accentBg,
                             }}
                             onClick={() => {
                               if (saving) return;
-                              const input = document.createElement("input");
-                              input.type = "file";
-                              input.accept = "image/*";
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
                               input.onchange = (e) => {
                                 const file = (e.target as HTMLInputElement)
                                   .files?.[0];
@@ -828,7 +828,7 @@ export function PublicationWizard() {
                               className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px]"
                               style={{
                                 background: colors.coral,
-                                color: "#fff",
+                                color: '#fff',
                               }}
                             >
                               ✕
@@ -854,7 +854,7 @@ export function PublicationWizard() {
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
-                                      "stock",
+                                      'stock',
                                       e.target.value,
                                     )
                                   }
@@ -878,7 +878,7 @@ export function PublicationWizard() {
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
-                                      "precio",
+                                      'precio',
                                       e.target.value,
                                     )
                                   }
@@ -895,12 +895,12 @@ export function PublicationWizard() {
                             <FormSelect
                               colors={colors}
                               hasError={!!errs.fk_unidad}
-                              value={item.fk_unidad || ""}
+                              value={item.fk_unidad || ''}
                               disabled={saving}
                               onChange={(e) =>
                                 updateItem(
                                   item.tempId,
-                                  "fk_unidad",
+                                  'fk_unidad',
                                   Number(e.target.value),
                                 )
                               }
@@ -924,7 +924,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 3: Resumen */}
-        {currentStep === "resumen" && (
+        {currentStep === 'resumen' && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -999,15 +999,15 @@ export function PublicationWizard() {
                           className="text-[13px]"
                           style={{ color: colors.muted }}
                         >
-                          {item.stock} {unidad?.tipo ?? ""} · ${item.precio}
+                          {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
                         </p>
                       </div>
                       <Badge
                         variant={
-                          item.foto || item.imageFile ? "success" : "warning"
+                          item.foto || item.imageFile ? 'success' : 'warning'
                         }
                       >
-                        {item.foto || item.imageFile ? "Con foto" : "Sin foto"}
+                        {item.foto || item.imageFile ? 'Con foto' : 'Sin foto'}
                       </Badge>
                     </div>
                   );
@@ -1018,7 +1018,7 @@ export function PublicationWizard() {
         )}
 
         {/* Step 4: Publicar */}
-        {currentStep === "publicar" && (
+        {currentStep === 'publicar' && (
           <div>
             <h2
               className="mb-4 text-xl font-semibold"
@@ -1065,28 +1065,28 @@ export function PublicationWizard() {
           )}
         </div>
         <div className="flex gap-2">
-          {currentStep === "publicar" ? (
+          {currentStep === 'publicar' ? (
             <>
               <Button
                 variant="secondary"
                 onClick={() => void handleSaveDraft()}
                 disabled={saving || items.length === 0 || hasItemErrors}
               >
-                {saving ? "Guardando…" : "Guardar borrador"}
+                {saving ? 'Guardando…' : 'Guardar borrador'}
               </Button>
               <Button
                 variant="primary"
                 onClick={() => void handlePublish()}
                 disabled={saving || items.length === 0 || hasItemErrors}
               >
-                {saving ? "Publicando…" : "🚀 Publicar"}
+                {saving ? 'Publicando…' : '🚀 Publicar'}
               </Button>
             </>
           ) : (
             <Button
               variant="primary"
               onClick={nextStep}
-              disabled={currentStep === "productos" && items.length === 0}
+              disabled={currentStep === 'productos' && items.length === 0}
             >
               Siguiente →
             </Button>

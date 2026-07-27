@@ -1,8 +1,8 @@
-import type { SyntheticEvent } from "react";
+import type { SyntheticEvent } from 'react';
 
 /** Hide broken <img> elements — use as onError handler. */
 export function hideBrokenImage(e: SyntheticEvent<HTMLImageElement>) {
-  e.currentTarget.style.display = "none";
+  e.currentTarget.style.display = 'none';
 }
 
 /** Revoke a blob URL if non-null — safe no-op for null. */

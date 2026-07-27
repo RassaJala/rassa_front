@@ -1,36 +1,36 @@
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAppColors } from "../hooks/useAppColors";
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppColors } from '../hooks/useAppColors';
 import {
   useClosePublicacion,
   useDeletePublicacion,
   usePublicaciones,
   usePublishPublicacion,
-} from "../hooks/usePublications";
-import type { PublicacionEstado } from "../services/publications";
-import { extractApiError } from "../utils/apiError";
-import { formatDate } from "../utils/publicationWizard";
-import { mediaUrl } from "../utils/mediaUrl";
-import { hideBrokenImage } from "../utils/imageHelpers";
+} from '../hooks/usePublications';
+import type { PublicacionEstado } from '../services/publications';
+import { extractApiError } from '../utils/apiError';
+import { formatDate } from '../utils/publicationWizard';
+import { mediaUrl } from '../utils/mediaUrl';
+import { hideBrokenImage } from '../utils/imageHelpers';
 import {
   PublicationActions,
   getStatusBadge,
   productCountLabel,
-} from "../components/PublicationActions";
-import { PageHeader } from "../components/layout/PageHeader";
-import { Badge } from "../components/ui/Badge";
-import { Button } from "../components/ui/Button";
-import { EmptyState } from "../components/ui/EmptyState";
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
-import { Toast, type ToastState } from "../components/ui/Toast";
+} from '../components/PublicationActions';
+import { PageHeader } from '../components/layout/PageHeader';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Toast, type ToastState } from '../components/ui/Toast';
 
 // ── Helpers ────────────────────────────────────────────────
 
-const TABS: Array<{ key: PublicacionEstado | "all"; label: string }> = [
-  { key: "all", label: "Todas" },
-  { key: "borrador", label: "Borradores" },
-  { key: "publicado", label: "Publicadas" },
-  { key: "cerrado", label: "Cerradas" },
+const TABS: Array<{ key: PublicacionEstado | 'all'; label: string }> = [
+  { key: 'all', label: 'Todas' },
+  { key: 'borrador', label: 'Borradores' },
+  { key: 'publicado', label: 'Publicadas' },
+  { key: 'cerrado', label: 'Cerradas' },
 ];
 
 // ── FarmerPublications ─────────────────────────────────────
@@ -38,18 +38,18 @@ const TABS: Array<{ key: PublicacionEstado | "all"; label: string }> = [
 export function FarmerPublications() {
   const colors = useAppColors();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<PublicacionEstado | "all">("all");
+  const [activeTab, setActiveTab] = useState<PublicacionEstado | 'all'>('all');
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const { data, isLoading, isError, refetch } = usePublicaciones(
-    activeTab === "all" ? undefined : activeTab,
+    activeTab === 'all' ? undefined : activeTab,
   );
   const deleteMutation = useDeletePublicacion();
   const publishMutation = usePublishPublicacion();
   const closeMutation = useClosePublicacion();
 
   const showToast = useCallback((msg: string, asError = false) => {
-    setToast({ message: msg, type: asError ? "error" : "success" });
+    setToast({ message: msg, type: asError ? 'error' : 'success' });
   }, []);
 
   const publications = data?.data?.results ?? [];
@@ -64,31 +64,31 @@ export function FarmerPublications() {
   }
 
   async function handleDelete(id: number) {
-    if (!window.confirm("¿Eliminar esta publicación?")) return;
+    if (!window.confirm('¿Eliminar esta publicación?')) return;
     try {
       await deleteMutation.mutateAsync(id);
-      showToast("Publicación eliminada.");
+      showToast('Publicación eliminada.');
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]), true);
+      showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
 
   async function handlePublish(id: number) {
     try {
       await publishMutation.mutateAsync(id);
-      showToast("Publicación publicada.");
+      showToast('Publicación publicada.');
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]), true);
+      showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
 
   async function handleClose(id: number) {
-    if (!window.confirm("¿Cerrar esta publicación?")) return;
+    if (!window.confirm('¿Cerrar esta publicación?')) return;
     try {
       await closeMutation.mutateAsync(id);
-      showToast("Publicación cerrada.");
+      showToast('Publicación cerrada.');
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]), true);
+      showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
 
@@ -102,7 +102,7 @@ export function FarmerPublications() {
         action={
           <Button
             variant="primary"
-            onClick={() => void navigate("/agricultor/publicaciones/nueva")}
+            onClick={() => void navigate('/agricultor/publicaciones/nueva')}
           >
             + Nueva publicación
           </Button>
@@ -127,11 +127,11 @@ export function FarmerPublications() {
               className="cursor-pointer px-4 py-2 font-[inherit] text-[13px] font-semibold"
               style={{
                 borderRadius: 10,
-                border: "none",
-                background: isActive ? colors.surface : "transparent",
+                border: 'none',
+                background: isActive ? colors.surface : 'transparent',
                 color: isActive ? colors.fg : colors.muted,
-                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                transition: "background 0.15s, color 0.15s",
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'background 0.15s, color 0.15s',
               }}
             >
               {tab.label}
@@ -160,7 +160,7 @@ export function FarmerPublications() {
           action={
             <Button
               variant="primary"
-              onClick={() => void navigate("/agricultor/publicaciones/nueva")}
+              onClick={() => void navigate('/agricultor/publicaciones/nueva')}
             >
               + Nueva publicación
             </Button>
@@ -184,7 +184,7 @@ export function FarmerPublications() {
                     background: colors.bg,
                   }}
                 >
-                  {["Semana", "Fecha", "Productos", "Estado", ""].map((h) => (
+                  {['Semana', 'Fecha', 'Productos', 'Estado', ''].map((h) => (
                     <th
                       key={h}
                       className="px-[18px] py-3.5 text-left text-[13px] font-semibold uppercase tracking-[0.05em]"
@@ -226,7 +226,7 @@ export function FarmerPublications() {
                         {productos.length > 0 && (
                           <span
                             className="ml-2 flex gap-1"
-                            style={{ display: "inline-flex" }}
+                            style={{ display: 'inline-flex' }}
                           >
                             {productos.slice(0, 3).map((p) => {
                               const img = mediaUrl(p.foto);

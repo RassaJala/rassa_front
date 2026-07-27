@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { Badge } from "~/components/ui/Badge";
-import { Button } from "~/components/ui/Button";
-import { LoadingSpinner } from "~/components/ui/LoadingSpinner";
-import { colors } from "~/constants/colors";
-import { useAppColors } from "~/hooks/useAppColors";
-import api from "~/services/api";
+import { Badge } from '~/components/ui/Badge';
+import { Button } from '~/components/ui/Button';
+import { LoadingSpinner } from '~/components/ui/LoadingSpinner';
+import { colors } from '~/constants/colors';
+import { useAppColors } from '~/hooks/useAppColors';
+import api from '~/services/api';
 
 interface OrderItem {
   id_detalle: number;
@@ -38,14 +38,14 @@ interface OrderDetail {
 
 const STATUS_VARIANT: Record<
   string,
-  "default" | "success" | "warning" | "error"
+  'default' | 'success' | 'warning' | 'error'
 > = {
-  pendiente: "warning",
-  confirmado: "default",
-  en_preparacion: "default",
-  listo_para_retirar: "success",
-  entregado: "success",
-  cancelado: "error",
+  pendiente: 'warning',
+  confirmado: 'default',
+  en_preparacion: 'default',
+  listo_para_retirar: 'success',
+  entregado: 'success',
+  cancelado: 'error',
 };
 
 const TIMELINE_COLORS: Record<string, string> = {
@@ -59,12 +59,12 @@ const TIMELINE_COLORS: Record<string, string> = {
 
 function formatearFecha(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return d.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -80,7 +80,7 @@ export function BuyerOrderDetail() {
     isError,
     refetch,
   } = useQuery<OrderDetail>({
-    queryKey: ["pedido", orderId],
+    queryKey: ['pedido', orderId],
     queryFn: async () => {
       const { data } = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return data;
@@ -99,31 +99,31 @@ export function BuyerOrderDetail() {
         <Button variant="secondary" onClick={() => void refetch()}>
           Reintentar
         </Button>
-        <Button variant="ghost" onClick={() => navigate("/cliente/pedidos")}>
+        <Button variant="ghost" onClick={() => navigate('/cliente/pedidos')}>
           Volver a mis pedidos
         </Button>
       </div>
     );
   }
 
-  const isPickupReady = order.estado_actual === "listo_para_retirar";
+  const isPickupReady = order.estado_actual === 'listo_para_retirar';
 
   return (
     <div>
       {/* Back button */}
       <button
-        onClick={() => navigate("/cliente/pedidos")}
+        onClick={() => navigate('/cliente/pedidos')}
         style={{
-          background: "transparent",
-          border: "none",
+          background: 'transparent',
+          border: 'none',
           color: t.brand,
           fontSize: 14,
           fontWeight: 600,
-          cursor: "pointer",
+          cursor: 'pointer',
           padding: 0,
           marginBottom: 12,
-          display: "inline-flex",
-          alignItems: "center",
+          display: 'inline-flex',
+          alignItems: 'center',
           gap: 6,
         }}
       >
@@ -153,10 +153,10 @@ export function BuyerOrderDetail() {
       >
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
             gap: 16,
           }}
         >
@@ -167,20 +167,20 @@ export function BuyerOrderDetail() {
                 fontSize: 15,
                 fontWeight: 600,
                 color: t.fg,
-                margin: "4px 0 0 0",
+                margin: '4px 0 0 0',
               }}
             >
               {formatearFecha(order.creado_en)}
             </p>
           </div>
-          <div style={{ textAlign: "right" }}>
+          <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: 13, color: t.muted, margin: 0 }}>Total</p>
             <p
               style={{
                 fontSize: 22,
                 fontWeight: 700,
                 color: t.fg,
-                margin: "4px 0 0 0",
+                margin: '4px 0 0 0',
               }}
             >
               ${parseFloat(order.total).toFixed(2)}
@@ -189,14 +189,14 @@ export function BuyerOrderDetail() {
         </div>
 
         <div style={{ marginTop: 16 }}>
-          <Badge variant={STATUS_VARIANT[order.estado_actual] ?? "default"}>
-            {order.estado_actual.replace(/_/g, " ")}
+          <Badge variant={STATUS_VARIANT[order.estado_actual] ?? 'default'}>
+            {order.estado_actual.replace(/_/g, ' ')}
           </Badge>
         </div>
 
         <div
           style={{
-            display: "flex",
+            display: 'flex',
             gap: 32,
             marginTop: 16,
           }}
@@ -208,7 +208,7 @@ export function BuyerOrderDetail() {
                 fontSize: 15,
                 fontWeight: 600,
                 color: t.fg,
-                margin: "4px 0 0 0",
+                margin: '4px 0 0 0',
               }}
             >
               ${parseFloat(order.subtotal).toFixed(2)}
@@ -221,7 +221,7 @@ export function BuyerOrderDetail() {
                 fontSize: 15,
                 fontWeight: 600,
                 color: t.fg,
-                margin: "4px 0 0 0",
+                margin: '4px 0 0 0',
               }}
             >
               ${parseFloat(order.iva).toFixed(2)}
@@ -238,8 +238,8 @@ export function BuyerOrderDetail() {
             borderRadius: 16,
             padding: 20,
             marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 14,
           }}
         >
@@ -259,7 +259,7 @@ export function BuyerOrderDetail() {
               style={{
                 fontSize: 13,
                 color: colors.iconWhite,
-                margin: "4px 0 0 0",
+                margin: '4px 0 0 0',
                 opacity: 0.9,
               }}
             >
@@ -285,25 +285,25 @@ export function BuyerOrderDetail() {
           background: t.surface,
           borderRadius: 16,
           border: `1px solid ${t.border}`,
-          overflow: "hidden",
+          overflow: 'hidden',
           marginBottom: 24,
         }}
       >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {["Producto", "Cantidad", "Precio unitario", "Importe"].map(
+              {['Producto', 'Cantidad', 'Precio unitario', 'Importe'].map(
                 (h) => (
                   <th
                     key={h}
                     style={{
-                      textAlign: "left",
+                      textAlign: 'left',
                       fontSize: 11,
                       color: t.muted,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
                       fontWeight: 600,
-                      padding: "12px 20px",
+                      padding: '12px 20px',
                       background: t.bg,
                       borderBottom: `1px solid ${t.border}`,
                     }}
@@ -319,54 +319,54 @@ export function BuyerOrderDetail() {
               <tr key={detalle.id_detalle}>
                 <td
                   style={{
-                    padding: "14px 20px",
+                    padding: '14px 20px',
                     fontSize: 14,
                     fontWeight: 600,
                     color: t.fg,
                     borderBottom:
                       index < order.detalles.length - 1
                         ? `1px solid ${t.border}`
-                        : "none",
+                        : 'none',
                   }}
                 >
                   {detalle.nombre_producto}
                 </td>
                 <td
                   style={{
-                    padding: "14px 20px",
+                    padding: '14px 20px',
                     fontSize: 14,
                     color: t.fg,
                     borderBottom:
                       index < order.detalles.length - 1
                         ? `1px solid ${t.border}`
-                        : "none",
+                        : 'none',
                   }}
                 >
                   {detalle.cantidad}
                 </td>
                 <td
                   style={{
-                    padding: "14px 20px",
+                    padding: '14px 20px',
                     fontSize: 14,
                     color: t.muted,
                     borderBottom:
                       index < order.detalles.length - 1
                         ? `1px solid ${t.border}`
-                        : "none",
+                        : 'none',
                   }}
                 >
                   ${parseFloat(detalle.precio_unitario).toFixed(2)}
                 </td>
                 <td
                   style={{
-                    padding: "14px 20px",
+                    padding: '14px 20px',
                     fontSize: 14,
                     fontWeight: 700,
                     color: t.fg,
                     borderBottom:
                       index < order.detalles.length - 1
                         ? `1px solid ${t.border}`
-                        : "none",
+                        : 'none',
                   }}
                 >
                   ${parseFloat(detalle.importe).toFixed(2)}
@@ -400,17 +400,17 @@ export function BuyerOrderDetail() {
           const dotColor = TIMELINE_COLORS[entry.estado_nuevo] ?? t.muted;
           const label =
             index === 0
-              ? "Pedido creado"
-              : entry.estado_nuevo.replace(/_/g, " ");
+              ? 'Pedido creado'
+              : entry.estado_nuevo.replace(/_/g, ' ');
           const isLast = index === order.historial.length - 1;
 
           return (
-            <div key={entry.id_historial} style={{ display: "flex", gap: 16 }}>
+            <div key={entry.id_historial} style={{ display: 'flex', gap: 16 }}>
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                   width: 24,
                 }}
               >
@@ -418,7 +418,7 @@ export function BuyerOrderDetail() {
                   style={{
                     width: 16,
                     height: 16,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     background: dotColor,
                     marginTop: 4,
                     flexShrink: 0,
@@ -442,7 +442,7 @@ export function BuyerOrderDetail() {
                     fontWeight: 600,
                     color: t.fg,
                     margin: 0,
-                    textTransform: "capitalize",
+                    textTransform: 'capitalize',
                   }}
                 >
                   {label}
@@ -452,7 +452,7 @@ export function BuyerOrderDetail() {
                     style={{
                       fontSize: 13,
                       color: t.muted,
-                      margin: "2px 0 0 0",
+                      margin: '2px 0 0 0',
                     }}
                   >
                     por {entry.cambiado_por_nombre}
@@ -462,7 +462,7 @@ export function BuyerOrderDetail() {
                   style={{
                     fontSize: 13,
                     color: t.muted,
-                    margin: "2px 0 0 0",
+                    margin: '2px 0 0 0',
                   }}
                 >
                   {formatearFecha(entry.creado_en)}

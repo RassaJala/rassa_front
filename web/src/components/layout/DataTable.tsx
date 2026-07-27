@@ -1,8 +1,8 @@
-import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
-import type { Column, SortConfig, SortDirection } from "~/types";
-import { Card } from "../ui/Card";
-import { EmptyState } from "../ui/EmptyState";
+import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import type { Column, SortConfig, SortDirection } from '~/types';
+import { Card } from '../ui/Card';
+import { EmptyState } from '../ui/EmptyState';
 
 interface DataTableProps<T> {
   data: T[];
@@ -16,8 +16,8 @@ export function DataTable<T>({
   data,
   columns,
   keyExtractor,
-  emptyTitle = "Sin datos",
-  emptyMessage = "No hay elementos para mostrar.",
+  emptyTitle = 'Sin datos',
+  emptyMessage = 'No hay elementos para mostrar.',
 }: DataTableProps<T>) {
   const [sort, setSort] = useState<SortConfig | null>(null);
 
@@ -32,7 +32,7 @@ export function DataTable<T>({
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-      return sort.direction === "asc" ? cmp : -cmp;
+      return sort.direction === 'asc' ? cmp : -cmp;
     });
   }, [data, sort, columns]);
 
@@ -56,16 +56,16 @@ export function DataTable<T>({
                   key={col.key}
                   className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 ${
                     col.sortable
-                      ? "cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300"
-                      : ""
+                      ? 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300'
+                      : ''
                   }`}
                   onClick={() => {
                     if (!col.sortable) return;
                     setSort((prev) => {
                       if (prev?.key !== col.key)
-                        return { key: col.key, direction: "asc" };
-                      return prev.direction === "asc"
-                        ? { key: col.key, direction: "desc" }
+                        return { key: col.key, direction: 'asc' };
+                      return prev.direction === 'asc'
+                        ? { key: col.key, direction: 'desc' }
                         : null;
                     });
                   }}
@@ -94,9 +94,9 @@ export function DataTable<T>({
                   return (
                     <td
                       key={col.key}
-                      className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 ${col.className ?? ""}`}
+                      className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 ${col.className ?? ''}`}
                     >
-                      {col.render ? col.render(item) : String(value ?? "")}
+                      {col.render ? col.render(item) : String(value ?? '')}
                     </td>
                   );
                 })}
@@ -117,14 +117,14 @@ export function DataTable<T>({
                   <div
                     key={col.key}
                     className={
-                      col.className?.includes("col-span-") ? col.className : ""
+                      col.className?.includes('col-span-') ? col.className : ''
                     }
                   >
                     <dt className="text-xs text-gray-500 dark:text-gray-400">
                       {col.label}
                     </dt>
                     <dd className="text-sm text-gray-900 dark:text-gray-100">
-                      {col.render ? col.render(item) : String(value ?? "")}
+                      {col.render ? col.render(item) : String(value ?? '')}
                     </dd>
                   </div>
                 );
@@ -145,7 +145,7 @@ function SortIcon({
   direction?: SortDirection;
 }) {
   if (!active) return <ChevronDown size={14} className="text-gray-300" />;
-  return direction === "asc" ? (
+  return direction === 'asc' ? (
     <ArrowUp size={14} className="text-brand-red-coral" />
   ) : (
     <ArrowDown size={14} className="text-brand-red-coral" />

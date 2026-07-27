@@ -1,10 +1,10 @@
-import axios from "axios";
-import axiosRetry from "axios-retry";
-import { redirect } from "./navigate";
+import axios from 'axios';
+import axiosRetry from 'axios-retry';
+import { redirect } from './navigate';
 
-const API_URL = import.meta.env.VITE_API_URL ?? "/api";
+const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
-const PUBLIC_ENDPOINTS = ["/token/", "/auth/register/"];
+const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 
 function isPublic(url: string): boolean {
   return PUBLIC_ENDPOINTS.some((prefix) => url.startsWith(prefix));
@@ -13,7 +13,7 @@ function isPublic(url: string): boolean {
 const api = axios.create({
   baseURL: API_URL,
   timeout: 15_000,
-  headers: { "Content-Type": "application/json" },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 axiosRetry(api, {
@@ -21,23 +21,23 @@ axiosRetry(api, {
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (
-      error.config?.method === "get" &&
+      error.config?.method === 'get' &&
       axiosRetry.isNetworkOrIdempotentRequestError(error)
     );
   },
 });
 
 api.interceptors.request.use((config) => {
-  const url = config.url ?? "";
+  const url = config.url ?? '';
   if (isPublic(url)) return config;
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-const NO_REDIRECT_ON_401 = ["/auth/change-password/", "/token/refresh/"];
+const NO_REDIRECT_ON_401 = ['/auth/change-password/', '/token/refresh/'];
 
 // --- Refresh token ---
 
@@ -48,10 +48,10 @@ let pendingRequests: Array<{
 }> = [];
 
 async function refreshAccessToken(
-  originalRequest: ReturnType<typeof api>["config"],
+  originalRequest: ReturnType<typeof api>['config'],
 ): Promise<unknown> {
-  const refreshToken = sessionStorage.getItem("refresh_token");
-  if (!refreshToken) throw new Error("No refresh token");
+  const refreshToken = sessionStorage.getItem('refresh_token');
+  if (!refreshToken) throw new Error('No refresh token');
 
   const { data } = await axios.post<{ access: string; refresh?: string }>(
     `${API_URL}/token/refresh/`,
@@ -59,9 +59,9 @@ async function refreshAccessToken(
     { timeout: 10_000 },
   );
 
-  localStorage.setItem("token", data.access);
+  localStorage.setItem('token', data.access);
   if (data.refresh) {
-    sessionStorage.setItem("refresh_token", data.refresh);
+    sessionStorage.setItem('refresh_token', data.refresh);
   }
 
   // Retry all queued requests with the new token
@@ -81,7 +81,7 @@ api.interceptors.response.use(
     const requestUrl: string | undefined = error.config?.url;
     const is401 =
       error.response?.status === 401 &&
-      window.location.pathname !== "/login" &&
+      window.location.pathname !== '/login' &&
       requestUrl &&
       !NO_REDIRECT_ON_401.some((prefix) => requestUrl.startsWith(prefix));
 
@@ -91,15 +91,15 @@ api.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
       return refreshAccessToken(error.config).catch(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("refresh_token");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('refresh_token');
         pendingRequests.forEach(({ reject }) =>
-          reject(new Error("Sesión expirada")),
+          reject(new Error('Sesión expirada')),
         );
         pendingRequests = [];
         isRefreshing = false;
-        redirect("/login", { from: window.location.pathname });
+        redirect('/login', { from: window.location.pathname });
         return Promise.reject(error);
       });
     }

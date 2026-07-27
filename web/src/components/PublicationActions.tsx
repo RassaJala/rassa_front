@@ -1,7 +1,7 @@
-import type { AppColors } from "../hooks/useAppColors";
-import type { Publicacion, PublicacionEstado } from "../services/publications";
-import { Badge } from "./ui/Badge";
-import { Button } from "./ui/Button";
+import type { AppColors } from '../hooks/useAppColors';
+import type { Publicacion, PublicacionEstado } from '../services/publications';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
 
 // ── Shared types & helpers ──────────────────────────────────
 
@@ -18,20 +18,20 @@ export interface PubActionContext {
 
 const statusBadge: Record<
   PublicacionEstado,
-  { variant: "default" | "success" | "warning" | "error"; label: string }
+  { variant: 'default' | 'success' | 'warning' | 'error'; label: string }
 > = {
-  borrador: { variant: "warning", label: "Borrador" },
-  publicado: { variant: "success", label: "Publicada" },
-  cerrado: { variant: "default", label: "Cerrada" },
-  cancelado: { variant: "error", label: "Cancelada" },
+  borrador: { variant: 'warning', label: 'Borrador' },
+  publicado: { variant: 'success', label: 'Publicada' },
+  cerrado: { variant: 'default', label: 'Cerrada' },
+  cancelado: { variant: 'error', label: 'Cancelada' },
 };
 
 export function getStatusBadge(estado: PublicacionEstado) {
-  return statusBadge[estado] ?? { variant: "default" as const, label: estado };
+  return statusBadge[estado] ?? { variant: 'default' as const, label: estado };
 }
 
 export function productCountLabel(count: number): string {
-  return `${count} producto${count !== 1 ? "s" : ""}`;
+  return `${count} producto${count !== 1 ? 's' : ''}`;
 }
 
 function actionsForEstado({
@@ -42,8 +42,8 @@ function actionsForEstado({
   onPublish,
   onDelete,
   onClose,
-}: Omit<PubActionContext, "colors">): JSX.Element | null {
-  if (estado === "borrador") {
+}: Omit<PubActionContext, 'colors'>): JSX.Element | null {
+  if (estado === 'borrador') {
     return (
       <>
         <Button
@@ -72,7 +72,7 @@ function actionsForEstado({
       </>
     );
   }
-  if (estado === "publicado") {
+  if (estado === 'publicado') {
     return (
       <Button
         variant="secondary"
@@ -97,7 +97,7 @@ function iconActionsForEstado({
   onClose,
   colors,
 }: PubActionContext): JSX.Element | null {
-  if (estado === "borrador") {
+  if (estado === 'borrador') {
     return (
       <>
         <button
@@ -141,7 +141,7 @@ function iconActionsForEstado({
       </>
     );
   }
-  if (estado === "publicado") {
+  if (estado === 'publicado') {
     return (
       <button
         onClick={() => void onClose(pubId)}
@@ -171,7 +171,7 @@ export function PublicationActions({
   onDelete,
   onClose,
   colors,
-  variant = "icon",
+  variant = 'icon',
 }: {
   pub: Publicacion;
   isMutating: boolean;
@@ -180,9 +180,9 @@ export function PublicationActions({
   onDelete: (id: number) => void;
   onClose: (id: number) => void;
   colors: AppColors;
-  variant?: "icon" | "button";
+  variant?: 'icon' | 'button';
 }) {
-  if (variant === "button") {
+  if (variant === 'button') {
     return (
       <div className="flex gap-1.5">
         {actionsForEstado({
