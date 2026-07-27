@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any -- Test files are less strict */
 import React from 'react';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import api from '@/services/api';
 
 const mockRegister = jest.fn();
 const mockGoBack = jest.fn();
@@ -31,6 +33,14 @@ jest.mock('@react-native-community/netinfo', () => ({
 
 jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
+}));
+
+jest.mock('@/services/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
 }));
 
 const mockSetLocalidadId = jest.fn();
@@ -91,8 +101,24 @@ describe('RegisterScreen', () => {
     mockUseCatalogs.errorLocalidades = null;
   });
 
+  const renderScreen = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+      },
+    });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <RegisterScreen />
+      </QueryClientProvider>
+    );
+  };
+
   it('renderiza correctamente todos los campos obligatorios', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     expect(getByPlaceholderText('ejemplo@correo.com')).toBeTruthy();
     expect(getByPlaceholderText('Nombre(s)')).toBeTruthy();
@@ -105,7 +131,7 @@ describe('RegisterScreen', () => {
 
   it('valida campos vacíos obligatorios', () => {
     mockUseCatalogs.localidadId = null; // Forzar error de campo obligatorio
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     fireEvent.press(getByText('Registrarse'));
 
@@ -115,7 +141,7 @@ describe('RegisterScreen', () => {
   });
 
   it('valida correo electrónico incorrecto', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
@@ -140,7 +166,7 @@ describe('RegisterScreen', () => {
   });
 
   it('valida longitud de contraseña corta', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
@@ -164,7 +190,7 @@ describe('RegisterScreen', () => {
   });
 
   it('valida formato de fecha de nacimiento incorrecto', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
@@ -192,7 +218,7 @@ describe('RegisterScreen', () => {
 
   it('muestra error cuando no hay conexión de red', () => {
     mockNetInfoState.isConnected = false;
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     fireEvent.press(getByText('Registrarse'));
 
@@ -200,9 +226,11 @@ describe('RegisterScreen', () => {
   });
 
   it('ejecuta registro exitosamente si los datos son correctos y localidad está seleccionada', async () => {
+    const mockApiPost = api.post as jest.Mock;
+    mockApiPost.mockResolvedValueOnce({ data: { data: { access: 'token', user: {} } } });
     mockRegister.mockResolvedValueOnce(undefined);
 
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
@@ -246,7 +274,7 @@ describe('RegisterScreen', () => {
   it('muestra error de reintento si falla la carga de municipios', () => {
     mockUseCatalogs.errorMunicipios = 'API Error';
     mockUseCatalogs.selectedMunicipioNombre = ''; // force showing error view instead of selected
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     expect(getByText('Error al cargar municipios')).toBeTruthy();
     expect(getByText('Reintentar')).toBeTruthy();

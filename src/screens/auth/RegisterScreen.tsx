@@ -16,17 +16,14 @@ import DatePickerModal from '@/components/DatePickerModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import FormErrorBanner from '@/components/FormErrorBanner';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
-import { BRAND_GREEN_FOREST } from '@/constants/brandColors';
 import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { RegisterPayload, RegisterRole } from '@/types';
-import { parseApiError } from '@/utils/apiErrors';
-import {
-  buildRegistrationPayload,
-  validateRegistrationForm,
-} from '@/utils/validation';
+import { getAdminColors } from '@/utils/adminTheme';
+import { buildRegistrationPayload } from '@/utils/validation';
 
 const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
@@ -37,20 +34,35 @@ function RegisterScreenContent(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const isMounted = useRef(true);
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
-  const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
+  const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
+    getAdminColors(isDark);
 
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
-  const isSubmittingRef = useRef(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { submit, isSubmitting, errorMessage, serverError, setErrorMessage } =
+    useSubmitNewUser({
+      onSuccess: async () => {
+        try {
+          const payload = buildRegistrationPayload({
+            email: form.email,
+            password: form.password,
+            role: DEFAULT_REGISTER_ROLE,
+            telefono: form.telefono,
+            nombre: form.nombre,
+            apellidoPaterno: form.apellidoPaterno,
+            apellidoMaterno: form.apellidoMaterno,
+            fechaNacimiento: form.fechaNacimiento,
+            sexo: form.sexo,
+            domicilio: form.domicilio,
+            localidadId: form.catalog.localidadId,
+          }) as unknown as RegisterPayload;
+          await register(payload);
+        } catch (error) {
+          Sentry.captureException(error);
+        }
+      },
+    });
+
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   useEffect(() => {
@@ -61,62 +73,11 @@ function RegisterScreenContent(): React.JSX.Element {
   }, []);
 
   async function handleRegister() {
-    if (isSubmitting || isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
-    setErrorMessage(null);
-
     if (netInfo.isConnected === false) {
       setErrorMessage('Sin conexión a Internet.');
-      isSubmittingRef.current = false;
       return;
     }
-
-    const validationError = validateRegistrationForm({
-      email: form.email,
-      password: form.password,
-      telefono: form.telefono,
-      nombre: form.nombre,
-      apellidoPaterno: form.apellidoPaterno,
-      fechaNacimiento: form.fechaNacimiento,
-      domicilio: form.domicilio,
-      localidadId: form.catalog.localidadId,
-    });
-
-    if (validationError) {
-      setErrorMessage(validationError);
-      isSubmittingRef.current = false;
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = buildRegistrationPayload({
-        email: form.email,
-        password: form.password,
-        role: DEFAULT_REGISTER_ROLE,
-        telefono: form.telefono,
-        nombre: form.nombre,
-        apellidoPaterno: form.apellidoPaterno,
-        apellidoMaterno: form.apellidoMaterno,
-        fechaNacimiento: form.fechaNacimiento,
-        sexo: form.sexo,
-        domicilio: form.domicilio,
-        localidadId: form.catalog.localidadId,
-      }) as unknown as RegisterPayload;
-
-      await register(payload);
-    } catch (error) {
-      if (isMounted.current) {
-        setErrorMessage(parseApiError(error, 'Error al registrar usuario.'));
-      }
-      Sentry.captureException(error);
-    } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
-      isSubmittingRef.current = false;
-    }
+    await submit(form);
   }
 
   return (
@@ -196,6 +157,7 @@ function RegisterScreenContent(): React.JSX.Element {
           />
 
           <FormErrorBanner message={errorMessage} isDark={isDark} />
+          <FormErrorBanner message={serverError} isDark={isDark} />
 
           <View style={{ marginTop: 24, gap: 10 }}>
             <Pressable
@@ -241,7 +203,7 @@ function RegisterScreenContent(): React.JSX.Element {
                 ¿Ya tienes cuenta?{' '}
                 <Text
                   style={{
-                    color: BRAND_GREEN_FOREST,
+                    color: brand,
                     fontWeight: '700',
                   }}
                 >

@@ -176,12 +176,10 @@ export function validateRegistrationForm({
   readonly localidadId: number | null;
   readonly customAgeMsg?: string;
 }): string | null {
-  const rawTelefono = cleanPhoneNumber(telefono);
-
   if (
     !email.trim() ||
     (password !== undefined && !password) ||
-    !rawTelefono ||
+    !telefono.trim() ||
     !nombre.trim() ||
     !apellidoPaterno.trim() ||
     !fechaNacimiento.trim() ||
@@ -199,7 +197,7 @@ export function validateRegistrationForm({
     if (passErr) return passErr;
   }
 
-  const phoneErr = validatePhone(rawTelefono);
+  const phoneErr = validatePhone(telefono);
   if (phoneErr) return phoneErr;
 
   const birthdateErr = validateBirthdate(

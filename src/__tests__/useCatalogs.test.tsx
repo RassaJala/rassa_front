@@ -121,13 +121,17 @@ describe('useCatalogs', () => {
     await waitFor(() => {
       expect(getByTestId('municipios-count').props.children).toBe('2');
     });
-  });
 
-  it('selecting municipio resets localidad', async () => {
-    const { getByTestId } = renderTestComponent();
+    fireEvent.press(getByTestId('select-municipio-btn'));
 
     await waitFor(() => {
-      expect(getByTestId('municipios-count').props.children).toBe('2');
+      expect(mockApiGet).toHaveBeenCalledWith('/localidades/?municipio_id=1', {
+        timeout: 10000,
+      });
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('localidades-count').props.children).toBe('2');
     });
   });
 
@@ -196,12 +200,22 @@ describe('useCatalogs', () => {
   });
 
   it('uses placeholderData to keep previous data', async () => {
-    const { getByTestId } = renderTestComponent();
+    const { getByTestId, rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <TestComponent initialMunicipioId={1} />
+      </QueryClientProvider>,
+    );
 
     await waitFor(() => {
-      expect(getByTestId('municipios-count').props.children).toBe('2');
+      expect(getByTestId('localidades-count').props.children).toBe('2');
     });
 
-    expect(getByTestId('municipios-count').props.children).toBe('2');
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <TestComponent initialMunicipioId={2} />
+      </QueryClientProvider>,
+    );
+
+    expect(getByTestId('localidades-count').props.children).toBe('2');
   });
 });
