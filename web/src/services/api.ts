@@ -56,6 +56,7 @@ async function refreshAccessToken(
   const { data } = await axios.post<{ access: string }>(
     `${API_URL}/token/refresh/`,
     { refresh: refreshToken },
+    { timeout: 10_000 },
   );
 
   localStorage.setItem("token", data.access);

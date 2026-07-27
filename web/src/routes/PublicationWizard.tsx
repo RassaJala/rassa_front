@@ -573,12 +573,23 @@ export function PublicationWizard() {
             ? "No se pudieron cargar los productos de la publicación."
             : "No se pudo cargar la publicación."}
         </p>
-        <Button
-          variant="secondary"
-          onClick={() => void navigate("/agricultor/publicaciones")}
-        >
-          Volver
-        </Button>
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void pubQuery.refetch();
+              void itemsQuery.refetch();
+            }}
+          >
+            Reintentar
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => void navigate("/agricultor/publicaciones")}
+          >
+            Volver
+          </Button>
+        </div>
       </div>
     );
   }
