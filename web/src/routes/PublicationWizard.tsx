@@ -820,7 +820,11 @@ export function PublicationWizard() {
                           </div>
                           {displayImage && (
                             <button
-                              onClick={() => handleImageRemove(item.tempId)}
+                              onClick={() => {
+                                if (saving) return;
+                                handleImageRemove(item.tempId);
+                              }}
+                              disabled={saving}
                               className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px]"
                               style={{
                                 background: colors.coral,
