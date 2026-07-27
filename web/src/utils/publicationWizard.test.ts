@@ -1,11 +1,36 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canJumpToStep,
+  formatDate,
   generateTempId,
   getNextMonday,
   getWeekNumber,
+  type WizardItemDraft,
+  validateAllItems,
   validateItem,
 } from "./publicationWizard";
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function makeItem(overrides: Partial<WizardItemDraft> = {}): WizardItemDraft {
+  return {
+    tempId: "test",
+    fk_producto: 1,
+    nombre_producto: "Tomate",
+    fk_unidad: 1,
+    stock: "10",
+    precio: "500",
+    foto: null,
+    imageFile: null,
+    imagePreview: null,
+    ...overrides,
+  };
+}
+
+const VALID_STEPS = ["fecha", "productos", "resumen", "publicar"];
+
+// ── generateTempId ───────────────────────────────────────────
 
 describe("generateTempId", () => {
   it("returns unique ids with local_ prefix", () => {
@@ -16,6 +41,8 @@ describe("generateTempId", () => {
     expect(id1).not.toBe(id2);
   });
 });
+
+// ── getNextMonday ────────────────────────────────────────────
 
 describe("getNextMonday", () => {
   it("returns a Monday", () => {
@@ -31,6 +58,8 @@ describe("getNextMonday", () => {
   });
 });
 
+// ── getWeekNumber ────────────────────────────────────────────
+
 describe("getWeekNumber", () => {
   it("returns a number between 1 and 53", () => {
     const week = getWeekNumber(new Date());
@@ -44,18 +73,27 @@ describe("getWeekNumber", () => {
   });
 });
 
+// ── formatDate ───────────────────────────────────────────────
+
+describe("formatDate", () => {
+  it("returns long format by default", () => {
+    const result = formatDate(new Date(2026, 6, 28));
+    expect(result).toContain("28");
+  });
+
+  it("returns short format when opts.short is true", () => {
+    const result = formatDate(new Date(2026, 6, 28), { short: true });
+    expect(result).toContain("28");
+    expect(result.length).toBeLessThan(
+      formatDate(new Date(2026, 6, 28)).length,
+    );
+  });
+});
+
+// ── validateItem ─────────────────────────────────────────────
+
 describe("validateItem", () => {
-  const validItem = {
-    tempId: "test",
-    fk_producto: 1,
-    nombre_producto: "Tomate",
-    fk_unidad: 1,
-    stock: "10",
-    precio: "500",
-    foto: null,
-    imageFile: null,
-    imagePreview: null,
-  };
+  const validItem = makeItem();
 
   it("returns empty errors for valid item", () => {
     expect(validateItem(validItem)).toEqual({});
@@ -84,5 +122,84 @@ describe("validateItem", () => {
     expect(validateItem({ ...validItem, fk_unidad: 0 })).toHaveProperty(
       "fk_unidad",
     );
+  });
+
+  it("returns multiple errors for completely invalid item", () => {
+    const errs = validateItem(
+      makeItem({ stock: "", precio: "", fk_unidad: 0 }),
+    );
+    expect(Object.keys(errs)).toHaveLength(3);
+    expect(errs).toHaveProperty("stock");
+    expect(errs).toHaveProperty("precio");
+    expect(errs).toHaveProperty("fk_unidad");
+  });
+});
+
+// ── validateAllItems ─────────────────────────────────────────
+
+describe("validateAllItems", () => {
+  it("returns true for empty list", () => {
+    expect(validateAllItems([])).toBe(true);
+  });
+
+  it("returns true when all items valid", () => {
+    expect(validateAllItems([makeItem(), makeItem({ tempId: "2" })])).toBe(
+      true,
+    );
+  });
+
+  it("returns false when any item is invalid", () => {
+    const items = [makeItem(), makeItem({ tempId: "2", stock: "" })];
+    expect(validateAllItems(items)).toBe(false);
+  });
+
+  it("returns false when all items are invalid", () => {
+    const items = [
+      makeItem({ stock: "", precio: "" }),
+      makeItem({ tempId: "2", fk_unidad: 0 }),
+    ];
+    expect(validateAllItems(items)).toBe(false);
+  });
+});
+
+// ── canJumpToStep ────────────────────────────────────────────
+
+describe("canJumpToStep", () => {
+  const validItems = [makeItem()];
+  const invalidItems = [makeItem({ stock: "" })];
+
+  it("allows jumping backwards to any step", () => {
+    expect(canJumpToStep(0, 2, VALID_STEPS, validItems)).toBe(true);
+    expect(canJumpToStep(1, 3, VALID_STEPS, validItems)).toBe(true);
+  });
+
+  it("allows jumping to the same step", () => {
+    expect(canJumpToStep(1, 1, VALID_STEPS, validItems)).toBe(true);
+  });
+
+  it("allows jumping forward past productos when items are valid", () => {
+    expect(canJumpToStep(3, 0, VALID_STEPS, validItems)).toBe(true);
+    expect(canJumpToStep(2, 0, VALID_STEPS, validItems)).toBe(true);
+  });
+
+  it("blocks jumping forward past productos when items are invalid", () => {
+    expect(canJumpToStep(2, 0, VALID_STEPS, invalidItems)).toBe(false);
+    expect(canJumpToStep(3, 0, VALID_STEPS, invalidItems)).toBe(false);
+  });
+
+  it("allows jumping forward to step 0 (fecha) from any position", () => {
+    expect(canJumpToStep(0, 2, VALID_STEPS, invalidItems)).toBe(true);
+  });
+
+  it("allows jumping from fecha (0) to fecha (0) even with invalid items", () => {
+    expect(canJumpToStep(0, 0, VALID_STEPS, invalidItems)).toBe(true);
+  });
+
+  it("blocks jumping from productos (1) to publicar (3) when items invalid", () => {
+    expect(canJumpToStep(3, 1, VALID_STEPS, invalidItems)).toBe(false);
+  });
+
+  it("allows jumping from productos (1) to publicar (3) when items valid", () => {
+    expect(canJumpToStep(3, 1, VALID_STEPS, validItems)).toBe(true);
   });
 });

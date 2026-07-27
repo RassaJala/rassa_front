@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppColors } from "../hooks/useAppColors";
 import type { Producto } from "../services/publications";
 import { mediaUrl } from "../utils/mediaUrl";
@@ -17,6 +17,19 @@ export function ProductPickerModal({
   colors: ReturnType<typeof useAppColors>;
 }) {
   const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
 
   const q = search.toLowerCase();
   const filtered = catalog.filter(
@@ -57,6 +70,7 @@ export function ProductPickerModal({
 
         <div className="px-5 pt-4">
           <input
+            ref={inputRef}
             type="search"
             placeholder="🔍 Buscar producto..."
             value={search}

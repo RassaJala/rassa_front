@@ -79,3 +79,20 @@ export function validateItem(item: WizardItemDraft): ItemValidation {
   }
   return errors;
 }
+
+export function validateAllItems(items: WizardItemDraft[]): boolean {
+  return items.every((item) => Object.keys(validateItem(item)).length === 0);
+}
+
+export function canJumpToStep(
+  targetIdx: number,
+  currentIdx: number,
+  steps: string[],
+  items: WizardItemDraft[],
+): boolean {
+  if (targetIdx <= currentIdx) return true;
+  for (let i = currentIdx; i < targetIdx; i++) {
+    if (steps[i] === "productos" && !validateAllItems(items)) return false;
+  }
+  return true;
+}

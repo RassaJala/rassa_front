@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppColors } from "../hooks/useAppColors";
 import {
@@ -15,6 +15,7 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { Toast, type ToastState } from "../components/ui/Toast";
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -45,14 +46,7 @@ export function FarmerPublications() {
   const colors = useAppColors();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PublicacionEstado | "all">("all");
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    };
-  }, []);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const { data, isLoading, isError, refetch } = usePublicaciones(
     activeTab === "all" ? undefined : activeTab,
@@ -62,9 +56,7 @@ export function FarmerPublications() {
   const closeMutation = useClosePublicacion();
 
   const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast(msg);
-    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
+    setToast({ message: msg, type: "success" });
   }, []);
 
   const publications = data?.data?.results ?? [];
@@ -106,17 +98,7 @@ export function FarmerPublications() {
   return (
     <div className="relative">
       {/* Toast */}
-      {toast && (
-        <div
-          className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
-          style={{
-            background: colors.brand,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-          }}
-        >
-          ✓ {toast}
-        </div>
-      )}
+      <Toast toast={toast} onDone={() => setToast(null)} />
 
       <PageHeader
         title="Publicaciones Semanales"

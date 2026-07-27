@@ -14,14 +14,16 @@ import {
   useUpdateProductoSemanal,
   useUploadProductoSemanalImagen,
 } from "../hooks/usePublications";
-import type { Producto } from "../services/publications";
+import { getPublicacion, type Producto } from "../services/publications";
 import {
   type ItemValidation,
   type WizardItemDraft,
+  canJumpToStep,
   formatDate,
   generateTempId,
   getNextMonday,
   getWeekNumber,
+  validateAllItems as validateAllItemsPure,
   validateItem,
 } from "../utils/publicationWizard";
 import { extractApiError } from "../utils/apiError";
@@ -108,15 +110,20 @@ export function PublicationWizard() {
 
   useEffect(() => {
     if (!isEditing || itemsInitialized) return;
-    if (pubQuery.data && itemsQuery.data) {
+    if (pubQuery.data && itemsQuery.data && catalogQuery.data) {
       const pub = pubQuery.data.data;
       pubRef.current = pub;
+
+      const catalog = catalogQuery.data?.data?.results ?? [];
+      const catalogMap = new Map(
+        catalog.map((p) => [p.id_producto, p.nombre_producto]),
+      );
 
       const existingItems: WizardItemDraft[] = itemsQuery.data.data.map(
         (p) => ({
           tempId: String(p.id_producto_semanal),
           fk_producto: p.fk_producto,
-          nombre_producto: "",
+          nombre_producto: catalogMap.get(p.fk_producto) ?? "",
           fk_unidad: p.fk_unidad,
           stock: String(p.stock),
           precio: p.precio,
@@ -128,7 +135,13 @@ export function PublicationWizard() {
       setItems(existingItems);
       setItemsInitialized(true);
     }
-  }, [isEditing, itemsInitialized, pubQuery.data, itemsQuery.data]);
+  }, [
+    isEditing,
+    itemsInitialized,
+    pubQuery.data,
+    itemsQuery.data,
+    catalogQuery.data,
+  ]);
 
   // ── Cleanup on unmount ──
   const itemsRef = useRef(items);
@@ -161,6 +174,11 @@ export function PublicationWizard() {
 
   function prevStep() {
     setStepIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function jumpToStep(idx: number) {
+    if (!canJumpToStep(idx, stepIndex, WIZARD_STEPS, items)) return;
+    setStepIndex(idx);
   }
 
   // ── Items CRUD ──
@@ -322,10 +340,7 @@ export function PublicationWizard() {
     // Refresh pubRef snapshot for future delete detection
     const refreshed = await qc.fetchQuery({
       queryKey: ["publicaciones", pubNumber],
-      queryFn: () =>
-        import("../services/publications").then((m) =>
-          m.getPublicacion(pubNumber),
-        ),
+      queryFn: () => getPublicacion(pubNumber),
       staleTime: 0,
     });
     pubRef.current = refreshed.data;
@@ -443,6 +458,7 @@ export function PublicationWizard() {
   const unidades = unidadesQuery.data?.data ?? [];
   const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
   const selectedIds = new Set(items.map((i) => i.fk_producto));
+  const hasItemErrors = !validateAllItemsPure(items);
 
   return (
     <div className="relative mx-auto max-w-3xl">
@@ -484,7 +500,7 @@ export function PublicationWizard() {
           return (
             <button
               key={step}
-              onClick={() => setStepIndex(idx)}
+              onClick={() => jumpToStep(idx)}
               className="flex-1 cursor-pointer px-3 py-2.5 font-[inherit] text-[13px] font-semibold"
               style={{
                 borderRadius: 10,
@@ -904,14 +920,14 @@ export function PublicationWizard() {
               <Button
                 variant="secondary"
                 onClick={() => void handleSaveDraft()}
-                disabled={saving || items.length === 0}
+                disabled={saving || items.length === 0 || hasItemErrors}
               >
                 {saving ? "Guardando…" : "Guardar borrador"}
               </Button>
               <Button
                 variant="primary"
                 onClick={() => void handlePublish()}
-                disabled={saving || items.length === 0}
+                disabled={saving || items.length === 0 || hasItemErrors}
               >
                 {saving ? "Publicando…" : "🚀 Publicar"}
               </Button>
