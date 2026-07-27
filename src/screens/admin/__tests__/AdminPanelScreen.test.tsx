@@ -87,7 +87,9 @@ describe('AdminPanelScreen', () => {
     );
     fireEvent.press(getByText('Pedidos'));
 
-    expect(queryByText('Ingresá un ID de pedido válido (número positivo)')).toBeNull();
+    expect(
+      queryByText('Ingresá un ID de pedido válido (número positivo)'),
+    ).toBeNull();
     fireEvent.changeText(getByPlaceholderText('ID del pedido'), 'abc');
     expect(
       getByText('Ingresá un ID de pedido válido (número positivo)'),

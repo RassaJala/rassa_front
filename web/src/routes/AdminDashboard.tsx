@@ -5,8 +5,29 @@ import { useAppColors } from '../hooks/useAppColors';
 
 const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const weekSales = [90, 130, 70, 150, 110, 60, 40];
-const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const days = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+];
+const months = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
 const topProducts = [
   { name: '🥑 Aguacate Hass', sales: '$4,200' },
   { name: '🍅 Tomate orgánico', sales: '$3,150' },
@@ -15,16 +36,52 @@ const topProducts = [
   { name: '🌽 Maíz criollo', sales: '$1,620' },
 ];
 const recentActivity = [
-  { id: '#2841', producer: 'Don Carlos', avatar: 'DC', product: 'Aguacates Hass · 12 kg', amount: '$1,280', status: 'Entregado' },
-  { id: '#2840', producer: 'María G.', avatar: 'MG', product: 'Tomates orgánicos · 8 kg', amount: '$960', status: 'En camino' },
-  { id: '#2839', producer: 'Finca El Paraíso', avatar: 'EP', product: 'Café especial · 5 kg', amount: '$2,450', status: 'Entregado' },
-  { id: '#2838', producer: 'La Rinconada', avatar: 'LR', product: 'Cebolla larga · 15 kg', amount: '$890', status: 'Entregado' },
-  { id: '#2837', producer: 'José V.', avatar: 'JV', product: 'Maíz criollo · 20 kg', amount: '$1,100', status: 'Preparando' },
+  {
+    id: '#2841',
+    producer: 'Don Carlos',
+    avatar: 'DC',
+    product: 'Aguacates Hass · 12 kg',
+    amount: '$1,280',
+    status: 'Entregado',
+  },
+  {
+    id: '#2840',
+    producer: 'María G.',
+    avatar: 'MG',
+    product: 'Tomates orgánicos · 8 kg',
+    amount: '$960',
+    status: 'En camino',
+  },
+  {
+    id: '#2839',
+    producer: 'Finca El Paraíso',
+    avatar: 'EP',
+    product: 'Café especial · 5 kg',
+    amount: '$2,450',
+    status: 'Entregado',
+  },
+  {
+    id: '#2838',
+    producer: 'La Rinconada',
+    avatar: 'LR',
+    product: 'Cebolla larga · 15 kg',
+    amount: '$890',
+    status: 'Entregado',
+  },
+  {
+    id: '#2837',
+    producer: 'José V.',
+    avatar: 'JV',
+    product: 'Maíz criollo · 20 kg',
+    amount: '$1,100',
+    status: 'Preparando',
+  },
 ];
 
 export function AdminDashboard() {
   const colors = useAppColors();
-  const { isDark, fg, muted, border, surface, brand, coral, bg, accentBg } = colors;
+  const { isDark, fg, muted, border, surface, brand, coral, bg, accentBg } =
+    colors;
   const navigate = useNavigate();
   const [lookupId, setLookupId] = useState('');
 

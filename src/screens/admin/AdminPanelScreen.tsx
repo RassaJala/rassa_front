@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,7 +49,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
   },
-  bellBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  bellBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
   lookupCard: {
     borderRadius: 16,
@@ -117,9 +130,7 @@ export default function AdminPanelScreen({
                   <Text style={[styles.dateText, { color: muted }]}>
                     {today}
                   </Text>
-                  <Text style={[styles.titleText, { color: fg }]}>
-                    Panel
-                  </Text>
+                  <Text style={[styles.titleText, { color: fg }]}>Panel</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
@@ -209,7 +220,12 @@ export default function AdminPanelScreen({
                     ]}
                   />
                   {isInvalid ? (
-                    <Text style={[styles.errorText, { color: colors.brandRedCoral }]}>
+                    <Text
+                      style={[
+                        styles.errorText,
+                        { color: colors.brandRedCoral },
+                      ]}
+                    >
                       Ingresá un ID de pedido válido (número positivo)
                     </Text>
                   ) : null}
@@ -224,7 +240,12 @@ export default function AdminPanelScreen({
                     }}
                     style={[styles.submitBtn, { backgroundColor: brand }]}
                   >
-                    <Text style={[styles.submitBtnText, { color: colors.iconWhite }]}>
+                    <Text
+                      style={[
+                        styles.submitBtnText,
+                        { color: colors.iconWhite },
+                      ]}
+                    >
                       Ver historial
                     </Text>
                   </Pressable>
