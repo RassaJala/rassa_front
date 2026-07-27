@@ -40,13 +40,17 @@ function usePubMutation<TData, TVariables>(
   const qc = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: (_data, vars) => {
+    ...options,
+    onSuccess: (data, vars) => {
       for (const key of invalidateKeys(vars)) {
         void qc.invalidateQueries({ queryKey: key });
       }
+      options?.onSuccess?.(data, vars, undefined as never);
     },
-    onError: (err) => logMutationError(context, err),
-    ...options,
+    onError: (err: unknown, vars: TVariables) => {
+      logMutationError(context, err);
+      options?.onError?.(err, vars, undefined as never);
+    },
   });
 }
 

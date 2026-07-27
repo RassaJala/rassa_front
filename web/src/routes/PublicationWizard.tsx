@@ -284,8 +284,11 @@ export function PublicationWizard() {
   async function upsertItems(
     pubNumber: number,
     signal?: AbortSignal,
-  ): Promise<Map<string, number>> {
-    const createdIds: Array<{ tempId: string; serverId: number }> = [];
+  ): Promise<{
+    tempIdToServerId: Map<string, number>;
+    newServerIds: number[];
+  }> {
+    const newServerIds: number[] = [];
     const tempIdToServerId = new Map<string, number>();
 
     for (const item of items) {
@@ -316,7 +319,7 @@ export function PublicationWizard() {
           payload,
         });
         itemId = result.data.id_producto_semanal;
-        createdIds.push({ tempId: item.tempId, serverId: itemId });
+        newServerIds.push(itemId);
       }
 
       tempIdToServerId.set(item.tempId, itemId);
@@ -338,7 +341,7 @@ export function PublicationWizard() {
       }
     }
 
-    return tempIdToServerId;
+    return { tempIdToServerId, newServerIds };
   }
 
   // ── Phase 2: Refresh pubRef snapshot ──
@@ -386,24 +389,19 @@ export function PublicationWizard() {
     pubNumber: number,
     signal?: AbortSignal,
   ): Promise<void> {
-    const createdServerIds: number[] = [];
-    const originalTempIds = new Map(items.map((i) => [i.tempId, i.tempId]));
-
+    let newServerIds: number[] = [];
     try {
-      const tempIdToServerId = await upsertItems(pubNumber, signal);
-
-      for (const [tempId, serverId] of tempIdToServerId) {
-        const original = originalTempIds.get(tempId);
-        if (original && original === tempId) {
-          createdServerIds.push(serverId);
-        }
-      }
+      const { tempIdToServerId, newServerIds: ids } = await upsertItems(
+        pubNumber,
+        signal,
+      );
+      newServerIds = ids;
 
       await refreshSnapshot(pubNumber);
       await deleteOrphans(pubNumber, tempIdToServerId, signal);
     } catch (err) {
-      if (createdServerIds.length > 0) {
-        for (const serverId of createdServerIds) {
+      if (newServerIds.length > 0) {
+        for (const serverId of newServerIds) {
           try {
             await removeItemMutation.mutateAsync({
               pubId: pubNumber,
