@@ -36,7 +36,8 @@
     // Alias — @/* y ~/* apuntan a src/
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@rassa/chat": ["./packages/chat/src"]
     }
   },
   "include": [
@@ -54,6 +55,7 @@
     "config/lint-staged.config.ts",
     "config/prettier.config.mjs",
     "web",
-    "packages"
+    "packages/api",
+    "packages/design-tokens"
   ]
 }

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { ProductThumbnail } from '../components/ui/ProductThumbnail';
+
 import { useAppColors } from '../hooks/useAppColors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 

@@ -1,3 +1,4 @@
+import { messagesKey } from '@rassa/chat';
 import { useIsFocused } from '@react-navigation/native';
 import type {
   InfiniteData,
@@ -5,7 +6,7 @@ import type {
 } from '@tanstack/react-query';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-import { getMessages } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 const BASE_POLL_MS = 5_000;
@@ -17,8 +18,9 @@ export function useChatMessages(
   const isFocused = useIsFocused();
 
   return useInfiniteQuery({
-    queryKey: ['messages', conversationId],
-    queryFn: ({ pageParam = 1 }) => getMessages(conversationId, pageParam),
+    queryKey: messagesKey(conversationId),
+    queryFn: ({ pageParam = 1 }) =>
+      chatApi.getMessages(conversationId, pageParam),
     getNextPageParam: (lastPage) => {
       if (lastPage.next) {
         const url = new URL(lastPage.next);
@@ -32,8 +34,7 @@ export function useChatMessages(
     refetchInterval: (query) => {
       if (!isFocused) return false;
       const failureCount = query.state.errorUpdateCount;
-      const backoff = Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
-      return backoff;
+      return Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
     },
     refetchIntervalInBackground: false,
     staleTime: 5_000,

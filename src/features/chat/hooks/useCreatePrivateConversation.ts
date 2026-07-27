@@ -1,9 +1,10 @@
+import { conversationsKey } from '@rassa/chat';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { createPrivateConversation } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { ChatStackParamList, Conversation } from '@/types/chat';
 
 export function useCreatePrivateConversation(): UseMutationResult<
@@ -16,10 +17,10 @@ export function useCreatePrivateConversation(): UseMutationResult<
     useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
 
   return useMutation({
-    mutationFn: createPrivateConversation,
+    mutationFn: (payload) => chatApi.createPrivateConversation(payload),
     onSuccess: (conversation) => {
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
       navigation.navigate('Chat', {
         conversationId: conversation.id,

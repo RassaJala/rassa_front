@@ -72,9 +72,9 @@ describe('Storage (web)', () => {
     jest.clearAllMocks();
     (Platform as any).OS = 'web';
 
-    // Mock sessionStorage
+    // Match storage.ts: uses window.localStorage, not sessionStorage
     const store: Record<string, string> = {};
-    (global as any).sessionStorage = {
+    (global as any).localStorage = {
       getItem: jest.fn((key: string) => store[key] ?? null),
       setItem: jest.fn((key: string, value: string) => {
         store[key] = value;
@@ -89,39 +89,39 @@ describe('Storage (web)', () => {
     (Platform as any).OS = originalOS;
   });
 
-  it('getItemAsync lee de sessionStorage en web', async () => {
-    (global as any).sessionStorage.setItem('test_key', 'web_value');
+  it('getItemAsync lee de localStorage en web', async () => {
+    (global as any).localStorage.setItem('test_key', 'web_value');
 
     const result = await Storage.getItemAsync('test_key');
 
-    expect((global as any).sessionStorage.getItem).toHaveBeenCalledWith(
+    expect((global as any).localStorage.getItem).toHaveBeenCalledWith(
       'test_key',
     );
     expect(result).toBe('web_value');
   });
 
-  it('setItemAsync escribe en sessionStorage en web', async () => {
+  it('setItemAsync escribe en localStorage en web', async () => {
     await Storage.setItemAsync('test_key', 'web_value');
 
-    expect((global as any).sessionStorage.setItem).toHaveBeenCalledWith(
+    expect((global as any).localStorage.setItem).toHaveBeenCalledWith(
       'test_key',
       'web_value',
     );
   });
 
-  it('deleteItemAsync borra de sessionStorage en web', async () => {
-    (global as any).sessionStorage.setItem('test_key', 'value');
+  it('deleteItemAsync borra de localStorage en web', async () => {
+    (global as any).localStorage.setItem('test_key', 'value');
     await Storage.deleteItemAsync('test_key');
 
-    expect((global as any).sessionStorage.removeItem).toHaveBeenCalledWith(
+    expect((global as any).localStorage.removeItem).toHaveBeenCalledWith(
       'test_key',
     );
     const result = await Storage.getItemAsync('test_key');
     expect(result).toBeNull();
   });
 
-  it('retorna null si sessionStorage.getItem lanza excepción', async () => {
-    (global as any).sessionStorage.getItem = jest.fn(() => {
+  it('retorna null si localStorage.getItem lanza excepción', async () => {
+    (global as any).localStorage.getItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 
@@ -129,8 +129,8 @@ describe('Storage (web)', () => {
     expect(result).toBeNull();
   });
 
-  it('no lanza si sessionStorage.setItem falla', async () => {
-    (global as any).sessionStorage.setItem = jest.fn(() => {
+  it('no lanza si localStorage.setItem falla', async () => {
+    (global as any).localStorage.setItem = jest.fn(() => {
       throw new Error('Quota exceeded');
     });
 
@@ -139,8 +139,8 @@ describe('Storage (web)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('no lanza si sessionStorage.removeItem falla', async () => {
-    (global as any).sessionStorage.removeItem = jest.fn(() => {
+  it('no lanza si localStorage.removeItem falla', async () => {
+    (global as any).localStorage.removeItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 

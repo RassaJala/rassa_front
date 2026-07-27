@@ -38,8 +38,7 @@ const config = {
   jsxSingleQuote: false,
 
   // Listado de plugins de formateo adicionales.
-  // Incluye el plugin oficial de TailwindCSS para ordenar de manera automática las clases de NativeWind.
-  plugins: ['prettier-plugin-tailwindcss'],
+  // plugins: ['prettier-plugin-tailwindcss'],
 };
 
 export default config;

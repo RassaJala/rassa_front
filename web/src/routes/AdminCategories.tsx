@@ -28,7 +28,7 @@ const initialData: Category[] = [
 
 export function AdminCategories() {
   const colors = useAppColors();
-  const { fg, muted, border, surface, bg, brand, coral } = colors;
+  const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
 
   const [items, setItems] = useState<Category[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
