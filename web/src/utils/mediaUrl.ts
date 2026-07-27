@@ -6,7 +6,9 @@ export function mediaUrl(path: string | null | undefined): string | null {
   const clean = path
     .replace(/%2e/gi, "")
     .replace(/\.\./g, "")
+    .replace(/\/\/+/g, "/")
     .replace(/^\/+/, "/")
     .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑüÜ0-9_%\-/.]/g, "");
-  return `${BASE}${clean}`;
+  const prefixed = clean.startsWith("/") ? clean : `/${clean}`;
+  return `${BASE}${prefixed}`;
 }

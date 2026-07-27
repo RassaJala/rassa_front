@@ -177,6 +177,7 @@ type UploadImagenPayload = {
 
 const productoKeys = (pubId: number): InvalidateKeys[] => [
   ["publicaciones"],
+  ["publicaciones", pubId],
   ["publicaciones", pubId, "productos"],
 ];
 

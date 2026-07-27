@@ -128,6 +128,7 @@ export function PublicationWizard() {
         itemsQuery.data?.data ?? []
       ).map((p) => ({
         tempId: String(p.id_producto_semanal),
+        isNew: false,
         fk_producto: p.fk_producto,
         nombre_producto: catalogMap.get(p.fk_producto) ?? "",
         fk_unidad: p.fk_unidad,
@@ -193,6 +194,7 @@ export function PublicationWizard() {
 
     const newItem: WizardItemDraft = {
       tempId: generateTempId(),
+      isNew: true,
       fk_producto: producto.id_producto,
       nombre_producto: producto.nombre_producto,
       fk_unidad: 0,
@@ -297,8 +299,7 @@ export function PublicationWizard() {
     for (const item of items) {
       if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
       const serverId = Number(item.tempId);
-      const isExisting =
-        !Number.isNaN(serverId) && serverId > 0 && pubRef.current !== null;
+      const isExisting = !item.isNew && pubRef.current !== null;
 
       const payload = {
         fk_producto: item.fk_producto,
@@ -328,7 +329,9 @@ export function PublicationWizard() {
       tempIdToServerId.set(item.tempId, itemId);
       setItems((prev) =>
         prev.map((i) =>
-          i.tempId === item.tempId ? { ...i, tempId: String(itemId) } : i,
+          i.tempId === item.tempId
+            ? { ...i, tempId: String(itemId), isNew: false }
+            : i,
         ),
       );
 

@@ -33,6 +33,7 @@ describe("mediaUrl", () => {
 
   it("strips path traversal from relative paths", () => {
     const result = mediaUrl("/uploads/../../etc/passwd");
+    expect(result).toBe("https://api.example.com/uploads/etc/passwd");
     expect(result).not.toContain("..");
   });
 
@@ -41,13 +42,25 @@ describe("mediaUrl", () => {
     expect(result).toBe("https://api.example.com/uploads/photo.jpg");
   });
 
+  it("prepends base URL and adds leading slash for paths without one", () => {
+    const result = mediaUrl("uploads/photo.jpg");
+    expect(result).toBe("https://api.example.com/uploads/photo.jpg");
+  });
+
   it("normalizes leading slashes", () => {
     const result = mediaUrl("///uploads/img.png");
     expect(result).not.toContain("///");
+    expect(result).toBe("https://api.example.com/uploads/img.png");
   });
 
   it("strips encoded traversal sequences", () => {
     const result = mediaUrl("/uploads/%2e%2e/etc/passwd");
+    expect(result).toBe("https://api.example.com/uploads/etc/passwd");
     expect(result).not.toContain("%2e");
+  });
+
+  it("strips encoded dots case-insensitively", () => {
+    const result = mediaUrl("/uploads/%2E%2E/admin");
+    expect(result).toBe("https://api.example.com/uploads/admin");
   });
 });

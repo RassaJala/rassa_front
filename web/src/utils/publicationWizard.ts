@@ -51,6 +51,7 @@ export function formatDate(iso: Date, opts?: { short?: boolean }): string {
 
 export interface WizardItemDraft {
   tempId: string;
+  isNew: boolean;
   fk_producto: number;
   nombre_producto: string;
   fk_unidad: number;

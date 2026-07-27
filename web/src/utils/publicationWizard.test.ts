@@ -16,6 +16,7 @@ import {
 function makeItem(overrides: Partial<WizardItemDraft> = {}): WizardItemDraft {
   return {
     tempId: "test",
+    isNew: false,
     fk_producto: 1,
     nombre_producto: "Tomate",
     fk_unidad: 1,

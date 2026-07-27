@@ -19,7 +19,10 @@ export function extractApiError(error: unknown, fieldKeys: string[]): string {
 
   for (const key of fieldKeys) {
     const value = data[key];
-    if (Array.isArray(value) && value.length > 0) return String(value[0]);
+    if (Array.isArray(value) && value.length > 0) {
+      const first = value[0];
+      return typeof first === "string" ? first : String(first);
+    }
     if (typeof value === "string") return value;
   }
 
