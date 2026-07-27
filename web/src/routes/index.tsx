@@ -21,6 +21,10 @@ import { BuyerCart } from './BuyerCart';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
 import { ProfilePage } from './ProfilePage';
+import { ChatListPage } from './chat/ChatListPage';
+import { ChatDetailPage } from './chat/ChatDetailPage';
+import { GroupDetailPage } from './chat/GroupDetailPage';
+import { StartChatPage } from './chat/StartChatPage';
 import { useAuth } from '../hooks/useAuth';
 
 function NotFound() {
@@ -81,6 +85,10 @@ export function AppRouter() {
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                <Route path="chat" element={<ChatListPage />} />
+                <Route path="chat/nuevo" element={<StartChatPage />} />
+                <Route path="chat/:id" element={<ChatDetailPage />} />
+                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
                 <Route
                   path="*"
                   element={<Navigate to="/agricultor/productos" replace />}
@@ -101,6 +109,10 @@ export function AppRouter() {
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                <Route path="chat" element={<ChatListPage />} />
+                <Route path="chat/nuevo" element={<StartChatPage />} />
+                <Route path="chat/:id" element={<ChatDetailPage />} />
+                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
                 <Route
                   path="*"
                   element={<Navigate to="/vendedor/ventas" replace />}
@@ -132,6 +144,10 @@ export function AppRouter() {
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
+                <Route path="chat" element={<ChatListPage />} />
+                <Route path="chat/nuevo" element={<StartChatPage />} />
+                <Route path="chat/:id" element={<ChatDetailPage />} />
+                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
@@ -151,6 +167,10 @@ export function AppRouter() {
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                <Route path="chat" element={<ChatListPage />} />
+                <Route path="chat/nuevo" element={<StartChatPage />} />
+                <Route path="chat/:id" element={<ChatDetailPage />} />
+                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
             </DashboardLayout>
