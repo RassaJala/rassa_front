@@ -2,19 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { useAppColors } from "../hooks/useAppColors";
 import type { Producto } from "../services/publications";
 import { mediaUrl } from "../utils/mediaUrl";
-
-function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
-  e.currentTarget.style.display = "none";
-}
+import { hideBrokenImage } from "../utils/imageHelpers";
 
 export function ProductPickerModal({
   catalog,
+  catalogError,
   selectedIds,
   onSelect,
   onClose,
   colors,
 }: {
   catalog: Producto[];
+  catalogError?: boolean;
   selectedIds: Set<number>;
   onSelect: (p: Producto) => void;
   onClose: () => void;
@@ -95,7 +94,9 @@ export function ProductPickerModal({
               className="py-8 text-center text-[14px]"
               style={{ color: colors.muted }}
             >
-              No hay productos disponibles.
+              {catalogError
+                ? "Error al cargar el catálogo."
+                : "No hay productos disponibles."}
             </p>
           ) : (
             <div className="flex flex-col gap-2">

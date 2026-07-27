@@ -17,11 +17,13 @@ import * as publicationsApi from "../services/publications";
 function logMutationError(context: string, error: unknown): void {
   const name = error instanceof Error ? error.name : "UnknownError";
   const msg = error instanceof Error ? error.message : String(error);
-  const stack = error instanceof Error ? error.stack : undefined;
-  console.error(
-    `[publications] ${context}: ${name}: ${msg}`,
-    stack ? { stack } : "",
-  );
+  if (import.meta.env.DEV) {
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error(
+      `[publications] ${context}: ${name}: ${msg}`,
+      stack ? { stack } : "",
+    );
+  }
 }
 
 // ── Mutation factory ──────────────────────────────────────
@@ -45,10 +47,12 @@ function usePubMutation<TData, TVariables>(
       for (const key of invalidateKeys(vars)) {
         void qc.invalidateQueries({ queryKey: key });
       }
+      // TanStack Query v5 dropped the third context argument
       options?.onSuccess?.(data, vars, undefined as never);
     },
     onError: (err: unknown, vars: TVariables) => {
       logMutationError(context, err);
+      // TanStack Query v5 dropped the third context argument
       options?.onError?.(err, vars, undefined as never);
     },
   });

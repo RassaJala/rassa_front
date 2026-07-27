@@ -26,7 +26,6 @@ export function Toast({
       setVisible(false);
       return;
     }
-    // Small tick to trigger enter animation
     const tick = requestAnimationFrame(() => setVisible(true));
     const isError = toast.type === "error";
     const delay = isError ? TOAST_DISMISS_MS * 2 : TOAST_DISMISS_MS;
@@ -56,7 +55,10 @@ export function Toast({
         top: 16,
         right: 16,
         zIndex: 9999,
-        padding: "12px 20px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "12px 16px",
         borderRadius: 10,
         background: isError ? colors.coral : colors.brand,
         color: "#fff",
@@ -66,11 +68,34 @@ export function Toast({
         transition: "opacity 0.3s, transform 0.3s",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(-8px)",
-        pointerEvents: "none",
+        pointerEvents: visible ? "auto" : "none",
         maxWidth: 360,
       }}
     >
-      {toast.message}
+      <span style={{ flex: 1 }}>{toast.message}</span>
+      {isError && (
+        <button
+          onClick={() => setVisible(false)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 16,
+            lineHeight: 1,
+            padding: 0,
+            opacity: 0.8,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = "1";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = "0.8";
+          }}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }

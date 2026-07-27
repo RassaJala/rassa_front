@@ -186,6 +186,12 @@ describe("validateItem", () => {
     expect(validateItem({ ...validItem, precio: "0" })).toHaveProperty(
       "precio",
     );
+    expect(validateItem({ ...validItem, precio: "-5" })).toHaveProperty(
+      "precio",
+    );
+    expect(validateItem({ ...validItem, precio: "-0.01" })).toHaveProperty(
+      "precio",
+    );
   });
 
   it("requires fk_unidad", () => {

@@ -11,6 +11,7 @@ import type { PublicacionEstado } from "../services/publications";
 import { extractApiError } from "../utils/apiError";
 import { formatDate } from "../utils/publicationWizard";
 import { mediaUrl } from "../utils/mediaUrl";
+import { hideBrokenImage } from "../utils/imageHelpers";
 import {
   PublicationActions,
   getStatusBadge,
@@ -24,10 +25,6 @@ import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { Toast, type ToastState } from "../components/ui/Toast";
 
 // ── Helpers ────────────────────────────────────────────────
-
-function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
-  e.currentTarget.style.display = "none";
-}
 
 const TABS: Array<{ key: PublicacionEstado | "all"; label: string }> = [
   { key: "all", label: "Todas" },
@@ -51,8 +48,8 @@ export function FarmerPublications() {
   const publishMutation = usePublishPublicacion();
   const closeMutation = useClosePublicacion();
 
-  const showToast = useCallback((msg: string, isError = false) => {
-    setToast({ message: msg, type: isError ? "error" : "success" });
+  const showToast = useCallback((msg: string, asError = false) => {
+    setToast({ message: msg, type: asError ? "error" : "success" });
   }, []);
 
   const publications = data?.data?.results ?? [];

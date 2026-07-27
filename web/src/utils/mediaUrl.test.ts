@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.hoisted(() => {
+  vi.stubEnv("VITE_API_URL", "https://api.example.com/api");
+});
 
 import { mediaUrl } from "./mediaUrl";
 
@@ -34,11 +38,16 @@ describe("mediaUrl", () => {
 
   it("prepends base URL to relative paths", () => {
     const result = mediaUrl("/uploads/photo.jpg");
-    expect(result).toMatch(/\/uploads\/photo\.jpg$/);
+    expect(result).toBe("https://api.example.com/uploads/photo.jpg");
   });
 
   it("normalizes leading slashes", () => {
     const result = mediaUrl("///uploads/img.png");
     expect(result).not.toContain("///");
+  });
+
+  it("strips encoded traversal sequences", () => {
+    const result = mediaUrl("/uploads/%2e%2e/etc/passwd");
+    expect(result).not.toContain("%2e");
   });
 });

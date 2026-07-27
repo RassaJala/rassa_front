@@ -14,7 +14,11 @@ import {
   useUpdateProductoSemanal,
   useUploadProductoSemanalImagen,
 } from "../hooks/usePublications";
-import { getPublicacion, type Producto } from "../services/publications";
+import {
+  getPublicacion,
+  type Producto,
+  type Publicacion,
+} from "../services/publications";
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -34,6 +38,7 @@ import {
 } from "../constants/api";
 import { productCountLabel } from "../components/PublicationActions";
 import { mediaUrl } from "../utils/mediaUrl";
+import { hideBrokenImage, revokeBlobUrl } from "../utils/imageHelpers";
 import { ProductPickerModal } from "../components/ProductPickerModal";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -63,14 +68,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
 };
 
 // ── PublicationWizard ──────────────────────────────────────
-
-function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
-  e.currentTarget.style.display = "none";
-}
-
-function revokeItemImage(preview: string | null) {
-  if (preview) URL.revokeObjectURL(preview);
-}
 
 export function PublicationWizard() {
   const colors = useAppColors();
@@ -109,9 +106,7 @@ export function PublicationWizard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
-  const pubRef = useRef<import("../services/publications").Publicacion | null>(
-    null,
-  );
+  const pubRef = useRef<Publicacion | null>(null);
   const mountedRef = useRef(true);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -162,7 +157,7 @@ export function PublicationWizard() {
       mountedRef.current = false;
       abortRef.current?.abort();
       for (const item of itemsRef.current) {
-        revokeItemImage(item.imagePreview);
+        revokeBlobUrl(item.imagePreview);
       }
     };
   }, []);
@@ -212,7 +207,7 @@ export function PublicationWizard() {
 
   function removeItem(tempId: string) {
     const item = items.find((i) => i.tempId === tempId);
-    revokeItemImage(item?.imagePreview ?? null);
+    revokeBlobUrl(item?.imagePreview ?? null);
 
     setItems((prev) => prev.filter((i) => i.tempId !== tempId));
     setValidations((prev) => {
@@ -265,7 +260,7 @@ export function PublicationWizard() {
 
     // Revoke previous blob URL if replacing
     const prev = items.find((i) => i.tempId === tempId);
-    revokeItemImage(prev?.imagePreview ?? null);
+    revokeBlobUrl(prev?.imagePreview ?? null);
 
     const preview = URL.createObjectURL(file);
     setItems((prevItems) =>
@@ -279,7 +274,7 @@ export function PublicationWizard() {
 
   function handleImageRemove(tempId: string) {
     const item = items.find((i) => i.tempId === tempId);
-    revokeItemImage(item?.imagePreview ?? null);
+    revokeBlobUrl(item?.imagePreview ?? null);
 
     setItems((prev) =>
       prev.map((i) =>
@@ -367,7 +362,8 @@ export function PublicationWizard() {
     pubId: number,
     tempIdToServerId: Map<string, number>,
     signal?: AbortSignal,
-  ): Promise<void> {
+  ): Promise<number> {
+    let failures = 0;
     const currentIds = new Set<string>(
       [...tempIdToServerId.values()].map(String),
     );
@@ -390,22 +386,27 @@ export function PublicationWizard() {
             itemId: existing.id_producto_semanal,
           });
         } catch (err) {
-          console.error(
-            "[publications] failed to delete orphan item",
-            existing.id_producto_semanal,
-            err,
-          );
+          failures++;
+          if (import.meta.env.DEV) {
+            console.error(
+              "[publications] failed to delete orphan item",
+              existing.id_producto_semanal,
+              err,
+            );
+          }
         }
       }
     }
+    return failures;
   }
 
   // ── Persist items to server (with rollback) ──
   async function persistItems(
     pubId: number,
     signal?: AbortSignal,
-  ): Promise<void> {
+  ): Promise<{ orphanFailures: number }> {
     let newServerIds: number[] = [];
+    let orphanFailures = 0;
     try {
       const { tempIdToServerId, newServerIds: ids } = await upsertItems(
         pubId,
@@ -414,7 +415,7 @@ export function PublicationWizard() {
       newServerIds = ids;
 
       await refreshSnapshot(pubId);
-      await deleteOrphans(pubId, tempIdToServerId, signal);
+      orphanFailures = await deleteOrphans(pubId, tempIdToServerId, signal);
     } catch (err) {
       if (newServerIds.length > 0) {
         for (const serverId of newServerIds) {
@@ -424,16 +425,19 @@ export function PublicationWizard() {
               itemId: serverId,
             });
           } catch (cleanupErr) {
-            console.error(
-              "[publications] rollback cleanup failed for item",
-              serverId,
-              cleanupErr,
-            );
+            if (import.meta.env.DEV) {
+              console.error(
+                "[publications] rollback cleanup failed for item",
+                serverId,
+                cleanupErr,
+              );
+            }
           }
         }
       }
       throw err;
     }
+    return { orphanFailures };
   }
 
   // ── Shared persist orchestration ──
@@ -444,7 +448,6 @@ export function PublicationWizard() {
     if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
-    setError(null);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -463,11 +466,24 @@ export function PublicationWizard() {
         return;
       }
 
-      await persistItems(pub.id_publicacion, controller.signal);
+      const { orphanFailures } = await persistItems(
+        pub.id_publicacion,
+        controller.signal,
+      );
       await opts.afterPersist?.(pub.id_publicacion);
 
       if (mountedRef.current) {
         setToast({ message: opts.successMsg, type: "success" });
+        if (orphanFailures > 0) {
+          setTimeout(() => {
+            if (mountedRef.current) {
+              setToast({
+                message: `${orphanFailures} producto${orphanFailures !== 1 ? "s" : ""} antiguo${orphanFailures !== 1 ? "s" : ""} no se pudo${orphanFailures !== 1 ? "ron" : ""} eliminar.`,
+                type: "error",
+              });
+            }
+          }, 3500);
+        }
       }
     } catch (err) {
       if (controller.signal.aborted) {
@@ -476,7 +492,9 @@ export function PublicationWizard() {
         }
         return;
       }
-      console.error("[publications] persist failed:", err);
+      if (import.meta.env.DEV) {
+        console.error("[publications] persist failed:", err);
+      }
       if (mountedRef.current) {
         setError(extractApiError(err, ["detail", "message"]));
       }
@@ -1040,6 +1058,7 @@ export function PublicationWizard() {
       {showPicker && (
         <ProductPickerModal
           catalog={catalog}
+          catalogError={catalogQuery.isError}
           selectedIds={selectedIds}
           onSelect={addItem}
           onClose={() => setShowPicker(false)}
