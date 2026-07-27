@@ -214,7 +214,9 @@ describe('validateProfileEdit', () => {
         'Calle 123',
         1,
       ),
-    ).toBe('El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).');
+    ).toBe(
+      'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
+    );
   });
 
   it('retorna error cuando la fecha es inválida', () => {

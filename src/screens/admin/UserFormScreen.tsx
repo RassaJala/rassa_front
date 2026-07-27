@@ -103,7 +103,10 @@ function UserFormScreenContent(): React.JSX.Element {
           setIsValidating(false);
         }
       } catch (err) {
-        if (axios.isCancel(err) || (err instanceof Error && err.name === 'AbortError')) {
+        if (
+          axios.isCancel(err) ||
+          (err instanceof Error && err.name === 'AbortError')
+        ) {
           return;
         }
         console.error(

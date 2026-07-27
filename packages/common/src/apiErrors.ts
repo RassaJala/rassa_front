@@ -71,7 +71,9 @@ function parseAxiosError(error: unknown): string | null {
   return null;
 }
 
-function extractFieldErrorsFromList(data: Record<string, unknown>): string | null {
+function extractFieldErrorsFromList(
+  data: Record<string, unknown>,
+): string | null {
   const fieldErrors: string[] = [];
 
   for (const [key, val] of Object.entries(data)) {
@@ -135,7 +137,12 @@ function extractFieldErrorsFromData(
   const fields: Record<string, string> = {};
 
   if (typeof data.detail === 'string') {
-    return { fields, general: isSafeDetail(data.detail) ? data.detail : 'Error interno del servidor.' };
+    return {
+      fields,
+      general: isSafeDetail(data.detail)
+        ? data.detail
+        : 'Error interno del servidor.',
+    };
   }
   if (typeof data.message === 'string') {
     return { fields, general: data.message };

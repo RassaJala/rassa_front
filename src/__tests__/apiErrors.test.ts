@@ -1,4 +1,8 @@
-import { parseApiError, isSafeDetail, extractApiError } from '@/utils/apiErrors';
+import {
+  parseApiError,
+  isSafeDetail,
+  extractApiError,
+} from '@/utils/apiErrors';
 
 // Mock __DEV__ for tests
 (global as any).__DEV__ = true;
@@ -6,7 +10,9 @@ import { parseApiError, isSafeDetail, extractApiError } from '@/utils/apiErrors'
 describe('isSafeDetail', () => {
   it('returns false for tracebacks and system/database exceptions', () => {
     expect(isSafeDetail('Traceback (most recent call last):')).toBe(false);
-    expect(isSafeDetail('django.db.utils.OperationalError: connect failed')).toBe(false);
+    expect(
+      isSafeDetail('django.db.utils.OperationalError: connect failed'),
+    ).toBe(false);
     expect(isSafeDetail('database error connection lost')).toBe(false);
     expect(isSafeDetail('OperationalError')).toBe(false);
     expect(isSafeDetail('ProgrammingError')).toBe(false);

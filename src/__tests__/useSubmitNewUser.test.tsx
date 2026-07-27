@@ -13,7 +13,8 @@ jest.mock('axios', () => {
   const actual = jest.requireActual('axios');
   return {
     ...actual,
-    isAxiosError: (err: any) => !!(err && (err.isAxiosError || actual.isAxiosError(err))),
+    isAxiosError: (err: any) =>
+      !!(err && (err.isAxiosError || actual.isAxiosError(err))),
   };
 });
 
