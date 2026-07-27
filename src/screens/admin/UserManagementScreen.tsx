@@ -25,7 +25,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import FormErrorBanner from '@/components/FormErrorBanner';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
+import RoleSelector from '@/components/RoleSelector';
 import Toast from '@/components/Toast';
 import ConfirmDeactivationDialog from '@/components/UserManagement/ConfirmDeactivationDialog';
 import EmptyState from '@/components/UserManagement/EmptyState';
@@ -33,7 +35,6 @@ import FilterBar from '@/components/UserManagement/FilterBar';
 import RoleDialog from '@/components/UserManagement/RoleDialog';
 import UserCard from '@/components/UserManagement/UserCard';
 import { colors } from '@/constants/colors';
-import { ROLE_OPTIONS } from '@/constants/roles';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
@@ -369,7 +370,7 @@ async function fetchAllPages(
   }
 }
 
-export default function UserManagementScreen(): React.JSX.Element {
+function UserManagementScreenContent(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const {
@@ -381,7 +382,6 @@ export default function UserManagementScreen(): React.JSX.Element {
     inputBg,
     surface,
     accentBg,
-    coralBg,
     segBg,
     errorBg,
     errorBorder,
@@ -899,82 +899,17 @@ export default function UserManagementScreen(): React.JSX.Element {
               Nuevo usuario
             </Text>
 
-            {formErrorMessage || formServerError ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: 8,
-                  backgroundColor: coralBg,
-                  borderRadius: 12,
-                  padding: 12,
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="alert-circle"
-                  size={18}
-                  color={colors.brandRedCoral}
-                />
-                <Text
-                  style={{
-                    flex: 1,
-                    fontSize: 14,
-                    lineHeight: 20,
-                    color: colors.brandRedCoral,
-                  }}
-                >
-                  {formServerError || formErrorMessage}
-                </Text>
-              </View>
-            ) : null}
+            {/* Error banners */}
+            <FormErrorBanner message={formErrorMessage} isDark={isDark} />
+            <FormErrorBanner message={formServerError} isDark={isDark} />
 
             {/* Role selector */}
-            <View style={{ gap: 6 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '600',
-                  letterSpacing: 0.08,
-                  textTransform: 'uppercase',
-                  color: muted,
-                }}
-              >
-                Rol
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {ROLE_OPTIONS.map((opt) => {
-                  const isActive = form.role === opt.value;
-                  return (
-                    <TouchableOpacity
-                      key={opt.value}
-                      activeOpacity={0.7}
-                      onPress={() => form.setRole(opt.value)}
-                      disabled={isSubmitting}
-                      style={{
-                        flex: 1,
-                        height: 46,
-                        borderRadius: 12,
-                        borderWidth: 1.5,
-                        borderColor: isActive ? brand : border,
-                        backgroundColor: isActive ? accentBg : surface,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: '600',
-                          color: isActive ? brand : muted,
-                        }}
-                      >
-                        {opt.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
+            <RoleSelector
+              role={form.role}
+              onChangeRole={form.setRole}
+              isDark={isDark}
+              disabled={isSubmitting}
+            />
 
             <ErrorBoundary>
               <RegistrationFormFields
@@ -1091,5 +1026,13 @@ export default function UserManagementScreen(): React.JSX.Element {
         onDismiss={hideToast}
       />
     </View>
+  );
+}
+
+export default function UserManagementScreen(): React.JSX.Element {
+  return (
+    <ErrorBoundary>
+      <UserManagementScreenContent />
+    </ErrorBoundary>
   );
 }

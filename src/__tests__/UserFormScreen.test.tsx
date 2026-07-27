@@ -130,4 +130,14 @@ describe('UserFormScreen', () => {
       expect(mockGoBack).toHaveBeenCalled();
     });
   });
+
+  it('allows selecting user roles', async () => {
+    const { getByText } = renderScreen();
+    await waitFor(() => {
+      expect(getByText('Vendedor')).toBeTruthy();
+    });
+    fireEvent.press(getByText('Vendedor'));
+    fireEvent.press(getByText('Guardar'));
+    expect(mockSubmit).toHaveBeenCalled();
+  });
 });

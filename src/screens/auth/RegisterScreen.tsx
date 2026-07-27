@@ -13,19 +13,24 @@ import { useNavigation } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import FormErrorBanner from '@/components/FormErrorBanner';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { BRAND_GREEN_FOREST } from '@/constants/brandColors';
 import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { RegisterRole } from '@/types';
+import type { RegisterPayload, RegisterRole } from '@/types';
 import { parseApiError } from '@/utils/apiErrors';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import {
+  buildRegistrationPayload,
+  validateRegistrationForm,
+} from '@/utils/validation';
 
 const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
-export default function RegisterScreen(): React.JSX.Element {
+function RegisterScreenContent(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
   const netInfo = useNetInfo();
@@ -86,19 +91,19 @@ export default function RegisterScreen(): React.JSX.Element {
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        email: form.email.trim(),
+      const payload = buildRegistrationPayload({
+        email: form.email,
         password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
         role: DEFAULT_REGISTER_ROLE,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
+        telefono: form.telefono,
+        nombre: form.nombre,
+        apellidoPaterno: form.apellidoPaterno,
+        apellidoMaterno: form.apellidoMaterno,
+        fechaNacimiento: form.fechaNacimiento,
         sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId as number,
-      };
+        domicilio: form.domicilio,
+        localidadId: form.catalog.localidadId,
+      }) as unknown as RegisterPayload;
 
       await register(payload);
     } catch (error) {
@@ -113,8 +118,6 @@ export default function RegisterScreen(): React.JSX.Element {
       isSubmittingRef.current = false;
     }
   }
-
-  const errorColor = colors.brandRedCoral;
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -192,24 +195,7 @@ export default function RegisterScreen(): React.JSX.Element {
             disabled={isSubmitting}
           />
 
-          {errorMessage ? (
-            <View
-              style={{
-                marginTop: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <MaterialCommunityIcons
-                name="alert-circle"
-                size={16}
-                color={errorColor}
-              />
-              <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
-                {errorMessage}
-              </Text>
-            </View>
-          ) : null}
+          <FormErrorBanner message={errorMessage} isDark={isDark} />
 
           <View style={{ marginTop: 24, gap: 10 }}>
             <Pressable
@@ -274,5 +260,13 @@ export default function RegisterScreen(): React.JSX.Element {
         initialDate={form.fechaNacimiento}
       />
     </View>
+  );
+}
+
+export default function RegisterScreen(): React.JSX.Element {
+  return (
+    <ErrorBoundary>
+      <RegisterScreenContent />
+    </ErrorBoundary>
   );
 }

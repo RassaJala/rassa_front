@@ -11,6 +11,7 @@ import {
   MIN_PASSWORD_LENGTH,
   validateBirthdate,
   validateName,
+  validateRegistrationForm,
 } from '@/utils/validation';
 
 describe('validation utilities', () => {
@@ -269,6 +270,60 @@ describe('validation utilities', () => {
 
     it('retorna null para exactamente 18 años atrás (caso límite)', () => {
       expect(validateBirthdate(toDateStr(eighteenYearsAgo))).toBeNull();
+    });
+  });
+
+  describe('validateRegistrationForm', () => {
+    const validForm = {
+      email: 'test@email.com',
+      password: 'password123',
+      telefono: '1234567890',
+      nombre: 'John',
+      apellidoPaterno: 'Doe',
+      fechaNacimiento: '1990-01-01',
+      domicilio: 'Calle 123',
+      localidadId: 1,
+    };
+
+    it('retorna null para un formulario completamente válido', () => {
+      expect(validateRegistrationForm(validForm)).toBeNull();
+    });
+
+    it('retorna error de campos vacíos si falta algún campo obligatorio', () => {
+      expect(validateRegistrationForm({ ...validForm, email: '' })).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+    });
+
+    it('retorna error de correo si el formato de email es inválido', () => {
+      expect(
+        validateRegistrationForm({ ...validForm, email: 'invalidemail' }),
+      ).toBe('Ingresa un correo electrónico válido.');
+    });
+
+    it('retorna error de contraseña si es menor al mínimo', () => {
+      expect(validateRegistrationForm({ ...validForm, password: '123' })).toBe(
+        'La contraseña debe tener al menos 8 caracteres.',
+      );
+    });
+
+    it('retorna error de teléfono si no tiene 10 o 12 dígitos', () => {
+      expect(
+        validateRegistrationForm({ ...validForm, telefono: '12345' }),
+      ).toBe(
+        'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
+      );
+    });
+
+    it('retorna error si es menor de edad', () => {
+      const today = new Date();
+      const fifteenYearsAgo = `${today.getFullYear() - 15}-01-01`;
+      expect(
+        validateRegistrationForm({
+          ...validForm,
+          fechaNacimiento: fifteenYearsAgo,
+        }),
+      ).toBe('Debes ser mayor de 18 años para registrarte.');
     });
   });
 });

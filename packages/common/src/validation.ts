@@ -234,3 +234,39 @@ export function validatePasswordChange(
 
   return null;
 }
+
+export interface RegistrationFormData {
+  readonly email: string;
+  readonly password?: string;
+  readonly role: string;
+  readonly telefono: string;
+  readonly nombre: string;
+  readonly apellidoPaterno: string;
+  readonly apellidoMaterno?: string | null;
+  readonly fechaNacimiento: string;
+  readonly sexo: string;
+  readonly domicilio: string;
+  readonly localidadId: number | null;
+}
+
+export function buildRegistrationPayload(form: RegistrationFormData) {
+  return {
+    email: form.email.trim(),
+    ...(form.password ? { password: form.password } : {}),
+    telefono: cleanPhoneNumber(form.telefono),
+    role: form.role,
+    nombre: form.nombre.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+    apellido_paterno: form.apellidoPaterno
+      .trim()
+      .replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+    apellido_materno: form.apellidoMaterno?.trim()
+      ? form.apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '')
+      : null,
+    fecha_nacimiento: form.fechaNacimiento,
+    sexo: form.sexo,
+    domicilio: form.domicilio
+      .trim()
+      .replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
+    fk_localidad: form.localidadId,
+  };
+}

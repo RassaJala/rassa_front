@@ -21,7 +21,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "~/*": ["./src/*"],
-      "@/common/*": ["../packages/common/src/*"]
+      "@/common/*": ["../packages/common/src/*"],
+      "@root/*": ["../src/*"]
     }
   },
   "include": ["src"]

@@ -9,6 +9,7 @@ export default defineConfig({
       '@/common': path.resolve(__dirname, '../packages/common/src'),
       '@': path.resolve(__dirname, './src'),
       '~': path.resolve(__dirname, './src'),
+      '@root': path.resolve(__dirname, '../src'),
     },
   },
   server: {

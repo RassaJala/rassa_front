@@ -13,9 +13,10 @@ import axios from 'axios';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import FormErrorBanner from '@/components/FormErrorBanner';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
+import RoleSelector from '@/components/RoleSelector';
 import { colors } from '@/constants/colors';
-import { ROLE_OPTIONS } from '@/constants/roles';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
@@ -149,8 +150,6 @@ function UserFormScreenContent(): React.JSX.Element {
 
   const handleSubmit = () => submit(form);
 
-  const errorColor = colors.brandRedCoral;
-
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       <FormHeader isDark={isDark} onBack={() => navigation.goBack()} />
@@ -170,49 +169,12 @@ function UserFormScreenContent(): React.JSX.Element {
           }}
         >
           {/* Selector de Rol */}
-          <Text
-            style={{
-              marginBottom: 6,
-              fontSize: 12,
-              fontWeight: '600',
-              letterSpacing: 0.08,
-              textTransform: 'uppercase',
-              color: muted,
-            }}
-          >
-            Rol del usuario *
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {ROLE_OPTIONS.map((opt) => {
-              const isActive = form.role === opt.value;
-              return (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => form.setRole(opt.value)}
-                  style={{
-                    flex: 1,
-                    height: 40,
-                    borderRadius: 10,
-                    borderWidth: 1.5,
-                    borderColor: isActive ? brand : border,
-                    backgroundColor: isActive ? accentBg : segBg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '600',
-                      color: isActive ? brand : muted,
-                    }}
-                  >
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <RoleSelector
+            role={form.role}
+            onChangeRole={form.setRole}
+            isDark={isDark}
+            disabled={isSubmitting}
+          />
 
           <ErrorBoundary>
             <RegistrationFormFields
@@ -241,43 +203,8 @@ function UserFormScreenContent(): React.JSX.Element {
           </ErrorBoundary>
 
           {/* ── Error messages ──────────────────────────── */}
-          {errorMessage ? (
-            <View
-              style={{
-                marginTop: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <MaterialCommunityIcons
-                name="alert-circle"
-                size={16}
-                color={errorColor}
-              />
-              <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
-                {errorMessage}
-              </Text>
-            </View>
-          ) : null}
-
-          {serverError ? (
-            <View
-              style={{
-                marginTop: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <MaterialCommunityIcons
-                name="alert-circle"
-                size={16}
-                color={errorColor}
-              />
-              <Text style={{ marginLeft: 6, fontSize: 14, color: errorColor }}>
-                {serverError}
-              </Text>
-            </View>
-          ) : null}
+          <FormErrorBanner message={errorMessage} isDark={isDark} />
+          <FormErrorBanner message={serverError} isDark={isDark} />
 
           {/* ── Acciones de Guardar / Cancelar ───────────── */}
           <View style={{ marginTop: 24, gap: 10 }}>

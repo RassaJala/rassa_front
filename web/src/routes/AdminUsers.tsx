@@ -1,5 +1,5 @@
-/* globals console */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { colors } from '../constants/colors';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
@@ -39,10 +39,10 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const roleColors: Record<UserRole, string> = {
-  admin: '#DE393A',
-  farmer: '#16a34a',
-  seller: '#f59e0b',
-  buyer: '#3b82f6',
+  admin: colors.brand.redCoral,
+  farmer: colors.primary,
+  seller: colors.accent,
+  buyer: colors.info,
 };
 
 const ROLE_FILTERS = [
@@ -856,16 +856,9 @@ export function AdminUsers() {
   const [deactTarget, setDeactTarget] = useState<User | null>(null);
 
   // ── Reset page when filters change ──
-  const prevFilterKey = useMemo(
-    () => ({ search, roleFilter, statusFilter }),
-    [search, roleFilter, statusFilter],
-  );
-  const filterKey = JSON.stringify(prevFilterKey);
-  const prevKeyRef = useRef(filterKey);
-  if (prevKeyRef.current !== filterKey) {
-    prevKeyRef.current = filterKey;
+  useEffect(() => {
     setPage(1);
-  }
+  }, [search, roleFilter, statusFilter]);
 
   // ── Filtered + paginated list ──
   const filtered = useMemo(() => {
@@ -1703,9 +1696,9 @@ export function AdminUsers() {
                   height: 36,
                   padding: '0 16px',
                   borderRadius: 8,
-                  border: '1.5px solid #DE393A',
+                  border: `1.5px solid ${coral}`,
                   background: 'transparent',
-                  color: '#DE393A',
+                  color: coral,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',

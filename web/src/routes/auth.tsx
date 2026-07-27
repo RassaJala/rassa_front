@@ -13,12 +13,14 @@ import type { User } from '~/types';
 import { normalizeRole } from '~/types';
 
 import { parseApiError } from '~/utils/apiErrors';
-import { validateRegistrationForm } from '~/utils/validation';
+import {
+  buildRegistrationPayload,
+  validateRegistrationForm,
+  EMAIL_REGEX,
+} from '~/utils/validation';
 
 // Helpers
 // ---------------------------------------------------------------------------
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function mapRegisterUser(raw: Record<string, unknown>): User {
   return {
@@ -67,7 +69,7 @@ function loginErrors(
 ): { email?: string; password?: string } {
   const errs: { email?: string; password?: string } = {};
   if (!email.trim()) errs.email = 'Ingresá tu correo electrónico';
-  else if (!EMAIL_RE.test(email.trim()))
+  else if (!EMAIL_REGEX.test(email.trim()))
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
   else if (password.length < 8)
@@ -319,7 +321,7 @@ export function LoginScreen() {
               placeholder="••••••••"
               autoComplete="current-password"
               required
-              minLength={6}
+              minLength={8}
               style={{
                 ...inputBase,
                 borderColor: errors.password ? errColor : theme.border,
@@ -487,27 +489,19 @@ export function RegisterScreen() {
     setError(null);
     setLoading(true);
 
-    const payload = {
-      email: email.trim(),
+    const payload = buildRegistrationPayload({
+      email,
       password,
-      nombre: nombre.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-      apellido_paterno: apellidoPaterno
-        .trim()
-        .replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-      apellido_materno: apellidoMaterno.trim()
-        ? apellidoMaterno.trim().replace(/[^\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, '')
-        : null,
-      telefono: telefono.trim().startsWith('+')
-        ? telefono.replace(/\D/g, '').slice(0, 12)
-        : telefono.replace(/\D/g, '').slice(0, 10),
-      fecha_nacimiento: fechaNacimiento,
-      sexo,
-      domicilio: domicilio
-        .trim()
-        .replace(/[^\s#,\-./0-9A-Za-zÁÉÍÑÓÚÜáéíñóúü]/g, ''),
-      fk_localidad: catalogs.localidadId,
       role: 'buyer',
-    };
+      telefono,
+      nombre,
+      apellidoPaterno,
+      apellidoMaterno,
+      fechaNacimiento,
+      sexo,
+      domicilio,
+      localidadId: catalogs.localidadId,
+    });
 
     try {
       const { data: body } = await api.post<{

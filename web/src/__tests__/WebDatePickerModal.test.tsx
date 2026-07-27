@@ -76,4 +76,59 @@ describe('WebDatePickerModal', () => {
 
     expect(screen.getAllByText('20')[0]).toBeInTheDocument();
   });
+
+  it('handles leap years correctly', () => {
+    render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    // Select leap year 2004
+    fireEvent.click(screen.getByText('2004'));
+    // Select Febrero
+    fireEvent.click(screen.getByText('Febrero'));
+
+    // Febrero 2004 has 29 days
+    expect(screen.getByText('29')).toBeInTheDocument();
+    expect(screen.queryByText('30')).toBeNull();
+  });
+
+  it('closes when clicking overlay', () => {
+    const onCloseMock = vi.fn();
+    const { container } = render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={onCloseMock}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const backdrop = container.firstChild;
+    if (backdrop) {
+      fireEvent.click(backdrop);
+    }
+    expect(onCloseMock).toHaveBeenCalled();
+  });
+
+  it('can navigate back and forth using tabs', () => {
+    render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+        initialDate="2000-05-20"
+      />,
+    );
+
+    // Click "Año" step tab
+    fireEvent.click(screen.getByText('Año'));
+    expect(screen.getAllByText('2000')[0]).toBeInTheDocument();
+
+    // Click "Mes" step tab
+    fireEvent.click(screen.getByText('Mes'));
+    expect(screen.getAllByText('Mayo')[0]).toBeInTheDocument();
+  });
 });
