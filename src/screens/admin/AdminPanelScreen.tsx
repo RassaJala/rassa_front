@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -6,24 +6,24 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
-} from "@/components/ProfileDrawer";
-import StatCard from "@/components/StatCard";
-import { colors } from "@/constants/colors";
-import { useAdminColors } from "@/hooks/useAdminColors";
-import { useFormattedDate } from "@/hooks/useFormattedDate";
-import { getAdminStats } from "@/services/mock/dashboard";
-import { useTheme } from "@/store/ThemeContext";
-import type { AdminStackParamList } from "@/types";
+} from '@/components/ProfileDrawer';
+import StatCard from '@/components/StatCard';
+import { colors } from '@/constants/colors';
+import { useAdminColors } from '@/hooks/useAdminColors';
+import { useFormattedDate } from '@/hooks/useFormattedDate';
+import { getAdminStats } from '@/services/mock/dashboard';
+import { useTheme } from '@/store/ThemeContext';
+import type { AdminStackParamList } from '@/types';
 
-type Nav = NativeStackNavigationProp<AdminStackParamList, "AdminPanel">;
+type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminPanel'>;
 
 interface Props {
   readonly navigation: Nav;
@@ -34,29 +34,29 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1, paddingBottom: 24 },
   contentArea: { flex: 1, paddingTop: 48, paddingHorizontal: 20 },
   headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   dateText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: 0.06,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   titleText: {
     fontSize: 32,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   bellBtn: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statsRow: { flexDirection: "row", gap: 10, paddingVertical: 24 },
+  statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
   lookupCard: {
     borderRadius: 16,
     borderWidth: 1,
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   lookupTitle: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 12,
   },
   input: {
@@ -83,11 +83,11 @@ const styles = StyleSheet.create({
   submitBtn: {
     borderRadius: 12,
     paddingVertical: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
   submitBtnText: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });
 
@@ -95,7 +95,7 @@ export default function AdminPanelScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
@@ -104,7 +104,7 @@ export default function AdminPanelScreen({
   const pumpkin = colors.accent;
   const stats = getAdminStats();
   const [showLookup, setShowLookup] = useState(false);
-  const [lookupId, setLookupId] = useState("");
+  const [lookupId, setLookupId] = useState('');
   const lookupNum = Number(lookupId);
   const isInvalid =
     lookupId.length > 0 &&
@@ -118,7 +118,7 @@ export default function AdminPanelScreen({
     <ProfileDrawerProvider
       defaultName="Administrador"
       defaultEmail="admin@rassa.com"
-      onProfilePress={() => navigation.navigate("AdminProfile")}
+      onProfilePress={() => navigation.navigate('AdminProfile')}
     >
       <View style={[styles.container, { backgroundColor: bg }]}>
         <View style={styles.container}>
@@ -136,7 +136,7 @@ export default function AdminPanelScreen({
                   </Text>
                   <Text style={[styles.titleText, { color: fg }]}>Panel</Text>
                 </View>
-                <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     testID="notification-bell"
                     style={({ pressed }) => [
@@ -241,9 +241,9 @@ export default function AdminPanelScreen({
                         Number.isSafeInteger(id) &&
                         id > 0
                       ) {
-                        navigation.navigate("OrderDetail", { orderId: id });
+                        navigation.navigate('OrderDetail', { orderId: id });
                         setShowLookup(false);
-                        setLookupId("");
+                        setLookupId('');
                       }
                     }}
                     style={[styles.submitBtn, { backgroundColor: brand }]}

@@ -1,24 +1,24 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import type { RouteProp } from "@react-navigation/native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import ErrorBoundary from "@/components/ErrorBoundary";
-import OrderTimeline from "@/components/OrderTimeline";
-import { useAdminColors } from "@/hooks/useAdminColors";
-import type { AdminStackParamList } from "@/types";
+import ErrorBoundary from '@/components/ErrorBoundary';
+import OrderTimeline from '@/components/OrderTimeline';
+import { useAdminColors } from '@/hooks/useAdminColors';
+import type { AdminStackParamList } from '@/types';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 8,
   },
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.02,
   },
   card: {
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 16,
     borderWidth: 1,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
 });
 
@@ -44,11 +44,11 @@ export default function OrderDetailScreen(): React.JSX.Element {
   const { bg, surface, fg, border } = useAdminColors();
   const insets = useSafeAreaInsets();
 
-  const route = useRoute<RouteProp<AdminStackParamList, "OrderDetail">>();
+  const route = useRoute<RouteProp<AdminStackParamList, 'OrderDetail'>>();
   const { orderId } = route.params;
   const navigation =
     useNavigation<
-      NativeStackNavigationProp<AdminStackParamList, "OrderDetail">
+      NativeStackNavigationProp<AdminStackParamList, 'OrderDetail'>
     >();
 
   return (

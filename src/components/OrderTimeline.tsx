@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import {
   buildDescription,
@@ -17,9 +17,9 @@ import {
   getStatusColor,
   isNotFoundError,
   STATUS_LABELS,
-} from "@/constants/orderTimeline";
-import { useAdminColors } from "@/hooks/useAdminColors";
-import { useOrderTimeline } from "@/hooks/useOrderTimeline";
+} from '@/constants/orderTimeline';
+import { useAdminColors } from '@/hooks/useAdminColors';
+import { useOrderTimeline } from '@/hooks/useOrderTimeline';
 
 const GUTTER_WIDTH = 28;
 const MIN_HEIGHT = 64;
@@ -33,14 +33,14 @@ const styles = StyleSheet.create({
   },
   gutter: {
     width: GUTTER_WIDTH,
-    alignItems: "center",
+    alignItems: 'center',
   },
   gutterLine: {
     flex: 1,
     width: 2,
   },
   row: {
-    flexDirection: "row",
+    flexDirection: 'row',
     minHeight: MIN_HEIGHT,
   },
   content: {
@@ -49,15 +49,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   subtitle: {
     fontSize: 13,
     marginTop: 2,
   },
   metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 4,
     gap: 4,
   },
@@ -66,18 +66,18 @@ const styles = StyleSheet.create({
   },
   centeredContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 48,
   },
   errorText: {
     marginTop: 12,
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 15,
   },
   retryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
     marginTop: 16,
     paddingHorizontal: 20,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   card: {
     borderRadius: 16,
@@ -129,12 +129,12 @@ export default function OrderTimeline({
     return (
       <View style={[styles.centeredContainer, { backgroundColor: bg }]}>
         <MaterialCommunityIcons
-          name={is404 ? "package-variant-closed" : "alert-circle-outline"}
+          name={is404 ? 'package-variant-closed' : 'alert-circle-outline'}
           size={40}
           color={muted}
         />
         <Text style={[styles.errorText, { color: muted }]}>
-          {is404 ? "Pedido no encontrado" : "Error al cargar el historial"}
+          {is404 ? 'Pedido no encontrado' : 'Error al cargar el historial'}
         </Text>
         {is404 && onBack ? (
           <Pressable

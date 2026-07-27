@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 import {
   buildDescription,
@@ -10,25 +10,25 @@ import {
   normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
-} from "../../../src/constants/orderTimeline";
-import api from "../services/api";
-import { useAppColors } from "../hooks/useAppColors";
-import type { OrderStatusHistory } from "../../../src/types";
+} from '../../../src/constants/orderTimeline';
+import api from '../services/api';
+import { useAppColors } from '../hooks/useAppColors';
+import type { OrderStatusHistory } from '../../../src/types';
 
 // ponytail: module-scoped styles to avoid recreation on every render
 const SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg) } }`;
 
 const btnStyle: React.CSSProperties = {
   height: 40,
-  padding: "0 18px",
+  padding: '0 18px',
   borderRadius: 10,
-  border: "none",
+  border: 'none',
   fontSize: 14,
   fontWeight: 600,
-  fontFamily: "inherit",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
   gap: 6,
 };
 
@@ -39,13 +39,13 @@ const lineStyle: React.CSSProperties = {
 };
 
 const centeredStyle: React.CSSProperties = {
-  display: "grid",
-  placeItems: "center",
-  padding: "64px 24px",
+  display: 'grid',
+  placeItems: 'center',
+  padding: '64px 24px',
 };
 
 const timelineEntryStyle: React.CSSProperties = {
-  display: "flex",
+  display: 'flex',
   gap: 14,
   minHeight: 64,
 };
@@ -61,7 +61,7 @@ export function AdminOrderDetail() {
     OrderStatusHistory[],
     Error
   >({
-    queryKey: ["order-history", orderId] as const,
+    queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
       const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
       return normalizeOrderHistoryResponse(res.data);
@@ -89,8 +89,8 @@ export function AdminOrderDetail() {
       {/* Header */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 12,
           marginBottom: 24,
         }}
@@ -103,7 +103,7 @@ export function AdminOrderDetail() {
             border: `1.5px solid ${border}`,
             color: fg,
             fontSize: 18,
-            padding: "0 10px",
+            padding: '0 10px',
           }}
         >
           ←
@@ -112,7 +112,7 @@ export function AdminOrderDetail() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            letterSpacing: "-0.01em",
+            letterSpacing: '-0.01em',
             color: fg,
           }}
         >
@@ -126,7 +126,7 @@ export function AdminOrderDetail() {
           background: surface,
           borderRadius: 16,
           border: `1px solid ${border}`,
-          overflow: "hidden",
+          overflow: 'hidden',
         }}
       >
         {/* Loading */}
@@ -136,10 +136,10 @@ export function AdminOrderDetail() {
               style={{
                 width: 32,
                 height: 32,
-                border: "3px solid",
+                border: '3px solid',
                 borderColor: `${border} ${border} ${border} ${brand}`,
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
               }}
             />
             <p style={{ marginTop: 12, fontSize: 14, color: muted }}>
@@ -153,10 +153,10 @@ export function AdminOrderDetail() {
         {isError && (
           <div style={{ ...centeredStyle, color: muted }}>
             <span style={{ fontSize: 40 }}>⚠️</span>
-            <p style={{ marginTop: 12, fontSize: 14, textAlign: "center" }}>
+            <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
               {isNotFoundError(error)
-                ? "Pedido no encontrado"
-                : "Error al cargar el historial"}
+                ? 'Pedido no encontrado'
+                : 'Error al cargar el historial'}
             </p>
             {isNotFoundError(error) ? (
               <button
@@ -213,9 +213,9 @@ export function AdminOrderDetail() {
                   {/* Gutter */}
                   <div
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                       width: 16,
                     }}
                   >
@@ -223,7 +223,7 @@ export function AdminOrderDetail() {
                       style={{
                         width: DOT_SIZE,
                         height: DOT_SIZE,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         backgroundColor: dotColor,
                         flexShrink: 0,
                         marginTop: 4,
@@ -260,8 +260,8 @@ export function AdminOrderDetail() {
                     </div>
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 6,
                         marginTop: 4,
                         fontSize: 12,
