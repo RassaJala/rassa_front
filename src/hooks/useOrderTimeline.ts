@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 import {
   normalizeOrderHistoryResponse,
   STALE_TIME,
-} from '@/constants/orderTimeline';
-import api from '@/services/api';
-import type { OrderStatusHistory } from '@/types';
+} from "@/constants/orderTimeline";
+import api from "@/services/api";
+import type { OrderStatusHistory } from "@/types";
 
 export function useOrderTimeline(orderId: number): {
   entries: OrderStatusHistory[];
@@ -21,7 +21,7 @@ export function useOrderTimeline(orderId: number): {
     error,
     refetch,
   } = useQuery<OrderStatusHistory[], Error>({
-    queryKey: ['order-history', orderId] as const,
+    queryKey: ["order-history", orderId] as const,
     queryFn: async () => {
       const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
       return normalizeOrderHistoryResponse(res.data);
@@ -29,9 +29,10 @@ export function useOrderTimeline(orderId: number): {
     enabled: orderId > 0,
     staleTime: STALE_TIME,
     refetchOnWindowFocus: true,
-    // ponytail: axios-retry handles retries globally, no amplification needed
+    // axios-retry (api.ts:58-69) ya aplica 3 reintentos con exponential backoff
+    // a GET requests con error de red o 5xx. `retry: false` evita doble reintento.
     retry: false,
   });
 
-  return { entries: entries ?? [], isLoading, isError, error, refetch };
+  return { entries, isLoading, isError, error, refetch };
 }
