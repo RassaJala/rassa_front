@@ -44,7 +44,9 @@ import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
@@ -456,6 +458,8 @@ function SellerNavigator() {
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
       />
+      <SellerStack.Screen name="Payment" component={PaymentScreen} />
+      <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
     </SellerStack.Navigator>
   );
 }

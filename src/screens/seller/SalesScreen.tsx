@@ -11,13 +11,15 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
-import type { Order, PedidoEstado } from '@/types';
+import type { Order, PedidoEstado, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiError';
 
 interface FilterOption {
@@ -96,6 +98,8 @@ export default function SalesScreen(): React.JSX.Element {
   const white = colors.iconWhite;
   const redCoral = colors.brandRedCoral;
 
+  const navigation =
+    useNavigation<NativeStackNavigationProp<SellerStackParamList>>();
   const [filter, setFilter] = useState<PedidoEstado | ''>('');
   const [toast, setToast] = useState<{
     visible: boolean;
@@ -279,7 +283,7 @@ export default function SalesScreen(): React.JSX.Element {
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            {accion ? (
+            {accion && item.estado_actual !== 'listo_para_retirar' ? (
               <Pressable
                 onPress={() => {
                   statusMutation.mutate({
@@ -316,6 +320,34 @@ export default function SalesScreen(): React.JSX.Element {
                   }}
                 >
                   {accion.label}
+                </Text>
+              </Pressable>
+            ) : null}
+            {item.estado_actual === 'listo_para_retirar' ? (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Payment', { orderId: item.id_pedido })
+                }
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  backgroundColor: brand,
+                  borderRadius: 10,
+                  paddingVertical: 10,
+                }}
+              >
+                <MaterialCommunityIcons name="cash" size={18} color={white} />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '700',
+                    color: white,
+                  }}
+                >
+                  Cobrar
                 </Text>
               </Pressable>
             ) : null}

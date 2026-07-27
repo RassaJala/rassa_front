@@ -296,6 +296,40 @@ export interface SearchUserResult {
   apellido_paterno: string;
   apellido_materno: string | null;
 }
+// ── Payments ───────────────────────────────────────────────
+
+export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'otros';
+
+export interface PaymentType {
+  id_tipo_pago: number;
+  nombre: string;
+  descripcion?: string;
+}
+
+export interface Payment {
+  id_pago: number;
+  pedido: number;
+  tipo_pago: number;
+  tipo_pago_nombre?: string;
+  monto: string;
+  metodo_pago: PaymentMethod;
+  referencia: string;
+  folio: string;
+  fecha_pago: string;
+  cliente_nombre?: string;
+  cliente_id?: number;
+  total_pedido?: string;
+  productos?: { nombre: string; cantidad: number; precio: string }[];
+}
+
+export interface PaymentPayload {
+  pedido: number;
+  tipo_pago: number;
+  monto: string;
+  metodo_pago: PaymentMethod;
+  referencia?: string;
+}
+
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
@@ -317,4 +351,6 @@ export type SellerStackParamList = {
     title: string;
     isFamily?: boolean | undefined;
   };
+  Payment: { readonly orderId: number };
+  Receipt: { readonly paymentId: number };
 };
