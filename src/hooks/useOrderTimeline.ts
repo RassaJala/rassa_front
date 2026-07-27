@@ -28,7 +28,7 @@ export function useOrderTimeline(orderId: number): {
     },
     enabled: orderId > 0,
     staleTime: STALE_TIME,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     // ponytail: axios-retry handles retries globally, no amplification needed
     retry: false,
   });

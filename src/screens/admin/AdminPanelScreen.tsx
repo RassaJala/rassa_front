@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,7 @@ import {
 } from '@/components/ProfileDrawer';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
+import { useAdminColors } from '@/hooks/useAdminColors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { getAdminStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
@@ -21,26 +22,76 @@ interface Props {
   readonly navigation: Nav;
 }
 
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+  contentArea: { flex: 1, paddingTop: 48, paddingHorizontal: 20 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.06,
+    textTransform: 'uppercase',
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  bellBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
+  lookupCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 24,
+  },
+  lookupTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  input: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  submitBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  submitBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});
+
 export default function AdminPanelScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const stats = getAdminStats();
-  const [showLookup, setShowLookup] = useState(false);
-  const [lookupId, setLookupId] = useState('');
-
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
   const pumpkin = colors.accent;
+  const stats = getAdminStats();
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupId, setLookupId] = useState('');
   const lookupNum = Number(lookupId);
   const isInvalid = lookupId.length > 0 && (isNaN(lookupNum) || lookupNum <= 0);
 

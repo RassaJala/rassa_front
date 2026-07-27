@@ -2,17 +2,21 @@ import {
   buildDescription,
   formatTimestamp,
   getStatusColor,
+  normalizeOrderHistoryResponse,
 } from '../orderTimeline';
 
 describe('formatTimestamp', () => {
-  it('formats a valid ISO string in DD/MM HH:mm (UTC)', () => {
-    const result = formatTimestamp('2025-06-15T10:30:00Z');
-    expect(result).toBe('15/06 10:30');
+  it('formats a valid ISO string in DD/MM HH:mm (local time)', () => {
+    // Use UTC midnight — local time may vary by timezone;
+    // we check the pattern, not the exact value
+    const result = formatTimestamp('2025-06-15T12:00:00Z');
+    expect(result).toMatch(/^\d{2}\/\d{2} \d{2}:\d{2}$/);
   });
 
-  it('handles single-digit day and month with padding', () => {
+  it('handles single-digit day and month with padding (local time)', () => {
     const result = formatTimestamp('2025-01-05T08:05:00Z');
-    expect(result).toBe('05/01 08:05');
+    // Pattern check: DD/MM HH:mm
+    expect(result).toMatch(/^\d{2}\/\d{2} \d{2}:\d{2}$/);
   });
 
   it('returns em dash for empty string', () => {
@@ -25,6 +29,38 @@ describe('formatTimestamp', () => {
 
   it('returns em dash for null-ish input via string coercion', () => {
     expect(formatTimestamp('')).toBe('—');
+  });
+});
+
+describe('normalizeOrderHistoryResponse', () => {
+  it('passes through a flat array', () => {
+    const data = [{ id_historial: 1, estado_nuevo: 'pendiente' }];
+    expect(normalizeOrderHistoryResponse(data)).toEqual(data);
+  });
+
+  it('unwraps { data: [...] }', () => {
+    const entries = [{ id_historial: 1, estado_nuevo: 'pendiente' }];
+    expect(normalizeOrderHistoryResponse({ data: entries })).toEqual(entries);
+  });
+
+  it('returns [] for { data: null }', () => {
+    expect(normalizeOrderHistoryResponse({ data: null })).toEqual([]);
+  });
+
+  it('returns [] for { data: "string" }', () => {
+    expect(normalizeOrderHistoryResponse({ data: 'not-array' })).toEqual([]);
+  });
+
+  it('returns [] for null', () => {
+    expect(normalizeOrderHistoryResponse(null)).toEqual([]);
+  });
+
+  it('returns [] for undefined', () => {
+    expect(normalizeOrderHistoryResponse(undefined)).toEqual([]);
+  });
+
+  it('returns [] for a plain object without data wrapper', () => {
+    expect(normalizeOrderHistoryResponse({ foo: 'bar' })).toEqual([]);
   });
 });
 

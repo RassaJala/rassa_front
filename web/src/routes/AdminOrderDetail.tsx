@@ -10,7 +10,7 @@ import {
   normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
-} from '../../src/constants/orderTimeline';
+} from '../../../src/constants/orderTimeline';
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
 import type { OrderStatusHistory } from '../../src/types';
@@ -68,7 +68,7 @@ export function AdminOrderDetail() {
     },
     enabled: isValidId,
     staleTime: STALE_TIME,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     // ponytail: axios-retry handles retries globally, no amplification needed
     retry: false,
   });
