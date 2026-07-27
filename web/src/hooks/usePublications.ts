@@ -14,8 +14,13 @@ import * as publicationsApi from "../services/publications";
 // ── Error logging helper ──────────────────────────────────
 
 function logMutationError(context: string, error: unknown): void {
+  const name = error instanceof Error ? error.name : "UnknownError";
   const msg = error instanceof Error ? error.message : String(error);
-  console.error(`[publications] ${context}:`, msg);
+  const stack = error instanceof Error ? error.stack : undefined;
+  console.error(
+    `[publications] ${context}: ${name}: ${msg}`,
+    stack ? { stack } : "",
+  );
 }
 
 // ── Queries ────────────────────────────────────────────────

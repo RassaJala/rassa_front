@@ -101,6 +101,7 @@ export function PublicationWizard() {
     null,
   );
   const mountedRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   // ── Initialize items from server data (editing mode) ──
   const [itemsInitialized, setItemsInitialized] = useState(false);
@@ -136,6 +137,7 @@ export function PublicationWizard() {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      abortRef.current?.abort();
       for (const item of itemsRef.current) {
         if (item.imagePreview) URL.revokeObjectURL(item.imagePreview);
       }
@@ -260,10 +262,14 @@ export function PublicationWizard() {
   }
 
   // ── Persist items to server (via hooks) ──
-  async function persistItems(pubNumber: number): Promise<void> {
+  async function persistItems(
+    pubNumber: number,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const tempIdToServerId = new Map<string, number>();
 
     for (const item of items) {
+      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
       const serverId = Number(item.tempId);
       const isExisting =
         !Number.isNaN(serverId) && serverId > 0 && pubRef.current !== null;
@@ -271,8 +277,8 @@ export function PublicationWizard() {
       const payload = {
         fk_producto: item.fk_producto,
         fk_unidad: item.fk_unidad,
-        stock: Number(item.stock) || 0,
-        precio: Number(item.precio) || 0,
+        stock: Number(item.stock),
+        precio: Number(item.precio),
       };
 
       let itemId: number;
@@ -302,6 +308,7 @@ export function PublicationWizard() {
 
       // Upload image if there's a new file
       if (item.imageFile) {
+        if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
         const formData = new FormData();
         formData.append("imagen", item.imageFile);
         await uploadMutation.mutateAsync({
@@ -338,6 +345,7 @@ export function PublicationWizard() {
       }
     }
     for (const existing of pubRef.current.productos) {
+      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
       const existingId = String(existing.id_producto_semanal);
       if (!currentIds.has(existingId)) {
         await removeItemMutation.mutateAsync({
@@ -348,12 +356,18 @@ export function PublicationWizard() {
     }
   }
 
-  // ── Save draft ──
-  async function handleSaveDraft() {
+  // ── Shared persist orchestration ──
+  async function runPersist(opts: {
+    successMsg: string;
+    afterPersist?: (pubId: number) => Promise<void>;
+  }): Promise<void> {
     if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
     setError(null);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       let pub = pubRef.current;
@@ -364,51 +378,39 @@ export function PublicationWizard() {
       }
       if (!pub) return;
 
-      await persistItems(pub.id_publicacion);
+      await persistItems(pub.id_publicacion, controller.signal);
+      await opts.afterPersist?.(pub.id_publicacion);
+
       if (mountedRef.current) {
-        setToast({ message: "Borrador guardado.", type: "success" });
+        setToast({ message: opts.successMsg, type: "success" });
       }
     } catch (err) {
+      if (controller.signal.aborted) return;
+      console.error("[publications] persist failed:", err);
       if (mountedRef.current) {
         setError(extractApiError(err, ["detail", "message"]));
       }
     } finally {
+      abortRef.current = null;
       savingRef.current = false;
       if (mountedRef.current) setSaving(false);
     }
   }
 
+  // ── Save draft ──
+  function handleSaveDraft() {
+    void runPersist({ successMsg: "Borrador guardado." });
+  }
+
   // ── Publish ──
-  async function handlePublish() {
-    if (savingRef.current) return;
-    savingRef.current = true;
-    setSaving(true);
-    setError(null);
-
-    try {
-      let pub = pubRef.current;
-      if (!pub) {
-        const result = await createMutation.mutateAsync();
-        pub = result.data;
-        pubRef.current = pub;
-      }
-      if (!pub) return;
-
-      await persistItems(pub.id_publicacion);
-      await publishMutation.mutateAsync(pub.id_publicacion);
-
-      if (mountedRef.current) {
-        setToast({ message: "¡Publicación publicada!", type: "success" });
-        void navigate("/agricultor/publicaciones");
-      }
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(extractApiError(err, ["detail", "message"]));
-      }
-    } finally {
-      savingRef.current = false;
-      if (mountedRef.current) setSaving(false);
-    }
+  function handlePublish() {
+    void runPersist({
+      successMsg: "¡Publicación publicada!",
+      afterPersist: async (pubId) => {
+        await publishMutation.mutateAsync(pubId);
+        if (mountedRef.current) void navigate("/agricultor/publicaciones");
+      },
+    });
   }
 
   // ── Toast ──
@@ -419,11 +421,13 @@ export function PublicationWizard() {
     return <LoadingSpinner className="py-20" />;
   }
 
-  if (isEditing && pubQuery.isError) {
+  if (isEditing && (pubQuery.isError || itemsQuery.isError)) {
     return (
       <div className="py-12 text-center">
         <p className="mb-3" style={{ color: colors.coral }}>
-          No se pudo cargar la publicación.
+          {itemsQuery.isError
+            ? "No se pudieron cargar los productos de la publicación."
+            : "No se pudo cargar la publicación."}
         </p>
         <Button
           variant="secondary"
