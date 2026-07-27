@@ -86,6 +86,7 @@ describe('useSubmitNewUser hook', () => {
 
   it('handles API error safely using parseApiError', async () => {
     mockedApi.post.mockRejectedValueOnce({
+      isAxiosError: true,
       response: { status: 409, data: { detail: 'El correo ya existe' } },
     });
 

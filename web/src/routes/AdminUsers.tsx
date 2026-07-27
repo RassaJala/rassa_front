@@ -10,7 +10,7 @@ import {
   cleanAddress,
   cleanName,
   cleanPhoneNumber,
-  isAdult,
+  validateRegistrationForm,
 } from '~/utils/validation';
 import { Toast } from '../components/ui/Toast';
 import type { ToastState } from '../components/ui/Toast';
@@ -98,33 +98,41 @@ async function fetchAllPages(
     );
     return accumulated;
   }
-  const response = await api.get<unknown>(url);
-  const body = response.data;
-  const payload =
-    body &&
-    typeof body === 'object' &&
-    'data' in (body as Record<string, unknown>)
-      ? (body as Record<string, unknown>).data
-      : body;
+  try {
+    const response = await api.get<unknown>(url);
+    const body = response.data;
+    const payload =
+      body &&
+      typeof body === 'object' &&
+      'data' in (body as Record<string, unknown>)
+        ? (body as Record<string, unknown>).data
+        : body;
 
-  const results: Record<string, unknown>[] =
-    payload &&
-    typeof payload === 'object' &&
-    'results' in (payload as Record<string, unknown>)
-      ? (payload as { results: Record<string, unknown>[] }).results
-      : Array.isArray(payload)
-        ? (payload as Record<string, unknown>[])
-        : [];
+    const results: Record<string, unknown>[] =
+      payload &&
+      typeof payload === 'object' &&
+      'results' in (payload as Record<string, unknown>)
+        ? (payload as { results: Record<string, unknown>[] }).results
+        : Array.isArray(payload)
+          ? (payload as Record<string, unknown>[])
+          : [];
 
-  const page = results.map(mapUser);
-  const all = [...accumulated, ...page];
-  const next =
-    payload && typeof payload === 'object'
-      ? ((payload as Record<string, unknown>).next as string | null)
-      : null;
+    const page = results.map(mapUser);
+    const all = [...accumulated, ...page];
+    const next =
+      payload && typeof payload === 'object'
+        ? ((payload as Record<string, unknown>).next as string | null)
+        : null;
 
-  if (next) return fetchAllPages(next, all, depth + 1);
-  return all;
+    if (next) return fetchAllPages(next, all, depth + 1);
+    return all;
+  } catch (error) {
+    console.warn(`[AdminUsers] error fetching page at depth ${depth}:`, error);
+    if (accumulated.length > 0) {
+      return accumulated;
+    }
+    throw error;
+  }
 }
 
 async function fetchUsers(): Promise<User[]> {
@@ -264,35 +272,24 @@ function NuevoUsuarioForm({
   function handleCreateUser() {
     setFormError(null);
 
-    if (!formEmail.trim()) return setFormError('El email es obligatorio.');
-    if (!/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formEmail.trim()))
-      return setFormError('Ingresa un correo electrónico válido.');
-    if (!formPassword) return setFormError('La contraseña es obligatoria.');
-    if (formPassword.length < 6)
-      return setFormError('La contraseña debe tener al menos 6 caracteres.');
-    if (!formTelefono.trim())
-      return setFormError('El teléfono es obligatorio.');
-    const cleanedPhone = cleanPhoneNumber(formTelefono);
-    if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12)
-      return setFormError(
-        'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).',
-      );
-    if (!formNombre.trim()) return setFormError('El nombre es obligatorio.');
-    if (!formApePat.trim())
-      return setFormError('El apellido paterno es obligatorio.');
-    if (!formFechaNac.trim())
-      return setFormError('La fecha de nacimiento es obligatoria.');
-    if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(formFechaNac))
-      return setFormError(
-        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
-      );
-    if (!isAdult(formFechaNac))
-      return setFormError('Debes ser mayor de 18 años para registrarte.');
-    if (!formDomicilio.trim())
-      return setFormError('La dirección es obligatoria.');
-    if (!formSexo) return setFormError('Seleccioná un género.');
-    if (catalogs.localidadId === null)
-      return setFormError('Seleccioná una localidad.');
+    const validationError = validateRegistrationForm({
+      email: formEmail,
+      password: formPassword,
+      telefono: formTelefono,
+      nombre: formNombre,
+      apellidoPaterno: formApePat,
+      fechaNacimiento: formFechaNac,
+      domicilio: formDomicilio,
+      localidadId: catalogs.localidadId,
+    });
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+    if (!formSexo) {
+      setFormError('Seleccioná un género.');
+      return;
+    }
 
     const basePayload: Record<string, unknown> = {
       email: formEmail.trim(),
@@ -601,48 +598,110 @@ function NuevoUsuarioForm({
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <label style={formLabel}>Municipio *</label>
-          <select
-            value={catalogs.selectedMunicipioId ?? ''}
-            onChange={(e) => {
-              const id = e.target.value ? Number(e.target.value) : null;
-              if (id) catalogs.handleSelectMunicipio(id);
-            }}
-            style={formInputStyle('municipio')}
-          >
-            <option value="">
-              {catalogs.isLoadingMunicipios ? 'Cargando...' : 'Seleccionar'}
-            </option>
-            {catalogs.municipios.map((m) => (
-              <option key={m.id_municipio} value={m.id_municipio}>
-                {m.nombre}
+          {catalogs.errorMunicipios ? (
+            <div
+              style={{
+                ...formInputStyle('municipio'),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderColor: coral,
+              }}
+            >
+              <span style={{ fontSize: 13, color: coral }}>
+                {catalogs.errorMunicipios}
+              </span>
+              <button
+                type="button"
+                onClick={() => void catalogs.refetchMunicipios()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: brand,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                }}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <select
+              value={catalogs.selectedMunicipioId ?? ''}
+              onChange={(e) => {
+                const id = e.target.value ? Number(e.target.value) : null;
+                if (id) catalogs.handleSelectMunicipio(id);
+              }}
+              style={formInputStyle('municipio')}
+            >
+              <option value="">
+                {catalogs.isLoadingMunicipios ? 'Cargando...' : 'Seleccionar'}
               </option>
-            ))}
-          </select>
+              {catalogs.municipios.map((m) => (
+                <option key={m.id_municipio} value={m.id_municipio}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <label style={formLabel}>Localidad *</label>
-          <select
-            value={catalogs.localidadId ?? ''}
-            disabled={!catalogs.selectedMunicipioId}
-            onChange={(e) => {
-              const id = e.target.value ? Number(e.target.value) : null;
-              if (id) catalogs.setLocalidadId(id);
-            }}
-            style={formInputStyle('localidad')}
-          >
-            <option value="">
-              {catalogs.isLoadingLocalidades
-                ? 'Cargando...'
-                : !catalogs.selectedMunicipioId
-                  ? 'Elegí un municipio'
-                  : 'Seleccionar'}
-            </option>
-            {catalogs.localidades.map((l) => (
-              <option key={l.id_localidad} value={l.id_localidad}>
-                {l.nombre}
+          {catalogs.errorLocalidades ? (
+            <div
+              style={{
+                ...formInputStyle('localidad'),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderColor: coral,
+              }}
+            >
+              <span style={{ fontSize: 13, color: coral }}>
+                {catalogs.errorLocalidades}
+              </span>
+              <button
+                type="button"
+                onClick={() => void catalogs.refetchLocalidades()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: brand,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                }}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <select
+              value={catalogs.localidadId ?? ''}
+              disabled={!catalogs.selectedMunicipioId}
+              onChange={(e) => {
+                const id = e.target.value ? Number(e.target.value) : null;
+                if (id) catalogs.setLocalidadId(id);
+              }}
+              style={formInputStyle('localidad')}
+            >
+              <option value="">
+                {catalogs.isLoadingLocalidades
+                  ? 'Cargando...'
+                  : !catalogs.selectedMunicipioId
+                    ? 'Elegí un municipio'
+                    : 'Seleccionar'}
               </option>
-            ))}
-          </select>
+              {catalogs.localidades.map((l) => (
+                <option key={l.id_localidad} value={l.id_localidad}>
+                  {l.nombre}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -755,11 +814,7 @@ export function AdminUsers() {
       setErrorMessage('');
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ??
-        (err as Error)?.message ??
-        'Error al cambiar estado';
+      const detail = parseApiError(err, 'Error al cambiar estado.');
       showToast(detail, 'error');
       setErrorMessage(detail);
     },
@@ -778,11 +833,7 @@ export function AdminUsers() {
       setErrorMessage('');
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ??
-        (err as Error)?.message ??
-        'Error al cambiar rol';
+      const detail = parseApiError(err, 'Error al cambiar rol.');
       showToast(detail, 'error');
       setErrorMessage(detail);
     },

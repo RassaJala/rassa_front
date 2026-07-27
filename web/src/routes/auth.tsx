@@ -13,6 +13,7 @@ import type { User } from '~/types';
 import { normalizeRole } from '~/types';
 
 import { parseApiError } from '~/utils/apiErrors';
+import { validateRegistrationForm } from '~/utils/validation';
 
 // Helpers
 // ---------------------------------------------------------------------------
@@ -24,7 +25,18 @@ function mapRegisterUser(raw: Record<string, unknown>): User {
     id: raw.id_usuario as number,
     email: raw.email as string,
     nombre: raw.nombre as string,
-    apellido_paterno: (raw.apellido_paterno as string) ?? '',
+    apellido_paterno: raw.apellido_paterno as string,
+    apellido_materno: (raw.apellido_materno as string | undefined) ?? undefined,
+    telefono: (raw.telefono as string | undefined) ?? undefined,
+    fecha_nacimiento: (raw.fecha_nacimiento as string | undefined) ?? undefined,
+    genero: (raw.sexo as string | undefined) ?? undefined,
+    direccion: (raw.domicilio as string | undefined) ?? undefined,
+    municipio_id: (raw.fk_municipio as number | undefined) ?? undefined,
+    municipio_nombre:
+      (raw.fk_municipio_nombre as string | undefined) ?? undefined,
+    localidad: (raw.fk_localidad as number | undefined) ?? undefined,
+    localidad_nombre:
+      (raw.fk_localidad_nombre as string | undefined) ?? undefined,
     rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
   };
 }
@@ -58,8 +70,8 @@ function loginErrors(
   else if (!EMAIL_RE.test(email.trim()))
     errs.email = 'El correo no tiene formato válido';
   if (!password) errs.password = 'Ingresá tu contraseña';
-  else if (password.length < 6)
-    errs.password = 'La contraseña debe tener al menos 6 caracteres.';
+  else if (password.length < 8)
+    errs.password = 'La contraseña debe tener al menos 8 caracteres.';
   return errs;
 }
 
@@ -86,27 +98,19 @@ function registerErrors(fields: {
     localidadId,
   } = fields;
 
-  if (!email.trim()) return 'El email es obligatorio.';
-  if (!EMAIL_RE.test(email.trim()))
-    return 'Ingresa un correo electrónico válido.';
-  if (!password) return 'La contraseña es obligatoria.';
-  if (password.length < 6)
-    return 'La contraseña debe tener al menos 6 caracteres.';
-  if (!telefono.trim()) return 'El teléfono es obligatorio.';
-  const digits = telefono.replace(/\D/g, '');
-  const cleanedPhone = telefono.trim().startsWith('+')
-    ? digits.slice(0, 12)
-    : digits.slice(0, 10);
-  if (cleanedPhone.length !== 10 && cleanedPhone.length !== 12)
-    return 'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).';
-  if (!nombre.trim()) return 'El nombre es obligatorio.';
-  if (!apellido.trim()) return 'El apellido paterno es obligatorio.';
-  if (!fechaNacimiento.trim()) return 'La fecha de nacimiento es obligatoria.';
-  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(fechaNacimiento))
-    return 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.';
+  const err = validateRegistrationForm({
+    email,
+    password,
+    telefono,
+    nombre,
+    apellidoPaterno: apellido,
+    fechaNacimiento,
+    domicilio,
+    localidadId,
+  });
+  if (err) return err;
+
   if (!sexo) return 'Seleccioná un género.';
-  if (!domicilio.trim()) return 'La dirección es obligatoria.';
-  if (localidadId === null) return 'Seleccioná una localidad.';
   return null;
 }
 
@@ -135,6 +139,7 @@ export function LoginScreen() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     const errs = loginErrors(email, password);
     if (errs.email || errs.password) {
       setErrors(errs);
@@ -463,6 +468,7 @@ export function RegisterScreen() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     const err = registerErrors({
       nombre,
       apellido: apellidoPaterno,
@@ -651,12 +657,12 @@ export function RegisterScreen() {
           <div style={{ position: 'relative' }}>
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               style={{ ...inputStyle('password'), paddingRight: 40 }}
               onFocus={() => setFocusedField('password')}
               onBlur={() => setFocusedField(null)}

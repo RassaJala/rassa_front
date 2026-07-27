@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any -- Test mocks */
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import UserFormScreen from '@/screens/admin/UserFormScreen';
@@ -11,6 +11,17 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     goBack: mockGoBack,
   }),
+}));
+
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: () => ({
+    user: { role: 'admin' },
+  }),
+}));
+
+jest.mock('@/services/api', () => ({
+  get: () => Promise.resolve({ data: { data: { role: 'admin' } } }),
+  post: () => Promise.resolve({ data: {} }),
 }));
 
 jest.mock('@/store/ThemeContext', () => ({
@@ -70,23 +81,31 @@ describe('UserFormScreen', () => {
     );
   }
 
-  it('renders title and role selection', () => {
+  it('renders title and role selection', async () => {
     const { getByText } = renderScreen();
-    expect(getByText('Nuevo usuario')).toBeTruthy();
-    expect(getByText('Cliente')).toBeTruthy();
-    expect(getByText('Vendedor')).toBeTruthy();
-    expect(getByText('Agricultor')).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText('Nuevo usuario')).toBeTruthy();
+      expect(getByText('Cliente')).toBeTruthy();
+      expect(getByText('Vendedor')).toBeTruthy();
+      expect(getByText('Agricultor')).toBeTruthy();
+    });
   });
 
-  it('navigates back when clicking back button or cancel', () => {
+  it('navigates back when clicking back button or cancel', async () => {
     const { getByText } = renderScreen();
+    await waitFor(() => {
+      expect(getByText('Cancelar')).toBeTruthy();
+    });
     const cancelButton = getByText('Cancelar');
     fireEvent.press(cancelButton);
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
-  it('submits form when clicking save', () => {
+  it('submits form when clicking save', async () => {
     const { getByText } = renderScreen();
+    await waitFor(() => {
+      expect(getByText('Guardar')).toBeTruthy();
+    });
     const saveButton = getByText('Guardar');
     fireEvent.press(saveButton);
     expect(mockSubmit).toHaveBeenCalledTimes(1);

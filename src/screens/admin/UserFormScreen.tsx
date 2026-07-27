@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,7 @@ import { colors } from '@/constants/colors';
 import { ROLE_OPTIONS } from '@/constants/roles';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
+import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import { getAdminColors } from '@/utils/adminTheme';
 
@@ -76,12 +77,62 @@ export default function UserFormScreen(): React.JSX.Element {
   const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
     getAdminColors(isDark);
 
+  const [isValidating, setIsValidating] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function verifyAuth() {
+      try {
+        const res = await api.get<{ data?: { role?: string } }>('/auth/me/');
+        const backendUser = res.data?.data;
+        const role = backendUser?.role?.toLowerCase() ?? '';
+        if (
+          role !== 'admin' &&
+          role !== 'administrator' &&
+          role !== 'administrador'
+        ) {
+          throw new Error('Not an admin');
+        }
+        if (active) {
+          setIsValidating(false);
+        }
+      } catch (err) {
+        console.error(
+          '[UserFormScreen] active backend auth check failed:',
+          err,
+        );
+        if (active) {
+          navigation.goBack();
+        }
+      }
+    }
+    void verifyAuth();
+    return () => {
+      active = false;
+    };
+  }, [navigation]);
+
   const form = useRegistrationForm({ initialRole: 'buyer' });
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const { submit, isSubmitting, errorMessage, serverError, setErrorMessage } =
     useSubmitNewUser({
       onSuccess: () => navigation.goBack(),
     });
+
+  if (isValidating) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <ActivityIndicator size="large" color={brand} />
+      </View>
+    );
+  }
 
   const handleSubmit = () => submit(form);
 

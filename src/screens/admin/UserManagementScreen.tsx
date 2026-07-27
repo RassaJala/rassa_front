@@ -42,6 +42,7 @@ import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse } from '@/types';
 import type { AdminUser } from '@/types/userManagement';
 import { getAdminColors } from '@/utils/adminTheme';
+import { parseApiError } from '@/utils/apiErrors';
 
 const TRANSPARENT = 'transparent';
 const WHITE = '#FFFFFF';
@@ -74,9 +75,18 @@ function handleToggleError(
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
 ) {
   return (error: unknown) => {
-    const detail =
-      (error as { response?: { data?: { detail?: string } } })?.response?.data
-        ?.detail ?? 'Error al cambiar estado';
+    const detail = parseApiError(error, 'Error al cambiar estado.');
+    showToast(detail, 'error');
+    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  };
+}
+
+function handleRoleError(
+  queryClient: ReturnType<typeof useQueryClient>,
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+) {
+  return (error: unknown) => {
+    const detail = parseApiError(error, 'Error al cambiar rol.');
     showToast(detail, 'error');
     void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
   };
@@ -97,19 +107,6 @@ function handleRoleSuccess(
   void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
   closeRoleModal();
   showToast(`${name} cambió de ${oldRole} a ${newRoleLabel}`, 'success');
-}
-
-function handleRoleError(
-  queryClient: ReturnType<typeof useQueryClient>,
-  showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
-) {
-  return (error: unknown) => {
-    const detail =
-      (error as { response?: { data?: { detail?: string } } })?.response?.data
-        ?.detail ?? 'Error al cambiar rol';
-    showToast(detail, 'error');
-    void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-  };
 }
 
 function saveUserRole(params: {
@@ -333,32 +330,43 @@ async function fetchAllPages(
     );
     return accumulated;
   }
-  const response = await api.get<unknown>(url);
-  const body = response.data;
-  const payload: unknown =
-    body &&
-    typeof body === 'object' &&
-    'data' in (body as Record<string, unknown>)
-      ? (body as Record<string, unknown>).data
-      : body;
+  try {
+    const response = await api.get<unknown>(url);
+    const body = response.data;
+    const payload: unknown =
+      body &&
+      typeof body === 'object' &&
+      'data' in (body as Record<string, unknown>)
+        ? (body as Record<string, unknown>).data
+        : body;
 
-  const results: AdminUser[] =
-    payload &&
-    typeof payload === 'object' &&
-    'results' in (payload as Record<string, unknown>)
-      ? (payload as { results: AdminUser[] }).results
-      : Array.isArray(payload)
-        ? (payload as AdminUser[])
-        : [];
+    const results: AdminUser[] =
+      payload &&
+      typeof payload === 'object' &&
+      'results' in (payload as Record<string, unknown>)
+        ? (payload as { results: AdminUser[] }).results
+        : Array.isArray(payload)
+          ? (payload as AdminUser[])
+          : [];
 
-  const all = [...accumulated, ...results];
-  const next: string | null =
-    payload && typeof payload === 'object'
-      ? (((payload as Record<string, unknown>).next as string | null) ?? null)
-      : null;
+    const all = [...accumulated, ...results];
+    const next: string | null =
+      payload && typeof payload === 'object'
+        ? (((payload as Record<string, unknown>).next as string | null) ?? null)
+        : null;
 
-  if (next) return fetchAllPages(next, all, depth + 1);
-  return all;
+    if (next) return fetchAllPages(next, all, depth + 1);
+    return all;
+  } catch (error) {
+    console.warn(
+      `[UserManagement] error fetching page at depth ${depth}:`,
+      error,
+    );
+    if (accumulated.length > 0) {
+      return accumulated;
+    }
+    throw error;
+  }
 }
 
 export default function UserManagementScreen(): React.JSX.Element {

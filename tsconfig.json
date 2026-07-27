@@ -36,7 +36,8 @@
     // Alias — @/* y ~/* apuntan a src/
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@/common/*": ["./packages/common/src/*"]
     }
   },
   "include": [

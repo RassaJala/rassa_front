@@ -20,6 +20,7 @@ import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { RegisterRole } from '@/types';
+import { parseApiError } from '@/utils/apiErrors';
 import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
 
 const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
@@ -98,11 +99,7 @@ export default function RegisterScreen(): React.JSX.Element {
       await register(payload);
     } catch (error) {
       if (isMounted.current) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Error al registrar usuario.',
-        );
+        setErrorMessage(parseApiError(error, 'Error al registrar usuario.'));
       }
       Sentry.captureException(error);
     } finally {
