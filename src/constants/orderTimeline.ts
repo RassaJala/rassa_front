@@ -73,8 +73,7 @@ export function normalizeOrderHistoryResponse(
 ): OrderStatusHistory[] {
   if (Array.isArray(body)) return body as OrderStatusHistory[];
   if (isWrappedData(body)) {
-    const inner = body.data as unknown;
-    if (Array.isArray(inner)) return inner as OrderStatusHistory[];
+    if (Array.isArray(body.data)) return body.data as OrderStatusHistory[];
     return [];
   }
   return [];
