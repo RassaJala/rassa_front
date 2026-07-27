@@ -20,7 +20,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@rassa/chat": ["../packages/chat/src"]
     }
   },
   "include": ["src"]

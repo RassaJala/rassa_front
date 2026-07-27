@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '~': path.resolve(__dirname, './src'),
+      '@rassa/chat': path.resolve(__dirname, '../packages/chat/src'),
     },
   },
   server: {
