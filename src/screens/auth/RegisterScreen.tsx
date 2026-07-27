@@ -10,7 +10,6 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -21,9 +20,8 @@ import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { RegisterPayload, RegisterRole } from '@/types';
+import type { RegisterRole } from '@/types';
 import { getAdminColors } from '@/utils/adminTheme';
-import { buildRegistrationPayload } from '@/utils/validation';
 
 const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
@@ -41,25 +39,9 @@ function RegisterScreenContent(): React.JSX.Element {
 
   const { submit, isSubmitting, errorMessage, serverError, setErrorMessage } =
     useSubmitNewUser({
-      onSuccess: async () => {
-        try {
-          const payload = buildRegistrationPayload({
-            email: form.email,
-            password: form.password,
-            role: DEFAULT_REGISTER_ROLE,
-            telefono: form.telefono,
-            nombre: form.nombre,
-            apellidoPaterno: form.apellidoPaterno,
-            apellidoMaterno: form.apellidoMaterno,
-            fechaNacimiento: form.fechaNacimiento,
-            sexo: form.sexo,
-            domicilio: form.domicilio,
-            localidadId: form.catalog.localidadId,
-          }) as unknown as RegisterPayload;
-          await register(payload);
-        } catch (error) {
-          Sentry.captureException(error);
-        }
+      submitFn: register,
+      onSuccess: () => {
+        // Auto-login is handled inside register context function
       },
     });
 

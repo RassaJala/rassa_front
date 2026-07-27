@@ -5,11 +5,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseRegistrationFormReturn } from '@/hooks/useRegistrationForm';
 import api from '@/services/api';
 import { parseApiError } from '@/utils/apiErrors';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import {
+  buildRegistrationPayload,
+  validateRegistrationForm,
+} from '@/utils/validation';
 
 interface SubmitNewUserOptions {
   readonly onSuccess?: () => void;
   readonly onError?: (errorMsg: string) => void;
+  readonly submitFn?: (payload: any) => Promise<any>;
 }
 
 export interface UseSubmitNewUserReturn {
@@ -31,19 +35,23 @@ export function useSubmitNewUser(
 
   const mutation = useMutation({
     mutationFn: async (form: UseRegistrationFormReturn) => {
-      const payload = {
-        email: form.email.trim(),
+      const payload = buildRegistrationPayload({
+        email: form.email,
         password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
         role: form.role,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
+        telefono: form.telefono,
+        nombre: form.nombre,
+        apellidoPaterno: form.apellidoPaterno,
+        apellidoMaterno: form.apellidoMaterno,
+        fechaNacimiento: form.fechaNacimiento,
         sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId as number,
-      };
+        domicilio: form.domicilio,
+        localidadId: form.catalog.localidadId,
+      });
+
+      if (options?.submitFn) {
+        return options.submitFn(payload);
+      }
 
       const endpoint =
         form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';

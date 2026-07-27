@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import RegisterScreen from '@/screens/auth/RegisterScreen';
-import api from '@/services/api';
 
 const mockRegister = jest.fn();
 const mockGoBack = jest.fn();
@@ -226,10 +225,6 @@ describe('RegisterScreen', () => {
   });
 
   it('ejecuta registro exitosamente si los datos son correctos y localidad está seleccionada', async () => {
-    const mockApiPost = api.post as jest.Mock;
-    mockApiPost.mockResolvedValueOnce({
-      data: { data: { access: 'token', user: {} } },
-    });
     mockRegister.mockResolvedValueOnce(undefined);
 
     const { getByPlaceholderText, getByText } = renderScreen();
