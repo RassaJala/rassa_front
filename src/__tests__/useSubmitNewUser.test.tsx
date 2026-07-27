@@ -9,6 +9,14 @@ import api from '@/services/api';
 jest.mock('@/services/api');
 const mockedApi = api as jest.Mocked<typeof api>;
 
+jest.mock('axios', () => {
+  const actual = jest.requireActual('axios');
+  return {
+    ...actual,
+    isAxiosError: (err: any) => !!(err && (err.isAxiosError || actual.isAxiosError(err))),
+  };
+});
+
 describe('useSubmitNewUser hook', () => {
   let queryClient: QueryClient;
 

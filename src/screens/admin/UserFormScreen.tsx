@@ -9,6 +9,7 @@ import {
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 import DatePickerModal from '@/components/DatePickerModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -70,7 +71,7 @@ function FormHeader({
   );
 }
 
-export default function UserFormScreen(): React.JSX.Element {
+function UserFormScreenContent(): React.JSX.Element {
   const navigation = useNavigation();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -81,22 +82,30 @@ export default function UserFormScreen(): React.JSX.Element {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+
     async function verifyAuth() {
       try {
-        const res = await api.get<{ data?: { role?: string } }>('/auth/me/');
+        const res = await api.get<{ data?: { role?: string } }>('/auth/me/', {
+          signal: controller.signal,
+        });
         const backendUser = res.data?.data;
         const role = backendUser?.role?.toLowerCase() ?? '';
-        if (
-          role !== 'admin' &&
-          role !== 'administrator' &&
-          role !== 'administrador'
-        ) {
+        const ADMIN_ROLES: readonly string[] = [
+          'admin',
+          'administrator',
+          'administrador',
+        ];
+        if (!ADMIN_ROLES.includes(role)) {
           throw new Error('Not an admin');
         }
         if (active) {
           setIsValidating(false);
         }
       } catch (err) {
+        if (axios.isCancel(err) || (err instanceof Error && err.name === 'AbortError')) {
+          return;
+        }
         console.error(
           '[UserFormScreen] active backend auth check failed:',
           err,
@@ -109,6 +118,7 @@ export default function UserFormScreen(): React.JSX.Element {
     void verifyAuth();
     return () => {
       active = false;
+      controller.abort();
     };
   }, [navigation]);
 
@@ -156,16 +166,18 @@ export default function UserFormScreen(): React.JSX.Element {
             padding: 20,
           }}
         >
-          {/* ── Role selector ──────────────────────────── */}
+          {/* Selector de Rol */}
           <Text
             style={{
               marginBottom: 6,
-              fontSize: 14,
-              fontWeight: '500',
-              color: fg,
+              fontSize: 12,
+              fontWeight: '600',
+              letterSpacing: 0.08,
+              textTransform: 'uppercase',
+              color: muted,
             }}
           >
-            Rol *
+            Rol del usuario *
           </Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {ROLE_OPTIONS.map((opt) => {
@@ -174,7 +186,6 @@ export default function UserFormScreen(): React.JSX.Element {
                 <Pressable
                   key={opt.value}
                   onPress={() => form.setRole(opt.value)}
-                  disabled={isSubmitting}
                   style={{
                     flex: 1,
                     height: 40,
@@ -265,15 +276,15 @@ export default function UserFormScreen(): React.JSX.Element {
             </View>
           ) : null}
 
-          {/* ── Actions ──────────────────────────────────── */}
+          {/* ── Acciones de Guardar / Cancelar ───────────── */}
           <View style={{ marginTop: 24, gap: 10 }}>
             <Pressable
-              onPress={() => void handleSubmit()}
+              onPress={handleSubmit}
               disabled={isSubmitting}
               style={{
                 height: 50,
                 borderRadius: 14,
-                backgroundColor: colors.brandRedCoral,
+                backgroundColor: brand,
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'row',
@@ -321,5 +332,13 @@ export default function UserFormScreen(): React.JSX.Element {
         initialDate={form.fechaNacimiento}
       />
     </View>
+  );
+}
+
+export default function UserFormScreen(): React.JSX.Element {
+  return (
+    <ErrorBoundary>
+      <UserFormScreenContent />
+    </ErrorBoundary>
   );
 }

@@ -19,9 +19,11 @@ jest.mock('@/store/AuthContext', () => ({
   }),
 }));
 
+const mockApiGet = jest.fn();
+const mockApiPost = jest.fn();
 jest.mock('@/services/api', () => ({
-  get: () => Promise.resolve({ data: { data: { role: 'admin' } } }),
-  post: () => Promise.resolve({ data: {} }),
+  get: (...args: any[]) => mockApiGet(...args),
+  post: (...args: any[]) => mockApiPost(...args),
 }));
 
 jest.mock('@/store/ThemeContext', () => ({
@@ -68,6 +70,8 @@ describe('UserFormScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockApiGet.mockResolvedValue({ data: { data: { role: 'admin' } } });
+    mockApiPost.mockResolvedValue({ data: {} });
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -109,5 +113,21 @@ describe('UserFormScreen', () => {
     const saveButton = getByText('Guardar');
     fireEvent.press(saveButton);
     expect(mockSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('redirects back if auth check fails', async () => {
+    mockApiGet.mockRejectedValueOnce(new Error('Auth failed'));
+    renderScreen();
+    await waitFor(() => {
+      expect(mockGoBack).toHaveBeenCalled();
+    });
+  });
+
+  it('redirects back if user role is not admin', async () => {
+    mockApiGet.mockResolvedValueOnce({ data: { data: { role: 'buyer' } } });
+    renderScreen();
+    await waitFor(() => {
+      expect(mockGoBack).toHaveBeenCalled();
+    });
   });
 });

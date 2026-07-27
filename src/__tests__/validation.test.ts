@@ -67,11 +67,11 @@ describe('validation utilities', () => {
   });
 
   describe('cleanPhoneNumber', () => {
-    it('extracts only digits, no truncation', () => {
+    it('extracts only digits, and truncates appropriately', () => {
       expect(cleanPhoneNumber('555-123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('(555) 123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('+52 555 123 4567')).toBe('525551234567');
-      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567890'); // no truncation
+      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567'); // truncates to 10
     });
 
     it('handles empty string', () => {
@@ -102,14 +102,14 @@ describe('validation utilities', () => {
   });
 
   describe('cleanAddress', () => {
-    it('returns the input unchanged (passthrough, matching web)', () => {
+    it('filters invalid characters from address', () => {
       expect(cleanAddress('Calle 123, Col. Centro')).toBe(
         'Calle 123, Col. Centro',
       );
       expect(cleanAddress('Av. Principal #45-B')).toBe('Av. Principal #45-B');
-      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2ºA');
-      expect(cleanAddress('Calle @#$%')).toBe('Calle @#$%');
-      expect(cleanAddress('Dirección!')).toBe('Dirección!');
+      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2A');
+      expect(cleanAddress('Calle @#$%')).toBe('Calle #');
+      expect(cleanAddress('Dirección!')).toBe('Dirección');
     });
 
     it('handles empty string', () => {

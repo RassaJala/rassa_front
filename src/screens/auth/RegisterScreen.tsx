@@ -43,6 +43,7 @@ export default function RegisterScreen(): React.JSX.Element {
 
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
+  const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
@@ -55,11 +56,13 @@ export default function RegisterScreen(): React.JSX.Element {
   }, []);
 
   async function handleRegister() {
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setErrorMessage(null);
 
     if (netInfo.isConnected === false) {
       setErrorMessage('Sin conexión a Internet.');
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -76,6 +79,7 @@ export default function RegisterScreen(): React.JSX.Element {
 
     if (validationError) {
       setErrorMessage(validationError);
+      isSubmittingRef.current = false;
       return;
     }
 
@@ -106,6 +110,7 @@ export default function RegisterScreen(): React.JSX.Element {
       if (isMounted.current) {
         setIsSubmitting(false);
       }
+      isSubmittingRef.current = false;
     }
   }
 

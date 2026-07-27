@@ -9,7 +9,7 @@ import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import { createFamilyWithHead } from '../services/families';
 import type { Family, SearchUserResult } from '../types';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 
 export function AdminFamilies() {
   const { resolved } = useTheme();
