@@ -376,7 +376,7 @@ export function PublicationWizard() {
         if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(String(parsed));
       }
     }
-    for (const existing of pubRef.current.productos) {
+    for (const existing of pubRef.current.productos ?? []) {
       if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
       const existingId = String(existing.id_producto_semanal);
       if (!currentIds.has(existingId)) {
