@@ -103,59 +103,36 @@ export default function AdminPanelScreen({
       defaultEmail="admin@rassa.com"
       onProfilePress={() => navigation.navigate('AdminProfile')}
     >
-      <View style={{ flex: 1, backgroundColor: bg }}>
-        <View style={{ flex: 1 }}>
+      <View style={[styles.container, { backgroundColor: bg }]}>
+        <View style={styles.container}>
           <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+            <View style={styles.contentArea}>
               {/* ═══ HEADER ═══ */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
-              >
+              <View style={styles.headerRow}>
                 <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                    }}
-                  >
+                  <Text style={[styles.dateText, { color: muted }]}>
                     {today}
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: 32,
-                      fontWeight: '700',
-                      letterSpacing: -0.3,
-                      color: fg,
-                    }}
-                  >
+                  <Text style={[styles.titleText, { color: fg }]}>
                     Panel
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     testID="notification-bell"
-                    style={({ pressed }) => ({
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
-                      backgroundColor: surface,
-                      borderWidth: 1,
-                      borderColor: border,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: pressed ? 0.6 : 1,
-                    })}
+                    style={({ pressed }) => [
+                      styles.bellBtn,
+                      {
+                        backgroundColor: surface,
+                        borderWidth: 1,
+                        borderColor: border,
+                        opacity: pressed ? 0.6 : 1,
+                      },
+                    ]}
                   >
                     <MaterialCommunityIcons
                       name="bell-outline"
@@ -168,9 +145,7 @@ export default function AdminPanelScreen({
               </View>
 
               {/* ═══ STATS ═══ */}
-              <View
-                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
-              >
+              <View style={styles.statsRow}>
                 <StatCard
                   icon="package-variant"
                   value={stats.totalProducts.toLocaleString()}
@@ -210,23 +185,12 @@ export default function AdminPanelScreen({
 
               {showLookup ? (
                 <View
-                  style={{
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    padding: 20,
-                    marginBottom: 24,
-                  }}
+                  style={[
+                    styles.lookupCard,
+                    { backgroundColor: surface, borderColor: border },
+                  ]}
                 >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: fg,
-                      marginBottom: 12,
-                    }}
-                  >
+                  <Text style={[styles.lookupTitle, { color: fg }]}>
                     Buscar historial de pedido
                   </Text>
                   <TextInput
@@ -235,26 +199,17 @@ export default function AdminPanelScreen({
                     value={lookupId}
                     onChangeText={setLookupId}
                     keyboardType="number-pad"
-                    style={{
-                      backgroundColor: bg,
-                      color: fg,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: isInvalid ? colors.brandRedCoral : border,
-                      paddingHorizontal: 16,
-                      paddingVertical: 12,
-                      fontSize: 15,
-                      marginBottom: 4,
-                    }}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: bg,
+                        color: fg,
+                        borderColor: isInvalid ? colors.brandRedCoral : border,
+                      },
+                    ]}
                   />
                   {isInvalid ? (
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: colors.brandRedCoral,
-                        marginBottom: 12,
-                      }}
-                    >
+                    <Text style={[styles.errorText, { color: colors.brandRedCoral }]}>
                       Ingresá un ID de pedido válido (número positivo)
                     </Text>
                   ) : null}
@@ -267,20 +222,9 @@ export default function AdminPanelScreen({
                         setLookupId('');
                       }
                     }}
-                    style={{
-                      backgroundColor: brand,
-                      borderRadius: 12,
-                      paddingVertical: 12,
-                      alignItems: 'center',
-                    }}
+                    style={[styles.submitBtn, { backgroundColor: brand }]}
                   >
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: '700',
-                        color: colors.iconWhite,
-                      }}
-                    >
+                    <Text style={[styles.submitBtnText, { color: colors.iconWhite }]}>
                       Ver historial
                     </Text>
                   </Pressable>
