@@ -25,6 +25,10 @@ import { Toast, type ToastState } from "../components/ui/Toast";
 
 // ── Helpers ────────────────────────────────────────────────
 
+function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
+  e.currentTarget.style.display = "none";
+}
+
 const TABS: Array<{ key: PublicacionEstado | "all"; label: string }> = [
   { key: "all", label: "Todas" },
   { key: "borrador", label: "Borradores" },
@@ -47,8 +51,8 @@ export function FarmerPublications() {
   const publishMutation = usePublishPublicacion();
   const closeMutation = useClosePublicacion();
 
-  const showToast = useCallback((msg: string) => {
-    setToast({ message: msg, type: "success" });
+  const showToast = useCallback((msg: string, isError = false) => {
+    setToast({ message: msg, type: isError ? "error" : "success" });
   }, []);
 
   const publications = data?.data?.results ?? [];
@@ -68,7 +72,7 @@ export function FarmerPublications() {
       await deleteMutation.mutateAsync(id);
       showToast("Publicación eliminada.");
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]));
+      showToast(extractApiError(err, ["detail", "message"]), true);
     }
   }
 
@@ -77,7 +81,7 @@ export function FarmerPublications() {
       await publishMutation.mutateAsync(id);
       showToast("Publicación publicada.");
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]));
+      showToast(extractApiError(err, ["detail", "message"]), true);
     }
   }
 
@@ -87,7 +91,7 @@ export function FarmerPublications() {
       await closeMutation.mutateAsync(id);
       showToast("Publicación cerrada.");
     } catch (err) {
-      showToast(extractApiError(err, ["detail", "message"]));
+      showToast(extractApiError(err, ["detail", "message"]), true);
     }
   }
 
@@ -235,11 +239,7 @@ export function FarmerPublications() {
                                   src={img}
                                   alt=""
                                   className="h-6 w-6 rounded-full object-cover"
-                                  onError={(e) => {
-                                    (
-                                      e.target as HTMLImageElement
-                                    ).style.display = "none";
-                                  }}
+                                  onError={hideBrokenImage}
                                 />
                               ) : null;
                             })}

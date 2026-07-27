@@ -32,6 +32,7 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
 } from "../constants/api";
+import { productCountLabel } from "../components/PublicationActions";
 import { mediaUrl } from "../utils/mediaUrl";
 import { ProductPickerModal } from "../components/ProductPickerModal";
 import { Badge } from "../components/ui/Badge";
@@ -62,6 +63,14 @@ const STEP_LABELS: Record<WizardStep, string> = {
 };
 
 // ── PublicationWizard ──────────────────────────────────────
+
+function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
+  e.currentTarget.style.display = "none";
+}
+
+function revokeItemImage(preview: string | null) {
+  if (preview) URL.revokeObjectURL(preview);
+}
 
 export function PublicationWizard() {
   const colors = useAppColors();
@@ -153,7 +162,7 @@ export function PublicationWizard() {
       mountedRef.current = false;
       abortRef.current?.abort();
       for (const item of itemsRef.current) {
-        if (item.imagePreview) URL.revokeObjectURL(item.imagePreview);
+        revokeItemImage(item.imagePreview);
       }
     };
   }, []);
@@ -202,9 +211,8 @@ export function PublicationWizard() {
   }
 
   function removeItem(tempId: string) {
-    // Revoke blob URL if it exists
     const item = items.find((i) => i.tempId === tempId);
-    if (item?.imagePreview) URL.revokeObjectURL(item.imagePreview);
+    revokeItemImage(item?.imagePreview ?? null);
 
     setItems((prev) => prev.filter((i) => i.tempId !== tempId));
     setValidations((prev) => {
@@ -257,7 +265,7 @@ export function PublicationWizard() {
 
     // Revoke previous blob URL if replacing
     const prev = items.find((i) => i.tempId === tempId);
-    if (prev?.imagePreview) URL.revokeObjectURL(prev.imagePreview);
+    revokeItemImage(prev?.imagePreview ?? null);
 
     const preview = URL.createObjectURL(file);
     setItems((prevItems) =>
@@ -271,7 +279,7 @@ export function PublicationWizard() {
 
   function handleImageRemove(tempId: string) {
     const item = items.find((i) => i.tempId === tempId);
-    if (item?.imagePreview) URL.revokeObjectURL(item.imagePreview);
+    revokeItemImage(item?.imagePreview ?? null);
 
     setItems((prev) =>
       prev.map((i) =>
@@ -282,7 +290,7 @@ export function PublicationWizard() {
 
   // ── Phase 1: Upsert items ──
   async function upsertItems(
-    pubNumber: number,
+    pubId: number,
     signal?: AbortSignal,
   ): Promise<{
     tempIdToServerId: Map<string, number>;
@@ -308,14 +316,14 @@ export function PublicationWizard() {
 
       if (isExisting) {
         const result = await updateItemMutation.mutateAsync({
-          pubId: pubNumber,
+          pubId,
           itemId: serverId,
           payload,
         });
         itemId = result.data.id_producto_semanal;
       } else {
         const result = await addItemMutation.mutateAsync({
-          pubId: pubNumber,
+          pubId,
           payload,
         });
         itemId = result.data.id_producto_semanal;
@@ -334,7 +342,7 @@ export function PublicationWizard() {
         const formData = new FormData();
         formData.append("imagen", item.imageFile);
         await uploadMutation.mutateAsync({
-          pubId: pubNumber,
+          pubId,
           itemId,
           formData,
         });
@@ -345,10 +353,10 @@ export function PublicationWizard() {
   }
 
   // ── Phase 2: Refresh pubRef snapshot ──
-  async function refreshSnapshot(pubNumber: number): Promise<void> {
+  async function refreshSnapshot(pubId: number): Promise<void> {
     const refreshed = await qc.fetchQuery({
-      queryKey: ["publicaciones", pubNumber],
-      queryFn: () => getPublicacion(pubNumber),
+      queryKey: ["publicaciones", pubId],
+      queryFn: () => getPublicacion(pubId),
       staleTime: 0,
     });
     pubRef.current = refreshed.data;
@@ -356,7 +364,7 @@ export function PublicationWizard() {
 
   // ── Phase 3: Delete orphan items ──
   async function deleteOrphans(
-    pubNumber: number,
+    pubId: number,
     tempIdToServerId: Map<string, number>,
     signal?: AbortSignal,
   ): Promise<void> {
@@ -376,35 +384,43 @@ export function PublicationWizard() {
       if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
       const existingId = String(existing.id_producto_semanal);
       if (!currentIds.has(existingId)) {
-        await removeItemMutation.mutateAsync({
-          pubId: pubNumber,
-          itemId: existing.id_producto_semanal,
-        });
+        try {
+          await removeItemMutation.mutateAsync({
+            pubId,
+            itemId: existing.id_producto_semanal,
+          });
+        } catch (err) {
+          console.error(
+            "[publications] failed to delete orphan item",
+            existing.id_producto_semanal,
+            err,
+          );
+        }
       }
     }
   }
 
   // ── Persist items to server (with rollback) ──
   async function persistItems(
-    pubNumber: number,
+    pubId: number,
     signal?: AbortSignal,
   ): Promise<void> {
     let newServerIds: number[] = [];
     try {
       const { tempIdToServerId, newServerIds: ids } = await upsertItems(
-        pubNumber,
+        pubId,
         signal,
       );
       newServerIds = ids;
 
-      await refreshSnapshot(pubNumber);
-      await deleteOrphans(pubNumber, tempIdToServerId, signal);
+      await refreshSnapshot(pubId);
+      await deleteOrphans(pubId, tempIdToServerId, signal);
     } catch (err) {
       if (newServerIds.length > 0) {
         for (const serverId of newServerIds) {
           try {
             await removeItemMutation.mutateAsync({
-              pubId: pubNumber,
+              pubId,
               itemId: serverId,
             });
           } catch (cleanupErr) {
@@ -454,7 +470,12 @@ export function PublicationWizard() {
         setToast({ message: opts.successMsg, type: "success" });
       }
     } catch (err) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        if (mountedRef.current) {
+          setToast({ message: "Operación cancelada.", type: "error" });
+        }
+        return;
+      }
       console.error("[publications] persist failed:", err);
       if (mountedRef.current) {
         setError(extractApiError(err, ["detail", "message"]));
@@ -740,10 +761,7 @@ export function PublicationWizard() {
                                 src={displayImage}
                                 alt=""
                                 className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
+                                onError={hideBrokenImage}
                               />
                             ) : (
                               <span className="text-2xl">📷</span>
@@ -870,8 +888,7 @@ export function PublicationWizard() {
                 className="mt-1 text-[15px] font-semibold"
                 style={{ color: colors.fg }}
               >
-                {items.length} producto{items.length !== 1 ? "s" : ""} en la
-                publicación
+                {productCountLabel(items.length)} en la publicación
               </p>
             </div>
 
@@ -906,10 +923,7 @@ export function PublicationWizard() {
                             src={displayImage}
                             alt=""
                             className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
+                            onError={hideBrokenImage}
                           />
                         ) : (
                           <span className="text-lg">🌿</span>
@@ -969,8 +983,8 @@ export function PublicationWizard() {
                 ¿Publicar la semana {weekNumber}?
               </p>
               <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
-                {items.length} producto{items.length !== 1 ? "s" : ""} serán
-                publicados y visibles para los compradores.
+                {productCountLabel(items.length)} serán publicados y visibles
+                para los compradores.
               </p>
             </div>
           </div>

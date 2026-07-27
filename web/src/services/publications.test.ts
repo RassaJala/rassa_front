@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CATALOG_PAGE_SIZE } from "../constants/api";
 
 vi.mock("./api", () => ({
   default: {
@@ -172,7 +173,7 @@ describe("getCatalogProductos", () => {
     mockedApi.get.mockResolvedValue({ data: { data: { results: [] } } });
     await getCatalogProductos();
     expect(mockedApi.get).toHaveBeenCalledWith("/productos/", {
-      params: { page_size: 200 },
+      params: { page_size: CATALOG_PAGE_SIZE },
     });
   });
 });

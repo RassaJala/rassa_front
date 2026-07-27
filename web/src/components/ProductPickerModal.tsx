@@ -3,6 +3,10 @@ import { useAppColors } from "../hooks/useAppColors";
 import type { Producto } from "../services/publications";
 import { mediaUrl } from "../utils/mediaUrl";
 
+function hideBrokenImage(e: React.SyntheticEvent<HTMLImageElement>) {
+  e.currentTarget.style.display = "none";
+}
+
 export function ProductPickerModal({
   catalog,
   selectedIds,
@@ -31,10 +35,10 @@ export function ProductPickerModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const q = search.toLowerCase();
+  const queryLower = search.toLowerCase();
   const filtered = catalog.filter(
     (p) =>
-      p.nombre_producto.toLowerCase().includes(q) &&
+      p.nombre_producto.toLowerCase().includes(queryLower) &&
       !selectedIds.has(p.id_producto),
   );
 
@@ -72,6 +76,7 @@ export function ProductPickerModal({
           <input
             ref={inputRef}
             type="search"
+            aria-label="Buscar producto"
             placeholder="🔍 Buscar producto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -126,6 +131,7 @@ export function ProductPickerModal({
                           src={img}
                           alt={p.nombre_producto}
                           className="h-full w-full object-cover"
+                          onError={hideBrokenImage}
                         />
                       ) : (
                         <span className="text-xl">🌿</span>

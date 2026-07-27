@@ -1,4 +1,8 @@
-import { UPLOAD_TIMEOUT_MS, assertValidId } from "../constants/api";
+import {
+  CATALOG_PAGE_SIZE,
+  UPLOAD_TIMEOUT_MS,
+  assertValidId,
+} from "../constants/api";
 import api from "./api";
 
 // ── Types ──────────────────────────────────────────────────
@@ -198,7 +202,7 @@ export async function getCatalogProductos(): Promise<
 > {
   const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
     "/productos/",
-    { params: { page_size: 200 } },
+    { params: { page_size: CATALOG_PAGE_SIZE } },
   );
   return data;
 }

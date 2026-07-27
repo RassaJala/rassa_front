@@ -11,6 +11,9 @@ export const ALLOWED_IMAGE_TYPES = [
 export const UPLOAD_TIMEOUT_MS = 60_000;
 export const QUERY_STALE_TIME = 30_000;
 export const QUERY_RETRY = 3;
+export const CATALOG_PAGE_SIZE = 200;
+export const TOAST_DISMISS_MS = 3000;
+export const TOAST_EXIT_MS = 300;
 
 // ── ID validation guard ────────────────────────────────────
 

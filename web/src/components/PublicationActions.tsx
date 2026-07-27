@@ -23,6 +23,133 @@ export function productCountLabel(count: number): string {
   return `${count} producto${count !== 1 ? "s" : ""}`;
 }
 
+function actionsForEstado(
+  estado: PublicacionEstado,
+  pubId: number,
+  isMutating: boolean,
+  onEdit: (id: number) => void,
+  onPublish: (id: number) => void,
+  onDelete: (id: number) => void,
+  onClose: (id: number) => void,
+): JSX.Element | null {
+  if (estado === "borrador") {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          className="!px-3 !py-1.5 !text-[13px]"
+          onClick={() => onEdit(pubId)}
+        >
+          Editar
+        </Button>
+        <Button
+          variant="secondary"
+          className="!px-3 !py-1.5 !text-[13px]"
+          disabled={isMutating}
+          onClick={() => void onPublish(pubId)}
+        >
+          Publicar
+        </Button>
+        <Button
+          variant="ghost"
+          className="!px-3 !py-1.5 !text-[13px]"
+          disabled={isMutating}
+          onClick={() => void onDelete(pubId)}
+        >
+          Eliminar
+        </Button>
+      </>
+    );
+  }
+  if (estado === "publicado") {
+    return (
+      <Button
+        variant="secondary"
+        className="!px-3 !py-1.5 !text-[13px]"
+        disabled={isMutating}
+        onClick={() => void onClose(pubId)}
+      >
+        Cerrar
+      </Button>
+    );
+  }
+  return null;
+}
+
+function iconActionsForEstado(
+  estado: PublicacionEstado,
+  pubId: number,
+  isMutating: boolean,
+  onEdit: (id: number) => void,
+  onPublish: (id: number) => void,
+  onDelete: (id: number) => void,
+  onClose: (id: number) => void,
+  colors: AppColors,
+): JSX.Element | null {
+  if (estado === "borrador") {
+    return (
+      <>
+        <button
+          onClick={() => onEdit(pubId)}
+          title="Editar"
+          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
+          style={{
+            border: `1px solid ${colors.border}`,
+            background: colors.surface,
+            color: colors.fg,
+          }}
+        >
+          Editar
+        </button>
+        <button
+          onClick={() => void onPublish(pubId)}
+          disabled={isMutating}
+          title="Publicar"
+          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
+          style={{
+            border: `1px solid ${colors.brand}`,
+            background: colors.accentBg,
+            color: colors.brand,
+          }}
+        >
+          Publicar
+        </button>
+        <button
+          onClick={() => void onDelete(pubId)}
+          disabled={isMutating}
+          title="Eliminar"
+          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
+          style={{
+            border: `1px solid ${colors.border}`,
+            background: colors.surface,
+            color: colors.coral,
+          }}
+        >
+          Eliminar
+        </button>
+      </>
+    );
+  }
+  if (estado === "publicado") {
+    return (
+      <button
+        onClick={() => void onClose(pubId)}
+        disabled={isMutating}
+        title="Cerrar"
+        className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
+        style={{
+          border: `1px solid ${colors.coral}`,
+          background: colors.accentBg,
+          color: colors.coral,
+        }}
+      >
+        Cerrar
+      </button>
+    );
+  }
+  return null;
+}
+
 // ── PublicationActions ──────────────────────────────────────
 
 export function PublicationActions({
@@ -47,42 +174,14 @@ export function PublicationActions({
   if (variant === "button") {
     return (
       <div className="flex gap-1.5">
-        {pub.estado === "borrador" && (
-          <>
-            <Button
-              variant="ghost"
-              className="!px-3 !py-1.5 !text-[13px]"
-              onClick={() => onEdit(pub.id_publicacion)}
-            >
-              Editar
-            </Button>
-            <Button
-              variant="secondary"
-              className="!px-3 !py-1.5 !text-[13px]"
-              disabled={isMutating}
-              onClick={() => void onPublish(pub.id_publicacion)}
-            >
-              Publicar
-            </Button>
-            <Button
-              variant="ghost"
-              className="!px-3 !py-1.5 !text-[13px]"
-              disabled={isMutating}
-              onClick={() => void onDelete(pub.id_publicacion)}
-            >
-              Eliminar
-            </Button>
-          </>
-        )}
-        {pub.estado === "publicado" && (
-          <Button
-            variant="secondary"
-            className="!px-3 !py-1.5 !text-[13px]"
-            disabled={isMutating}
-            onClick={() => void onClose(pub.id_publicacion)}
-          >
-            Cerrar
-          </Button>
+        {actionsForEstado(
+          pub.estado,
+          pub.id_publicacion,
+          isMutating,
+          onEdit,
+          onPublish,
+          onDelete,
+          onClose,
         )}
       </div>
     );
@@ -90,62 +189,15 @@ export function PublicationActions({
 
   return (
     <div className="flex gap-1.5">
-      {pub.estado === "borrador" && (
-        <>
-          <button
-            onClick={() => onEdit(pub.id_publicacion)}
-            title="Editar"
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-            style={{
-              border: `1px solid ${colors.border}`,
-              background: colors.surface,
-              color: colors.fg,
-            }}
-          >
-            Editar
-          </button>
-          <button
-            onClick={() => void onPublish(pub.id_publicacion)}
-            disabled={isMutating}
-            title="Publicar"
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-            style={{
-              border: `1px solid ${colors.brand}`,
-              background: colors.accentBg,
-              color: colors.brand,
-            }}
-          >
-            Publicar
-          </button>
-          <button
-            onClick={() => void onDelete(pub.id_publicacion)}
-            disabled={isMutating}
-            title="Eliminar"
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-            style={{
-              border: `1px solid ${colors.border}`,
-              background: colors.surface,
-              color: colors.coral,
-            }}
-          >
-            Eliminar
-          </button>
-        </>
-      )}
-      {pub.estado === "publicado" && (
-        <button
-          onClick={() => void onClose(pub.id_publicacion)}
-          disabled={isMutating}
-          title="Cerrar"
-          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-          style={{
-            border: `1px solid ${colors.coral}`,
-            background: colors.accentBg,
-            color: colors.coral,
-          }}
-        >
-          Cerrar
-        </button>
+      {iconActionsForEstado(
+        pub.estado,
+        pub.id_publicacion,
+        isMutating,
+        onEdit,
+        onPublish,
+        onDelete,
+        onClose,
+        colors,
       )}
     </div>
   );
