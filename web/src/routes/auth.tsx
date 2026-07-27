@@ -116,8 +116,6 @@ function registerErrors(fields: {
   return null;
 }
 
-const coral = '#DE393A';
-const errColor = '#DE393A';
 // ponytail: oklch equivalents — brand: oklch(42% 0.14 148), coral: oklch(60% 0.17 18)
 
 // ---------------------------------------------------------------------------
@@ -255,7 +253,7 @@ export function LoginScreen() {
               required
               style={{
                 ...inputBase,
-                borderColor: errors.email ? errColor : theme.border,
+                borderColor: errors.email ? theme.coral : theme.border,
                 background: theme.surface,
                 color: theme.fg,
               }}
@@ -268,7 +266,7 @@ export function LoginScreen() {
             />
           </div>
           {errors.email && (
-            <span style={{ fontSize: 12, color: errColor }}>
+            <span style={{ fontSize: 12, color: theme.coral }}>
               {errors.email}
             </span>
           )}
@@ -324,7 +322,7 @@ export function LoginScreen() {
               minLength={8}
               style={{
                 ...inputBase,
-                borderColor: errors.password ? errColor : theme.border,
+                borderColor: errors.password ? theme.coral : theme.border,
                 background: theme.surface,
                 color: theme.fg,
               }}
@@ -360,7 +358,7 @@ export function LoginScreen() {
             </button>
           </div>
           {errors.password && (
-            <span style={{ fontSize: 12, color: errColor }}>
+            <span style={{ fontSize: 12, color: theme.coral }}>
               {errors.password}
             </span>
           )}
@@ -368,7 +366,7 @@ export function LoginScreen() {
 
         {/* General error */}
         {generalError && (
-          <p style={{ textAlign: 'center', fontSize: 14, color: errColor }}>
+          <p style={{ textAlign: 'center', fontSize: 14, color: theme.coral }}>
             {generalError}
           </p>
         )}
@@ -382,7 +380,7 @@ export function LoginScreen() {
             height: 54,
             border: 'none',
             borderRadius: 16,
-            background: loading ? `${coral}99` : coral,
+            background: loading ? `${theme.coral}99` : theme.coral,
             color: '#fff',
             fontSize: 17,
             fontWeight: 600,
@@ -876,7 +874,7 @@ export function RegisterScreen() {
         </div>
 
         {error && (
-          <p style={{ textAlign: 'center', fontSize: 13, color: errColor }}>
+          <p style={{ textAlign: 'center', fontSize: 13, color: theme.coral }}>
             {error}
           </p>
         )}
@@ -887,7 +885,7 @@ export function RegisterScreen() {
             disabled={loading}
             style={{
               ...btnBaseStyle,
-              background: loading ? `${coral}99` : coral,
+              background: loading ? `${theme.coral}99` : theme.coral,
               color: '#fff',
               opacity: loading ? 0.7 : 1,
               cursor: loading ? 'not-allowed' : 'pointer',

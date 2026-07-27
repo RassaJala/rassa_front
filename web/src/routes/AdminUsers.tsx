@@ -60,9 +60,9 @@ const STATUS_FILTERS = [
 ] as const;
 
 const ROLE_OPTIONS: { label: string; value: UserRole; color: string }[] = [
-  { label: 'Agricultor', value: 'farmer', color: '#16a34a' },
-  { label: 'Vendedor', value: 'seller', color: '#f59e0b' },
-  { label: 'Cliente', value: 'buyer', color: '#3b82f6' },
+  { label: 'Agricultor', value: 'farmer', color: colors.primary },
+  { label: 'Vendedor', value: 'seller', color: colors.accent },
+  { label: 'Cliente', value: 'buyer', color: colors.info },
 ];
 
 function getFullName(u: User): string {
