@@ -113,7 +113,7 @@ describe('RegisterScreen', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <RegisterScreen />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   };
 
@@ -227,7 +227,9 @@ describe('RegisterScreen', () => {
 
   it('ejecuta registro exitosamente si los datos son correctos y localidad está seleccionada', async () => {
     const mockApiPost = api.post as jest.Mock;
-    mockApiPost.mockResolvedValueOnce({ data: { data: { access: 'token', user: {} } } });
+    mockApiPost.mockResolvedValueOnce({
+      data: { data: { access: 'token', user: {} } },
+    });
     mockRegister.mockResolvedValueOnce(undefined);
 
     const { getByPlaceholderText, getByText } = renderScreen();
