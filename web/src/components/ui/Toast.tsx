@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface ToastState {
   message: string;
@@ -14,6 +14,8 @@ export function Toast({
   onDone: () => void;
 }) {
   const [visible, setVisible] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     if (!toast) {
@@ -22,16 +24,23 @@ export function Toast({
     }
     // Small tick to trigger enter animation
     const tick = requestAnimationFrame(() => setVisible(true));
-    const timer = setTimeout(() => {
+    const dismissTimer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDone, 300);
     }, 3000);
+    let fadeTimer: ReturnType<typeof setTimeout>;
     return () => {
       cancelAnimationFrame(tick);
-      clearTimeout(timer);
+      clearTimeout(dismissTimer);
+      clearTimeout(fadeTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
+
+  useEffect(() => {
+    if (!visible && toast) {
+      const t = setTimeout(() => onDoneRef.current(), 300);
+      return () => clearTimeout(t);
+    }
+  }, [visible, toast]);
 
   if (!toast) return null;
 

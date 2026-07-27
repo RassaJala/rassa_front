@@ -70,6 +70,7 @@ export function PublicationWizard() {
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
   const pubId = isEditing ? Number(id) : 0;
+  const invalidId = isEditing && (Number.isNaN(pubId) || pubId <= 0);
 
   // ── Step state ──
   const [stepIndex, setStepIndex] = useState(0);
@@ -119,19 +120,19 @@ export function PublicationWizard() {
         catalog.map((p) => [p.id_producto, p.nombre_producto]),
       );
 
-      const existingItems: WizardItemDraft[] = itemsQuery.data.data.map(
-        (p) => ({
-          tempId: String(p.id_producto_semanal),
-          fk_producto: p.fk_producto,
-          nombre_producto: catalogMap.get(p.fk_producto) ?? "",
-          fk_unidad: p.fk_unidad,
-          stock: String(p.stock),
-          precio: p.precio,
-          foto: p.foto,
-          imageFile: null,
-          imagePreview: null,
-        }),
-      );
+      const existingItems: WizardItemDraft[] = (
+        itemsQuery.data?.data ?? []
+      ).map((p) => ({
+        tempId: String(p.id_producto_semanal),
+        fk_producto: p.fk_producto,
+        nombre_producto: catalogMap.get(p.fk_producto) ?? "",
+        fk_unidad: p.fk_unidad,
+        stock: String(p.stock),
+        precio: p.precio,
+        foto: p.foto,
+        imageFile: null,
+        imagePreview: null,
+      }));
       setItems(existingItems);
       setItemsInitialized(true);
     }
@@ -168,7 +169,7 @@ export function PublicationWizard() {
 
   // ── Navigation ──
   function nextStep() {
-    if (currentStep === "productos" && !validateAllItems()) return;
+    if (currentStep === "productos" && !validateAndMarkItems()) return;
     setStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
   }
 
@@ -228,7 +229,7 @@ export function PublicationWizard() {
     });
   }
 
-  function validateAllItems(): boolean {
+  function validateAndMarkItems(): boolean {
     const v = new Map<string, ItemValidation>();
     let hasError = false;
     for (const item of items) {
@@ -279,11 +280,12 @@ export function PublicationWizard() {
     );
   }
 
-  // ── Persist items to server (via hooks) ──
-  async function persistItems(
+  // ── Phase 1: Upsert items ──
+  async function upsertItems(
     pubNumber: number,
     signal?: AbortSignal,
-  ): Promise<void> {
+  ): Promise<Map<string, number>> {
+    const createdIds: Array<{ tempId: string; serverId: number }> = [];
     const tempIdToServerId = new Map<string, number>();
 
     for (const item of items) {
@@ -314,9 +316,9 @@ export function PublicationWizard() {
           payload,
         });
         itemId = result.data.id_producto_semanal;
+        createdIds.push({ tempId: item.tempId, serverId: itemId });
       }
 
-      // Sync immediately so retry after partial failure sees server IDs
       tempIdToServerId.set(item.tempId, itemId);
       setItems((prev) =>
         prev.map((i) =>
@@ -324,7 +326,6 @@ export function PublicationWizard() {
         ),
       );
 
-      // Upload image if there's a new file
       if (item.imageFile) {
         if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
         const formData = new FormData();
@@ -337,19 +338,28 @@ export function PublicationWizard() {
       }
     }
 
-    // Refresh pubRef snapshot for future delete detection
+    return tempIdToServerId;
+  }
+
+  // ── Phase 2: Refresh pubRef snapshot ──
+  async function refreshSnapshot(pubNumber: number): Promise<void> {
     const refreshed = await qc.fetchQuery({
       queryKey: ["publicaciones", pubNumber],
       queryFn: () => getPublicacion(pubNumber),
       staleTime: 0,
     });
     pubRef.current = refreshed.data;
+  }
 
-    // Remove items that were deleted
+  // ── Phase 3: Delete orphan items ──
+  async function deleteOrphans(
+    pubNumber: number,
+    tempIdToServerId: Map<string, number>,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const currentIds = new Set<string>(
       [...tempIdToServerId.values()].map(String),
     );
-    // Also include items that were already synced (not in tempIdToServerId)
     for (const item of items) {
       const syncedId = tempIdToServerId.get(item.tempId);
       if (syncedId !== undefined) {
@@ -368,6 +378,43 @@ export function PublicationWizard() {
           itemId: existing.id_producto_semanal,
         });
       }
+    }
+  }
+
+  // ── Persist items to server (with rollback) ──
+  async function persistItems(
+    pubNumber: number,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const createdServerIds: number[] = [];
+    const originalTempIds = new Map(items.map((i) => [i.tempId, i.tempId]));
+
+    try {
+      const tempIdToServerId = await upsertItems(pubNumber, signal);
+
+      for (const [tempId, serverId] of tempIdToServerId) {
+        const original = originalTempIds.get(tempId);
+        if (original && original === tempId) {
+          createdServerIds.push(serverId);
+        }
+      }
+
+      await refreshSnapshot(pubNumber);
+      await deleteOrphans(pubNumber, tempIdToServerId, signal);
+    } catch (err) {
+      if (createdServerIds.length > 0) {
+        for (const serverId of createdServerIds) {
+          try {
+            await removeItemMutation.mutateAsync({
+              pubId: pubNumber,
+              itemId: serverId,
+            });
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+      }
+      throw err;
     }
   }
 
@@ -432,6 +479,22 @@ export function PublicationWizard() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // ── Loading state ──
+  if (invalidId) {
+    return (
+      <div className="py-12 text-center">
+        <p className="mb-3" style={{ color: colors.coral }}>
+          ID de publicación inválido.
+        </p>
+        <Button
+          variant="secondary"
+          onClick={() => void navigate("/agricultor/publicaciones")}
+        >
+          Volver
+        </Button>
+      </div>
+    );
+  }
+
   if (isEditing && (pubQuery.isLoading || itemsQuery.isLoading)) {
     return <LoadingSpinner className="py-20" />;
   }
@@ -670,6 +733,10 @@ export function PublicationWizard() {
                                 src={displayImage}
                                 alt=""
                                 className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
                               />
                             ) : (
                               <span className="text-2xl">📷</span>
@@ -832,6 +899,10 @@ export function PublicationWizard() {
                             src={displayImage}
                             alt=""
                             className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
+                            }}
                           />
                         ) : (
                           <span className="text-lg">🌿</span>

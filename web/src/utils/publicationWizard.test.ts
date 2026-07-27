@@ -108,6 +108,15 @@ describe("validateItem", () => {
     expect(validateItem({ ...validItem, stock: "-5" })).toHaveProperty("stock");
   });
 
+  it("requires stock to be an integer", () => {
+    expect(validateItem({ ...validItem, stock: "1.5" })).toHaveProperty(
+      "stock",
+    );
+    expect(validateItem({ ...validItem, stock: "10" })).not.toHaveProperty(
+      "stock",
+    );
+  });
+
   it("requires precio > 0", () => {
     expect(validateItem({ ...validItem, precio: "" })).toHaveProperty("precio");
     expect(validateItem({ ...validItem, precio: "abc" })).toHaveProperty(

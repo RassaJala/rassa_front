@@ -69,6 +69,8 @@ export function validateItem(item: WizardItemDraft): ItemValidation {
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
     errors.stock = "Stock debe ser mayor a 0.";
+  } else if (!Number.isInteger(stockNum)) {
+    errors.stock = "Stock debe ser un número entero.";
   }
   const precioNum = Number(item.precio);
   if (!item.precio || Number.isNaN(precioNum) || precioNum <= 0) {

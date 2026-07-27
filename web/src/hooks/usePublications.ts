@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { QUERY_RETRY, QUERY_STALE_TIME } from "../constants/api";
 import type {
@@ -21,6 +22,32 @@ function logMutationError(context: string, error: unknown): void {
     `[publications] ${context}: ${name}: ${msg}`,
     stack ? { stack } : "",
   );
+}
+
+// ── Mutation factory ──────────────────────────────────────
+
+type InvalidateKeys =
+  | ["publicaciones"]
+  | ["publicaciones", number]
+  | ["publicaciones", number, "productos"];
+
+function usePubMutation<TData, TVariables>(
+  context: string,
+  mutationFn: (vars: TVariables) => Promise<TData>,
+  invalidateKeys: (vars: TVariables) => InvalidateKeys[],
+  options?: UseMutationOptions<TData, unknown, TVariables>,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (_data, vars) => {
+      for (const key of invalidateKeys(vars)) {
+        void qc.invalidateQueries({ queryKey: key });
+      }
+    },
+    onError: (err) => logMutationError(context, err),
+    ...options,
+  });
 }
 
 // ── Queries ────────────────────────────────────────────────
@@ -76,144 +103,107 @@ export function useUnidades() {
 // ── Publicacion mutations ──────────────────────────────────
 
 export function useCreatePublicacion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: publicationsApi.createPublicacion,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-    },
-    onError: (err) => logMutationError("createPublicacion", err),
-  });
+  return usePubMutation(
+    "createPublicacion",
+    publicationsApi.createPublicacion,
+    () => [["publicaciones"]],
+  );
 }
 
 export function useDeletePublicacion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: publicationsApi.deletePublicacion,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-    },
-    onError: (err) => logMutationError("deletePublicacion", err),
-  });
+  return usePubMutation(
+    "deletePublicacion",
+    publicationsApi.deletePublicacion,
+    () => [["publicaciones"]],
+  );
 }
 
 export function usePublishPublicacion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: publicationsApi.publishPublicacion,
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables],
-      });
-    },
-    onError: (err) => logMutationError("publishPublicacion", err),
-  });
+  return usePubMutation(
+    "publishPublicacion",
+    publicationsApi.publishPublicacion,
+    (id: number) => [["publicaciones"], ["publicaciones", id]],
+  );
 }
 
 export function useClosePublicacion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: publicationsApi.closePublicacion,
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables],
-      });
-    },
-    onError: (err) => logMutationError("closePublicacion", err),
-  });
+  return usePubMutation(
+    "closePublicacion",
+    publicationsApi.closePublicacion,
+    (id: number) => [["publicaciones"], ["publicaciones", id]],
+  );
 }
 
 // ── ProductoSemanal mutations ──────────────────────────────
 
+type AddProductoPayload = {
+  pubId: number;
+  payload: {
+    fk_producto: number;
+    fk_unidad: number;
+    stock: number;
+    precio: number;
+    foto?: string | null;
+  };
+};
+
+type UpdateProductoPayload = {
+  pubId: number;
+  itemId: number;
+  payload: {
+    fk_producto?: number;
+    fk_unidad?: number;
+    stock?: number;
+    precio?: number;
+    foto?: string | null;
+  };
+};
+
+type DeleteProductoPayload = { pubId: number; itemId: number };
+
+type UploadImagenPayload = {
+  pubId: number;
+  itemId: number;
+  formData: FormData;
+};
+
+const productoKeys = (pubId: number): InvalidateKeys[] => [
+  ["publicaciones"],
+  ["publicaciones", pubId, "productos"],
+];
+
 export function useAddProductoSemanal() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      pubId,
-      payload,
-    }: {
-      pubId: number;
-      payload: {
-        fk_producto: number;
-        fk_unidad: number;
-        stock: number;
-        precio: number;
-        foto?: string | null;
-      };
-    }) => publicationsApi.addProductoSemanal(pubId, payload),
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables.pubId, "productos"],
-      });
-    },
-    onError: (err) => logMutationError("addProductoSemanal", err),
-  });
+  return usePubMutation(
+    "addProductoSemanal",
+    ({ pubId, payload }: AddProductoPayload) =>
+      publicationsApi.addProductoSemanal(pubId, payload),
+    (v) => productoKeys(v.pubId),
+  );
 }
 
 export function useUpdateProductoSemanal() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      pubId,
-      itemId,
-      payload,
-    }: {
-      pubId: number;
-      itemId: number;
-      payload: {
-        fk_producto?: number;
-        fk_unidad?: number;
-        stock?: number;
-        precio?: number;
-        foto?: string | null;
-      };
-    }) => publicationsApi.updateProductoSemanal(pubId, itemId, payload),
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables.pubId, "productos"],
-      });
-    },
-    onError: (err) => logMutationError("updateProductoSemanal", err),
-  });
+  return usePubMutation(
+    "updateProductoSemanal",
+    ({ pubId, itemId, payload }: UpdateProductoPayload) =>
+      publicationsApi.updateProductoSemanal(pubId, itemId, payload),
+    (v) => productoKeys(v.pubId),
+  );
 }
 
 export function useDeleteProductoSemanal() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ pubId, itemId }: { pubId: number; itemId: number }) =>
+  return usePubMutation(
+    "deleteProductoSemanal",
+    ({ pubId, itemId }: DeleteProductoPayload) =>
       publicationsApi.deleteProductoSemanal(pubId, itemId),
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables.pubId, "productos"],
-      });
-    },
-    onError: (err) => logMutationError("deleteProductoSemanal", err),
-  });
+    (v) => productoKeys(v.pubId),
+  );
 }
 
 export function useUploadProductoSemanalImagen() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      pubId,
-      itemId,
-      formData,
-    }: {
-      pubId: number;
-      itemId: number;
-      formData: FormData;
-    }) => publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
-    onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: ["publicaciones"] });
-      void qc.invalidateQueries({
-        queryKey: ["publicaciones", variables.pubId, "productos"],
-      });
-    },
-    onError: (err) => logMutationError("uploadProductoSemanalImagen", err),
-  });
+  return usePubMutation(
+    "uploadProductoSemanalImagen",
+    ({ pubId, itemId, formData }: UploadImagenPayload) =>
+      publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
+    (v) => productoKeys(v.pubId),
+  );
 }

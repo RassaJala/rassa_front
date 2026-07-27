@@ -10,6 +10,11 @@ import {
 import type { PublicacionEstado } from "../services/publications";
 import { formatDate } from "../utils/publicationWizard";
 import { mediaUrl } from "../utils/mediaUrl";
+import {
+  PublicationActions,
+  getStatusBadge,
+  productCountLabel,
+} from "../components/PublicationActions";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -25,20 +30,6 @@ const TABS: Array<{ key: PublicacionEstado | "all"; label: string }> = [
   { key: "publicado", label: "Publicadas" },
   { key: "cerrado", label: "Cerradas" },
 ];
-
-const statusBadge: Record<
-  string,
-  { variant: "default" | "success" | "warning" | "error"; label: string }
-> = {
-  borrador: { variant: "warning", label: "Borrador" },
-  publicado: { variant: "success", label: "Publicada" },
-  cerrado: { variant: "default", label: "Cerrada" },
-  cancelado: { variant: "error", label: "Cancelada" },
-};
-
-function getStatusBadge(estado: string) {
-  return statusBadge[estado] ?? { variant: "default" as const, label: estado };
-}
 
 // ── FarmerPublications ─────────────────────────────────────
 
@@ -65,6 +56,10 @@ export function FarmerPublications() {
     deleteMutation.isPending ||
     publishMutation.isPending ||
     closeMutation.isPending;
+
+  function handleEdit(id: number) {
+    void navigate(`/agricultor/publicaciones/${String(id)}/editar`);
+  }
 
   async function handleDelete(id: number) {
     if (!window.confirm("¿Eliminar esta publicación?")) return;
@@ -201,6 +196,7 @@ export function FarmerPublications() {
               <tbody>
                 {publications.map((pub) => {
                   const badge = getStatusBadge(pub.estado);
+                  const productos = pub.productos ?? [];
                   return (
                     <tr
                       key={pub.id_publicacion}
@@ -224,14 +220,13 @@ export function FarmerPublications() {
                         className="px-[18px] py-4 text-[14px]"
                         style={{ color: colors.fg }}
                       >
-                        {pub.productos.length} producto
-                        {pub.productos.length !== 1 ? "s" : ""}
-                        {pub.productos.length > 0 && (
+                        {productCountLabel(productos.length)}
+                        {productos.length > 0 && (
                           <span
                             className="ml-2 flex gap-1"
                             style={{ display: "inline-flex" }}
                           >
-                            {pub.productos.slice(0, 3).map((p) => {
+                            {productos.slice(0, 3).map((p) => {
                               const img = mediaUrl(p.foto);
                               return img ? (
                                 <img
@@ -239,6 +234,11 @@ export function FarmerPublications() {
                                   src={img}
                                   alt=""
                                   className="h-6 w-6 rounded-full object-cover"
+                                  onError={(e) => {
+                                    (
+                                      e.target as HTMLImageElement
+                                    ).style.display = "none";
+                                  }}
                                 />
                               ) : null;
                             })}
@@ -249,75 +249,15 @@ export function FarmerPublications() {
                         <Badge variant={badge.variant}>{badge.label}</Badge>
                       </td>
                       <td className="px-[18px] py-4">
-                        <div className="flex gap-1.5">
-                          {pub.estado === "borrador" && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  void navigate(
-                                    `/agricultor/publicaciones/${String(pub.id_publicacion)}/editar`,
-                                  )
-                                }
-                                title="Editar"
-                                className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-                                style={{
-                                  border: `1px solid ${colors.border}`,
-                                  background: colors.surface,
-                                  color: colors.fg,
-                                }}
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() =>
-                                  void handlePublish(pub.id_publicacion)
-                                }
-                                disabled={isMutating}
-                                title="Publicar"
-                                className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-                                style={{
-                                  border: `1px solid ${colors.brand}`,
-                                  background: colors.accentBg,
-                                  color: colors.brand,
-                                }}
-                              >
-                                🚀
-                              </button>
-                              <button
-                                onClick={() =>
-                                  void handleDelete(pub.id_publicacion)
-                                }
-                                disabled={isMutating}
-                                title="Eliminar"
-                                className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-                                style={{
-                                  border: `1px solid ${colors.border}`,
-                                  background: colors.surface,
-                                  color: colors.coral,
-                                }}
-                              >
-                                🗑
-                              </button>
-                            </>
-                          )}
-                          {pub.estado === "publicado" && (
-                            <button
-                              onClick={() =>
-                                void handleClose(pub.id_publicacion)
-                              }
-                              disabled={isMutating}
-                              title="Cerrar"
-                              className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-                              style={{
-                                border: `1px solid ${colors.coral}`,
-                                background: "rgba(222,57,58,0.07)",
-                                color: colors.coral,
-                              }}
-                            >
-                              🔒
-                            </button>
-                          )}
-                        </div>
+                        <PublicationActions
+                          pub={pub}
+                          isMutating={isMutating}
+                          onEdit={handleEdit}
+                          onPublish={handlePublish}
+                          onDelete={handleDelete}
+                          onClose={handleClose}
+                          colors={colors}
+                        />
                       </td>
                     </tr>
                   );
@@ -363,53 +303,19 @@ export function FarmerPublications() {
                     className="mb-3 text-[13px]"
                     style={{ color: colors.muted }}
                   >
-                    {pub.productos.length} producto
-                    {pub.productos.length !== 1 ? "s" : ""}
+                    {productCountLabel((pub.productos ?? []).length)}
                   </p>
 
-                  <div className="flex gap-1.5">
-                    {pub.estado === "borrador" && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          className="!px-3 !py-1.5 !text-[13px]"
-                          onClick={() =>
-                            void navigate(
-                              `/agricultor/publicaciones/${String(pub.id_publicacion)}/editar`,
-                            )
-                          }
-                        >
-                          ✏️ Editar
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          className="!px-3 !py-1.5 !text-[13px]"
-                          disabled={isMutating}
-                          onClick={() => void handlePublish(pub.id_publicacion)}
-                        >
-                          🚀 Publicar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className="!px-3 !py-1.5 !text-[13px]"
-                          disabled={isMutating}
-                          onClick={() => void handleDelete(pub.id_publicacion)}
-                        >
-                          🗑
-                        </Button>
-                      </>
-                    )}
-                    {pub.estado === "publicado" && (
-                      <Button
-                        variant="secondary"
-                        className="!px-3 !py-1.5 !text-[13px]"
-                        disabled={isMutating}
-                        onClick={() => void handleClose(pub.id_publicacion)}
-                      >
-                        🔒 Cerrar
-                      </Button>
-                    )}
-                  </div>
+                  <PublicationActions
+                    pub={pub}
+                    isMutating={isMutating}
+                    onEdit={handleEdit}
+                    onPublish={handlePublish}
+                    onDelete={handleDelete}
+                    onClose={handleClose}
+                    colors={colors}
+                    variant="button"
+                  />
                 </div>
               );
             })}
