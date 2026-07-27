@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { useAppColors } from "../../hooks/useAppColors";
+
 export interface ToastState {
   message: string;
   type: "success" | "error";
@@ -13,6 +15,7 @@ export function Toast({
   toast: ToastState | null;
   onDone: () => void;
 }) {
+  const colors = useAppColors();
   const [visible, setVisible] = useState(false);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -27,11 +30,9 @@ export function Toast({
     const dismissTimer = setTimeout(() => {
       setVisible(false);
     }, 3000);
-    let fadeTimer: ReturnType<typeof setTimeout>;
     return () => {
       cancelAnimationFrame(tick);
       clearTimeout(dismissTimer);
-      clearTimeout(fadeTimer);
     };
   }, [toast]);
 
@@ -54,7 +55,7 @@ export function Toast({
         zIndex: 9999,
         padding: "12px 20px",
         borderRadius: 10,
-        background: isError ? "#DE393A" : "#24563C",
+        background: isError ? colors.coral : colors.brand,
         color: "#fff",
         fontSize: 14,
         fontWeight: 600,

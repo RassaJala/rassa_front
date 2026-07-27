@@ -10,6 +10,7 @@ vi.mock("./api", () => ({
 }));
 
 import api from "./api";
+import { assertValidId } from "../constants/api";
 import {
   PUBLICACION_ESTADOS,
   addProductoSemanal,
@@ -170,7 +171,9 @@ describe("getCatalogProductos", () => {
   it("calls GET /productos/", async () => {
     mockedApi.get.mockResolvedValue({ data: { data: { results: [] } } });
     await getCatalogProductos();
-    expect(mockedApi.get).toHaveBeenCalledWith("/productos/");
+    expect(mockedApi.get).toHaveBeenCalledWith("/productos/", {
+      params: { page_size: 200 },
+    });
   });
 });
 
@@ -179,5 +182,38 @@ describe("getUnidades", () => {
     mockedApi.get.mockResolvedValue({ data: { data: [] } });
     await getUnidades();
     expect(mockedApi.get).toHaveBeenCalledWith("/unidades/");
+  });
+});
+
+describe("assertValidId", () => {
+  it("accepts positive integers", () => {
+    expect(() => assertValidId(1)).not.toThrow();
+    expect(() => assertValidId(42)).not.toThrow();
+  });
+
+  it("throws for zero", () => {
+    expect(() => assertValidId(0)).toThrow("Invalid ID: 0");
+  });
+
+  it("throws for negative", () => {
+    expect(() => assertValidId(-1)).toThrow("Invalid ID: -1");
+  });
+
+  it("throws for float", () => {
+    expect(() => assertValidId(1.5)).toThrow("Invalid ID: 1.5");
+  });
+
+  it("throws for NaN", () => {
+    expect(() => assertValidId(NaN)).toThrow("Invalid ID: NaN");
+  });
+
+  it("throws for Infinity", () => {
+    expect(() => assertValidId(Infinity)).toThrow("Invalid ID: Infinity");
+  });
+
+  it("uses custom label", () => {
+    expect(() => assertValidId(0, "publicacion")).toThrow(
+      "Invalid publicacion: 0",
+    );
   });
 });

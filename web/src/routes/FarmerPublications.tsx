@@ -8,6 +8,7 @@ import {
   usePublishPublicacion,
 } from "../hooks/usePublications";
 import type { PublicacionEstado } from "../services/publications";
+import { extractApiError } from "../utils/apiError";
 import { formatDate } from "../utils/publicationWizard";
 import { mediaUrl } from "../utils/mediaUrl";
 import {
@@ -66,8 +67,8 @@ export function FarmerPublications() {
     try {
       await deleteMutation.mutateAsync(id);
       showToast("Publicación eliminada.");
-    } catch {
-      showToast("No se pudo eliminar.");
+    } catch (err) {
+      showToast(extractApiError(err, ["detail", "message"]));
     }
   }
 
@@ -75,8 +76,8 @@ export function FarmerPublications() {
     try {
       await publishMutation.mutateAsync(id);
       showToast("Publicación publicada.");
-    } catch {
-      showToast("No se pudo publicar.");
+    } catch (err) {
+      showToast(extractApiError(err, ["detail", "message"]));
     }
   }
 
@@ -85,8 +86,8 @@ export function FarmerPublications() {
     try {
       await closeMutation.mutateAsync(id);
       showToast("Publicación cerrada.");
-    } catch {
-      showToast("No se pudo cerrar.");
+    } catch (err) {
+      showToast(extractApiError(err, ["detail", "message"]));
     }
   }
 

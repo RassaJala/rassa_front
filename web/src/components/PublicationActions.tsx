@@ -1,11 +1,12 @@
-import type { Publicacion } from "../services/publications";
+import type { AppColors } from "../hooks/useAppColors";
+import type { Publicacion, PublicacionEstado } from "../services/publications";
 import { Badge } from "./ui/Badge";
 import { Button } from "./ui/Button";
 
 // ── Shared types & helpers ──────────────────────────────────
 
 const statusBadge: Record<
-  string,
+  PublicacionEstado,
   { variant: "default" | "success" | "warning" | "error"; label: string }
 > = {
   borrador: { variant: "warning", label: "Borrador" },
@@ -14,7 +15,7 @@ const statusBadge: Record<
   cancelado: { variant: "error", label: "Cancelada" },
 };
 
-export function getStatusBadge(estado: string) {
+export function getStatusBadge(estado: PublicacionEstado) {
   return statusBadge[estado] ?? { variant: "default" as const, label: estado };
 }
 
@@ -40,7 +41,7 @@ export function PublicationActions({
   onPublish: (id: number) => void;
   onDelete: (id: number) => void;
   onClose: (id: number) => void;
-  colors: ReturnType<typeof import("../hooks/useAppColors").useAppColors>;
+  colors: AppColors;
   variant?: "icon" | "button";
 }) {
   if (variant === "button") {
@@ -53,7 +54,7 @@ export function PublicationActions({
               className="!px-3 !py-1.5 !text-[13px]"
               onClick={() => onEdit(pub.id_publicacion)}
             >
-              ✏️ Editar
+              Editar
             </Button>
             <Button
               variant="secondary"
@@ -61,7 +62,7 @@ export function PublicationActions({
               disabled={isMutating}
               onClick={() => void onPublish(pub.id_publicacion)}
             >
-              🚀 Publicar
+              Publicar
             </Button>
             <Button
               variant="ghost"
@@ -69,7 +70,7 @@ export function PublicationActions({
               disabled={isMutating}
               onClick={() => void onDelete(pub.id_publicacion)}
             >
-              🗑
+              Eliminar
             </Button>
           </>
         )}
@@ -80,7 +81,7 @@ export function PublicationActions({
             disabled={isMutating}
             onClick={() => void onClose(pub.id_publicacion)}
           >
-            🔒 Cerrar
+            Cerrar
           </Button>
         )}
       </div>
@@ -101,7 +102,7 @@ export function PublicationActions({
               color: colors.fg,
             }}
           >
-            ✏️
+            Editar
           </button>
           <button
             onClick={() => void onPublish(pub.id_publicacion)}
@@ -114,7 +115,7 @@ export function PublicationActions({
               color: colors.brand,
             }}
           >
-            🚀
+            Publicar
           </button>
           <button
             onClick={() => void onDelete(pub.id_publicacion)}
@@ -127,7 +128,7 @@ export function PublicationActions({
               color: colors.coral,
             }}
           >
-            🗑
+            Eliminar
           </button>
         </>
       )}
@@ -139,11 +140,11 @@ export function PublicationActions({
           className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
           style={{
             border: `1px solid ${colors.coral}`,
-            background: "rgba(222,57,58,0.07)",
+            background: colors.accentBg,
             color: colors.coral,
           }}
         >
-          🔒
+          Cerrar
         </button>
       )}
     </div>

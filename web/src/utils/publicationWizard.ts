@@ -4,6 +4,9 @@ export function generateTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+const MS_PER_DAY = 86_400_000;
+
+/** Returns the next Monday from today (or today if it's already Monday). */
 export function getNextMonday(): Date {
   const now = new Date();
   const day = now.getDay();
@@ -22,7 +25,7 @@ export function getWeekNumber(date: Date): number {
   return (
     1 +
     Math.round(
-      ((d.getTime() - week1.getTime()) / 86_400_000 -
+      ((d.getTime() - week1.getTime()) / MS_PER_DAY -
         3 +
         ((week1.getDay() + 6) % 7)) /
         7,

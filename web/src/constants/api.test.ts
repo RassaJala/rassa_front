@@ -27,8 +27,8 @@ describe("constants", () => {
     expect(QUERY_STALE_TIME).toBe(30_000);
   });
 
-  it("QUERY_RETRY is 1", () => {
-    expect(QUERY_RETRY).toBe(1);
+  it("QUERY_RETRY is 3", () => {
+    expect(QUERY_RETRY).toBe(3);
   });
 
   it("ALLOWED_IMAGE_TYPES includes common image formats", () => {

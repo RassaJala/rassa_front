@@ -230,16 +230,16 @@ export function PublicationWizard() {
   }
 
   function validateAndMarkItems(): boolean {
-    const v = new Map<string, ItemValidation>();
+    const validationResults = new Map<string, ItemValidation>();
     let hasError = false;
     for (const item of items) {
       const errs = validateItem(item);
       if (Object.keys(errs).length > 0) {
-        v.set(item.tempId, errs);
+        validationResults.set(item.tempId, errs);
         hasError = true;
       }
     }
-    setValidations(v);
+    setValidations(validationResults);
     return !hasError;
   }
 
@@ -407,8 +407,12 @@ export function PublicationWizard() {
               pubId: pubNumber,
               itemId: serverId,
             });
-          } catch {
-            // Best-effort cleanup
+          } catch (cleanupErr) {
+            console.error(
+              "[publications] rollback cleanup failed for item",
+              serverId,
+              cleanupErr,
+            );
           }
         }
       }
@@ -436,7 +440,12 @@ export function PublicationWizard() {
         pub = result.data;
         pubRef.current = pub;
       }
-      if (!pub) return;
+      if (!pub) {
+        if (mountedRef.current) {
+          setError("No se pudo crear la publicación.");
+        }
+        return;
+      }
 
       await persistItems(pub.id_publicacion, controller.signal);
       await opts.afterPersist?.(pub.id_publicacion);

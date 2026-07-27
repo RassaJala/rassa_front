@@ -196,17 +196,19 @@ export interface Producto {
 export async function getCatalogProductos(): Promise<
   ApiResponse<{ results: Producto[] }>
 > {
-  const { data } =
-    await api.get<ApiResponse<{ results: Producto[] }>>("/productos/");
+  const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
+    "/productos/",
+    { params: { page_size: 200 } },
+  );
   return data;
 }
 
-export async function getUnidades(): Promise<
-  ApiResponse<{ id_unidad: number; tipo: string }[]>
-> {
-  const { data } =
-    await api.get<ApiResponse<{ id_unidad: number; tipo: string }[]>>(
-      "/unidades/",
-    );
+export interface Unidad {
+  id_unidad: number;
+  tipo: string;
+}
+
+export async function getUnidades(): Promise<ApiResponse<Unidad[]>> {
+  const { data } = await api.get<ApiResponse<Unidad[]>>("/unidades/");
   return data;
 }

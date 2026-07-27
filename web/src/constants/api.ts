@@ -10,7 +10,7 @@ export const ALLOWED_IMAGE_TYPES = [
 ] as const;
 export const UPLOAD_TIMEOUT_MS = 60_000;
 export const QUERY_STALE_TIME = 30_000;
-export const QUERY_RETRY = 1 as const;
+export const QUERY_RETRY = 3;
 
 // ── ID validation guard ────────────────────────────────────
 

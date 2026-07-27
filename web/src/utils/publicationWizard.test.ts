@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   canJumpToStep,
@@ -45,12 +45,48 @@ describe("generateTempId", () => {
 // ── getNextMonday ────────────────────────────────────────────
 
 describe("getNextMonday", () => {
-  it("returns a Monday", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns next Monday on a Tuesday", () => {
+    vi.setSystemTime(new Date(2026, 6, 28, 12, 0, 0)); // Tuesday July 28
     const monday = getNextMonday();
     expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3); // Aug 3
+    expect(monday.getMonth()).toBe(7); // August
+  });
+
+  it("returns today on Monday", () => {
+    vi.setSystemTime(new Date(2026, 6, 27, 12, 0, 0)); // Monday July 27
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(27);
+    expect(monday.getMonth()).toBe(6); // July
+  });
+
+  it("returns next Monday on Sunday", () => {
+    vi.setSystemTime(new Date(2026, 7, 2, 12, 0, 0)); // Sunday Aug 2
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3);
+    expect(monday.getMonth()).toBe(7); // August
+  });
+
+  it("returns next Monday on Saturday", () => {
+    vi.setSystemTime(new Date(2026, 7, 1, 12, 0, 0)); // Saturday Aug 1
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3);
+    expect(monday.getMonth()).toBe(7); // August
   });
 
   it("returns a date in the future or today", () => {
+    vi.setSystemTime(new Date(2026, 6, 30, 12, 0, 0)); // Thursday
     const monday = getNextMonday();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -70,6 +106,31 @@ describe("getWeekNumber", () => {
   it("returns consistent week for same date", () => {
     const date = new Date("2026-07-27");
     expect(getWeekNumber(date)).toBe(getWeekNumber(date));
+  });
+
+  it("returns week 1 for Jan 1 2026 (Thursday)", () => {
+    const week = getWeekNumber(new Date(2026, 0, 1));
+    expect(week).toBe(1);
+  });
+
+  it("returns week 53 for Dec 31 2020 (Thursday — ISO week 53 year)", () => {
+    const week = getWeekNumber(new Date(2020, 11, 31));
+    expect(week).toBe(53);
+  });
+
+  it("returns week 53 for Dec 28 2026 (Monday — week 53 of 2026)", () => {
+    const week = getWeekNumber(new Date(2026, 11, 28));
+    expect(week).toBe(53);
+  });
+
+  it("returns week 52 for Dec 27 2026 (Sunday)", () => {
+    const week = getWeekNumber(new Date(2026, 11, 27));
+    expect(week).toBe(52);
+  });
+
+  it("returns week 1 for Jan 4 2027 (Monday)", () => {
+    const week = getWeekNumber(new Date(2027, 0, 4));
+    expect(week).toBe(1);
   });
 });
 

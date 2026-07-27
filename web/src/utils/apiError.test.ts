@@ -75,4 +75,10 @@ describe("extractApiError", () => {
       ),
     ).toBe("First");
   });
+
+  it("returns fallback for empty array field value", () => {
+    expect(extractApiError(makeAxiosError({ errors: [] }), fields)).toBe(
+      "Error del servidor. Intenta de nuevo.",
+    );
+  });
 });
