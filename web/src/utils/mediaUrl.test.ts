@@ -19,15 +19,15 @@ describe("mediaUrl", () => {
     expect(mediaUrl("")).toBeNull();
   });
 
-  it("passes through absolute HTTP URLs", () => {
-    expect(mediaUrl("http://example.com/img.jpg")).toBe(
-      "http://example.com/img.jpg",
+  it("passes through absolute HTTP URLs from trusted domains", () => {
+    expect(mediaUrl("http://localhost:8000/img.jpg")).toBe(
+      "http://localhost:8000/img.jpg",
     );
   });
 
-  it("passes through absolute HTTPS URLs", () => {
-    expect(mediaUrl("https://cdn.example.com/photo.png")).toBe(
-      "https://cdn.example.com/photo.png",
+  it("passes through absolute HTTPS URLs from trusted domains", () => {
+    expect(mediaUrl("https://api.example.com/photo.png")).toBe(
+      "https://api.example.com/photo.png",
     );
   });
 
@@ -62,5 +62,25 @@ describe("mediaUrl", () => {
   it("strips encoded dots case-insensitively", () => {
     const result = mediaUrl("/uploads/%2E%2E/admin");
     expect(result).toBe("https://api.example.com/uploads/admin");
+  });
+
+  it("strips encoded slashes to prevent traversal", () => {
+    const result = mediaUrl("/uploads/%2f..%2f..%2fetc/passwd");
+    expect(result).toBe("https://api.example.com/uploads/etc/passwd");
+    expect(result).not.toContain("%2f");
+  });
+
+  it("rejects external URLs from untrusted domains", () => {
+    expect(mediaUrl("https://evil.com/payload.jpg")).toBeNull();
+  });
+
+  it("passes through URLs from trusted domains", () => {
+    expect(mediaUrl("http://localhost:3000/img.png")).toBe(
+      "http://localhost:3000/img.png",
+    );
+  });
+
+  it("returns null for malformed URLs", () => {
+    expect(mediaUrl("http://")).toBeNull();
   });
 });

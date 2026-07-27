@@ -5,6 +5,17 @@ import { Button } from "./ui/Button";
 
 // ── Shared types & helpers ──────────────────────────────────
 
+export interface PubActionContext {
+  estado: PublicacionEstado;
+  pubId: number;
+  isMutating: boolean;
+  onEdit: (id: number) => void;
+  onPublish: (id: number) => void;
+  onDelete: (id: number) => void;
+  onClose: (id: number) => void;
+  colors: AppColors;
+}
+
 const statusBadge: Record<
   PublicacionEstado,
   { variant: "default" | "success" | "warning" | "error"; label: string }
@@ -23,15 +34,15 @@ export function productCountLabel(count: number): string {
   return `${count} producto${count !== 1 ? "s" : ""}`;
 }
 
-function actionsForEstado(
-  estado: PublicacionEstado,
-  pubId: number,
-  isMutating: boolean,
-  onEdit: (id: number) => void,
-  onPublish: (id: number) => void,
-  onDelete: (id: number) => void,
-  onClose: (id: number) => void,
-): JSX.Element | null {
+function actionsForEstado({
+  estado,
+  pubId,
+  isMutating,
+  onEdit,
+  onPublish,
+  onDelete,
+  onClose,
+}: Omit<PubActionContext, "colors">): JSX.Element | null {
   if (estado === "borrador") {
     return (
       <>
@@ -76,16 +87,16 @@ function actionsForEstado(
   return null;
 }
 
-function iconActionsForEstado(
-  estado: PublicacionEstado,
-  pubId: number,
-  isMutating: boolean,
-  onEdit: (id: number) => void,
-  onPublish: (id: number) => void,
-  onDelete: (id: number) => void,
-  onClose: (id: number) => void,
-  colors: AppColors,
-): JSX.Element | null {
+function iconActionsForEstado({
+  estado,
+  pubId,
+  isMutating,
+  onEdit,
+  onPublish,
+  onDelete,
+  onClose,
+  colors,
+}: PubActionContext): JSX.Element | null {
   if (estado === "borrador") {
     return (
       <>
@@ -174,31 +185,31 @@ export function PublicationActions({
   if (variant === "button") {
     return (
       <div className="flex gap-1.5">
-        {actionsForEstado(
-          pub.estado,
-          pub.id_publicacion,
+        {actionsForEstado({
+          estado: pub.estado,
+          pubId: pub.id_publicacion,
           isMutating,
           onEdit,
           onPublish,
           onDelete,
           onClose,
-        )}
+        })}
       </div>
     );
   }
 
   return (
     <div className="flex gap-1.5">
-      {iconActionsForEstado(
-        pub.estado,
-        pub.id_publicacion,
+      {iconActionsForEstado({
+        estado: pub.estado,
+        pubId: pub.id_publicacion,
         isMutating,
         onEdit,
         onPublish,
         onDelete,
         onClose,
         colors,
-      )}
+      })}
     </div>
   );
 }

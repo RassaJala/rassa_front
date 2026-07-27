@@ -23,13 +23,14 @@ export function Toast({
   const toastRef = useRef(toast);
   toastRef.current = toast;
 
+  const isError = toast?.type === "error";
+
   useEffect(() => {
     if (!toast) {
       setVisible(false);
       return;
     }
     const tick = requestAnimationFrame(() => setVisible(true));
-    const isError = toast.type === "error";
     const delay = isError ? TOAST_DISMISS_MS * 2 : TOAST_DISMISS_MS;
     const dismissTimer = setTimeout(() => {
       setVisible(false);
@@ -54,7 +55,6 @@ export function Toast({
 
   if (!toast) return null;
 
-  const isError = toast.type === "error";
   return (
     <div
       style={{

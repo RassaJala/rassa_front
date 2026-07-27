@@ -2,13 +2,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { QUERY_RETRY, QUERY_STALE_TIME } from "../constants/api";
+
+const QUERY_OPTIONS = {
+  staleTime: QUERY_STALE_TIME,
+  retry: QUERY_RETRY,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+} as const;
 import type {
+  AddProductoPayload as AddProductoServicePayload,
   ApiResponse,
   Producto,
   ProductoSemanal,
   Publicacion,
   PublicacionEstado,
   PublicacionList,
+  UpdateProductoPayload as UpdateProductoServicePayload,
 } from "../services/publications";
 import * as publicationsApi from "../services/publications";
 
@@ -65,8 +74,7 @@ export function usePublicaciones(estado?: PublicacionEstado) {
     queryKey: ["publicaciones", { estado }],
     queryFn: () =>
       publicationsApi.getPublicaciones(estado ? { estado } : undefined),
-    staleTime: QUERY_STALE_TIME,
-    retry: QUERY_RETRY,
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -75,8 +83,7 @@ export function usePublicacion(id: number) {
     queryKey: ["publicaciones", id],
     queryFn: () => publicationsApi.getPublicacion(id),
     enabled: id > 0,
-    staleTime: QUERY_STALE_TIME,
-    retry: QUERY_RETRY,
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -85,8 +92,7 @@ export function useProductosSemanales(pubId: number) {
     queryKey: ["publicaciones", pubId, "productos"],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,
-    staleTime: QUERY_STALE_TIME,
-    retry: QUERY_RETRY,
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -94,8 +100,7 @@ export function useCatalogProductos() {
   return useQuery<ApiResponse<{ results: Producto[] }>>({
     queryKey: ["productos-catalog"],
     queryFn: publicationsApi.getCatalogProductos,
-    staleTime: QUERY_STALE_TIME,
-    retry: QUERY_RETRY,
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -103,8 +108,7 @@ export function useUnidades() {
   return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
     queryKey: ["unidades"],
     queryFn: publicationsApi.getUnidades,
-    staleTime: QUERY_STALE_TIME,
-    retry: QUERY_RETRY,
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -144,27 +148,15 @@ export function useClosePublicacion() {
 
 // ── ProductoSemanal mutations ──────────────────────────────
 
-type AddProductoPayload = {
+type AddProductoHookPayload = {
   pubId: number;
-  payload: {
-    fk_producto: number;
-    fk_unidad: number;
-    stock: number;
-    precio: number;
-    foto?: string | null;
-  };
+  payload: AddProductoServicePayload;
 };
 
-type UpdateProductoPayload = {
+type UpdateProductoHookPayload = {
   pubId: number;
   itemId: number;
-  payload: {
-    fk_producto?: number;
-    fk_unidad?: number;
-    stock?: number;
-    precio?: number;
-    foto?: string | null;
-  };
+  payload: UpdateProductoServicePayload;
 };
 
 type DeleteProductoPayload = { pubId: number; itemId: number };
@@ -184,7 +176,7 @@ const productoKeys = (pubId: number): InvalidateKeys[] => [
 export function useAddProductoSemanal() {
   return usePubMutation(
     "addProductoSemanal",
-    ({ pubId, payload }: AddProductoPayload) =>
+    ({ pubId, payload }: AddProductoHookPayload) =>
       publicationsApi.addProductoSemanal(pubId, payload),
     (v) => productoKeys(v.pubId),
   );
@@ -193,7 +185,7 @@ export function useAddProductoSemanal() {
 export function useUpdateProductoSemanal() {
   return usePubMutation(
     "updateProductoSemanal",
-    ({ pubId, itemId, payload }: UpdateProductoPayload) =>
+    ({ pubId, itemId, payload }: UpdateProductoHookPayload) =>
       publicationsApi.updateProductoSemanal(pubId, itemId, payload),
     (v) => productoKeys(v.pubId),
   );

@@ -35,6 +35,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
+  TOAST_ORPHAN_DELAY_MS,
 } from "../constants/api";
 import { productCountLabel } from "../components/PublicationActions";
 import { mediaUrl } from "../utils/mediaUrl";
@@ -494,12 +495,13 @@ export function PublicationWizard() {
                 type: "error",
               });
             }
-          }, 3500);
+          }, TOAST_ORPHAN_DELAY_MS);
         }
       }
     } catch (err) {
       if (controller.signal.aborted) {
         if (mountedRef.current) {
+          setError(null);
           setToast({ message: "Operación cancelada.", type: "error" });
         }
         return;
@@ -1077,6 +1079,7 @@ export function PublicationWizard() {
         <ProductPickerModal
           catalog={catalog}
           catalogError={catalogQuery.isError}
+          onRetryCatalog={() => void catalogQuery.refetch()}
           selectedIds={selectedIds}
           onSelect={addItem}
           onClose={() => setShowPicker(false)}

@@ -7,6 +7,7 @@ import { hideBrokenImage } from "../utils/imageHelpers";
 export function ProductPickerModal({
   catalog,
   catalogError,
+  onRetryCatalog,
   selectedIds,
   onSelect,
   onClose,
@@ -14,6 +15,7 @@ export function ProductPickerModal({
 }: {
   catalog: Producto[];
   catalogError?: boolean;
+  onRetryCatalog?: () => void;
   selectedIds: Set<number>;
   onSelect: (p: Producto) => void;
   onClose: () => void;
@@ -97,6 +99,15 @@ export function ProductPickerModal({
               {catalogError
                 ? "Error al cargar el catálogo."
                 : "No hay productos disponibles."}
+              {catalogError && onRetryCatalog && (
+                <button
+                  onClick={onRetryCatalog}
+                  className="mt-2 cursor-pointer border-none text-[13px] font-semibold"
+                  style={{ color: colors.brand, background: "none" }}
+                >
+                  Reintentar
+                </button>
+              )}
             </p>
           ) : (
             <div className="flex flex-col gap-2">

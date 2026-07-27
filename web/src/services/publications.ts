@@ -49,6 +49,22 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface AddProductoPayload {
+  fk_producto: number;
+  fk_unidad: number;
+  stock: number;
+  precio: number;
+  foto?: string | null;
+}
+
+export interface UpdateProductoPayload {
+  fk_producto?: number;
+  fk_unidad?: number;
+  stock?: number;
+  precio?: number;
+  foto?: string | null;
+}
+
 // ── Publicacion endpoints ───────────────────────────────────
 
 export async function getPublicaciones(params?: {
@@ -120,13 +136,7 @@ export async function getProductosSemanales(
 
 export async function addProductoSemanal(
   pubId: number,
-  payload: {
-    fk_producto: number;
-    fk_unidad: number;
-    stock: number;
-    precio: number;
-    foto?: string | null;
-  },
+  payload: AddProductoPayload,
 ): Promise<ApiResponse<ProductoSemanal>> {
   assertValidId(pubId, "publicacion");
   const { data } = await api.post<ApiResponse<ProductoSemanal>>(
@@ -139,13 +149,7 @@ export async function addProductoSemanal(
 export async function updateProductoSemanal(
   pubId: number,
   itemId: number,
-  payload: {
-    fk_producto?: number;
-    fk_unidad?: number;
-    stock?: number;
-    precio?: number;
-    foto?: string | null;
-  },
+  payload: UpdateProductoPayload,
 ): Promise<ApiResponse<ProductoSemanal>> {
   assertValidId(pubId, "publicacion");
   assertValidId(itemId, "producto_semanal");
