@@ -20,6 +20,8 @@ export function Toast({
   const [visible, setVisible] = useState(false);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   useEffect(() => {
     if (!toast) {
@@ -40,7 +42,12 @@ export function Toast({
 
   useEffect(() => {
     if (!visible && toast) {
-      const t = setTimeout(() => onDoneRef.current(), TOAST_EXIT_MS);
+      const t = setTimeout(() => {
+        // Only fire onDone if toast hasn't been replaced
+        if (toastRef.current === toast) {
+          onDoneRef.current();
+        }
+      }, TOAST_EXIT_MS);
       return () => clearTimeout(t);
     }
   }, [visible, toast]);

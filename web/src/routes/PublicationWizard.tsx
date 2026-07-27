@@ -407,16 +407,24 @@ export function PublicationWizard() {
   ): Promise<{ orphanFailures: number }> {
     let newServerIds: number[] = [];
     let orphanFailures = 0;
+    let itemsSaved = false;
     try {
       const { tempIdToServerId, newServerIds: ids } = await upsertItems(
         pubId,
         signal,
       );
       newServerIds = ids;
+      itemsSaved = true;
 
       await refreshSnapshot(pubId);
       orphanFailures = await deleteOrphans(pubId, tempIdToServerId, signal);
     } catch (err) {
+      if (itemsSaved && newServerIds.length === 0) {
+        // Only updates were made — items are saved but snapshot/orphans failed
+        throw new Error(
+          "Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.",
+        );
+      }
       if (newServerIds.length > 0) {
         for (const serverId of newServerIds) {
           try {
@@ -515,7 +523,13 @@ export function PublicationWizard() {
     void runPersist({
       successMsg: "¡Publicación publicada!",
       afterPersist: async (pubId) => {
-        await publishMutation.mutateAsync(pubId);
+        try {
+          await publishMutation.mutateAsync(pubId);
+        } catch {
+          throw new Error(
+            "Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.",
+          );
+        }
         if (mountedRef.current) void navigate("/agricultor/publicaciones");
       },
     });
