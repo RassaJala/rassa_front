@@ -37,7 +37,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "~/*": ["./src/*"],
-      "@/common/*": ["./packages/common/src/*"]
+      "@/common/*": ["./packages/common/src/*"],
+      "@rassa/chat": ["./packages/chat/src"]
     }
   },
   "include": [

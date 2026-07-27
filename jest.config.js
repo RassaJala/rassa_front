@@ -12,6 +12,7 @@ module.exports = {
   coverageReporters: ['text', 'lcov'],
   moduleNameMapper: {
     '^@/common/(.*)$': '<rootDir>/packages/common/src/$1',
+    '^@rassa/chat$': '<rootDir>/packages/chat/src',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^~/(.*)$': '<rootDir>/src/$1',
   },
