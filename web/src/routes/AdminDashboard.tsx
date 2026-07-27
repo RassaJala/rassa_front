@@ -131,6 +131,7 @@ export function AdminDashboard() {
           }}
         />
         <button
+          type="button"
           onClick={() => {
             const id = Number(lookupId);
             if (id > 0) navigate(`/admin/pedidos/${id}`);

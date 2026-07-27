@@ -1,3 +1,5 @@
+import type { OrderStatusHistory } from '@/types';
+
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
@@ -63,4 +65,17 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function getStatusColor(status: string, fallback: string): string {
   return STATUS_COLORS[status] ?? fallback;
+}
+
+// ponytail: single normalizer shared by mobile hook and web route
+export function normalizeOrderHistoryResponse(
+  body: unknown,
+): OrderStatusHistory[] {
+  if (Array.isArray(body)) return body as OrderStatusHistory[];
+  if (isWrappedData(body)) {
+    const inner = body.data as unknown;
+    if (Array.isArray(inner)) return inner as OrderStatusHistory[];
+    return [];
+  }
+  return [];
 }

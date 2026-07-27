@@ -7,7 +7,7 @@ import {
   formatTimestamp,
   getStatusColor,
   isNotFoundError,
-  isWrappedData,
+  normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
 } from '../../src/constants/orderTimeline';
@@ -64,11 +64,7 @@ export function AdminOrderDetail() {
     queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
       const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
-      const body = res.data;
-      // ponytail: backend usually returns array directly, fallback for wrapped response
-      if (Array.isArray(body)) return body as OrderStatusHistory[];
-      if (isWrappedData(body)) return body.data as OrderStatusHistory[];
-      return [];
+      return normalizeOrderHistoryResponse(res.data);
     },
     enabled: isValidId,
     staleTime: STALE_TIME,

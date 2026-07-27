@@ -7,6 +7,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import OrderTimeline from '@/components/OrderTimeline';
 import { useAdminColors } from '@/hooks/useAdminColors';
 import type { AdminStackParamList } from '@/types';
@@ -67,7 +68,9 @@ export default function OrderDetailScreen(): React.JSX.Element {
       <View
         style={[styles.card, { backgroundColor: surface, borderColor: border }]}
       >
-        <OrderTimeline orderId={orderId} />
+        <ErrorBoundary>
+          <OrderTimeline orderId={orderId} />
+        </ErrorBoundary>
       </View>
     </View>
   );

@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { isWrappedData, STALE_TIME } from '@/constants/orderTimeline';
+import {
+  normalizeOrderHistoryResponse,
+  STALE_TIME,
+} from '@/constants/orderTimeline';
 import api from '@/services/api';
 import type { OrderStatusHistory } from '@/types';
 
@@ -21,11 +24,7 @@ export function useOrderTimeline(orderId: number): {
     queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
       const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
-      const body = res.data;
-      // ponytail: backend usually returns array directly, fallback for wrapped response
-      if (Array.isArray(body)) return body as OrderStatusHistory[];
-      if (isWrappedData(body)) return body.data as OrderStatusHistory[];
-      return [];
+      return normalizeOrderHistoryResponse(res.data);
     },
     enabled: orderId > 0,
     staleTime: STALE_TIME,
