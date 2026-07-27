@@ -479,7 +479,7 @@ function NuevoUsuarioForm({
           <div style={{ position: 'relative' }}>
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={formPassword}
               onChange={(e) => setFormPassword(e.target.value)}
               style={{ ...formInputStyle('password'), paddingRight: 36 }}

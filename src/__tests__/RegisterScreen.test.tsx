@@ -122,7 +122,7 @@ describe('RegisterScreen', () => {
       'correo-invalido',
     );
     fireEvent.changeText(
-      getByPlaceholderText('Mínimo 6 caracteres'),
+      getByPlaceholderText('Mínimo 8 caracteres'),
       'password123',
     );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
@@ -146,7 +146,7 @@ describe('RegisterScreen', () => {
       getByPlaceholderText('ejemplo@correo.com'),
       'juan@test.com',
     );
-    fireEvent.changeText(getByPlaceholderText('Mínimo 6 caracteres'), '123'); // Corta
+    fireEvent.changeText(getByPlaceholderText('Mínimo 8 caracteres'), '123'); // Corta
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -171,7 +171,7 @@ describe('RegisterScreen', () => {
       'juan@test.com',
     );
     fireEvent.changeText(
-      getByPlaceholderText('Mínimo 6 caracteres'),
+      getByPlaceholderText('Mínimo 8 caracteres'),
       'password123',
     );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
@@ -209,7 +209,7 @@ describe('RegisterScreen', () => {
       'test@reg.com',
     );
     fireEvent.changeText(
-      getByPlaceholderText('Mínimo 6 caracteres'),
+      getByPlaceholderText('Mínimo 8 caracteres'),
       'password123',
     );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'NombreTest');

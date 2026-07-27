@@ -95,7 +95,7 @@ export default function RegistrationFormFields({
       <Text style={labelStyle}>Contraseña *</Text>
       <TextInput
         style={inputStyle}
-        placeholder="Mínimo 6 caracteres"
+        placeholder="Mínimo 8 caracteres"
         placeholderTextColor={placeholderColor}
         secureTextEntry
         value={password}
