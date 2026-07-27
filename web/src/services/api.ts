@@ -53,17 +53,23 @@ async function refreshAccessToken(
   const refreshToken = sessionStorage.getItem("refresh_token");
   if (!refreshToken) throw new Error("No refresh token");
 
-  const { data } = await axios.post<{ access: string }>(
+  const { data } = await axios.post<{ access: string; refresh?: string }>(
     `${API_URL}/token/refresh/`,
     { refresh: refreshToken },
     { timeout: 10_000 },
   );
 
   localStorage.setItem("token", data.access);
+  if (data.refresh) {
+    sessionStorage.setItem("refresh_token", data.refresh);
+  }
 
   // Retry all queued requests with the new token
   pendingRequests.forEach(({ resolve }) => resolve(data.access));
   pendingRequests = [];
+
+  // Reset BEFORE retrying to avoid deadlock if retry also gets 401
+  isRefreshing = false;
 
   originalRequest.headers.Authorization = `Bearer ${data.access}`;
   return api(originalRequest);
@@ -84,22 +90,18 @@ api.interceptors.response.use(
     // Intenta refrescar el token antes de redirigir
     if (!isRefreshing) {
       isRefreshing = true;
-      return refreshAccessToken(error.config)
-        .catch(() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          sessionStorage.removeItem("refresh_token");
-          // Rechaza todas las peticiones encoladas para que no queden huérfanas
-          pendingRequests.forEach(({ reject }) =>
-            reject(new Error("Sesión expirada")),
-          );
-          pendingRequests = [];
-          redirect("/login", { from: window.location.pathname });
-          return Promise.reject(error);
-        })
-        .finally(() => {
-          isRefreshing = false;
-        });
+      return refreshAccessToken(error.config).catch(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("refresh_token");
+        pendingRequests.forEach(({ reject }) =>
+          reject(new Error("Sesión expirada")),
+        );
+        pendingRequests = [];
+        isRefreshing = false;
+        redirect("/login", { from: window.location.pathname });
+        return Promise.reject(error);
+      });
     }
 
     // Otra solicitud ya está refrescando — encolamos esta

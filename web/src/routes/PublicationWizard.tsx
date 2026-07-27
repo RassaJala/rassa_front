@@ -773,6 +773,7 @@ export function PublicationWizard() {
                         </p>
                         <button
                           onClick={() => removeItem(item.tempId)}
+                          disabled={saving}
                           className="cursor-pointer border-none bg-transparent text-[16px]"
                           style={{ color: colors.coral }}
                         >
@@ -794,6 +795,7 @@ export function PublicationWizard() {
                                 : colors.accentBg,
                             }}
                             onClick={() => {
+                              if (saving) return;
                               const input = document.createElement("input");
                               input.type = "file";
                               input.accept = "image/*";
@@ -844,6 +846,7 @@ export function PublicationWizard() {
                                   type="number"
                                   min="0"
                                   value={item.stock}
+                                  disabled={saving}
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
@@ -867,6 +870,7 @@ export function PublicationWizard() {
                                   min="0"
                                   step="0.01"
                                   value={item.precio}
+                                  disabled={saving}
                                   onChange={(e) =>
                                     updateItem(
                                       item.tempId,
@@ -888,6 +892,7 @@ export function PublicationWizard() {
                               colors={colors}
                               hasError={!!errs.fk_unidad}
                               value={item.fk_unidad || ""}
+                              disabled={saving}
                               onChange={(e) =>
                                 updateItem(
                                   item.tempId,
