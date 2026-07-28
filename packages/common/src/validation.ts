@@ -49,9 +49,10 @@ export function isAdult(birthDate: string): boolean {
   // as safety guards for TypeScript strict mode post-validation.
   if (!DATE_REGEX.test(birthDate)) return false;
   const parts = birthDate.split('-');
-  const year = parseInt(parts[0] ?? '0', 10);
-  const month = parseInt(parts[1] ?? '0', 10) - 1;
-  const day = parseInt(parts[2] ?? '0', 10);
+  const year = parseInt(parts[0] ?? '', 10);
+  const month = parseInt(parts[1] ?? '', 10) - 1;
+  const day = parseInt(parts[2] ?? '', 10);
+  if (isNaN(year) || isNaN(month + 1) || isNaN(day)) return false;
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - month;
