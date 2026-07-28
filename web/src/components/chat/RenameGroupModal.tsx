@@ -32,6 +32,15 @@ export function RenameGroupModal({
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          onClose();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Cerrar modal"
     >
       <div
         className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl"

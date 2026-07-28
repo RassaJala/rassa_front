@@ -1,7 +1,7 @@
 // Constants and helpers for the order status timeline (AdminOrderDetail).
 // ponytail: minimal implementations matching the shape AdminOrderDetail.tsx consumes.
 
-import type { OrderStatusHistory } from '../../src/types';
+import type { OrderStatusHistory } from '~/types';
 
 /** React Query stale time for the order history query (ms). */
 export const STALE_TIME = 30_000;

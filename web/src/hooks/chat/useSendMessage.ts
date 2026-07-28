@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { conversationsKey, messagesKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,13 +17,9 @@ export function useSendMessage(
 ): UseMutationResult<Message, Error, SendMessagePayload> {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const sendingRef = useRef(false);
 
   return useMutation({
-    mutationFn: (payload) => {
-      sendingRef.current = true;
-      return chatApi.sendMessage(payload);
-    },
+    mutationFn: (payload) => chatApi.sendMessage(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({
         queryKey: messagesKey(conversationId),
@@ -91,7 +86,6 @@ export function useSendMessage(
       }
     },
     onSettled: () => {
-      sendingRef.current = false;
       void queryClient.invalidateQueries({
         queryKey: messagesKey(conversationId),
       });

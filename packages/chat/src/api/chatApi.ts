@@ -63,7 +63,7 @@ export interface ChatApi {
   ): Promise<Conversation>;
   markConversationAsRead(conversationId: number): Promise<void>;
   editMessage(messageId: number, contenido: string): Promise<Message>;
-  deleteMessage(messageId: number): Promise<Message>;
+  deleteMessage(messageId: number): Promise<void>;
   sendMessageWithMedia(payload: SendMessageWithMediaPayload): Promise<Message>;
   getGroupMembers(conversationId: number): Promise<GroupMember[]>;
   createGroup(payload: CreateGroupPayload): Promise<Conversation>;
@@ -99,12 +99,19 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       const raw = unwrap<BackendMessage[] | PaginatedResponse<BackendMessage>>(
         res,
       );
-      const rawList = Array.isArray(raw) ? raw : raw.results;
+      if (Array.isArray(raw)) {
+        return {
+          count: raw.length,
+          next: null,
+          previous: null,
+          results: raw.map((m) => mapMessage(m, conversationId)),
+        };
+      }
       return {
-        count: rawList.length,
-        next: null,
-        previous: null,
-        results: rawList.map((m) => mapMessage(m, conversationId)),
+        count: raw.count,
+        next: raw.next,
+        previous: raw.previous,
+        results: (raw.results ?? []).map((m) => mapMessage(m, conversationId)),
       };
     },
 
@@ -158,18 +165,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
     },
 
     async deleteMessage(messageId) {
-      const res = await http.patch(messageDeletePath(messageId));
-      void unwrap(res);
-      return {
-        id: messageId,
-        conversacion: 0,
-        remitente: 0,
-        remitente_nombre: '',
-        contenido: '',
-        creado_en: '',
-        leido: false,
-        activo: false,
-      };
+      await http.patch(messageDeletePath(messageId));
     },
 
     async sendMessageWithMedia(payload) {

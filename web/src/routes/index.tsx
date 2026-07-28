@@ -27,6 +27,13 @@ import { GroupDetailPage } from './chat/GroupDetailPage';
 import { StartChatPage } from './chat/StartChatPage';
 import { useAuth } from '../hooks/useAuth';
 
+const CHAT_ROUTE_CONFIGS = [
+  { path: 'chat', element: <ChatListPage /> },
+  { path: 'chat/nuevo', element: <StartChatPage /> },
+  { path: 'chat/:id', element: <ChatDetailPage /> },
+  { path: 'chat/:id/grupo', element: <GroupDetailPage /> },
+];
+
 function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -85,10 +92,9 @@ export function AppRouter() {
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
                 <Route path="perfil" element={<ProfilePage />} />
-                <Route path="chat" element={<ChatListPage />} />
-                <Route path="chat/nuevo" element={<StartChatPage />} />
-                <Route path="chat/:id" element={<ChatDetailPage />} />
-                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route
                   path="*"
                   element={<Navigate to="/agricultor/productos" replace />}
@@ -109,10 +115,9 @@ export function AppRouter() {
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="perfil" element={<ProfilePage />} />
-                <Route path="chat" element={<ChatListPage />} />
-                <Route path="chat/nuevo" element={<StartChatPage />} />
-                <Route path="chat/:id" element={<ChatDetailPage />} />
-                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route
                   path="*"
                   element={<Navigate to="/vendedor/ventas" replace />}
@@ -144,10 +149,9 @@ export function AppRouter() {
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
-                <Route path="chat" element={<ChatListPage />} />
-                <Route path="chat/nuevo" element={<StartChatPage />} />
-                <Route path="chat/:id" element={<ChatDetailPage />} />
-                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
@@ -167,10 +171,9 @@ export function AppRouter() {
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
-                <Route path="chat" element={<ChatListPage />} />
-                <Route path="chat/nuevo" element={<StartChatPage />} />
-                <Route path="chat/:id" element={<ChatDetailPage />} />
-                <Route path="chat/:id/grupo" element={<GroupDetailPage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
             </DashboardLayout>

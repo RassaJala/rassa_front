@@ -46,7 +46,7 @@ export function ChatBubble({
         }`}
         style={{
           background: isOwn ? c.brand : c.surface,
-          color: isOwn ? '#fff' : c.fg,
+          color: isOwn ? c.onBrand : c.fg,
         }}
       >
         {/* Sender name (others only) */}
@@ -77,7 +77,7 @@ export function ChatBubble({
         >
           <span
             className="text-xs"
-            style={{ opacity: 0.6, color: isOwn ? '#fff' : c.muted }}
+            style={{ opacity: 0.6, color: isOwn ? c.onBrand : c.muted }}
           >
             {formatTime(message.creado_en)}
           </span>

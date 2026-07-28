@@ -73,6 +73,7 @@ export function MessageEditModal({
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             rows={3}
             className="w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none"
             style={{

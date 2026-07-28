@@ -7,7 +7,7 @@ import type { Message, PaginatedResponse } from '@rassa/chat';
 
 export function useDeleteMessage(
   conversationId: number,
-): UseMutationResult<Message, Error, number> {
+): UseMutationResult<void, Error, number> {
   const queryClient = useQueryClient();
 
   return useMutation({
