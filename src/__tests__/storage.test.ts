@@ -89,7 +89,6 @@ describe('Storage (web)', () => {
         }),
       },
     };
-    };
   });
 
   afterEach(() => {
