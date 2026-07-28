@@ -295,6 +295,16 @@ describe('validation utilities', () => {
       );
     });
 
+    it('retorna error de campos obligatorios si el email es inválido pero el teléfono está vacío', () => {
+      expect(
+        validateRegistrationForm({
+          ...validForm,
+          email: 'invalidemail',
+          telefono: '',
+        }),
+      ).toBe('Por favor, completa todos los campos obligatorios.');
+    });
+
     it('retorna error de correo si el formato de email es inválido', () => {
       expect(
         validateRegistrationForm({ ...validForm, email: 'invalidemail' }),

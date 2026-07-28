@@ -177,14 +177,21 @@ export function validateRegistrationForm({
   readonly customAgeMsg?: string;
 }): string | null {
   if (
+    !email ||
     !email.trim() ||
     (password !== undefined && !password) ||
+    !telefono ||
     !telefono.trim() ||
+    !nombre ||
     !nombre.trim() ||
+    !apellidoPaterno ||
     !apellidoPaterno.trim() ||
+    !fechaNacimiento ||
     !fechaNacimiento.trim() ||
+    !domicilio ||
     !domicilio.trim() ||
-    localidadId === null
+    localidadId === null ||
+    localidadId === undefined
   ) {
     return 'Por favor, completa todos los campos obligatorios.';
   }
