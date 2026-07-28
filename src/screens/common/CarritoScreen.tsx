@@ -14,9 +14,13 @@ import { useTheme } from '@/store/ThemeContext';
 function cartColors(isDark: boolean) {
   return {
     rowBg: isDark ? colors.cartRowBgD : colors.cartRowBg,
-    placeholderBg: isDark ? colors.cartPlaceholderBgD : colors.cartPlaceholderBg,
+    placeholderBg: isDark
+      ? colors.cartPlaceholderBgD
+      : colors.cartPlaceholderBg,
     btnBg: isDark ? colors.cartBtnBgD : colors.cartBtnBg,
-    btnDisabledBg: isDark ? colors.cartBtnDisabledBgD : colors.cartBtnDisabledBg,
+    btnDisabledBg: isDark
+      ? colors.cartBtnDisabledBgD
+      : colors.cartBtnDisabledBg,
   };
 }
 
@@ -220,7 +224,10 @@ export default function CarritoScreen(): React.JSX.Element {
           <Text className="text-2xl font-bold" style={{ color: tc.fg }}>
             Mi Carrito
           </Text>
-          <Pressable testID="clear-cart" onPress={() => handleClearCart(clearCart)}>
+          <Pressable
+            testID="clear-cart"
+            onPress={() => handleClearCart(clearCart)}
+          >
             <Text
               className="text-sm font-semibold"
               style={{ color: colors.error }}

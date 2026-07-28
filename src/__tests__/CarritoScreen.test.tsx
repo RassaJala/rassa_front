@@ -138,7 +138,9 @@ describe('CarritoScreen', () => {
   });
 
   it('disables + button at stock limit', () => {
-    useCartStore.setState({ items: [{ ...mockItem, cantidad: 10, stock: 10 }] });
+    useCartStore.setState({
+      items: [{ ...mockItem, cantidad: 10, stock: 10 }],
+    });
 
     const { getByTestId } = render(<CarritoScreen />);
     const incBtn = getByTestId('qty-inc');
