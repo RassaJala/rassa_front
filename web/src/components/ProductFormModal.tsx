@@ -365,7 +365,7 @@ export function ProductFormModal({
                 <button
                   onClick={handleRemoveImage}
                   title="Eliminar imagen"
-                  className="absolute -right-2 -top-2 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-none text-sm text-white"
+                  className="absolute -top-2 -right-2 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-none text-sm text-white"
                   style={{
                     background: coral,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.2)',

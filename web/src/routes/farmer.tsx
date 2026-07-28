@@ -220,7 +220,7 @@ export function FarmerProducts() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-7 right-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
+          className="fixed right-7 bottom-7 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white"
           style={{ background: brand, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
         >
           ✓ {toast}
@@ -337,7 +337,7 @@ export function FarmerProducts() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-[18px] py-3.5 text-left text-[13px] font-semibold uppercase tracking-[0.05em]"
+                      className="px-[18px] py-3.5 text-left text-[13px] font-semibold tracking-[0.05em] uppercase"
                       style={{ color: muted }}
                     >
                       {h}
