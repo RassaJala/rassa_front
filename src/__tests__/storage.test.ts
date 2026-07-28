@@ -63,6 +63,7 @@ describe('Storage (native)', () => {
 
 describe('Storage (web)', () => {
   let originalOS: string;
+  let windowRef: typeof globalThis.window | undefined;
 
   beforeAll(() => {
     originalOS = Platform.OS;
@@ -72,17 +73,30 @@ describe('Storage (web)', () => {
     jest.clearAllMocks();
     (Platform as any).OS = 'web';
 
-    // Match storage.ts: uses window.localStorage, not sessionStorage
+    // ponytail: the code uses window.localStorage (not sessionStorage).
+    // In Node.js jest, window isn't available, so we mock it globally.
+    windowRef = (global as any).window;
     const store: Record<string, string> = {};
-    (global as any).localStorage = {
-      getItem: jest.fn((key: string) => store[key] ?? null),
-      setItem: jest.fn((key: string, value: string) => {
-        store[key] = value;
-      }),
-      removeItem: jest.fn((key: string) => {
-        delete store[key];
-      }),
+    (global as any).window = {
+      ...((global as any).window ?? {}),
+      localStorage: {
+        getItem: jest.fn((key: string) => store[key] ?? null),
+        setItem: jest.fn((key: string, value: string) => {
+          store[key] = value;
+        }),
+        removeItem: jest.fn((key: string) => {
+          delete store[key];
+        }),
+      },
     };
+  });
+
+  afterEach(() => {
+    if (windowRef === undefined) {
+      delete (global as any).window;
+    } else {
+      (global as any).window = windowRef;
+    }
   });
 
   afterAll(() => {
@@ -90,11 +104,11 @@ describe('Storage (web)', () => {
   });
 
   it('getItemAsync lee de localStorage en web', async () => {
-    (global as any).localStorage.setItem('test_key', 'web_value');
+    (global as any).window.localStorage.setItem('test_key', 'web_value');
 
     const result = await Storage.getItemAsync('test_key');
 
-    expect((global as any).localStorage.getItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.getItem).toHaveBeenCalledWith(
       'test_key',
     );
     expect(result).toBe('web_value');
@@ -103,17 +117,17 @@ describe('Storage (web)', () => {
   it('setItemAsync escribe en localStorage en web', async () => {
     await Storage.setItemAsync('test_key', 'web_value');
 
-    expect((global as any).localStorage.setItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.setItem).toHaveBeenCalledWith(
       'test_key',
       'web_value',
     );
   });
 
   it('deleteItemAsync borra de localStorage en web', async () => {
-    (global as any).localStorage.setItem('test_key', 'value');
+    (global as any).window.localStorage.setItem('test_key', 'value');
     await Storage.deleteItemAsync('test_key');
 
-    expect((global as any).localStorage.removeItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.removeItem).toHaveBeenCalledWith(
       'test_key',
     );
     const result = await Storage.getItemAsync('test_key');
@@ -121,7 +135,7 @@ describe('Storage (web)', () => {
   });
 
   it('retorna null si localStorage.getItem lanza excepción', async () => {
-    (global as any).localStorage.getItem = jest.fn(() => {
+    (global as any).window.localStorage.getItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 
@@ -130,7 +144,7 @@ describe('Storage (web)', () => {
   });
 
   it('no lanza si localStorage.setItem falla', async () => {
-    (global as any).localStorage.setItem = jest.fn(() => {
+    (global as any).window.localStorage.setItem = jest.fn(() => {
       throw new Error('Quota exceeded');
     });
 
@@ -140,7 +154,7 @@ describe('Storage (web)', () => {
   });
 
   it('no lanza si localStorage.removeItem falla', async () => {
-    (global as any).localStorage.removeItem = jest.fn(() => {
+    (global as any).window.localStorage.removeItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 
