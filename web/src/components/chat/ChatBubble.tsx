@@ -89,7 +89,7 @@ export function ChatBubble({
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
                 className="cursor-pointer border-none bg-transparent text-xs"
-                style={{ color: isOwn ? '#fff' : c.muted }}
+                style={{ color: isOwn ? c.onBrand : c.muted }}
                 aria-label="Opciones de mensaje"
               >
                 ⋯

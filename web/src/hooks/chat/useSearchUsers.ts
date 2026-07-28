@@ -13,19 +13,30 @@ export function useSearchUsers(query: string) {
       return;
     }
 
+    const abortController = new AbortController();
+
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await chatApi.searchUsers(trimmed);
-        setResults(data);
+        const data = await chatApi.searchUsers(trimmed, abortController.signal);
+        if (!abortController.signal.aborted) {
+          setResults(data);
+        }
       } catch {
-        setResults([]);
+        if (!abortController.signal.aborted) {
+          setResults([]);
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
   }, [query]);
 
   return { results, loading };

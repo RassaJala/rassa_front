@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
@@ -11,6 +11,7 @@ import { useMarkAsRead } from '~/hooks/chat/useMarkAsRead';
 import { ChatBubble } from '~/components/chat/ChatBubble';
 import { ChatInput } from '~/components/chat/ChatInput';
 import { MessageEditModal } from '~/components/chat/MessageEditModal';
+import { ConfirmDialog } from '~/components/ui/ConfirmDialog';
 import { Toast, type ToastState } from '~/components/ui/Toast';
 import type { Message } from '@rassa/chat';
 
@@ -36,8 +37,8 @@ export function ChatDetailPage() {
   const deleteMessage = useDeleteMessage(conversationId);
   const markAsRead = useMarkAsRead();
 
-  const sendingRef = useRef(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
@@ -51,14 +52,9 @@ export function ChatDetailPage() {
   const messages = data?.pages.flatMap((p) => p.results).reverse() ?? [];
 
   const handleSend = (text: string) => {
-    if (sendingRef.current) return;
-    sendingRef.current = true;
     sendMessage.mutate(
       { conversacion: conversationId, contenido: text },
       {
-        onSettled: () => {
-          sendingRef.current = false;
-        },
         onError: () =>
           setToast({ message: 'Error al enviar mensaje', type: 'error' }),
       },
@@ -82,11 +78,16 @@ export function ChatDetailPage() {
   };
 
   const handleDelete = (messageId: number) => {
-    if (!window.confirm('¿Eliminar este mensaje?')) return;
-    deleteMessage.mutate(messageId, {
+    setConfirmDeleteId(messageId);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (confirmDeleteId == null) return;
+    deleteMessage.mutate(confirmDeleteId, {
       onError: () =>
         setToast({ message: 'Error al eliminar mensaje', type: 'error' }),
     });
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -162,6 +163,14 @@ export function ChatDetailPage() {
           onClose={() => setEditingMessage(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId != null}
+        title="Eliminar mensaje"
+        message="¿Eliminar este mensaje?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
 
       <Toast toast={toast} onDone={() => setToast(null)} />
     </div>

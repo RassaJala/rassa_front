@@ -32,7 +32,7 @@ export function MessageEditModal({
       style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        if (e.key === 'Escape') {
           e.preventDefault();
           onClose();
         }

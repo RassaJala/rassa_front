@@ -125,7 +125,7 @@ export function GroupDetailPage() {
       </div>
 
       {/* Modals */}
-      {showRename && members && members.length > 0 && (
+      {showRename && (
         <RenameGroupModal
           currentName={groupName}
           onSave={handleRename}

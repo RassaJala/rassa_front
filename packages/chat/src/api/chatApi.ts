@@ -75,7 +75,7 @@ export interface ChatApi {
     conversationId: number,
     payload: AddGroupMemberPayload,
   ): Promise<GroupMember>;
-  searchUsers(q: string): Promise<SearchUserResult[]>;
+  searchUsers(q: string, signal?: AbortSignal): Promise<SearchUserResult[]>;
 }
 
 export function createChatApi(http: AxiosInstance): ChatApi {
@@ -264,9 +264,9 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       };
     },
 
-    async searchUsers(q) {
+    async searchUsers(q, signal) {
       if (q.length < 3) return [];
-      const res = await http.get(searchUsersPath(q));
+      const res = await http.get(searchUsersPath(q), signal ? { signal } : {});
       const data = unwrap<SearchUserResult[]>(res);
       return data;
     },
