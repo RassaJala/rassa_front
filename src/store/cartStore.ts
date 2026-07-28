@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // ── Types ────────────────────────────────────────────────
 
@@ -24,60 +26,79 @@ interface CartState {
 
 // ── Store ────────────────────────────────────────────────
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
 
-  addItem: (item, cantidad = 1) => {
-    set((state) => {
-      const existing = state.items.find(
-        (i) => i.id_producto_semanal === item.id_producto_semanal,
-      );
+      addItem: (item, cantidad = 1) => {
+        set((state) => {
+          const existing = state.items.find(
+            (i) => i.id_producto_semanal === item.id_producto_semanal,
+          );
 
-      if (existing) {
-        const newQty = Math.min(existing.cantidad + cantidad, item.stock);
-        return {
+          if (existing) {
+            const newQty = Math.min(existing.cantidad + cantidad, item.stock);
+            return {
+              items: state.items.map((i) =>
+                i.id_producto_semanal === item.id_producto_semanal
+                  ? { ...i, cantidad: newQty }
+                  : i,
+              ),
+            };
+          }
+
+          return {
+            items: [
+              ...state.items,
+              { ...item, cantidad: Math.min(cantidad, item.stock) },
+            ],
+          };
+        });
+      },
+
+      removeItem: (id) => {
+        set((state) => ({
+          items: state.items.filter((i) => i.id_producto_semanal !== id),
+        }));
+      },
+
+      updateQuantity: (id, cantidad) => {
+        if (cantidad <= 0) {
+          set((state) => ({
+            items: state.items.filter((i) => i.id_producto_semanal !== id),
+          }));
+          return;
+        }
+        set((state) => ({
           items: state.items.map((i) =>
-            i.id_producto_semanal === item.id_producto_semanal
-              ? { ...i, cantidad: newQty }
+            i.id_producto_semanal === id
+              ? { ...i, cantidad: Math.min(cantidad, i.stock) }
               : i,
           ),
-        };
-      }
+        }));
+      },
 
-      return {
-        items: [
-          ...state.items,
-          { ...item, cantidad: Math.min(cantidad, item.stock) },
-        ],
-      };
-    });
-  },
+      clearCart: () => set({ items: [] }),
 
-  removeItem: (id) => {
-    set((state) => ({
-      items: state.items.filter((i) => i.id_producto_semanal !== id),
-    }));
-  },
-
-  updateQuantity: (id, cantidad) => {
-    if (cantidad <= 0) {
-      set((state) => ({
-        items: state.items.filter((i) => i.id_producto_semanal !== id),
-      }));
-      return;
-    }
-    set((state) => ({
-      items: state.items.map((i) =>
-        i.id_producto_semanal === id
-          ? { ...i, cantidad: Math.min(cantidad, i.stock) }
-          : i,
-      ),
-    }));
-  },
-
-  clearCart: () => set({ items: [] }),
-
-  total: () => {
-    return get().items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-  },
-}));
+      total: () => {
+        return get().items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+      },
+    }),
+    {
+      name: 'rassa-cart',
+      storage: {
+        getItem: async (k) => {
+          const v = await AsyncStorage.getItem(k);
+          return v ? JSON.parse(v) : null;
+        },
+        setItem: async (k, v) => {
+          await AsyncStorage.setItem(k, JSON.stringify(v));
+        },
+        removeItem: async (k) => {
+          await AsyncStorage.removeItem(k);
+        },
+      },
+    },
+  ),
+);
