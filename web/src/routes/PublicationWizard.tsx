@@ -35,6 +35,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
+  PERSIST_TIMEOUT_MS,
   TOAST_ORPHAN_DELAY_MS,
 } from '../constants/api';
 import { productCountLabel } from '../components/PublicationActions';
@@ -67,6 +68,25 @@ const STEP_LABELS: Record<WizardStep, string> = {
   resumen: 'Resumen',
   publicar: 'Publicar',
 };
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Timeout after ${String(ms)}ms`)),
+      ms,
+    );
+    void promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 // ── PublicationWizard ──────────────────────────────────────
 
@@ -465,39 +485,44 @@ export function PublicationWizard() {
     abortRef.current = controller;
 
     try {
-      setError(null);
-      let pub = pubRef.current;
-      if (!pub) {
-        const result = await createMutation.mutateAsync();
-        pub = result.data;
-        pubRef.current = pub;
-      }
-      if (!pub) {
-        if (mountedRef.current) {
-          setError('No se pudo crear la publicación.');
-        }
-        return;
-      }
-
-      const { orphanFailures } = await persistItems(
-        pub.id_publicacion,
-        controller.signal,
-      );
-      await opts.afterPersist?.(pub.id_publicacion);
-
-      if (mountedRef.current) {
-        setToast({ message: opts.successMsg, type: 'success' });
-        if (orphanFailures > 0) {
-          setTimeout(() => {
+      await withTimeout(
+        (async () => {
+          setError(null);
+          let pub = pubRef.current;
+          if (!pub) {
+            const result = await createMutation.mutateAsync();
+            pub = result.data;
+            pubRef.current = pub;
+          }
+          if (!pub) {
             if (mountedRef.current) {
-              setToast({
-                message: `${orphanFailures} producto${orphanFailures !== 1 ? 's' : ''} antiguo${orphanFailures !== 1 ? 's' : ''} no se pudo${orphanFailures !== 1 ? 'ron' : ''} eliminar.`,
-                type: 'error',
-              });
+              setError('No se pudo crear la publicación.');
             }
-          }, TOAST_ORPHAN_DELAY_MS);
-        }
-      }
+            return;
+          }
+
+          const { orphanFailures } = await persistItems(
+            pub.id_publicacion,
+            controller.signal,
+          );
+          await opts.afterPersist?.(pub.id_publicacion);
+
+          if (mountedRef.current) {
+            setToast({ message: opts.successMsg, type: 'success' });
+            if (orphanFailures > 0) {
+              setTimeout(() => {
+                if (mountedRef.current) {
+                  setToast({
+                    message: `${orphanFailures} producto${orphanFailures !== 1 ? 's' : ''} antiguo${orphanFailures !== 1 ? 's' : ''} no se pudo${orphanFailures !== 1 ? 'ron' : ''} eliminar.`,
+                    type: 'error',
+                  });
+                }
+              }, TOAST_ORPHAN_DELAY_MS);
+            }
+          }
+        })(),
+        PERSIST_TIMEOUT_MS,
+      );
     } catch (err) {
       if (controller.signal.aborted) {
         if (mountedRef.current) {

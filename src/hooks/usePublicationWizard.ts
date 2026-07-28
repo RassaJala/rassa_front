@@ -319,11 +319,13 @@ export function usePublicationWizard({
         try {
           await removeItemMutation.mutateAsync({ pubId, itemId: id });
         } catch (err) {
-          console.error(
-            '[usePublicationWizard] compensateCreatedItems failed for id',
-            id,
-            err,
-          );
+          if (__DEV__) {
+            console.error(
+              '[usePublicationWizard] compensateCreatedItems failed for id',
+              id,
+              err,
+            );
+          }
         }
       }
     },
@@ -336,10 +338,12 @@ export function usePublicationWizard({
         await deletePublicationMutation.mutateAsync(pub.id_publicacion);
         publicationRef.current = undefined;
       } catch (err) {
-        console.error(
-          '[usePublicationWizard] compensateAutoCreatedPub failed:',
-          err,
-        );
+        if (__DEV__) {
+          console.error(
+            '[usePublicationWizard] compensateAutoCreatedPub failed:',
+            err,
+          );
+        }
       }
     },
     [deletePublicationMutation],
@@ -383,7 +387,9 @@ export function usePublicationWizard({
         }
       }
     } catch (error) {
-      console.error('[usePublicationWizard] persistItem failed:', error);
+      if (__DEV__) {
+        console.error('[usePublicationWizard] persistItem failed:', error);
+      }
       await compensateCreatedItems(pub.id_publicacion, createdIds);
       if (autoCreatedPub) {
         await compensateAutoCreatedPub(pub);
@@ -431,10 +437,12 @@ export function usePublicationWizard({
         if (!currentIds.has(id)) {
           const itemId = Number(id);
           if (!isValidItemId(itemId)) {
-            console.error(
-              '[usePublicationWizard] invalid item id for removal:',
-              id,
-            );
+            if (__DEV__) {
+              console.error(
+                '[usePublicationWizard] invalid item id for removal:',
+                id,
+              );
+            }
             continue;
           }
           try {
@@ -443,11 +451,13 @@ export function usePublicationWizard({
               itemId,
             });
           } catch (err) {
-            console.error(
-              '[usePublicationWizard] failed to delete stale item',
-              id,
-              err,
-            );
+            if (__DEV__) {
+              console.error(
+                '[usePublicationWizard] failed to delete stale item',
+                id,
+                err,
+              );
+            }
           }
         }
       }

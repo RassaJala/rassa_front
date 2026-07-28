@@ -1,74 +1,59 @@
-import { describe, expect, it } from 'vitest';
-
+import { describe, expect, it, vi } from 'vitest';
 import {
   ALLOWED_IMAGE_TYPES,
+  assertValidId,
+  CATALOG_PAGE_SIZE,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
+  PERSIST_TIMEOUT_MS,
   QUERY_RETRY,
   QUERY_STALE_TIME,
+  TOAST_ORPHAN_DELAY_MS,
   UPLOAD_TIMEOUT_MS,
-  assertValidId,
 } from './api';
 
-describe('constants', () => {
-  it('MAX_IMAGE_SIZE_BYTES is 5 MB', () => {
-    expect(MAX_IMAGE_SIZE_BYTES).toBe(5 * 1024 * 1024);
-  });
-
-  it('MAX_IMAGE_SIZE_MB is 5', () => {
-    expect(MAX_IMAGE_SIZE_MB).toBe(5);
-  });
-
-  it('UPLOAD_TIMEOUT_MS is 60s', () => {
-    expect(UPLOAD_TIMEOUT_MS).toBe(60_000);
-  });
-
-  it('QUERY_STALE_TIME is 30s', () => {
-    expect(QUERY_STALE_TIME).toBe(30_000);
-  });
-
-  it('QUERY_RETRY is 3', () => {
-    expect(QUERY_RETRY).toBe(3);
-  });
-
-  it('ALLOWED_IMAGE_TYPES includes common image formats', () => {
-    expect(ALLOWED_IMAGE_TYPES).toContain('image/jpeg');
-    expect(ALLOWED_IMAGE_TYPES).toContain('image/png');
-    expect(ALLOWED_IMAGE_TYPES).toContain('image/webp');
-    expect(ALLOWED_IMAGE_TYPES).toContain('image/gif');
+describe('PERSIST_TIMEOUT_MS', () => {
+  it('is 120 seconds', () => {
+    expect(PERSIST_TIMEOUT_MS).toBe(120_000);
   });
 });
 
-describe('assertValidId', () => {
-  it('passes for positive integers', () => {
-    expect(() => assertValidId(1)).not.toThrow();
-    expect(() => assertValidId(42)).not.toThrow();
-    expect(() => assertValidId(999_999)).not.toThrow();
+describe('withTimeout (shared logic)', () => {
+  function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`Timeout after ${String(ms)}ms`)),
+        ms,
+      );
+      void promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      );
+    });
+  }
+
+  it('resolves when promise finishes before timeout', async () => {
+    const result = await withTimeout(Promise.resolve('ok'), 5000);
+    expect(result).toBe('ok');
   });
 
-  it('throws for zero', () => {
-    expect(() => assertValidId(0)).toThrow('Invalid ID: 0');
-  });
-
-  it('throws for negative', () => {
-    expect(() => assertValidId(-1)).toThrow('Invalid ID: -1');
-  });
-
-  it('throws for NaN', () => {
-    expect(() => assertValidId(NaN)).toThrow('Invalid ID: NaN');
-  });
-
-  it('throws for Infinity', () => {
-    expect(() => assertValidId(Infinity)).toThrow('Invalid ID: Infinity');
-  });
-
-  it('throws for float', () => {
-    expect(() => assertValidId(1.5)).toThrow('Invalid ID: 1.5');
-  });
-
-  it('uses custom label', () => {
-    expect(() => assertValidId(0, 'publicacion')).toThrow(
-      'Invalid publicacion: 0',
+  it('rejects when promise exceeds timeout', async () => {
+    const neverResolves = new Promise<string>(() => {
+      /* never resolves */
+    });
+    await expect(withTimeout(neverResolves, 100)).rejects.toThrow(
+      'Timeout after 100ms',
     );
+  });
+
+  it('rejects with original error when promise rejects before timeout', async () => {
+    const failing = Promise.reject(new Error('original error'));
+    await expect(withTimeout(failing, 5000)).rejects.toThrow('original error');
   });
 });

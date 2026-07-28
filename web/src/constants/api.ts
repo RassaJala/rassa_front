@@ -15,6 +15,7 @@ export const CATALOG_PAGE_SIZE = 200;
 export const TOAST_DISMISS_MS = 3000;
 export const TOAST_EXIT_MS = 300;
 export const TOAST_ORPHAN_DELAY_MS = 3500;
+export const PERSIST_TIMEOUT_MS = 120_000;
 
 // ── ID validation guard ────────────────────────────────────
 
