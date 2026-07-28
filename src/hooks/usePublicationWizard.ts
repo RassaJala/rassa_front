@@ -14,6 +14,12 @@ import {
   useUpdateProductoSemanal,
 } from './usePublications';
 
+function logDev(...args: unknown[]): void {
+  if (__DEV__) {
+    console.error(...args);
+  }
+}
+
 export type WizardStep = 'fecha' | 'productos' | 'resumen' | 'publicar';
 
 export const WIZARD_STEPS: WizardStep[] = [
@@ -417,6 +423,30 @@ export function usePublicationWizard({
     updateItemMutation,
   ]);
 
+  const deleteStaleItems = useCallback(
+    async (
+      pubId: number,
+      existingIds: Set<string>,
+      currentIds: Set<string>,
+    ): Promise<void> => {
+      for (const id of existingIds) {
+        if (currentIds.has(id)) continue;
+
+        const itemId = Number(id);
+        if (!isValidItemId(itemId)) {
+          logDev('[usePublicationWizard] invalid item id for removal:', id);
+          continue;
+        }
+        try {
+          await removeItemMutation.mutateAsync({ pubId, itemId });
+        } catch (err) {
+          logDev('[usePublicationWizard] failed to delete stale item', id, err);
+        }
+      }
+    },
+    [removeItemMutation],
+  );
+
   const publish = useCallback(async () => {
     if (publishingRef.current) return;
     publishingRef.current = true;
@@ -433,34 +463,11 @@ export function usePublicationWizard({
       );
       const currentIds = new Set(localItems.map((i) => i.tempId));
 
-      for (const id of existingIds) {
-        if (!currentIds.has(id)) {
-          const itemId = Number(id);
-          if (!isValidItemId(itemId)) {
-            if (__DEV__) {
-              console.error(
-                '[usePublicationWizard] invalid item id for removal:',
-                id,
-              );
-            }
-            continue;
-          }
-          try {
-            await removeItemMutation.mutateAsync({
-              pubId: pub.id_publicacion,
-              itemId,
-            });
-          } catch (err) {
-            if (__DEV__) {
-              console.error(
-                '[usePublicationWizard] failed to delete stale item',
-                id,
-                err,
-              );
-            }
-          }
-        }
-      }
+      await deleteStaleItems(
+        pub.id_publicacion,
+        existingIds,
+        currentIds,
+      );
 
       await publishMutation.mutateAsync(pub.id_publicacion);
     } finally {
@@ -470,7 +477,7 @@ export function usePublicationWizard({
     localItems,
     productos,
     ensurePublicationAndPersist,
-    removeItemMutation,
+    deleteStaleItems,
     publishMutation,
   ]);
 
