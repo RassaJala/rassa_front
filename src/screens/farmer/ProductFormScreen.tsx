@@ -23,12 +23,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
 import { useTheme } from '@/store/ThemeContext';
 import type {
   ApiResponse,
   Category,
   FarmerStackParamList,
-  Producto,
   Unidad,
 } from '@/types';
 import { extractApiError } from '@/utils/apiError';
@@ -191,7 +191,10 @@ export default function ProductFormScreen({
   }, [nombreProducto, precio, categoriaId]);
 
   const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } =
+      (await ImagePicker.requestMediaLibraryPermissionsAsync()) as {
+        status: string;
+      };
     if (status !== 'granted') {
       setToastMessage('Se necesita permiso para acceder a la galería.');
       setToastType('error');
@@ -508,7 +511,7 @@ export default function ProductFormScreen({
                         className="h-48 w-48 rounded-xl"
                         resizeMode="cover"
                       />
-                      <View className="absolute bottom-0 right-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
+                      <View className="absolute right-0 bottom-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
                         <Pressable
                           onPress={() => handleRemoveImage(activeIndex)}
                           hitSlop={8}

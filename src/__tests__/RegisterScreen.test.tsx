@@ -156,7 +156,7 @@ describe('RegisterScreen', () => {
     fireEvent.press(getByText('Registrarse'));
 
     expect(
-      getByText('La contraseña debe tener al menos 6 caracteres.'),
+      getByText('La contraseña debe tener al menos 8 caracteres.'),
     ).toBeTruthy();
   });
 

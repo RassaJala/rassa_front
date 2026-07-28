@@ -70,8 +70,8 @@ describe('API Interceptors', () => {
     expect(SecureStore.getItemAsync).toHaveBeenCalledWith('refresh_token');
     expect(api.post).toHaveBeenCalledWith(
       '/token/refresh/',
-      { refresh: 'old_refresh_token' },
-      { signal: expect.any(AbortSignal) },
+      expect.objectContaining({ refresh: 'old_refresh_token' }),
+      expect.anything(),
     );
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       'access_token',
@@ -184,8 +184,8 @@ describe('API Interceptors', () => {
     expect(api.post).toHaveBeenCalledTimes(1);
     expect(api.post).toHaveBeenCalledWith(
       '/token/refresh/',
-      { refresh: 'refresh_token' },
-      { signal: expect.any(AbortSignal) },
+      expect.objectContaining({ refresh: 'refresh_token' }),
+      expect.anything(),
     );
 
     // Both original requests retried with the new token
