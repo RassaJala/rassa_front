@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { UseRegistrationFormReturn } from '@/hooks/useRegistrationForm';
 import api from '@/services/api';
+import type { RegisterPayload } from '@/types';
 import { parseApiError } from '@/utils/apiErrors';
 import {
   buildRegistrationPayload,
@@ -13,7 +14,7 @@ import {
 interface SubmitNewUserOptions {
   readonly onSuccess?: () => void;
   readonly onError?: (errorMsg: string) => void;
-  readonly submitFn?: (payload: any) => Promise<any>;
+  readonly submitFn?: (payload: RegisterPayload) => Promise<unknown>;
 }
 
 export interface UseSubmitNewUserReturn {
@@ -47,7 +48,7 @@ export function useSubmitNewUser(
         sexo: form.sexo,
         domicilio: form.domicilio,
         localidadId: form.catalog.localidadId,
-      });
+      }) as unknown as RegisterPayload;
 
       if (options?.submitFn) {
         return options.submitFn(payload);
