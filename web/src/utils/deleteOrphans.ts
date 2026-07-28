@@ -18,7 +18,7 @@ export async function deleteOrphans(
   let failures = 0;
 
   for (const existing of serverItems) {
-    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+    if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
     const existingId = String(existing.id_producto_semanal);
     if (!currentIds.has(existingId)) {
       try {

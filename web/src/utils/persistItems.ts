@@ -39,7 +39,8 @@ export async function persistItems(
   } catch (err) {
     if (itemsSaved) {
       throw new Error(
-        "Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.",
+        'Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.',
+        { cause: err },
       );
     }
     if (newServerIds.length > 0) {

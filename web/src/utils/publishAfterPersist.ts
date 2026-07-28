@@ -10,7 +10,7 @@ export async function publishAfterPersist(
     await publishFn(pubId);
   } catch {
     throw new Error(
-      "Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.",
+      'Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.',
     );
   }
   if (isMounted) navigateFn();
