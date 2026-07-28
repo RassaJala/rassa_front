@@ -191,6 +191,13 @@ export function ProductFormModal({
     [form, initialForm],
   );
 
+  // Revoke blob URL on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (form.imagePreview) URL.revokeObjectURL(form.imagePreview);
+    };
+  }, [form.imagePreview]);
+
   // ponytail: confirmación al cerrar con cambios sin guardar (#31)
   const handleClose = useCallback(() => {
     if (

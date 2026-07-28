@@ -56,7 +56,7 @@ describe('mediaUrl', () => {
   it('strips encoded traversal sequences', () => {
     const result = mediaUrl('/uploads/%2e%2e/etc/passwd');
     expect(result).toBe('https://api.example.com/uploads/etc/passwd');
-    expect(result).not.toContain('%2e');
+    expect(result).not.toContain('..');
   });
 
   it('strips encoded dots case-insensitively', () => {
@@ -67,7 +67,19 @@ describe('mediaUrl', () => {
   it('strips encoded slashes to prevent traversal', () => {
     const result = mediaUrl('/uploads/%2f..%2f..%2fetc/passwd');
     expect(result).toBe('https://api.example.com/uploads/etc/passwd');
-    expect(result).not.toContain('%2f');
+    expect(result).not.toContain('..');
+  });
+
+  it('preserves query params in relative paths', () => {
+    const result = mediaUrl('/uploads/photo.jpg?token=abc123');
+    expect(result).toBe(
+      'https://api.example.com/uploads/photo.jpg?token=abc123',
+    );
+  });
+
+  it('preserves hash fragments in relative paths', () => {
+    const result = mediaUrl('/uploads/photo.jpg#section');
+    expect(result).toBe('https://api.example.com/uploads/photo.jpg#section');
   });
 
   it('rejects external URLs from untrusted domains', () => {

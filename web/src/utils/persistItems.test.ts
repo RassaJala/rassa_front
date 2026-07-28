@@ -148,7 +148,7 @@ describe('publishAfterPersist', () => {
     const publishFn = vi.fn().mockResolvedValue(undefined);
     const navigateFn = vi.fn();
 
-    await publishAfterPersist(1, publishFn, navigateFn, true);
+    await publishAfterPersist(1, publishFn, navigateFn, { current: true });
 
     expect(publishFn).toHaveBeenCalledWith(1);
     expect(navigateFn).toHaveBeenCalled();
@@ -158,7 +158,7 @@ describe('publishAfterPersist', () => {
     const publishFn = vi.fn().mockResolvedValue(undefined);
     const navigateFn = vi.fn();
 
-    await publishAfterPersist(1, publishFn, navigateFn, false);
+    await publishAfterPersist(1, publishFn, navigateFn, { current: false });
 
     expect(publishFn).toHaveBeenCalledWith(1);
     expect(navigateFn).not.toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe('publishAfterPersist', () => {
     const navigateFn = vi.fn();
 
     await expect(
-      publishAfterPersist(1, publishFn, navigateFn, true),
+      publishAfterPersist(1, publishFn, navigateFn, { current: true }),
     ).rejects.toThrow(
       'Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.',
     );
@@ -181,7 +181,7 @@ describe('publishAfterPersist', () => {
     const navigateFn = vi.fn();
 
     await expect(
-      publishAfterPersist(1, publishFn, navigateFn, true),
+      publishAfterPersist(1, publishFn, navigateFn, { current: true }),
     ).rejects.toThrow(
       'Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.',
     );
@@ -191,7 +191,7 @@ describe('publishAfterPersist', () => {
     const publishFn = vi.fn().mockResolvedValue(undefined);
     const navigateFn = vi.fn();
 
-    await publishAfterPersist(42, publishFn, navigateFn, true);
+    await publishAfterPersist(42, publishFn, navigateFn, { current: true });
 
     expect(publishFn).toHaveBeenCalledWith(42);
   });

@@ -4,7 +4,7 @@ export async function publishAfterPersist(
   pubId: number,
   publishFn: (id: number) => Promise<unknown>,
   navigateFn: () => void,
-  isMounted: boolean,
+  mountedRef: { readonly current: boolean },
 ): Promise<void> {
   try {
     await publishFn(pubId);
@@ -13,5 +13,5 @@ export async function publishAfterPersist(
       'Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.',
     );
   }
-  if (isMounted) navigateFn();
+  if (mountedRef.current) navigateFn();
 }

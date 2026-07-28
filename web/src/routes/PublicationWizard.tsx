@@ -505,7 +505,7 @@ export function PublicationWizard() {
           pubId,
           (id) => publishMutation.mutateAsync(id),
           () => void navigate('/agricultor/publicaciones'),
-          mountedRef.current,
+          mountedRef,
         ),
     });
   }

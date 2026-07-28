@@ -13,15 +13,19 @@ const TRUSTED_DOMAINS = [BASE_HOST, 'localhost', '127.0.0.1'].filter(Boolean);
 
 const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript|blob|file):/i;
 
-function normalizePercentEncoding(s: string): string {
+function fullyDecode(s: string): string {
   let prev = s;
-  let curr = prev.replace(/%25/gi, '%');
-  let limit = 3;
-  while (curr !== prev && limit-- > 0) {
-    prev = curr;
-    curr = curr.replace(/%25/gi, '%');
+  let limit = 5;
+  while (limit-- > 0) {
+    try {
+      const next = decodeURIComponent(prev);
+      if (next === prev) break;
+      prev = next;
+    } catch {
+      break;
+    }
   }
-  return curr;
+  return prev;
 }
 
 export function mediaUrl(path: string | null | undefined): string | null {
@@ -40,15 +44,14 @@ export function mediaUrl(path: string | null | undefined): string | null {
     return null;
   }
   if (BLOCKED_PROTOCOLS.test(path)) return null;
-  const decoded = normalizePercentEncoding(path);
+  const decoded = fullyDecode(path);
+  if (BLOCKED_PROTOCOLS.test(decoded)) return null;
   const clean = decoded
-    .replace(/%00/gi, '')
-    .replace(/%2e/gi, '')
-    .replace(/%2f/gi, '')
+    .replace(/\0/g, '')
     .replace(/\.\./g, '')
-    .replace(/\/\/+/g, '/')
+    .replace(/\/+/g, '/')
     .replace(/^\/+/, '/')
-    .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑüÜ0-9_%\-/.]/g, '');
+    .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑüÜ0-9_%\-/.?&=#]/g, '');
   const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
   return `${BASE}${prefixed}`;
 }
