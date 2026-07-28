@@ -46,12 +46,12 @@ export function ChatListPage() {
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-          <div
-            role="status"
-            aria-label="Cargando conversaciones"
-            className="h-6 w-6 animate-spin rounded-full border-2"
-            style={{ borderColor: c.border, borderTopColor: c.brand }}
-          />
+            <div
+              role="status"
+              aria-label="Cargando conversaciones"
+              className="h-6 w-6 animate-spin rounded-full border-2"
+              style={{ borderColor: c.border, borderTopColor: c.brand }}
+            />
           </div>
         )}
 
