@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAxiosPost = vi.fn();
 const mockInstancePost = vi.fn();
@@ -11,12 +11,12 @@ const responseFns: Array<{
   onRejected: (error: unknown) => unknown;
 }> = [];
 
-vi.mock('axios', () => {
+vi.mock("axios", () => {
   const handler = {
     apply(_target: unknown, _thisArg: unknown, args: unknown[]) {
       const config = args[0] as Record<string, unknown>;
-      const method = (config.method as string) ?? 'get';
-      if (method === 'post') return mockInstancePost(config);
+      const method = (config.method as string) ?? "get";
+      if (method === "post") return mockInstancePost(config);
       return mockInstanceGet(config);
     },
   };
@@ -59,18 +59,18 @@ vi.mock('axios', () => {
   };
 });
 
-vi.mock('axios-retry', () => ({
+vi.mock("axios-retry", () => ({
   default: vi.fn(),
   isNetworkOrIdempotentRequestError: vi.fn(() => false),
   exponentialDelay: vi.fn(() => 1000),
 }));
 
 const mockRedirect = vi.fn();
-vi.mock('./navigate', () => ({
+vi.mock("./navigate", () => ({
   redirect: mockRedirect,
 }));
 
-describe('api.ts token interceptor', () => {
+describe("api.ts token interceptor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requestFns.length = 0;
@@ -86,30 +86,30 @@ describe('api.ts token interceptor', () => {
 
   async function loadApi() {
     vi.resetModules();
-    await import('./api');
+    await import("./api");
     await new Promise((r) => setTimeout(r, 0));
   }
 
-  it('attaches Bearer token to requests', async () => {
-    localStorage.setItem('token', 'test-access-token');
+  it("attaches Bearer token to requests", async () => {
+    localStorage.setItem("token", "test-access-token");
     await loadApi();
 
     expect(requestFns.length).toBeGreaterThan(0);
     const config = requestFns[0]({
-      url: '/publicaciones/',
+      url: "/publicaciones/",
       headers: {} as Record<string, string>,
     });
     expect((config.headers as Record<string, string>).Authorization).toBe(
-      'Bearer test-access-token',
+      "Bearer test-access-token",
     );
   });
 
-  it('does not attach token to public endpoints', async () => {
-    localStorage.setItem('token', 'test-access-token');
+  it("does not attach token to public endpoints", async () => {
+    localStorage.setItem("token", "test-access-token");
     await loadApi();
 
     const config = requestFns[0]({
-      url: '/token/',
+      url: "/token/",
       headers: {} as Record<string, string>,
     });
     expect(
@@ -117,9 +117,9 @@ describe('api.ts token interceptor', () => {
     ).toBeUndefined();
   });
 
-  it('calls refresh endpoint on 401 and stores new tokens', async () => {
-    sessionStorage.setItem('refresh_token', 'refresh-123');
-    localStorage.setItem('token', 'old-token');
+  it("calls refresh endpoint on 401 and stores new tokens", async () => {
+    sessionStorage.setItem("refresh_token", "refresh-123");
+    localStorage.setItem("token", "old-token");
     await loadApi();
 
     expect(responseFns.length).toBeGreaterThan(0);
@@ -127,96 +127,318 @@ describe('api.ts token interceptor', () => {
 
     const error401 = {
       config: {
-        url: '/publicaciones/',
-        headers: { Authorization: 'Bearer old-token' } as Record<
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
           string,
           string
         >,
-        method: 'get',
+        method: "get",
       },
       response: { status: 401 },
     };
 
     mockAxiosPost.mockResolvedValueOnce({
-      data: { access: 'new-token', refresh: 'new-refresh' },
+      data: { access: "new-token", refresh: "new-refresh" },
     });
     mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
 
     await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
 
     expect(mockAxiosPost).toHaveBeenCalledWith(
-      expect.stringContaining('/token/refresh/'),
-      { refresh: 'refresh-123' },
+      expect.stringContaining("/token/refresh/"),
+      { refresh: "refresh-123" },
       { timeout: 10_000 },
     );
-    expect(localStorage.getItem('token')).toBe('new-token');
-    expect(sessionStorage.getItem('refresh_token')).toBe('new-refresh');
+    expect(localStorage.getItem("token")).toBe("new-token");
+    expect(sessionStorage.getItem("refresh_token")).toBe("new-refresh");
   });
 
-  it('clears tokens and redirects to /login on refresh failure', async () => {
-    localStorage.setItem('token', 'old-token');
-    localStorage.setItem('user', 'some-user');
-    sessionStorage.setItem('refresh_token', 'bad-refresh');
+  it("clears tokens and redirects to /login on refresh failure", async () => {
+    localStorage.setItem("token", "old-token");
+    localStorage.setItem("user", "some-user");
+    sessionStorage.setItem("refresh_token", "bad-refresh");
     await loadApi();
 
     const interceptor = responseFns[0];
 
     const error401 = {
       config: {
-        url: '/publicaciones/',
-        headers: { Authorization: 'Bearer old-token' } as Record<
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
           string,
           string
         >,
-        method: 'get',
+        method: "get",
       },
       response: { status: 401 },
     };
 
-    mockAxiosPost.mockRejectedValueOnce(new Error('refresh failed'));
+    mockAxiosPost.mockRejectedValueOnce(new Error("refresh failed"));
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
 
-    expect(localStorage.getItem('token')).toBeNull();
-    expect(localStorage.getItem('user')).toBeNull();
-    expect(sessionStorage.getItem('refresh_token')).toBeNull();
-    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
+    expect(sessionStorage.getItem("refresh_token")).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith("/login", {
       from: expect.any(String),
     });
   });
 
-  it('passes through non-401 errors', async () => {
+  it("passes through non-401 errors", async () => {
     await loadApi();
     const interceptor = responseFns[0];
 
     const error500 = {
-      config: { url: '/publicaciones/' },
+      config: { url: "/publicaciones/" },
       response: { status: 500 },
     };
 
     await expect(interceptor.onRejected(error500)).rejects.toBe(error500);
   });
 
-  it('does not redirect for /token/refresh/ 401s', async () => {
-    localStorage.setItem('token', 'old-token');
-    sessionStorage.setItem('refresh_token', 'bad-refresh');
+  it("does not redirect for /token/refresh/ 401s", async () => {
+    localStorage.setItem("token", "old-token");
+    sessionStorage.setItem("refresh_token", "bad-refresh");
     await loadApi();
 
     const interceptor = responseFns[0];
 
     const error401Refresh = {
       config: {
-        url: '/token/refresh/',
-        headers: { Authorization: 'Bearer old-token' } as Record<
+        url: "/token/refresh/",
+        headers: { Authorization: "Bearer old-token" } as Record<
           string,
           string
         >,
-        method: 'post',
+        method: "post",
       },
       response: { status: 401 },
     };
 
     await expect(interceptor.onRejected(error401Refresh)).rejects.toThrow();
     expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  // ── Security: token handling ──────────────────────────────
+
+  it("SECURITY: does not store empty token", async () => {
+    localStorage.setItem("token", "");
+    await loadApi();
+
+    const config = requestFns[0]({
+      url: "/publicaciones/",
+      headers: {} as Record<string, string>,
+    });
+    expect(
+      (config.headers as Record<string, string>).Authorization,
+    ).toBeUndefined();
+  });
+
+  it("SECURITY: does not attach token to /auth/register/ endpoint", async () => {
+    localStorage.setItem("token", "test-token");
+    await loadApi();
+
+    const config = requestFns[0]({
+      url: "/auth/register/",
+      headers: {} as Record<string, string>,
+    });
+    expect(
+      (config.headers as Record<string, string>).Authorization,
+    ).toBeUndefined();
+  });
+
+  it("SECURITY: clears ALL auth data on refresh failure", async () => {
+    localStorage.setItem("token", "old-token");
+    localStorage.setItem("user", JSON.stringify({ id: 1 }));
+    sessionStorage.setItem("refresh_token", "bad-refresh");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockRejectedValueOnce(new Error("refresh failed"));
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
+    expect(sessionStorage.getItem("refresh_token")).toBeNull();
+  });
+
+  it("SECURITY: stores new refresh token when backend rotates", async () => {
+    sessionStorage.setItem("refresh_token", "old-refresh");
+    localStorage.setItem("token", "old-token");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({
+      data: { access: "new-access", refresh: "new-refresh-token" },
+    });
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
+
+    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
+
+    expect(sessionStorage.getItem("refresh_token")).toBe("new-refresh-token");
+  });
+
+  it("SECURITY: keeps old refresh token when backend does not rotate", async () => {
+    sessionStorage.setItem("refresh_token", "keep-this");
+    localStorage.setItem("token", "old-token");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({
+      data: { access: "new-access" },
+    });
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
+
+    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
+
+    expect(sessionStorage.getItem("refresh_token")).toBe("keep-this");
+  });
+
+  it("SECURITY: does not redirect to non-login paths", async () => {
+    localStorage.setItem("token", "old-token");
+    sessionStorage.setItem("refresh_token", "bad-refresh");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockRejectedValueOnce(new Error("refresh failed"));
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    expect(mockRedirect).toHaveBeenCalledWith("/login", {
+      from: expect.any(String),
+    });
+  });
+
+  it("SECURITY: rejects refresh with 10s timeout", async () => {
+    localStorage.setItem("token", "old-token");
+    sessionStorage.setItem("refresh_token", "slow-refresh");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockImplementation(
+      () =>
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 100),
+        ),
+    );
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    expect(localStorage.getItem("token")).toBeNull();
+  });
+
+  it("SECURITY: handles missing refresh_token gracefully", async () => {
+    localStorage.setItem("token", "old-token");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    expect(mockRedirect).toHaveBeenCalledWith("/login", {
+      from: expect.any(String),
+    });
+  });
+
+  it("SECURITY: does not redirect when already on /login", async () => {
+    Object.defineProperty(window, "location", {
+      value: { pathname: "/login" },
+      writable: true,
+    });
+
+    localStorage.setItem("token", "old-token");
+    sessionStorage.setItem("refresh_token", "bad-refresh");
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: {
+        url: "/publicaciones/",
+        headers: { Authorization: "Bearer old-token" } as Record<
+          string,
+          string
+        >,
+        method: "get",
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockRejectedValueOnce(new Error("refresh failed"));
+
+    // Should NOT trigger redirect when already on login
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
   });
 });
