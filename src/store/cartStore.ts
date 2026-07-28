@@ -90,7 +90,8 @@ export const useCartStore = create<CartState>()(
       storage: {
         getItem: async (k) => {
           const v = await AsyncStorage.getItem(k);
-          return v ? JSON.parse(v) : null;
+          // ponytail: JSON.parse returns any, cast to unknown for Zustand persist
+          return v ? (JSON.parse(v) as unknown) : null;
         },
         setItem: async (k, v) => {
           await AsyncStorage.setItem(k, JSON.stringify(v));
