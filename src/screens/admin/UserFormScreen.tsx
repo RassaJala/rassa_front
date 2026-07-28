@@ -116,7 +116,7 @@ function UserFormScreenContent(): React.JSX.Element {
           err,
         );
         if (retryCount < 1 && active) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           if (active) {
             return verifyAuth(retryCount + 1);
           }
@@ -187,10 +187,10 @@ function UserFormScreenContent(): React.JSX.Element {
           <ErrorBoundary>
             <RegistrationFormFields
               form={form}
-            colors={adminColors}
-            setErrorMessage={setErrorMessage}
-            onOpenDatePicker={() => setIsDatePickerVisible(true)}
-            disabled={isSubmitting}
+              colors={adminColors}
+              setErrorMessage={setErrorMessage}
+              onOpenDatePicker={() => setIsDatePickerVisible(true)}
+              disabled={isSubmitting}
             />
           </ErrorBoundary>
 

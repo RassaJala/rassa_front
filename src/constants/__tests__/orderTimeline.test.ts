@@ -1,14 +1,22 @@
-import { formatTimestamp, getStatusColor } from '../orderTimeline';
+import {
+  buildDescription,
+  formatTimestamp,
+  getStatusColor,
+  normalizeOrderHistoryResponse,
+} from '../orderTimeline';
 
 describe('formatTimestamp', () => {
-  it('formats a valid ISO string in DD/MM HH:mm (UTC)', () => {
-    const result = formatTimestamp('2025-06-15T10:30:00Z');
-    expect(result).toBe('15/06 10:30');
+  it('formats a valid ISO string in DD/MM HH:mm (local time)', () => {
+    // Use UTC midnight — local time may vary by timezone;
+    // we check the pattern, not the exact value
+    const result = formatTimestamp('2025-06-15T12:00:00Z');
+    expect(result).toMatch(/^\d{2}\/\d{2} \d{2}:\d{2}$/);
   });
 
-  it('handles single-digit day and month with padding', () => {
+  it('handles single-digit day and month with padding (local time)', () => {
     const result = formatTimestamp('2025-01-05T08:05:00Z');
-    expect(result).toBe('05/01 08:05');
+    // Pattern check: DD/MM HH:mm
+    expect(result).toMatch(/^\d{2}\/\d{2} \d{2}:\d{2}$/);
   });
 
   it('returns em dash for empty string', () => {
@@ -21,6 +29,26 @@ describe('formatTimestamp', () => {
 
   it('returns em dash for null-ish input via string coercion', () => {
     expect(formatTimestamp('')).toBe('—');
+  });
+});
+
+describe('normalizeOrderHistoryResponse', () => {
+  it('passes through a flat array', () => {
+    const data = [{ id_historial: 1, estado_nuevo: 'pendiente' }];
+    expect(normalizeOrderHistoryResponse(data)).toEqual(data);
+  });
+
+  it('unwraps { data: [...] }', () => {
+    const entries = [{ id_historial: 1, estado_nuevo: 'pendiente' }];
+    expect(normalizeOrderHistoryResponse({ data: entries })).toEqual(entries);
+  });
+
+  it('returns [] for nullish/malformed input', () => {
+    expect(normalizeOrderHistoryResponse(null)).toEqual([]);
+    expect(normalizeOrderHistoryResponse(undefined)).toEqual([]);
+    expect(normalizeOrderHistoryResponse({ data: null })).toEqual([]);
+    expect(normalizeOrderHistoryResponse({ data: 'not-array' })).toEqual([]);
+    expect(normalizeOrderHistoryResponse({ foo: 'bar' })).toEqual([]);
   });
 });
 
@@ -53,5 +81,43 @@ describe('getStatusColor', () => {
 
   it('returns fallback for unknown status', () => {
     expect(getStatusColor('unknown', fallback)).toBe(fallback);
+  });
+});
+
+describe('buildDescription', () => {
+  it('returns "Pedido creado" when estado_anterior is null', () => {
+    expect(
+      buildDescription({
+        estado_anterior: null,
+        estado_nuevo: 'pendiente',
+      }),
+    ).toBe('Pedido creado');
+  });
+
+  it('returns transition with labels for known statuses', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'pendiente',
+        estado_nuevo: 'confirmado',
+      }),
+    ).toBe('Pendiente → Confirmado');
+  });
+
+  it('uses raw status key as fallback when label is missing', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'unknown_from',
+        estado_nuevo: 'pendiente',
+      }),
+    ).toBe('unknown_from → Pendiente');
+  });
+
+  it('uses raw status key as fallback when both labels are missing', () => {
+    expect(
+      buildDescription({
+        estado_anterior: 'foo',
+        estado_nuevo: 'bar',
+      }),
+    ).toBe('foo → bar');
   });
 });

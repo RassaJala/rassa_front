@@ -1,9 +1,9 @@
+import { ROLE_OPTIONS as SHARED_ROLE_OPTIONS } from '@/common/roles';
+
 import { colors } from './colors';
 
 export { ROLE_LABELS } from '@/common/roles';
 export type { UserRole } from '@/common/roles';
-
-import { ROLE_OPTIONS as SHARED_ROLE_OPTIONS } from '@/common/roles';
 
 export const ROLE_FILTERS = [
   { label: 'Todos', value: null as string | null },

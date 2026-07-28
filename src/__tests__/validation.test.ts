@@ -358,9 +358,7 @@ describe('validation utilities', () => {
     });
 
     it('retorna error si la nueva contraseña es menor al mínimo', () => {
-      expect(
-        validatePasswordChange('oldPass123', 'short', 'short'),
-      ).toBe(
+      expect(validatePasswordChange('oldPass123', 'short', 'short')).toBe(
         `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
       );
     });

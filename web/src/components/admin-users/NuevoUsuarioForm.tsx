@@ -130,7 +130,11 @@ export default function NuevoUsuarioForm({
       <UserRoleSelector
         formRole={formRole}
         setFormRole={setFormRole}
-        roleColors={{ farmer: webColors.primary, seller: webColors.accent, buyer: webColors.info }}
+        roleColors={{
+          farmer: webColors.primary,
+          seller: webColors.accent,
+          buyer: webColors.info,
+        }}
         muted={muted}
         border={border}
       />

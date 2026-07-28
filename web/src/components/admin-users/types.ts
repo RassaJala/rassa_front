@@ -1,6 +1,9 @@
 import { colors } from '../../constants/colors';
 
-import { ROLE_LABELS, ROLE_OPTIONS as SHARED_ROLE_OPTIONS } from '@/common/roles';
+import {
+  ROLE_LABELS,
+  ROLE_OPTIONS as SHARED_ROLE_OPTIONS,
+} from '@/common/roles';
 
 export type UserRole = 'admin' | 'farmer' | 'seller' | 'buyer';
 

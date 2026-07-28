@@ -125,19 +125,25 @@ describe('UserFormScreen', () => {
   it('redirects back if auth check fails after retry', async () => {
     mockApiGet.mockRejectedValue(new Error('Auth failed'));
     renderScreen();
-    await waitFor(() => {
-      expect(mockGoBack).toHaveBeenCalledTimes(1);
-      expect(mockApiGet).toHaveBeenCalledTimes(2);
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(mockGoBack).toHaveBeenCalledTimes(1);
+        expect(mockApiGet).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 2000 },
+    );
   });
 
   it('redirects back if user role is not admin after retry', async () => {
     mockApiGet.mockResolvedValue({ data: { data: { role: 'buyer' } } });
     renderScreen();
-    await waitFor(() => {
-      expect(mockGoBack).toHaveBeenCalledTimes(1);
-      expect(mockApiGet).toHaveBeenCalledTimes(2);
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(mockGoBack).toHaveBeenCalledTimes(1);
+        expect(mockApiGet).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 2000 },
+    );
   });
 
   it('retries auth check on failure and succeeds on second attempt', async () => {

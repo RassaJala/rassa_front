@@ -120,9 +120,12 @@ describe('parseApiError', () => {
         data: { detail: 'Conflicto: Ya existe un registro con esos datos.' },
       },
     };
-    const wrapped = new Error('Conflicto: Ya existe un registro con esos datos.', {
-      cause: axiosError,
-    });
+    const wrapped = new Error(
+      'Conflicto: Ya existe un registro con esos datos.',
+      {
+        cause: axiosError,
+      },
+    );
     expect(parseApiError(wrapped)).toBe(
       'Conflicto: Ya existe un registro con esos datos.',
     );
@@ -137,7 +140,9 @@ describe('parseApiError', () => {
       },
     };
     const wrapped = new Error('Validation failed', { cause: axiosError });
-    expect(parseApiError(wrapped)).toContain('email: Este campo es obligatorio.');
+    expect(parseApiError(wrapped)).toContain(
+      'email: Este campo es obligatorio.',
+    );
   });
 });
 

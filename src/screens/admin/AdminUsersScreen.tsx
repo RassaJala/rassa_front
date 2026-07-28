@@ -58,10 +58,10 @@ export default function AdminUsersScreen(): React.JSX.Element {
       <ScrollView className="flex-1 px-4 py-6">
         <View className="mb-6 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-2xl font-bold dark:text-gray-100">
               RASSA
             </Text>
-            <Text className="text-xl font-semibold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-xl font-semibold dark:text-gray-100">
               Usuarios
             </Text>
           </View>

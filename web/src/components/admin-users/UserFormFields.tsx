@@ -35,8 +35,14 @@ interface UserFormFieldsProps {
   readonly brand: string;
   readonly coral: string;
   readonly catalogs: {
-    readonly municipios: readonly { readonly id_municipio: number; readonly nombre: string }[];
-    readonly localidades: readonly { readonly id_localidad: number; readonly nombre: string }[];
+    readonly municipios: readonly {
+      readonly id_municipio: number;
+      readonly nombre: string;
+    }[];
+    readonly localidades: readonly {
+      readonly id_localidad: number;
+      readonly nombre: string;
+    }[];
     readonly selectedMunicipioId: number | null;
     readonly localidadId: number | null;
     readonly isLoadingMunicipios: boolean;

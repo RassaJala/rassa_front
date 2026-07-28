@@ -71,7 +71,7 @@ export default function ChatListScreen(): React.JSX.Element {
           icon="plus"
           label="Nuevo chat"
           onPress={() => navigation.navigate('StartChat')}
-          className="absolute bottom-4 right-4"
+          className="absolute right-4 bottom-4"
         />
       ) : null}
     </View>

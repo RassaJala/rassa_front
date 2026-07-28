@@ -177,9 +177,7 @@ export default function RegistrationFormFields({
                 borderRadius: 10,
                 borderWidth: 1.5,
                 borderColor: isActive ? colors.brand : colors.border,
-                backgroundColor: isActive
-                  ? colors.accentBg
-                  : colors.segBg,
+                backgroundColor: isActive ? colors.accentBg : colors.segBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

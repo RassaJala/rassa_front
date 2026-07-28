@@ -16,13 +16,17 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const SERVER_ERROR_THRESHOLD = 500;
+
 axiosRetry(api, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (
       error.config?.method === 'get' &&
-      axiosRetry.isNetworkOrIdempotentRequestError(error)
+      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        (error.response?.status !== undefined &&
+          error.response.status >= SERVER_ERROR_THRESHOLD))
     );
   },
 });

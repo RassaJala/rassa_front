@@ -162,8 +162,18 @@ describe('WebDatePickerModal', () => {
     fireEvent.click(screen.getByText(String(currentYear - 18)));
 
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     for (const m of months) {
       expect(screen.getByText(m)).toBeInTheDocument();
