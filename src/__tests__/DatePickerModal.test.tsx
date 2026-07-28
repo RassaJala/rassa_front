@@ -9,24 +9,28 @@ import DatePickerModal from '@/components/DatePickerModal';
 const mockOnValueChange = jest.fn();
 let mockDateTimePickerValue = new Date(2000, 0, 15);
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  __esModule: true,
-  default: jest.fn(
-    ({
-      value,
-      onChange,
-      testID: _testID,
-    }: {
-      readonly value: Date;
-      readonly onChange: (e: unknown, d?: Date) => void;
-      readonly testID: string;
-    }) => {
-      mockDateTimePickerValue = value;
-      mockOnValueChange.mockImplementation(onChange);
-      return null;
-    },
-  ),
-}));
+jest.mock('@react-native-community/datetimepicker', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = jest.requireActual('react');
+  return {
+    __esModule: true,
+    default: jest.fn(
+      ({
+        value,
+        onChange,
+        testID,
+      }: {
+        readonly value: Date;
+        readonly onChange: (e: unknown, d?: Date) => void;
+        readonly testID: string;
+      }) => {
+        mockDateTimePickerValue = value;
+        mockOnValueChange.mockImplementation(onChange);
+        return React.createElement('View', { testID });
+      },
+    ),
+  };
+});
 
 // ── Helpers ─────────────────────────────────────────
 function mockAndroid(): void {
@@ -84,11 +88,10 @@ describe('DatePickerModal', () => {
       );
 
       // Simulate native picker selection
-      mockOnValueChange.mock.calls[0]?.[1] &&
-        mockOnValueChange(
-          { type: 'set', nativeEvent: { timestamp: 0, utcOffset: 0 } },
-          new Date(2000, 0, 15),
-        );
+      mockOnValueChange(
+        { type: 'set', nativeEvent: { timestamp: 0, utcOffset: 0 } },
+        new Date(2000, 0, 15),
+      );
 
       expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
       expect(onClose).toHaveBeenCalledTimes(1);

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test file for apiError utility */
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError, extractFieldErrors } from '@/utils/apiError';
 
 // Mock __DEV__ for tests
 (global as any).__DEV__ = true;
@@ -136,5 +136,133 @@ describe('extractApiError', () => {
     const result = extractApiError(axiosError, ['nombre', 'detail']);
 
     expect(result).toBe('Error del servidor. Intenta de nuevo.');
+  });
+});
+
+describe('extractFieldErrors', () => {
+  it('devuelve mensaje general para non-axios errors', () => {
+    const result = extractFieldErrors(new Error('Algo salió mal'), []);
+
+    expect(result).toEqual({ fields: {}, general: 'Algo salió mal' });
+  });
+
+  it('devuelve default para unknown', () => {
+    const result = extractFieldErrors(null, []);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'Error desconocido.',
+    });
+  });
+
+  it('devuelve default cuando no hay response.data', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: { data: null },
+    };
+
+    const result = extractFieldErrors(axiosError, []);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'Error del servidor. Intenta de nuevo.',
+    });
+  });
+
+  it('detecta HTML string data', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: '<!DOCTYPE html><html>error</html>',
+        status: 500,
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, []);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'Error interno del servidor. Revisa los logs del backend.',
+    });
+  });
+
+  it('extrae errores por campo desde arrays', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: { nombre: ['El nombre es obligatorio.'] },
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, ['nombre']);
+
+    expect(result).toEqual({
+      fields: { nombre: 'El nombre es obligatorio.' },
+      general: null,
+    });
+  });
+
+  it('extrae errores por campo desde strings', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: { telefono: 'Número inválido.' },
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, ['telefono']);
+
+    expect(result).toEqual({
+      fields: { telefono: 'Número inválido.' },
+      general: null,
+    });
+  });
+
+  it('retorna detail como general cuando no hay fieldKeys', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: { detail: 'Credenciales inválidas.' },
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, []);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'Credenciales inválidas.',
+    });
+  });
+
+  it('retorna primer error de data si ningún field key coincide', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: { otro_campo: ['error'] },
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, ['nombre']);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'otro_campo: error',
+    });
+  });
+
+  it('cae a default si no hay fieldKeys match ni entries con arrays', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: { foo: 'bar' },
+      },
+    };
+
+    const result = extractFieldErrors(axiosError, ['nombre']);
+
+    expect(result).toEqual({
+      fields: {},
+      general: 'Error del servidor. Intenta de nuevo.',
+    });
   });
 });
