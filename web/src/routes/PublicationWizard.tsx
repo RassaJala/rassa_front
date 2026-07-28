@@ -31,8 +31,10 @@ import {
   validateItem,
 } from "../utils/publicationWizard";
 import { extractApiError } from "../utils/apiError";
+import { deleteOrphans as deleteOrphansCore } from "../utils/deleteOrphans";
 import { persistItems as persistItemsCore } from "../utils/persistItems";
 import { publishAfterPersist } from "../utils/publishAfterPersist";
+import { upsertItems as upsertItemsCore } from "../utils/upsertItems";
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
@@ -309,68 +311,45 @@ export function PublicationWizard() {
   }
 
   // ── Phase 1: Upsert items ──
-  async function upsertItems(
+  async function upsertItemsWrapper(
     pubId: number,
     signal?: AbortSignal,
   ): Promise<{
     tempIdToServerId: Map<string, number>;
     newServerIds: number[];
   }> {
-    const newServerIds: number[] = [];
-    const tempIdToServerId = new Map<string, number>();
+    const result = await upsertItemsCore(
+      pubId,
+      items.map((i) => ({
+        tempId: i.tempId,
+        isNew: i.isNew,
+        fk_producto: i.fk_producto,
+        fk_unidad: i.fk_unidad,
+        stock: i.stock,
+        precio: i.precio,
+        imageFile: i.imageFile,
+      })),
+      {
+        add: (vars) => addItemMutation.mutateAsync(vars),
+        update: (vars) => updateItemMutation.mutateAsync(vars),
+        uploadImage: (vars) => uploadMutation.mutateAsync(vars),
+        hasServerPub: pubRef.current !== null,
+      },
+      signal,
+    );
 
-    for (const item of items) {
-      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-      const serverId = Number(item.tempId);
-      const isExisting = !item.isNew && pubRef.current !== null;
-
-      const payload = {
-        fk_producto: item.fk_producto,
-        fk_unidad: item.fk_unidad,
-        stock: Number(item.stock),
-        precio: Number(item.precio),
-      };
-
-      let itemId: number;
-
-      if (isExisting) {
-        const result = await updateItemMutation.mutateAsync({
-          pubId,
-          itemId: serverId,
-          payload,
-        });
-        itemId = result.data.id_producto_semanal;
-      } else {
-        const result = await addItemMutation.mutateAsync({
-          pubId,
-          payload,
-        });
-        itemId = result.data.id_producto_semanal;
-        newServerIds.push(itemId);
-      }
-
-      tempIdToServerId.set(item.tempId, itemId);
+    // Sync local item tempIds with server IDs
+    for (const [tempId, serverId] of result.tempIdToServerId) {
       setItems((prev) =>
         prev.map((i) =>
-          i.tempId === item.tempId
-            ? { ...i, tempId: String(itemId), isNew: false }
+          i.tempId === tempId
+            ? { ...i, tempId: String(serverId), isNew: false }
             : i,
         ),
       );
-
-      if (item.imageFile) {
-        if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-        const formData = new FormData();
-        formData.append("imagen", item.imageFile);
-        await uploadMutation.mutateAsync({
-          pubId,
-          itemId,
-          formData,
-        });
-      }
     }
 
-    return { tempIdToServerId, newServerIds };
+    return result;
   }
 
   // ── Phase 2: Refresh pubRef snapshot ──
@@ -384,12 +363,11 @@ export function PublicationWizard() {
   }
 
   // ── Phase 3: Delete orphan items ──
-  async function deleteOrphans(
+  async function deleteOrphansWrapper(
     pubId: number,
     tempIdToServerId: Map<string, number>,
     signal?: AbortSignal,
   ): Promise<number> {
-    let failures = 0;
     const currentIds = new Set<string>(
       [...tempIdToServerId.values()].map(String),
     );
@@ -402,28 +380,16 @@ export function PublicationWizard() {
         if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(String(parsed));
       }
     }
-    for (const existing of pubRef.current.productos ?? []) {
-      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-      const existingId = String(existing.id_producto_semanal);
-      if (!currentIds.has(existingId)) {
-        try {
-          await removeItemMutation.mutateAsync({
-            pubId,
-            itemId: existing.id_producto_semanal,
-          });
-        } catch (err) {
-          failures++;
-          if (import.meta.env.DEV) {
-            console.error(
-              "[publications] failed to delete orphan item",
-              existing.id_producto_semanal,
-              err,
-            );
-          }
-        }
-      }
-    }
-    return failures;
+
+    return deleteOrphansCore(
+      pubId,
+      pubRef.current.productos ?? [],
+      currentIds,
+      {
+        removeItem: (vars) => removeItemMutation.mutateAsync(vars),
+      },
+      signal,
+    );
   }
 
   // ── Persist items to server (with rollback) ──
@@ -434,9 +400,9 @@ export function PublicationWizard() {
     return persistItemsCore(
       pubId,
       {
-        upsertItems: (pid, sig) => upsertItems(pid, sig),
+        upsertItems: (pid, sig) => upsertItemsWrapper(pid, sig),
         refreshSnapshot: (pid) => refreshSnapshot(pid),
-        deleteOrphans: (pid, map, sig) => deleteOrphans(pid, map, sig),
+        deleteOrphans: (pid, map, sig) => deleteOrphansWrapper(pid, map, sig),
         removeItem: (pid, itemId) =>
           removeItemMutation.mutateAsync({ pubId: pid, itemId }),
         logCleanupFailure: import.meta.env.DEV
