@@ -463,11 +463,7 @@ export function usePublicationWizard({
       );
       const currentIds = new Set(localItems.map((i) => i.tempId));
 
-      await deleteStaleItems(
-        pub.id_publicacion,
-        existingIds,
-        currentIds,
-      );
+      await deleteStaleItems(pub.id_publicacion, existingIds, currentIds);
 
       await publishMutation.mutateAsync(pub.id_publicacion);
     } finally {
