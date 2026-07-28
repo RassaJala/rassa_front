@@ -26,3 +26,9 @@ export const renameGroupPath = (conversationId: number): string =>
 
 export const addGroupMemberPath = (conversationId: number): string =>
   `/chat/conversaciones/${conversationId}/agregar-integrante/`;
+
+export const conversationReadPath = (conversationId: number): string =>
+  `/chat/conversaciones/${conversationId}/leer/`;
+
+export const searchUsersPath = (q: string): string =>
+  `/chat/usuarios/buscar/?q=${encodeURIComponent(q)}`;

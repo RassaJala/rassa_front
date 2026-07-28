@@ -182,16 +182,14 @@ describe('chat service', () => {
     expect(result.participante_nombre).toBe('');
   });
 
-  it('markMessageAsRead calls PATCH and returns placeholder', async () => {
+  it('markConversationAsRead calls PATCH batch endpoint', async () => {
     mockApi.patch.mockResolvedValueOnce({
-      data: { ok: true, mensaje: 'Mensaje marcado como leído.' },
+      data: { ok: true, mensaje: 'Conversación marcada como leída.' },
     });
 
-    const result = await chatApi.markMessageAsRead(10);
+    await chatApi.markConversationAsRead(5);
 
-    expect(mockApi.patch).toHaveBeenCalledWith('/chat/mensajes/10/leer/');
-    expect(result.id).toBe(10);
-    expect(result.leido).toBe(true);
+    expect(mockApi.patch).toHaveBeenCalledWith('/chat/conversaciones/5/leer/');
   });
 
   it('throws when backend responds with ok: false', async () => {

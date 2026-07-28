@@ -23,17 +23,20 @@ export function ConversationItem({
   return (
     <button
       type="button"
+      disabled={!user?.rol}
       onClick={() =>
         user?.rol &&
         navigate(`/${user.rol}/chat/${conversation.id}`, {
           state: { tipo: conversation.tipo },
         })
       }
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:opacity-80"
+      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:opacity-80 ${
+        !user?.rol ? 'cursor-not-allowed opacity-50' : ''
+      }`}
       style={{
         borderBottom: `1px solid ${c.border}`,
         background: 'transparent',
-        cursor: 'pointer',
+        cursor: user?.rol ? 'pointer' : 'not-allowed',
       }}
     >
       {/* Avatar placeholder */}

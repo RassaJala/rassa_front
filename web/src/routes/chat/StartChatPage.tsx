@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
+import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
+import type { SearchUserResult } from '@rassa/chat';
 import { Toast, type ToastState } from '~/components/ui/Toast';
 
 export function StartChatPage() {
@@ -10,18 +12,41 @@ export function StartChatPage() {
   const c = useAppColors();
   const { user } = useAuth();
   const createConversation = useCreatePrivateConversation();
-  const [userId, setUserId] = useState('');
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<SearchUserResult | null>(null);
+  const { results, loading } = useSearchUsers(query);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  const enteredId = Number(userId);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        listRef.current &&
+        !listRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
   const isSelfChat =
-    user?.id !== undefined && enteredId === user.id && userId !== '';
-  const isValidId = userId !== '' && !Number.isNaN(enteredId) && enteredId > 0;
+    selected && user?.id !== undefined && selected.id_usuario === user.id;
+  const showDropdown = query.trim().length >= 3 && !selected;
 
   const handleSubmit = () => {
-    if (!isValidId || isSelfChat) return;
+    if (!selected || isSelfChat) return;
     createConversation.mutate(
-      { fk_usuario: enteredId },
+      { fk_usuario: selected.id_usuario },
       {
         onError: () =>
           setToast({ message: 'Error al crear conversación', type: 'error' }),
@@ -61,29 +86,109 @@ export function StartChatPage() {
             Iniciar conversación privada
           </h2>
           <p className="mb-6 text-center text-sm" style={{ color: c.muted }}>
-            Ingresá el ID del usuario con quien deseás chatear
+            Buscá un usuario por nombre o correo
           </p>
 
           <label
             className="mb-1 block text-sm font-medium"
             style={{ color: c.fg }}
           >
-            ID del usuario
+            Usuario
           </label>
-          <input
-            type="number"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            placeholder="Ej: 42"
-            min={1}
-            className="mb-4 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-            style={{
-              borderColor: c.inputBorder,
-              background: c.surface,
-              color: c.fg,
-            }}
-            aria-label="ID del usuario"
-          />
+
+          {selected ? (
+            <div
+              className="mb-4 flex items-center justify-between rounded-lg border px-3 py-2"
+              style={{
+                borderColor: c.inputBorder,
+                background: c.bg,
+              }}
+            >
+              <div>
+                <span className="text-sm font-medium" style={{ color: c.fg }}>
+                  {selected.nombre_completo}
+                </span>
+                <span className="ml-2 text-xs" style={{ color: c.muted }}>
+                  {selected.correo}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected(null);
+                  setQuery('');
+                }}
+                className="cursor-pointer border-none bg-transparent text-sm"
+                style={{ color: c.coral }}
+                aria-label="Quitar selección"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div className="relative mb-4">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelected(null);
+                }}
+                placeholder="Buscar por nombre o correo..."
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{
+                  borderColor: c.inputBorder,
+                  background: c.surface,
+                  color: c.fg,
+                }}
+                aria-label="Buscar usuario"
+              />
+              {showDropdown && (
+                <div
+                  ref={listRef}
+                  className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-lg shadow-lg"
+                  style={{
+                    background: c.surface,
+                    border: `1px solid ${c.border}`,
+                  }}
+                >
+                  {loading && (
+                    <div
+                      className="px-3 py-2 text-sm"
+                      style={{ color: c.muted }}
+                    >
+                      Buscando…
+                    </div>
+                  )}
+                  {!loading && results.length === 0 && (
+                    <div
+                      className="px-3 py-2 text-sm"
+                      style={{ color: c.muted }}
+                    >
+                      Sin resultados
+                    </div>
+                  )}
+                  {results.map((userResult) => (
+                    <button
+                      key={userResult.id_usuario}
+                      type="button"
+                      onClick={() => setSelected(userResult)}
+                      className="flex w-full flex-col items-start px-3 py-2 text-left hover:opacity-80"
+                      style={{ color: c.fg }}
+                    >
+                      <span className="text-sm font-medium">
+                        {userResult.nombre_completo}
+                      </span>
+                      <span className="text-xs" style={{ color: c.muted }}>
+                        {userResult.correo} · {userResult.rol}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {isSelfChat && (
             <p className="mb-4 text-sm" style={{ color: c.coral }}>
@@ -94,7 +199,7 @@ export function StartChatPage() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={createConversation.isPending || !isValidId || isSelfChat}
+            disabled={createConversation.isPending || !selected || isSelfChat}
             className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             style={{ background: c.brand }}
           >

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useChatMessages } from '~/hooks/chat/useChatMessages';
+import { useConversations } from '~/hooks/chat/useConversations';
 import { useSendMessage } from '~/hooks/chat/useSendMessage';
 import { useEditMessage } from '~/hooks/chat/useEditMessage';
 import { useDeleteMessage } from '~/hooks/chat/useDeleteMessage';
@@ -24,7 +25,10 @@ export function ChatDetailPage() {
   const c = useAppColors();
   const { user } = useAuth();
   const conversationId = Number(id);
-  const tipo = (location.state as ChatLocationState | null)?.tipo;
+  const { data: convData } = useConversations();
+  const currentConv = convData?.results?.find((c) => c.id === conversationId);
+  const tipo =
+    currentConv?.tipo ?? (location.state as ChatLocationState | null)?.tipo;
 
   const { data, isLoading } = useChatMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
@@ -32,28 +36,29 @@ export function ChatDetailPage() {
   const deleteMessage = useDeleteMessage(conversationId);
   const markAsRead = useMarkAsRead();
 
+  const sendingRef = useRef(false);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  // Mark unread messages as read on mount
   useEffect(() => {
-    if (!data || !user) return;
-    for (const page of data.pages) {
-      for (const msg of page.results) {
-        if (!msg.leido && msg.remitente !== user.id) {
-          void markAsRead.mutate(msg.id);
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.pages]);
+    if (!conversationId) return;
+    const timer = setTimeout(() => {
+      markAsRead.mutate(conversationId);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [conversationId]);
 
   const messages = data?.pages.flatMap((p) => p.results).reverse() ?? [];
 
   const handleSend = (text: string) => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     sendMessage.mutate(
       { conversacion: conversationId, contenido: text },
       {
+        onSettled: () => {
+          sendingRef.current = false;
+        },
         onError: () =>
           setToast({ message: 'Error al enviar mensaje', type: 'error' }),
       },

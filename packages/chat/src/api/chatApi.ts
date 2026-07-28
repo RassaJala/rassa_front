@@ -12,6 +12,7 @@ import type {
   Message,
   PaginatedResponse,
   RenameGroupPayload,
+  SearchUserResult,
   SendMessagePayload,
   SendMessageWithMediaPayload,
 } from '../domain/types';
@@ -29,12 +30,13 @@ import {
   SEND_MEDIA_PATH,
   SEND_MESSAGE_PATH,
   addGroupMemberPath,
+  conversationReadPath,
   groupMembersPath,
   messageDeletePath,
   messageEditPath,
-  messageReadPath,
   messagesPath,
   renameGroupPath,
+  searchUsersPath,
 } from './endpoints';
 import { mapConversation, mapGroupMember, mapMessage } from './mappers';
 
@@ -59,7 +61,7 @@ export interface ChatApi {
   createPrivateConversation(
     payload: CreateConversationPayload,
   ): Promise<Conversation>;
-  markMessageAsRead(messageId: number): Promise<Message>;
+  markConversationAsRead(conversationId: number): Promise<void>;
   editMessage(messageId: number, contenido: string): Promise<Message>;
   deleteMessage(messageId: number): Promise<Message>;
   sendMessageWithMedia(payload: SendMessageWithMediaPayload): Promise<Message>;
@@ -73,13 +75,17 @@ export interface ChatApi {
     conversationId: number,
     payload: AddGroupMemberPayload,
   ): Promise<GroupMember>;
+  searchUsers(q: string): Promise<SearchUserResult[]>;
 }
 
 export function createChatApi(http: AxiosInstance): ChatApi {
   const api: ChatApi = {
     async getConversations() {
       const res = await http.get(CONVERSATIONS_PATH);
-      const rawList = unwrap<BackendConversation[]>(res);
+      const raw = unwrap<
+        BackendConversation[] | PaginatedResponse<BackendConversation>
+      >(res);
+      const rawList = Array.isArray(raw) ? raw : raw.results;
       return {
         count: rawList.length,
         next: null,
@@ -90,12 +96,15 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async getMessages(conversationId, page) {
       const res = await http.get(messagesPath(conversationId, page));
-      const rawPaginated = unwrap<PaginatedResponse<BackendMessage>>(res);
+      const raw = unwrap<BackendMessage[] | PaginatedResponse<BackendMessage>>(
+        res,
+      );
+      const rawList = Array.isArray(raw) ? raw : raw.results;
       return {
-        count: rawPaginated.count,
-        next: rawPaginated.next,
-        previous: rawPaginated.previous,
-        results: rawPaginated.results.map((m) => mapMessage(m, conversationId)),
+        count: rawList.length,
+        next: null,
+        previous: null,
+        results: rawList.map((m) => mapMessage(m, conversationId)),
       };
     },
 
@@ -138,18 +147,8 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       };
     },
 
-    async markMessageAsRead(messageId) {
-      const res = await http.patch(messageReadPath(messageId));
-      void unwrap(res);
-      return {
-        id: messageId,
-        conversacion: 0,
-        remitente: 0,
-        remitente_nombre: '',
-        contenido: '',
-        creado_en: '',
-        leido: true,
-      };
+    async markConversationAsRead(conversationId) {
+      await http.patch(conversationReadPath(conversationId));
     },
 
     async editMessage(messageId, contenido) {
@@ -267,6 +266,13 @@ export function createChatApi(http: AxiosInstance): ChatApi {
         rol: '',
         avatar: null,
       };
+    },
+
+    async searchUsers(q) {
+      if (q.length < 3) return [];
+      const res = await http.get(searchUsersPath(q));
+      const data = unwrap<SearchUserResult[]>(res);
+      return data;
     },
   };
 

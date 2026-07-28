@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useCanModifyMessage } from '~/hooks/chat/useCanModifyMessage';
@@ -20,6 +20,18 @@ export function ChatBubble({
   const { user } = useAuth();
   const { canEdit, canDelete } = useCanModifyMessage(message);
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   const isOwn = user?.id === message.remitente;
   const isActive = message.activo !== false;
@@ -84,6 +96,7 @@ export function ChatBubble({
               </button>
               {showMenu && (
                 <div
+                  ref={menuRef}
                   className="absolute bottom-full right-0 z-10 mb-1 min-w-[120px] overflow-hidden rounded-lg shadow-lg"
                   style={{
                     background: c.surface,

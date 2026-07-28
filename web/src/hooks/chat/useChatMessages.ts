@@ -8,8 +8,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { chatApi } from '~/services/chat';
 import type { Message, PaginatedResponse } from '@rassa/chat';
 
-const BASE_POLL_MS = 5_000;
-const MAX_POLL_MS = 60_000;
+const POLL_MS = 5_000;
 
 export function useChatMessages(
   conversationId: number,
@@ -20,17 +19,19 @@ export function useChatMessages(
       chatApi.getMessages(conversationId, pageParam),
     getNextPageParam: (lastPage) => {
       if (lastPage.next) {
-        const url = new URL(lastPage.next);
-        return Number(url.searchParams.get('page'));
+        try {
+          const url = new URL(lastPage.next);
+          const page = Number(url.searchParams.get('page'));
+          return Number.isNaN(page) ? undefined : page;
+        } catch {
+          return undefined;
+        }
       }
       // eslint-disable-next-line unicorn/no-useless-undefined -- required by TanStack Query to signal no next page
       return undefined;
     },
     initialPageParam: 1,
-    refetchInterval: (query) => {
-      const failureCount = query.state.errorUpdateCount;
-      return Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
-    },
+    refetchInterval: POLL_MS,
     refetchIntervalInBackground: false,
     staleTime: 5_000,
   });

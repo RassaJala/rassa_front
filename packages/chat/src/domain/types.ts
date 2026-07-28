@@ -78,3 +78,10 @@ export interface RenameGroupPayload {
 export interface AddGroupMemberPayload {
   fk_usuario: number;
 }
+
+export interface SearchUserResult {
+  id_usuario: number;
+  nombre_completo: string;
+  correo: string;
+  rol: string;
+}

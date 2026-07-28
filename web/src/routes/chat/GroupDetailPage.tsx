@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
+import { useConversations } from '~/hooks/chat/useConversations';
 import { useGroupMembers } from '~/hooks/chat/useGroupMembers';
 import { useRenameGroup } from '~/hooks/chat/useRenameGroup';
 import { useAddGroupMember } from '~/hooks/chat/useAddGroupMember';
@@ -16,6 +17,12 @@ export function GroupDetailPage() {
   const c = useAppColors();
   const { user } = useAuth();
   const conversationId = Number(id);
+
+  const { data: conversations } = useConversations();
+  const currentConversation = conversations?.results?.find(
+    (c) => c.id === conversationId,
+  );
+  const groupName = currentConversation?.nombre ?? '';
 
   const { data: members, isLoading } = useGroupMembers(conversationId);
   const renameGroup = useRenameGroup(conversationId);
@@ -120,7 +127,7 @@ export function GroupDetailPage() {
       {/* Modals */}
       {showRename && members && members.length > 0 && (
         <RenameGroupModal
-          currentName=""
+          currentName={groupName}
           onSave={handleRename}
           onClose={() => setShowRename(false)}
           saving={renameGroup.isPending}
