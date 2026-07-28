@@ -12,7 +12,7 @@ function isPublic(url: string): boolean {
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15_000,
+  timeout: 10_000,
   headers: { 'Content-Type': 'application/json' },
 });
 

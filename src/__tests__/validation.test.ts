@@ -328,7 +328,7 @@ describe('validation utilities', () => {
 
     it('rejects too short number', () => {
       expect(validatePhone('555')).toBe(
-        'El teléfono debe tener exactamente 10 dígitos.',
+        'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
       );
     });
 
@@ -336,10 +336,8 @@ describe('validation utilities', () => {
       expect(validatePhone('5551234567')).toBeNull();
     });
 
-    it('rejects 12-digit international number', () => {
-      expect(validatePhone('525551234567')).toBe(
-        'El teléfono debe tener exactamente 10 dígitos.',
-      );
+    it('accepts 12-digit international number', () => {
+      expect(validatePhone('525551234567')).toBeNull();
     });
 
     it('cleans number before validating', () => {
