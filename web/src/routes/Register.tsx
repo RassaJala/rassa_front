@@ -13,11 +13,7 @@ import type { User } from '~/types';
 import { normalizeRole } from '~/types';
 
 import { parseApiError } from '~/utils/apiErrors';
-import {
-  cleanAddress,
-  cleanName,
-  formatPhoneNumber,
-} from '~/utils/validation';
+import { cleanAddress, cleanName, formatPhoneNumber } from '~/utils/validation';
 import {
   buildRegistrationPayload,
   validateRegistrationForm,

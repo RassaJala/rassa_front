@@ -177,7 +177,7 @@ export default function DatePickerModal({
                     activeOpacity={0.6}
                     onPress={() => handleSelectYear(y)}
                     className={`rounded-lg border-b border-gray-100 py-3 dark:border-gray-800 ${
-                       selectedYear === y
+                      selectedYear === y
                         ? 'bg-brand-red-coral/10 dark:bg-brand-red-coral/20'
                         : 'bg-transparent'
                     }`}
@@ -204,7 +204,7 @@ export default function DatePickerModal({
                     activeOpacity={0.6}
                     onPress={() => handleSelectMonth(idx)}
                     className={`rounded-lg border-b border-gray-100 py-3 dark:border-gray-800 ${
-                       selectedMonth === idx
+                      selectedMonth === idx
                         ? 'bg-brand-red-coral/10 dark:bg-brand-red-coral/20'
                         : 'bg-transparent'
                     }`}
