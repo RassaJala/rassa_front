@@ -90,8 +90,8 @@ export const useCartStore = create<CartState>()(
       storage: {
         getItem: async (k) => {
           const v = await AsyncStorage.getItem(k);
-          // ponytail: JSON.parse returns any, cast to unknown for Zustand persist
-          return v ? (JSON.parse(v) as unknown) : null;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return v ? JSON.parse(v) : null;
         },
         setItem: async (k, v) => {
           await AsyncStorage.setItem(k, JSON.stringify(v));
