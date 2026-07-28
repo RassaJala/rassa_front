@@ -14,7 +14,7 @@ export interface PersistItemsDeps {
     tempIdToServerId: Map<string, number>,
     signal?: AbortSignal,
   ) => Promise<number>;
-  removeItem: (pubId: number, itemId: number) => Promise<void>;
+  removeItem: (pubId: number, itemId: number) => Promise<unknown>;
   logCleanupFailure?: (itemId: number, err: unknown) => void;
 }
 

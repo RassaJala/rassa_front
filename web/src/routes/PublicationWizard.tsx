@@ -42,16 +42,13 @@ import {
   PERSIST_TIMEOUT_MS,
   TOAST_ORPHAN_DELAY_MS,
 } from '../constants/api';
-import { productCountLabel } from '../components/PublicationActions';
-import { mediaUrl } from '../utils/mediaUrl';
-import { hideBrokenImage, revokeBlobUrl } from '../utils/imageHelpers';
+import { revokeBlobUrl } from '../utils/imageHelpers';
 import { ProductPickerModal } from '../components/ProductPickerModal';
-import { Badge } from '../components/ui/Badge';
+import { FechaStep } from '../components/wizard/FechaStep';
+import { ProductosStep } from '../components/wizard/ProductosStep';
+import { PublicarStep } from '../components/wizard/PublicarStep';
+import { ResumenStep } from '../components/wizard/ResumenStep';
 import { Button } from '../components/ui/Button';
-import { EmptyState } from '../components/ui/EmptyState';
-import { FormField } from '../components/ui/FormField';
-import { FormSelect } from '../components/ui/FormSelect';
-import { Input } from '../components/ui/Input';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Toast, type ToastState } from '../components/ui/Toast';
 
@@ -437,7 +434,7 @@ export function PublicationWizard() {
           setError(null);
           let pub = pubRef.current;
           if (!pub) {
-            const result = await createMutation.mutateAsync();
+            const result = await createMutation.mutateAsync(undefined);
             pub = result.data;
             pubRef.current = pub;
           }
@@ -653,368 +650,46 @@ export function PublicationWizard() {
           border: `1px solid ${colors.border}`,
         }}
       >
-        {/* Step 1: Fecha */}
         {currentStep === 'fecha' && (
-          <div>
-            <h2
-              className="mb-4 text-xl font-semibold"
-              style={{ color: colors.fg }}
-            >
-              Fecha de publicación
-            </h2>
-            <div
-              className="rounded-xl p-5"
-              style={{
-                background: colors.bg,
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              <p
-                className="text-[15px] font-semibold"
-                style={{ color: colors.fg }}
-              >
-                Semana {weekNumber}
-              </p>
-              <p
-                className="mt-1 text-[14px] capitalize"
-                style={{ color: colors.muted }}
-              >
-                {formatDate(nextMonday)}
-              </p>
-              <p className="mt-3 text-[13px]" style={{ color: colors.muted }}>
-                La publicación correspondirá a esta semana. Los productos que
-                agregues en el siguiente paso estarán disponibles para los
-                compradores.
-              </p>
-            </div>
-          </div>
+          <FechaStep
+            weekNumber={weekNumber}
+            nextMonday={nextMonday}
+            colors={colors}
+          />
         )}
 
-        {/* Step 2: Productos */}
         {currentStep === 'productos' && (
-          <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: colors.fg }}
-              >
-                Productos ({items.length})
-              </h2>
-              <Button variant="secondary" onClick={() => setShowPicker(true)}>
-                + Agregar producto
-              </Button>
-            </div>
-
-            {loadingCatalog ? (
-              <LoadingSpinner className="py-8" />
-            ) : items.length === 0 ? (
-              <EmptyState
-                icon="📦"
-                title="No hay productos"
-                message="Agregá productos para tu publicación semanal."
-                action={
-                  <Button variant="primary" onClick={() => setShowPicker(true)}>
-                    + Agregar producto
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {items.map((item) => {
-                  const errs = validations.get(item.tempId) ?? {};
-                  const displayImage = item.imagePreview ?? mediaUrl(item.foto);
-                  return (
-                    <div
-                      key={item.tempId}
-                      className="rounded-xl p-4"
-                      style={{
-                        border: `1px solid ${colors.border}`,
-                        background: colors.surface,
-                      }}
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <p
-                          className="text-[15px] font-semibold"
-                          style={{ color: colors.fg }}
-                        >
-                          {item.nombre_producto ||
-                            `Producto #${String(item.fk_producto)}`}
-                        </p>
-                        <button
-                          onClick={() => removeItem(item.tempId)}
-                          disabled={saving}
-                          className="cursor-pointer border-none bg-transparent text-[16px]"
-                          style={{ color: colors.coral }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="flex gap-3">
-                        {/* Image */}
-                        <div className="shrink-0">
-                          <div
-                            className="relative grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-xl"
-                            style={{
-                              border: displayImage
-                                ? 'none'
-                                : `2px dashed ${colors.inputBorder}`,
-                              background: displayImage
-                                ? 'transparent'
-                                : colors.accentBg,
-                            }}
-                            onClick={() => {
-                              if (saving) return;
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = 'image/*';
-                              input.onchange = (e) => {
-                                const file = (e.target as HTMLInputElement)
-                                  .files?.[0];
-                                if (file) handleImageSelect(item.tempId, file);
-                              };
-                              input.click();
-                            }}
-                          >
-                            {displayImage ? (
-                              <img
-                                src={displayImage}
-                                alt=""
-                                className="h-full w-full object-cover"
-                                onError={hideBrokenImage}
-                              />
-                            ) : (
-                              <span className="text-2xl">📷</span>
-                            )}
-                          </div>
-                          {displayImage && (
-                            <button
-                              onClick={() => {
-                                if (saving) return;
-                                handleImageRemove(item.tempId);
-                              }}
-                              disabled={saving}
-                              className="relative -mt-2 ml-16 grid h-5 w-5 cursor-pointer place-items-center rounded-full border-none text-[11px]"
-                              style={{
-                                background: colors.coral,
-                                color: '#fff',
-                              }}
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Fields */}
-                        <div className="flex min-w-0 flex-1 flex-col gap-2">
-                          <div className="flex gap-2">
-                            <div className="flex-1">
-                              <FormField
-                                label="Stock *"
-                                error={errs.stock}
-                                colors={colors}
-                              >
-                                <Input
-                                  colors={colors}
-                                  type="number"
-                                  min="0"
-                                  value={item.stock}
-                                  disabled={saving}
-                                  onChange={(e) =>
-                                    updateItem(
-                                      item.tempId,
-                                      'stock',
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="0"
-                                />
-                              </FormField>
-                            </div>
-                            <div className="flex-1">
-                              <FormField
-                                label="Precio *"
-                                error={errs.precio}
-                                colors={colors}
-                              >
-                                <Input
-                                  colors={colors}
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={item.precio}
-                                  disabled={saving}
-                                  onChange={(e) =>
-                                    updateItem(
-                                      item.tempId,
-                                      'precio',
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="0.00"
-                                />
-                              </FormField>
-                            </div>
-                          </div>
-                          <FormField
-                            label="Unidad *"
-                            error={errs.fk_unidad}
-                            colors={colors}
-                          >
-                            <FormSelect
-                              colors={colors}
-                              hasError={!!errs.fk_unidad}
-                              value={item.fk_unidad || ''}
-                              disabled={saving}
-                              onChange={(e) =>
-                                updateItem(
-                                  item.tempId,
-                                  'fk_unidad',
-                                  Number(e.target.value),
-                                )
-                              }
-                            >
-                              <option value="">Seleccionar unidad</option>
-                              {unidades.map((u) => (
-                                <option key={u.id_unidad} value={u.id_unidad}>
-                                  {u.tipo}
-                                </option>
-                              ))}
-                            </FormSelect>
-                          </FormField>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ProductosStep
+            items={items}
+            validations={validations}
+            saving={saving}
+            colors={colors}
+            unidades={unidades}
+            loadingCatalog={loadingCatalog}
+            onAddItem={() => setShowPicker(true)}
+            onRemoveItem={removeItem}
+            onUpdateItem={updateItem}
+            onImageSelect={handleImageSelect}
+            onImageRemove={handleImageRemove}
+          />
         )}
 
-        {/* Step 3: Resumen */}
         {currentStep === 'resumen' && (
-          <div>
-            <h2
-              className="mb-4 text-xl font-semibold"
-              style={{ color: colors.fg }}
-            >
-              Resumen
-            </h2>
-            <div
-              className="mb-4 rounded-xl p-4"
-              style={{
-                background: colors.bg,
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              <p className="text-[14px]" style={{ color: colors.muted }}>
-                Semana {weekNumber} — {formatDate(nextMonday)}
-              </p>
-              <p
-                className="mt-1 text-[15px] font-semibold"
-                style={{ color: colors.fg }}
-              >
-                {productCountLabel(items.length)} en la publicación
-              </p>
-            </div>
-
-            {items.length === 0 ? (
-              <EmptyState
-                icon="📦"
-                title="Sin productos"
-                message="Agregá productos en el paso anterior."
-              />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {items.map((item) => {
-                  const unidad = unidades.find(
-                    (u) => u.id_unidad === item.fk_unidad,
-                  );
-                  const displayImage = item.imagePreview ?? mediaUrl(item.foto);
-                  return (
-                    <div
-                      key={item.tempId}
-                      className="flex items-center gap-3 rounded-xl p-3"
-                      style={{
-                        border: `1px solid ${colors.border}`,
-                        background: colors.surface,
-                      }}
-                    >
-                      <div
-                        className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg"
-                        style={{ background: colors.accentBg }}
-                      >
-                        {displayImage ? (
-                          <img
-                            src={displayImage}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            onError={hideBrokenImage}
-                          />
-                        ) : (
-                          <span className="text-lg">🌿</span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="text-[14px] font-semibold"
-                          style={{ color: colors.fg }}
-                        >
-                          {item.nombre_producto ||
-                            `Producto #${String(item.fk_producto)}`}
-                        </p>
-                        <p
-                          className="text-[13px]"
-                          style={{ color: colors.muted }}
-                        >
-                          {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          item.foto || item.imageFile ? 'success' : 'warning'
-                        }
-                      >
-                        {item.foto || item.imageFile ? 'Con foto' : 'Sin foto'}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ResumenStep
+            weekNumber={weekNumber}
+            nextMonday={nextMonday}
+            items={items}
+            unidades={unidades}
+            colors={colors}
+          />
         )}
 
-        {/* Step 4: Publicar */}
         {currentStep === 'publicar' && (
-          <div>
-            <h2
-              className="mb-4 text-xl font-semibold"
-              style={{ color: colors.fg }}
-            >
-              Publicar
-            </h2>
-            <div
-              className="rounded-xl p-5 text-center"
-              style={{
-                background: colors.bg,
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              <p className="mb-2 text-[40px]">🚀</p>
-              <p
-                className="text-[15px] font-semibold"
-                style={{ color: colors.fg }}
-              >
-                ¿Publicar la semana {weekNumber}?
-              </p>
-              <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
-                {productCountLabel(items.length)} serán publicados y visibles
-                para los compradores.
-              </p>
-            </div>
-          </div>
+          <PublicarStep
+            weekNumber={weekNumber}
+            items={items}
+            colors={colors}
+          />
         )}
       </div>
 
