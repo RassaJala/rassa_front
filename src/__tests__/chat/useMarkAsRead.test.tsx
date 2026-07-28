@@ -57,7 +57,7 @@ describe('useMarkAsRead', () => {
       getByTestId('mark').props.onPress();
     });
 
-    expect(mockApiPatch).toHaveBeenCalledWith('/chat/mensajes/42/leer/');
+    expect(mockApiPatch).toHaveBeenCalledWith('/chat/conversaciones/42/leer/');
   });
 
   it('invalidates conversations query after marking', async () => {
