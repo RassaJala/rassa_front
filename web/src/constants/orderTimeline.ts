@@ -3,9 +3,9 @@ import type { OrderStatusHistory } from '../types';
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
-export function normalizeOrderHistoryResponse(
-  response: { data: OrderStatusHistory[] },
-): OrderStatusHistory[] {
+export function normalizeOrderHistoryResponse(response: {
+  data: OrderStatusHistory[];
+}): OrderStatusHistory[] {
   return response.data;
 }
 
