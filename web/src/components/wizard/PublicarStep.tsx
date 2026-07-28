@@ -26,8 +26,8 @@ export function PublicarStep({ weekNumber, items, colors }: PublicarStepProps) {
           ¿Publicar la semana {weekNumber}?
         </p>
         <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
-          {productCountLabel(items.length)} serán publicados y visibles
-          para los compradores.
+          {productCountLabel(items.length)} serán publicados y visibles para los
+          compradores.
         </p>
       </div>
     </div>

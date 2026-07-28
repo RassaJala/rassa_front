@@ -28,9 +28,18 @@ const mockMutateAsync = vi.fn();
 
 vi.mock('../../hooks/usePublications', () => ({
   usePublicaciones: vi.fn(),
-  useDeletePublicacion: () => ({ isPending: false, mutateAsync: mockMutateAsync }),
-  usePublishPublicacion: () => ({ isPending: false, mutateAsync: mockMutateAsync }),
-  useClosePublicacion: () => ({ isPending: false, mutateAsync: mockMutateAsync }),
+  useDeletePublicacion: () => ({
+    isPending: false,
+    mutateAsync: mockMutateAsync,
+  }),
+  usePublishPublicacion: () => ({
+    isPending: false,
+    mutateAsync: mockMutateAsync,
+  }),
+  useClosePublicacion: () => ({
+    isPending: false,
+    mutateAsync: mockMutateAsync,
+  }),
 }));
 
 import { usePublicaciones } from '../../hooks/usePublications';
@@ -138,7 +147,9 @@ describe('FarmerPublications', () => {
     render(<FarmerPublications />);
     const btns = screen.getAllByText('+ Nueva publicación');
     await userEvent.click(btns[0]!);
-    expect(mockNavigate).toHaveBeenCalledWith('/agricultor/publicaciones/nueva');
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/agricultor/publicaciones/nueva',
+    );
   });
 
   it('calls delete when confirm is accepted', async () => {

@@ -685,11 +685,7 @@ export function PublicationWizard() {
         )}
 
         {currentStep === 'publicar' && (
-          <PublicarStep
-            weekNumber={weekNumber}
-            items={items}
-            colors={colors}
-          />
+          <PublicarStep weekNumber={weekNumber} items={items} colors={colors} />
         )}
       </div>
 
