@@ -14,6 +14,11 @@ import { normalizeRole } from '~/types';
 
 import { parseApiError } from '~/utils/apiErrors';
 import {
+  cleanAddress,
+  cleanName,
+  formatPhoneNumber,
+} from '~/utils/validation';
+import {
   buildRegistrationPayload,
   validateRegistrationForm,
   EMAIL_REGEX,
@@ -589,7 +594,7 @@ export function RegisterScreen() {
               placeholder="Juan"
               autoComplete="given-name"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(cleanName(e.target.value))}
               required
               style={inputStyle('nombre')}
               onFocus={() => setFocusedField('nombre')}
@@ -603,7 +608,7 @@ export function RegisterScreen() {
               placeholder="Pérez"
               autoComplete="family-name"
               value={apellidoPaterno}
-              onChange={(e) => setApellidoPaterno(e.target.value)}
+              onChange={(e) => setApellidoPaterno(cleanName(e.target.value))}
               required
               style={inputStyle('apellidoPaterno')}
               onFocus={() => setFocusedField('apellidoPaterno')}
@@ -622,7 +627,7 @@ export function RegisterScreen() {
               placeholder="Opcional"
               autoComplete="additional-name"
               value={apellidoMaterno}
-              onChange={(e) => setApellidoMaterno(e.target.value)}
+              onChange={(e) => setApellidoMaterno(cleanName(e.target.value))}
               style={inputStyle('apellidoMaterno')}
               onFocus={() => setFocusedField('apellidoMaterno')}
               onBlur={() => setFocusedField(null)}
@@ -691,7 +696,7 @@ export function RegisterScreen() {
               placeholder="10 dígitos"
               autoComplete="tel"
               value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
+              onChange={(e) => setTelefono(formatPhoneNumber(e.target.value))}
               required
               style={inputStyle('telefono')}
               onFocus={() => setFocusedField('telefono')}
@@ -744,7 +749,7 @@ export function RegisterScreen() {
               placeholder="Calle, número, colonia"
               autoComplete="street-address"
               value={domicilio}
-              onChange={(e) => setDomicilio(e.target.value)}
+              onChange={(e) => setDomicilio(cleanAddress(e.target.value))}
               required
               style={inputStyle('domicilio')}
               onFocus={() => setFocusedField('domicilio')}

@@ -124,7 +124,7 @@ function RegisterScreenContent(): React.JSX.Element {
               style={{
                 height: 50,
                 borderRadius: 14,
-                backgroundColor: colors.brandRedCoral,
+                backgroundColor: brand,
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'row',

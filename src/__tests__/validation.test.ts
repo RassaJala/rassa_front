@@ -223,8 +223,11 @@ describe('validation utilities', () => {
     const toDateStr = (date: Date): string =>
       date.toISOString().split('T')[0] ?? '';
 
-    it('retorna error si la fecha está vacía', () => {
+    it('retorna error si la fecha está vacía o solo espacios', () => {
       expect(validateBirthdate('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+      expect(validateBirthdate('   ')).toBe(
         'Por favor, completa todos los campos obligatorios.',
       );
     });
@@ -359,7 +362,10 @@ describe('validation utilities', () => {
     });
 
     it('rejects invalid format', () => {
-      expect(validateBirthdate('01-15-2024')).toBe(
+      expect(validateBirthdate('15-01-2000')).toBe(
+        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
+      );
+      expect(validateBirthdate('2000/01/15')).toBe(
         'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
       );
     });
@@ -376,7 +382,7 @@ describe('validation utilities', () => {
       expect(validateBirthdate(adult)).toBeNull();
     });
 
-    it('uses custom message for underage', () => {
+    it('usa customMsg cuando se proporciona', () => {
       const today = new Date();
       const recent = `${today.getFullYear() - 17}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       expect(validateBirthdate(recent, 'Eres menor.')).toBe('Eres menor.');

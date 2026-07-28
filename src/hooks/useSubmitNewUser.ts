@@ -25,6 +25,7 @@ export interface UseSubmitNewUserReturn {
   readonly serverError: string;
   readonly setErrorMessage: (msg: string | null) => void;
   readonly setServerError: (msg: string) => void;
+  readonly resetError: () => void;
 }
 
 export function useSubmitNewUser(
@@ -34,6 +35,11 @@ export function useSubmitNewUser(
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string>('');
   const submittingRef = useRef(false);
+
+  const resetError = () => {
+    setErrorMessage(null);
+    setServerError('');
+  };
 
   const mutation = useMutation({
     mutationFn: async (form: UseRegistrationFormReturn) => {
@@ -96,7 +102,11 @@ export function useSubmitNewUser(
     }
 
     submittingRef.current = true;
-    mutation.mutate(form);
+    try {
+      await mutation.mutateAsync(form);
+    } catch {
+      // Error handled by mutation.onError
+    }
   };
 
   return {
@@ -106,5 +116,6 @@ export function useSubmitNewUser(
     serverError,
     setErrorMessage,
     setServerError,
+    resetError,
   };
 }

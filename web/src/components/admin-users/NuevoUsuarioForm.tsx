@@ -5,9 +5,7 @@ import { useCatalogs } from '../../hooks/useCatalogs';
 import api from '../../services/api';
 import { parseApiError } from '../../utils/apiErrors';
 import {
-  cleanAddress,
-  cleanName,
-  cleanPhoneNumber,
+  buildRegistrationPayload,
   validateRegistrationForm,
 } from '../../utils/validation';
 import UserFormActions from './UserFormActions';
@@ -77,6 +75,11 @@ export default function NuevoUsuarioForm({
     if (createMutation.isPending) return;
     setFormError(null);
 
+    if (!formSexo) {
+      setFormError('Seleccioná un género.');
+      return;
+    }
+
     const validationError = validateRegistrationForm({
       email: formEmail,
       password: formPassword,
@@ -91,24 +94,21 @@ export default function NuevoUsuarioForm({
       setFormError(validationError);
       return;
     }
-    if (!formSexo) {
-      setFormError('Seleccioná un género.');
-      return;
-    }
 
-    const basePayload: Record<string, unknown> = {
-      email: formEmail.trim(),
+    const formData = {
+      email: formEmail,
       password: formPassword,
-      nombre: cleanName(formNombre),
-      apellido_paterno: cleanName(formApePat),
-      apellido_materno: formApeMat.trim() ? cleanName(formApeMat) : null,
-      telefono: cleanPhoneNumber(formTelefono),
-      fecha_nacimiento: formFechaNac,
+      role: formRole,
+      telefono: formTelefono,
+      nombre: formNombre,
+      apellidoPaterno: formApePat,
+      apellidoMaterno: formApeMat || null,
+      fechaNacimiento: formFechaNac,
       sexo: formSexo,
-      domicilio: cleanAddress(formDomicilio),
-      fk_localidad: catalogs.localidadId,
+      localidadId: catalogs.localidadId,
     };
-    if (formRole !== 'farmer') basePayload.role = formRole;
+    const basePayload = buildRegistrationPayload(formData);
+    if (formRole === 'farmer') delete basePayload.role;
     createMutation.mutate(basePayload);
   }
 

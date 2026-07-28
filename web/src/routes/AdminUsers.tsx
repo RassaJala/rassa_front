@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../providers/ThemeProvider';
+import { getColors } from '../constants/colors';
 import api from '../services/api';
 import { parseApiError } from '~/utils/apiErrors';
 import { Toast } from '../components/ui/Toast';
@@ -113,7 +114,7 @@ export function AdminUsers() {
   const surface = isDark ? '#263028' : '#FFFFFF';
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const coral = getColors(isDark).coral;
   const queryClient = useQueryClient();
 
   // ── Queries ──
