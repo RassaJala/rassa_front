@@ -10,8 +10,11 @@ import {
   MAX_NOMBRE,
   MIN_PASSWORD_LENGTH,
   validateBirthdate,
+  validateEmail,
   validateName,
+  validatePassword,
   validatePasswordChange,
+  validatePhone,
   validateRegistrationForm,
 } from '@/utils/validation';
 
@@ -274,67 +277,111 @@ describe('validation utilities', () => {
     });
   });
 
-  describe('validateRegistrationForm', () => {
-    const validForm = {
-      email: 'test@email.com',
-      password: 'password123',
-      telefono: '1234567890',
-      nombre: 'John',
-      apellidoPaterno: 'Doe',
-      fechaNacimiento: '1990-01-01',
-      domicilio: 'Calle 123',
-      localidadId: 1,
-    };
-
-    it('retorna null para un formulario completamente válido', () => {
-      expect(validateRegistrationForm(validForm)).toBeNull();
-    });
-
-    it('retorna error de campos vacíos si falta algún campo obligatorio', () => {
-      expect(validateRegistrationForm({ ...validForm, email: '' })).toBe(
+  describe('validateEmail', () => {
+    it('rejects empty string', () => {
+      expect(validateEmail('')).toBe(
         'Por favor, completa todos los campos obligatorios.',
       );
     });
 
-    it('retorna error de campos obligatorios si el email es inválido pero el teléfono está vacío', () => {
-      expect(
-        validateRegistrationForm({
-          ...validForm,
-          email: 'invalidemail',
-          telefono: '',
-        }),
-      ).toBe('Por favor, completa todos los campos obligatorios.');
+    it('rejects whitespace-only string', () => {
+      expect(validateEmail('   ')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
     });
 
-    it('retorna error de correo si el formato de email es inválido', () => {
-      expect(
-        validateRegistrationForm({ ...validForm, email: 'invalidemail' }),
-      ).toBe('Ingresa un correo electrónico válido.');
+    it('rejects invalid format', () => {
+      expect(validateEmail('notanemail')).toBe(
+        'Ingresa un correo electrónico válido.',
+      );
     });
 
-    it('retorna error de contraseña si es menor al mínimo', () => {
-      expect(validateRegistrationForm({ ...validForm, password: '123' })).toBe(
+    it('accepts valid email', () => {
+      expect(validateEmail('test@example.com')).toBeNull();
+    });
+  });
+
+  describe('validatePassword', () => {
+    it('rejects empty string', () => {
+      expect(validatePassword('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+    });
+
+    it('rejects too short password', () => {
+      expect(validatePassword('abc')).toBe(
         'La contraseña debe tener al menos 8 caracteres.',
       );
     });
 
-    it('retorna error de teléfono si no tiene 10 o 12 dígitos', () => {
-      expect(
-        validateRegistrationForm({ ...validForm, telefono: '12345' }),
-      ).toBe(
-        'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
+    it('accepts valid password', () => {
+      expect(validatePassword('secreta123')).toBeNull();
+    });
+  });
+
+  describe('validatePhone', () => {
+    it('rejects empty string', () => {
+      expect(validatePhone('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
       );
     });
 
-    it('retorna error si es menor de edad', () => {
+    it('rejects too short number', () => {
+      expect(validatePhone('555')).toBe(
+        'El teléfono debe tener exactamente 10 dígitos.',
+      );
+    });
+
+    it('accepts 10-digit national number', () => {
+      expect(validatePhone('5551234567')).toBeNull();
+    });
+
+    it('rejects 12-digit international number', () => {
+      expect(validatePhone('525551234567')).toBe(
+        'El teléfono debe tener exactamente 10 dígitos.',
+      );
+    });
+
+    it('cleans number before validating', () => {
+      expect(validatePhone('555-123-4567')).toBeNull();
+    });
+  });
+
+  describe('validateBirthdate', () => {
+    it('rejects empty string', () => {
+      expect(validateBirthdate('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+    });
+
+    it('rejects whitespace-only', () => {
+      expect(validateBirthdate('   ')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+    });
+
+    it('rejects invalid format', () => {
+      expect(validateBirthdate('01-15-2024')).toBe(
+        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
+      );
+    });
+
+    it('rejects underage date', () => {
       const today = new Date();
-      const fifteenYearsAgo = `${today.getFullYear() - 15}-01-01`;
-      expect(
-        validateRegistrationForm({
-          ...validForm,
-          fechaNacimiento: fifteenYearsAgo,
-        }),
-      ).toBe('Debes ser mayor de 18 años para registrarte.');
+      const recent = `${today.getFullYear() - 17}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      expect(validateBirthdate(recent)).toBe('Debes ser mayor de 18 años.');
+    });
+
+    it('accepts adult date', () => {
+      const today = new Date();
+      const adult = `${today.getFullYear() - 18}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      expect(validateBirthdate(adult)).toBeNull();
+    });
+
+    it('uses custom message for underage', () => {
+      const today = new Date();
+      const recent = `${today.getFullYear() - 17}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      expect(validateBirthdate(recent, 'Eres menor.')).toBe('Eres menor.');
     });
   });
 
@@ -373,6 +420,54 @@ describe('validation utilities', () => {
       expect(
         validatePasswordChange('samePass123', 'samePass123', 'samePass123'),
       ).toBe('La nueva contraseña debe ser diferente a la actual.');
+    });
+  });
+
+  describe('validateRegistrationForm', () => {
+    const validForm = {
+      email: 'test@example.com',
+      password: 'secret123',
+      telefono: '5551234567',
+      nombre: 'Juan',
+      apellidoPaterno: 'Pérez',
+      fechaNacimiento: '2000-01-15',
+      domicilio: 'Calle 123',
+      localidadId: 1,
+    };
+
+    it('passes valid form', () => {
+      expect(validateRegistrationForm(validForm)).toBeNull();
+    });
+
+    it('rejects missing required fields', () => {
+      const result = validateRegistrationForm({
+        ...validForm,
+        nombre: '',
+        localidadId: null,
+      });
+      expect(result).toBe('Por favor, completa todos los campos obligatorios.');
+    });
+
+    it('validates email format', () => {
+      const result = validateRegistrationForm({
+        ...validForm,
+        email: 'invalid',
+      });
+      expect(result).toBe('Ingresa un correo electrónico válido.');
+    });
+
+    it('validates password when provided', () => {
+      const result = validateRegistrationForm({
+        ...validForm,
+        password: 'abc',
+      });
+      expect(result).toBe('La contraseña debe tener al menos 8 caracteres.');
+    });
+
+    it('skips password validation when undefined', () => {
+      const { password: _pw, ...formWithoutPassword } = validForm;
+      const result = validateRegistrationForm(formWithoutPassword);
+      expect(result).toBeNull();
     });
   });
 });
