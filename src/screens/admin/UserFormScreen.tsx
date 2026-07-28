@@ -144,7 +144,7 @@ function UserFormScreenContent(): React.JSX.Element {
           alignItems: 'center',
         }}
       >
-        <ActivityIndicator size="large" color={brand} />
+        <ActivityIndicator testID="auth-loading" size="large" color={brand} />
       </View>
     );
   }
@@ -224,7 +224,11 @@ function UserFormScreenContent(): React.JSX.Element {
               }}
             >
               {isSubmitting ? (
-                <ActivityIndicator size={16} color={colors.iconWhite} />
+                <ActivityIndicator
+                  testID="submit-loading"
+                  size={16}
+                  color={colors.iconWhite}
+                />
               ) : null}
               <Text
                 style={{

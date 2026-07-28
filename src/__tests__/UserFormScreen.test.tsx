@@ -54,12 +54,16 @@ jest.mock('@/hooks/useCatalogs', () => ({
 }));
 
 const mockSubmit = jest.fn();
+let mockErrorMessage: string | null = null;
+let mockServerError = '';
+let mockIsSubmitting = false;
+
 jest.mock('@/hooks/useSubmitNewUser', () => ({
   useSubmitNewUser: () => ({
     submit: mockSubmit,
-    isSubmitting: false,
-    errorMessage: null,
-    serverError: '',
+    isSubmitting: mockIsSubmitting,
+    errorMessage: mockErrorMessage,
+    serverError: mockServerError,
     setErrorMessage: jest.fn(),
     setServerError: jest.fn(),
   }),
@@ -70,6 +74,9 @@ describe('UserFormScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockErrorMessage = null;
+    mockServerError = '';
+    mockIsSubmitting = false;
     mockApiGet.mockResolvedValue({ data: { data: { role: 'admin' } } });
     mockApiPost.mockResolvedValue({ data: {} });
     queryClient = new QueryClient({
@@ -139,5 +146,49 @@ describe('UserFormScreen', () => {
     fireEvent.press(getByText('Vendedor'));
     fireEvent.press(getByText('Guardar'));
     expect(mockSubmit).toHaveBeenCalled();
+  });
+
+  it('renders loading state initially during auth check', () => {
+    const { getByTestId } = renderScreen();
+    expect(getByTestId('auth-loading')).toBeTruthy();
+  });
+
+  it('renders validation error message if useSubmitNewUser returns errorMessage', async () => {
+    mockErrorMessage = 'Por favor, completa todos los campos obligatorios.';
+    const { getByText } = renderScreen();
+    await waitFor(() => {
+      expect(
+        getByText('Por favor, completa todos los campos obligatorios.'),
+      ).toBeTruthy();
+    });
+  });
+
+  it('renders server error message if useSubmitNewUser returns serverError', async () => {
+    mockServerError = 'Error del servidor: Correo ya registrado';
+    const { getByText } = renderScreen();
+    await waitFor(() => {
+      expect(
+        getByText('Error del servidor: Correo ya registrado'),
+      ).toBeTruthy();
+    });
+  });
+
+  it('renders loading indicator when submitting', async () => {
+    mockIsSubmitting = true;
+    const { getByTestId } = renderScreen();
+    await waitFor(() => {
+      expect(getByTestId('submit-loading')).toBeTruthy();
+    });
+  });
+
+  it('opens date picker modal when pressing birthdate field', async () => {
+    const { getByTestId, getByText } = renderScreen();
+    await waitFor(() => {
+      expect(getByTestId('birthdate-pressable')).toBeTruthy();
+    });
+    fireEvent.press(getByTestId('birthdate-pressable'));
+    await waitFor(() => {
+      expect(getByText('Fecha de Nacimiento')).toBeTruthy();
+    });
   });
 });
