@@ -125,7 +125,7 @@ export default function DatePickerModal({
         >
           {/* Header */}
           <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-lg font-bold dark:text-gray-100">
               Fecha de Nacimiento
             </Text>
             <TouchableOpacity
@@ -133,7 +133,7 @@ export default function DatePickerModal({
               onPress={handleDone}
               className="px-3 py-1"
             >
-              <Text className="text-base font-semibold text-brand-red-coral">
+              <Text className="text-brand-red-coral text-base font-semibold">
                 Hecho
               </Text>
             </TouchableOpacity>

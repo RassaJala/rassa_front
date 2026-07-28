@@ -97,6 +97,7 @@ export interface OrderItem {
   importe: string;
 }
 
+/** @deprecated Usar OrderStatusHistory en su lugar */
 export interface OrderHistoryEntry {
   id_historial: number;
   estado_anterior: string | null;

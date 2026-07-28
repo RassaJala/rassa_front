@@ -64,7 +64,7 @@ export function BuyerCart() {
                   </p>
                 </div>
               </div>
-              <p className="font-bold text-brand-green-forest">
+              <p className="text-brand-green-forest font-bold">
                 {item.subtotal}
               </p>
             </div>
@@ -73,7 +73,7 @@ export function BuyerCart() {
             <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
               Total
             </p>
-            <p className="text-xl font-bold text-brand-green-forest">
+            <p className="text-brand-green-forest text-xl font-bold">
               ${total.toLocaleString()}
             </p>
           </div>

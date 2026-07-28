@@ -102,7 +102,7 @@ function CategoryPickerModal({
         onPress={onClose}
       >
         <View className="gap-1 rounded-2xl bg-white p-4 dark:bg-gray-900">
-          <Text className="mb-2 px-2 text-[17px] font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink mb-2 px-2 text-[17px] font-bold dark:text-gray-100">
             Seleccionar categoría
           </Text>
           {categories.map((cat) => (
@@ -120,7 +120,7 @@ function CategoryPickerModal({
               }`}
             >
               <Text
-                className={`text-base text-brand-ink dark:text-gray-100 ${
+                className={`text-brand-ink text-base dark:text-gray-100 ${
                   selected === cat ? 'font-semibold' : 'font-normal'
                 }`}
               >
@@ -165,7 +165,7 @@ function ToggleConfirmModal({
               color="#DE393A"
             />
           </View>
-          <Text className="text-center text-[17px] font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink text-center text-[17px] font-bold dark:text-gray-100">
             {target?.estado
               ? `Desactivar "${target?.name}"?`
               : `Activar "${target?.name}"?`}
@@ -183,7 +183,7 @@ function ToggleConfirmModal({
               onClose();
             }}
             activeOpacity={0.8}
-            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
+            className="bg-brand-red-coral h-[50px] items-center justify-center rounded-[14px]"
           >
             <Text className="text-base font-semibold text-white">
               {target?.estado ? 'Desactivar' : 'Activar'}
@@ -194,7 +194,7 @@ function ToggleConfirmModal({
             activeOpacity={0.8}
             className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-[15px] font-semibold dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -235,7 +235,7 @@ function DeleteConfirmModal({
               color="#DE393A"
             />
           </View>
-          <Text className="text-center text-[17px] font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink text-center text-[17px] font-bold dark:text-gray-100">
             {target?.estado === false
               ? `¿Eliminar permanentemente "${target?.name}"?`
               : `¿Desactivar "${target?.name}"?`}
@@ -258,7 +258,7 @@ function DeleteConfirmModal({
               }
             }}
             activeOpacity={0.8}
-            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
+            className="bg-brand-red-coral h-[50px] items-center justify-center rounded-[14px]"
           >
             <Text className="text-base font-semibold text-white">
               {target?.estado === false
@@ -271,7 +271,7 @@ function DeleteConfirmModal({
             activeOpacity={0.8}
             className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-[15px] font-semibold dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>
@@ -417,7 +417,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
         <View className="flex-1">
           <Text
-            className="text-base font-semibold text-brand-ink dark:text-gray-100"
+            className="text-brand-ink text-base font-semibold dark:text-gray-100"
             numberOfLines={1}
           >
             {item.name}
@@ -430,7 +430,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
           </Text>
         </View>
 
-        <Text className="text-base font-bold text-brand-green-forest dark:text-brand-green-forest">
+        <Text className="text-brand-green-forest dark:text-brand-green-forest text-base font-bold">
           ${item.price}
         </Text>
 
@@ -504,7 +504,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
         className="flex-row items-center justify-between px-5 pb-1"
         style={{ paddingTop: 60 }}
       >
-        <Text className="text-[28px] font-bold tracking-tight text-brand-ink dark:text-gray-100">
+        <Text className="text-brand-ink text-[28px] font-bold tracking-tight dark:text-gray-100">
           Productos
         </Text>
         {!showTrash && inactiveProducts.length > 0 ? (
@@ -523,7 +523,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
   function renderSegmentedControl() {
     if (showTrash) return null;
     return (
-      <View className="px-5 pb-4 pt-3">
+      <View className="px-5 pt-3 pb-4">
         <View className="flex-row rounded-[10px] bg-gray-100 p-[3px] dark:bg-gray-800">
           <TouchableOpacity
             onPress={() => {
@@ -580,12 +580,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
           contentContainerStyle={{ padding: 20, gap: 18 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-lg font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink text-lg font-bold dark:text-gray-100">
             {editingProduct ? 'Editar producto' : 'Nuevo producto'}
           </Text>
 
           <View className="gap-1.5">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <Text className="text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
               Nombre
             </Text>
             <TextInput
@@ -593,12 +593,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
               onChangeText={(t) => setFormValues((p) => ({ ...p, name: t }))}
               placeholder="ej. Aguacate Hass"
               placeholderTextColor={muted}
-              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="text-brand-ink h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
 
           <View className="gap-1.5">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <Text className="text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
               Categoría
             </Text>
             <TouchableOpacity
@@ -625,7 +625,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
           </View>
 
           <View className="gap-1.5">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <Text className="text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
               Precio
             </Text>
             <TextInput
@@ -634,12 +634,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
               placeholder="0.00"
               placeholderTextColor={muted}
               keyboardType="decimal-pad"
-              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="text-brand-ink h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
 
           <View className="gap-1.5">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <Text className="text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
               Stock
             </Text>
             <TextInput
@@ -647,7 +647,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
               onChangeText={(t) => setFormValues((p) => ({ ...p, stock: t }))}
               placeholder="ej. 200 kg"
               placeholderTextColor={muted}
-              className="h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] text-brand-ink dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="text-brand-ink h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
         </ScrollView>
@@ -656,7 +656,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
           <TouchableOpacity
             onPress={handleSave}
             activeOpacity={0.8}
-            className="h-[50px] items-center justify-center rounded-[14px] bg-brand-red-coral"
+            className="bg-brand-red-coral h-[50px] items-center justify-center rounded-[14px]"
           >
             <Text className="text-base font-semibold text-white">Guardar</Text>
           </TouchableOpacity>
@@ -665,7 +665,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
             activeOpacity={0.8}
             className="h-[44px] items-center justify-center rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700"
           >
-            <Text className="text-[15px] font-semibold text-brand-ink dark:text-gray-100">
+            <Text className="text-brand-ink text-[15px] font-semibold dark:text-gray-100">
               Cancelar
             </Text>
           </TouchableOpacity>

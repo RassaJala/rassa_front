@@ -47,7 +47,7 @@ export function DataTable<T>({
   return (
     <>
       {/* Desktop: table */}
-      <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none md:block">
+      <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
