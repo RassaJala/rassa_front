@@ -5,10 +5,10 @@ import { Menu } from 'react-native-paper';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 
+import { isVideoAsset, validateSize } from '@rassa/chat';
+
 import { ATTACHMENT_TYPES } from '@/types/chat';
 import type { AttachmentType } from '@/types/chat';
-
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 interface SelectedFile {
   uri: string;
@@ -20,10 +20,6 @@ interface SelectedFile {
 interface AttachmentPickerProps {
   onSelected: (file: SelectedFile, kind: AttachmentType) => void;
   children: React.ReactNode;
-}
-
-function validateSize(fileSize: number): boolean {
-  return fileSize <= MAX_FILE_SIZE;
 }
 
 export default function AttachmentPicker({
@@ -47,7 +43,7 @@ export default function AttachmentPicker({
       return;
     }
 
-    const isVideo = asset.type?.toLowerCase() === 'video';
+    const isVideo = isVideoAsset(asset.type);
     onSelected(
       {
         uri: asset.uri,

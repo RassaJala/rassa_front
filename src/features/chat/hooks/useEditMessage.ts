@@ -1,7 +1,8 @@
+import { messagesKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { editMessage } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 type EditMessageVariables = { messageId: number; contenido: string };
@@ -12,21 +13,22 @@ export function useEditMessage(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, contenido }) => editMessage(messageId, contenido),
+    mutationFn: ({ messageId, contenido }) =>
+      chatApi.editMessage(messageId, contenido),
     onMutate: async ({ messageId, contenido }) => {
       await queryClient.cancelQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
 
       const previousMessages = queryClient.getQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId]);
+      }>(messagesKey(conversationId));
 
       queryClient.setQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId], (old) => {
+      }>(messagesKey(conversationId), (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -44,14 +46,14 @@ export function useEditMessage(
     onError: (_error, _variables, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(
-          ['messages', conversationId],
+          messagesKey(conversationId),
           context.previousMessages,
         );
       }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
     },
   });
