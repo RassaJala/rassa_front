@@ -125,6 +125,24 @@ describe('addProductoSemanal', () => {
     );
     expect(result).toEqual({ data: { id_producto_semanal: 1 } });
   });
+
+  it('passes foto in payload when provided', async () => {
+    const payload = {
+      fk_producto: 1,
+      fk_unidad: 1,
+      stock: 10,
+      precio: 500,
+      foto: 'base64data',
+    };
+    mockedApi.post.mockResolvedValue({
+      data: { data: { id_producto_semanal: 2 } },
+    });
+    await addProductoSemanal(5, payload);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/publicaciones/5/productos/',
+      payload,
+    );
+  });
 });
 
 describe('updateProductoSemanal', () => {
@@ -138,6 +156,46 @@ describe('updateProductoSemanal', () => {
       { stock: 20 },
     );
     expect(result).toEqual({ data: { id_producto_semanal: 1 } });
+  });
+
+  it('sends all optional fields when provided', async () => {
+    mockedApi.patch.mockResolvedValue({
+      data: { data: { id_producto_semanal: 1 } },
+    });
+    const payload = {
+      fk_producto: 99,
+      fk_unidad: 3,
+      stock: 15,
+      precio: 750,
+      foto: 'newbase64',
+    };
+    await updateProductoSemanal(5, 10, payload);
+    expect(mockedApi.patch).toHaveBeenCalledWith(
+      '/publicaciones/5/productos/10/',
+      payload,
+    );
+  });
+
+  it('sends partial payload with only precio', async () => {
+    mockedApi.patch.mockResolvedValue({
+      data: { data: { id_producto_semanal: 1 } },
+    });
+    await updateProductoSemanal(1, 2, { precio: 999 });
+    expect(mockedApi.patch).toHaveBeenCalledWith(
+      '/publicaciones/1/productos/2/',
+      { precio: 999 },
+    );
+  });
+
+  it('sends null foto to remove image', async () => {
+    mockedApi.patch.mockResolvedValue({
+      data: { data: { id_producto_semanal: 1 } },
+    });
+    await updateProductoSemanal(1, 2, { foto: null });
+    expect(mockedApi.patch).toHaveBeenCalledWith(
+      '/publicaciones/1/productos/2/',
+      { foto: null },
+    );
   });
 });
 
@@ -176,6 +234,18 @@ describe('getCatalogProductos', () => {
       params: { page_size: CATALOG_PAGE_SIZE },
     });
   });
+
+  it('returns data with results', async () => {
+    const catalog = {
+      results: [
+        { id_producto: 1, nombre_producto: 'Tomate', precio: '500', stock: 10 },
+      ],
+    };
+    mockedApi.get.mockResolvedValue({ data: { data: catalog } });
+    const result = await getCatalogProductos();
+    expect(result.data.results).toHaveLength(1);
+    expect(result.data.results[0].id_producto).toBe(1);
+  });
 });
 
 describe('getUnidades', () => {
@@ -183,6 +253,31 @@ describe('getUnidades', () => {
     mockedApi.get.mockResolvedValue({ data: { data: [] } });
     await getUnidades();
     expect(mockedApi.get).toHaveBeenCalledWith('/unidades/');
+  });
+
+  it('returns unidades data', async () => {
+    const unidades = [
+      { id_unidad: 1, tipo: 'kg' },
+      { id_unidad: 2, tipo: 'unidad' },
+    ];
+    mockedApi.get.mockResolvedValue({ data: { data: unidades } });
+    const result = await getUnidades();
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0].tipo).toBe('kg');
+  });
+});
+
+describe('getProductosSemanales', () => {
+  it('calls GET /publicaciones/:id/productos/ and returns data', async () => {
+    const items = [
+      { id_producto_semanal: 1, fk_producto: 10, stock: 5 },
+      { id_producto_semanal: 2, fk_producto: 20, stock: 3 },
+    ];
+    mockedApi.get.mockResolvedValue({ data: { data: items } });
+    const result = await getProductosSemanales(42);
+    expect(mockedApi.get).toHaveBeenCalledWith('/publicaciones/42/productos/');
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0].fk_producto).toBe(10);
   });
 });
 

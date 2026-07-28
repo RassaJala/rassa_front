@@ -93,6 +93,38 @@ describe('getNextMonday', () => {
     today.setHours(0, 0, 0, 0);
     expect(monday.getTime()).toBeGreaterThanOrEqual(today.getTime());
   });
+
+  it('returns next Monday on Wednesday', () => {
+    vi.setSystemTime(new Date(2026, 6, 29, 12, 0, 0)); // Wednesday July 29
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3); // Aug 3
+    expect(monday.getMonth()).toBe(7); // August
+  });
+
+  it('returns next Monday on Thursday', () => {
+    vi.setSystemTime(new Date(2026, 6, 30, 12, 0, 0)); // Thursday July 30
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3); // Aug 3
+    expect(monday.getMonth()).toBe(7); // August
+  });
+
+  it('returns next Monday on Friday', () => {
+    vi.setSystemTime(new Date(2026, 7, 0, 12, 0, 0)); // Friday Jul 31 (wait Jul 31 is a Friday)
+    const monday = getNextMonday();
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getDate()).toBe(3); // Aug 3
+    expect(monday.getMonth()).toBe(7); // August
+  });
+
+  it('normalizes hours to 00:00:00', () => {
+    vi.setSystemTime(new Date(2026, 6, 29, 23, 59, 59)); // Wednesday late night
+    const monday = getNextMonday();
+    expect(monday.getHours()).toBe(0);
+    expect(monday.getMinutes()).toBe(0);
+    expect(monday.getSeconds()).toBe(0);
+  });
 });
 
 // ── getWeekNumber ────────────────────────────────────────────
@@ -222,6 +254,38 @@ describe('validateItem', () => {
     const errs = validateItem(itemWithEmptyFoto);
     expect(errs).not.toHaveProperty('foto');
   });
+
+  it('accepts decimal precio (e.g. "10.5")', () => {
+    const errs = validateItem(makeItem({ precio: '10.5' }));
+    expect(errs).not.toHaveProperty('precio');
+  });
+
+  it('accepts stock "10.0" (Number.isInteger true for 10.0)', () => {
+    const errs = validateItem(makeItem({ stock: '10.0' }));
+    expect(errs).not.toHaveProperty('stock');
+  });
+
+  it('rejects stock "0.5" (not integer)', () => {
+    expect(validateItem(makeItem({ stock: '0.5' }))).toHaveProperty('stock');
+  });
+
+  it('rejects stock as whitespace-only string', () => {
+    expect(validateItem(makeItem({ stock: '   ' }))).toHaveProperty('stock');
+  });
+
+  it('rejects precio as whitespace-only string', () => {
+    expect(validateItem(makeItem({ precio: '   ' }))).toHaveProperty('precio');
+  });
+
+  it('accepts stock "1" (minimum valid)', () => {
+    const errs = validateItem(makeItem({ stock: '1' }));
+    expect(errs).not.toHaveProperty('stock');
+  });
+
+  it('accepts precio "0.01" (tiny positive)', () => {
+    const errs = validateItem(makeItem({ precio: '0.01' }));
+    expect(errs).not.toHaveProperty('precio');
+  });
 });
 
 // ── validateAllItems ─────────────────────────────────────────
@@ -290,5 +354,22 @@ describe('canJumpToStep', () => {
 
   it('allows jumping from productos (1) to publicar (3) when items valid', () => {
     expect(canJumpToStep(3, 1, VALID_STEPS, validItems)).toBe(true);
+  });
+
+  it('allows jumping across multiple non-productos steps', () => {
+    const steps = ['a', 'b', 'c', 'd'];
+    expect(canJumpToStep(3, 0, steps, invalidItems)).toBe(true);
+  });
+
+  it('blocks when an intermediate step is productos with invalid items', () => {
+    expect(canJumpToStep(3, 0, VALID_STEPS, invalidItems)).toBe(false);
+  });
+
+  it('allows when intermediate productos step has valid items', () => {
+    expect(canJumpToStep(3, 0, VALID_STEPS, validItems)).toBe(true);
+  });
+
+  it('allows jumping from step 2 (resumen) to step 3 (publicar) skipping productos check', () => {
+    expect(canJumpToStep(3, 2, VALID_STEPS, invalidItems)).toBe(true);
   });
 });

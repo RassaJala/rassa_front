@@ -161,4 +161,54 @@ describe('extractApiError', () => {
     const result = extractApiError(error, fields);
     expect(result.length).toBeLessThanOrEqual(1000);
   });
+
+  it('returns second fieldKey match when first does not exist', () => {
+    const error = makeAxiosError({ message: 'Rate limited' });
+    const result = extractApiError(error, ['detail', 'message', 'errors']);
+    expect(result).toBe('Rate limited');
+  });
+
+  it('skips non-string, non-array field values', () => {
+    const error = makeAxiosError({ detail: 42, message: true, errors: null });
+    const result = extractApiError(error, ['detail', 'message', 'errors']);
+    expect(result).toBe('Error del servidor. Intenta de nuevo.');
+  });
+
+  it('returns array value from second fieldKey when first has no match', () => {
+    const error = makeAxiosError({ warnings: ['Deprecated field'] });
+    const result = extractApiError(error, ['errors', 'warnings']);
+    expect(result).toBe('Deprecated field');
+  });
+
+  it('returns string from second fieldKey when first has empty array', () => {
+    const error = makeAxiosError({ errors: [], message: 'Fallback msg' });
+    const result = extractApiError(error, ['detail', 'errors', 'message']);
+    expect(result).toBe('Fallback msg');
+  });
+
+  it('returns first element of array fieldKey', () => {
+    const error = makeAxiosError({ errors: ['First error', 'Second error'] });
+    const result = extractApiError(error, ['detail', 'message', 'errors']);
+    expect(result).toBe('First error');
+  });
+
+  it('prefers detail over message over errors', () => {
+    const error = makeAxiosError({
+      detail: 'A',
+      message: 'B',
+      errors: ['C'],
+    });
+    const result = extractApiError(error, ['detail', 'message', 'errors']);
+    expect(result).toBe('A');
+  });
+
+  it('skips detail/message check when they are non-string primitives', () => {
+    const error = makeAxiosError({
+      detail: 123,
+      message: true,
+      errors: ['Actual error'],
+    });
+    const result = extractApiError(error, ['detail', 'message', 'errors']);
+    expect(result).toBe('Actual error');
+  });
 });
