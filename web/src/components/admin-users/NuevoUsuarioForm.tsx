@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { colors } from '../../constants/colors';
 import { useCatalogs } from '../../hooks/useCatalogs';
 import api from '../../services/api';
 import { parseApiError } from '../../utils/apiErrors';
@@ -177,9 +178,9 @@ export default function NuevoUsuarioForm({
               buyer: 'Cliente',
             };
             const colorsMap = {
-              farmer: '#16a34a',
-              seller: '#f59e0b',
-              buyer: '#3b82f6',
+              farmer: colors.primary,
+              seller: colors.accent,
+              buyer: colors.info,
             };
             const active = formRole === r;
             return (
