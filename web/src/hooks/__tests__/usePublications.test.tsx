@@ -111,9 +111,7 @@ const FAKE_PRODUCTOS_SEMANALES = {
 
 const FAKE_CATALOG = {
   data: {
-    results: [
-      { id_producto: 1, nombre_producto: 'Tomate', precio: '500' },
-    ],
+    results: [{ id_producto: 1, nombre_producto: 'Tomate', precio: '500' }],
   },
 };
 
@@ -136,7 +134,9 @@ describe('usePublications — queries', () => {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockedApi.getPublicaciones).toHaveBeenCalledWith({ estado: 'borrador' });
+    expect(mockedApi.getPublicaciones).toHaveBeenCalledWith({
+      estado: 'borrador',
+    });
     expect(result.current.data).toEqual(FAKE_PUBLICACIONES);
   });
 
@@ -213,7 +213,9 @@ describe('usePublications — mutations', () => {
   });
 
   it('useCreatePublicacion succeeds', async () => {
-    mockedApi.createPublicacion.mockResolvedValue({ data: FAKE_PUBLICACION.data });
+    mockedApi.createPublicacion.mockResolvedValue({
+      data: FAKE_PUBLICACION.data,
+    });
     const { result } = renderHook(() => useCreatePublicacion(), {
       wrapper: createWrapper(),
     });
@@ -280,7 +282,11 @@ describe('usePublications — mutations', () => {
     });
     const payload = { fk_producto: 1, fk_unidad: 1, stock: 15, precio: 600 };
     await result.current.mutateAsync({ pubId: 1, itemId: 100, payload });
-    expect(mockedApi.updateProductoSemanal).toHaveBeenCalledWith(1, 100, payload);
+    expect(mockedApi.updateProductoSemanal).toHaveBeenCalledWith(
+      1,
+      100,
+      payload,
+    );
   });
 
   it('useDeleteProductoSemanal succeeds', async () => {
@@ -321,9 +327,7 @@ describe('usePublications — mutations', () => {
   });
 
   it('usePublicaciones propagates error', async () => {
-    mockedApi.getPublicaciones.mockRejectedValue(
-      new Error('network error'),
-    );
+    mockedApi.getPublicaciones.mockRejectedValue(new Error('network error'));
     const { result } = renderHook(() => usePublicaciones(), {
       wrapper: createWrapper(),
     });

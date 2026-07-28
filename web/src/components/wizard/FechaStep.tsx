@@ -23,13 +23,15 @@ export function FechaStep({ weekNumber, nextMonday, colors }: FechaStepProps) {
         <p className="text-[15px] font-semibold" style={{ color: colors.fg }}>
           Semana {weekNumber}
         </p>
-        <p className="mt-1 text-[14px] capitalize" style={{ color: colors.muted }}>
+        <p
+          className="mt-1 text-[14px] capitalize"
+          style={{ color: colors.muted }}
+        >
           {formatDate(nextMonday)}
         </p>
         <p className="mt-3 text-[13px]" style={{ color: colors.muted }}>
-          La publicación corresponderá a esta semana. Los productos que
-          agregues en el siguiente paso estarán disponibles para los
-          compradores.
+          La publicación corresponderá a esta semana. Los productos que agregues
+          en el siguiente paso estarán disponibles para los compradores.
         </p>
       </div>
     </div>

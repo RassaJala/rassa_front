@@ -1,5 +1,8 @@
 import type { AppColors } from '../../hooks/useAppColors';
-import type { ItemValidation, WizardItemDraft } from '../../utils/publicationWizard';
+import type {
+  ItemValidation,
+  WizardItemDraft,
+} from '../../utils/publicationWizard';
 import { mediaUrl } from '../../utils/mediaUrl';
 import { hideBrokenImage } from '../../utils/imageHelpers';
 import { Button } from '../ui/Button';
@@ -79,7 +82,10 @@ export function ProductosStep({
                 }}
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-[15px] font-semibold" style={{ color: colors.fg }}>
+                  <p
+                    className="text-[15px] font-semibold"
+                    style={{ color: colors.fg }}
+                  >
                     {item.nombre_producto ||
                       `Producto #${String(item.fk_producto)}`}
                   </p>
@@ -162,11 +168,7 @@ export function ProductosStep({
                             value={item.stock}
                             disabled={saving}
                             onChange={(e) =>
-                              onUpdateItem(
-                                item.tempId,
-                                'stock',
-                                e.target.value,
-                              )
+                              onUpdateItem(item.tempId, 'stock', e.target.value)
                             }
                             placeholder="0"
                           />

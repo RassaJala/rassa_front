@@ -37,7 +37,10 @@ export function ResumenStep({
         <p className="text-[14px]" style={{ color: colors.muted }}>
           Semana {weekNumber} — {formatDate(nextMonday)}
         </p>
-        <p className="mt-1 text-[15px] font-semibold" style={{ color: colors.fg }}>
+        <p
+          className="mt-1 text-[15px] font-semibold"
+          style={{ color: colors.fg }}
+        >
           {productCountLabel(items.length)} en la publicación
         </p>
       </div>
@@ -51,9 +54,7 @@ export function ResumenStep({
       ) : (
         <div className="flex flex-col gap-2">
           {items.map((item) => {
-            const unidad = unidades.find(
-              (u) => u.id_unidad === item.fk_unidad,
-            );
+            const unidad = unidades.find((u) => u.id_unidad === item.fk_unidad);
             const displayImage = item.imagePreview ?? mediaUrl(item.foto);
             return (
               <div
@@ -80,7 +81,10 @@ export function ResumenStep({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-semibold" style={{ color: colors.fg }}>
+                  <p
+                    className="text-[14px] font-semibold"
+                    style={{ color: colors.fg }}
+                  >
                     {item.nombre_producto ||
                       `Producto #${String(item.fk_producto)}`}
                   </p>
@@ -89,9 +93,7 @@ export function ResumenStep({
                   </p>
                 </div>
                 <Badge
-                  variant={
-                    item.foto || item.imageFile ? 'success' : 'warning'
-                  }
+                  variant={item.foto || item.imageFile ? 'success' : 'warning'}
                 >
                   {item.foto || item.imageFile ? 'Con foto' : 'Sin foto'}
                 </Badge>
