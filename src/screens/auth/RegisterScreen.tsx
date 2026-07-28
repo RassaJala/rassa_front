@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -31,9 +31,8 @@ function RegisterScreenContent(): React.JSX.Element {
   const netInfo = useNetInfo();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const isMounted = useRef(true);
-  const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
-    getAdminColors(isDark);
+  const adminColors = getAdminColors(isDark);
+  const { bg, surface, fg, muted, border, brand } = adminColors;
 
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
@@ -46,13 +45,6 @@ function RegisterScreenContent(): React.JSX.Element {
     });
 
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   async function handleRegister() {
     if (netInfo.isConnected === false) {
@@ -116,23 +108,7 @@ function RegisterScreenContent(): React.JSX.Element {
         >
           <RegistrationFormFields
             form={form}
-            colors={{
-              muted,
-              border,
-              surface,
-              fg,
-              brand,
-              accentBg,
-              segBg,
-              errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-              errorBorder: isDark
-                ? colors.admErrorBorderD
-                : colors.admErrorBorderL,
-              errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-              errorAction: isDark
-                ? colors.admErrorActionD
-                : colors.admErrorActionL,
-            }}
+            colors={adminColors}
             setErrorMessage={setErrorMessage}
             onOpenDatePicker={() => setIsDatePickerVisible(true)}
             disabled={isSubmitting}

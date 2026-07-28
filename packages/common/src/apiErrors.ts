@@ -28,7 +28,10 @@ function parseHtmlOrStringError(data: string, status?: number): string {
 }
 
 export function isSafeDetail(detail: string): boolean {
-  // Regex targeting standard python/django tracebacks or database errors
+  // Regex targeting standard python/django tracebacks or database errors.
+  // Note: /at\s+.*:\d+/i was removed — it caused false positives on common
+  // Spanish text (e.g. "tratamiento: 3 sesiones", "atención: 5").
+  // Python/JS stack traces are already caught by the patterns above.
   if (
     /traceback\s+\(most\s+recent\s+call\s+last\)/i.test(detail) ||
     /django\.db/i.test(detail) ||
@@ -38,19 +41,27 @@ export function isSafeDetail(detail: string): boolean {
     /programmingerror/i.test(detail) ||
     /integrityerror/i.test(detail) ||
     /exception\s+at/i.test(detail) ||
-    /file\s+".*"\s*,\s*line\s+\d+/i.test(detail) ||
-    /at\s+.*:\d+/i.test(detail)
+    /file\s+".*"\s*,\s*line\s+\d+/i.test(detail)
   ) {
     return false;
   }
   return true;
 }
 
-function parseAxiosError(error: unknown): string | null {
-  if (!axios.isAxiosError(error)) return null;
+function unwrapCause(error: unknown): unknown {
+  if (error instanceof Error && error.cause !== undefined) {
+    return error.cause;
+  }
+  return error;
+}
 
-  const status = error.response?.status;
-  const data = error.response?.data as unknown;
+function parseAxiosError(error: unknown): string | null {
+  const candidate = unwrapCause(error);
+
+  if (!axios.isAxiosError(candidate)) return null;
+
+  const status = candidate.response?.status;
+  const data = candidate.response?.data as unknown;
 
   if (data && typeof data === 'object') {
     const record = data as Record<string, unknown>;
@@ -101,16 +112,18 @@ export function extractApiError(
   fieldKeys: string[],
   defaultMessage = 'Error del servidor. Intenta de nuevo.',
 ): string {
-  if (!axios.isAxiosError(error)) {
+  const candidate = unwrapCause(error);
+
+  if (!axios.isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
-  const data = error.response?.data;
+  const data = candidate.response?.data;
 
   if (!data) return defaultMessage;
 
   if (typeof data === 'string') {
-    return parseHtmlOrStringError(data, error.response?.status);
+    return parseHtmlOrStringError(data, candidate.response?.status);
   }
 
   const record = data as Record<string, unknown>;
@@ -176,14 +189,16 @@ export function extractFieldErrors(
   error: unknown,
   fieldKeys: string[],
 ): { fields: Record<string, string>; general: string | null } {
-  if (!axios.isAxiosError(error)) {
+  const candidate = unwrapCause(error);
+
+  if (!axios.isAxiosError(candidate)) {
     return {
       fields: {},
       general: error instanceof Error ? error.message : 'Error desconocido.',
     };
   }
 
-  const data = error.response?.data;
+  const data = candidate.response?.data;
 
   if (!data) {
     return { fields: {}, general: 'Error del servidor. Intenta de nuevo.' };
@@ -192,7 +207,7 @@ export function extractFieldErrors(
   if (typeof data === 'string') {
     return {
       fields: {},
-      general: parseHtmlOrStringError(data, error.response?.status),
+      general: parseHtmlOrStringError(data, candidate.response?.status),
     };
   }
 

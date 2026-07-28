@@ -112,7 +112,7 @@ function registerErrors(fields: {
   });
   if (err) return err;
 
-  if (!sexo) return 'Seleccioná un género.';
+  if (!sexo) return 'Selecciona un género.';
   return null;
 }
 
@@ -423,7 +423,7 @@ export function LoginScreen() {
             marginTop: 4,
           }}
         >
-          ¿No tenés cuenta?{' '}
+          ¿No tienes cuenta?{' '}
           <Link
             to="/register"
             style={{
@@ -921,7 +921,7 @@ export function RegisterScreen() {
             color: theme.muted,
           }}
         >
-          ¿Ya tenés cuenta?{' '}
+          ¿Ya tienes cuenta?{' '}
           <Link
             to="/login"
             style={{

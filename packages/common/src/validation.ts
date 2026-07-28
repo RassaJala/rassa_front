@@ -3,6 +3,7 @@ export const DATE_REGEX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const NAME_REGEX = /^[\sA-Za-zÁÉÍÑÓÚÜáéíñóúü]+$/;
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_NOMBRE = 100;
+export const CATALOG_TIMEOUT = 10_000;
 
 export function cleanName(val: string): string {
   // Only letters (with accents), spaces — no apostrophes or hyphens

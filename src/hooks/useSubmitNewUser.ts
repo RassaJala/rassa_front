@@ -8,6 +8,7 @@ import type { RegisterPayload } from '@/types';
 import { parseApiError } from '@/utils/apiErrors';
 import {
   buildRegistrationPayload,
+  CATALOG_TIMEOUT,
   validateRegistrationForm,
 } from '@/utils/validation';
 
@@ -57,7 +58,7 @@ export function useSubmitNewUser(
       const endpoint =
         form.role === 'farmer' ? '/auth/create-farmer/' : '/auth/register/';
 
-      return api.post(endpoint, payload, { timeout: 10000 });
+      return api.post(endpoint, payload, { timeout: CATALOG_TIMEOUT });
     },
     onSuccess: () => {
       submittingRef.current = false;

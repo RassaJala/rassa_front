@@ -1,5 +1,10 @@
 import { colors } from './colors';
 
+export { ROLE_LABELS } from '@/common/roles';
+export type { UserRole } from '@/common/roles';
+
+import { ROLE_OPTIONS as SHARED_ROLE_OPTIONS } from '@/common/roles';
+
 export const ROLE_FILTERS = [
   { label: 'Todos', value: null as string | null },
   { label: 'Admin', value: 'Admin' },
@@ -14,12 +19,19 @@ export const STATUS_FILTERS = [
   { label: 'Inactivos', value: 'false' },
 ] as const;
 
-export const ROLE_OPTIONS = [
-  // Admin no está aquí — solo se asigna por backend (2 admins fijos)
-  { label: 'Agricultor', value: 'farmer', color: colors.primary },
-  { label: 'Vendedor', value: 'seller', color: colors.accent },
-  { label: 'Cliente', value: 'buyer', color: colors.info },
-] as const;
+export const ROLE_OPTIONS = SHARED_ROLE_OPTIONS.map((opt) => ({
+  ...opt,
+  color:
+    opt.value === 'farmer'
+      ? colors.primary
+      : opt.value === 'seller'
+        ? colors.accent
+        : colors.info,
+})) as readonly {
+  readonly label: string;
+  readonly value: 'farmer' | 'seller' | 'buyer';
+  readonly color: string;
+}[];
 
 export const ROLE_COLOR_MAP: Record<string, string> = {
   admin: colors.error,

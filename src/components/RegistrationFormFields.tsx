@@ -2,19 +2,13 @@ import React from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import CatalogSelector from '@/components/CatalogSelector';
-import type { CatalogColors } from '@/components/CatalogSelector';
 import type { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import type { AdminColors } from '@/utils/adminTheme';
 import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
-
-interface FormColors extends CatalogColors {
-  readonly brand: string;
-  readonly accentBg: string;
-  readonly segBg: string;
-}
 
 interface RegistrationFormFieldsProps {
   readonly form: ReturnType<typeof useRegistrationForm>;
-  readonly colors: FormColors;
+  readonly colors: AdminColors;
   readonly setErrorMessage: (msg: string | null) => void;
   readonly onOpenDatePicker: () => void;
   readonly disabled?: boolean;
@@ -22,7 +16,7 @@ interface RegistrationFormFieldsProps {
 
 export default function RegistrationFormFields({
   form,
-  colors: formColors,
+  colors,
   setErrorMessage,
   onOpenDatePicker,
   disabled = false,
@@ -56,21 +50,21 @@ export default function RegistrationFormFields({
     fontWeight: '600' as const,
     letterSpacing: 0.08,
     textTransform: 'uppercase' as const,
-    color: formColors.muted,
+    color: colors.muted,
   };
 
   const inputStyle = {
     borderWidth: 1.5,
-    borderColor: formColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: formColors.surface,
-    color: formColors.fg,
+    backgroundColor: colors.surface,
+    color: colors.fg,
     fontSize: 15,
     paddingHorizontal: 14,
     height: 46,
   };
 
-  const placeholderColor = formColors.muted;
+  const placeholderColor = colors.muted;
 
   const sexoOptions = [
     { value: 'M' as const, label: 'Masculino' },
@@ -143,7 +137,7 @@ export default function RegistrationFormFields({
         onChangeText={(val) => setTelefono(formatPhoneNumber(val))}
         editable={!disabled}
       />
-      <Text style={{ marginTop: 4, fontSize: 12, color: formColors.muted }}>
+      <Text style={{ marginTop: 4, fontSize: 12, color: colors.muted }}>
         Para números extranjeros inicia con + (ej. +1...)
       </Text>
 
@@ -182,10 +176,10 @@ export default function RegistrationFormFields({
                 height: 40,
                 borderRadius: 10,
                 borderWidth: 1.5,
-                borderColor: isActive ? formColors.brand : formColors.border,
+                borderColor: isActive ? colors.brand : colors.border,
                 backgroundColor: isActive
-                  ? formColors.accentBg
-                  : formColors.segBg,
+                  ? colors.accentBg
+                  : colors.segBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -194,7 +188,7 @@ export default function RegistrationFormFields({
                 style={{
                   fontSize: 13,
                   fontWeight: '600',
-                  color: isActive ? formColors.brand : formColors.muted,
+                  color: isActive ? colors.brand : colors.muted,
                 }}
               >
                 {opt.label}
@@ -230,7 +224,7 @@ export default function RegistrationFormFields({
         refetchMunicipios={catalog.refetchMunicipios}
         refetchLocalidades={catalog.refetchLocalidades}
         setErrorMessage={setErrorMessage}
-        catalogColors={formColors}
+        catalogColors={colors}
       />
     </View>
   );

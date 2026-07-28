@@ -131,4 +131,90 @@ describe('WebDatePickerModal', () => {
     fireEvent.click(screen.getByText('Mes'));
     expect(screen.getAllByText('Mayo')[0]).toBeInTheDocument();
   });
+
+  it('closes when clicking cancel without calling onSelectDate', () => {
+    const onSelectDateMock = vi.fn();
+    const onCloseMock = vi.fn();
+
+    render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={onCloseMock}
+        onSelectDate={onSelectDateMock}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Cancelar'));
+    expect(onCloseMock).toHaveBeenCalled();
+    expect(onSelectDateMock).not.toHaveBeenCalled();
+  });
+
+  it('displays all 12 Spanish month names', () => {
+    render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const currentYear = new Date().getFullYear();
+    fireEvent.click(screen.getByText(String(currentYear - 18)));
+
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+    for (const m of months) {
+      expect(screen.getByText(m)).toBeInTheDocument();
+    }
+  });
+
+  it('shows oldest year based on YEARS_BACK constant', () => {
+    render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const currentYear = new Date().getFullYear();
+    const maxAdultYear = currentYear - 18;
+    const oldestYear = maxAdultYear - 103 + 1;
+    expect(screen.getByText(String(oldestYear))).toBeInTheDocument();
+  });
+
+  it('resets selection when reopened without initialDate', () => {
+    const { rerender } = render(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    const currentYear = new Date().getFullYear();
+    fireEvent.click(screen.getByText(String(currentYear - 18)));
+    fireEvent.click(screen.getByText('Enero'));
+    expect(screen.getByText('15')).toBeInTheDocument();
+
+    rerender(
+      <WebDatePickerModal
+        visible={false}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    rerender(
+      <WebDatePickerModal
+        visible={true}
+        onClose={vi.fn()}
+        onSelectDate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(String(currentYear - 18))).toBeInTheDocument();
+  });
 });

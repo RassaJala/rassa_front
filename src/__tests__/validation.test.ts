@@ -11,6 +11,7 @@ import {
   MIN_PASSWORD_LENGTH,
   validateBirthdate,
   validateName,
+  validatePasswordChange,
   validateRegistrationForm,
 } from '@/utils/validation';
 
@@ -334,6 +335,46 @@ describe('validation utilities', () => {
           fechaNacimiento: fifteenYearsAgo,
         }),
       ).toBe('Debes ser mayor de 18 años para registrarte.');
+    });
+  });
+
+  describe('validatePasswordChange', () => {
+    it('retorna null cuando todo es válido', () => {
+      expect(
+        validatePasswordChange('oldPass123', 'newPass456', 'newPass456'),
+      ).toBeNull();
+    });
+
+    it('retorna error si algún campo está vacío', () => {
+      expect(validatePasswordChange('', 'newPass123', 'newPass123')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+      expect(validatePasswordChange('oldPass123', '', 'newPass123')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+      expect(validatePasswordChange('oldPass123', 'newPass123', '')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+    });
+
+    it('retorna error si la nueva contraseña es menor al mínimo', () => {
+      expect(
+        validatePasswordChange('oldPass123', 'short', 'short'),
+      ).toBe(
+        `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
+    });
+
+    it('retorna error si la confirmación no coincide', () => {
+      expect(
+        validatePasswordChange('oldPass123', 'newPass456', 'different789'),
+      ).toBe('La confirmación de la contraseña no coincide.');
+    });
+
+    it('retorna error si la nueva contraseña es igual a la actual', () => {
+      expect(
+        validatePasswordChange('samePass123', 'samePass123', 'samePass123'),
+      ).toBe('La nueva contraseña debe ser diferente a la actual.');
     });
   });
 });

@@ -4,6 +4,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import api from '@/services/api';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 
 const mockRegister = jest.fn();
@@ -41,6 +42,8 @@ jest.mock('@/services/api', () => ({
     post: jest.fn(),
   },
 }));
+
+const mockedApi = api as jest.Mocked<typeof api>;
 
 const mockSetLocalidadId = jest.fn();
 const mockSetLocalidadNombre = jest.fn();
@@ -265,6 +268,9 @@ describe('RegisterScreen', () => {
         domicilio: 'Calle 123',
         fk_localidad: 10,
       });
+      // Guard against double-POST regression: only AuthContext.register must
+      // make the network call, never api.post directly from RegisterScreen.
+      expect(mockedApi.post).not.toHaveBeenCalled();
     });
   });
 

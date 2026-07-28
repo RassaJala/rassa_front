@@ -373,21 +373,8 @@ async function fetchAllPages(
 function UserManagementScreenContent(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const {
-    bg,
-    fg,
-    muted,
-    border,
-    brand,
-    inputBg,
-    surface,
-    accentBg,
-    segBg,
-    errorBg,
-    errorBorder,
-    errorText,
-    errorAction,
-  } = getAdminColors(isDark);
+  const adminColors = getAdminColors(isDark);
+  const { bg, fg, muted, border, brand, inputBg, surface, segBg } = adminColors;
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -914,19 +901,7 @@ function UserManagementScreenContent(): React.JSX.Element {
             <ErrorBoundary>
               <RegistrationFormFields
                 form={form}
-                colors={{
-                  surface,
-                  fg,
-                  muted,
-                  border,
-                  brand,
-                  accentBg,
-                  segBg,
-                  errorBg,
-                  errorBorder,
-                  errorText,
-                  errorAction,
-                }}
+                colors={adminColors}
                 setErrorMessage={setFormErrorMessage}
                 onOpenDatePicker={() => setIsDatePickerVisible(true)}
                 disabled={isSubmitting}

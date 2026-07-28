@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import api from '@/services/api';
 import type { Localidad, Municipio } from '@/types';
+import { CATALOG_TIMEOUT } from '@/utils/validation';
 
 export function useCatalogs(
   initialMunicipioId: number | null = null,
@@ -53,7 +54,7 @@ export function useCatalogs(
     queryKey: ['municipios'],
     queryFn: async () => {
       const { data } = await api.get<{ data: Municipio[] }>('/municipios/', {
-        timeout: 10000,
+        timeout: CATALOG_TIMEOUT,
       });
       return data.data;
     },
@@ -71,7 +72,7 @@ export function useCatalogs(
       if (selectedMunicipioId === null) return [];
       const { data } = await api.get<{ data: Localidad[] }>(
         `/localidades/?municipio_id=${selectedMunicipioId}`,
-        { timeout: 10000 },
+        { timeout: CATALOG_TIMEOUT },
       );
       return data.data;
     },

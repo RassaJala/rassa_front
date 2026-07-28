@@ -77,8 +77,8 @@ function UserFormScreenContent(): React.JSX.Element {
   const navigation = useNavigation();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const { bg, surface, fg, muted, border, brand, segBg, accentBg } =
-    getAdminColors(isDark);
+  const adminColors = getAdminColors(isDark);
+  const { bg, surface, fg, border, brand } = adminColors;
 
   const [isValidating, setIsValidating] = useState(true);
 
@@ -86,7 +86,7 @@ function UserFormScreenContent(): React.JSX.Element {
     let active = true;
     const controller = new AbortController();
 
-    async function verifyAuth() {
+    async function verifyAuth(retryCount = 0) {
       try {
         const res = await api.get<{ data?: { role?: string } }>('/auth/me/', {
           signal: controller.signal,
@@ -115,6 +115,13 @@ function UserFormScreenContent(): React.JSX.Element {
           '[UserFormScreen] active backend auth check failed:',
           err,
         );
+        if (retryCount < 1 && active) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (active) {
+            return verifyAuth(retryCount + 1);
+          }
+          return;
+        }
         if (active) {
           navigation.goBack();
         }
@@ -180,26 +187,10 @@ function UserFormScreenContent(): React.JSX.Element {
           <ErrorBoundary>
             <RegistrationFormFields
               form={form}
-              colors={{
-                muted,
-                border,
-                surface,
-                fg,
-                brand,
-                accentBg,
-                segBg,
-                errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
-                errorBorder: isDark
-                  ? colors.admErrorBorderD
-                  : colors.admErrorBorderL,
-                errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
-                errorAction: isDark
-                  ? colors.admErrorActionD
-                  : colors.admErrorActionL,
-              }}
-              setErrorMessage={setErrorMessage}
-              onOpenDatePicker={() => setIsDatePickerVisible(true)}
-              disabled={isSubmitting}
+            colors={adminColors}
+            setErrorMessage={setErrorMessage}
+            onOpenDatePicker={() => setIsDatePickerVisible(true)}
+            disabled={isSubmitting}
             />
           </ErrorBoundary>
 

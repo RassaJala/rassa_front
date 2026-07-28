@@ -18,13 +18,18 @@ describe('isSafeDetail', () => {
     expect(isSafeDetail('ProgrammingError')).toBe(false);
     expect(isSafeDetail('IntegrityError')).toBe(false);
     expect(isSafeDetail('file "/app/views.py", line 15')).toBe(false);
-    expect(isSafeDetail('at Object.anonymous (index.js:10:5)')).toBe(false);
+    // Note: 'at Object.anonymous (index.js:10:5)' is a JS client-side stack
+    // trace — the backend should never return it, so we do NOT sanitize it.
   });
 
   it('returns true for safe user-facing validation strings', () => {
     expect(isSafeDetail('El correo ya existe')).toBe(true);
     expect(isSafeDetail('Ingresa un correo válido')).toBe(true);
     expect(isSafeDetail('Revisa la línea de código en el email')).toBe(true);
+    // Strings that used to be false-positived by the removed /at\s+.*:\d+/ regex:
+    expect(isSafeDetail('Error en tratamiento: 3 intentos')).toBe(true);
+    expect(isSafeDetail('atención: 5 días de espera')).toBe(true);
+    expect(isSafeDetail('Consulta el apartado: 2')).toBe(true);
   });
 });
 
@@ -105,6 +110,34 @@ describe('parseApiError', () => {
     expect(parseApiError(safeError)).toBe(
       'El código de verificación es inválido.',
     );
+  });
+
+  it('unwraps Error.cause containing an AxiosError', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { detail: 'Conflicto: Ya existe un registro con esos datos.' },
+      },
+    };
+    const wrapped = new Error('Conflicto: Ya existe un registro con esos datos.', {
+      cause: axiosError,
+    });
+    expect(parseApiError(wrapped)).toBe(
+      'Conflicto: Ya existe un registro con esos datos.',
+    );
+  });
+
+  it('unwraps cause for non-status-mapped errors', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: { email: ['Este campo es obligatorio.'] },
+      },
+    };
+    const wrapped = new Error('Validation failed', { cause: axiosError });
+    expect(parseApiError(wrapped)).toContain('email: Este campo es obligatorio.');
   });
 });
 
