@@ -40,6 +40,16 @@ const defaultProps = {
   refetchMunicipios: jest.fn(),
   refetchLocalidades: jest.fn(),
   setErrorMessage: jest.fn(),
+  catalogColors: {
+    muted: '#5E6B5E',
+    border: '#E2E6DF',
+    surface: '#FFFFFF',
+    fg: '#2D3328',
+    errorBg: 'rgba(254,242,242,1)',
+    errorBorder: '#fca5a5',
+    errorText: '#dc2626',
+    errorAction: '#b91c1c',
+  },
 };
 
 beforeEach(() => {
@@ -77,15 +87,19 @@ describe('CatalogSelector', () => {
   });
 
   it('opens municipio dialog on press', async () => {
-    const { getByText } = await render(<CatalogSelector {...defaultProps} />);
+    const { getByText, getAllByText } = await render(
+      <CatalogSelector {...defaultProps} />,
+    );
     fireEvent.press(getByText('Seleccionar Municipio'));
     await waitFor(() => {
-      expect(getByText('Seleccionar Municipio')).toBeTruthy();
+      // Both trigger button and modal title are rendered
+      expect(getAllByText('Seleccionar Municipio').length).toBe(2);
+      expect(getByText('Cerrar')).toBeTruthy();
     });
   });
 
   it('opens localidad dialog on press when municipio selected', async () => {
-    const { getByText } = await render(
+    const { getByText, getAllByText } = await render(
       <CatalogSelector
         {...defaultProps}
         selectedMunicipioId={1}
@@ -94,7 +108,9 @@ describe('CatalogSelector', () => {
     );
     fireEvent.press(getByText('Seleccionar Localidad'));
     await waitFor(() => {
-      expect(getByText('Seleccionar Localidad')).toBeTruthy();
+      // Both trigger button and modal title are rendered
+      expect(getAllByText('Seleccionar Localidad').length).toBe(2);
+      expect(getByText('Cerrar')).toBeTruthy();
     });
   });
 

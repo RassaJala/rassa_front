@@ -1,13 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppColors } from '../hooks/useAppColors';
+import { useAppColors, type AppColors } from '../hooks/useAppColors';
 import {
   useClosePublicacion,
   useDeletePublicacion,
   usePublicaciones,
   usePublishPublicacion,
 } from '../hooks/usePublications';
-import type { PublicacionEstado } from '../services/publications';
+import type { Publicacion, PublicacionEstado } from '../services/publications';
 import { extractApiError } from '../utils/apiError';
 import { formatDate } from '../utils/publicationWizard';
 import { mediaUrl } from '../utils/mediaUrl';
@@ -24,7 +24,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Toast, type ToastState } from '../components/ui/Toast';
 
-// ── Helpers ────────────────────────────────────────────────
+const PAGE_SIZE = 10;
 
 const TABS: Array<{ key: PublicacionEstado | 'all'; label: string }> = [
   { key: 'all', label: 'Todas' },
@@ -33,16 +33,277 @@ const TABS: Array<{ key: PublicacionEstado | 'all'; label: string }> = [
   { key: 'cerrado', label: 'Cerradas' },
 ];
 
+const MONTHS = [
+  { value: 0, label: 'Todos los meses' },
+  { value: 1, label: 'Enero' },
+  { value: 2, label: 'Febrero' },
+  { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' },
+  { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' },
+  { value: 12, label: 'Diciembre' },
+];
+
+// ── DetailModal ───────────────────────────────────────────
+
+function DetailModal({
+  pub,
+  onClose,
+  colors,
+}: {
+  pub: Publicacion;
+  onClose: () => void;
+  colors: AppColors;
+}) {
+  const productos = pub.productos ?? [];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)' }}
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-2xl p-6"
+        style={{
+          background: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold" style={{ color: colors.fg }}>
+              Semana {pub.semana}
+            </h2>
+            <p className="text-[13px]" style={{ color: colors.muted }}>
+              {formatDate(new Date(pub.fecha_publicacion), { short: true })}
+            </p>
+          </div>
+          <Badge variant={getStatusBadge(pub.estado).variant}>
+            {getStatusBadge(pub.estado).label}
+          </Badge>
+        </div>
+
+        <p
+          className="mb-4 text-[14px] font-semibold"
+          style={{ color: colors.fg }}
+        >
+          {productCountLabel(productos.length)}
+        </p>
+
+        {productos.length === 0 ? (
+          <p className="text-[13px]" style={{ color: colors.muted }}>
+            Esta publicación no tiene productos.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {productos.map((p) => {
+              const img = mediaUrl(p.foto);
+              return (
+                <div
+                  key={p.id_producto_semanal}
+                  className="flex items-center gap-4 rounded-xl p-3"
+                  style={{
+                    background: colors.bg,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  {img ? (
+                    <img
+                      src={img}
+                      alt=""
+                      className="h-14 w-14 rounded-lg object-cover"
+                      onError={hideBrokenImage}
+                    />
+                  ) : (
+                    <div
+                      className="flex h-14 w-14 items-center justify-center rounded-lg text-[22px]"
+                      style={{ background: colors.border }}
+                    >
+                      📦
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate text-[14px] font-semibold"
+                      style={{ color: colors.fg }}
+                    >
+                      Producto #{p.fk_producto}
+                    </p>
+                    <div className="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                      <span style={{ color: colors.muted }}>
+                        Stock: {p.stock}
+                      </span>
+                      <span style={{ color: colors.brand }}>
+                        ${p.precio}
+                      </span>
+                      <Badge
+                        variant={
+                          p.estado === 'activo'
+                            ? 'success'
+                            : 'default'
+                        }
+                      >
+                        {p.estado}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <Button variant="ghost" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Pagination ────────────────────────────────────────────
+
+function Pagination({
+  page,
+  totalPages,
+  onChange,
+  colors,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (p: number) => void;
+  colors: AppColors;
+}) {
+  if (totalPages <= 1) return null;
+
+  const pages: number[] = [];
+  const start = Math.max(1, page - 2);
+  const end = Math.min(totalPages, page + 2);
+  for (let i = start; i <= end; i++) pages.push(i);
+
+  return (
+    <div
+      className="flex items-center justify-center gap-1.5 px-[18px] py-4"
+      style={{
+        borderTop: `1px solid ${colors.border}`,
+      }}
+    >
+      <button
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          background: colors.bg,
+          color: colors.muted,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        Anterior
+      </button>
+
+      {start > 1 && (
+        <>
+          <button
+            onClick={() => onChange(1)}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
+            style={{
+              background: colors.bg,
+              color: colors.muted,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            1
+          </button>
+          {start > 2 && (
+            <span className="px-1 text-[13px]" style={{ color: colors.muted }}>
+              ...
+            </span>
+          )}
+        </>
+      )}
+
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
+          style={{
+            background: p === page ? colors.brand : colors.bg,
+            color: p === page ? '#fff' : colors.muted,
+            border: `1px solid ${p === page ? colors.brand : colors.border}`,
+          }}
+        >
+          {p}
+        </button>
+      ))}
+
+      {end < totalPages && (
+        <>
+          {end < totalPages - 1 && (
+            <span className="px-1 text-[13px]" style={{ color: colors.muted }}>
+              ...
+            </span>
+          )}
+          <button
+            onClick={() => onChange(totalPages)}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
+            style={{
+              background: colors.bg,
+              color: colors.muted,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            {totalPages}
+          </button>
+        </>
+      )}
+
+      <button
+        disabled={page >= totalPages}
+        onClick={() => onChange(page + 1)}
+        className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
+        style={{
+          background: colors.bg,
+          color: colors.muted,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        Siguiente
+      </button>
+    </div>
+  );
+}
+
 // ── FarmerPublications ─────────────────────────────────────
 
 export function FarmerPublications() {
   const colors = useAppColors();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PublicacionEstado | 'all'>('all');
+  const [page, setPage] = useState(1);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [detailPub, setDetailPub] = useState<Publicacion | null>(null);
 
-  const { data, isLoading, isError, refetch } = usePublicaciones(
+  const [filterMonth, setFilterMonth] = useState(0);
+  const [filterYear, setFilterYear] = useState(0);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = usePublicaciones(
     activeTab === 'all' ? undefined : activeTab,
+    page,
   );
   const deleteMutation = useDeletePublicacion();
   const publishMutation = usePublishPublicacion();
@@ -53,6 +314,33 @@ export function FarmerPublications() {
   }, []);
 
   const publications = data?.data?.results ?? [];
+  const totalCount = data?.data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = useMemo(() => {
+    const years = [0];
+    for (const p of publications) {
+      const y = new Date(p.fecha_publicacion).getFullYear();
+      if (!years.includes(y)) years.push(y);
+    }
+    return years.sort((a, b) => b - a);
+  }, [publications]);
+
+  const filtered = useMemo(() => {
+    if (!filterMonth && !filterYear) return publications;
+    return publications.filter((pub) => {
+      const d = new Date(pub.fecha_publicacion);
+      if (filterMonth && d.getMonth() + 1 !== filterMonth) return false;
+      if (filterYear && d.getFullYear() !== filterYear) return false;
+      return true;
+    });
+  }, [publications, filterMonth, filterYear]);
+
+  function handleTabChange(tab: PublicacionEstado | 'all') {
+    setActiveTab(tab);
+    setPage(1);
+  }
 
   const isMutating =
     deleteMutation.isPending ||
@@ -92,10 +380,19 @@ export function FarmerPublications() {
     }
   }
 
+  const listToRender = filtered;
+
   return (
     <div className="relative">
-      {/* Toast */}
       <Toast toast={toast} onDone={() => setToast(null)} />
+
+      {detailPub && (
+        <DetailModal
+          pub={detailPub}
+          onClose={() => setDetailPub(null)}
+          colors={colors}
+        />
+      )}
 
       <PageHeader
         title="Publicaciones Semanales"
@@ -123,7 +420,7 @@ export function FarmerPublications() {
           return (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className="cursor-pointer px-4 py-2 font-[inherit] text-[13px] font-semibold"
               style={{
                 borderRadius: 10,
@@ -139,6 +436,48 @@ export function FarmerPublications() {
           );
         })}
       </div>
+
+      {/* Filters */}
+      {!isLoading && !isError && publications.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(Number(e.target.value))}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium outline-none"
+            style={{
+              background: colors.surface,
+              color: colors.fg,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            {MONTHS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(Number(e.target.value))}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium outline-none"
+            style={{
+              background: colors.surface,
+              color: colors.fg,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            <option value={0}>Todos los años</option>
+            {yearOptions
+              .filter((y) => y > 0)
+              .map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
 
       {/* Content */}
       {isLoading ? (
@@ -165,6 +504,12 @@ export function FarmerPublications() {
               + Nueva publicación
             </Button>
           }
+        />
+      ) : listToRender.length === 0 ? (
+        <EmptyState
+          icon="🔍"
+          title="Sin resultados"
+          message="No hay publicaciones que coincidan con los filtros."
         />
       ) : (
         <>
@@ -196,13 +541,17 @@ export function FarmerPublications() {
                 </tr>
               </thead>
               <tbody>
-                {publications.map((pub) => {
+                {listToRender.map((pub) => {
                   const badge = getStatusBadge(pub.estado);
                   const productos = pub.productos ?? [];
                   return (
                     <tr
                       key={pub.id_publicacion}
-                      style={{ borderBottom: `1px solid ${colors.border}` }}
+                      className="cursor-pointer"
+                      style={{
+                        borderBottom: `1px solid ${colors.border}`,
+                      }}
+                      onClick={() => setDetailPub(pub)}
                     >
                       <td
                         className="px-[18px] py-4 text-[15px] font-semibold"
@@ -255,6 +604,7 @@ export function FarmerPublications() {
                           onDelete={handleDelete}
                           onClose={handleClose}
                           colors={colors}
+                          variant="button"
                         />
                       </td>
                     </tr>
@@ -262,11 +612,17 @@ export function FarmerPublications() {
                 })}
               </tbody>
             </table>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onChange={setPage}
+              colors={colors}
+            />
           </div>
 
           {/* Mobile cards */}
           <div className="flex flex-col gap-3 md:hidden">
-            {publications.map((pub) => {
+            {listToRender.map((pub) => {
               const badge = getStatusBadge(pub.estado);
               return (
                 <div
@@ -304,19 +660,38 @@ export function FarmerPublications() {
                     {productCountLabel((pub.productos ?? []).length)}
                   </p>
 
-                  <PublicationActions
-                    pub={pub}
-                    isMutating={isMutating}
-                    onEdit={handleEdit}
-                    onPublish={handlePublish}
-                    onDelete={handleDelete}
-                    onClose={handleClose}
-                    colors={colors}
-                    variant="button"
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="ghost"
+                      className="!px-3 !py-1.5 !text-[13px]"
+                      onClick={() => setDetailPub(pub)}
+                    >
+                      Ver detalle
+                    </Button>
+                    <PublicationActions
+                      pub={pub}
+                      isMutating={isMutating}
+                      onEdit={handleEdit}
+                      onPublish={handlePublish}
+                      onDelete={handleDelete}
+                      onClose={handleClose}
+                      colors={colors}
+                      variant="button"
+                    />
+                  </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* Mobile pagination */}
+          <div className="mt-4 md:hidden">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onChange={setPage}
+              colors={colors}
+            />
           </div>
         </>
       )}

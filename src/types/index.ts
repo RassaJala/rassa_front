@@ -184,6 +184,7 @@ export type AdminStackParamList = {
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
+  UserForm: undefined;
   Chat: {
     conversationId: number;
     title: string;

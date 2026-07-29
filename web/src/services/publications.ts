@@ -69,6 +69,8 @@ export interface UpdateProductoPayload {
 
 export async function getPublicaciones(params?: {
   estado?: PublicacionEstado;
+  page?: number;
+  page_size?: number;
 }): Promise<ApiResponse<PublicacionList>> {
   const { data } = await api.get<ApiResponse<PublicacionList>>(
     '/publicaciones/',

@@ -19,7 +19,7 @@ export function ProfileComponent() {
   const { resolved } = useTheme();
   const isDark = resolved === 'dark';
   const colors = getColors(isDark);
-  const { fg, muted, border, surface, bg, coral } = colors;
+  const { fg, muted, border, surface, coral } = colors;
 
   const profile = useProfileData();
   const catalog = useProfileCatalog();

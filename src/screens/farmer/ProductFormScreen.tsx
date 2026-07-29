@@ -31,7 +31,7 @@ import type {
   FarmerStackParamList,
   Unidad,
 } from '@/types';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,

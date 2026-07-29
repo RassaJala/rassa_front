@@ -10,10 +10,10 @@ import {
   normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
-} from '../constants/orderTimeline';
+} from '@root/constants/orderTimeline';
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
-import type { OrderStatusHistory } from '../types';
+import type { OrderStatusHistory } from '@root/types';
 
 // ponytail: module-scoped styles to avoid recreation on every render
 const SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg) } }`;

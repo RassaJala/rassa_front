@@ -26,7 +26,6 @@ interface Props {
 
 const COMPACT_BREAKPOINT = 400;
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- farmer home with stats/grid layout
 export default function FarmerHomeScreen({
   navigation,
 }: Props): React.JSX.Element {

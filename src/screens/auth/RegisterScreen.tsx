@@ -1,232 +1,193 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useNavigation } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import FormErrorBanner from '@/components/FormErrorBanner';
 import RegistrationFormFields from '@/components/RegistrationFormFields';
 import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { RegisterRole } from '@/types';
-import { cleanPhoneNumber, validateRegistrationForm } from '@/utils/validation';
+import { getAdminColors } from '@/utils/adminTheme';
 
 const DEFAULT_REGISTER_ROLE: RegisterRole = 'buyer';
 
-export default function RegisterScreen(): React.JSX.Element {
+function RegisterScreenContent(): React.JSX.Element {
   const { register } = useAuth();
   const navigation = useNavigation();
   const netInfo = useNetInfo();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const isMounted = useRef(true);
-
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const adminColors = getAdminColors(isDark);
+  const { bg, surface, fg, muted, border, brand } = adminColors;
 
   const form = useRegistrationForm({ initialRole: DEFAULT_REGISTER_ROLE });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { submit, isSubmitting, errorMessage, serverError, setErrorMessage } =
+    useSubmitNewUser({
+      submitFn: register,
+      onSuccess: () => {
+        // Auto-login is handled inside register context function
+      },
+    });
+
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
   async function handleRegister() {
-    if (isSubmitting) return;
-    setErrorMessage(null);
-
     if (netInfo.isConnected === false) {
       setErrorMessage('Sin conexión a Internet.');
       return;
     }
-
-    const validationError = validateRegistrationForm({
-      email: form.email,
-      password: form.password,
-      telefono: form.telefono,
-      nombre: form.nombre,
-      apellidoPaterno: form.apellidoPaterno,
-      fechaNacimiento: form.fechaNacimiento,
-      domicilio: form.domicilio,
-      localidadId: form.catalog.localidadId,
-    });
-
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        email: form.email.trim(),
-        password: form.password,
-        telefono: cleanPhoneNumber(form.telefono),
-        role: DEFAULT_REGISTER_ROLE,
-        nombre: form.nombre.trim(),
-        apellido_paterno: form.apellidoPaterno.trim(),
-        apellido_materno: form.apellidoMaterno.trim() || null,
-        fecha_nacimiento: form.fechaNacimiento,
-        sexo: form.sexo,
-        domicilio: form.domicilio.trim(),
-        fk_localidad: form.catalog.localidadId as number,
-      };
-
-      await register(payload);
-    } catch (error) {
-      if (isMounted.current) {
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : 'Error al registrar usuario.',
-        );
-      }
-      Sentry.captureException(error);
-    } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
-    }
+    await submit(form);
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: bg }}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <View style={{ padding: 16 }}>
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 60,
+          paddingBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+          })}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
+        </Pressable>
+        <View>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              letterSpacing: -0.02,
+              color: fg,
+            }}
+          >
+            Crear cuenta
+          </Text>
+          <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
+            Completa los siguientes datos para registrarte.
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View
           style={{
             borderRadius: 16,
             borderWidth: 1,
             borderColor: border,
             backgroundColor: surface,
-            padding: 16,
+            padding: 20,
           }}
         >
-          <Text
-            style={{
-              marginBottom: 4,
-              fontSize: 22,
-              fontWeight: '700',
-              color: fg,
-              letterSpacing: -0.3,
-            }}
-          >
-            Crear cuenta
-          </Text>
-          <Text
-            style={{
-              marginBottom: 24,
-              fontSize: 14,
-              color: muted,
-            }}
-          >
-            Completa los siguientes datos para registrarte.
-          </Text>
-
           <RegistrationFormFields
             form={form}
+            colors={adminColors}
             setErrorMessage={setErrorMessage}
             onOpenDatePicker={() => setIsDatePickerVisible(true)}
+            disabled={isSubmitting}
           />
 
-          {errorMessage ? (
-            <Text
+          <FormErrorBanner message={errorMessage} isDark={isDark} />
+          <FormErrorBanner message={serverError} isDark={isDark} />
+
+          <View style={{ marginTop: 24, gap: 10 }}>
+            <Pressable
+              onPress={() => void handleRegister()}
+              disabled={isSubmitting}
               style={{
-                marginBottom: 16,
-                textAlign: 'center',
-                fontSize: 13,
-                color: colors.brandRedCoral,
+                height: 50,
+                borderRadius: 14,
+                backgroundColor: brand,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                opacity: isSubmitting ? 0.6 : 1,
               }}
             >
-              {errorMessage}
-            </Text>
-          ) : null}
-
-          <Pressable
-            onPress={() => void handleRegister()}
-            disabled={isSubmitting}
-            style={{
-              backgroundColor: colors.brandRedCoral,
-              borderRadius: 16,
-              paddingVertical: 14,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: isSubmitting ? 0.7 : 1,
-            }}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
+              {isSubmitting ? (
+                <ActivityIndicator size={16} color={colors.iconWhite} />
+              ) : null}
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: '700',
+                  fontWeight: '600',
                   color: colors.iconWhite,
                 }}
               >
                 Registrarse
               </Text>
-            )}
-          </Pressable>
+            </Pressable>
 
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: 16, alignItems: 'center' }}
-          >
-            <Text
+            <Pressable
+              onPress={() => navigation.goBack()}
               style={{
-                fontSize: 14,
-                fontWeight: '500',
-                color: muted,
+                height: 44,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: border,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              ¿Ya tienes cuenta?{' '}
-              <Text
-                style={{
-                  color: isDark ? colors.admBrandD : colors.admBrandL,
-                  fontWeight: '600',
-                }}
-              >
-                Inicia sesión
+              <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
+                ¿Ya tienes cuenta?{' '}
+                <Text
+                  style={{
+                    color: brand,
+                    fontWeight: '700',
+                  }}
+                >
+                  Inicia sesión
+                </Text>
               </Text>
-            </Text>
-          </Pressable>
+            </Pressable>
+          </View>
         </View>
-        <DatePickerModal
-          visible={isDatePickerVisible}
-          onClose={() => setIsDatePickerVisible(false)}
-          onSelectDate={form.setFechaNacimiento}
-          initialDate={form.fechaNacimiento}
-        />
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onClose={() => setIsDatePickerVisible(false)}
+        onSelectDate={form.setFechaNacimiento}
+        initialDate={form.fechaNacimiento}
+        isDark={isDark}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 40,
-  },
-});
+export default function RegisterScreen(): React.JSX.Element {
+  return (
+    <ErrorBoundary>
+      <RegisterScreenContent />
+    </ErrorBoundary>
+  );
+}

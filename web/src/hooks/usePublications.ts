@@ -55,11 +55,17 @@ function usePubMutation<TData, TVariables>(
 
 // ── Queries ────────────────────────────────────────────────
 
-export function usePublicaciones(estado?: PublicacionEstado) {
+export function usePublicaciones(
+  estado?: PublicacionEstado,
+  page = 1,
+) {
   return useQuery<ApiResponse<PublicacionList>>({
-    queryKey: ['publicaciones', { estado }],
+    queryKey: ['publicaciones', { estado, page }],
     queryFn: () =>
-      publicationsApi.getPublicaciones(estado ? { estado } : undefined),
+      publicationsApi.getPublicaciones({
+        ...(estado ? { estado } : {}),
+        page,
+      }),
     ...QUERY_OPTIONS,
   });
 }

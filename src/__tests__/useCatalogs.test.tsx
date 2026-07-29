@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react-native';
+import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import { useCatalogs } from '@/hooks/useCatalogs';
@@ -70,6 +70,18 @@ describe('useCatalogs', () => {
         </Text>
         <Text testID="error-municipios">{catalog.errorMunicipios ?? ''}</Text>
         <Text testID="error-localidades">{catalog.errorLocalidades ?? ''}</Text>
+        <Pressable
+          testID="select-municipio-btn"
+          onPress={() => catalog.handleSelectMunicipio(1, 'Municipio 1')}
+        />
+        <Pressable
+          testID="select-localidad-btn"
+          onPress={() => catalog.handleSelectLocalidad(10, 'Localidad 10')}
+        />
+        <Pressable
+          testID="refetch-municipios-btn"
+          onPress={() => catalog.refetchMunicipios()}
+        />
       </View>
     );
   };
@@ -109,13 +121,17 @@ describe('useCatalogs', () => {
     await waitFor(() => {
       expect(getByTestId('municipios-count').props.children).toBe('2');
     });
-  });
 
-  it('selecting municipio resets localidad', async () => {
-    const { getByTestId } = renderTestComponent();
+    fireEvent.press(getByTestId('select-municipio-btn'));
 
     await waitFor(() => {
-      expect(getByTestId('municipios-count').props.children).toBe('2');
+      expect(mockApiGet).toHaveBeenCalledWith('/localidades/?municipio_id=1', {
+        timeout: 10000,
+      });
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('localidades-count').props.children).toBe('2');
     });
   });
 
@@ -156,18 +172,50 @@ describe('useCatalogs', () => {
   });
 
   it('exposes refetch functions', async () => {
+    mockApiGet.mockClear();
     const { getByTestId } = renderTestComponent();
 
     await waitFor(() => {
       expect(getByTestId('municipios-count').props.children).toBe('2');
     });
+
+    fireEvent.press(getByTestId('refetch-municipios-btn'));
+    await waitFor(() => {
+      expect(mockApiGet).toHaveBeenCalled();
+    });
   });
 
-  it('has staleTime of 5 minutes', async () => {
-    renderTestComponent();
+  it('selecting municipio resets localidad', async () => {
+    const { getByTestId } = renderTestComponent();
+
+    await waitFor(() => {
+      expect(getByTestId('municipios-count').props.children).toBe('2');
+    });
+
+    fireEvent.press(getByTestId('select-localidad-btn'));
+    expect(getByTestId('localidad-id').props.children).toBe('10');
+
+    fireEvent.press(getByTestId('select-municipio-btn'));
+    expect(getByTestId('localidad-id').props.children).toBe('');
   });
 
   it('uses placeholderData to keep previous data', async () => {
-    renderTestComponent();
+    const { getByTestId, rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <TestComponent initialMunicipioId={1} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('localidades-count').props.children).toBe('2');
+    });
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <TestComponent initialMunicipioId={2} />
+      </QueryClientProvider>,
+    );
+
+    expect(getByTestId('localidades-count').props.children).toBe('2');
   });
 });

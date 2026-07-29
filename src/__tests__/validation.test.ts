@@ -13,6 +13,7 @@ import {
   validateEmail,
   validateName,
   validatePassword,
+  validatePasswordChange,
   validatePhone,
   validateRegistrationForm,
 } from '@/utils/validation';
@@ -71,11 +72,11 @@ describe('validation utilities', () => {
   });
 
   describe('cleanPhoneNumber', () => {
-    it('extracts only digits, no truncation', () => {
+    it('extracts only digits, and truncates appropriately', () => {
       expect(cleanPhoneNumber('555-123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('(555) 123-4567')).toBe('5551234567');
       expect(cleanPhoneNumber('+52 555 123 4567')).toBe('525551234567');
-      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567890'); // no truncation
+      expect(cleanPhoneNumber('5551234567890')).toBe('5551234567'); // truncates to 10
     });
 
     it('handles empty string', () => {
@@ -106,14 +107,14 @@ describe('validation utilities', () => {
   });
 
   describe('cleanAddress', () => {
-    it('returns the input unchanged (passthrough, matching web)', () => {
+    it('filters invalid characters from address', () => {
       expect(cleanAddress('Calle 123, Col. Centro')).toBe(
         'Calle 123, Col. Centro',
       );
       expect(cleanAddress('Av. Principal #45-B')).toBe('Av. Principal #45-B');
-      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2ºA');
-      expect(cleanAddress('Calle @#$%')).toBe('Calle @#$%');
-      expect(cleanAddress('Dirección!')).toBe('Dirección!');
+      expect(cleanAddress('C/ Mayor 10, 2ºA')).toBe('C/ Mayor 10, 2A');
+      expect(cleanAddress('Calle @#$%')).toBe('Calle #');
+      expect(cleanAddress('Dirección!')).toBe('Dirección');
     });
 
     it('handles empty string', () => {
@@ -222,8 +223,11 @@ describe('validation utilities', () => {
     const toDateStr = (date: Date): string =>
       date.toISOString().split('T')[0] ?? '';
 
-    it('retorna error si la fecha está vacía', () => {
+    it('retorna error si la fecha está vacía o solo espacios', () => {
       expect(validateBirthdate('')).toBe(
+        'Por favor, completa todos los campos obligatorios.',
+      );
+      expect(validateBirthdate('   ')).toBe(
         'Por favor, completa todos los campos obligatorios.',
       );
     });
@@ -327,7 +331,7 @@ describe('validation utilities', () => {
 
     it('rejects too short number', () => {
       expect(validatePhone('555')).toBe(
-        'El teléfono debe tener exactamente 10 dígitos.',
+        'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
       );
     });
 
@@ -335,10 +339,8 @@ describe('validation utilities', () => {
       expect(validatePhone('5551234567')).toBeNull();
     });
 
-    it('rejects 12-digit international number', () => {
-      expect(validatePhone('525551234567')).toBe(
-        'El teléfono debe tener exactamente 10 dígitos.',
-      );
+    it('accepts 12-digit international number', () => {
+      expect(validatePhone('525551234567')).toBeNull();
     });
 
     it('cleans number before validating', () => {
@@ -360,7 +362,10 @@ describe('validation utilities', () => {
     });
 
     it('rejects invalid format', () => {
-      expect(validateBirthdate('01-15-2024')).toBe(
+      expect(validateBirthdate('15-01-2000')).toBe(
+        'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
+      );
+      expect(validateBirthdate('2000/01/15')).toBe(
         'La fecha de nacimiento debe tener el formato AAAA-MM-DD.',
       );
     });
@@ -377,10 +382,48 @@ describe('validation utilities', () => {
       expect(validateBirthdate(adult)).toBeNull();
     });
 
-    it('uses custom message for underage', () => {
+    it('usa customMsg cuando se proporciona', () => {
       const today = new Date();
       const recent = `${today.getFullYear() - 17}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       expect(validateBirthdate(recent, 'Eres menor.')).toBe('Eres menor.');
+    });
+  });
+
+  describe('validatePasswordChange', () => {
+    it('retorna null cuando todo es válido', () => {
+      expect(
+        validatePasswordChange('oldPass123', 'newPass456', 'newPass456'),
+      ).toBeNull();
+    });
+
+    it('retorna error si algún campo está vacío', () => {
+      expect(validatePasswordChange('', 'newPass123', 'newPass123')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+      expect(validatePasswordChange('oldPass123', '', 'newPass123')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+      expect(validatePasswordChange('oldPass123', 'newPass123', '')).toBe(
+        'Por favor, completa todos los campos.',
+      );
+    });
+
+    it('retorna error si la nueva contraseña es menor al mínimo', () => {
+      expect(validatePasswordChange('oldPass123', 'short', 'short')).toBe(
+        `La nueva contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
+    });
+
+    it('retorna error si la confirmación no coincide', () => {
+      expect(
+        validatePasswordChange('oldPass123', 'newPass456', 'different789'),
+      ).toBe('La confirmación de la contraseña no coincide.');
+    });
+
+    it('retorna error si la nueva contraseña es igual a la actual', () => {
+      expect(
+        validatePasswordChange('samePass123', 'samePass123', 'samePass123'),
+      ).toBe('La nueva contraseña debe ser diferente a la actual.');
     });
   });
 
