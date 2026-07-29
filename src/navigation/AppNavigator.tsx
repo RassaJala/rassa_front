@@ -1,5 +1,3 @@
-/* globals clearTimeout, setTimeout -- Required for React Native timers */
-
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 

@@ -5,8 +5,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-/* global window -- declared because TS lib excludes dom in RN projects */
-
 export interface Breakpoints {
   mobile: boolean;
   tablet: boolean;
