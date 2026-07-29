@@ -567,7 +567,7 @@ export function PublicationWizard() {
   const hasItemErrors = !validateAllItemsPure(items);
 
   return (
-    <div className="relative mx-auto max-w-3xl">
+    <div className="relative w-full px-4 md:px-6">
       {/* Toast */}
       <Toast toast={toast} onDone={() => setToast(null)} />
 
