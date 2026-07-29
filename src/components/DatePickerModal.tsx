@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-color-literals, sonarjs/cognitive-complexity */
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -5,9 +6,11 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
+  useColorScheme,
   View,
 } from 'react-native';
 
+import { colors } from '@/constants/colors';
 import { MONTH_NAMES, YEARS_BACK } from '@/constants/dates';
 
 // ── Helpers ──────────────────────────────────────────
@@ -56,6 +59,7 @@ export default function DatePickerModal({
   onSelectDate,
   initialDate,
 }: DatePickerModalProps): React.JSX.Element | null {
+  const isDark = useColorScheme() === 'dark';
   const [step, setStep] = useState<Step>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
@@ -111,6 +115,14 @@ export default function DatePickerModal({
       : 31;
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
 
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const fg = isDark ? colors.admFgD : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.admBorderD : colors.border;
+  const tabBg = isDark ? colors.admSegBgD : colors.inactiveGrayBg;
+  const selectedBg = `${colors.brandRedCoral}1A`;
+  const tabActiveBg = isDark ? colors.admSurfaceD : colors.surface;
+
   return (
     <Modal
       transparent
@@ -124,39 +136,41 @@ export default function DatePickerModal({
         onPress={onClose}
       >
         <Pressable
-          className="rounded-t-2xl bg-white p-5 dark:bg-gray-900"
+          style={{ backgroundColor: surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 }}
           onPress={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
               Fecha de Nacimiento
             </Text>
-            <TouchableOpacity onPress={onClose} className="px-3 py-1">
-              <Text className="text-base font-semibold text-brand-red-coral">
+            <TouchableOpacity onPress={onClose} style={{ paddingHorizontal: 12, paddingVertical: 4 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.brandRedCoral }}>
                 Cancelar
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Tab bar: Año / Mes / Día */}
-          <View className="mb-4 flex-row rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+          {/* Tab bar */}
+          <View style={{ marginBottom: 16, flexDirection: 'row', borderRadius: 12, backgroundColor: tabBg, padding: 4 }}>
             <TabButton
               label="Año"
               value={selectedYear != null ? String(selectedYear) : '----'}
               active={step === 'year'}
               onPress={() => setStep('year')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
             />
             <TabButton
               label="Mes"
-              value={
-                selectedMonth != null
-                  ? (MONTH_NAMES[selectedMonth] ?? '---')
-                  : '---'
-              }
+              value={selectedMonth != null ? (MONTH_NAMES[selectedMonth] ?? '---') : '---'}
               active={step === 'month'}
               disabled={selectedYear == null}
               onPress={() => setStep('month')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
             />
             <TabButton
               label="Día"
@@ -164,31 +178,22 @@ export default function DatePickerModal({
               active={step === 'day'}
               disabled={selectedMonth == null}
               onPress={() => setStep('day')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
             />
           </View>
 
           {/* Content */}
-          <View className="h-64">
+          <View style={{ height: 256 }}>
             {step === 'year' && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {years.map((y) => (
-                  <TouchableOpacity
-                    key={y}
-                    activeOpacity={0.6}
-                    onPress={() => handleSelectYear(y)}
-                    className={`rounded-lg border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedYear === y
-                        ? 'bg-brand-red-coral/10 dark:bg-brand-red-coral/20'
-                        : 'bg-transparent'
-                    }`}
-                  >
-                    <Text
-                      className={`text-center text-[15px] font-semibold ${
-                        selectedYear === y
-                          ? 'text-brand-red-coral'
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}
-                    >
+                  <TouchableOpacity key={y} activeOpacity={0.6} onPress={() => handleSelectYear(y)}
+                    style={{ borderRadius: 8, borderBottomWidth: 1, borderBottomColor: border, paddingVertical: 12,
+                      backgroundColor: selectedYear === y ? selectedBg : 'transparent' }}>
+                    <Text style={{ textAlign: 'center', fontSize: 15, fontWeight: '600',
+                      color: selectedYear === y ? colors.brandRedCoral : fg }}>
                       {y}
                     </Text>
                   </TouchableOpacity>
@@ -199,23 +204,11 @@ export default function DatePickerModal({
             {step === 'month' && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {MONTH_NAMES.map((name, idx) => (
-                  <TouchableOpacity
-                    key={name}
-                    activeOpacity={0.6}
-                    onPress={() => handleSelectMonth(idx)}
-                    className={`rounded-lg border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedMonth === idx
-                        ? 'bg-brand-red-coral/10 dark:bg-brand-red-coral/20'
-                        : 'bg-transparent'
-                    }`}
-                  >
-                    <Text
-                      className={`text-center text-[15px] font-semibold ${
-                        selectedMonth === idx
-                          ? 'text-brand-red-coral'
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}
-                    >
+                  <TouchableOpacity key={name} activeOpacity={0.6} onPress={() => handleSelectMonth(idx)}
+                    style={{ borderRadius: 8, borderBottomWidth: 1, borderBottomColor: border, paddingVertical: 12,
+                      backgroundColor: selectedMonth === idx ? selectedBg : 'transparent' }}>
+                    <Text style={{ textAlign: 'center', fontSize: 15, fontWeight: '600',
+                      color: selectedMonth === idx ? colors.brandRedCoral : fg }}>
                       {name}
                     </Text>
                   </TouchableOpacity>
@@ -225,27 +218,18 @@ export default function DatePickerModal({
 
             {step === 'day' && (
               <ScrollView showsVerticalScrollIndicator={false}>
-                <View className="flex-row flex-wrap">
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {daysArray.map((d) => {
                     const isSelected = selectedDay === d;
                     return (
-                      <TouchableOpacity
-                        key={d}
-                        activeOpacity={0.6}
-                        onPress={() => handleSelectDay(d)}
-                        className={`m-[1%] h-9 w-[17%] items-center justify-center rounded-xl ${
-                          isSelected
-                            ? 'bg-brand-red-coral'
-                            : 'border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
-                        }`}
-                      >
-                        <Text
-                          className={`text-sm font-semibold ${
-                            isSelected
-                              ? 'text-white'
-                              : 'text-gray-900 dark:text-gray-100'
-                          }`}
-                        >
+                      <TouchableOpacity key={d} activeOpacity={0.6} onPress={() => handleSelectDay(d)}
+                        style={{ margin: '1%', width: '17%', height: 36, alignItems: 'center', justifyContent: 'center',
+                          borderRadius: 12,
+                          backgroundColor: isSelected ? colors.brandRedCoral : (isDark ? colors.admSurfaceD : colors.surface),
+                          borderWidth: isSelected ? 0 : 1,
+                          borderColor: isDark ? colors.admBorderD : colors.border }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600',
+                          color: isSelected ? colors.iconWhite : fg }}>
                           {d}
                         </Text>
                       </TouchableOpacity>
@@ -257,35 +241,14 @@ export default function DatePickerModal({
           </View>
 
           {/* Confirm button */}
-          <View className="mt-4 items-end border-t border-gray-100 pt-3 dark:border-gray-800">
-            <TouchableOpacity
-              testID="btn-done"
-              onPress={() => {
-                if (
-                  selectedYear !== null &&
-                  selectedMonth !== null &&
-                  selectedDay !== null
-                ) {
-                  onSelectDate(
-                    toDateString(selectedYear, selectedMonth, selectedDay),
-                  );
-                  onClose();
-                }
-              }}
+          <View style={{ marginTop: 16, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: border, paddingTop: 12 }}>
+            <TouchableOpacity testID="btn-done"
+              onPress={() => { if (selectedYear !== null && selectedMonth !== null && selectedDay !== null) { onSelectDate(toDateString(selectedYear, selectedMonth, selectedDay)); onClose(); } }}
               disabled={selectedDay == null}
-              className={`rounded-lg px-5 py-2 ${
-                selectedDay != null
-                  ? 'bg-brand-red-coral'
-                  : 'bg-gray-300 dark:bg-gray-700'
-              }`}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  selectedDay != null
-                    ? 'text-white'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
+              style={{ borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8,
+                backgroundColor: selectedDay != null ? colors.brandRedCoral : muted }}>
+              <Text style={{ fontSize: 13, fontWeight: '600',
+                color: selectedDay != null ? colors.iconWhite : (isDark ? colors.mutedDark : colors.textSecondary) }}>
                 Hecho
               </Text>
             </TouchableOpacity>
@@ -304,6 +267,9 @@ interface TabButtonProps {
   readonly active: boolean;
   readonly disabled?: boolean;
   readonly onPress: () => void;
+  readonly isDark: boolean;
+  readonly fg: string;
+  readonly tabActiveBg: string;
 }
 
 function TabButton({
@@ -312,23 +278,33 @@ function TabButton({
   active,
   disabled,
   onPress,
+  isDark,
+  fg,
+  tabActiveBg,
 }: TabButtonProps) {
   return (
     <TouchableOpacity
       activeOpacity={0.6}
       onPress={onPress}
       disabled={disabled}
-      className={`flex-1 items-center rounded-lg py-2 ${
-        active ? 'bg-white dark:bg-gray-700' : 'bg-transparent'
-      } ${disabled ? 'opacity-40' : ''}`}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        borderRadius: 8,
+        paddingVertical: 8,
+        backgroundColor: active ? tabActiveBg : 'transparent',
+        opacity: disabled ? 0.4 : 1,
+      }}
     >
-      <Text className="text-[11px] text-gray-400 dark:text-gray-500">
+      <Text style={{ fontSize: 11, color: isDark ? colors.mutedDark : colors.textSecondary }}>
         {label}
       </Text>
       <Text
-        className={`text-xs font-semibold ${
-          active ? 'text-brand-red-coral' : 'text-gray-900 dark:text-gray-100'
-        }`}
+        style={{
+          fontSize: 12,
+          fontWeight: '600',
+          color: active ? colors.brandRedCoral : fg,
+        }}
       >
         {value}
       </Text>

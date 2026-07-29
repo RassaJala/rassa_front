@@ -285,7 +285,7 @@ export default function CatalogSelector({
         onRequestClose={() => setShowMunicipioDialog(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 }}
+          style={{ flex: 1, backgroundColor: colors.modalOverlayBg, justifyContent: 'center', padding: 32 }}
           onPress={() => setShowMunicipioDialog(false)}
         >
           <Pressable
@@ -343,7 +343,7 @@ export default function CatalogSelector({
         onRequestClose={() => setShowLocalidadDialog(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 }}
+          style={{ flex: 1, backgroundColor: colors.modalOverlayBg, justifyContent: 'center', padding: 32 }}
           onPress={() => setShowLocalidadDialog(false)}
         >
           <Pressable
