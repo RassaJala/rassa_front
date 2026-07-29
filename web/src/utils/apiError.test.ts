@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
 import { extractApiError } from './apiErrors';

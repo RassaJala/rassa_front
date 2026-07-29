@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 const STATUS_MESSAGES: Record<number, string> = {
   401: 'Credenciales inválidas o sesión expirada.',
   403: 'No tienes permiso para realizar esta acción.',
@@ -48,6 +46,10 @@ export function isSafeDetail(detail: string): boolean {
   return true;
 }
 
+function isAxiosError(error: unknown): error is { isAxiosError: true; response?: { status?: number; data?: unknown } } {
+  return typeof error === 'object' && error !== null && (error as Record<string, unknown>).isAxiosError === true;
+}
+
 function unwrapCause(error: unknown): unknown {
   if (error instanceof Error && error.cause !== undefined) {
     return error.cause;
@@ -58,7 +60,7 @@ function unwrapCause(error: unknown): unknown {
 function parseAxiosError(error: unknown): string | null {
   const candidate = unwrapCause(error);
 
-  if (!axios.isAxiosError(candidate)) return null;
+  if (!isAxiosError(candidate)) return null;
 
   const status = candidate.response?.status;
   const data = candidate.response?.data as unknown;
@@ -114,7 +116,7 @@ export function extractApiError(
 ): string {
   const candidate = unwrapCause(error);
 
-  if (!axios.isAxiosError(candidate)) {
+  if (!isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
@@ -191,7 +193,7 @@ export function extractFieldErrors(
 ): { fields: Record<string, string>; general: string | null } {
   const candidate = unwrapCause(error);
 
-  if (!axios.isAxiosError(candidate)) {
+  if (!isAxiosError(candidate)) {
     return {
       fields: {},
       general: error instanceof Error ? error.message : 'Error desconocido.',
