@@ -248,12 +248,14 @@ function filterItems<T extends { nombre: string; estado: boolean }>(
 
   const filtered = (items ?? []).filter((item) => {
     try {
-      // Validate estado before using it
+      // Validate estado before using it — non-boolean estado is an error, exclude it
       if (typeof item.estado !== 'boolean') {
-        console.warn(
-          'CrudListScreen: estado is not boolean, unexpected:',
-          item,
+        excludedCount++;
+        Sentry.captureException(
+          new Error(`CrudListScreen: estado is not boolean`),
         );
+        console.warn('CrudListScreen: estado is not boolean, excluding:', item);
+        return false;
       }
 
       const matchesSearch =

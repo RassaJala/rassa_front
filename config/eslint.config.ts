@@ -199,8 +199,6 @@ function createReactNativeRules() {
         __DEV__: 'readonly',
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
-        window: 'readonly',
-        document: 'readonly',
         process: 'readonly',
       },
     },

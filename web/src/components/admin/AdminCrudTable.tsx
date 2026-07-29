@@ -58,6 +58,7 @@ export function AdminCrudTable<
     'todos' | 'activos' | 'inactivos'
   >('todos');
   const [filterExcludedCount, setFilterExcludedCount] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
   const [delTarget, setDelTarget] = useState<T | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export function AdminCrudTable<
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Separate effect for excludedCount — avoids setState inside useMemo
   const filtered = useMemo(() => {
     const result = filterItems(
       items,
@@ -75,41 +77,69 @@ export function AdminCrudTable<
       statusFilter,
       searchFields,
     );
-    setFilterExcludedCount(result.excludedCount);
-    return result.items;
+    return result;
   }, [items, searchDebounced, statusFilter, searchFields]);
+
+  useEffect(() => {
+    setFilterExcludedCount(filtered.excludedCount);
+  }, [filtered.excludedCount]);
+
+  // ponytail: form fields are always string keys of T — never id (number) or estado (boolean)
+  function mergeFormIntoEntity(entity: T, formData: Record<string, string>): T {
+    const result: Record<string, unknown> = { ...entity };
+    for (const key of Object.keys(formData)) {
+      result[key] = formData[key];
+    }
+    return result as unknown as T;
+  }
 
   function startNew() {
     setEditId(null);
     setForm(Object.fromEntries(fields.map((f) => [f.name, ''])));
+    setFormError(null);
     setTab('form');
   }
 
   function startEdit(item: T) {
     setEditId(item.id);
     setForm(
-      Object.fromEntries(fields.map((f) => [f.name, String(item[f.name])])),
+      Object.fromEntries(
+        fields.map((f) => [f.name, String(item[f.name] ?? '')]),
+      ),
     );
+    setFormError(null);
     setTab('form');
   }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    const hasError = fields.some((f) => f.required && !form[f.name]?.trim());
-    if (hasError) return;
+    const missingField = fields.find(
+      (f) => f.required && !(form[f.name] ?? '').trim(),
+    );
+    if (missingField) {
+      setFormError(`El campo "${missingField.label}" es obligatorio.`);
+      return;
+    }
+    setFormError(null);
     setSaving(true);
     const formData = Object.fromEntries(
       fields.map((f) => [f.name, form[f.name]?.trim() ?? '']),
     );
     if (editId) {
       setItems((prev) =>
-        prev.map((i) => (i.id === editId ? ({ ...i, ...formData } as T) : i)),
+        prev.map((i) =>
+          i.id === editId ? mergeFormIntoEntity(i, formData) : i,
+        ),
       );
     } else {
-      setItems((prev) => [
-        ...prev,
-        { id: nextId.current++, ...formData, estado: true } as T,
-      ]);
+      const base: Record<string, unknown> = {
+        id: nextId.current++,
+        estado: true,
+      };
+      for (const [key, value] of Object.entries(formData)) {
+        base[key] = value;
+      }
+      setItems((prev) => [...prev, base as unknown as T]);
     }
     setTab('list');
     setSaving(false);
@@ -354,7 +384,7 @@ export function AdminCrudTable<
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {items.length === 0 ? (
                   <tr>
                     <td
                       colSpan={fields.length + 2}
@@ -368,8 +398,8 @@ export function AdminCrudTable<
                       No hay {entityNamePlural}
                     </td>
                   </tr>
-                ) : (
-                  filtered.map((item) => (
+                ) : filtered.items.length === 0 ? null : (
+                  filtered.items.map((item) => (
                     <tr key={item.id} style={{ background: surface }}>
                       {fields.map((f) => (
                         <td
@@ -478,7 +508,7 @@ export function AdminCrudTable<
                 )}
               </tbody>
             </table>
-            {!items.length ? null : filtered.length === 0 ? (
+            {items.length > 0 && filtered.items.length === 0 ? (
               <div
                 style={{
                   textAlign: 'center',
@@ -533,6 +563,21 @@ export function AdminCrudTable<
               {editId ? `Editar ${entityName}` : `Nueva ${entityName}`}
             </span>
           </div>
+          {formError ? (
+            <div
+              style={{
+                margin: '0 24px 16px',
+                padding: '10px 14px',
+                borderRadius: 10,
+                background: isDark ? '#3D2023' : '#FDEDEE',
+                color: '#DE393A',
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              ⚠️ {formError}
+            </div>
+          ) : null}
           <form
             onSubmit={handleSave}
             style={{

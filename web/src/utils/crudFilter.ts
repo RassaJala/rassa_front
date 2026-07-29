@@ -23,19 +23,23 @@ export interface FilterResult<T> {
  * Returns filtered items plus a count of items excluded by error.
  */
 export function filterItems<T extends { estado: boolean }>(
-  items: T[],
+  items: T[] | undefined,
   searchDebounced: string,
   statusFilter: StatusFilter,
   searchFields: (keyof T & string)[],
+  onError?: (error: unknown, item: T) => void,
 ): FilterResult<T> {
   const normalizedSearch = searchDebounced.toLowerCase().trim();
   let excludedCount = 0;
 
-  const filtered = items.filter((item) => {
+  const filtered = (items ?? []).filter((item) => {
     try {
-      // Validate estado before using it
+      // Validate estado before using it — non-boolean estado increments excludedCount
       if (typeof item.estado !== 'boolean') {
+        excludedCount++;
         console.warn('crudFilter: estado is not boolean:', item);
+        onError?.(new Error(`estado is not boolean`), item);
+        return false;
       }
 
       const matchesSearch =
@@ -64,6 +68,7 @@ export function filterItems<T extends { estado: boolean }>(
         item,
         error,
       );
+      onError?.(error, item);
       return false;
     }
   });
