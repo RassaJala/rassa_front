@@ -146,12 +146,12 @@ export default function CarritoScreen(): React.JSX.Element {
         </Pressable>
       </View>
     ),
-    [surface, border, fg, muted, brand, isDark, cart],
+    [surface, border, fg, muted, brand, isDark, cart, formatPrice],
   );
 
   const keyExtractor = useCallback(
     (item: (typeof cart.items)[number]) => String(item.id_producto_semanal),
-    [],
+    [cart],
   );
 
   if (cart.items.length === 0) {

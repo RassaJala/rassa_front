@@ -29,6 +29,256 @@ interface Props {
   readonly navigation: Nav;
 }
 
+function flattenProductos(
+  data:
+    | readonly {
+        readonly agricultor: {
+          readonly id_usuario: number;
+          readonly nombre: string;
+          readonly apellido: string;
+        };
+        readonly productos: readonly ProductoSemanalPublic[];
+      }[]
+    | undefined,
+): Array<{
+  producto: ProductoSemanalPublic;
+  farmerId: number;
+  farmerName: string;
+}> {
+  const result: Array<{
+    producto: ProductoSemanalPublic;
+    farmerId: number;
+    farmerName: string;
+  }> = [];
+  if (!data) {
+    return result;
+  }
+  for (const pub of data) {
+    const farmerId = pub.agricultor.id_usuario;
+    const farmerName = `${pub.agricultor.nombre} ${pub.agricultor.apellido}`;
+    for (const prod of pub.productos) {
+      result.push({ producto: prod, farmerId, farmerName });
+    }
+  }
+  return result;
+}
+
+interface ProductsContentProps {
+  readonly isLoading: boolean;
+  readonly isError: boolean;
+  readonly allProductos: ReadonlyArray<{
+    readonly producto: ProductoSemanalPublic;
+    readonly farmerId: number;
+    readonly farmerName: string;
+  }>;
+  readonly refetch: () => void;
+  readonly cart: ReturnType<typeof useCart>;
+  readonly surface: string;
+  readonly border: string;
+  readonly muted: string;
+  readonly fg: string;
+  readonly brand: string;
+  readonly formatPrice: (value: string) => string;
+  readonly handleProductPress: (
+    producto: ProductoSemanalPublic,
+    farmerId: number,
+    farmerName: string,
+  ) => void;
+  readonly handleAddToCart: (producto: ProductoSemanalPublic) => void;
+}
+
+function ProductsContent({
+  isLoading,
+  isError,
+  allProductos,
+  refetch,
+  cart,
+  surface,
+  border,
+  muted,
+  fg,
+  brand,
+  formatPrice,
+  handleProductPress,
+  handleAddToCart,
+}: ProductsContentProps): React.JSX.Element {
+  if (isLoading) {
+    return (
+      <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={brand} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={{ alignItems: 'center', paddingVertical: 32, gap: 12 }}>
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={40}
+          color={muted}
+        />
+        <Text style={{ fontSize: 14, color: muted, textAlign: 'center' }}>
+          No se pudieron cargar los productos
+        </Text>
+        <Pressable
+          onPress={() => void refetch()}
+          style={{
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: border,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
+            Reintentar
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (allProductos.length === 0) {
+    return (
+      <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+        <MaterialCommunityIcons
+          name="package-variant-closed"
+          size={40}
+          color={muted}
+        />
+        <Text
+          style={{
+            fontSize: 14,
+            color: muted,
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
+          No hay productos disponibles esta semana
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      {allProductos.map(({ producto, farmerId, farmerName }) => (
+        <ProductCard
+          key={producto.id_producto_semanal}
+          producto={producto}
+          farmerId={farmerId}
+          farmerName={farmerName}
+          cart={cart}
+          surface={surface}
+          border={border}
+          muted={muted}
+          fg={fg}
+          brand={brand}
+          formatPrice={formatPrice}
+          handleProductPress={handleProductPress}
+          handleAddToCart={handleAddToCart}
+        />
+      ))}
+    </View>
+  );
+}
+
+interface ProductCardProps {
+  readonly producto: ProductoSemanalPublic;
+  readonly farmerId: number;
+  readonly farmerName: string;
+  readonly cart: ReturnType<typeof useCart>;
+  readonly surface: string;
+  readonly border: string;
+  readonly muted: string;
+  readonly fg: string;
+  readonly brand: string;
+  readonly formatPrice: (value: string) => string;
+  readonly handleProductPress: (
+    producto: ProductoSemanalPublic,
+    farmerId: number,
+    farmerName: string,
+  ) => void;
+  readonly handleAddToCart: (producto: ProductoSemanalPublic) => void;
+}
+
+function ProductCard({
+  producto,
+  farmerId,
+  farmerName,
+  cart,
+  surface,
+  border,
+  muted,
+  fg,
+  brand,
+  formatPrice,
+  handleProductPress,
+  handleAddToCart,
+}: ProductCardProps): React.JSX.Element {
+  const inCart = cart.hasItem(producto.id_producto_semanal);
+  const cartQuantity = cart.items.find(
+    (i) => i.id_producto_semanal === producto.id_producto_semanal,
+  )?.cantidad;
+
+  return (
+    <Pressable
+      onPress={() => handleProductPress(producto, farmerId, farmerName)}
+      style={({ pressed }) => ({
+        backgroundColor: surface,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: border,
+        padding: 14,
+        opacity: pressed ? 0.9 : 1,
+      })}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>
+            {producto.producto}
+          </Text>
+          <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
+            {farmerName} · {producto.unidad}
+          </Text>
+          <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
+            Stock: {producto.stock} {producto.unidad}
+          </Text>
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: brand }}>
+          {formatPrice(producto.precio)}
+        </Text>
+      </View>
+
+      <Pressable
+        onPress={() => handleAddToCart(producto)}
+        disabled={inCart}
+        style={({ pressed }) => ({
+          backgroundColor: inCart ? muted : brand,
+          borderRadius: 10,
+          paddingVertical: 10,
+          alignItems: 'center',
+          marginTop: 10,
+          opacity: pressed ? 0.8 : 1,
+        })}
+      >
+        <Text
+          style={{ fontSize: 14, fontWeight: '700', color: colors.iconWhite }}
+        >
+          {inCart ? `En carrito (${cartQuantity ?? 0})` : 'Agregar al carrito'}
+        </Text>
+      </Pressable>
+    </Pressable>
+  );
+}
+
 export default function HomeScreen({ navigation }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -93,22 +343,7 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
   }, []);
 
   // Extract all products from all publications
-  const allProductos: Array<{
-    producto: ProductoSemanalPublic;
-    farmerId: number;
-    farmerName: string;
-  }> = [];
-  if (currentPubRes?.data) {
-    for (const pub of currentPubRes.data) {
-      for (const prod of pub.productos) {
-        allProductos.push({
-          producto: prod,
-          farmerId: pub.agricultor.id_usuario,
-          farmerName: `${pub.agricultor.nombre} ${pub.agricultor.apellido}`,
-        });
-      }
-    }
-  }
+  const allProductos = flattenProductos(currentPubRes?.data);
 
   return (
     <ProfileDrawerProvider
@@ -246,158 +481,21 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
               Esta semana en tu mercado
             </Text>
 
-            {isLoading ? (
-              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={brand} />
-              </View>
-            ) : isError ? (
-              <View
-                style={{
-                  alignItems: 'center',
-                  paddingVertical: 32,
-                  gap: 12,
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="alert-circle-outline"
-                  size={40}
-                  color={muted}
-                />
-                <Text
-                  style={{ fontSize: 14, color: muted, textAlign: 'center' }}
-                >
-                  No se pudieron cargar los productos
-                </Text>
-                <Pressable
-                  onPress={() => void refetch()}
-                  style={{
-                    paddingHorizontal: 20,
-                    paddingVertical: 8,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: border,
-                  }}
-                >
-                  <Text
-                    style={{ fontSize: 13, fontWeight: '600', color: brand }}
-                  >
-                    Reintentar
-                  </Text>
-                </Pressable>
-              </View>
-            ) : allProductos.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-                <MaterialCommunityIcons
-                  name="package-variant-closed"
-                  size={40}
-                  color={muted}
-                />
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: muted,
-                    textAlign: 'center',
-                    marginTop: 8,
-                  }}
-                >
-                  No hay productos disponibles esta semana
-                </Text>
-              </View>
-            ) : (
-              <View style={{ gap: 10 }}>
-                {allProductos.map(({ producto, farmerId, farmerName }) => {
-                  const inCart = cart.hasItem(producto.id_producto_semanal);
-                  return (
-                    <Pressable
-                      key={producto.id_producto_semanal}
-                      onPress={() =>
-                        handleProductPress(producto, farmerId, farmerName)
-                      }
-                      style={({ pressed }) => ({
-                        backgroundColor: surface,
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: border,
-                        padding: 14,
-                        opacity: pressed ? 0.9 : 1,
-                      })}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                        }}
-                      >
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={{
-                              fontSize: 16,
-                              fontWeight: '600',
-                              color: fg,
-                            }}
-                          >
-                            {producto.producto}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: 13,
-                              color: muted,
-                              marginTop: 2,
-                            }}
-                          >
-                            {farmerName} · {producto.unidad}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: 13,
-                              color: muted,
-                              marginTop: 1,
-                            }}
-                          >
-                            Stock: {producto.stock} {producto.unidad}
-                          </Text>
-                        </View>
-                        <Text
-                          style={{
-                            fontSize: 18,
-                            fontWeight: '700',
-                            color: brand,
-                          }}
-                        >
-                          {formatPrice(producto.precio)}
-                        </Text>
-                      </View>
-
-                      <Pressable
-                        onPress={() => handleAddToCart(producto)}
-                        disabled={inCart}
-                        style={({ pressed }) => ({
-                          backgroundColor: inCart ? muted : brand,
-                          borderRadius: 10,
-                          paddingVertical: 10,
-                          alignItems: 'center',
-                          marginTop: 10,
-                          opacity: pressed ? 0.8 : 1,
-                        })}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '700',
-                            color: colors.iconWhite,
-                          }}
-                        >
-                          {inCart
-                            ? `En carrito (${cart.items.find((i) => i.id_producto_semanal === producto.id_producto_semanal)?.cantidad ?? 0})`
-                            : 'Agregar al carrito'}
-                        </Text>
-                      </Pressable>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
+            <ProductsContent
+              isLoading={isLoading}
+              isError={isError}
+              allProductos={allProductos}
+              refetch={refetch}
+              cart={cart}
+              surface={surface}
+              border={border}
+              muted={muted}
+              fg={fg}
+              brand={brand}
+              formatPrice={formatPrice}
+              handleProductPress={handleProductPress}
+              handleAddToCart={handleAddToCart}
+            />
           </View>
         </ScrollView>
       </View>

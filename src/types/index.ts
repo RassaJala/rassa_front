@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -179,7 +181,6 @@ export interface CreditLimit {
 }
 
 // ── Navigation param lists ────────────────────────────────
-import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type AdminStackParamList = {
   AdminPanel: undefined;
