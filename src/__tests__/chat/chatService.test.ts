@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, sonarjs/no-duplicate-string -- Test files are less strict */
+import { createChatApi } from '@rassa/chat';
 import api from '@/services/api';
-import {
-  getConversations,
-  getMessages,
-  sendMessage,
-  createPrivateConversation,
-  markMessageAsRead,
-} from '@/services/chat';
 
 jest.mock('@/services/api');
 
 const mockApi = api as jest.Mocked<typeof api>;
+const chatApi = createChatApi(mockApi);
 
 describe('chat service', () => {
   beforeEach(() => {
@@ -35,7 +30,7 @@ describe('chat service', () => {
       },
     });
 
-    const result = await getConversations();
+    const result = await chatApi.getConversations();
 
     expect(mockApi.get).toHaveBeenCalledWith('/chat/usuarios/conversaciones/');
     expect(result.results).toHaveLength(1);
@@ -74,7 +69,7 @@ describe('chat service', () => {
       },
     });
 
-    const result = await getMessages(1, 1);
+    const result = await chatApi.getMessages(1, 1);
 
     expect(mockApi.get).toHaveBeenCalledWith(
       '/chat/conversaciones/1/mensajes/?page=1',
@@ -108,7 +103,7 @@ describe('chat service', () => {
       },
     });
 
-    const result = await sendMessage(payload);
+    const result = await chatApi.sendMessage(payload);
 
     expect(mockApi.post).toHaveBeenCalledWith('/chat/mensajes/enviar/', {
       fk_conversacion: 1,
@@ -152,7 +147,7 @@ describe('chat service', () => {
       },
     });
 
-    const result = await createPrivateConversation(payload);
+    const result = await chatApi.createPrivateConversation(payload);
 
     expect(mockApi.post).toHaveBeenCalledWith(
       '/chat/conversaciones/crear-privada/',
@@ -181,7 +176,7 @@ describe('chat service', () => {
       },
     });
 
-    const result = await createPrivateConversation(payload);
+    const result = await chatApi.createPrivateConversation(payload);
 
     expect(result.id).toBe(21);
     expect(result.participante_nombre).toBe('');
@@ -192,7 +187,7 @@ describe('chat service', () => {
       data: { ok: true, mensaje: 'Mensaje marcado como leído.' },
     });
 
-    const result = await markMessageAsRead(10);
+    const result = await chatApi.markMessageAsRead(10);
 
     expect(mockApi.patch).toHaveBeenCalledWith('/chat/mensajes/10/leer/');
     expect(result.id).toBe(10);
@@ -204,6 +199,6 @@ describe('chat service', () => {
       data: { ok: false, message: 'Unauthorized' },
     });
 
-    await expect(getConversations()).rejects.toThrow('Unauthorized');
+    await expect(chatApi.getConversations()).rejects.toThrow('Unauthorized');
   });
 });

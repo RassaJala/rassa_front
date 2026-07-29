@@ -75,12 +75,12 @@ export default function OnboardingScreen({
           {/* Logo */}
           <Image
             source={logo}
-            className="h-50 w-50 mb-10 rounded-full"
+            className="mb-10 h-50 w-50 rounded-full"
             resizeMode="contain"
           />
 
           {/* Título */}
-          <Text className="mb-5 text-center text-3xl font-bold text-brand-ink dark:text-gray-100">
+          <Text className="text-brand-ink mb-5 text-center text-3xl font-bold dark:text-gray-100">
             {currentSlide.title}
           </Text>
 
@@ -92,7 +92,7 @@ export default function OnboardingScreen({
       </View>
 
       {/* Parte inferior */}
-      <View className="items-center pb-3 pt-1">
+      <View className="items-center pt-1 pb-3">
         {/* Indicadores */}
         <View className="mb-10 flex-row">
           {slides.map((slide, index) => (
@@ -100,7 +100,7 @@ export default function OnboardingScreen({
               key={slide.title}
               className={`mx-1 rounded-full ${
                 index === current
-                  ? 'h-3 w-10 bg-brand-red-coral'
+                  ? 'bg-brand-red-coral h-3 w-10'
                   : 'h-3 w-3 bg-gray-300 dark:bg-gray-600'
               }`}
             />

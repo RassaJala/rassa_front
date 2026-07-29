@@ -1,7 +1,8 @@
+import { conversationsKey, messagesKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { sendMessage } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import { useAuth } from '@/store/AuthContext';
 import type {
   Message,
@@ -16,16 +17,16 @@ export function useSendMessage(
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: sendMessage,
+    mutationFn: (payload) => chatApi.sendMessage(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
 
       const previousMessages = queryClient.getQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId]);
+      }>(messagesKey(conversationId));
 
       const optimisticMessage: Message = {
         id: Date.now(),
@@ -40,7 +41,7 @@ export function useSendMessage(
       queryClient.setQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId], (old) => {
+      }>(messagesKey(conversationId), (old) => {
         if (!old) return old;
         const firstPage = old.pages.at(0);
         if (!firstPage) return old;
@@ -61,7 +62,7 @@ export function useSendMessage(
       queryClient.setQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId], (old) => {
+      }>(messagesKey(conversationId), (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -77,17 +78,17 @@ export function useSendMessage(
     onError: (_error, _variables, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(
-          ['messages', conversationId],
+          messagesKey(conversationId),
           context.previousMessages,
         );
       }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
     },
   });

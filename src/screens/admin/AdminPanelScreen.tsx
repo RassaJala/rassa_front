@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +17,7 @@ import {
 } from '@/components/ProfileDrawer';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
+import { useAdminColors } from '@/hooks/useAdminColors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { getAdminStats } from '@/services/mock/dashboard';
 import { useTheme } from '@/store/ThemeContext';
@@ -21,28 +29,88 @@ interface Props {
   readonly navigation: Nav;
 }
 
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+  contentArea: { flex: 1, paddingTop: 48, paddingHorizontal: 20 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.06,
+    textTransform: 'uppercase',
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  bellBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
+  lookupCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 24,
+  },
+  lookupTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  input: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  submitBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  submitBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});
+
 export default function AdminPanelScreen({
   navigation,
 }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const stats = getAdminStats();
-  const [showLookup, setShowLookup] = useState(false);
-  const [lookupId, setLookupId] = useState('');
-
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
+  const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const accentBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const coralBg = isDark ? colors.admCoralBgD : colors.admCoralBgL;
   const pumpkinBg = isDark ? colors.admPumpkinBgD : colors.admPumpkinBgL;
   const coral = colors.brandRedCoral;
   const pumpkin = colors.accent;
+  const stats = getAdminStats();
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupId, setLookupId] = useState('');
   const lookupNum = Number(lookupId);
-  const isInvalid = lookupId.length > 0 && (isNaN(lookupNum) || lookupNum <= 0);
+  const isInvalid =
+    lookupId.length > 0 &&
+    (!Number.isFinite(lookupNum) ||
+      !Number.isSafeInteger(lookupNum) ||
+      lookupNum <= 0);
 
   const { today } = useFormattedDate();
 
@@ -50,60 +118,36 @@ export default function AdminPanelScreen({
     <ProfileDrawerProvider
       defaultName="Administrador"
       defaultEmail="admin@rassa.com"
+      onProfilePress={() => navigation.navigate('AdminProfile')}
     >
-      <View style={{ flex: 1, backgroundColor: bg }}>
-        <View style={{ flex: 1 }}>
+      <View style={[styles.container, { backgroundColor: bg }]}>
+        <View style={styles.container}>
           <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ flex: 1, paddingTop: 48, paddingHorizontal: 20 }}>
+            <View style={styles.contentArea}>
               {/* ═══ HEADER ═══ */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
-              >
+              <View style={styles.headerRow}>
                 <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      letterSpacing: 0.06,
-                      textTransform: 'uppercase',
-                      color: muted,
-                    }}
-                  >
+                  <Text style={[styles.dateText, { color: muted }]}>
                     {today}
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: 32,
-                      fontWeight: '700',
-                      letterSpacing: -0.3,
-                      color: fg,
-                    }}
-                  >
-                    Panel
-                  </Text>
+                  <Text style={[styles.titleText, { color: fg }]}>Panel</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     testID="notification-bell"
-                    style={({ pressed }) => ({
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
-                      backgroundColor: surface,
-                      borderWidth: 1,
-                      borderColor: border,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: pressed ? 0.6 : 1,
-                    })}
+                    style={({ pressed }) => [
+                      styles.bellBtn,
+                      {
+                        backgroundColor: surface,
+                        borderWidth: 1,
+                        borderColor: border,
+                        opacity: pressed ? 0.6 : 1,
+                      },
+                    ]}
                   >
                     <MaterialCommunityIcons
                       name="bell-outline"
@@ -116,9 +160,7 @@ export default function AdminPanelScreen({
               </View>
 
               {/* ═══ STATS ═══ */}
-              <View
-                style={{ flexDirection: 'row', gap: 10, paddingVertical: 24 }}
-              >
+              <View style={styles.statsRow}>
                 <StatCard
                   icon="package-variant"
                   value={stats.totalProducts.toLocaleString()}
@@ -158,23 +200,12 @@ export default function AdminPanelScreen({
 
               {showLookup ? (
                 <View
-                  style={{
-                    backgroundColor: surface,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: border,
-                    padding: 20,
-                    marginBottom: 24,
-                  }}
+                  style={[
+                    styles.lookupCard,
+                    { backgroundColor: surface, borderColor: border },
+                  ]}
                 >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: fg,
-                      marginBottom: 12,
-                    }}
-                  >
+                  <Text style={[styles.lookupTitle, { color: fg }]}>
                     Buscar historial de pedido
                   </Text>
                   <TextInput
@@ -183,25 +214,21 @@ export default function AdminPanelScreen({
                     value={lookupId}
                     onChangeText={setLookupId}
                     keyboardType="number-pad"
-                    style={{
-                      backgroundColor: bg,
-                      color: fg,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: isInvalid ? colors.brandRedCoral : border,
-                      paddingHorizontal: 16,
-                      paddingVertical: 12,
-                      fontSize: 15,
-                      marginBottom: 4,
-                    }}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: bg,
+                        color: fg,
+                        borderColor: isInvalid ? colors.brandRedCoral : border,
+                      },
+                    ]}
                   />
                   {isInvalid ? (
                     <Text
-                      style={{
-                        fontSize: 12,
-                        color: colors.brandRedCoral,
-                        marginBottom: 12,
-                      }}
+                      style={[
+                        styles.errorText,
+                        { color: colors.brandRedCoral },
+                      ]}
                     >
                       Ingresá un ID de pedido válido (número positivo)
                     </Text>
@@ -209,25 +236,23 @@ export default function AdminPanelScreen({
                   <Pressable
                     onPress={() => {
                       const id = Number(lookupId);
-                      if (id > 0) {
+                      if (
+                        Number.isFinite(id) &&
+                        Number.isSafeInteger(id) &&
+                        id > 0
+                      ) {
                         navigation.navigate('OrderDetail', { orderId: id });
                         setShowLookup(false);
                         setLookupId('');
                       }
                     }}
-                    style={{
-                      backgroundColor: brand,
-                      borderRadius: 12,
-                      paddingVertical: 12,
-                      alignItems: 'center',
-                    }}
+                    style={[styles.submitBtn, { backgroundColor: brand }]}
                   >
                     <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: '700',
-                        color: colors.iconWhite,
-                      }}
+                      style={[
+                        styles.submitBtnText,
+                        { color: colors.iconWhite },
+                      ]}
                     >
                       Ver historial
                     </Text>

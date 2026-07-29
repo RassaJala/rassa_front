@@ -1,277 +1,153 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-const MONTH_NAMES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+import DateTimePicker from '@react-native-community/datetimepicker';
+import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
-// Years back from 18 years ago (allows ages 18 to ~121)
-const YEARS_BACK = 103;
+// ── Helpers ──────────────────────────────────────────
+
+function parseInitialDate(dateStr?: string): Date {
+  if (!dateStr) return new Date();
+  // Force local-time parsing so getFullYear/getMonth/getDate are correct
+  const d = new Date(dateStr + 'T00:00:00');
+  return Number.isNaN(d.getTime()) ? new Date() : d;
+}
+
+function toDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getBounds(): { min: Date; max: Date } {
+  const now = new Date();
+  const maxAdultYear = now.getFullYear() - 18;
+  const maxAdult = new Date(maxAdultYear, now.getMonth(), now.getDate());
+  // 103 years back from the max adult date → allows ages ~18 to ~121
+  const min = new Date(maxAdult);
+  min.setFullYear(min.getFullYear() - 103);
+  return { min, max: maxAdult };
+}
+
+// ── Props ────────────────────────────────────────────
 
 interface DatePickerModalProps {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelectDate: (dateString: string) => void;
-  readonly initialDate?: string; // Expects "YYYY-MM-DD"
+  readonly initialDate?: string;
 }
+
+// ── Component ────────────────────────────────────────
 
 export default function DatePickerModal({
   visible,
   onClose,
   onSelectDate,
   initialDate,
-}: DatePickerModalProps): React.JSX.Element {
-  const currentYear = new Date().getFullYear();
-  // Only allow birth years that correspond to age >= 18
-  const maxAdultYear = currentYear - 18;
-  const years = Array.from({ length: YEARS_BACK }, (_, i) => maxAdultYear - i);
+}: DatePickerModalProps): React.JSX.Element | null {
+  const [internalDate, setInternalDate] = useState(() =>
+    parseInitialDate(initialDate),
+  );
+  const bounds = getBounds();
 
-  const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-indexed: 0 = Enero, 11 = Diciembre
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-
-  // Initialize from initialDate if provided
+  // Sync internal date when modal opens with a new initialDate
   useEffect(() => {
     if (visible) {
-      if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-        const parts = initialDate.split('-').map(Number);
-        if (parts.length === 3) {
-          const y = parts[0] ?? currentYear;
-          const m = parts[1] ?? 1;
-          const d = parts[2] ?? 1;
-          setSelectedYear(y);
-          setSelectedMonth(m - 1);
-          setSelectedDay(d);
-          setStep('day'); // Jump to day selection if we have full date
-        }
-      } else {
-        setSelectedYear(null);
-        setSelectedMonth(null);
-        setSelectedDay(null);
-        setStep('year');
+      setInternalDate(parseInitialDate(initialDate));
+    }
+  }, [visible, initialDate]);
+
+  const handleChange = useCallback(
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (selectedDate) {
+        setInternalDate(selectedDate);
       }
-    }
-  }, [visible, initialDate, currentYear]);
+      if (Platform.OS === 'android') {
+        // Android dialog closes automatically after selection or dismiss
+        if (selectedDate && event.type !== 'dismissed') {
+          onSelectDate(toDateString(selectedDate));
+        }
+        onClose();
+      }
+      // iOS: just update the internal date, user taps "Hecho" to confirm
+    },
+    [onSelectDate, onClose],
+  );
 
-  const handleSelectYear = (year: number) => {
-    setSelectedYear(year);
-    setStep('month');
-  };
+  const handleDone = useCallback(() => {
+    onSelectDate(toDateString(internalDate));
+    onClose();
+  }, [internalDate, onSelectDate, onClose]);
 
-  const handleSelectMonth = (monthIndex: number) => {
-    setSelectedMonth(monthIndex);
-    setStep('day');
-  };
+  // ── Android: native dialog ─────────────────────────
+  if (Platform.OS === 'android') {
+    // Render nothing when not visible so the dialog lifecycle is clean
+    if (!visible) return null;
 
-  const handleSelectDay = (day: number) => {
-    setSelectedDay(day);
-    if (selectedYear !== null && selectedMonth !== null) {
-      const monthStr = String(selectedMonth + 1).padStart(2, '0');
-      const dayStr = String(day).padStart(2, '0');
-      onSelectDate(`${selectedYear}-${monthStr}-${dayStr}`);
-      onClose();
-    }
-  };
+    return (
+      <DateTimePicker
+        testID="dateTimePicker"
+        value={internalDate}
+        mode="date"
+        display="default"
+        minimumDate={bounds.min}
+        maximumDate={bounds.max}
+        onChange={handleChange}
+      />
+    );
+  }
 
-  // Get number of days in selected month & year
-  const getDaysInMonth = (): number => {
-    if (selectedYear === null || selectedMonth === null) return 31;
-    // selectedMonth + 1 gives the next month, day 0 gives the last day of the current month
-    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  };
-
-  const daysCount = getDaysInMonth();
-  const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
-
+  // ── iOS: spinner inside a Modal ────────────────────
   return (
     <Modal
       transparent
-      animationType="fade"
+      animationType="slide"
       visible={visible}
       onRequestClose={onClose}
     >
       <Pressable
         testID="modal-overlay"
+        className="flex-1 justify-end bg-black/50"
         onPress={onClose}
-        className="flex-1 items-center justify-center bg-black/50"
       >
         <Pressable
-          className="w-[88%] max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900"
-          onPress={(e) => e.stopPropagation()} // Prevent closing when tapping card
+          className="rounded-t-2xl bg-white p-6 dark:bg-gray-900"
+          onPress={(e) => e.stopPropagation()}
         >
-          {/* Modal Header */}
-          <Text className="mb-4 text-center text-xl font-bold text-brand-ink dark:text-gray-100">
-            Fecha de Nacimiento
-          </Text>
-
-          {/* Current Selection Indicators */}
-          <View className="mb-4 flex-row justify-between rounded-xl bg-gray-100 p-2 dark:bg-gray-800">
+          {/* Header */}
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text className="text-brand-ink text-lg font-bold dark:text-gray-100">
+              Fecha de Nacimiento
+            </Text>
             <TouchableOpacity
-              testID="tab-year-selector"
-              onPress={() => setStep('year')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'year' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
+              testID="btn-done"
+              onPress={handleDone}
+              className="px-3 py-1"
             >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Año
-              </Text>
-              <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedYear ?? '----'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-month-selector"
-              disabled={selectedYear === null}
-              onPress={() => setStep('month')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'month' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
-            >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Mes
-              </Text>
-              <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-day-selector"
-              disabled={selectedMonth === null}
-              onPress={() => setStep('day')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'day' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
-            >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Día
-              </Text>
-              <Text className="text-sm font-semibold text-brand-red-coral">
-                {selectedDay ?? '--'}
+              <Text className="text-brand-red-coral text-base font-semibold">
+                Hecho
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Selector Content based on Step */}
-          <View className="h-60 justify-center">
-            {step === 'year' && (
-              <ScrollView testID="years-list">
-                {years.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`year-option-${item}`}
-                    onPress={() => handleSelectYear(item)}
-                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedYear === item
-                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
-                        : ''
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${
-                        selectedYear === item
-                          ? 'text-brand-red-coral'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {step === 'month' && (
-              <ScrollView testID="months-list">
-                {MONTH_NAMES.map((item, index) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`month-option-${index}`}
-                    onPress={() => handleSelectMonth(index)}
-                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedMonth === index
-                        ? 'bg-red-50 dark:bg-brand-red-coral/20'
-                        : ''
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${
-                        selectedMonth === index
-                          ? 'text-brand-red-coral'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            {step === 'day' && (
-              <ScrollView
-                testID="days-grid"
-                contentContainerClassName="flex-row flex-wrap justify-start"
-              >
-                {daysArray.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`day-option-${item}`}
-                    onPress={() => handleSelectDay(item)}
-                    className={`m-[1%] aspect-square w-[18%] items-center justify-center rounded-xl border border-gray-100 dark:border-gray-800 ${
-                      selectedDay === item
-                        ? 'border-brand-red-coral bg-brand-red-coral'
-                        : 'bg-white dark:bg-gray-800'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${
-                        selectedDay === item
-                          ? 'text-white'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View className="mt-4 flex-row justify-end space-x-3 border-t border-gray-100 pt-3 dark:border-gray-800">
-            <TouchableOpacity
-              testID="btn-cancel"
-              onPress={onClose}
-              className="px-4 py-2"
-            >
-              <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={internalDate}
+            mode="date"
+            display="spinner"
+            minimumDate={bounds.min}
+            maximumDate={bounds.max}
+            onChange={handleChange}
+          />
         </Pressable>
       </Pressable>
     </Modal>

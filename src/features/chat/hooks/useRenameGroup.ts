@@ -1,7 +1,8 @@
+import { conversationsKey, groupMembersKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { renameGroup } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Conversation, RenameGroupPayload } from '@/types/chat';
 
 export function useRenameGroup(
@@ -10,13 +11,13 @@ export function useRenameGroup(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload) => renameGroup(conversationId, payload),
+    mutationFn: (payload) => chatApi.renameGroup(conversationId, payload),
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['conversations'],
+        queryKey: conversationsKey(),
       });
       void queryClient.invalidateQueries({
-        queryKey: ['groupMembers', conversationId],
+        queryKey: groupMembersKey(conversationId),
       });
     },
   });

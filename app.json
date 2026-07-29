@@ -19,6 +19,10 @@
       },
       "package": "com.rassa.app"
     },
-    "plugins": []
+    "plugins": [],
+    "web": {
+      "bundler": "metro",
+      "port": 8083
+    }
   }
 }

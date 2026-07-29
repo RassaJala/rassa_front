@@ -28,14 +28,10 @@ import {
 
 import Toast from '@/components/Toast';
 import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type {
-  ApiResponse,
-  Category,
-  FarmerStackParamList,
-  Producto,
-} from '@/types';
+import type { ApiResponse, Category, FarmerStackParamList } from '@/types';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
@@ -376,7 +372,7 @@ export default function ProductListScreen({
             <MaterialCommunityIcons name="arrow-left" size={24} color={fg} />
           </Pressable>
           <View
-            className="absolute left-0 right-0 items-center"
+            className="absolute right-0 left-0 items-center"
             pointerEvents="none"
           >
             <Text style={{ fontSize: 20, fontWeight: '700', color: fg }}>

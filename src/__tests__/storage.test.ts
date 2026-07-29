@@ -63,6 +63,7 @@ describe('Storage (native)', () => {
 
 describe('Storage (web)', () => {
   let originalOS: string;
+  let windowRef: typeof globalThis.window | undefined;
 
   beforeAll(() => {
     originalOS = Platform.OS;
@@ -72,56 +73,69 @@ describe('Storage (web)', () => {
     jest.clearAllMocks();
     (Platform as any).OS = 'web';
 
-    // Mock sessionStorage
+    // ponytail: the code uses window.localStorage (not sessionStorage).
+    // In Node.js jest, window isn't available, so we mock it globally.
+    windowRef = (global as any).window;
     const store: Record<string, string> = {};
-    (global as any).sessionStorage = {
-      getItem: jest.fn((key: string) => store[key] ?? null),
-      setItem: jest.fn((key: string, value: string) => {
-        store[key] = value;
-      }),
-      removeItem: jest.fn((key: string) => {
-        delete store[key];
-      }),
+    (global as any).window = {
+      ...((global as any).window ?? {}),
+      localStorage: {
+        getItem: jest.fn((key: string) => store[key] ?? null),
+        setItem: jest.fn((key: string, value: string) => {
+          store[key] = value;
+        }),
+        removeItem: jest.fn((key: string) => {
+          delete store[key];
+        }),
+      },
     };
+  });
+
+  afterEach(() => {
+    if (windowRef === undefined) {
+      delete (global as any).window;
+    } else {
+      (global as any).window = windowRef;
+    }
   });
 
   afterAll(() => {
     (Platform as any).OS = originalOS;
   });
 
-  it('getItemAsync lee de sessionStorage en web', async () => {
-    (global as any).sessionStorage.setItem('test_key', 'web_value');
+  it('getItemAsync lee de localStorage en web', async () => {
+    (global as any).window.localStorage.setItem('test_key', 'web_value');
 
     const result = await Storage.getItemAsync('test_key');
 
-    expect((global as any).sessionStorage.getItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.getItem).toHaveBeenCalledWith(
       'test_key',
     );
     expect(result).toBe('web_value');
   });
 
-  it('setItemAsync escribe en sessionStorage en web', async () => {
+  it('setItemAsync escribe en localStorage en web', async () => {
     await Storage.setItemAsync('test_key', 'web_value');
 
-    expect((global as any).sessionStorage.setItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.setItem).toHaveBeenCalledWith(
       'test_key',
       'web_value',
     );
   });
 
-  it('deleteItemAsync borra de sessionStorage en web', async () => {
-    (global as any).sessionStorage.setItem('test_key', 'value');
+  it('deleteItemAsync borra de localStorage en web', async () => {
+    (global as any).window.localStorage.setItem('test_key', 'value');
     await Storage.deleteItemAsync('test_key');
 
-    expect((global as any).sessionStorage.removeItem).toHaveBeenCalledWith(
+    expect((global as any).window.localStorage.removeItem).toHaveBeenCalledWith(
       'test_key',
     );
     const result = await Storage.getItemAsync('test_key');
     expect(result).toBeNull();
   });
 
-  it('retorna null si sessionStorage.getItem lanza excepción', async () => {
-    (global as any).sessionStorage.getItem = jest.fn(() => {
+  it('retorna null si localStorage.getItem lanza excepción', async () => {
+    (global as any).window.localStorage.getItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 
@@ -129,8 +143,8 @@ describe('Storage (web)', () => {
     expect(result).toBeNull();
   });
 
-  it('no lanza si sessionStorage.setItem falla', async () => {
-    (global as any).sessionStorage.setItem = jest.fn(() => {
+  it('no lanza si localStorage.setItem falla', async () => {
+    (global as any).window.localStorage.setItem = jest.fn(() => {
       throw new Error('Quota exceeded');
     });
 
@@ -139,8 +153,8 @@ describe('Storage (web)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('no lanza si sessionStorage.removeItem falla', async () => {
-    (global as any).sessionStorage.removeItem = jest.fn(() => {
+  it('no lanza si localStorage.removeItem falla', async () => {
+    (global as any).window.localStorage.removeItem = jest.fn(() => {
       throw new Error('Storage error');
     });
 
