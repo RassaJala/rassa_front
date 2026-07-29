@@ -54,3 +54,6 @@ Thumbs.db
 
 # Local review files
 REVISION_PR11.md
+
+# Lint output
+lint-err.txt
