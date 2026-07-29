@@ -1,5 +1,6 @@
 import React from 'react';
 import WebDatePickerModal from '../WebDatePickerModal';
+import { formatPhoneNumber } from '../../utils/validation';
 
 interface UserFormFieldsProps {
   readonly formNombre: string;
@@ -243,7 +244,7 @@ export default function UserFormFields({
             type="tel"
             placeholder="10 dígitos"
             value={formTelefono}
-            onChange={(e) => setFormTelefono(e.target.value)}
+            onChange={(e) => setFormTelefono(formatPhoneNumber(e.target.value))}
             style={formInputStyle('telefono')}
             onFocus={() => setFormFocused('telefono')}
             onBlur={() => setFormFocused(null)}
