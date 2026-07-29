@@ -68,7 +68,10 @@ export default class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback as React.JSX.Element;
       }
 
-      const isDev = __DEV__;
+      const errorMsg = this.state.error?.message ?? '';
+      const errorStack = this.state.error?.stack ?? '';
+
+      console.log('[ErrorBoundary] error:', errorMsg, errorStack);
 
       return (
         <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
@@ -78,15 +81,12 @@ export default class ErrorBoundary extends Component<Props, State> {
                 Algo salió mal
               </Text>
               <Text className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                Ocurrió un error inesperado. Por favor, intenta de nuevo.
+                {errorMsg || 'Ocurrió un error inesperado. Por favor, intenta de nuevo.'}
               </Text>
-              {isDev && this.state.error ? (
+              {errorStack ? (
                 <View className="mb-4 max-h-48 w-full overflow-y-auto rounded bg-gray-100 p-3 dark:bg-gray-900">
                   <Text className="font-mono text-xs text-red-600 dark:text-red-400">
-                    {this.state.error.message}
-                    {this.state.error.stack
-                      ? `\n\n${this.state.error.stack}`
-                      : ''}
+                    {errorStack}
                   </Text>
                 </View>
               ) : null}
