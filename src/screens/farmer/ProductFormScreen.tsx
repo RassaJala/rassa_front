@@ -32,6 +32,7 @@ import type {
   Unidad,
 } from '@/types';
 import { extractApiError } from '@/utils/apiError';
+import { parseApiList } from '@/utils/apiResponse';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
@@ -111,23 +112,26 @@ export default function ProductFormScreen({
     };
   }, []);
 
-  const { data: categories } = useQuery<Category[]>({
+  const { data: rawCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
-      return data.data;
+      const response = await api.get('/categorias/');
+      return parseApiList<Category>(response.data);
     },
     staleTime: 60_000,
   });
 
-  const { data: units } = useQuery<Unidad[]>({
+  const { data: rawUnits } = useQuery({
     queryKey: ['units'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
-      return data.data;
+      const response = await api.get('/unidades/');
+      return parseApiList<Unidad>(response.data);
     },
     staleTime: 60_000,
   });
+
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
+  const units = Array.isArray(rawUnits) ? rawUnits : [];
 
   const { data: existingProduct, isLoading: loadingProduct } =
     useQuery<Producto>({
@@ -148,8 +152,26 @@ export default function ProductFormScreen({
       setPrecio(existingProduct.precio);
       setStock(String(existingProduct.stock));
       setEsPerecedero(existingProduct.es_perecedero);
-      setCategoriaId(existingProduct.categoria?.id_categoria);
-      setUnidadId(existingProduct.unidad?.id_unidad ?? null);
+
+      const catId =
+        typeof existingProduct.categoria === 'object' &&
+        existingProduct.categoria !== null
+          ? (existingProduct.categoria as Category).id_categoria
+          : typeof existingProduct.categoria === 'number'
+            ? existingProduct.categoria
+            : ((existingProduct as unknown as Record<string, unknown>).fk_categoria as number | null) ?? null;
+      setCategoriaId(catId);
+
+      const unId =
+        typeof existingProduct.unidad === 'object' &&
+        existingProduct.unidad !== null
+          ? (existingProduct.unidad as Unidad).id_unidad
+          : typeof existingProduct.unidad === 'number'
+            ? existingProduct.unidad
+            : ((existingProduct as unknown as Record<string, unknown>).fk_unidad as number | null) ?? null;
+      setUnidadId(unId);
+
+
       if (existingProduct.imagenes && existingProduct.imagenes.length > 0) {
         setImages(
           existingProduct.imagenes.map((img) => ({
@@ -202,19 +224,26 @@ export default function ProductFormScreen({
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
+      allowsMultipleSelection: true,
       quality: 0.8,
       base64: true,
     });
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setImages([
-        {
-          uri: asset.uri,
-          base64: asset.base64 ?? undefined,
-          isPrimary: true,
-        },
-      ]);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const newPicked: ProductImageState[] = result.assets.map((asset) => ({
+        uri: asset.uri,
+        base64: asset.base64 ?? undefined,
+        isPrimary: false,
+      }));
+
+      setImages((prev) => {
+        const hasActivePrimary = prev.some(
+          (img) => img.isPrimary && !img.markedForDeletion,
+        );
+        if (!hasActivePrimary && newPicked.length > 0 && newPicked[0]) {
+          newPicked[0].isPrimary = true;
+        }
+        return [...prev, ...newPicked];
+      });
     }
   }, []);
 
@@ -222,18 +251,28 @@ export default function ProductFormScreen({
     setImages((prev) => {
       const next = [...prev];
       const target = next[indexToRemove];
-      if (!target) return next;
+      if (!target) return prev;
 
       if (target.id) {
-        target.markedForDeletion = true;
-        target.isPrimary = false;
+        next[indexToRemove] = {
+          ...target,
+          markedForDeletion: true,
+          isPrimary: false,
+        };
       } else {
         next.splice(indexToRemove, 1);
       }
 
       if (!next.some((img) => img.isPrimary && !img.markedForDeletion)) {
-        const firstAvailable = next.find((img) => !img.markedForDeletion);
-        if (firstAvailable) firstAvailable.isPrimary = true;
+        const firstAvailableIndex = next.findIndex(
+          (img) => !img.markedForDeletion,
+        );
+        if (firstAvailableIndex !== -1 && next[firstAvailableIndex]) {
+          next[firstAvailableIndex] = {
+            ...next[firstAvailableIndex],
+            isPrimary: true,
+          };
+        }
       }
       return next;
     });
@@ -367,9 +406,9 @@ export default function ProductFormScreen({
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const selectedCategoryName =
-    categories?.find((c) => c.id_categoria === categoriaId)?.nombre ?? '';
+    categories.find((c) => c.id_categoria === categoriaId)?.nombre ?? '';
   const selectedUnitName =
-    units?.find((u) => u.id_unidad === unidadId)?.tipo ?? '';
+    units.find((u) => u.id_unidad === unidadId)?.tipo ?? '';
 
   if (loadingProduct) {
     return (
@@ -484,7 +523,7 @@ export default function ProductFormScreen({
             </View>
           ) : null}
 
-          {/* Image picker */}
+          {/* Image picker (Thumbnail Grid) */}
           <View>
             <Text
               style={{
@@ -495,74 +534,133 @@ export default function ProductFormScreen({
                 color: fg,
               }}
             >
-              Foto del producto
+              Imágenes del producto
             </Text>
-            <View className="items-center">
-              {(() => {
-                const activeImage = images.find(
-                  (img) => !img.markedForDeletion,
-                );
-                if (activeImage) {
-                  const activeIndex = images.indexOf(activeImage);
-                  return (
-                    <View className="relative">
-                      <Image
-                        source={{ uri: activeImage.uri }}
-                        className="h-48 w-48 rounded-xl"
-                        resizeMode="cover"
-                      />
-                      <View className="absolute bottom-0 right-0 flex-row justify-end rounded-b-xl bg-black/50 px-2 py-1">
-                        <Pressable
-                          onPress={() => handleRemoveImage(activeIndex)}
-                          hitSlop={8}
-                        >
-                          <MaterialCommunityIcons
-                            name="delete-outline"
-                            size={20}
-                            color={white}
-                          />
-                        </Pressable>
-                      </View>
-                    </View>
-                  );
-                }
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {images.map((img, index) => {
+                if (img.markedForDeletion) return null;
                 return (
-                  <Pressable
-                    onPress={() => void pickImage()}
-                    style={({ pressed }) => ({
-                      height: 192,
-                      width: 192,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderStyle: 'dashed',
-                      borderColor: inputBorder,
-                      backgroundColor: surface,
-                      opacity: pressed ? 0.8 : 1,
-                    })}
+                  <View
+                    key={
+                      img.id ? `existing-${img.id}` : `new-${img.uri}-${index}`
+                    }
+                    style={{
+                      position: 'relative',
+                      width: 108,
+                      height: 108,
+                    }}
                   >
-                    <MaterialCommunityIcons
-                      name="camera-plus-outline"
-                      size={32}
-                      color={muted}
-                    />
-                    <Text
+                    <View
                       style={{
                         marginTop: 8,
-                        paddingHorizontal: 8,
-                        textAlign: 'center',
-                        fontSize: 12,
-                        color: muted,
+                        width: 100,
+                        height: 100,
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        backgroundColor: accentBg,
+                        borderWidth: 1,
+                        borderColor: border,
                       }}
                     >
-                      Agregar imagen
-                    </Text>
-                  </Pressable>
+                      <Image
+                        source={{ uri: img.uri }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                      {img.isPrimary ? (
+                        <View
+                          style={{
+                            position: 'absolute',
+                            bottom: 4,
+                            left: 4,
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            borderRadius: 4,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 9,
+                              fontWeight: '700',
+                              color: white,
+                            }}
+                          >
+                            Principal
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    <Pressable
+                      onPress={() => handleRemoveImage(index)}
+                      style={({ pressed }) => ({
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: coral,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                        elevation: 8,
+                        shadowColor: black,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 3,
+                        opacity: pressed ? 0.8 : 1,
+                      })}
+                      hitSlop={8}
+                    >
+                      <MaterialCommunityIcons
+                        name="close"
+                        size={18}
+                        color={white}
+                      />
+                    </Pressable>
+                  </View>
                 );
-              })()}
+              })}
+
+              <Pressable
+                onPress={() => void pickImage()}
+                style={({ pressed }) => ({
+                  marginTop: 8,
+                  width: 100,
+                  height: 100,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 12,
+                  borderWidth: 2,
+                  borderStyle: 'dashed',
+                  borderColor: inputBorder,
+                  backgroundColor: surface,
+                  opacity: pressed ? 0.8 : 1,
+                })}
+              >
+                <MaterialCommunityIcons
+                  name="camera-plus-outline"
+                  size={24}
+                  color={muted}
+                />
+                <Text
+                  style={{
+                    marginTop: 4,
+                    paddingHorizontal: 4,
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: '500',
+                    color: muted,
+                  }}
+                >
+                  Agregar
+                </Text>
+              </Pressable>
             </View>
           </View>
+
 
           {/* Nombre */}
           <View>

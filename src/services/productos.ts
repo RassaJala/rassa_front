@@ -1,5 +1,6 @@
 import { API_TIMEOUT } from '@/constants/api';
 import type { ApiResponse } from '@/types';
+import { parseApiList } from '@/utils/apiResponse';
 import { assertValidId } from '@/utils/ids';
 
 import api from './api';
@@ -131,11 +132,14 @@ export async function uploadProductoImagen(
 }
 
 export async function getCategorias(): Promise<ApiResponse<Categoria[]>> {
-  const { data } = await api.get<ApiResponse<Categoria[]>>('/categorias/');
-  return data;
+  const response = await api.get('/categorias/');
+  const list = parseApiList<Categoria>(response.data);
+  return { ok: true, data: list } as ApiResponse<Categoria[]>;
 }
 
 export async function getUnidades(): Promise<ApiResponse<Unidad[]>> {
-  const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
-  return data;
+  const response = await api.get('/unidades/');
+  const list = parseApiList<Unidad>(response.data);
+  return { ok: true, data: list } as ApiResponse<Unidad[]>;
 }
+

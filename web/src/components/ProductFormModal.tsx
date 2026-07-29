@@ -7,7 +7,7 @@ import { Input } from './ui/Input';
 import { TextArea } from './ui/TextArea';
 import type { AppColors, useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
-import { uploadImage } from '../services/productImageUpload';
+import { uploadProductImages } from '../services/productImageUpload';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -55,6 +55,12 @@ export function mediaUrl(path: string | null | undefined): string | null {
 
 // ── Form State ─────────────────────────────────────────────
 
+interface ExistingImage {
+  id_imagen: number;
+  url: string;
+  es_principal: boolean;
+}
+
 interface FormState {
   nombre_producto: string;
   descripcion: string;
@@ -63,10 +69,35 @@ interface FormState {
   es_perecedero: boolean;
   categoriaId: number | null;
   unidadId: number | null;
-  imageFile: File | null;
-  imagePreview: string | null;
-  existingImageUrl: string | null;
-  imageDeleted: boolean;
+  newImageFiles: File[];
+  newImagePreviews: string[];
+  existingImages: ExistingImage[];
+  imagesToDelete: number[];
+}
+
+function extractExistingImages(producto?: Producto): ExistingImage[] {
+  if (!producto) return [];
+
+  if (producto.imagenes && producto.imagenes.length > 0) {
+    return producto.imagenes.map((img) => ({
+      id_imagen: img.id_imagen,
+      url: mediaUrl(img.url) ?? img.url,
+      es_principal: img.es_principal,
+    }));
+  }
+
+  const fallback = producto.imagen_principal ?? producto.imagen;
+  if (fallback) {
+    return [
+      {
+        id_imagen: 0,
+        url: mediaUrl(fallback) ?? fallback,
+        es_principal: true,
+      },
+    ];
+  }
+
+  return [];
 }
 
 function buildInitialForm(producto?: Producto): FormState {
@@ -77,19 +108,20 @@ function buildInitialForm(producto?: Producto): FormState {
     stock: String(producto?.stock ?? 0),
     es_perecedero: producto?.es_perecedero ?? false,
     categoriaId:
-      typeof producto?.categoria === 'object'
+      typeof producto?.categoria === 'object' && producto.categoria !== null
         ? producto.categoria.id_categoria
         : (producto?.categoria ?? null),
     unidadId:
       typeof producto?.unidad === 'object' && producto.unidad !== null
         ? producto.unidad.id_unidad
         : (producto?.unidad ?? null),
-    imageFile: null,
-    imagePreview: null,
-    existingImageUrl: mediaUrl(producto?.imagen_principal ?? producto?.imagen),
-    imageDeleted: false,
+    newImageFiles: [],
+    newImagePreviews: [],
+    existingImages: extractExistingImages(producto),
+    imagesToDelete: [],
   };
 }
+
 
 // ── Validation ─────────────────────────────────────────────
 
@@ -123,20 +155,17 @@ function buildPayload(form: FormState) {
 
 // ── Image helpers ──────────────────────────────────────────
 
-async function deleteOldImages(productId: number): Promise<void> {
-  const { data: detailRes } = await api.get<ApiResponse<Producto>>(
-    `/productos/${productId}/`,
+async function deleteImages(
+  productId: number,
+  ids: number[],
+): Promise<void> {
+  await Promise.all(
+    ids.map((id) =>
+      api
+        .delete(`/productos/${productId}/imagen/${id}/`)
+        .catch(console.error),
+    ),
   );
-  const imgs = detailRes.data.imagenes;
-  if (imgs && imgs.length > 0) {
-    await Promise.all(
-      imgs.map((img) =>
-        api
-          .delete(`/productos/${productId}/imagen/${img.id_imagen}/`)
-          .catch(console.error),
-      ),
-    );
-  }
 }
 
 // ── Props ──────────────────────────────────────────────────
@@ -178,6 +207,35 @@ export function ProductFormModal({
     [form, initialForm],
   );
 
+  useEffect(() => {
+    if (!producto?.id_producto) return;
+
+    let isMounted = true;
+    api
+      .get<ApiResponse<Producto>>(`/productos/${producto.id_producto}/`)
+      .then(({ data }) => {
+        if (!isMounted) return;
+        const detailedProd = data?.data;
+        if (detailedProd) {
+          const imgs = extractExistingImages(detailedProd);
+          if (imgs.length > 0) {
+            setForm((prev) => ({
+              ...prev,
+              existingImages: imgs,
+            }));
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        console.warn('Error al cargar detalle del producto en web:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [producto?.id_producto]);
+
+
   // ponytail: confirmación al cerrar con cambios sin guardar (#31)
   const handleClose = useCallback(() => {
     if (
@@ -197,41 +255,53 @@ export function ProductFormModal({
     });
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((p) => ({ ...p, image: 'La imagen no puede superar 5 MB.' }));
-      return;
+    const valid: File[] = [];
+    for (const f of files) {
+      if (f.size > 5 * 1024 * 1024) {
+        setErrors((p) => ({
+          ...p,
+          images: `"${f.name}" supera 5 MB.`,
+        }));
+        continue;
+      }
+      if (f.type === 'image/svg+xml') {
+        setErrors((p) => ({
+          ...p,
+          images: `"${f.name}" no es un formato válido.`,
+        }));
+        continue;
+      }
+      valid.push(f);
     }
-    if (file.type === 'image/svg+xml') {
-      setErrors((p) => ({ ...p, image: 'No se permiten archivos SVG.' }));
-      return;
-    }
+    if (valid.length === 0) return;
 
-    if (form.imagePreview) URL.revokeObjectURL(form.imagePreview);
-    const preview = URL.createObjectURL(file);
+    const previews = valid.map((f) => URL.createObjectURL(f));
     setForm((p) => ({
       ...p,
-      imageFile: file,
-      imagePreview: preview,
-      existingImageUrl: null,
-      imageDeleted: true,
+      newImageFiles: [...p.newImageFiles, ...valid],
+      newImagePreviews: [...p.newImagePreviews, ...previews],
     }));
   }
 
-  function handleRemoveImage(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (form.imagePreview) URL.revokeObjectURL(form.imagePreview);
+  function handleRemoveNewImage(index: number) {
+    setForm((p) => {
+      URL.revokeObjectURL(p.newImagePreviews[index]!);
+      const nextFiles = p.newImageFiles.filter((_, i) => i !== index);
+      const nextPreviews = p.newImagePreviews.filter((_, i) => i !== index);
+      return { ...p, newImageFiles: nextFiles, newImagePreviews: nextPreviews };
+    });
+  }
+
+  function handleRemoveExistingImage(id: number) {
     setForm((p) => ({
       ...p,
-      imageFile: null,
-      imagePreview: null,
-      existingImageUrl: null,
-      imageDeleted: true,
+      existingImages: p.existingImages.filter((img) => img.id_imagen !== id),
+      imagesToDelete: [...p.imagesToDelete, id],
     }));
-    if (fileRef.current) fileRef.current.value = '';
   }
 
   async function handleSave() {
@@ -254,18 +324,20 @@ export function ProductFormModal({
         : await api.post<ApiResponse<Producto>>('/productos/', payload);
       const saved = data.data;
 
-      if (isEditing && producto && form.imageDeleted) {
-        await deleteOldImages(producto.id_producto).catch(console.error);
+      if (form.imagesToDelete.length > 0) {
+        await deleteImages(saved.id_producto, form.imagesToDelete).catch(
+          console.error,
+        );
       }
 
-      if (form.imageFile) {
+      if (form.newImageFiles.length > 0) {
         try {
-          await uploadImage(saved.id_producto, form.imageFile);
+          await uploadProductImages(saved.id_producto, form.newImageFiles);
         } catch (imgErr) {
           setGeneralError(
             imgErr instanceof Error
-              ? `Producto guardado, pero imagen no subida: ${imgErr.message}`
-              : 'Producto guardado, pero no se pudo subir la imagen.',
+              ? `Producto guardado, pero algunas imágenes no se subieron: ${imgErr.message}`
+              : 'Producto guardado, pero no se pudieron subir las imágenes.',
           );
           return;
         }
@@ -282,8 +354,6 @@ export function ProductFormModal({
       setSaving(false);
     }
   }
-
-  const displayImage = form.imagePreview ?? form.existingImageUrl;
 
   return (
     <div
@@ -329,61 +399,100 @@ export function ProductFormModal({
             </div>
           )}
 
-          {/* Imagen */}
-          <div className="flex flex-col items-center gap-2">
-            <FormField label="Foto del producto" colors={colors}>
+          {/* Imágenes */}
+          <div className="flex flex-col gap-2">
+            <FormField label="Imágenes del producto" colors={colors}>
               <></>
             </FormField>
-            <div className="relative mt-1">
+
+            <div className="grid grid-cols-3 gap-2">
+              {form.existingImages.map((img) => (
+                <div key={img.id_imagen} className="relative">
+                  <div
+                    className="h-24 w-full overflow-hidden rounded-xl"
+                    style={{ background: accentBg }}
+                  >
+                    <img
+                      src={img.url}
+                      className="h-full w-full object-cover"
+                      alt=""
+                    />
+                  </div>
+                  <span
+                    className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                  >
+                    {img.es_principal ? 'Principal' : ''}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveExistingImage(img.id_imagen)}
+                    title="Eliminar imagen"
+                    className="absolute -right-1.5 -top-1.5 grid h-6 w-6 cursor-pointer place-items-center rounded-full border-none text-[11px] text-white"
+                    style={{
+                      background: coral,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+
+              {form.newImagePreviews.map((preview, i) => (
+                <div key={`new-${i}`} className="relative">
+                  <div
+                    className="h-24 w-full overflow-hidden rounded-xl"
+                    style={{ background: accentBg }}
+                  >
+                    <img
+                      src={preview}
+                      className="h-full w-full object-cover"
+                      alt=""
+                    />
+                  </div>
+                  <span
+                    className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
+                  >
+                    {form.existingImages.length === 0 && i === 0
+                      ? 'Principal'
+                      : ''}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveNewImage(i)}
+                    title="Eliminar imagen"
+                    className="absolute -right-1.5 -top-1.5 grid h-6 w-6 cursor-pointer place-items-center rounded-full border-none text-[11px] text-white"
+                    style={{
+                      background: coral,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+
               <div
                 onClick={() => fileRef.current?.click()}
-                title="Haz clic para subir o cambiar imagen"
-                className="grid h-[140px] w-[140px] shrink-0 cursor-pointer place-items-center overflow-hidden rounded-2xl"
-                style={{
-                  border: displayImage ? 'none' : `2px dashed ${border}`,
-                  background: displayImage ? 'transparent' : accentBg,
-                }}
+                title="Agregar imágenes"
+                className="flex h-24 w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed"
+                style={{ borderColor: border, background: accentBg }}
               >
-                {displayImage ? (
-                  <img
-                    src={displayImage}
-                    className="h-full w-full object-cover"
-                    alt="producto"
-                  />
-                ) : (
-                  <span className="text-4xl">📷</span>
-                )}
+                <span className="text-2xl">📷</span>
               </div>
-              {displayImage && (
-                <button
-                  onClick={handleRemoveImage}
-                  title="Eliminar imagen"
-                  className="absolute -right-2 -top-2 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-none text-sm text-white"
-                  style={{
-                    background: coral,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                  }}
-                >
-                  ✕
-                </button>
-              )}
             </div>
-            {!displayImage && (
-              <span className="text-[13px]" style={{ color: muted }}>
-                Haz clic para subir una imagen
-              </span>
-            )}
-            {errors.image && (
+
+            {errors.images && (
               <span className="text-xs" style={{ color: coral }}>
-                {errors.image}
+                {errors.images}
               </span>
             )}
+
             <input
               ref={fileRef}
               type="file"
+              multiple
               accept="image/*"
               className="hidden"
-              onChange={handleFileChange}
+              onChange={handleFilesSelected}
             />
           </div>
 
