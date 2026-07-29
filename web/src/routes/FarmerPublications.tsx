@@ -140,15 +140,9 @@ function DetailModal({
                       <span style={{ color: colors.muted }}>
                         Stock: {p.stock}
                       </span>
-                      <span style={{ color: colors.brand }}>
-                        ${p.precio}
-                      </span>
+                      <span style={{ color: colors.brand }}>${p.precio}</span>
                       <Badge
-                        variant={
-                          p.estado === 'activo'
-                            ? 'success'
-                            : 'default'
-                        }
+                        variant={p.estado === 'activo' ? 'success' : 'default'}
                       >
                         {p.estado}
                       </Badge>
@@ -297,12 +291,7 @@ export function FarmerPublications() {
   const [filterYear, setFilterYear] = useState(0);
   const [filterMinProducts, setFilterMinProducts] = useState(0);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = usePublicaciones(
+  const { data, isLoading, isError, refetch } = usePublicaciones(
     activeTab === 'all' ? undefined : activeTab,
     page,
   );
