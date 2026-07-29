@@ -29,9 +29,11 @@ import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import CheckoutScreen from '@/screens/buyer/CheckoutScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
+import OrderSuccessScreen from '@/screens/buyer/OrderSuccessScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
@@ -313,6 +315,12 @@ function BuyerNavigator() {
   return (
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
+      <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
+      <BuyerStack.Screen
+        name="OrderSuccess"
+        component={OrderSuccessScreen}
+        options={{ gestureEnabled: false }}
+      />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />

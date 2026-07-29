@@ -19,6 +19,7 @@ import { useColorScheme } from 'nativewind';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
+import { CartProvider } from '~/store/CartContext';
 import { ThemeProvider } from '~/store/ThemeContext';
 
 const queryClient = new QueryClient({
@@ -69,12 +70,14 @@ export default function App(): React.JSX.Element {
       <ThemeProvider>
         <PaperProvider theme={theme}>
           <AuthProvider>
-            <ErrorBoundary>
-              <NavigationContainer>
-                <AppNavigator />
-                <StatusBar style="auto" />
-              </NavigationContainer>
-            </ErrorBoundary>
+            <CartProvider>
+              <ErrorBoundary>
+                <NavigationContainer>
+                  <AppNavigator />
+                  <StatusBar style="auto" />
+                </NavigationContainer>
+              </ErrorBoundary>
+            </CartProvider>
           </AuthProvider>
         </PaperProvider>
       </ThemeProvider>

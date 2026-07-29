@@ -39,7 +39,46 @@ export interface PublicacionList {
   results: Publicacion[];
 }
 
+// ── Public endpoint types (GET /api/publicaciones/current/) ──
+
+export interface AgricultorResume {
+  readonly id_usuario: number;
+  readonly nombre: string;
+  readonly apellido: string;
+}
+
+export interface ProductoSemanalPublic {
+  readonly id_producto_semanal: number;
+  readonly producto: string;
+  readonly unidad: string;
+  readonly stock: number;
+  readonly precio: string;
+  readonly foto: string | null;
+}
+
+export interface PublicacionCurrent {
+  readonly id_publicacion: number;
+  readonly agricultor: AgricultorResume;
+  readonly fecha_publicacion: string;
+  readonly semana: number;
+  readonly productos: readonly ProductoSemanalPublic[];
+}
+
 // ── API functions ──────────────────────────────────────────
+
+/**
+ * Obtiene las publicaciones publicadas de la semana actual (público).
+ * GET /api/publicaciones/current/
+ * Retorna: { ok: true, data: PublicacionCurrent[] }
+ */
+export async function getPublicacionesCurrent(): Promise<
+  ApiResponse<readonly PublicacionCurrent[]>
+> {
+  const { data } = await api.get<ApiResponse<readonly PublicacionCurrent[]>>(
+    '/publicaciones/current/',
+  );
+  return data;
+}
 
 export async function getPublicaciones(params?: {
   estado?: PublicacionEstado | undefined;

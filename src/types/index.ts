@@ -179,6 +179,8 @@ export interface CreditLimit {
 }
 
 // ── Navigation param lists ────────────────────────────────
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type AdminStackParamList = {
   AdminPanel: undefined;
   AdminProfile: undefined;
@@ -226,14 +228,27 @@ export type AuthStackParamList = {
 export type BuyerTabsParamList = {
   Home: undefined;
   Pedidos: undefined;
+  Carrito: undefined;
+  Notificaciones: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
-  BuyerTabs: undefined;
+  BuyerTabs: NavigatorScreenParams<BuyerTabsParamList> | undefined;
   OrderDetail: { orderId: number };
   Profile: undefined;
-  ProductDetail: { productId: number; farmerId: number };
+  ProductDetail: {
+    readonly productoSemanalId: number;
+    readonly farmerId: number;
+    readonly farmerName: string;
+    readonly nombreProducto: string;
+    readonly precio: string;
+    readonly stock: number;
+    readonly unidad: string;
+    readonly foto: string | null;
+  };
+  Checkout: undefined;
+  OrderSuccess: { orderId: number; total: string };
   Chat: {
     conversationId: number;
     title: string;
