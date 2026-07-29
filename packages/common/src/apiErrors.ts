@@ -46,8 +46,17 @@ export function isSafeDetail(detail: string): boolean {
   return true;
 }
 
-function isAxiosError(error: unknown): error is { isAxiosError: true; response?: { status?: number; data?: unknown } } {
-  return typeof error === 'object' && error !== null && (error as Record<string, unknown>).isAxiosError === true;
+function isAxiosError(
+  error: unknown,
+): error is {
+  isAxiosError: true;
+  response?: { status?: number; data?: unknown };
+} {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as Record<string, unknown>).isAxiosError === true
+  );
 }
 
 function unwrapCause(error: unknown): unknown {
