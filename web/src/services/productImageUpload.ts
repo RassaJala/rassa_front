@@ -9,9 +9,7 @@ export async function uploadImage(
       const fd = new FormData();
       fd.append('imagen', file);
       fd.append('es_principal', 'true');
-      await api.post(`/productos/${productId}/imagen/`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await api.post(`/productos/${productId}/imagen/`, fd);
       return;
     } catch (imgErr) {
       if (attempt === 1) throw imgErr;

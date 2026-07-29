@@ -267,6 +267,7 @@ export function ProductFormModal({
               ? `Producto guardado, pero imagen no subida: ${imgErr.message}`
               : 'Producto guardado, pero no se pudo subir la imagen.',
           );
+          return;
         }
       }
 

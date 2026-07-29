@@ -295,8 +295,12 @@ export function AdminUnits() {
                             padding: '3px 10px',
                             borderRadius: 6,
                             background: item.estado
-                              ? 'rgba(36,86,60,0.07)'
-                              : 'rgba(242,169,0,0.1)',
+                              ? isDark
+                                ? 'rgba(74,138,99,0.15)'
+                                : 'rgba(36,86,60,0.07)'
+                              : isDark
+                                ? 'rgba(242,169,0,0.12)'
+                                : 'rgba(242,169,0,0.1)',
                             color: item.estado ? brand : '#F2A900',
                           }}
                         >

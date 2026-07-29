@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test file */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import api from '../services/api';
 import { uploadImage } from '../services/productImageUpload';
 
-jest.mock('../services/api', () => ({
+vi.mock('../services/api', () => ({
   __esModule: true,
-  default: { post: jest.fn() },
+  default: { post: vi.fn() },
 }));
 
-const mockPost = api.post as jest.Mock;
+const mockPost = api.post as unknown as vi.Mock;
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 function makeFile(name = 'foto.jpg', type = 'image/jpeg'): File {
@@ -25,14 +26,9 @@ describe('uploadImage', () => {
     await uploadImage(5, file);
 
     expect(mockPost).toHaveBeenCalledTimes(1);
-    const [url, fd, opts] = mockPost.mock.calls[0] as [
-      string,
-      FormData,
-      { headers: Record<string, string> },
-    ];
+    const [url, fd] = mockPost.mock.calls[0] as [string, FormData];
 
     expect(url).toBe('/productos/5/imagen/');
-    expect(opts.headers['Content-Type']).toBe('multipart/form-data');
 
     expect(fd.get('imagen')).toBe(file);
     expect(fd.get('es_principal')).toBe('true');
