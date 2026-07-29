@@ -11,14 +11,18 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
-import type { Order, PedidoEstado } from '@/types';
+import type { Order, PedidoEstado, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiError';
+
+type Nav = NativeStackNavigationProp<SellerStackParamList>;
 
 interface FilterOption {
   readonly label: string;
@@ -61,12 +65,7 @@ const ACCIONES: Readonly<Record<string, Accion | null>> = {
     icon: 'package-variant-closed',
     color: colors.info,
   },
-  listo_para_retirar: {
-    label: 'Entregar',
-    estado: 'entregado',
-    icon: 'handshake',
-    color: colors.success,
-  },
+  listo_para_retirar: null,
   entregado: null,
   cancelado: null,
 };
@@ -95,6 +94,7 @@ export default function SalesScreen(): React.JSX.Element {
   const activeBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const white = colors.iconWhite;
   const redCoral = colors.brandRedCoral;
+  const navigation = useNavigation<Nav>();
 
   const [filter, setFilter] = useState<PedidoEstado | ''>('');
   const [toast, setToast] = useState<{
@@ -319,6 +319,44 @@ export default function SalesScreen(): React.JSX.Element {
                 </Text>
               </Pressable>
             ) : null}
+            {item.estado_actual === 'listo_para_retirar' ? (
+              <Pressable
+                onPress={() => {
+                  navigation.navigate('Payment', {
+                    orderId: item.id_pedido,
+                    clientName: item.cliente_nombre ?? '',
+                    total: item.total,
+                  });
+                }}
+                disabled={busy}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  backgroundColor: brand,
+                  borderRadius: 10,
+                  paddingVertical: 10,
+                  opacity: busy ? 0.5 : 1,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="cash-register"
+                  size={18}
+                  color={white}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '700',
+                    color: white,
+                  }}
+                >
+                  Registrar pago
+                </Text>
+              </Pressable>
+            ) : null}
             {accionNoTerminal.has(item.estado_actual) ? (
               <Pressable
                 onPress={() => {
@@ -387,6 +425,7 @@ export default function SalesScreen(): React.JSX.Element {
       cancelMutation,
       accionNoTerminal,
       isRowPending,
+      navigation,
     ],
   );
 

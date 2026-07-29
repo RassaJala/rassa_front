@@ -294,8 +294,45 @@ export type SellerTabsParamList = {
   ChatList: undefined;
 };
 
+export type MetodoPago = 'efectivo' | 'transferencia';
+
+export interface TipoPago {
+  readonly id_tipo_pago: number;
+  readonly nombre: string;
+}
+
+export interface ProductoRecibo {
+  readonly nombre: string;
+  readonly precio: string;
+  readonly cantidad: number;
+}
+
+export interface Payment {
+  readonly id_pago: number;
+  readonly folio: string;
+  readonly pedido: number | null;
+  readonly tipo_pago: number;
+  readonly tipo_pago_nombre: string;
+  readonly cliente_nombre: string | null;
+  readonly cliente_id: number | null;
+  readonly monto: string;
+  readonly referencia: string | null;
+  readonly total_pedido: string | null;
+  readonly productos: ProductoRecibo[];
+  readonly fecha_pago: string;
+}
+
+export interface PaymentPayload {
+  readonly pedido: number;
+  readonly tipo_pago: number;
+  readonly monto: string;
+  readonly referencia?: string;
+}
+
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  Payment: { orderId: number; clientName: string; total: string };
+  Receipt: { paymentId: number };
   Chat: {
     conversationId: number;
     title: string;
