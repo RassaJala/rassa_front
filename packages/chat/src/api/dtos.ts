@@ -11,7 +11,7 @@ export interface BackendMessage {
 
 export interface BackendConversation {
   id_conversacion: number;
-  tipo: boolean;
+  tipo: string;
   nombre: string;
   ultimo_mensaje: string | null;
   ultimo_mensaje_creado_en: string | null;

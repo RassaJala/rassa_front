@@ -27,7 +27,7 @@ export function mapConversation(raw: BackendConversation): Conversation {
   return {
     id: raw.id_conversacion,
     nombre: raw.nombre,
-    tipo: raw.tipo ? 'grupal' : 'privada',
+    tipo: raw.tipo,
     es_familia: raw.es_familia ?? false,
     ultimo_mensaje: raw.ultimo_mensaje,
     ultimo_mensaje_fecha: raw.ultimo_mensaje_creado_en,
