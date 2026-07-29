@@ -19,8 +19,8 @@ export function cleanPhoneNumber(val: string): string {
 }
 
 export function formatPhoneNumber(val: string): string {
-  const cleaned = val.replace(/\D/g, '');
   const hasPlus = val.trim().startsWith('+');
+  const cleaned = cleanPhoneNumber(val);
   if (cleaned.length === 0) {
     return hasPlus ? '+' : '';
   }
