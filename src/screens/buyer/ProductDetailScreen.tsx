@@ -7,6 +7,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, themeColors } from '@/constants/colors';
+import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
 import { useCart } from '@/store/CartContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
@@ -20,6 +21,13 @@ export default function ProductDetailScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const cart = useCart();
+  const createPrivateConversation = useCreatePrivateConversation();
+
+  const { farmerId } = route.params;
+
+  const handleContactFarmer = useCallback(() => {
+    createPrivateConversation.mutate({ fk_usuario: farmerId });
+  }, [createPrivateConversation, farmerId]);
 
   const {
     productoSemanalId,
@@ -322,6 +330,7 @@ export default function ProductDetailScreen(): React.JSX.Element {
 
         {/* Contact farmer */}
         <Pressable
+          onPress={handleContactFarmer}
           style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',

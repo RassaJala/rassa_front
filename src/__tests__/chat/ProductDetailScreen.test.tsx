@@ -15,12 +15,35 @@ jest.mock('@/store/AuthContext', () => ({
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light' }),
 }));
+jest.mock('@/store/CartContext', () => ({
+  useCart: () => ({
+    items: [],
+    addItem: jest.fn(),
+    removeItem: jest.fn(),
+    updateQuantity: jest.fn(),
+    clearCart: jest.fn(),
+    hasItem: () => false,
+    totalItems: 0,
+    subtotal: 0,
+    iva: 0,
+    total: 0,
+  }),
+}));
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
   return {
     ...actual,
     useRoute: () => ({
-      params: { productId: 10, farmerId: 5 },
+      params: {
+        productoSemanalId: 10,
+        farmerId: 5,
+        farmerName: 'Juan Pérez',
+        nombreProducto: 'Tomate',
+        precio: '25.00',
+        stock: 100,
+        unidad: 'kg',
+        foto: null,
+      },
     }),
     useNavigation: () => ({ navigate: jest.fn() }),
     useIsFocused: () => true,
@@ -28,6 +51,7 @@ jest.mock('@react-navigation/native', () => {
 });
 
 const mockApiPost = api.post as jest.Mock;
+const mockApiGet = api.get as jest.Mock;
 
 describe('ProductDetailScreen — Contact Farmer', () => {
   let queryClient: QueryClient;
@@ -52,7 +76,7 @@ describe('ProductDetailScreen — Contact Farmer', () => {
   it('renders the contact button', () => {
     const { getByText } = renderScreen();
 
-    expect(getByText('Contactar agricultor')).toBeTruthy();
+    expect(getByText('Contactar a Juan Pérez')).toBeTruthy();
   });
 
   it('calls createPrivateConversation with farmerId on press', async () => {
@@ -63,10 +87,16 @@ describe('ProductDetailScreen — Contact Farmer', () => {
         data: { id_conversacion: 30 },
       },
     });
+    mockApiGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: [{ id: 30, nombre: '', tipo: 'privada', es_familia: false }],
+      },
+    });
 
     const { getByText } = renderScreen();
 
-    fireEvent.press(getByText('Contactar agricultor'));
+    fireEvent.press(getByText('Contactar a Juan Pérez'));
 
     await waitFor(() => {
       expect(mockApiPost).toHaveBeenCalledWith(
