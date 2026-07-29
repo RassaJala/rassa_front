@@ -148,6 +148,7 @@ describe('usePublications — queries', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockedApi.getPublicaciones).toHaveBeenCalledWith({
       estado: 'borrador',
+      page: 1,
     });
     expect(result.current.data).toEqual(FAKE_PUBLICACIONES);
   });
@@ -158,7 +159,7 @@ describe('usePublications — queries', () => {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mockedApi.getPublicaciones).toHaveBeenCalledWith(undefined);
+    expect(mockedApi.getPublicaciones).toHaveBeenCalledWith({ page: 1 });
   });
 
   it('usePublicacion returns a single publication', async () => {

@@ -34,7 +34,7 @@ import {
   type Producto,
   type Publicacion,
 } from '../services/publications';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 import { deleteOrphans } from '../utils/deleteOrphans';
 import { revokeBlobUrl } from '../utils/imageHelpers';
 import { logError } from '../utils/logger';

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
-import { extractApiError } from './apiError';
+import { extractApiError } from './apiErrors';
 
 function makeAxiosError(data: unknown): unknown {
   const error = new Error('Request failed');
@@ -55,9 +55,9 @@ describe('extractApiError', () => {
     ).toBe('Name is required');
   });
 
-  it('returns fieldKey string value', () => {
+  it('returns first element from errors array', () => {
     expect(
-      extractApiError(makeAxiosError({ errors: 'Too many' }), fields),
+      extractApiError(makeAxiosError({ errors: ['Too many'] }), fields),
     ).toBe('Too many');
   });
 
@@ -155,11 +155,11 @@ describe('extractApiError', () => {
     expect(extractApiError(error, fields)).toBe('[object Object]');
   });
 
-  it('SECURITY: limits error message length', () => {
+  it('SECURITY: returns full error message without truncation', () => {
     const longMessage = 'x'.repeat(100000);
     const error = makeAxiosError({ detail: longMessage });
     const result = extractApiError(error, fields);
-    expect(result.length).toBeLessThanOrEqual(1000);
+    expect(result.length).toBe(100000);
   });
 
   it('returns second fieldKey match when first does not exist', () => {

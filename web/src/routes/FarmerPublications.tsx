@@ -8,7 +8,7 @@ import {
   usePublishPublicacion,
 } from '../hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '../services/publications';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 import { formatDate } from '../utils/publicationWizard';
 import { mediaUrl } from '../utils/mediaUrl';
 import { hideBrokenImage } from '../utils/imageHelpers';
@@ -140,15 +140,9 @@ function DetailModal({
                       <span style={{ color: colors.muted }}>
                         Stock: {p.stock}
                       </span>
-                      <span style={{ color: colors.brand }}>
-                        ${p.precio}
-                      </span>
+                      <span style={{ color: colors.brand }}>${p.precio}</span>
                       <Badge
-                        variant={
-                          p.estado === 'activo'
-                            ? 'success'
-                            : 'default'
-                        }
+                        variant={p.estado === 'activo' ? 'success' : 'default'}
                       >
                         {p.estado}
                       </Badge>
@@ -296,12 +290,7 @@ export function FarmerPublications() {
   const [filterMonth, setFilterMonth] = useState(0);
   const [filterYear, setFilterYear] = useState(0);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = usePublicaciones(
+  const { data, isLoading, isError, refetch } = usePublicaciones(
     activeTab === 'all' ? undefined : activeTab,
     page,
   );
