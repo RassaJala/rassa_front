@@ -127,21 +127,6 @@ const FAKE_PUBLICACION = {
   },
 };
 
-const FAKE_PRODUCTOS = {
-  data: [
-    {
-      id_producto_semanal: 100,
-      fk_producto: 1,
-      fk_unidad: 1,
-      stock: 10,
-      precio: '500.00',
-      foto: null,
-      estado: 'activo',
-      creado_en: '2026-07-27T00:00:00Z',
-    },
-  ],
-};
-
 function createWrapper() {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false } },
