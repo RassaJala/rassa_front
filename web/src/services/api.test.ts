@@ -421,7 +421,11 @@ describe('api.ts token interceptor', () => {
 
     const interceptor = responseFns[0];
     const error500 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 500, data: { detail: 'Server error' } },
     };
 
@@ -437,7 +441,11 @@ describe('api.ts token interceptor', () => {
 
     const interceptor = responseFns[0];
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -463,7 +471,11 @@ describe('api.ts token interceptor', () => {
     );
 
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -493,7 +505,11 @@ describe('api.ts token interceptor', () => {
 
     const interceptor = responseFns[0];
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -515,7 +531,11 @@ describe('api.ts token interceptor', () => {
 
     const interceptor = responseFns[0];
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -549,11 +569,19 @@ describe('api.ts token interceptor', () => {
     );
 
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
     const queuedError = {
-      config: { url: '/productos/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/productos/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -585,7 +613,11 @@ describe('api.ts token interceptor', () => {
     );
 
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -610,7 +642,11 @@ describe('api.ts token interceptor', () => {
 
     const interceptor = responseFns[0];
     const error401 = {
-      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
       response: { status: 401 },
     };
 
@@ -663,9 +699,9 @@ describe('api.ts token interceptor', () => {
       headers: {} as Record<string, string>,
     });
     expect(config).toBeDefined();
-    expect(
-      (config.headers as Record<string, string>).Authorization,
-    ).toBe('Bearer test-token');
+    expect((config.headers as Record<string, string>).Authorization).toBe(
+      'Bearer test-token',
+    );
   });
 
   it('SECURITY: does not redirect when already on /login', async () => {

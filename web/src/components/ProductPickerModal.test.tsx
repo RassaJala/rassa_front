@@ -53,7 +53,12 @@ function renderModal({
 
 describe('ProductPickerModal', () => {
   it('renders catalog products', () => {
-    renderModal({ catalog: [makeProduct(), makeProduct({ id_producto: 2, nombre_producto: 'Lechuga' })] });
+    renderModal({
+      catalog: [
+        makeProduct(),
+        makeProduct({ id_producto: 2, nombre_producto: 'Lechuga' }),
+      ],
+    });
     expect(screen.getByText('Tomate')).toBeDefined();
     expect(screen.getByText('Lechuga')).toBeDefined();
   });
@@ -99,7 +104,13 @@ describe('ProductPickerModal', () => {
   });
 
   it('filters out already selected products', () => {
-    renderModal({ catalog: [makeProduct(), makeProduct({ id_producto: 2, nombre_producto: 'Lechuga' })], selectedIds: new Set([1]) });
+    renderModal({
+      catalog: [
+        makeProduct(),
+        makeProduct({ id_producto: 2, nombre_producto: 'Lechuga' }),
+      ],
+      selectedIds: new Set([1]),
+    });
     expect(screen.queryByText('Tomate')).toBeNull();
     expect(screen.getByText('Lechuga')).toBeDefined();
   });

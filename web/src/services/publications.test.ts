@@ -477,9 +477,9 @@ describe('error responses', () => {
       value: { status: 500, data: { detail: 'Internal server error' } },
     });
     mockedApi.patch.mockRejectedValue(err);
-    await expect(
-      updateProductoSemanal(5, 10, { stock: 20 }),
-    ).rejects.toThrow('Server error');
+    await expect(updateProductoSemanal(5, 10, { stock: 20 })).rejects.toThrow(
+      'Server error',
+    );
   });
 
   it('deleteProductoSemanal with 403 forbidden', async () => {
@@ -549,9 +549,7 @@ describe('edge cases', () => {
           count: 1,
           next: null,
           previous: null,
-          results: [
-            { id_publicacion: 1, extra_field: 'ignored' },
-          ],
+          results: [{ id_publicacion: 1, extra_field: 'ignored' }],
         },
       },
     });

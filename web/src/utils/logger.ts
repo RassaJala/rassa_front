@@ -18,7 +18,7 @@ export function logError(
   };
 
   if (isDev) {
-    console.error(`[${context}]`, error, extra ?? "");
+    console.error(`[${context}]`, error, extra ?? '');
   }
 
   // In production, send to error tracking service

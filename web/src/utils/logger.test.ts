@@ -26,47 +26,30 @@ describe('logError', () => {
 
   it('includes extra context in console.error call', () => {
     logError('test', new Error('fail'), { userId: 42, role: 'admin' });
-    expect(console.error).toHaveBeenCalledWith(
-      '[test]',
-      expect.any(Error),
-      { userId: 42, role: 'admin' },
-    );
+    expect(console.error).toHaveBeenCalledWith('[test]', expect.any(Error), {
+      userId: 42,
+      role: 'admin',
+    });
   });
 
   it('handles string error', () => {
     logError('ctx', 'something broke');
-    expect(console.error).toHaveBeenCalledWith(
-      '[ctx]',
-      'something broke',
-      '',
-    );
+    expect(console.error).toHaveBeenCalledWith('[ctx]', 'something broke', '');
   });
 
   it('handles null error', () => {
     logError('ctx', null);
-    expect(console.error).toHaveBeenCalledWith(
-      '[ctx]',
-      null,
-      '',
-    );
+    expect(console.error).toHaveBeenCalledWith('[ctx]', null, '');
   });
 
   it('handles undefined error', () => {
     logError('ctx', undefined);
-    expect(console.error).toHaveBeenCalledWith(
-      '[ctx]',
-      undefined,
-      '',
-    );
+    expect(console.error).toHaveBeenCalledWith('[ctx]', undefined, '');
   });
 
   it('handles error with extra as empty object', () => {
     logError('ctx', new Error('fail'), {});
-    expect(console.error).toHaveBeenCalledWith(
-      '[ctx]',
-      expect.any(Error),
-      {},
-    );
+    expect(console.error).toHaveBeenCalledWith('[ctx]', expect.any(Error), {});
   });
 
   it('works with different context strings', () => {

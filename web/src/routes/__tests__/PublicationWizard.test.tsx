@@ -77,8 +77,22 @@ const mockedPublishAfterPersist = vi.mocked(publishAfterPersist);
 const FAKE_CATALOG = {
   data: {
     results: [
-      { id_producto: 1, nombre_producto: 'Tomate', precio: '500', stock: 100, imagen: null, imagen_principal: null },
-      { id_producto: 2, nombre_producto: 'Lechuga', precio: '300', stock: 50, imagen: null, imagen_principal: null },
+      {
+        id_producto: 1,
+        nombre_producto: 'Tomate',
+        precio: '500',
+        stock: 100,
+        imagen: null,
+        imagen_principal: null,
+      },
+      {
+        id_producto: 2,
+        nombre_producto: 'Lechuga',
+        precio: '300',
+        stock: 50,
+        imagen: null,
+        imagen_principal: null,
+      },
     ],
   },
 };
@@ -98,7 +112,16 @@ const FAKE_PUBLICACION = {
     semana: 31,
     estado: 'borrador' as const,
     productos: [
-      { id_producto_semanal: 100, fk_producto: 1, fk_unidad: 1, stock: 10, precio: '500.00', foto: null, estado: 'activo', creado_en: '2026-07-27T00:00:00Z' },
+      {
+        id_producto_semanal: 100,
+        fk_producto: 1,
+        fk_unidad: 1,
+        stock: 10,
+        precio: '500.00',
+        foto: null,
+        estado: 'activo',
+        creado_en: '2026-07-27T00:00:00Z',
+      },
     ],
     creado_en: '2026-07-27T00:00:00Z',
   },
@@ -106,7 +129,16 @@ const FAKE_PUBLICACION = {
 
 const FAKE_PRODUCTOS = {
   data: [
-    { id_producto_semanal: 100, fk_producto: 1, fk_unidad: 1, stock: 10, precio: '500.00', foto: null, estado: 'activo', creado_en: '2026-07-27T00:00:00Z' },
+    {
+      id_producto_semanal: 100,
+      fk_producto: 1,
+      fk_unidad: 1,
+      stock: 10,
+      precio: '500.00',
+      foto: null,
+      estado: 'activo',
+      creado_en: '2026-07-27T00:00:00Z',
+    },
   ],
 };
 
@@ -152,7 +184,9 @@ function setupHooks() {
     refetch: vi.fn(),
   } as never);
 
-  const mockMutateAsync = vi.fn().mockResolvedValue({ data: { id_producto_semanal: 999 } });
+  const mockMutateAsync = vi
+    .fn()
+    .mockResolvedValue({ data: { id_producto_semanal: 999 } });
 
   mockedUseCreatePublicacion.mockReturnValue({
     mutateAsync: vi.fn().mockResolvedValue(FAKE_PUBLICACION),
@@ -212,7 +246,9 @@ describe('PublicationWizard', () => {
     it('renders step 1 (FechaStep) with week info', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       expect(screen.getByText('Fecha de publicación')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: /Semana 32/ })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /Semana 32/ }),
+      ).toBeInTheDocument();
     });
 
     it('renders FechaStep even when catalog is still loading', () => {
@@ -249,7 +285,9 @@ describe('PublicationWizard', () => {
       expect(screen.getByText('Seleccionar producto')).toBeInTheDocument();
       await user.click(screen.getByText('Tomate'));
       await waitFor(() => {
-        expect(screen.queryByText('Seleccionar producto')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Seleccionar producto'),
+        ).not.toBeInTheDocument();
       });
       expect(screen.getByText('Productos (1)')).toBeInTheDocument();
     });
@@ -259,10 +297,16 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       await addItemAndFill(user);
       await user.click(screen.getByText('Siguiente →'));
-      expect(screen.getByRole('heading', { name: 'Resumen' })).toBeInTheDocument();
-      expect(screen.getByText('1 producto en la publicación')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Resumen' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('1 producto en la publicación'),
+      ).toBeInTheDocument();
       await user.click(screen.getByText('Siguiente →'));
-      expect(screen.getByRole('heading', { name: 'Publicar' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Publicar' }),
+      ).toBeInTheDocument();
       expect(screen.getByText(/¿Publicar la semana/)).toBeInTheDocument();
     });
 
@@ -280,7 +324,9 @@ describe('PublicationWizard', () => {
       await user.type(precioInput, '0');
       await user.click(screen.getByText('Siguiente →'));
       expect(screen.getByText('Stock debe ser mayor a 0.')).toBeInTheDocument();
-      expect(screen.getByText('Precio debe ser mayor a 0.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Precio debe ser mayor a 0.'),
+      ).toBeInTheDocument();
       expect(screen.getByText('Seleccioná una unidad.')).toBeInTheDocument();
     });
 
@@ -289,7 +335,9 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       await user.click(screen.getByText('Siguiente →'));
       expect(screen.getByText('Productos (0)')).toBeInTheDocument();
-      const stepBtns = screen.getAllByText((content, el) => el?.tagName === 'BUTTON' && content.includes('Fecha'));
+      const stepBtns = screen.getAllByText(
+        (content, el) => el?.tagName === 'BUTTON' && content.includes('Fecha'),
+      );
       await user.click(stepBtns[0]!);
       expect(screen.getByText('Fecha de publicación')).toBeInTheDocument();
     });
@@ -334,7 +382,9 @@ describe('PublicationWizard', () => {
       } as never);
       const user = userEvent.setup();
       render(<PublicationWizard />, { wrapper: createWrapper() });
-      expect(screen.getByText('No se pudo cargar la publicación.')).toBeInTheDocument();
+      expect(
+        screen.getByText('No se pudo cargar la publicación.'),
+      ).toBeInTheDocument();
       await user.click(screen.getByText('Reintentar'));
       expect(mockRefetch).toHaveBeenCalled();
     });
@@ -354,12 +404,19 @@ describe('PublicationWizard', () => {
         refetch: vi.fn(),
       } as never);
       render(<PublicationWizard />, { wrapper: createWrapper() });
-      expect(screen.getByText('No se pudieron cargar los productos de la publicación.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'No se pudieron cargar los productos de la publicación.',
+        ),
+      ).toBeInTheDocument();
     });
 
     it('shows empty state when edit mode has zero items', async () => {
       mockedUsePublicacion.mockReturnValue({
-        data: { ...FAKE_PUBLICACION, data: { ...FAKE_PUBLICACION.data, productos: [] } },
+        data: {
+          ...FAKE_PUBLICACION,
+          data: { ...FAKE_PUBLICACION.data, productos: [] },
+        },
         isLoading: false,
         isError: false,
         refetch: vi.fn(),
@@ -400,7 +457,9 @@ describe('PublicationWizard', () => {
       await user.click(getAddBtn());
       await user.click(screen.getByText('Tomate'));
       await user.click(getAddBtn());
-      expect(screen.queryByRole('heading', { name: 'Seleccionar producto' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: 'Seleccionar producto' }),
+      ).toBeInTheDocument();
       expect(screen.queryByText('Lechuga')).toBeInTheDocument();
     });
 
@@ -435,16 +494,21 @@ describe('PublicationWizard', () => {
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('Guardar borrador'));
-      await waitFor(() => {
-        expect(screen.getByText('Borrador guardado.')).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText('Borrador guardado.')).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
 
     it('shows saving state while persisting', async () => {
       let resolvePersist: (v: { orphanFailures: number }) => void;
-      mockedPersistItems.mockReturnValue(new Promise((resolve) => {
-        resolvePersist = resolve;
-      }));
+      mockedPersistItems.mockReturnValue(
+        new Promise((resolve) => {
+          resolvePersist = resolve;
+        }),
+      );
       const createMutateAsync = vi.fn().mockResolvedValue(FAKE_PUBLICACION);
       mockedUseCreatePublicacion.mockReturnValue({
         mutateAsync: createMutateAsync,
@@ -464,7 +528,9 @@ describe('PublicationWizard', () => {
     });
 
     it('shows error on persist failure', async () => {
-      const createMutateAsync = vi.fn().mockRejectedValue(new Error('Network error'));
+      const createMutateAsync = vi
+        .fn()
+        .mockRejectedValue(new Error('Network error'));
       mockedUseCreatePublicacion.mockReturnValue({
         mutateAsync: createMutateAsync,
         isPending: false,
@@ -504,7 +570,9 @@ describe('PublicationWizard', () => {
       await user.type(precioInput, '500');
       await user.selectOptions(screen.getByRole('combobox'), '1');
       await user.click(screen.getByText('Siguiente →'));
-      expect(screen.getByRole('heading', { name: 'Resumen' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Resumen' }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -524,13 +592,17 @@ describe('PublicationWizard', () => {
     it('shows invalid ID state', () => {
       mockParams.current = { id: 'abc' };
       render(<PublicationWizard />, { wrapper: createWrapper() });
-      expect(screen.getByText('ID de publicación inválido.')).toBeInTheDocument();
+      expect(
+        screen.getByText('ID de publicación inválido.'),
+      ).toBeInTheDocument();
     });
 
     it('shows invalid ID for negative ID', () => {
       mockParams.current = { id: '-1' };
       render(<PublicationWizard />, { wrapper: createWrapper() });
-      expect(screen.getByText('ID de publicación inválido.')).toBeInTheDocument();
+      expect(
+        screen.getByText('ID de publicación inválido.'),
+      ).toBeInTheDocument();
     });
 
     it('navigates back from invalid ID', async () => {
@@ -552,7 +624,9 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       await user.click(screen.getByText('Siguiente →'));
       await user.click(getAddBtn());
-      expect(screen.getByText('No hay productos disponibles.')).toBeInTheDocument();
+      expect(
+        screen.getByText('No hay productos disponibles.'),
+      ).toBeInTheDocument();
     });
 
     it('catalog error shows error in picker', async () => {
@@ -567,7 +641,9 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       await user.click(screen.getByText('Siguiente →'));
       await user.click(getAddBtn());
-      expect(screen.getByText('Error al cargar el catálogo.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Error al cargar el catálogo.'),
+      ).toBeInTheDocument();
     });
 
     it('can navigate back through all steps with items', async () => {
@@ -576,13 +652,19 @@ describe('PublicationWizard', () => {
       await addItemAndFill(user);
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('Siguiente →'));
-      expect(screen.getByRole('heading', { name: 'Publicar' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Publicar' }),
+      ).toBeInTheDocument();
       await user.click(screen.getByText('← Anterior'));
-      expect(screen.getByRole('heading', { name: 'Resumen' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Resumen' }),
+      ).toBeInTheDocument();
       await user.click(screen.getByText('← Anterior'));
       expect(screen.getByText(/Productos \(1\)/)).toBeInTheDocument();
       await user.click(screen.getByText('← Anterior'));
-      expect(screen.getByRole('heading', { name: 'Fecha de publicación' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Fecha de publicación' }),
+      ).toBeInTheDocument();
     });
   });
 });

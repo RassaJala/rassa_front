@@ -55,7 +55,7 @@ export async function upsertItems(
   const tempIdToServerId = new Map<string, number>();
 
   for (const item of items) {
-    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+    if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
     const serverId = Number(item.tempId);
     const isExisting = !item.isNew && deps.hasServerPub;
 
@@ -85,9 +85,9 @@ export async function upsertItems(
     tempIdToServerId.set(item.tempId, itemId);
 
     if (item.imageFile) {
-      if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+      if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
       const formData = new FormData();
-      formData.append("imagen", item.imageFile);
+      formData.append('imagen', item.imageFile);
       await deps.uploadImage({ pubId, itemId, formData });
     }
   }

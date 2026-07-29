@@ -49,7 +49,10 @@ describe('ResumenStep', () => {
       <ResumenStep
         weekNumber={32}
         nextMonday={new Date(2026, 7, 3)}
-        items={[makeItem(), makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' })]}
+        items={[
+          makeItem(),
+          makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' }),
+        ]}
         unidades={defaultUnidades}
         colors={baseColors}
       />,
@@ -228,9 +231,21 @@ describe('ResumenStep', () => {
         weekNumber={32}
         nextMonday={new Date(2026, 7, 3)}
         items={[
-          makeItem({ tempId: 'local_1', foto: 'uploads/photo1.jpg', nombre_producto: 'Tomate' }),
-          makeItem({ tempId: 'local_2', foto: null, nombre_producto: 'Lechuga' }),
-          makeItem({ tempId: 'local_3', foto: 'uploads/photo2.jpg', nombre_producto: 'Zanahoria' }),
+          makeItem({
+            tempId: 'local_1',
+            foto: 'uploads/photo1.jpg',
+            nombre_producto: 'Tomate',
+          }),
+          makeItem({
+            tempId: 'local_2',
+            foto: null,
+            nombre_producto: 'Lechuga',
+          }),
+          makeItem({
+            tempId: 'local_3',
+            foto: 'uploads/photo2.jpg',
+            nombre_producto: 'Zanahoria',
+          }),
         ]}
         unidades={defaultUnidades}
         colors={baseColors}
@@ -251,7 +266,11 @@ describe('ResumenStep', () => {
         nextMonday={new Date(2026, 7, 3)}
         items={[
           makeItem({ tempId: 'local_1', foto: null, imageFile: null }),
-          makeItem({ tempId: 'local_2', imageFile: new File([''], 'test.jpg', { type: 'image/jpeg' }), foto: null }),
+          makeItem({
+            tempId: 'local_2',
+            imageFile: new File([''], 'test.jpg', { type: 'image/jpeg' }),
+            foto: null,
+          }),
         ]}
         unidades={defaultUnidades}
         colors={baseColors}

@@ -142,10 +142,14 @@ describe('persistItems', () => {
 
   it('propagates upsertItems network timeout error', async () => {
     const deps = makeDeps({
-      upsertItems: vi.fn().mockRejectedValue(new Error('timeout of 5000ms exceeded')),
+      upsertItems: vi
+        .fn()
+        .mockRejectedValue(new Error('timeout of 5000ms exceeded')),
     });
 
-    await expect(persistItems(1, deps)).rejects.toThrow('timeout of 5000ms exceeded');
+    await expect(persistItems(1, deps)).rejects.toThrow(
+      'timeout of 5000ms exceeded',
+    );
   });
 
   it('handles empty items result from upsertItems', async () => {
@@ -165,10 +169,14 @@ describe('persistItems', () => {
     const controller = new AbortController();
     controller.abort();
     const deps = makeDeps({
-      upsertItems: vi.fn().mockRejectedValue(new DOMException('Cancelled', 'AbortError')),
+      upsertItems: vi
+        .fn()
+        .mockRejectedValue(new DOMException('Cancelled', 'AbortError')),
     });
 
-    await expect(persistItems(1, deps, controller.signal)).rejects.toThrow('Cancelled');
+    await expect(persistItems(1, deps, controller.signal)).rejects.toThrow(
+      'Cancelled',
+    );
   });
 
   it('processes single item correctly', async () => {
@@ -190,7 +198,10 @@ describe('persistItems', () => {
   it('handles mixed isNew items', async () => {
     const deps = makeDeps({
       upsertItems: vi.fn().mockResolvedValue({
-        tempIdToServerId: new Map([['local_1', 10], ['42', 20]]),
+        tempIdToServerId: new Map([
+          ['local_1', 10],
+          ['42', 20],
+        ]),
         newServerIds: [10],
         updatedServerIds: [20],
       }),

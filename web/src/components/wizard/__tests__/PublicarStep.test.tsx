@@ -36,24 +36,20 @@ function makeItem(overrides: Partial<WizardItemDraft> = {}): WizardItemDraft {
 describe('PublicarStep', () => {
   it('renders week info', () => {
     render(
-      <PublicarStep
-        weekNumber={32}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={32} items={[makeItem()]} colors={baseColors} />,
     );
     expect(screen.getByText('¿Publicar la semana 32?')).toBeDefined();
   });
 
   it('shows product count with single item', () => {
     render(
-      <PublicarStep
-        weekNumber={32}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={32} items={[makeItem()]} colors={baseColors} />,
     );
-    expect(screen.getByText('1 producto serán publicados y visibles para los compradores.')).toBeDefined();
+    expect(
+      screen.getByText(
+        '1 producto serán publicados y visibles para los compradores.',
+      ),
+    ).toBeDefined();
   });
 
   it('shows product count with multiple items', () => {
@@ -64,57 +60,43 @@ describe('PublicarStep', () => {
         colors={baseColors}
       />,
     );
-    expect(screen.getByText('2 productos serán publicados y visibles para los compradores.')).toBeDefined();
+    expect(
+      screen.getByText(
+        '2 productos serán publicados y visibles para los compradores.',
+      ),
+    ).toBeDefined();
   });
 
   it('shows rocket emoji', () => {
     render(
-      <PublicarStep
-        weekNumber={32}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={32} items={[makeItem()]} colors={baseColors} />,
     );
     expect(screen.getByText('🚀')).toBeDefined();
   });
 
   it('handles empty items gracefully', () => {
-    render(
-      <PublicarStep
-        weekNumber={32}
-        items={[]}
-        colors={baseColors}
-      />,
-    );
-    expect(screen.getByText('0 productos serán publicados y visibles para los compradores.')).toBeDefined();
+    render(<PublicarStep weekNumber={32} items={[]} colors={baseColors} />);
+    expect(
+      screen.getByText(
+        '0 productos serán publicados y visibles para los compradores.',
+      ),
+    ).toBeDefined();
   });
 
   it('handles different week numbers', () => {
     const { rerender } = render(
-      <PublicarStep
-        weekNumber={1}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={1} items={[makeItem()]} colors={baseColors} />,
     );
     expect(screen.getByText('¿Publicar la semana 1?')).toBeDefined();
     rerender(
-      <PublicarStep
-        weekNumber={53}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={53} items={[makeItem()]} colors={baseColors} />,
     );
     expect(screen.getByText('¿Publicar la semana 53?')).toBeDefined();
   });
 
   it('shows correct product count text for single item', () => {
     render(
-      <PublicarStep
-        weekNumber={32}
-        items={[makeItem()]}
-        colors={baseColors}
-      />,
+      <PublicarStep weekNumber={32} items={[makeItem()]} colors={baseColors} />,
     );
     expect(screen.getByText(/1 producto/)).toBeDefined();
   });
@@ -123,7 +105,10 @@ describe('PublicarStep', () => {
     render(
       <PublicarStep
         weekNumber={32}
-        items={[makeItem(), makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' })]}
+        items={[
+          makeItem(),
+          makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' }),
+        ]}
         colors={baseColors}
       />,
     );
@@ -131,13 +116,7 @@ describe('PublicarStep', () => {
   });
 
   it('shows correct product count text for zero items', () => {
-    render(
-      <PublicarStep
-        weekNumber={32}
-        items={[]}
-        colors={baseColors}
-      />,
-    );
+    render(<PublicarStep weekNumber={32} items={[]} colors={baseColors} />);
     expect(screen.getByText(/0 productos/)).toBeDefined();
   });
 
@@ -145,7 +124,9 @@ describe('PublicarStep', () => {
     render(
       <PublicarStep
         weekNumber={10}
-        items={[makeItem({ foto: 'uploads/img.jpg', nombre_producto: 'Manzana' })]}
+        items={[
+          makeItem({ foto: 'uploads/img.jpg', nombre_producto: 'Manzana' }),
+        ]}
         colors={baseColors}
       />,
     );

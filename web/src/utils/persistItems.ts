@@ -43,7 +43,7 @@ export async function persistItems(
   } catch (err) {
     if (itemsSaved) {
       throw new Error(
-        "Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.",
+        'Los cambios se guardaron, pero no se pudo actualizar la vista. Revisá la publicación.',
         { cause: err },
       );
     }
@@ -60,17 +60,17 @@ export async function persistItems(
       }
       if (deletedCount > 0) {
         messages.push(
-          `${deletedCount} producto${deletedCount !== 1 ? "s" : ""} creado${deletedCount !== 1 ? "s" : ""} fue${deletedCount !== 1 ? "ron" : ""} eliminado${deletedCount !== 1 ? "s" : ""}.`,
+          `${deletedCount} producto${deletedCount !== 1 ? 's' : ''} creado${deletedCount !== 1 ? 's' : ''} fue${deletedCount !== 1 ? 'ron' : ''} eliminado${deletedCount !== 1 ? 's' : ''}.`,
         );
       }
     }
     if (updatedServerIds.length > 0) {
       messages.push(
-        `${updatedServerIds.length} producto${updatedServerIds.length !== 1 ? "s" : ""} actualizado${updatedServerIds.length !== 1 ? "s" : ""} necesita${updatedServerIds.length !== 1 ? "n" : ""} revisión manual (IDs: ${updatedServerIds.join(", ")}).`,
+        `${updatedServerIds.length} producto${updatedServerIds.length !== 1 ? 's' : ''} actualizado${updatedServerIds.length !== 1 ? 's' : ''} necesita${updatedServerIds.length !== 1 ? 'n' : ''} revisión manual (IDs: ${updatedServerIds.join(', ')}).`,
       );
     }
     if (messages.length > 0) {
-      throw new Error(messages.join(" "), { cause: err });
+      throw new Error(messages.join(' '), { cause: err });
     }
     throw err;
   }

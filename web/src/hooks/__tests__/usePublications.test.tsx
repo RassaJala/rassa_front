@@ -22,7 +22,12 @@ import {
 vi.mock('../../constants/api', () => ({
   QUERY_STALE_TIME: 30_000,
   QUERY_RETRY: 0,
-  QUERY_OPTIONS: { staleTime: 30_000, retry: 0, refetchOnWindowFocus: true, refetchOnReconnect: true } as const,
+  QUERY_OPTIONS: {
+    staleTime: 30_000,
+    retry: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  } as const,
 }));
 
 vi.mock('../../utils/logger', () => ({
@@ -233,9 +238,7 @@ describe('usePublications — queries', () => {
   });
 
   it('useProductosSemanales shows error state on API failure', async () => {
-    mockedApi.getProductosSemanales.mockRejectedValue(
-      new Error('API failure'),
-    );
+    mockedApi.getProductosSemanales.mockRejectedValue(new Error('API failure'));
     const { result } = renderHook(() => useProductosSemanales(1), {
       wrapper: createWrapper(),
     });
@@ -412,15 +415,11 @@ describe('usePublications — mutations', () => {
   });
 
   it('useCreatePublicacion mutation error triggers onError callback', async () => {
-    mockedApi.createPublicacion.mockRejectedValue(
-      new Error('create failed'),
-    );
+    mockedApi.createPublicacion.mockRejectedValue(new Error('create failed'));
     const { result } = renderHook(() => useCreatePublicacion(), {
       wrapper: createWrapper(),
     });
-    await expect(result.current.mutateAsync()).rejects.toThrow(
-      'create failed',
-    );
+    await expect(result.current.mutateAsync()).rejects.toThrow('create failed');
     expect(logError).toHaveBeenCalledWith(
       'publications.createPublicacion',
       expect.any(Error),
@@ -428,9 +427,7 @@ describe('usePublications — mutations', () => {
   });
 
   it('useDeletePublicacion mutation error triggers onError callback', async () => {
-    mockedApi.deletePublicacion.mockRejectedValue(
-      new Error('delete failed'),
-    );
+    mockedApi.deletePublicacion.mockRejectedValue(new Error('delete failed'));
     const { result } = renderHook(() => useDeletePublicacion(), {
       wrapper: createWrapper(),
     });
@@ -444,9 +441,7 @@ describe('usePublications — mutations', () => {
   });
 
   it('usePublishPublicacion mutation error triggers onError callback', async () => {
-    mockedApi.publishPublicacion.mockRejectedValue(
-      new Error('publish failed'),
-    );
+    mockedApi.publishPublicacion.mockRejectedValue(new Error('publish failed'));
     const { result } = renderHook(() => usePublishPublicacion(), {
       wrapper: createWrapper(),
     });
@@ -460,9 +455,7 @@ describe('usePublications — mutations', () => {
   });
 
   it('useAddProductoSemanal mutation error triggers onError callback', async () => {
-    mockedApi.addProductoSemanal.mockRejectedValue(
-      new Error('add failed'),
-    );
+    mockedApi.addProductoSemanal.mockRejectedValue(new Error('add failed'));
     const { result } = renderHook(() => useAddProductoSemanal(), {
       wrapper: createWrapper(),
     });

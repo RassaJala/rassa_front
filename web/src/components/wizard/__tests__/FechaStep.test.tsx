@@ -36,7 +36,9 @@ describe('FechaStep', () => {
         colors={baseColors}
       />,
     );
-    expect(screen.getByText(/lunes|martes|miércoles|jueves|viernes|sábado|domingo/i)).toBeDefined();
+    expect(
+      screen.getByText(/lunes|martes|miércoles|jueves|viernes|sábado|domingo/i),
+    ).toBeDefined();
   });
 
   it('handles different week numbers', () => {

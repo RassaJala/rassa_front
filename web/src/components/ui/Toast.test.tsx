@@ -45,27 +45,45 @@ describe('Toast', () => {
   it('auto-dismisses after default time for success type', () => {
     const onDone = vi.fn();
     render(<Toast toast={makeToast()} onDone={onDone} />);
-    act(() => { vi.advanceTimersByTime(100); });
-    act(() => { vi.advanceTimersByTime(TOAST_DISMISS_MS); });
-    act(() => { vi.advanceTimersByTime(TOAST_EXIT_MS); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_DISMISS_MS);
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_EXIT_MS);
+    });
     expect(onDone).toHaveBeenCalledOnce();
   });
 
   it('auto-dismisses after double time for error type', () => {
     const onDone = vi.fn();
     render(<Toast toast={makeToast({ type: 'error' })} onDone={onDone} />);
-    act(() => { vi.advanceTimersByTime(100); });
-    act(() => { vi.advanceTimersByTime(TOAST_DISMISS_MS * 2); });
-    act(() => { vi.advanceTimersByTime(TOAST_EXIT_MS); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_DISMISS_MS * 2);
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_EXIT_MS);
+    });
     expect(onDone).toHaveBeenCalledOnce();
   });
 
   it('dismiss button on error type calls onDone', () => {
     const onDone = vi.fn();
     render(<Toast toast={makeToast({ type: 'error' })} onDone={onDone} />);
-    act(() => { vi.advanceTimersByTime(100); });
-    act(() => { screen.getByText('✕').click(); });
-    act(() => { vi.advanceTimersByTime(TOAST_EXIT_MS); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    act(() => {
+      screen.getByText('✕').click();
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_EXIT_MS);
+    });
     expect(onDone).toHaveBeenCalledOnce();
   });
 
@@ -84,12 +102,16 @@ describe('Toast', () => {
     const { rerender } = render(
       <Toast toast={makeToast({ message: 'A' })} onDone={onDoneA} />,
     );
-    act(() => { vi.advanceTimersByTime(100); });
-    rerender(
-      <Toast toast={makeToast({ message: 'B' })} onDone={onDoneB} />,
-    );
-    act(() => { vi.advanceTimersByTime(TOAST_DISMISS_MS); });
-    act(() => { vi.advanceTimersByTime(TOAST_EXIT_MS); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    rerender(<Toast toast={makeToast({ message: 'B' })} onDone={onDoneB} />);
+    act(() => {
+      vi.advanceTimersByTime(TOAST_DISMISS_MS);
+    });
+    act(() => {
+      vi.advanceTimersByTime(TOAST_EXIT_MS);
+    });
     expect(onDoneA).not.toHaveBeenCalled();
     expect(onDoneB).toHaveBeenCalledOnce();
   });

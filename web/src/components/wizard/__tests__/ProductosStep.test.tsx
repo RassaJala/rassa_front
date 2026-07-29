@@ -2,7 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ItemValidation, WizardItemDraft } from '../../../utils/publicationWizard';
+import type {
+  ItemValidation,
+  WizardItemDraft,
+} from '../../../utils/publicationWizard';
 import { ProductosStep } from '../ProductosStep';
 
 const baseColors = {
@@ -52,7 +55,11 @@ function renderStep({
   loadingCatalog?: boolean;
   onAddItem?: () => void;
   onRemoveItem?: (tempId: string) => void;
-  onUpdateItem?: (tempId: string, field: keyof WizardItemDraft, value: string | number | null) => void;
+  onUpdateItem?: (
+    tempId: string,
+    field: keyof WizardItemDraft,
+    value: string | number | null,
+  ) => void;
   onImageSelect?: (tempId: string, file: File) => void;
   onImageRemove?: (tempId: string) => void;
 } = {}) {
@@ -76,7 +83,10 @@ function renderStep({
 describe('ProductosStep', () => {
   it('renders product list with item count', () => {
     renderStep({
-      items: [makeItem(), makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' })],
+      items: [
+        makeItem(),
+        makeItem({ tempId: 'local_2', nombre_producto: 'Lechuga' }),
+      ],
     });
     expect(screen.getByText('Productos (2)')).toBeDefined();
     expect(screen.getByText('Tomate')).toBeDefined();
@@ -97,7 +107,10 @@ describe('ProductosStep', () => {
 
   it('displays validation errors', () => {
     const validations = new Map<string, ItemValidation>();
-    validations.set('local_1', { stock: 'Stock inválido', precio: 'Precio inválido' });
+    validations.set('local_1', {
+      stock: 'Stock inválido',
+      precio: 'Precio inválido',
+    });
     renderStep({ validations });
     expect(screen.getByText('Stock inválido')).toBeDefined();
     expect(screen.getByText('Precio inválido')).toBeDefined();

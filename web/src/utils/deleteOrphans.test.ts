@@ -163,7 +163,9 @@ describe('deleteOrphans', () => {
 
   it('counts failure on 500 server error', async () => {
     const deps = makeDeps({
-      removeItem: vi.fn().mockRejectedValue(new Error('500 Internal Server Error')),
+      removeItem: vi
+        .fn()
+        .mockRejectedValue(new Error('500 Internal Server Error')),
     });
     const serverItems = [makeServerItem(1)];
     const currentIds = new Set<string>();
@@ -174,7 +176,9 @@ describe('deleteOrphans', () => {
 
   it('counts failure on network timeout', async () => {
     const deps = makeDeps({
-      removeItem: vi.fn().mockRejectedValue(new Error('timeout of 5000ms exceeded')),
+      removeItem: vi
+        .fn()
+        .mockRejectedValue(new Error('timeout of 5000ms exceeded')),
     });
     const serverItems = [makeServerItem(1)];
     const currentIds = new Set<string>();
@@ -219,7 +223,9 @@ describe('deleteOrphans', () => {
 
   it('handles large serverIds array of 20+ items', async () => {
     const deps = makeDeps();
-    const serverItems = Array.from({ length: 25 }, (_, i) => makeServerItem(i + 1));
+    const serverItems = Array.from({ length: 25 }, (_, i) =>
+      makeServerItem(i + 1),
+    );
     const currentIds = new Set<string>();
 
     const result = await deleteOrphans(1, serverItems, currentIds, deps);
