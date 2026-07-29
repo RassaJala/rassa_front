@@ -8,7 +8,7 @@ import {
   usePublishPublicacion,
 } from '../hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '../services/publications';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 import { formatDate } from '../utils/publicationWizard';
 import { mediaUrl } from '../utils/mediaUrl';
 import { hideBrokenImage } from '../utils/imageHelpers';
@@ -295,6 +295,7 @@ export function FarmerPublications() {
 
   const [filterMonth, setFilterMonth] = useState(0);
   const [filterYear, setFilterYear] = useState(0);
+  const [filterMinProducts, setFilterMinProducts] = useState(0);
 
   const {
     data,
@@ -328,19 +329,33 @@ export function FarmerPublications() {
   }, [publications]);
 
   const filtered = useMemo(() => {
-    if (!filterMonth && !filterYear) return publications;
     return publications.filter((pub) => {
-      const d = new Date(pub.fecha_publicacion);
-      if (filterMonth && d.getMonth() + 1 !== filterMonth) return false;
-      if (filterYear && d.getFullYear() !== filterYear) return false;
+      if (filterMonth) {
+        const d = new Date(pub.fecha_publicacion);
+        if (d.getMonth() + 1 !== filterMonth) return false;
+      }
+      if (filterYear) {
+        const d = new Date(pub.fecha_publicacion);
+        if (d.getFullYear() !== filterYear) return false;
+      }
+      if (filterMinProducts > 0 && (pub.productos ?? []).length < filterMinProducts) return false;
       return true;
     });
-  }, [publications, filterMonth, filterYear]);
+  }, [publications, filterMonth, filterYear, filterMinProducts]);
 
   function handleTabChange(tab: PublicacionEstado | 'all') {
     setActiveTab(tab);
     setPage(1);
   }
+
+  function clearFilters() {
+    setFilterMonth(0);
+    setFilterYear(0);
+    setFilterMinProducts(0);
+  }
+
+  const listToRender = filtered;
+  const filtersActive = filterMonth > 0 || filterYear > 0 || filterMinProducts > 0;
 
   const isMutating =
     deleteMutation.isPending ||
@@ -379,8 +394,6 @@ export function FarmerPublications() {
       showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
-
-  const listToRender = filtered;
 
   return (
     <div className="relative">
@@ -439,43 +452,106 @@ export function FarmerPublications() {
 
       {/* Filters */}
       {!isLoading && !isError && publications.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <select
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(Number(e.target.value))}
-            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium outline-none"
-            style={{
-              background: colors.surface,
-              color: colors.fg,
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            {MONTHS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filterYear}
-            onChange={(e) => setFilterYear(Number(e.target.value))}
-            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium outline-none"
-            style={{
-              background: colors.surface,
-              color: colors.fg,
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            <option value={0}>Todos los años</option>
-            {yearOptions
-              .filter((y) => y > 0)
-              .map((y) => (
-                <option key={y} value={y}>
-                  {y}
+        <div
+          className="mb-5 flex flex-wrap items-end gap-3"
+          style={{
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: 12,
+            padding: '12px 16px',
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-[12px] font-semibold uppercase tracking-[0.05em]"
+              style={{ color: colors.muted }}
+            >
+              Mes
+            </label>
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(Number(e.target.value))}
+              className="h-9 cursor-pointer rounded-lg px-3 text-[13px]"
+              style={{
+                border: `1px solid ${colors.border}`,
+                background: colors.bg,
+                color: colors.fg,
+                fontFamily: 'inherit',
+              }}
+            >
+              {MONTHS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
                 </option>
               ))}
-          </select>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-[12px] font-semibold uppercase tracking-[0.05em]"
+              style={{ color: colors.muted }}
+            >
+              Año
+            </label>
+            <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(Number(e.target.value))}
+              className="h-9 cursor-pointer rounded-lg px-3 text-[13px]"
+              style={{
+                border: `1px solid ${colors.border}`,
+                background: colors.bg,
+                color: colors.fg,
+                fontFamily: 'inherit',
+              }}
+            >
+              <option value={0}>Todos los años</option>
+              {yearOptions
+                .filter((y) => y > 0)
+                .map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-[12px] font-semibold uppercase tracking-[0.05em]"
+              style={{ color: colors.muted }}
+            >
+              Min. productos
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={filterMinProducts}
+              onChange={(e) => setFilterMinProducts(Math.max(0, Number(e.target.value)))}
+              className="h-9 w-20 rounded-lg px-3 text-[13px]"
+              style={{
+                border: `1px solid ${colors.border}`,
+                background: colors.bg,
+                color: colors.fg,
+                fontFamily: 'inherit',
+              }}
+            />
+          </div>
+
+          {filtersActive && (
+            <button
+              onClick={clearFilters}
+              className="h-9 cursor-pointer rounded-lg px-3 text-[13px] font-semibold"
+              style={{
+                border: `1px solid ${colors.border}`,
+                background: colors.bg,
+                color: colors.coral,
+                fontFamily: 'inherit',
+              }}
+            >
+              Limpiar
+            </button>
+          )}
         </div>
       )}
 
@@ -510,6 +586,11 @@ export function FarmerPublications() {
           icon="🔍"
           title="Sin resultados"
           message="No hay publicaciones que coincidan con los filtros."
+          action={
+            <Button variant="secondary" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          }
         />
       ) : (
         <>
