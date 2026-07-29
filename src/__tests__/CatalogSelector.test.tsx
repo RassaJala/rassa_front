@@ -87,7 +87,9 @@ describe('CatalogSelector', () => {
   });
 
   it('opens municipio dialog on press', async () => {
-    const { getByText, getAllByText } = await render(<CatalogSelector {...defaultProps} />);
+    const { getByText, getAllByText } = await render(
+      <CatalogSelector {...defaultProps} />,
+    );
     fireEvent.press(getByText('Seleccionar Municipio'));
     await waitFor(() => {
       // Both trigger button and modal title are rendered

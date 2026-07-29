@@ -285,7 +285,12 @@ export default function CatalogSelector({
         onRequestClose={() => setShowMunicipioDialog(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: colors.modalOverlayBg, justifyContent: 'center', padding: 32 }}
+          style={{
+            flex: 1,
+            backgroundColor: colors.modalOverlayBg,
+            justifyContent: 'center',
+            padding: 32,
+          }}
           onPress={() => setShowMunicipioDialog(false)}
         >
           <Pressable
@@ -297,8 +302,20 @@ export default function CatalogSelector({
             }}
             onPress={() => {}}
           >
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: catalogColors.border }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: catalogColors.fg }}>
+            <View
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: catalogColors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: catalogColors.fg,
+                }}
+              >
                 Seleccionar Municipio
               </Text>
             </View>
@@ -325,9 +342,22 @@ export default function CatalogSelector({
                 </TouchableOpacity>
               )}
             />
-            <View style={{ padding: 10, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: catalogColors.border }}>
+            <View
+              style={{
+                padding: 10,
+                alignItems: 'flex-end',
+                borderTopWidth: 1,
+                borderTopColor: catalogColors.border,
+              }}
+            >
               <TouchableOpacity onPress={() => setShowMunicipioDialog(false)}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: catalogColors.errorAction }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: catalogColors.errorAction,
+                  }}
+                >
                   Cerrar
                 </Text>
               </TouchableOpacity>
@@ -343,7 +373,12 @@ export default function CatalogSelector({
         onRequestClose={() => setShowLocalidadDialog(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: colors.modalOverlayBg, justifyContent: 'center', padding: 32 }}
+          style={{
+            flex: 1,
+            backgroundColor: colors.modalOverlayBg,
+            justifyContent: 'center',
+            padding: 32,
+          }}
           onPress={() => setShowLocalidadDialog(false)}
         >
           <Pressable
@@ -355,8 +390,20 @@ export default function CatalogSelector({
             }}
             onPress={() => {}}
           >
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: catalogColors.border }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: catalogColors.fg }}>
+            <View
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: catalogColors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: catalogColors.fg,
+                }}
+              >
                 Seleccionar Localidad
               </Text>
             </View>
@@ -383,9 +430,22 @@ export default function CatalogSelector({
                 </TouchableOpacity>
               )}
             />
-            <View style={{ padding: 10, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: catalogColors.border }}>
+            <View
+              style={{
+                padding: 10,
+                alignItems: 'flex-end',
+                borderTopWidth: 1,
+                borderTopColor: catalogColors.border,
+              }}
+            >
               <TouchableOpacity onPress={() => setShowLocalidadDialog(false)}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: catalogColors.errorAction }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: catalogColors.errorAction,
+                  }}
+                >
                   Cerrar
                 </Text>
               </TouchableOpacity>
