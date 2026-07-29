@@ -28,7 +28,9 @@ export function useSearchUsers(query: string) {
       } catch (err) {
         if (!abortController.signal.aborted) {
           setResults([]);
-          setError(err instanceof Error ? err.message : 'Error al buscar usuarios');
+          setError(
+            err instanceof Error ? err.message : 'Error al buscar usuarios',
+          );
         }
       } finally {
         if (!abortController.signal.aborted) {

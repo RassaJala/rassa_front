@@ -63,7 +63,11 @@ export interface ChatApi {
     payload: CreateConversationPayload,
   ): Promise<Conversation>;
   markConversationAsRead(conversationId: number): Promise<void>;
-  editMessage(messageId: number, contenido: string, conversationId?: number): Promise<Message>;
+  editMessage(
+    messageId: number,
+    contenido: string,
+    conversationId?: number,
+  ): Promise<Message>;
   deleteMessage(messageId: number): Promise<void>;
   sendMessageWithMedia(payload: SendMessageWithMediaPayload): Promise<Message>;
   getGroupMembers(conversationId: number): Promise<GroupMember[]>;
