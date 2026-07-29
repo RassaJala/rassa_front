@@ -47,6 +47,7 @@ interface DatePickerModalProps {
   readonly onClose: () => void;
   readonly onSelectDate: (dateString: string) => void;
   readonly initialDate?: string;
+  readonly isDark?: boolean;
 }
 
 // ── Component ────────────────────────────────────────
@@ -58,8 +59,10 @@ export default function DatePickerModal({
   onClose,
   onSelectDate,
   initialDate,
+  isDark: isDarkProp,
 }: DatePickerModalProps): React.JSX.Element | null {
-  const isDark = useColorScheme() === 'dark';
+  const osScheme = useColorScheme();
+  const isDark = isDarkProp ?? osScheme === 'dark';
   const [step, setStep] = useState<Step>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);

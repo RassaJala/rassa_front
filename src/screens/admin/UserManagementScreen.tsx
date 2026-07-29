@@ -972,6 +972,7 @@ function UserManagementScreenContent(): React.JSX.Element {
         onClose={() => setIsDatePickerVisible(false)}
         onSelectDate={form.setFechaNacimiento}
         initialDate={form.fechaNacimiento}
+        isDark={isDark}
       />
 
       {/* ═══ Role Change Modal ═══ */}

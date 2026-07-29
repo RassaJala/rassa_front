@@ -178,6 +178,7 @@ function RegisterScreenContent(): React.JSX.Element {
         onClose={() => setIsDatePickerVisible(false)}
         onSelectDate={form.setFechaNacimiento}
         initialDate={form.fechaNacimiento}
+        isDark={isDark}
       />
     </View>
   );
