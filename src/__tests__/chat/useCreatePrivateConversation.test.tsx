@@ -64,7 +64,7 @@ describe('useCreatePrivateConversation', () => {
         data: [
           {
             id_conversacion: 7,
-            tipo: false,
+            tipo: 'privada',
             nombre: 'Juan',
             ultimo_mensaje: null,
             ultimo_mensaje_creado_en: null,

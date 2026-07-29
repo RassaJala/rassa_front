@@ -19,7 +19,7 @@ describe('chat service', () => {
         data: [
           {
             id_conversacion: 1,
-            tipo: false,
+            tipo: 'privada',
             nombre: 'Juan Perez',
             ultimo_mensaje: 'Hola',
             ultimo_mensaje_creado_en: '2026-01-01T00:00:00Z',
@@ -136,7 +136,7 @@ describe('chat service', () => {
         data: [
           {
             id_conversacion: 20,
-            tipo: false,
+            tipo: 'privada',
             nombre: 'Juan Perez',
             ultimo_mensaje: 'Hola',
             ultimo_mensaje_creado_en: '2026-01-01T00:00:00Z',

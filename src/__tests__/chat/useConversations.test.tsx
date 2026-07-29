@@ -24,7 +24,7 @@ describe('useConversations', () => {
       data: [
         {
           id_conversacion: 1,
-          tipo: false,
+            tipo: 'privada',
           nombre: 'Chat 1',
           ultimo_mensaje: 'Hola',
           ultimo_mensaje_creado_en: '2026-01-01',
@@ -33,7 +33,7 @@ describe('useConversations', () => {
         },
         {
           id_conversacion: 2,
-          tipo: false,
+            tipo: 'privada',
           nombre: 'Chat 2',
           ultimo_mensaje: 'Adios',
           ultimo_mensaje_creado_en: '2026-01-02',
