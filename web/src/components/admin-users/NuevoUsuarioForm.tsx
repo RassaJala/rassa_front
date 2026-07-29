@@ -105,6 +105,7 @@ export default function NuevoUsuarioForm({
       apellidoMaterno: formApeMat || null,
       fechaNacimiento: formFechaNac,
       sexo: formSexo,
+      domicilio: formDomicilio,
       localidadId: catalogs.localidadId,
     };
     const basePayload = buildRegistrationPayload(formData);
