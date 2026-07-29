@@ -24,6 +24,7 @@ import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserFormScreen from '@/screens/admin/UserFormScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
@@ -34,7 +35,7 @@ import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
-import ProfileScreen from '@/screens/common/profile/ProfileScreen';
+import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
@@ -475,6 +476,7 @@ function AdminScreens() {
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
       <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
+      <AdminStack.Screen name="UserForm" component={UserFormScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen

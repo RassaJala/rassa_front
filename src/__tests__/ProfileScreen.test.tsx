@@ -135,7 +135,9 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(
-          getByText('El teléfono debe tener exactamente 10 dígitos.'),
+          getByText(
+            'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
+          ),
         ).toBeTruthy();
       });
     });

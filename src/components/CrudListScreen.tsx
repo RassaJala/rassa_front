@@ -27,7 +27,7 @@ import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList, ApiResponse } from '@/types';
-import { extractFieldErrors } from '@/utils/apiError';
+import { extractFieldErrors } from '@/utils/apiErrors';
 import { parseApiList } from '@/utils/apiResponse';
 
 // ── Configuration ──────────────────────────────────────────
