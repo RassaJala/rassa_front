@@ -46,9 +46,7 @@ export function isSafeDetail(detail: string): boolean {
   return true;
 }
 
-function isAxiosError(
-  error: unknown,
-): error is {
+function isAxiosError(error: unknown): error is {
   isAxiosError: true;
   response?: { status?: number; data?: unknown };
 } {

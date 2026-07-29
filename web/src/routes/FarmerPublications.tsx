@@ -327,7 +327,11 @@ export function FarmerPublications() {
         const d = new Date(pub.fecha_publicacion);
         if (d.getFullYear() !== filterYear) return false;
       }
-      if (filterMinProducts > 0 && (pub.productos ?? []).length < filterMinProducts) return false;
+      if (
+        filterMinProducts > 0 &&
+        (pub.productos ?? []).length < filterMinProducts
+      )
+        return false;
       return true;
     });
   }, [publications, filterMonth, filterYear, filterMinProducts]);
@@ -344,7 +348,8 @@ export function FarmerPublications() {
   }
 
   const listToRender = filtered;
-  const filtersActive = filterMonth > 0 || filterYear > 0 || filterMinProducts > 0;
+  const filtersActive =
+    filterMonth > 0 || filterYear > 0 || filterMinProducts > 0;
 
   const isMutating =
     deleteMutation.isPending ||
@@ -516,7 +521,9 @@ export function FarmerPublications() {
               type="number"
               min={0}
               value={filterMinProducts}
-              onChange={(e) => setFilterMinProducts(Math.max(0, Number(e.target.value)))}
+              onChange={(e) =>
+                setFilterMinProducts(Math.max(0, Number(e.target.value)))
+              }
               className="h-9 w-20 rounded-lg px-3 text-[13px]"
               style={{
                 border: `1px solid ${colors.border}`,
