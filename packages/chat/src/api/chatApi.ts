@@ -38,6 +38,7 @@ import {
   renameGroupPath,
   searchUsersPath,
 } from './endpoints';
+
 import { mapConversation, mapGroupMember, mapMessage } from './mappers';
 
 // Unwrap the {ok, data, mensaje} envelope. Throws on ok === false.
@@ -62,7 +63,7 @@ export interface ChatApi {
     payload: CreateConversationPayload,
   ): Promise<Conversation>;
   markConversationAsRead(conversationId: number): Promise<void>;
-  editMessage(messageId: number, contenido: string): Promise<Message>;
+  editMessage(messageId: number, contenido: string, conversationId?: number): Promise<Message>;
   deleteMessage(messageId: number): Promise<void>;
   sendMessageWithMedia(payload: SendMessageWithMediaPayload): Promise<Message>;
   getGroupMembers(conversationId: number): Promise<GroupMember[]>;
@@ -155,17 +156,19 @@ export function createChatApi(http: AxiosInstance): ChatApi {
     },
 
     async markConversationAsRead(conversationId) {
-      await http.patch(conversationReadPath(conversationId));
+      const res = await http.patch(conversationReadPath(conversationId));
+      unwrap(res);
     },
 
-    async editMessage(messageId, contenido) {
+    async editMessage(messageId, contenido, conversationId) {
       const res = await http.patch(messageEditPath(messageId), { contenido });
       const raw = unwrap<BackendMessage>(res);
-      return mapMessage(raw);
+      return mapMessage(raw, conversationId);
     },
 
     async deleteMessage(messageId) {
-      await http.patch(messageDeletePath(messageId));
+      const res = await http.patch(messageDeletePath(messageId));
+      unwrap(res);
     },
 
     async sendMessageWithMedia(payload) {
@@ -188,8 +191,8 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       return {
         id: data.id_mensaje,
         conversacion: payload.conversacion,
-        remitente: 0,
-        remitente_nombre: '',
+        remitente: payload.remitente ?? 0,
+        remitente_nombre: payload.remitente_nombre ?? '',
         contenido: payload.contenido ?? '',
         creado_en: new Date().toISOString(),
         leido: false,

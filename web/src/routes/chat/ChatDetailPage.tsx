@@ -49,7 +49,7 @@ export function ChatDetailPage() {
     return () => clearTimeout(timer);
   }, [conversationId]);
 
-  const messages = data?.pages.flatMap((p) => p.results).reverse() ?? [];
+  const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
 
   const handleSend = (text: string) => {
     sendMessage.mutate(

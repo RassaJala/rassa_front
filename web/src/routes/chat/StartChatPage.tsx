@@ -14,7 +14,7 @@ export function StartChatPage() {
   const createConversation = useCreatePrivateConversation();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<SearchUserResult | null>(null);
-  const { results, loading } = useSearchUsers(query);
+  const { results, loading, error } = useSearchUsers(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -161,7 +161,15 @@ export function StartChatPage() {
                       Buscando…
                     </div>
                   )}
-                  {!loading && results.length === 0 && (
+                  {!loading && error && (
+                    <div
+                      className="px-3 py-2 text-sm"
+                      style={{ color: c.coral }}
+                    >
+                      {error}
+                    </div>
+                  )}
+                  {!loading && !error && results.length === 0 && (
                     <div
                       className="px-3 py-2 text-sm"
                       style={{ color: c.muted }}

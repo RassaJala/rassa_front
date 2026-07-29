@@ -14,7 +14,7 @@ export function useEditMessage(
 
   return useMutation({
     mutationFn: ({ messageId, contenido }) =>
-      chatApi.editMessage(messageId, contenido),
+      chatApi.editMessage(messageId, contenido, conversationId),
     onMutate: async ({ messageId, contenido }) => {
       await queryClient.cancelQueries({
         queryKey: messagesKey(conversationId),

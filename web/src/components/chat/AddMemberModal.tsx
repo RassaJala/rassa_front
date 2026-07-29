@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
 import type { SearchUserResult } from '@rassa/chat';
+import { Toast, type ToastState } from '~/components/ui/Toast';
 
 interface AddMemberModalProps {
   onSave: (userId: number) => void;
@@ -17,7 +18,7 @@ export function AddMemberModal({
   const c = useAppColors();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<SearchUserResult | null>(null);
-  const { results, loading } = useSearchUsers(query);
+  const { results, loading, error } = useSearchUsers(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -162,7 +163,15 @@ export function AddMemberModal({
                       Buscando…
                     </div>
                   )}
-                  {!loading && results.length === 0 && (
+                  {!loading && error && (
+                    <div
+                      className="px-3 py-2 text-sm"
+                      style={{ color: c.coral }}
+                    >
+                      {error}
+                    </div>
+                  )}
+                  {!loading && !error && results.length === 0 && (
                     <div
                       className="px-3 py-2 text-sm"
                       style={{ color: c.muted }}
