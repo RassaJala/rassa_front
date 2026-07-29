@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
+  Pressable,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
 
 import { colors } from '@/constants/colors';
 import type { Localidad, Municipio } from '@/types';
@@ -277,18 +278,34 @@ export default function CatalogSelector({
         catalogColors={catalogColors}
       />
 
-      <Portal>
-        <Dialog
-          visible={showMunicipioDialog}
-          onDismiss={() => setShowMunicipioDialog(false)}
-          style={{ maxHeight: DIALOG_MAX_HEIGHT }}
+      <Modal
+        visible={showMunicipioDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMunicipioDialog(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 }}
+          onPress={() => setShowMunicipioDialog(false)}
         >
-          <Dialog.Title>Seleccionar Municipio</Dialog.Title>
-          <Dialog.Content>
+          <Pressable
+            style={{
+              backgroundColor: catalogColors.surface,
+              borderRadius: 12,
+              maxHeight: DIALOG_MAX_HEIGHT,
+              overflow: 'hidden',
+            }}
+            onPress={() => {}}
+          >
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: catalogColors.border }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: catalogColors.fg }}>
+                Seleccionar Municipio
+              </Text>
+            </View>
             <FlatList
               data={municipios}
               keyExtractor={(item) => String(item.id_municipio)}
-              style={{ maxHeight: DIALOG_MAX_HEIGHT }}
+              style={{ maxHeight: DIALOG_MAX_HEIGHT - 100 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
@@ -298,36 +315,55 @@ export default function CatalogSelector({
                   style={{
                     borderBottomWidth: 1,
                     borderBottomColor: catalogColors.border,
-                    paddingVertical: 16,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
                   }}
                 >
-                  <Text style={{ fontSize: 16, color: catalogColors.fg }}>
+                  <Text style={{ fontSize: 15, color: catalogColors.fg }}>
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
               )}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowMunicipioDialog(false)}>
-              Cerrar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+            <View style={{ padding: 10, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: catalogColors.border }}>
+              <TouchableOpacity onPress={() => setShowMunicipioDialog(false)}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: catalogColors.errorAction }}>
+                  Cerrar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
-      <Portal>
-        <Dialog
-          visible={showLocalidadDialog}
-          onDismiss={() => setShowLocalidadDialog(false)}
-          style={{ maxHeight: DIALOG_MAX_HEIGHT }}
+      <Modal
+        visible={showLocalidadDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLocalidadDialog(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 }}
+          onPress={() => setShowLocalidadDialog(false)}
         >
-          <Dialog.Title>Seleccionar Localidad</Dialog.Title>
-          <Dialog.Content>
+          <Pressable
+            style={{
+              backgroundColor: catalogColors.surface,
+              borderRadius: 12,
+              maxHeight: DIALOG_MAX_HEIGHT,
+              overflow: 'hidden',
+            }}
+            onPress={() => {}}
+          >
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: catalogColors.border }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: catalogColors.fg }}>
+                Seleccionar Localidad
+              </Text>
+            </View>
             <FlatList
               data={localidades}
               keyExtractor={(item) => String(item.id_localidad)}
-              style={{ maxHeight: DIALOG_MAX_HEIGHT }}
+              style={{ maxHeight: DIALOG_MAX_HEIGHT - 100 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
@@ -337,23 +373,26 @@ export default function CatalogSelector({
                   style={{
                     borderBottomWidth: 1,
                     borderBottomColor: catalogColors.border,
-                    paddingVertical: 16,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
                   }}
                 >
-                  <Text style={{ fontSize: 16, color: catalogColors.fg }}>
+                  <Text style={{ fontSize: 15, color: catalogColors.fg }}>
                     {item.nombre}
                   </Text>
                 </TouchableOpacity>
               )}
             />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowLocalidadDialog(false)}>
-              Cerrar
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+            <View style={{ padding: 10, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: catalogColors.border }}>
+              <TouchableOpacity onPress={() => setShowLocalidadDialog(false)}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: catalogColors.errorAction }}>
+                  Cerrar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
