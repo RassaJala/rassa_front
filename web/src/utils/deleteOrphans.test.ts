@@ -149,4 +149,96 @@ describe('deleteOrphans', () => {
     const result = await deleteOrphans(1, [], new Set(), deps);
     expect(result).toBe(0);
   });
+
+  it('counts failure on 404 delete (already deleted)', async () => {
+    const deps = makeDeps({
+      removeItem: vi.fn().mockRejectedValue(new Error('404 not found')),
+    });
+    const serverItems = [makeServerItem(42)];
+    const currentIds = new Set<string>();
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(1);
+  });
+
+  it('counts failure on 500 server error', async () => {
+    const deps = makeDeps({
+      removeItem: vi.fn().mockRejectedValue(new Error('500 Internal Server Error')),
+    });
+    const serverItems = [makeServerItem(1)];
+    const currentIds = new Set<string>();
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(1);
+  });
+
+  it('counts failure on network timeout', async () => {
+    const deps = makeDeps({
+      removeItem: vi.fn().mockRejectedValue(new Error('timeout of 5000ms exceeded')),
+    });
+    const serverItems = [makeServerItem(1)];
+    const currentIds = new Set<string>();
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(1);
+  });
+
+  it('counts failure on 403 forbidden', async () => {
+    const deps = makeDeps({
+      removeItem: vi.fn().mockRejectedValue(new Error('403 Forbidden')),
+    });
+    const serverItems = [makeServerItem(1)];
+    const currentIds = new Set<string>();
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(1);
+  });
+
+  it('handles empty serverIds array', async () => {
+    const deps = makeDeps();
+    const result = await deleteOrphans(1, [], new Set('1', '2'), deps);
+    expect(result).toBe(0);
+    expect(deps.removeItem).not.toHaveBeenCalled();
+  });
+
+  it('handles mixed valid and invalid serverIds', async () => {
+    const deps = makeDeps();
+    const serverItems = [
+      makeServerItem(1),
+      makeServerItem(2),
+      makeServerItem(3),
+    ];
+    const currentIds = new Set(['1', '999']);
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(0);
+    expect(deps.removeItem).toHaveBeenCalledTimes(2);
+    expect(deps.removeItem).toHaveBeenCalledWith({ pubId: 1, itemId: 2 });
+    expect(deps.removeItem).toHaveBeenCalledWith({ pubId: 1, itemId: 3 });
+  });
+
+  it('handles large serverIds array of 20+ items', async () => {
+    const deps = makeDeps();
+    const serverItems = Array.from({ length: 25 }, (_, i) => makeServerItem(i + 1));
+    const currentIds = new Set<string>();
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(0);
+    expect(deps.removeItem).toHaveBeenCalledTimes(25);
+  });
+
+  it('handles duplicate serverIds in array', async () => {
+    const deps = makeDeps();
+    const serverItems = [
+      makeServerItem(1),
+      makeServerItem(1),
+      makeServerItem(2),
+    ];
+    const currentIds = new Set(['1']);
+
+    const result = await deleteOrphans(1, serverItems, currentIds, deps);
+    expect(result).toBe(0);
+    expect(deps.removeItem).toHaveBeenCalledTimes(1);
+    expect(deps.removeItem).toHaveBeenCalledWith({ pubId: 1, itemId: 2 });
+  });
 });

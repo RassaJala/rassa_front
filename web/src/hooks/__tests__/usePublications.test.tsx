@@ -22,6 +22,11 @@ import {
 vi.mock('../../constants/api', () => ({
   QUERY_STALE_TIME: 30_000,
   QUERY_RETRY: 0,
+  QUERY_OPTIONS: { staleTime: 30_000, retry: 0, refetchOnWindowFocus: true, refetchOnReconnect: true } as const,
+}));
+
+vi.mock('../../utils/logger', () => ({
+  logError: vi.fn(),
 }));
 
 vi.mock('../../services/publications', () => ({
@@ -40,6 +45,8 @@ vi.mock('../../services/publications', () => ({
   deleteProductoSemanal: vi.fn(),
   uploadProductoSemanalImagen: vi.fn(),
 }));
+
+import { logError } from '../../utils/logger';
 
 const mockedApi = vi.mocked(publicationsApi);
 
@@ -201,6 +208,75 @@ describe('usePublications — queries', () => {
     expect(mockedApi.getUnidades).toHaveBeenCalledOnce();
     expect(result.current.data).toEqual(FAKE_UNIDADES);
   });
+
+  it('usePublicaciones shows error state on network failure', async () => {
+    mockedApi.getPublicaciones.mockRejectedValue(new Error('Network Error'));
+    const { result } = renderHook(() => usePublicaciones(), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeDefined();
+  });
+
+  it('usePublicacion shows error state on 404', async () => {
+    const notFound = new Error('Not found');
+    Object.defineProperty(notFound, 'isAxiosError', { value: true });
+    Object.defineProperty(notFound, 'response', {
+      value: { status: 404, data: { detail: 'Not found' } },
+    });
+    mockedApi.getPublicacion.mockRejectedValue(notFound);
+    const { result } = renderHook(() => usePublicacion(1), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeDefined();
+  });
+
+  it('useProductosSemanales shows error state on API failure', async () => {
+    mockedApi.getProductosSemanales.mockRejectedValue(
+      new Error('API failure'),
+    );
+    const { result } = renderHook(() => useProductosSemanales(1), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeDefined();
+  });
+
+  it('usePublicaciones with empty results array', async () => {
+    const empty = {
+      data: { count: 0, next: null, previous: null, results: [] },
+    };
+    mockedApi.getPublicaciones.mockResolvedValue(empty);
+    const { result } = renderHook(() => usePublicaciones(), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.data.results).toHaveLength(0);
+    expect(result.current.data?.data.count).toBe(0);
+  });
+
+  it('usePublicacion with negative id (should be disabled)', () => {
+    const { result } = renderHook(() => usePublicacion(-5), {
+      wrapper: createWrapper(),
+    });
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mockedApi.getPublicacion).not.toHaveBeenCalled();
+  });
+
+  it('usePublicacion shows error state with AxiosError type', async () => {
+    const serverError = new Error('Server error');
+    Object.defineProperty(serverError, 'isAxiosError', { value: true });
+    Object.defineProperty(serverError, 'response', {
+      value: { status: 500, data: { detail: 'Internal server error' } },
+    });
+    mockedApi.getPublicacion.mockRejectedValue(serverError);
+    const { result } = renderHook(() => usePublicacion(1), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeDefined();
+  });
 });
 
 describe('usePublications — mutations', () => {
@@ -333,5 +409,168 @@ describe('usePublications — mutations', () => {
     });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeDefined();
+  });
+
+  it('useCreatePublicacion mutation error triggers onError callback', async () => {
+    mockedApi.createPublicacion.mockRejectedValue(
+      new Error('create failed'),
+    );
+    const { result } = renderHook(() => useCreatePublicacion(), {
+      wrapper: createWrapper(),
+    });
+    await expect(result.current.mutateAsync()).rejects.toThrow(
+      'create failed',
+    );
+    expect(logError).toHaveBeenCalledWith(
+      'publications.createPublicacion',
+      expect.any(Error),
+    );
+  });
+
+  it('useDeletePublicacion mutation error triggers onError callback', async () => {
+    mockedApi.deletePublicacion.mockRejectedValue(
+      new Error('delete failed'),
+    );
+    const { result } = renderHook(() => useDeletePublicacion(), {
+      wrapper: createWrapper(),
+    });
+    await expect(result.current.mutateAsync(1)).rejects.toThrow(
+      'delete failed',
+    );
+    expect(logError).toHaveBeenCalledWith(
+      'publications.deletePublicacion',
+      expect.any(Error),
+    );
+  });
+
+  it('usePublishPublicacion mutation error triggers onError callback', async () => {
+    mockedApi.publishPublicacion.mockRejectedValue(
+      new Error('publish failed'),
+    );
+    const { result } = renderHook(() => usePublishPublicacion(), {
+      wrapper: createWrapper(),
+    });
+    await expect(result.current.mutateAsync(1)).rejects.toThrow(
+      'publish failed',
+    );
+    expect(logError).toHaveBeenCalledWith(
+      'publications.publishPublicacion',
+      expect.any(Error),
+    );
+  });
+
+  it('useAddProductoSemanal mutation error triggers onError callback', async () => {
+    mockedApi.addProductoSemanal.mockRejectedValue(
+      new Error('add failed'),
+    );
+    const { result } = renderHook(() => useAddProductoSemanal(), {
+      wrapper: createWrapper(),
+    });
+    const payload = { fk_producto: 1, fk_unidad: 1, stock: 10, precio: 500 };
+    await expect(
+      result.current.mutateAsync({ pubId: 1, payload }),
+    ).rejects.toThrow('add failed');
+    expect(logError).toHaveBeenCalledWith(
+      'publications.addProductoSemanal',
+      expect.any(Error),
+    );
+  });
+
+  it('useUploadProductoSemanalImagen mutation error triggers onError callback', async () => {
+    mockedApi.uploadProductoSemanalImagen.mockRejectedValue(
+      new Error('upload failed'),
+    );
+    const { result } = renderHook(() => useUploadProductoSemanalImagen(), {
+      wrapper: createWrapper(),
+    });
+    const formData = new FormData();
+    formData.append('imagen', new File([], 'test.jpg'));
+    await expect(
+      result.current.mutateAsync({ pubId: 1, itemId: 1, formData }),
+    ).rejects.toThrow('upload failed');
+    expect(logError).toHaveBeenCalledWith(
+      'publications.uploadProductoSemanalImagen',
+      expect.any(Error),
+    );
+  });
+
+  it('useDeletePublicacion called twice rapidly (double-submit not prevented at hook level)', async () => {
+    mockedApi.deletePublicacion.mockResolvedValue({} as never);
+    const { result } = renderHook(() => useDeletePublicacion(), {
+      wrapper: createWrapper(),
+    });
+    await Promise.all([
+      result.current.mutateAsync(1),
+      result.current.mutateAsync(1),
+    ]);
+    expect(mockedApi.deletePublicacion).toHaveBeenCalledTimes(2);
+  });
+
+  it('cache invalidation after mutation success', async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    vi.spyOn(qc, 'invalidateQueries');
+    mockedApi.createPublicacion.mockResolvedValue({
+      data: { id_publicacion: 1 } as never,
+    });
+    const { result } = renderHook(() => useCreatePublicacion(), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      ),
+    });
+    await result.current.mutateAsync();
+    expect(qc.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['publicaciones'],
+    });
+  });
+
+  it('cache invalidation after publish mutation invalidates list and detail', async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    vi.spyOn(qc, 'invalidateQueries');
+    mockedApi.publishPublicacion.mockResolvedValue({} as never);
+    const { result } = renderHook(() => usePublishPublicacion(), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      ),
+    });
+    await result.current.mutateAsync(5);
+    expect(qc.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['publicaciones'],
+    });
+    expect(qc.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['publicaciones', 5],
+    });
+  });
+
+  it('multiple different mutations do not interfere with each other', async () => {
+    mockedApi.createPublicacion.mockResolvedValue({
+      data: { id_publicacion: 1 } as never,
+    });
+    mockedApi.deletePublicacion.mockResolvedValue({} as never);
+    mockedApi.publishPublicacion.mockResolvedValue({} as never);
+    const { result: create } = renderHook(() => useCreatePublicacion(), {
+      wrapper: createWrapper(),
+    });
+    const { result: del } = renderHook(() => useDeletePublicacion(), {
+      wrapper: createWrapper(),
+    });
+    const { result: publish } = renderHook(() => usePublishPublicacion(), {
+      wrapper: createWrapper(),
+    });
+    const res = await create.current.mutateAsync();
+    expect(res.data.id_publicacion).toBe(1);
+    await del.current.mutateAsync(1);
+    expect(mockedApi.deletePublicacion).toHaveBeenCalledWith(
+      1,
+      expect.anything(),
+    );
+    await publish.current.mutateAsync(1);
+    expect(mockedApi.publishPublicacion).toHaveBeenCalledWith(
+      1,
+      expect.anything(),
+    );
   });
 });

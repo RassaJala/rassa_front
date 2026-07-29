@@ -59,8 +59,8 @@ describe('constants: values', () => {
     expect(TOAST_ORPHAN_DELAY_MS).toBe(3500);
   });
 
-  it('PERSIST_TIMEOUT_MS is 120 seconds', () => {
-    expect(PERSIST_TIMEOUT_MS).toBe(120_000);
+  it('PERSIST_TIMEOUT_MS is 300 seconds', () => {
+    expect(PERSIST_TIMEOUT_MS).toBe(300_000);
   });
 });
 

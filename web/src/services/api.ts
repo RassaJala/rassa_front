@@ -7,7 +7,9 @@ const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 
 function isPublic(url: string): boolean {
-  return PUBLIC_ENDPOINTS.some((prefix) => url.startsWith(prefix));
+  return PUBLIC_ENDPOINTS.some((prefix) =>
+    url.toLowerCase().startsWith(prefix),
+  );
 }
 
 const api = axios.create({
@@ -23,10 +25,9 @@ axiosRetry(api, {
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (
-      error.config?.method === 'get' &&
-      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-        (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD))
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status !== undefined &&
+        error.response.status >= SERVER_ERROR_THRESHOLD)
     );
   },
 });

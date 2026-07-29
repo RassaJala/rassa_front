@@ -201,4 +201,55 @@ describe('mediaUrl', () => {
   it('SECURITY: rejects absolute URLs from unknown hosts', () => {
     expect(mediaUrl('https://evil.com/steal.jpg')).toBeNull();
   });
+
+  // ── Additional edge cases ────────────────────────────────
+
+  it('handles unicode characters in relative path', () => {
+    const result = mediaUrl('/uploads/niño.jpg');
+    expect(result).toBeTruthy();
+    expect(result).toContain('uploads');
+  });
+
+  it('rejects URL from evil domain with different port', () => {
+    expect(mediaUrl('https://evil.com:8000/steal.jpg')).toBeNull();
+  });
+
+  it('rejects lookalike domain that is not an actual subdomain', () => {
+    expect(mediaUrl('https://fakeapi.example.com/photo.jpg')).toBeNull();
+  });
+
+  it('rejects URL with only credentials and no path', () => {
+    expect(mediaUrl('https://user:pass@api.example.com')).toBeNull();
+  });
+
+  it('handles path with mixed special characters', () => {
+    const result = mediaUrl('/uploads/photo@2x_test.file.jpg');
+    expect(result).toBeTruthy();
+    expect(result).not.toContain('@');
+  });
+
+  it('handles path with accented characters', () => {
+    const result = mediaUrl('/uploads/áéíóú.jpg');
+    expect(result).toBeTruthy();
+    expect(result).toContain('.jpg');
+  });
+
+  it('rejects absolute URL with credentials on trusted domain', () => {
+    expect(mediaUrl('http://admin@localhost:8000/admin')).toBeNull();
+  });
+
+  it('handles path with parens and spaces-like chars', () => {
+    const result = mediaUrl('/uploads/photo(1).jpg');
+    expect(result).toBeTruthy();
+  });
+
+  it('rejects absolute URL from evil.com with port variation', () => {
+    expect(mediaUrl('http://evil.com:8080/payload')).toBeNull();
+  });
+
+  it('handles path with numbers and dashes', () => {
+    const result = mediaUrl('/uploads/photo-2026-01-15.jpg');
+    expect(result).toBeTruthy();
+    expect(result).toContain('2026');
+  });
 });

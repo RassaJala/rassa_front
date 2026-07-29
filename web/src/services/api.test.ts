@@ -413,10 +413,270 @@ describe('api.ts token interceptor', () => {
     });
   });
 
+  // ── Error path: token refresh ────────────────────────────
+
+  it('does not attempt refresh on 500 server error', async () => {
+    localStorage.setItem('token', 'old-token');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error500 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 500, data: { detail: 'Server error' } },
+    };
+
+    await expect(interceptor.onRejected(error500)).rejects.toBe(error500);
+    expect(mockAxiosPost).not.toHaveBeenCalled();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  it('refresh fails with malformed response (no access field)', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({ data: { refresh: 'new-refresh' } });
+    mockInstanceGet.mockResolvedValue({ data: { id: 1 } });
+
+    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
+    expect(localStorage.getItem('token')).toBe('undefined');
+  });
+
+  it('multiple simultaneous 401 requests coalesce into one refresh', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    let resolveRefresh!: (value: { data: { access: string } }) => void;
+    mockAxiosPost.mockImplementationOnce(
+      () =>
+        new Promise<{ data: { access: string } }>((resolve) => {
+          resolveRefresh = resolve;
+        }),
+    );
+
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    const result1 = interceptor.onRejected({
+      ...error401,
+      config: { ...error401.config, url: '/publicaciones/1/' },
+    });
+    const result2 = interceptor.onRejected({
+      ...error401,
+      config: { ...error401.config, url: '/publicaciones/2/' },
+    });
+
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1);
+
+    mockInstanceGet.mockResolvedValue({ data: { id: 1 } });
+    resolveRefresh({ data: { access: 'new-token' } });
+
+    await expect(result1).resolves.toBeDefined();
+    await expect(result2).resolves.toBeDefined();
+    expect(localStorage.getItem('token')).toBe('new-token');
+  });
+
+  it('network error during token refresh (no response) clears tokens and redirects', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockRejectedValueOnce(new Error('Network Error'));
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(sessionStorage.getItem('refresh_token')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
+  });
+
+  it('refresh endpoint returns 401 — redirects to login', async () => {
+    localStorage.setItem('token', 'old-token');
+    localStorage.setItem('user', 'some-user');
+    sessionStorage.setItem('refresh_token', 'bad-refresh');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    const refreshError = new Error('Unauthorized');
+    Object.defineProperty(refreshError, 'response', {
+      value: { status: 401, data: { detail: 'Token invalid' } },
+    });
+    mockAxiosPost.mockRejectedValueOnce(refreshError);
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(sessionStorage.getItem('refresh_token')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
+  });
+
+  it('request queued before refresh completes retries with new token', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    let resolveRefresh!: (value: { data: { access: string } }) => void;
+    mockAxiosPost.mockImplementationOnce(
+      () =>
+        new Promise<{ data: { access: string } }>((resolve) => {
+          resolveRefresh = resolve;
+        }),
+    );
+
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+    const queuedError = {
+      config: { url: '/productos/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    const refreshResult = interceptor.onRejected(error401);
+    const queuedResult = interceptor.onRejected(queuedError);
+
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1);
+
+    mockInstanceGet.mockResolvedValue({ data: { ok: true } });
+    resolveRefresh({ data: { access: 'new-token' } });
+
+    await expect(refreshResult).resolves.toBeDefined();
+    await expect(queuedResult).resolves.toBeDefined();
+    expect(localStorage.getItem('token')).toBe('new-token');
+  });
+
+  it('concurrent refresh with one success and one queue failure', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    let resolveRefresh!: (value: { data: { access: string } }) => void;
+    mockAxiosPost.mockImplementationOnce(
+      () =>
+        new Promise<{ data: { access: string } }>((resolve) => {
+          resolveRefresh = resolve;
+        }),
+    );
+
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    const result1 = interceptor.onRejected(error401);
+    const result2 = interceptor.onRejected({
+      ...error401,
+      config: { ...error401.config, url: '/productos/' },
+    });
+
+    mockInstanceGet.mockRejectedValueOnce(new Error('Server error'));
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
+    resolveRefresh({ data: { access: 'new-token' } });
+
+    await expect(result1).resolves.toBeDefined();
+    await expect(result2).rejects.toThrow('Server error');
+  });
+
+  it('retry after refresh handles retry failure gracefully', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0];
+    const error401 = {
+      config: { url: '/publicaciones/', headers: {} as Record<string, string>, method: 'get' },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'new-token' } });
+    mockInstanceGet.mockRejectedValueOnce(new Error('Retry failed'));
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1);
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
+    expect(localStorage.getItem('token')).toBeNull();
+  });
+
+  // ── Edge cases: token handling ───────────────────────────
+
+  it('attaches token with special characters', async () => {
+    localStorage.setItem('token', 'token-with-$pecial_chars!@#');
+    await loadApi();
+
+    const config = requestFns[0]({
+      url: '/publicaciones/',
+      headers: {} as Record<string, string>,
+    });
+    expect((config.headers as Record<string, string>).Authorization).toBe(
+      'Bearer token-with-$pecial_chars!@#',
+    );
+  });
+
+  it('attaches very long token (>1000 chars)', async () => {
+    const longToken = 'a'.repeat(1500);
+    localStorage.setItem('token', longToken);
+    await loadApi();
+
+    const config = requestFns[0]({
+      url: '/publicaciones/',
+      headers: {} as Record<string, string>,
+    });
+    expect((config.headers as Record<string, string>).Authorization).toBe(
+      `Bearer ${longToken}`,
+    );
+  });
+
+  it('does not crash on malformed request URL', async () => {
+    localStorage.setItem('token', 'test-token');
+    await loadApi();
+
+    const config = requestFns[0]({
+      url: undefined,
+      headers: {} as Record<string, string>,
+    });
+    expect(config).toBeDefined();
+    expect(
+      (config.headers as Record<string, string>).Authorization,
+    ).toBe('Bearer test-token');
+  });
+
   it('SECURITY: does not redirect when already on /login', async () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      'location',
+    );
     Object.defineProperty(window, 'location', {
       value: { pathname: '/login' },
       writable: true,
+      configurable: true,
     });
 
     localStorage.setItem('token', 'old-token');
@@ -440,5 +700,9 @@ describe('api.ts token interceptor', () => {
 
     // Should NOT trigger redirect when already on login
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    if (originalDescriptor) {
+      Object.defineProperty(window, 'location', originalDescriptor);
+    }
   });
 });

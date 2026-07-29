@@ -260,6 +260,107 @@ describe('upsertItems', () => {
     expect(result.tempIdToServerId.get('local_2')).toBe(202);
     expect(result.newServerIds).toEqual([201, 202]);
   });
+
+  it('rejects with network timeout error', async () => {
+    const deps = makeUpsertDeps({
+      add: vi.fn().mockRejectedValue(new Error('timeout of 5000ms exceeded')),
+    });
+    const items = [makeItem()];
+
+    await expect(upsertItems(1, items, deps)).rejects.toThrow(
+      'timeout of 5000ms exceeded',
+    );
+  });
+
+  it('handles malformed server response with missing id (create)', async () => {
+    const deps = makeUpsertDeps({
+      add: vi.fn().mockResolvedValue({ data: {} }),
+    });
+    const items = [makeItem()];
+
+    const result = await upsertItems(1, items, deps);
+    expect(result.tempIdToServerId.get('local_1')).toBeUndefined();
+  });
+
+  it('handles malformed server response with missing id (update)', async () => {
+    const deps = makeUpsertDeps({
+      hasServerPub: true,
+      update: vi.fn().mockResolvedValue({ data: {} }),
+    });
+    const items = [makeItem({ isNew: false, tempId: '42' })];
+
+    const result = await upsertItems(1, items, deps);
+    expect(result.tempIdToServerId.get('42')).toBeUndefined();
+  });
+
+  it('throws when aborted mid-sequence between items', async () => {
+    const controller = new AbortController();
+    let callCount = 0;
+    const deps = makeUpsertDeps({
+      add: vi.fn().mockImplementation(async () => {
+        callCount++;
+        if (callCount === 1) controller.abort();
+        return { data: { id_producto_semanal: 100 + callCount } };
+      }),
+    });
+    const items = [
+      makeItem({ tempId: 'local_1' }),
+      makeItem({ tempId: 'local_2' }),
+    ];
+
+    await expect(
+      upsertItems(1, items, deps, controller.signal),
+    ).rejects.toThrow('Cancelled');
+  });
+
+  it('processes mixed create and update items', async () => {
+    const deps = makeUpsertDeps({ hasServerPub: true });
+    const items = [
+      makeItem({ tempId: 'local_1', isNew: true }),
+      makeItem({ tempId: '42', isNew: false }),
+    ];
+
+    const result = await upsertItems(1, items, deps);
+
+    expect(deps.add).toHaveBeenCalledTimes(1);
+    expect(deps.update).toHaveBeenCalledTimes(1);
+    expect(result.newServerIds).toEqual([100]);
+    expect(result.updatedServerIds).toEqual([200]);
+  });
+
+  it('processes mixed items with and without images', async () => {
+    const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
+    const deps = makeUpsertDeps();
+    const items = [
+      makeItem({ tempId: 'local_1', imageFile: file }),
+      makeItem({ tempId: 'local_2', imageFile: null }),
+    ];
+
+    const result = await upsertItems(1, items, deps);
+
+    expect(deps.uploadImage).toHaveBeenCalledTimes(1);
+    expect(result.tempIdToServerId.size).toBe(2);
+  });
+
+  it('handles image upload failure after item create', async () => {
+    const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
+    const deps = makeUpsertDeps({
+      uploadImage: vi.fn().mockRejectedValue(new Error('upload failed')),
+    });
+    const items = [makeItem({ imageFile: file })];
+
+    await expect(upsertItems(1, items, deps)).rejects.toThrow('upload failed');
+    expect(deps.add).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws when server returns null data for create', async () => {
+    const deps = makeUpsertDeps({
+      add: vi.fn().mockResolvedValue(null),
+    });
+    const items = [makeItem()];
+
+    await expect(upsertItems(1, items, deps)).rejects.toThrow();
+  });
 });
 
 // ── deleteOrphans ───────────────────────────────────────────

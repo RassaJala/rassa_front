@@ -1,14 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationOptions } from '@tanstack/react-query';
 
-import { QUERY_RETRY, QUERY_STALE_TIME } from '../constants/api';
-
-const QUERY_OPTIONS = {
-  staleTime: QUERY_STALE_TIME,
-  retry: QUERY_RETRY,
-  refetchOnWindowFocus: true,
-  refetchOnReconnect: true,
-} as const;
+import { logError } from '../utils/logger';
+import { QUERY_OPTIONS } from '../constants/api';
 import type {
   AddProductoPayload as AddProductoServicePayload,
   ApiResponse,
@@ -24,15 +18,7 @@ import * as publicationsApi from '../services/publications';
 // ── Error logging helper ──────────────────────────────────
 
 function logMutationError(context: string, error: unknown): void {
-  const name = error instanceof Error ? error.name : 'UnknownError';
-  const msg = error instanceof Error ? error.message : String(error);
-  if (import.meta.env.DEV) {
-    const stack = error instanceof Error ? error.stack : undefined;
-    console.error(
-      `[publications] ${context}: ${name}: ${msg}`,
-      stack ? { stack } : '',
-    );
-  }
+  logError(`publications.${context}`, error);
 }
 
 // ── Mutation factory ──────────────────────────────────────

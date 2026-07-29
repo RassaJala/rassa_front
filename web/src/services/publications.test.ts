@@ -411,3 +411,181 @@ describe('assertValidId', () => {
     );
   });
 });
+
+describe('error responses', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('getPublicaciones with network error', async () => {
+    mockedApi.get.mockRejectedValue(new Error('Network Error'));
+    await expect(getPublicaciones()).rejects.toThrow('Network Error');
+  });
+
+  it('getPublicacion with 404', async () => {
+    const err = new Error('Not found');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 404, data: { detail: 'Not found' } },
+    });
+    mockedApi.get.mockRejectedValue(err);
+    await expect(getPublicacion(1)).rejects.toThrow('Not found');
+  });
+
+  it('createPublicacion with 400 validation error', async () => {
+    const err = new Error('Validation error');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 400, data: { detail: 'Invalid data' } },
+    });
+    mockedApi.post.mockRejectedValue(err);
+    await expect(createPublicacion()).rejects.toThrow('Validation error');
+  });
+
+  it('deletePublicacion with 404 not found', async () => {
+    const err = new Error('Not found');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 404, data: { detail: 'Publication not found' } },
+    });
+    mockedApi.delete.mockRejectedValue(err);
+    await expect(deletePublicacion(42)).rejects.toThrow('Not found');
+  });
+
+  it('publishPublicacion with 409 conflict', async () => {
+    const err = new Error('Conflict');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 409, data: { detail: 'Already published' } },
+    });
+    mockedApi.post.mockRejectedValue(err);
+    await expect(publishPublicacion(1)).rejects.toThrow('Conflict');
+  });
+
+  it('addProductoSemanal with network timeout', async () => {
+    mockedApi.post.mockRejectedValue(new Error('timeout of 60000ms exceeded'));
+    const payload = { fk_producto: 1, fk_unidad: 1, stock: 10, precio: 500 };
+    await expect(addProductoSemanal(5, payload)).rejects.toThrow(
+      'timeout of 60000ms exceeded',
+    );
+  });
+
+  it('updateProductoSemanal with 500 server error', async () => {
+    const err = new Error('Server error');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 500, data: { detail: 'Internal server error' } },
+    });
+    mockedApi.patch.mockRejectedValue(err);
+    await expect(
+      updateProductoSemanal(5, 10, { stock: 20 }),
+    ).rejects.toThrow('Server error');
+  });
+
+  it('deleteProductoSemanal with 403 forbidden', async () => {
+    const err = new Error('Forbidden');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 403, data: { detail: 'Not authorized' } },
+    });
+    mockedApi.delete.mockRejectedValue(err);
+    await expect(deleteProductoSemanal(5, 10)).rejects.toThrow('Forbidden');
+  });
+
+  it('uploadProductoSemanalImagen with 413 file too large', async () => {
+    const err = new Error('Payload too large');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 413, data: { detail: 'File too large' } },
+    });
+    mockedApi.post.mockRejectedValue(err);
+    await expect(
+      uploadProductoSemanalImagen(5, 10, new FormData()),
+    ).rejects.toThrow('Payload too large');
+  });
+
+  it('getProductosSemanales with 500', async () => {
+    const err = new Error('Server error');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 500, data: { detail: 'Server error' } },
+    });
+    mockedApi.get.mockRejectedValue(err);
+    await expect(getProductosSemanales(42)).rejects.toThrow('Server error');
+  });
+
+  it('closePublicacion with 404 not found', async () => {
+    const err = new Error('Not found');
+    Object.defineProperty(err, 'isAxiosError', { value: true });
+    Object.defineProperty(err, 'response', {
+      value: { status: 404, data: { detail: 'Not found' } },
+    });
+    mockedApi.post.mockRejectedValue(err);
+    await expect(closePublicacion(1)).rejects.toThrow('Not found');
+  });
+});
+
+describe('edge cases', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('getPublicaciones with empty response data', async () => {
+    mockedApi.get.mockResolvedValue({ data: {} });
+    const result = await getPublicaciones();
+    expect(result).toEqual({});
+  });
+
+  it('createPublicacion with missing fields in response', async () => {
+    mockedApi.post.mockResolvedValue({ data: { data: {} } });
+    const result = await createPublicacion();
+    expect(result.data).toEqual({});
+  });
+
+  it('getPublicaciones with extra fields in response', async () => {
+    mockedApi.get.mockResolvedValue({
+      data: {
+        data: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [
+            { id_publicacion: 1, extra_field: 'ignored' },
+          ],
+        },
+      },
+    });
+    const result = await getPublicaciones();
+    expect(result.data.results[0].id_publicacion).toBe(1);
+  });
+
+  it('getPublicaciones with malformed response (not array in results)', async () => {
+    mockedApi.get.mockResolvedValue({
+      data: { data: { count: 1, results: 'not-an-array' } },
+    });
+    const result = await getPublicaciones();
+    expect(typeof result.data.results).toBe('string');
+  });
+
+  it('getCatalogProductos with null results', async () => {
+    mockedApi.get.mockResolvedValue({ data: { data: { results: null } } });
+    const result = await getCatalogProductos();
+    expect(result.data.results).toBeNull();
+  });
+
+  it('getUnidades with non-array response', async () => {
+    mockedApi.get.mockResolvedValue({ data: { data: { not: 'an array' } } });
+    const result = await getUnidades();
+    expect(result.data).toEqual({ not: 'an array' });
+  });
+
+  it('SECURITY: very long string id rejected by assertValidId', async () => {
+    await expect(getPublicacion(NaN)).rejects.toThrow(
+      'Invalid publicacion: NaN',
+    );
+  });
+
+  it('SECURITY: assertValidId rejects large decimal', async () => {
+    expect(() => assertValidId(900719925474099.1)).toThrow();
+  });
+});

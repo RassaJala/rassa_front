@@ -15,7 +15,14 @@ export const CATALOG_PAGE_SIZE = 200;
 export const TOAST_DISMISS_MS = 3000;
 export const TOAST_EXIT_MS = 300;
 export const TOAST_ORPHAN_DELAY_MS = 3500;
-export const PERSIST_TIMEOUT_MS = 120_000;
+export const PERSIST_TIMEOUT_MS = 300_000;
+
+export const QUERY_OPTIONS = {
+  staleTime: QUERY_STALE_TIME,
+  retry: QUERY_RETRY,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+} as const;
 
 // ── ID validation guard ────────────────────────────────────
 

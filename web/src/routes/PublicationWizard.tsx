@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ProductPickerModal } from '../components/ProductPickerModal';
+import { Button } from '../components/ui/Button';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Toast, type ToastState } from '../components/ui/Toast';
+import { FechaStep } from '../components/wizard/FechaStep';
+import { ProductosStep } from '../components/wizard/ProductosStep';
+import { PublicarStep } from '../components/wizard/PublicarStep';
+import { ResumenStep } from '../components/wizard/ResumenStep';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_IMAGE_SIZE_MB,
+  PERSIST_TIMEOUT_MS,
+  TOAST_ORPHAN_DELAY_MS,
+} from '../constants/api';
 import { useAppColors } from '../hooks/useAppColors';
 import {
   useAddProductoSemanal,
@@ -19,6 +34,11 @@ import {
   type Producto,
   type Publicacion,
 } from '../services/publications';
+import { extractApiError } from '../utils/apiError';
+import { deleteOrphans } from '../utils/deleteOrphans';
+import { revokeBlobUrl } from '../utils/imageHelpers';
+import { logError } from '../utils/logger';
+import { persistItems } from '../utils/persistItems';
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -27,30 +47,11 @@ import {
   generateTempId,
   getNextMonday,
   getWeekNumber,
-  validateAllItems as validateAllItemsPure,
+  validateAllItems,
   validateItem,
 } from '../utils/publicationWizard';
-import { extractApiError } from '../utils/apiError';
-import { deleteOrphans as deleteOrphansCore } from '../utils/deleteOrphans';
-import { persistItems as persistItemsCore } from '../utils/persistItems';
 import { publishAfterPersist } from '../utils/publishAfterPersist';
-import { upsertItems as upsertItemsCore } from '../utils/upsertItems';
-import {
-  ALLOWED_IMAGE_TYPES,
-  MAX_IMAGE_SIZE_BYTES,
-  MAX_IMAGE_SIZE_MB,
-  PERSIST_TIMEOUT_MS,
-  TOAST_ORPHAN_DELAY_MS,
-} from '../constants/api';
-import { revokeBlobUrl } from '../utils/imageHelpers';
-import { ProductPickerModal } from '../components/ProductPickerModal';
-import { FechaStep } from '../components/wizard/FechaStep';
-import { ProductosStep } from '../components/wizard/ProductosStep';
-import { PublicarStep } from '../components/wizard/PublicarStep';
-import { ResumenStep } from '../components/wizard/ResumenStep';
-import { Button } from '../components/ui/Button';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { Toast, type ToastState } from '../components/ui/Toast';
+import { upsertItems } from '../utils/upsertItems';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -70,12 +71,19 @@ const STEP_LABELS: Record<WizardStep, string> = {
   publicar: 'Publicar',
 };
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+const ERROR_BG = 'rgba(222,57,58,0.08)';
+const ERROR_BORDER = 'rgba(222,57,58,0.2)';
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  controller: AbortController,
+): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`Timeout after ${String(ms)}ms`)),
-      ms,
-    );
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('timeout'));
+    }, ms);
     void promise.then(
       (value) => {
         clearTimeout(timer);
@@ -133,10 +141,10 @@ export function PublicationWizard() {
   const abortRef = useRef<AbortController | null>(null);
 
   // ── Initialize items from server data (editing mode) ──
-  const [itemsInitialized, setItemsInitialized] = useState(false);
+  const itemsInitializedRef = useRef(false);
 
   useEffect(() => {
-    if (!isEditing || itemsInitialized) return;
+    if (!isEditing || itemsInitializedRef.current) return;
     if (pubQuery.data && itemsQuery.data && catalogQuery.data) {
       const pub = pubQuery.data.data;
       pubRef.current = pub;
@@ -161,15 +169,13 @@ export function PublicationWizard() {
         imagePreview: null,
       }));
       setItems(existingItems);
-      setItemsInitialized(true);
+      itemsInitializedRef.current = true;
     }
-  }, [
-    isEditing,
-    itemsInitialized,
-    pubQuery.data,
-    itemsQuery.data,
-    catalogQuery.data,
-  ]);
+
+    return () => {
+      itemsInitializedRef.current = false;
+    };
+  }, [isEditing, id, pubQuery.data, itemsQuery.data, catalogQuery.data]);
 
   // ── Cleanup on unmount ──
   const itemsRef = useRef(items);
@@ -314,8 +320,9 @@ export function PublicationWizard() {
   ): Promise<{
     tempIdToServerId: Map<string, number>;
     newServerIds: number[];
+    updatedServerIds: number[];
   }> {
-    const result = await upsertItemsCore(
+    return upsertItems(
       pubId,
       items.map((i) => ({
         tempId: i.tempId,
@@ -334,19 +341,6 @@ export function PublicationWizard() {
       },
       signal,
     );
-
-    // Sync local item tempIds with server IDs
-    for (const [tempId, serverId] of result.tempIdToServerId) {
-      setItems((prev) =>
-        prev.map((i) =>
-          i.tempId === tempId
-            ? { ...i, tempId: String(serverId), isNew: false }
-            : i,
-        ),
-      );
-    }
-
-    return result;
   }
 
   // ── Phase 2: Refresh pubRef snapshot ──
@@ -378,7 +372,7 @@ export function PublicationWizard() {
       }
     }
 
-    return deleteOrphansCore(
+    return deleteOrphans(
       pubId,
       pubRef.current?.productos ?? [],
       currentIds,
@@ -393,27 +387,32 @@ export function PublicationWizard() {
   async function persistItemsWrapper(
     pubId: number,
     signal?: AbortSignal,
-  ): Promise<{ orphanFailures: number }> {
-    return persistItemsCore(
+  ): Promise<{
+    orphanFailures: number;
+    tempIdToServerId: Map<string, number>;
+  }> {
+    let tempIdToServerId = new Map<string, number>();
+
+    const result = await persistItems(
       pubId,
       {
-        upsertItems: (pid, sig) => upsertItemsWrapper(pid, sig),
+        upsertItems: async (pid, sig) => {
+          const mapping = await upsertItemsWrapper(pid, sig);
+          tempIdToServerId = mapping.tempIdToServerId;
+          return mapping;
+        },
         refreshSnapshot: (pid) => refreshSnapshot(pid),
         deleteOrphans: (pid, map, sig) => deleteOrphansWrapper(pid, map, sig),
         removeItem: (pid, itemId) =>
           removeItemMutation.mutateAsync({ pubId: pid, itemId }),
-        logCleanupFailure: import.meta.env.DEV
-          ? (itemId, err) => {
-              console.error(
-                '[publications] rollback cleanup failed for item',
-                itemId,
-                err,
-              );
-            }
-          : undefined,
+        logCleanupFailure: (itemId, err) => {
+          logError('publications.rollbackCleanup', err, { itemId });
+        },
       },
       signal,
     );
+
+    return { orphanFailures: result.orphanFailures, tempIdToServerId };
   }
 
   // ── Shared persist orchestration ──
@@ -431,6 +430,7 @@ export function PublicationWizard() {
     try {
       await withTimeout(
         (async () => {
+          if (controller.signal.aborted) return;
           setError(null);
           let pub = pubRef.current;
           if (!pub) {
@@ -445,9 +445,17 @@ export function PublicationWizard() {
             return;
           }
 
-          const { orphanFailures } = await persistItemsWrapper(
-            pub.id_publicacion,
-            controller.signal,
+          const { orphanFailures, tempIdToServerId } =
+            await persistItemsWrapper(pub.id_publicacion, controller.signal);
+          // Apply server ID mapping only after full persist succeeds
+          setItems((prev) =>
+            prev.map((i) => {
+              const serverId = tempIdToServerId.get(i.tempId);
+              if (serverId !== undefined) {
+                return { ...i, tempId: String(serverId), isNew: false };
+              }
+              return i;
+            }),
           );
           await opts.afterPersist?.(pub.id_publicacion);
 
@@ -466,6 +474,7 @@ export function PublicationWizard() {
           }
         })(),
         PERSIST_TIMEOUT_MS,
+        controller,
       );
     } catch (err) {
       if (controller.signal.aborted) {
@@ -475,11 +484,15 @@ export function PublicationWizard() {
         }
         return;
       }
-      if (import.meta.env.DEV) {
-        console.error('[publications] persist failed:', err);
-      }
-      if (mountedRef.current) {
-        setError(extractApiError(err, ['detail', 'message']));
+      if (err instanceof Error && err.message === 'timeout') {
+        if (mountedRef.current) {
+          setError('La operación tardó demasiado. Intentá de nuevo.');
+        }
+      } else {
+        logError('publications.persist', err);
+        if (mountedRef.current) {
+          setError(extractApiError(err, ['detail', 'message']));
+        }
       }
     } finally {
       abortRef.current = null;
@@ -490,11 +503,19 @@ export function PublicationWizard() {
 
   // ── Save draft ──
   function handleSaveDraft() {
+    if (!validateAllItems(items)) {
+      setError('Corregí los errores en los productos antes de continuar.');
+      return;
+    }
     void runPersist({ successMsg: 'Borrador guardado.' });
   }
 
   // ── Publish ──
   function handlePublish() {
+    if (!validateAllItems(items)) {
+      setError('Corregí los errores en los productos antes de continuar.');
+      return;
+    }
     void runPersist({
       successMsg: '¡Publicación publicada!',
       afterPersist: (pubId) =>
@@ -564,7 +585,7 @@ export function PublicationWizard() {
   const unidades = unidadesQuery.data?.data ?? [];
   const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
   const selectedIds = new Set(items.map((i) => i.fk_producto));
-  const hasItemErrors = !validateAllItemsPure(items);
+  const hasItemErrors = !validateAllItems(items);
 
   return (
     <div className="relative w-full px-4 md:px-6">
@@ -633,8 +654,8 @@ export function PublicationWizard() {
         <div
           className="mb-4 rounded-xl px-4 py-3 text-[14px]"
           style={{
-            background: 'rgba(222,57,58,0.08)',
-            border: '1px solid rgba(222,57,58,0.2)',
+            background: ERROR_BG,
+            border: `1px solid ${ERROR_BORDER}`,
             color: colors.coral,
           }}
         >

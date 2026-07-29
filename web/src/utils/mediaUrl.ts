@@ -34,7 +34,11 @@ export function mediaUrl(path: string | null | undefined): string | null {
     try {
       const url = new URL(path);
       const host = url.hostname;
-      if (TRUSTED_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))) {
+      if (
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        TRUSTED_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))
+      ) {
         if (url.username || url.password) return null;
         return path;
       }

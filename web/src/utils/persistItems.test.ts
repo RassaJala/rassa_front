@@ -139,6 +139,88 @@ describe('persistItems', () => {
     const result = await persistItems(1, deps);
     expect(result.orphanFailures).toBe(2);
   });
+
+  it('propagates upsertItems network timeout error', async () => {
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockRejectedValue(new Error('timeout of 5000ms exceeded')),
+    });
+
+    await expect(persistItems(1, deps)).rejects.toThrow('timeout of 5000ms exceeded');
+  });
+
+  it('handles empty items result from upsertItems', async () => {
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockResolvedValue({
+        tempIdToServerId: new Map(),
+        newServerIds: [],
+        updatedServerIds: [],
+      }),
+    });
+
+    const result = await persistItems(1, deps);
+    expect(result.orphanFailures).toBe(0);
+  });
+
+  it('passes abort signal and throws when signal is aborted early', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockRejectedValue(new DOMException('Cancelled', 'AbortError')),
+    });
+
+    await expect(persistItems(1, deps, controller.signal)).rejects.toThrow('Cancelled');
+  });
+
+  it('processes single item correctly', async () => {
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockResolvedValue({
+        tempIdToServerId: new Map([['local_1', 42]]),
+        newServerIds: [42],
+        updatedServerIds: [],
+      }),
+    });
+
+    const result = await persistItems(1, deps);
+    expect(result.orphanFailures).toBe(0);
+    expect(deps.upsertItems).toHaveBeenCalledTimes(1);
+    expect(deps.refreshSnapshot).toHaveBeenCalledTimes(1);
+    expect(deps.deleteOrphans).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles mixed isNew items', async () => {
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockResolvedValue({
+        tempIdToServerId: new Map([['local_1', 10], ['42', 20]]),
+        newServerIds: [10],
+        updatedServerIds: [20],
+      }),
+    });
+
+    const result = await persistItems(1, deps);
+    expect(result.orphanFailures).toBe(0);
+  });
+
+  it('handles 10+ item result from upsertItems', async () => {
+    const tempIdToServerId = new Map<string, number>();
+    const newServerIds: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      const tempId = `local_${i}`;
+      const serverId = 100 + i;
+      tempIdToServerId.set(tempId, serverId);
+      newServerIds.push(serverId);
+    }
+    const deps = makeDeps({
+      upsertItems: vi.fn().mockResolvedValue({
+        tempIdToServerId,
+        newServerIds,
+      }),
+    });
+
+    const result = await persistItems(1, deps);
+    expect(result.orphanFailures).toBe(0);
+    expect(deps.upsertItems).toHaveBeenCalledTimes(1);
+    expect(deps.refreshSnapshot).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ── publishAfterPersist ──────────────────────────────────────
