@@ -22,6 +22,7 @@ import type { ProductoSemanalPublic } from '@/services/publications';
 import { useCart } from '@/store/CartContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerTabsParamList } from '@/types';
+import { formatPrice } from '@/utils/format';
 
 type Nav = BottomTabNavigationProp<BuyerTabsParamList>;
 
@@ -337,10 +338,6 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
   const pumpkin = colors.accent;
 
   const { today } = useFormattedDate();
-
-  const formatPrice = useCallback((value: string): string => {
-    return `$${(Number.parseFloat(value) || 0).toFixed(2)}`;
-  }, []);
 
   // Extract all products from all publications
   const allProductos = flattenProductos(currentPubRes?.data);

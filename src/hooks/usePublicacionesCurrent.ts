@@ -16,5 +16,6 @@ export function usePublicacionesCurrent(): ReturnType<
     queryFn: getPublicacionesCurrent,
     staleTime: 60_000,
     retry: 1,
+    refetchOnWindowFocus: true,
   });
 }

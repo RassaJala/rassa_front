@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePri
 import { useCart } from '@/store/CartContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
+import { formatPrice, safePrice } from '@/utils/format';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList, 'ProductDetail'>;
 type Route = RouteProp<BuyerStackParamList, 'ProductDetail'>;
@@ -40,6 +41,13 @@ export default function ProductDetailScreen(): React.JSX.Element {
 
   const [cantidad, setCantidad] = useState(1);
   const [added, setAdded] = useState(false);
+  const addedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current);
+    };
+  }, []);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -49,13 +57,10 @@ export default function ProductDetailScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const tc = themeColors(isDark);
 
-  const formatPrice = useCallback((value: string): string => {
-    return `$${(Number.parseFloat(value) || 0).toFixed(2)}`;
-  }, []);
-
-  const importeTotal = (Number.parseFloat(precio) || 0) * cantidad;
+  const importeTotal = safePrice(precio) * cantidad;
 
   const handleAddToCart = useCallback(() => {
+    if (stock <= 0) return;
     cart.addItem({
       id_producto_semanal: productoSemanalId,
       nombre_producto: nombreProducto,
@@ -64,7 +69,8 @@ export default function ProductDetailScreen(): React.JSX.Element {
       cantidad,
     });
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current);
+    addedTimeoutRef.current = setTimeout(() => setAdded(false), 2000);
   }, [cart, productoSemanalId, nombreProducto, precio, stock, cantidad]);
 
   const handleIncrement = useCallback(() => {
@@ -368,12 +374,13 @@ export default function ProductDetailScreen(): React.JSX.Element {
       >
         <Pressable
           onPress={handleAddToCart}
+          disabled={stock <= 0}
           style={({ pressed }) => ({
-            backgroundColor: brand,
+            backgroundColor: stock <= 0 ? muted : brand,
             borderRadius: 12,
             paddingVertical: 14,
             alignItems: 'center',
-            opacity: pressed ? 0.8 : 1,
+            opacity: pressed && stock > 0 ? 0.8 : 1,
           })}
         >
           <Text
@@ -383,7 +390,9 @@ export default function ProductDetailScreen(): React.JSX.Element {
               color: colors.iconWhite,
             }}
           >
-            Agregar al carrito — {formatPrice(String(importeTotal))}
+            {stock <= 0
+              ? 'Sin stock disponible'
+              : `Agregar al carrito — ${formatPrice(String(importeTotal))}`}
           </Text>
         </Pressable>
       </View>

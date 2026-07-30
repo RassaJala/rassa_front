@@ -57,14 +57,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
       if (action.payload.cantidad <= 0) return state;
+      const capped = Math.min(action.payload.cantidad, action.payload.stock);
+      if (capped <= 0) return state;
       const existing = state.items.find(
         (i) => i.id_producto_semanal === action.payload.id_producto_semanal,
       );
       if (existing) {
-        const newQty = Math.min(
-          existing.cantidad + action.payload.cantidad,
-          existing.stock,
-        );
+        const newQty = Math.min(existing.cantidad + capped, existing.stock);
+        if (newQty <= 0) return state;
         return {
           items: state.items.map((i) =>
             i.id_producto_semanal === action.payload.id_producto_semanal
@@ -78,7 +78,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ...state.items,
           {
             ...action.payload,
-            cantidad: Math.min(action.payload.cantidad, action.payload.stock),
+            cantidad: capped,
           },
         ],
       };
@@ -98,16 +98,22 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         };
       }
       return {
-        items: state.items.map((i) =>
-          i.id_producto_semanal === action.payload.id
-            ? { ...i, cantidad: Math.min(action.payload.cantidad, i.stock) }
-            : i,
-        ),
+        items: state.items
+          .map((i) =>
+            i.id_producto_semanal === action.payload.id
+              ? { ...i, cantidad: Math.min(action.payload.cantidad, i.stock) }
+              : i,
+          )
+          .filter((i) => i.cantidad > 0),
       };
     }
     case 'CLEAR':
       return { items: [] };
     default:
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn('Carrito: acción desconocida', action);
+      }
       return state;
   }
 }

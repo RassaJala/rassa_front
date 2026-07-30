@@ -9,6 +9,7 @@ import { colors } from '@/constants/colors';
 import { useCart } from '@/store/CartContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
+import { formatPrice, safePrice } from '@/utils/format';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
@@ -28,10 +29,6 @@ export default function CarritoScreen(): React.JSX.Element {
   const handleCheckout = useCallback(() => {
     navigation.navigate('Checkout');
   }, [navigation]);
-
-  const formatPrice = useCallback((value: number): string => {
-    return `$${(value || 0).toFixed(2)}`;
-  }, []);
 
   const renderItem = useCallback(
     ({ item }: { readonly item: (typeof cart.items)[number] }) => (
@@ -59,7 +56,7 @@ export default function CarritoScreen(): React.JSX.Element {
             {item.nombre_producto}
           </Text>
           <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-            {formatPrice(Number.parseFloat(item.precio))} / ud.
+            {formatPrice(safePrice(item.precio))} / ud.
           </Text>
         </View>
 
@@ -127,7 +124,7 @@ export default function CarritoScreen(): React.JSX.Element {
             textAlign: 'right',
           }}
         >
-          {formatPrice(Number.parseFloat(item.precio) * item.cantidad)}
+          {formatPrice(safePrice(item.precio) * item.cantidad)}
         </Text>
 
         <Pressable
@@ -146,7 +143,7 @@ export default function CarritoScreen(): React.JSX.Element {
         </Pressable>
       </View>
     ),
-    [surface, border, fg, muted, brand, isDark, cart, formatPrice],
+    [surface, border, fg, muted, brand, isDark, cart],
   );
 
   const keyExtractor = useCallback(

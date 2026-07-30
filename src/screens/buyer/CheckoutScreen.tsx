@@ -18,38 +18,54 @@ import type { PedidoItemInput } from '@/services/orders';
 import { useCart } from '@/store/CartContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
+import { formatPrice, safePrice } from '@/utils/format';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList, 'Checkout'>;
 
 /**
  * Intenta extraer un mensaje legible desde el error del backend.
- * Soporta formatos: { detail }, { message }, field-level arrays, y ok_response.
+ * Soporta: timeout, sin conexión, 401, { detail }, { message },
+ * field-level arrays, y códigos HTTP comunes.
  */
 function extractError(error: unknown): string {
   if (!axios.isAxiosError(error)) {
     return 'Ocurrió un error inesperado. Intenta de nuevo.';
   }
 
+  // Timeout
+  if (error.code === 'ECONNABORTED') {
+    return 'La conexión tardó demasiado. Verifica tu conexión e intenta de nuevo.';
+  }
+
+  // Sin conexión / no hubo respuesta del servidor
+  if (!error.response) {
+    return 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+  }
+
   const data = error.response?.data as Record<string, unknown> | undefined;
-  if (!data) {
-    return 'Error de conexión con el servidor. Verifica tu conexión.';
+
+  // 401 — sesión expirada
+  if (error.response?.status === 401) {
+    return 'Tu sesión expiró. Inicia sesión nuevamente.';
   }
 
   // DRF ValidationError: { "detail": "mensaje" }
-  if (typeof data.detail === 'string') return data.detail;
+  if (data && typeof data.detail === 'string') return data.detail;
 
   // Custom ok_response: { "message": "mensaje" }
-  if (typeof data.message === 'string') return data.message;
+  if (data && typeof data.message === 'string') return data.message;
 
-  // DRF field-level errors: { "field": ["error1", "error2"] }
-  for (const value of Object.values(data)) {
-    if (
-      Array.isArray(value) &&
-      value.length > 0 &&
-      typeof value[0] === 'string'
-    ) {
-      return value.join(' ');
+  // DRF field-level errors: collect string messages without exposing field names
+  if (data) {
+    const messages: string[] = [];
+    for (const value of Object.values(data)) {
+      if (Array.isArray(value)) {
+        for (const msg of value) {
+          if (typeof msg === 'string') messages.push(msg);
+        }
+      }
     }
+    if (messages.length > 0) return messages.join(' ');
   }
 
   // Http-level status
@@ -84,10 +100,6 @@ export default function CheckoutScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const errorBg = isDark ? colors.admErrorBgD : colors.admErrorBgL;
 
-  const formatPrice = useCallback((value: number): string => {
-    return `$${(value || 0).toFixed(2)}`;
-  }, []);
-
   const handleConfirm = useCallback(() => {
     if (isMutatingRef.current) return;
     setErrorMsg(null);
@@ -108,6 +120,10 @@ export default function CheckoutScreen(): React.JSX.Element {
         isMutatingRef.current = false;
         if (!isMountedRef.current) return;
         const pedido = response.data;
+        if (!pedido?.id_pedido) {
+          setErrorMsg('Respuesta inesperada del servidor.');
+          return;
+        }
         cart.clearCart();
         navigation.replace('OrderSuccess', {
           orderId: pedido.id_pedido,
@@ -220,8 +236,7 @@ export default function CheckoutScreen(): React.JSX.Element {
           }}
         >
           {cart.items.map((item, index) => {
-            const importe =
-              (Number.parseFloat(item.precio) || 0) * item.cantidad;
+            const importe = safePrice(item.precio) * item.cantidad;
             return (
               <View
                 key={item.id_producto_semanal}
@@ -348,36 +363,66 @@ export default function CheckoutScreen(): React.JSX.Element {
               borderRadius: 12,
               padding: 14,
               marginBottom: 16,
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: 10,
             }}
           >
-            <MaterialCommunityIcons
-              name="alert-circle"
-              size={22}
-              color={colors.error}
-            />
-            <Text
+            <View
               style={{
-                flex: 1,
-                fontSize: 14,
-                color: colors.error,
-                lineHeight: 20,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 10,
               }}
             >
-              {errorMsg}
-            </Text>
-            <Pressable
-              onPress={() => setErrorMsg(null)}
-              hitSlop={8}
-              style={{ marginTop: 2 }}
-            >
               <MaterialCommunityIcons
-                name="close"
-                size={18}
+                name="alert-circle"
+                size={22}
                 color={colors.error}
               />
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: 14,
+                  color: colors.error,
+                  lineHeight: 20,
+                }}
+              >
+                {errorMsg}
+              </Text>
+              <Pressable
+                onPress={() => setErrorMsg(null)}
+                hitSlop={8}
+                style={{ marginTop: 2 }}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={18}
+                  color={colors.error}
+                />
+              </Pressable>
+            </View>
+            <Pressable
+              onPress={() => {
+                setErrorMsg(null);
+                handleConfirm();
+              }}
+              style={({ pressed }) => ({
+                marginTop: 10,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: colors.error,
+                paddingVertical: 8,
+                alignItems: 'center',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: colors.error,
+                }}
+              >
+                Reintentar
+              </Text>
             </Pressable>
           </View>
         ) : null}
