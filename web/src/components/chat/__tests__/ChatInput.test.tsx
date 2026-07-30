@@ -17,14 +17,14 @@ vi.mock('~/hooks/useAppColors', () => ({
 describe('ChatInput', () => {
   it('renders input and send button', () => {
     render(<ChatInput onSend={vi.fn()} />);
-    expect(screen.getByPlaceholderText('Escribí un mensaje…')).toBeDefined();
+    expect(screen.getByPlaceholderText('Escribí un mensaje...')).toBeDefined();
     expect(screen.getByLabelText('Enviar mensaje')).toBeDefined();
   });
 
   it('calls onSend with trimmed text on Enter', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).toHaveBeenCalledWith('Hola');
@@ -33,7 +33,7 @@ describe('ChatInput', () => {
   it('does not call onSend when text is empty', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).not.toHaveBeenCalled();
   });
@@ -41,7 +41,7 @@ describe('ChatInput', () => {
   it('does not call onSend when text is only whitespace', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.change(input, { target: { value: '   ' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).not.toHaveBeenCalled();
@@ -50,7 +50,7 @@ describe('ChatInput', () => {
   it('does not call onSend on Shift+Enter', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
     expect(onSend).not.toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('ChatInput', () => {
 
   it('disables input and button when disabled prop is true', () => {
     render(<ChatInput onSend={vi.fn()} disabled />);
-    expect(screen.getByPlaceholderText('Escribí un mensaje…')).toBeDisabled();
+    expect(screen.getByPlaceholderText('Escribí un mensaje...')).toBeDisabled();
     expect(screen.getByLabelText('Enviar mensaje')).toBeDisabled();
   });
 
@@ -69,7 +69,7 @@ describe('ChatInput', () => {
 
   it('send button is enabled when text is not empty', () => {
     render(<ChatInput onSend={vi.fn()} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     expect(screen.getByLabelText('Enviar mensaje')).toBeEnabled();
   });
@@ -77,7 +77,7 @@ describe('ChatInput', () => {
   it('clears input after sending', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje…');
+    const input = screen.getByPlaceholderText('Escribí un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(input).toHaveValue('');
