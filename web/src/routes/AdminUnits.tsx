@@ -17,8 +17,8 @@ const initialData: Unit[] = [
 export function AdminUnits() {
   return (
     <AdminCrudTable<Unit>
-      entityName="unidad"
-      entityNamePlural="unidades"
+      entityName="unidad de medida"
+      entityNamePlural="unidades de medida"
       initialData={initialData}
       fields={[
         {
@@ -36,7 +36,6 @@ export function AdminUnits() {
       ]}
       searchFields={['nombre', 'abreviatura']}
       nextIdStart={5}
-      formatDeleteTarget={(item) => `${item.nombre} (${item.abreviatura})`}
     />
   );
 }

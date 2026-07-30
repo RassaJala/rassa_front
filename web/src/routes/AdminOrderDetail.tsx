@@ -10,52 +10,18 @@ import {
   normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
-} from '@root/constants/orderTimeline';
+} from '../constants/orderTimeline';
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
-import type { OrderStatusHistory } from '@root/types';
-
-// ponytail: module-scoped styles to avoid recreation on every render
-const SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg) } }`;
-
-const btnStyle: React.CSSProperties = {
-  height: 40,
-  padding: '0 18px',
-  borderRadius: 10,
-  border: 'none',
-  fontSize: 14,
-  fontWeight: 600,
-  fontFamily: 'inherit',
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-};
-
-const lineStyle: React.CSSProperties = {
-  width: 2,
-  flex: 1,
-  minHeight: 24,
-};
-
-const centeredStyle: React.CSSProperties = {
-  display: 'grid',
-  placeItems: 'center',
-  padding: '64px 24px',
-};
-
-const timelineEntryStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: 14,
-  minHeight: 64,
-};
+import type { OrderStatusHistory } from '../types';
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fg, muted, border, surface, brand } = useAppColors();
+  const colors = useAppColors();
+  const { fg, muted, border, surface, brand } = colors;
   const orderId = Number(id);
-  const isValidId = !isNaN(orderId) && orderId > 0;
+  const isValidId = Number.isInteger(orderId) && orderId > 0;
 
   const { data, isLoading, isError, error, refetch } = useQuery<
     OrderStatusHistory[],
@@ -69,20 +35,44 @@ export function AdminOrderDetail() {
     enabled: isValidId,
     staleTime: STALE_TIME,
     refetchOnWindowFocus: true,
-    // axios-retry (web api.ts:19-30) ya aplica 3 reintentos con exponentialDelay
-    // a GET sobre errores de red o 5xx. `retry: false` evita doble reintento.
     retry: false,
   });
 
   const entries = data ?? [];
 
-  if (!isValidId) {
-    return (
-      <div>
-        <p style={{ color: muted }}>ID de pedido inválido</p>
-      </div>
-    );
-  }
+  // ── Styles ──
+
+  const btnStyle: React.CSSProperties = {
+    height: 40,
+    padding: '0 18px',
+    borderRadius: 10,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  };
+
+  const dotStyle = (color: string): React.CSSProperties => ({
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+    backgroundColor: color,
+    flexShrink: 0,
+    marginTop: 4,
+  });
+
+  const lineStyle: React.CSSProperties = {
+    width: 2,
+    flex: 1,
+    backgroundColor: border,
+    minHeight: 24,
+  };
+
+  // ── Render ──
 
   return (
     <div>
@@ -131,7 +121,14 @@ export function AdminOrderDetail() {
       >
         {/* Loading */}
         {isLoading && (
-          <div style={centeredStyle}>
+          <div
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              padding: '64px 24px',
+              color: muted,
+            }}
+          >
             <div
               style={{
                 width: 32,
@@ -142,20 +139,25 @@ export function AdminOrderDetail() {
                 animation: 'spin 0.8s linear infinite',
               }}
             />
-            <p style={{ marginTop: 12, fontSize: 14, color: muted }}>
-              Cargando historial…
-            </p>
-            <style>{SPIN_KEYFRAMES}</style>
+            <p style={{ marginTop: 12, fontSize: 14 }}>Cargando historial…</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         )}
 
         {/* Error */}
         {isError && (
-          <div style={{ ...centeredStyle, color: muted }}>
+          <div
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              padding: '64px 24px',
+              color: muted,
+            }}
+          >
             <span style={{ fontSize: 40 }}>⚠️</span>
             <p style={{ marginTop: 12, fontSize: 14, textAlign: 'center' }}>
-              {isNotFoundError(error)
-                ? 'Pedido no encontrado'
+              {error instanceof Error
+                ? error.message
                 : 'Error al cargar el historial'}
             </p>
             {isNotFoundError(error) ? (
@@ -190,7 +192,14 @@ export function AdminOrderDetail() {
 
         {/* Empty */}
         {!isLoading && !isError && entries.length === 0 && (
-          <div style={{ ...centeredStyle, color: muted }}>
+          <div
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              padding: '64px 24px',
+              color: muted,
+            }}
+          >
             <span style={{ fontSize: 40 }}>📋</span>
             <p style={{ marginTop: 12, fontSize: 14 }}>
               Sin historial de cambios
@@ -203,13 +212,19 @@ export function AdminOrderDetail() {
           <div style={{ padding: 24 }}>
             {entries.map((entry, index) => {
               const isLast = index === entries.length - 1;
-              const dotColor = getStatusColor(entry.estado_nuevo, border);
+              const dotColor = STATUS_COLORS[entry.estado_nuevo] ?? border;
               const label =
                 STATUS_LABELS[entry.estado_nuevo] ?? entry.estado_nuevo;
-              const description = buildDescription(entry);
+              const description =
+                entry.estado_anterior === null
+                  ? 'Pedido creado'
+                  : `${STATUS_LABELS[entry.estado_anterior] ?? entry.estado_anterior} → ${label}`;
 
               return (
-                <div key={entry.id_historial} style={timelineEntryStyle}>
+                <div
+                  key={entry.id_historial}
+                  style={{ display: 'flex', gap: 14, minHeight: 64 }}
+                >
                   {/* Gutter */}
                   <div
                     style={{
@@ -219,24 +234,8 @@ export function AdminOrderDetail() {
                       width: 16,
                     }}
                   >
-                    <div
-                      style={{
-                        width: DOT_SIZE,
-                        height: DOT_SIZE,
-                        borderRadius: '50%',
-                        backgroundColor: dotColor,
-                        flexShrink: 0,
-                        marginTop: 4,
-                      }}
-                    />
-                    {!isLast && (
-                      <div
-                        style={{
-                          ...lineStyle,
-                          backgroundColor: border,
-                        }}
-                      />
-                    )}
+                    <div style={dotStyle(dotColor)} />
+                    {!isLast && <div style={lineStyle} />}
                   </div>
 
                   {/* Content */}

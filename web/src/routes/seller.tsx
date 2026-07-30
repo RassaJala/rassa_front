@@ -2,6 +2,7 @@ import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 import type { Column } from '../types';
 
 // --- Types ---
@@ -13,6 +14,7 @@ interface SaleRow {
   total: string;
   fecha: string;
   estado: 'Completada' | 'Pendiente' | 'Cancelada';
+  imagen_url?: string | null;
 }
 
 interface SellerOrderRow {
@@ -23,6 +25,7 @@ interface SellerOrderRow {
   total: string;
   fecha: string;
   estado: 'Pendiente' | 'En camino' | 'Entregado';
+  imagen_url?: string | null;
 }
 
 // --- Mock Data ---
@@ -121,7 +124,17 @@ const saleStatusVariant: Record<
 };
 
 const saleColumns: Column<SaleRow>[] = [
-  { key: 'producto', label: 'Producto', sortable: true },
+  {
+    key: 'producto',
+    label: 'Producto',
+    sortable: true,
+    render: (s) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ProductThumbnail src={s.imagen_url} alt={s.producto} />
+        {s.producto}
+      </span>
+    ),
+  },
   { key: 'cantidad', label: 'Cantidad', sortable: true },
   {
     key: 'total',
@@ -150,7 +163,17 @@ const sellerOrderStatusVariant: Record<
 
 const sellerOrderColumns: Column<SellerOrderRow>[] = [
   { key: 'comprador', label: 'Comprador', sortable: true },
-  { key: 'producto', label: 'Producto', sortable: true },
+  {
+    key: 'producto',
+    label: 'Producto',
+    sortable: true,
+    render: (o) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ProductThumbnail src={o.imagen_url} alt={o.producto} />
+        {o.producto}
+      </span>
+    ),
+  },
   { key: 'cantidad', label: 'Cantidad', sortable: true },
   {
     key: 'total',

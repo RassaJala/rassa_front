@@ -11,7 +11,7 @@ export function setNavigate(fn: NavigateFn): void {
 
 export function redirect(path: string, state?: Record<string, unknown>): void {
   if (navigateFn) {
-    navigateFn(path, { state });
+    navigateFn(path, state !== undefined ? { state } : {});
   } else {
     // Fallback por si se llama antes de que React Router esté listo
     window.location.href = path;
