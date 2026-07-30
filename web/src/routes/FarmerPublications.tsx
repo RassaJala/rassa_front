@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppColors, type AppColors } from '../hooks/useAppColors';
+import { useAppColors } from '../hooks/useAppColors';
 import {
   useClosePublicacion,
   useDeletePublicacion,
@@ -81,7 +81,6 @@ export function FarmerPublications() {
   const totalCount = data?.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const currentYear = new Date().getFullYear();
   const yearOptions = useMemo(() => {
     const years = [0];
     for (const p of publications) {
