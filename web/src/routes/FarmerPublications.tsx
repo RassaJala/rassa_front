@@ -95,7 +95,7 @@ export function FarmerPublications() {
     return years.sort((a, b) => b - a);
   }, [publications]);
 
-  const listToRender = useMemo(() => {
+  const filtered = useMemo(() => {
     return publications.filter((pub) => {
       if (filterMonth) {
         const d = new Date(pub.fecha_publicacion);
