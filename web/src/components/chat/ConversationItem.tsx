@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import type { Conversation } from '@rassa/chat';
-import { formatTimestamp } from '@rassa/chat';
+import { formatConversationTime } from '@rassa/chat';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -20,24 +20,36 @@ export function ConversationItem({
       ? conversation.nombre || 'Grupo'
       : conversation.participante_nombre || 'Sin nombre';
 
+  if (!user?.rol) {
+    return (
+      <div
+        className="flex w-full animate-pulse items-center gap-3 px-4 py-3"
+        style={{ borderBottom: `1px solid ${c.border}` }}
+      >
+        <div className="h-10 w-10 rounded-full" style={{ background: c.border }} />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="h-3 w-32 rounded" style={{ background: c.border }} />
+            <div className="h-3 w-12 rounded" style={{ background: c.border }} />
+          </div>
+          <div className="h-3 w-48 rounded" style={{ background: c.border }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <button
       type="button"
-      disabled={!user?.rol}
-      title={!user?.rol ? 'Cargando usuario…' : displayName}
       onClick={() =>
-        user?.rol &&
         navigate(`/${user.rol}/chat/${conversation.id}`, {
           state: { tipo: conversation.tipo },
         })
       }
-      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:opacity-80 ${
-        !user?.rol ? 'cursor-not-allowed opacity-50' : ''
-      }`}
+      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:opacity-80"
       style={{
         borderBottom: `1px solid ${c.border}`,
         background: 'transparent',
-        cursor: user?.rol ? 'pointer' : 'not-allowed',
       }}
     >
       {/* Avatar placeholder */}
@@ -58,7 +70,7 @@ export function ConversationItem({
             {displayName}
           </span>
           <span className="shrink-0 text-xs" style={{ color: c.muted }}>
-            {formatTimestamp(conversation.ultimo_mensaje_fecha)}
+            {formatConversationTime(conversation.ultimo_mensaje_fecha)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2">

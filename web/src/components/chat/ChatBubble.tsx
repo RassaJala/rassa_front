@@ -3,7 +3,7 @@ import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useCanModifyMessage } from '~/hooks/chat/useCanModifyMessage';
 import type { Message } from '@rassa/chat';
-import { formatTime } from '@rassa/chat';
+import { formatMessageTime } from '@rassa/chat';
 
 interface ChatBubbleProps {
   message: Message;
@@ -79,7 +79,7 @@ export function ChatBubble({
             className="text-xs"
             style={{ opacity: 0.6, color: isOwn ? c.onBrand : c.muted }}
           >
-            {formatTime(message.creado_en)}
+            {formatMessageTime(message.creado_en)}
           </span>
 
           {/* Author menu: own + within window */}

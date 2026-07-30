@@ -18,6 +18,8 @@ export function ChatListPage() {
   useEffect(() => {
     if (error) {
       setToast({ message: 'Error al cargar conversaciones', type: 'error' });
+    } else {
+      setToast(null);
     }
   }, [error]);
 

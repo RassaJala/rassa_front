@@ -4,7 +4,7 @@ import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
-import type { SearchUserResult } from '@rassa/chat';
+import type { SearchUser } from '@rassa/chat';
 import { Toast, type ToastState } from '~/components/ui/Toast';
 
 export function StartChatPage() {
@@ -13,7 +13,7 @@ export function StartChatPage() {
   const { user } = useAuth();
   const createConversation = useCreatePrivateConversation();
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<SearchUserResult | null>(null);
+  const [selected, setSelected] = useState<SearchUser | null>(null);
   const { results, loading, error } = useSearchUsers(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -40,13 +40,13 @@ export function StartChatPage() {
   }, []);
 
   const isSelfChat =
-    selected && user?.id !== undefined && selected.id_usuario === user.id;
+    selected && user?.id !== undefined && selected.idUsuario === user.id;
   const showDropdown = query.trim().length >= 3 && !selected;
 
   const handleSubmit = () => {
     if (!selected || isSelfChat) return;
     createConversation.mutate(
-      { fk_usuario: selected.id_usuario },
+      { fk_usuario: selected.idUsuario },
       {
         onError: () =>
           setToast({ message: 'Error al crear conversación', type: 'error' }),
@@ -106,7 +106,7 @@ export function StartChatPage() {
             >
               <div>
                 <span className="text-sm font-medium" style={{ color: c.fg }}>
-                  {selected.nombre_completo}
+                  {selected.nombreCompleto}
                 </span>
                 <span className="ml-2 text-xs" style={{ color: c.muted }}>
                   {selected.correo}
@@ -179,14 +179,14 @@ export function StartChatPage() {
                   )}
                   {results.map((userResult) => (
                     <button
-                      key={userResult.id_usuario}
+                      key={userResult.idUsuario}
                       type="button"
                       onClick={() => setSelected(userResult)}
                       className="flex w-full flex-col items-start px-3 py-2 text-left hover:opacity-80"
                       style={{ color: c.fg }}
                     >
                       <span className="text-sm font-medium">
-                        {userResult.nombre_completo}
+                        {userResult.nombreCompleto}
                       </span>
                       <span className="text-xs" style={{ color: c.muted }}>
                         {userResult.correo} · {userResult.rol}

@@ -87,3 +87,10 @@ export interface SearchUserResult {
   correo: string;
   rol: string;
 }
+
+export interface SearchUser {
+  idUsuario: number;
+  nombreCompleto: string;
+  correo: string;
+  rol: string;
+}

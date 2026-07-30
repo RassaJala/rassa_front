@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
-import type { SearchUserResult } from '@rassa/chat';
+import type { SearchUser } from '@rassa/chat';
 import { Toast, type ToastState } from '~/components/ui/Toast';
 
 interface AddMemberModalProps {
@@ -17,7 +17,7 @@ export function AddMemberModal({
 }: Readonly<AddMemberModalProps>) {
   const c = useAppColors();
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<SearchUserResult | null>(null);
+  const [selected, setSelected] = useState<SearchUser | null>(null);
   const { results, loading, error } = useSearchUsers(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export function AddMemberModal({
 
   const handleSave = () => {
     if (!selected) return;
-    onSave(selected.id_usuario);
+    onSave(selected.idUsuario);
   };
 
   const showDropdown = query.trim().length >= 3 && !selected;
@@ -108,7 +108,7 @@ export function AddMemberModal({
             >
               <div>
                 <span className="text-sm font-medium" style={{ color: c.fg }}>
-                  {selected.nombre_completo}
+                  {selected.nombreCompleto}
                 </span>
                 <span className="ml-2 text-xs" style={{ color: c.muted }}>
                   {selected.correo}
@@ -181,14 +181,14 @@ export function AddMemberModal({
                   )}
                   {results.map((user) => (
                     <button
-                      key={user.id_usuario}
+                      key={user.idUsuario}
                       type="button"
                       onClick={() => setSelected(user)}
                       className="flex w-full flex-col items-start px-3 py-2 text-left hover:opacity-80"
                       style={{ color: c.fg }}
                     >
                       <span className="text-sm font-medium">
-                        {user.nombre_completo}
+                        {user.nombreCompleto}
                       </span>
                       <span className="text-xs" style={{ color: c.muted }}>
                         {user.correo} · {user.rol}

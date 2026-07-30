@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { chatApi } from '~/services/chat';
-import type { SearchUserResult } from '@rassa/chat';
+import type { SearchUser } from '@rassa/chat';
 
 export function useSearchUsers(query: string) {
-  const [results, setResults] = useState<SearchUserResult[]>([]);
+  const [results, setResults] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

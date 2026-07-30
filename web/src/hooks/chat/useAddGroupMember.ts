@@ -12,7 +12,7 @@ export function useAddGroupMember(
 
   return useMutation({
     mutationFn: (payload) => chatApi.addGroupMember(conversationId, payload),
-    onSettled: () => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: groupMembersKey(conversationId),
       });

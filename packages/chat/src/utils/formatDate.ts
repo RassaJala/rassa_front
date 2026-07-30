@@ -2,14 +2,14 @@
 // NOTE: uses new Date() with the host timezone; RN and browser may differ.
 // Inherited behavior — if cross-platform parity is needed, pin an explicit TZ.
 
-export function formatTime(dateString: string): string {
+export function formatMessageTime(dateString: string): string {
   return new Date(dateString).toLocaleTimeString('es-MX', {
     hour: '2-digit',
     minute: '2-digit',
   });
 }
 
-export function formatTimestamp(dateString: string | null): string {
+export function formatConversationTime(dateString: string | null): string {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();

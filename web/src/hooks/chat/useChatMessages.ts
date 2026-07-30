@@ -38,15 +38,24 @@ export function useChatMessages(
     refetchIntervalInBackground: false,
     staleTime: 5_000,
     select: (data) => {
-      const seen = new Set<string>();
+      const seenIds = new Set<number>();
+      const seenTempKeys = new Set<string>();
+      const realContents = new Set<string>();
       return {
         ...data,
         pages: data.pages.map((page) => ({
           ...page,
           results: page.results.filter((msg) => {
-            const key = `${msg.conversacion}-${msg.remitente}-${msg.contenido}-${msg.creado_en}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
+            if (typeof msg.id === 'number') {
+              if (seenIds.has(msg.id)) return false;
+              seenIds.add(msg.id);
+              realContents.add(`${msg.conversacion}-${msg.remitente}-${msg.contenido}`);
+              return true;
+            }
+            const tempKey = `${msg.conversacion}-${msg.remitente}-${msg.contenido}-${msg.creado_en}`;
+            if (seenTempKeys.has(tempKey)) return false;
+            if (realContents.has(`${msg.conversacion}-${msg.remitente}-${msg.contenido}`)) return false;
+            seenTempKeys.add(tempKey);
             return true;
           }),
         })),

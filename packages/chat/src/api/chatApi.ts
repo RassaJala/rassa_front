@@ -12,10 +12,20 @@ import type {
   Message,
   PaginatedResponse,
   RenameGroupPayload,
+  SearchUser,
   SearchUserResult,
   SendMessagePayload,
   SendMessageWithMediaPayload,
 } from '../domain/types';
+
+function mapSearchUser(raw: SearchUserResult): SearchUser {
+  return {
+    idUsuario: raw.id_usuario,
+    nombreCompleto: raw.nombre_completo,
+    correo: raw.correo,
+    rol: raw.rol,
+  };
+}
 import { appendDocument } from './adapters';
 import type {
   BackendConversation,
@@ -80,7 +90,7 @@ export interface ChatApi {
     conversationId: number,
     payload: AddGroupMemberPayload,
   ): Promise<void>;
-  searchUsers(q: string, signal?: AbortSignal): Promise<SearchUserResult[]>;
+  searchUsers(q: string, signal?: AbortSignal): Promise<SearchUser[]>;
 }
 
 export function createChatApi(http: AxiosInstance): ChatApi {
@@ -261,7 +271,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       if (q.length < 3) return [];
       const res = await http.get(searchUsersPath(q), signal ? { signal } : {});
       const data = unwrap<SearchUserResult[]>(res);
-      return data;
+      return data.map(mapSearchUser);
     },
   };
 

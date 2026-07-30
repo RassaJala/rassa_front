@@ -12,7 +12,7 @@ export function useRenameGroup(
 
   return useMutation({
     mutationFn: (payload) => chatApi.renameGroup(conversationId, payload),
-    onSettled: () => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: conversationsKey(),
       });

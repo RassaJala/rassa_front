@@ -28,27 +28,27 @@ export function RenameGroupModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          onClose();
-        }
+    <dialog
+      open
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
       }}
-      role="button"
-      tabIndex={0}
-      aria-label="Cerrar modal"
+      className="fixed inset-0 z-50 flex items-center justify-center p-0"
     >
+      <button
+        type="button"
+        aria-label="Cerrar"
+        className="absolute inset-0 cursor-default border-0 bg-transparent p-0"
+        style={{ background: 'rgba(0,0,0,0.5)' }}
+        onClick={onClose}
+      />
       <div
-        className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl"
+        className="relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-2xl"
         style={{
           background: c.surface,
           boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -120,6 +120,6 @@ export function RenameGroupModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
