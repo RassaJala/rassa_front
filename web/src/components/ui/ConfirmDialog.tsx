@@ -34,9 +34,9 @@ export function ConfirmDialog({
           onCancel();
         }
       }}
-      role="button"
-      tabIndex={0}
-      aria-label="Cerrar"
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
     >
       <div
         className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl"

@@ -146,7 +146,7 @@ export default function ChatScreen(): React.JSX.Element {
         remitente_nombre: user?.nombre ?? '',
       });
     },
-    [conversationId, sendMediaMutation],
+    [conversationId, sendMediaMutation, user],
   );
 
   const handleEndReached = useCallback(() => {

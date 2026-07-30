@@ -186,31 +186,28 @@ export function FarmerPublications() {
         />
       )}
 
-      {confirmAction && (
-        <ConfirmDialog
-          title={
-            confirmAction.kind === 'delete'
-              ? 'Eliminar publicación'
-              : 'Cerrar publicación'
+      <ConfirmDialog
+        open={confirmAction != null}
+        title={
+          confirmAction?.kind === 'delete'
+            ? 'Eliminar publicación'
+            : 'Cerrar publicación'
+        }
+        message={
+          confirmAction?.kind === 'delete'
+            ? '¿Eliminar esta publicación? Esta acción no se puede deshacer.'
+            : '¿Cerrar esta publicación? Los clientes no podrán verla.'
+        }
+        confirmLabel={confirmAction?.kind === 'delete' ? 'Eliminar' : 'Cerrar'}
+        onConfirm={() => {
+          if (confirmAction?.kind === 'delete') {
+            void executeDelete(confirmAction.id);
+          } else {
+            void executeClose(confirmAction.id);
           }
-          message={
-            confirmAction.kind === 'delete'
-              ? '¿Eliminar esta publicación? Esta acción no se puede deshacer.'
-              : '¿Cerrar esta publicación? Los clientes no podrán verla.'
-          }
-          confirmLabel={confirmAction.kind === 'delete' ? 'Eliminar' : 'Cerrar'}
-          variant={confirmAction.kind === 'delete' ? 'danger' : 'default'}
-          colors={colors}
-          onConfirm={() => {
-            if (confirmAction.kind === 'delete') {
-              void executeDelete(confirmAction.id);
-            } else {
-              void executeClose(confirmAction.id);
-            }
-          }}
-          onCancel={() => setConfirmAction(null)}
-        />
-      )}
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
 
       <PageHeader
         title="Publicaciones Semanales"
