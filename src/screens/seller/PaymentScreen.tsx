@@ -14,12 +14,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { createPago, fetchTiposPago } from '@/services/payments';
 import { useTheme } from '@/store/ThemeContext';
-import type { OrderDetail, SellerStackParamList, TipoPago } from '@/types';
+import type { OrderDetail, PaymentDetail, SellerStackParamList, TipoPago } from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
 
 // ── Types ──────────────────────────────────────────────────
@@ -138,6 +139,20 @@ function ErrorView({
   );
 }
 
+function LoadingView({
+  bg,
+  brand,
+}: {
+  readonly bg: string;
+  readonly brand: string;
+}): React.JSX.Element {
+  return (
+    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator size="large" color={brand} />
+    </View>
+  );
+}
+
 function NotReadyView({
   bg,
   muted,
@@ -165,6 +180,165 @@ function NotReadyView({
       >
         <Text style={{ fontWeight: '600', color: brand }}>Volver</Text>
       </Pressable>
+    </View>
+  );
+}
+
+function PaymentFormView({
+  bg,
+  fg,
+  muted,
+  brand,
+  border,
+  surface,
+  activeBg,
+  white,
+  error: errorColor,
+  order,
+  tiposPago,
+  selectedTipo,
+  setSelectedTipo,
+  referencia,
+  setReferencia,
+  fieldErrors,
+  setFieldErrors,
+  navigation,
+  pagoMutation,
+}: {
+  readonly bg: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly brand: string;
+  readonly border: string;
+  readonly surface: string;
+  readonly activeBg: string;
+  readonly white: string;
+  readonly error: string;
+  readonly order: OrderDetail;
+  readonly tiposPago: TipoPago[];
+  readonly selectedTipo: number | null;
+  readonly setSelectedTipo: (v: number | null) => void;
+  readonly referencia: string;
+  readonly setReferencia: (v: string) => void;
+  readonly fieldErrors: Record<string, string>;
+  readonly setFieldErrors: (v: Record<string, string>) => void;
+  readonly navigation: Nav;
+  readonly pagoMutation: UseMutationResult<PaymentDetail, unknown, void, unknown>;
+}) {
+  return (
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      {/* Header */}
+      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: surface, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
+        </Pressable>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>Registrar Pago</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Order info card */}
+        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: border, padding: 16, marginBottom: 20 }}>
+          <Text style={{ fontSize: 13, color: muted }}>Pedido #{order.id_pedido}</Text>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: fg, marginTop: 2 }}>
+            {order.cliente_nombre ?? 'Cliente'}
+          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+            <Text style={{ fontSize: 14, color: muted }}>Total a cobrar</Text>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: brand }}>
+              ${Number(order.total).toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Payment method */}
+        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 10 }}>Método de pago</Text>
+        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: fieldErrors.tipo_pago ? errorColor : border, padding: 12, marginBottom: 20 }}>
+          {tiposPago.map((tipo) => (
+            <PaymentMethodOption
+              key={tipo.id_tipo_pago}
+              tipo={tipo}
+              selected={selectedTipo === tipo.id_tipo_pago}
+              onSelect={() => {
+                setSelectedTipo(tipo.id_tipo_pago);
+                setFieldErrors({});
+              }}
+              brand={brand}
+              border={border}
+              muted={muted}
+              fg={fg}
+              activeBg={activeBg}
+              tiposCount={tiposPago.length}
+            />
+          ))}
+          {fieldErrors.tipo_pago ? (
+            <Text style={{ fontSize: 13, color: errorColor, marginTop: 6, marginLeft: 4 }}>{fieldErrors.tipo_pago}</Text>
+          ) : null}
+        </View>
+
+        {/* Reference field */}
+        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 6 }}>
+          Referencia <Text style={{ color: muted, fontWeight: '400', fontSize: 13 }}>(opcional)</Text>
+        </Text>
+        <TextInput
+          value={referencia}
+          onChangeText={(t) => {
+            setReferencia(t);
+            setFieldErrors({});
+          }}
+          placeholder={selectedTipo
+            ? (tiposPago.find((t) => t.id_tipo_pago === selectedTipo)?.nombre === 'Transferencia'
+              ? 'Número de transferencia'
+              : 'Nota o referencia')
+            : 'Selecciona un método de pago primero'}
+          placeholderTextColor={muted}
+          editable={selectedTipo !== null}
+          style={{
+            backgroundColor: surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: fieldErrors.referencia ? errorColor : border,
+            padding: 14,
+            fontSize: 15,
+            color: fg,
+            marginBottom: 24,
+            opacity: selectedTipo ? 1 : 0.5,
+          }}
+        />
+
+        {/* Submit button */}
+        <Pressable
+          onPress={() => {
+            if (!selectedTipo) {
+              setFieldErrors({ tipo_pago: 'Selecciona un método de pago' });
+              return;
+            }
+            pagoMutation.mutate();
+          }}
+          disabled={pagoMutation.isPending || !selectedTipo}
+          style={{
+            backgroundColor: pagoMutation.isPending ? muted : brand,
+            borderRadius: 14,
+            paddingVertical: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pagoMutation.isPending ? 0.6 : 1,
+            flexDirection: 'row',
+            gap: 8,
+          }}
+        >
+          {pagoMutation.isPending ? (
+            <ActivityIndicator size="small" color={white} />
+          ) : (
+            <MaterialCommunityIcons name="cash-check" size={22} color={white} />
+          )}
+          <Text style={{ fontSize: 17, fontWeight: '700', color: white }}>
+            {pagoMutation.isPending ? 'Registrando...' : 'Registrar Pago'}
+          </Text>
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }
@@ -239,11 +413,7 @@ export default function PaymentScreen(): React.JSX.Element {
   const isReady = order?.estado_actual === 'listo_para_retirar';
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={brand} />
-      </View>
-    );
+    return <LoadingView bg={bg} brand={brand} />;
   }
 
   if (orderError || !order) {
@@ -266,119 +436,26 @@ export default function PaymentScreen(): React.JSX.Element {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Header */}
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: surface, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
-        </Pressable>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>Registrar Pago</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Order info card */}
-        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: border, padding: 16, marginBottom: 20 }}>
-          <Text style={{ fontSize: 13, color: muted }}>Pedido #{order.id_pedido}</Text>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: fg, marginTop: 2 }}>
-            {order.cliente_nombre ?? 'Cliente'}
-          </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-            <Text style={{ fontSize: 14, color: muted }}>Total a cobrar</Text>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: brand }}>
-              ${Number(order.total).toFixed(2)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Payment method */}
-        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 10 }}>Método de pago</Text>
-        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: fieldErrors.tipo_pago ? error : border, padding: 12, marginBottom: 20 }}>
-          {tiposPago.map((tipo) => (
-            <PaymentMethodOption
-              key={tipo.id_tipo_pago}
-              tipo={tipo}
-              selected={selectedTipo === tipo.id_tipo_pago}
-              onSelect={() => {
-                setSelectedTipo(tipo.id_tipo_pago);
-                setFieldErrors({});
-              }}
-              brand={brand}
-              border={border}
-              muted={muted}
-              fg={fg}
-              activeBg={activeBg}
-              tiposCount={tiposPago.length}
-            />
-          ))}
-          {fieldErrors.tipo_pago ? (
-            <Text style={{ fontSize: 13, color: error, marginTop: 6, marginLeft: 4 }}>{fieldErrors.tipo_pago}</Text>
-          ) : null}
-        </View>
-
-        {/* Reference field */}
-        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 6 }}>
-          Referencia <Text style={{ color: muted, fontWeight: '400', fontSize: 13 }}>(opcional)</Text>
-        </Text>
-        <TextInput
-          value={referencia}
-          onChangeText={(t) => {
-            setReferencia(t);
-            setFieldErrors({});
-          }}
-          placeholder={selectedTipo
-            ? (tiposPago.find((t) => t.id_tipo_pago === selectedTipo)?.nombre === 'Transferencia'
-              ? 'Número de transferencia'
-              : 'Nota o referencia')
-            : 'Selecciona un método de pago primero'}
-          placeholderTextColor={muted}
-          editable={selectedTipo !== null}
-          style={{
-            backgroundColor: surface,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: fieldErrors.referencia ? error : border,
-            padding: 14,
-            fontSize: 15,
-            color: fg,
-            marginBottom: 24,
-            opacity: selectedTipo ? 1 : 0.5,
-          }}
-        />
-
-        {/* Submit button */}
-        <Pressable
-          onPress={() => {
-            if (!selectedTipo) {
-              setFieldErrors({ tipo_pago: 'Selecciona un método de pago' });
-              return;
-            }
-            pagoMutation.mutate();
-          }}
-          disabled={pagoMutation.isPending || !selectedTipo}
-          style={{
-            backgroundColor: pagoMutation.isPending ? muted : brand,
-            borderRadius: 14,
-            paddingVertical: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pagoMutation.isPending ? 0.6 : 1,
-            flexDirection: 'row',
-            gap: 8,
-          }}
-        >
-          {pagoMutation.isPending ? (
-            <ActivityIndicator size="small" color={white} />
-          ) : (
-            <MaterialCommunityIcons name="cash-check" size={22} color={white} />
-          )}
-          <Text style={{ fontSize: 17, fontWeight: '700', color: white }}>
-            {pagoMutation.isPending ? 'Registrando...' : 'Registrar Pago'}
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </View>
+    <PaymentFormView
+      bg={bg}
+      fg={fg}
+      muted={muted}
+      brand={brand}
+      border={border}
+      surface={surface}
+      activeBg={activeBg}
+      white={white}
+      error={error}
+      order={order}
+      tiposPago={tiposPago}
+      selectedTipo={selectedTipo}
+      setSelectedTipo={setSelectedTipo}
+      referencia={referencia}
+      setReferencia={setReferencia}
+      fieldErrors={fieldErrors}
+      setFieldErrors={setFieldErrors}
+      navigation={navigation}
+      pagoMutation={pagoMutation}
+    />
   );
 }
