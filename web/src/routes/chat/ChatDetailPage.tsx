@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
@@ -51,10 +51,16 @@ export function ChatDetailPage() {
 
   const endRef = useRef<HTMLDivElement>(null);
   const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
+  const realCountRef = useRef(0);
+
+  const realMessages = messages.filter(
+    (m) => typeof m.id === 'number',
+  );
+  realCountRef.current = realMessages.length;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [realCountRef.current]);
 
   const handleSend = (text: string) => {
     sendMessage.mutate(

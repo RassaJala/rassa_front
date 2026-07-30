@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 
 interface ChatInputProps {
@@ -9,12 +9,23 @@ interface ChatInputProps {
 export function ChatInput({ onSend, disabled }: Readonly<ChatInputProps>) {
   const c = useAppColors();
   const [text, setText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
+  };
 
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
     onSend(trimmed);
     setText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -26,17 +37,21 @@ export function ChatInput({ onSend, disabled }: Readonly<ChatInputProps>) {
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-3"
+      className="flex items-end gap-2 px-4 py-3"
       style={{ borderTop: `1px solid ${c.border}`, background: c.surface }}
     >
-      <input
-        type="text"
+      <textarea
+        ref={textareaRef}
+        rows={1}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          autoResize();
+        }}
         onKeyDown={handleKeyDown}
         placeholder="Escribí un mensaje..."
         disabled={disabled}
-        className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+        className="max-h-32 flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none"
         style={{
           borderColor: c.inputBorder,
           background: c.bg,

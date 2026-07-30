@@ -24,27 +24,27 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
-      onClick={onCancel}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          onCancel();
-        }
+    <dialog
+      open
+      onCancel={(e) => {
+        e.preventDefault();
+        onCancel();
       }}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center p-0"
     >
+      <button
+        type="button"
+        aria-label="Cerrar"
+        className="absolute inset-0 cursor-default border-0 bg-transparent p-0"
+        style={{ background: 'rgba(0,0,0,0.5)' }}
+        onClick={onCancel}
+      />
       <div
-        className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl"
+        className="relative z-10 flex w-full max-w-sm flex-col overflow-hidden rounded-2xl"
         style={{
           background: c.surface,
           boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4">
           <h3 className="text-base font-semibold" style={{ color: c.fg }}>
@@ -80,6 +80,6 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

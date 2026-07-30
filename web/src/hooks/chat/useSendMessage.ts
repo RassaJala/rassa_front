@@ -10,7 +10,7 @@ import type {
   SendMessagePayload,
 } from '@rassa/chat';
 
-let _tempIdCounter = 0;
+const _tempCounters = new Map<number, number>();
 
 export function useSendMessage(
   conversationId: number,
@@ -30,8 +30,11 @@ export function useSendMessage(
         pageParams: number[];
       }>(messagesKey(conversationId));
 
+      const nextId = (_tempCounters.get(conversationId) ?? 0) + 1;
+      _tempCounters.set(conversationId, nextId);
+
       const optimisticMessage: Message = {
-        id: `temp-${++_tempIdCounter}` as unknown as number,
+        id: `temp-${conversationId}-${nextId}` as unknown as number,
         conversacion: payload.conversacion,
         remitente: user?.id ?? 0,
         remitente_nombre: user?.nombre ?? 'Tú',

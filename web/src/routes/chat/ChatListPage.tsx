@@ -1,10 +1,18 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useConversations } from '~/hooks/chat/useConversations';
 import { ConversationItem } from '~/components/chat/ConversationItem';
 import { Toast, type ToastState } from '~/components/ui/Toast';
-import { useEffect, useState } from 'react';
+
+type FiltroTipo = 'todos' | 'individual' | 'grupal';
+
+const FILTROS: { label: string; value: FiltroTipo }[] = [
+  { label: 'Todos', value: 'todos' },
+  { label: 'Individuales', value: 'individual' },
+  { label: 'Grupales', value: 'grupal' },
+];
 
 export function ChatListPage() {
   const navigate = useNavigate();
@@ -12,8 +20,15 @@ export function ChatListPage() {
   const { user } = useAuth();
   const { data, isLoading, error } = useConversations();
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [filtro, setFiltro] = useState<FiltroTipo>('todos');
 
   const conversations = data?.results ?? [];
+
+  const filtered = conversations.filter((conv) => {
+    if (filtro === 'todos') return true;
+    if (filtro === 'individual') return conv.tipo === 'privada';
+    return conv.tipo === 'grupal';
+  });
 
   useEffect(() => {
     if (error) {
@@ -44,6 +59,28 @@ export function ChatListPage() {
         </button>
       </div>
 
+      {/* Filter toggles */}
+      <div
+        className="flex gap-2 px-5 py-3"
+        style={{ borderBottom: `1px solid ${c.border}` }}
+      >
+        {FILTROS.map(({ label, value }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFiltro(value)}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+            style={{
+              background: filtro === value ? c.brand : 'transparent',
+              color: filtro === value ? '#fff' : c.muted,
+              border: `1px solid ${filtro === value ? 'transparent' : c.border}`,
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
@@ -57,17 +94,19 @@ export function ChatListPage() {
           </div>
         )}
 
-        {!isLoading && conversations.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="mb-3 text-4xl">💬</span>
             <p className="text-sm" style={{ color: c.muted }}>
-              No tenés conversaciones aún
+              {filtro === 'todos'
+                ? 'No tenés conversaciones aún'
+                : `No tenés conversaciones ${filtro === 'individual' ? 'individuales' : 'grupales'} aún`}
             </p>
           </div>
         )}
 
         {!isLoading &&
-          conversations.map((conv) => (
+          filtered.map((conv) => (
             <ConversationItem key={conv.id} conversation={conv} />
           ))}
       </div>
