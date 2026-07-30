@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -161,7 +167,9 @@ describe('FarmerPublications', () => {
     mockMutateAsync.mockResolvedValue(undefined);
     render(<FarmerPublications />);
     await userEvent.click(screen.getAllByText('Eliminar')[0]!);
-    expect(await screen.findByRole('heading', { name: 'Eliminar publicación' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Eliminar publicación' }),
+    ).toBeInTheDocument();
     const dialog = screen.getByRole('dialog');
     fireEvent.click(within(dialog).getByText('Eliminar'));
     await waitFor(() => {
@@ -207,7 +215,9 @@ describe('FarmerPublications', () => {
     mockMutateAsync.mockResolvedValue(undefined);
     render(<FarmerPublications />);
     await userEvent.click(screen.getAllByText('Cerrar')[0]!);
-    expect(await screen.findByRole('heading', { name: 'Cerrar publicación' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Cerrar publicación' }),
+    ).toBeInTheDocument();
     const dialog = screen.getByRole('dialog');
     fireEvent.click(within(dialog).getByText('Cerrar'));
     await waitFor(() => {
