@@ -27,7 +27,7 @@ export default function ProfilePasswordTab({
 }: ProfilePasswordTabProps): React.JSX.Element {
   return (
     <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
+      <Text className="text-brand-ink mb-4 border-b border-gray-200 pb-2 text-lg font-bold dark:border-gray-800 dark:text-gray-100">
         Cambiar Contraseña
       </Text>
 
@@ -45,7 +45,7 @@ export default function ProfilePasswordTab({
       <TextInput
         testID="new-password-input"
         mode="outlined"
-        label="Nueva Contraseña (mínimo 6 caracteres) *"
+        label="Nueva Contraseña (mínimo 8 caracteres) *"
         className="mb-4 bg-white dark:bg-gray-900"
         placeholder="••••••••"
         secureTextEntry

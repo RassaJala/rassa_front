@@ -1,4 +1,3 @@
-/* global setTimeout, clearTimeout -- RN timer functions not in ESLint env */
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
@@ -73,7 +72,7 @@ export default function Toast({
         : 'bg-gray-800 dark:bg-gray-700';
 
   return (
-    <View className="pointer-events-box-none absolute bottom-24 left-4 right-4 z-50">
+    <View className="pointer-events-box-none absolute right-4 bottom-24 left-4 z-50">
       <Pressable onPress={onDismiss}>
         <Animated.View
           className={`rounded-xl px-4 py-3.5 shadow-lg ${bgClass}`}

@@ -97,6 +97,7 @@ export interface OrderItem {
   importe: string;
 }
 
+/** @deprecated Usar OrderStatusHistory en su lugar */
 export interface OrderHistoryEntry {
   id_historial: number;
   estado_anterior: string | null;
@@ -183,6 +184,7 @@ export type AdminStackParamList = {
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
+  UserForm: undefined;
   Chat: {
     conversationId: number;
     title: string;

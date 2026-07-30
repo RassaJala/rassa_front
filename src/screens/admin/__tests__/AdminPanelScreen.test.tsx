@@ -24,6 +24,17 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
+jest.mock('@/hooks/useAdminColors', () => ({
+  useAdminColors: () => ({
+    bg: '#fff',
+    surface: '#f5f5f5',
+    fg: '#000',
+    muted: '#666',
+    border: '#ddd',
+    brand: '#007AFF',
+  }),
+}));
+
 import AdminPanelScreen from '../AdminPanelScreen';
 
 describe('AdminPanelScreen', () => {
@@ -38,5 +49,33 @@ describe('AdminPanelScreen', () => {
     expect(queryByText('Buscar historial de pedido')).toBeNull();
     fireEvent.press(getByText('Pedidos'));
     expect(getByText('Buscar historial de pedido')).toBeTruthy();
+  });
+
+  it('navigates to OrderDetail on valid lookup submit', () => {
+    const { getByText, getByPlaceholderText } = render(
+      <AdminPanelScreen navigation={{ navigate: mockNavigate } as any} />,
+    );
+    fireEvent.press(getByText('Pedidos'));
+
+    const input = getByPlaceholderText('ID del pedido');
+    fireEvent.changeText(input, '42');
+    fireEvent.press(getByText('Ver historial'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('OrderDetail', { orderId: 42 });
+  });
+
+  it('shows validation error for invalid lookup ID', () => {
+    const { getByText, getByPlaceholderText, queryByText } = render(
+      <AdminPanelScreen navigation={{ navigate: mockNavigate } as any} />,
+    );
+    fireEvent.press(getByText('Pedidos'));
+
+    expect(
+      queryByText('Ingresá un ID de pedido válido (número positivo)'),
+    ).toBeNull();
+    fireEvent.changeText(getByPlaceholderText('ID del pedido'), 'abc');
+    expect(
+      getByText('Ingresá un ID de pedido válido (número positivo)'),
+    ).toBeTruthy();
   });
 });

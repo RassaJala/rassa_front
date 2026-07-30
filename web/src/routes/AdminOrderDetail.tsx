@@ -1,23 +1,19 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-import api from '../services/api';
-import { useAppColors } from '../hooks/useAppColors';
-
-interface HistoryEntry {
-  readonly id_historial: number;
-  readonly estado_anterior: string | null;
-  readonly estado_nuevo: string;
-  readonly creado_en: string;
-  readonly cambiado_por_nombre: string | null;
-}
-
 import {
+  buildDescription,
+  DOT_SIZE,
   formatTimestamp,
-  STATUS_COLORS,
+  getStatusColor,
+  isNotFoundError,
+  normalizeOrderHistoryResponse,
+  STALE_TIME,
   STATUS_LABELS,
 } from '../constants/orderTimeline';
-import type { ApiResponse } from '../types';
+import api from '../services/api';
+import { useAppColors } from '../hooks/useAppColors';
+import type { OrderStatusHistory } from '../types';
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -25,21 +21,23 @@ export function AdminOrderDetail() {
   const colors = useAppColors();
   const { fg, muted, border, surface, brand } = colors;
   const orderId = Number(id);
+  const isValidId = Number.isInteger(orderId) && orderId > 0;
 
-  const { data, isLoading, isError, error, refetch } = useQuery<HistoryEntry[]>(
-    {
-      queryKey: ['order-history', orderId],
-      queryFn: async () => {
-        const res = await api.get<ApiResponse<HistoryEntry[]> | HistoryEntry[]>(
-          `/pedidos/${orderId}/historial`,
-        );
-        if (Array.isArray(res.data)) return res.data;
-        return (res.data as ApiResponse<HistoryEntry[]>).data;
-      },
-      enabled: orderId > 0,
-      retry: false,
+  const { data, isLoading, isError, error, refetch } = useQuery<
+    OrderStatusHistory[],
+    Error
+  >({
+    queryKey: ['order-history', orderId] as const,
+    queryFn: async () => {
+      const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
+      return normalizeOrderHistoryResponse(res.data);
     },
-  );
+    enabled: isValidId,
+    staleTime: STALE_TIME,
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
+
 
   const entries = data ?? [];
 
@@ -163,18 +161,34 @@ export function AdminOrderDetail() {
                 ? error.message
                 : 'Error al cargar el historial'}
             </p>
-            <button
-              onClick={() => void refetch()}
-              style={{
-                ...btnStyle,
-                marginTop: 16,
-                background: surface,
-                border: `1.5px solid ${border}`,
-                color: brand,
-              }}
-            >
-              🔄 Reintentar
-            </button>
+            {isNotFoundError(error) ? (
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  ...btnStyle,
+                  marginTop: 16,
+                  background: surface,
+                  border: `1.5px solid ${border}`,
+                  color: brand,
+                }}
+              >
+                ← Volver
+              </button>
+            ) : (
+              <button
+                onClick={() => void refetch()}
+                style={{
+                  ...btnStyle,
+                  marginTop: 16,
+                  background: surface,
+                  border: `1.5px solid ${border}`,
+                  color: brand,
+                }}
+              >
+                🔄 Reintentar
+              </button>
+            )}
+
           </div>
         )}
 

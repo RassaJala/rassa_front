@@ -18,7 +18,7 @@ jest.mock('@react-native-community/netinfo', () => ({
   removeListeners: jest.fn(),
 }));
 jest.mock('@/store/AuthContext', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
   const actual = jest.requireActual('@/store/AuthContext');
   return {
     ...(actual as Record<string, unknown>),
@@ -135,7 +135,9 @@ describe('ProfileScreen', () => {
       fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(
-          getByText('El teléfono debe tener exactamente 10 dígitos.'),
+          getByText(
+            'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
+          ),
         ).toBeTruthy();
       });
     });

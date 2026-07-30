@@ -108,7 +108,7 @@ export default function ChangePassword({
 
   // ── Render ───────────────────────────────────────────
   return (
-    <View className="mt-4 rounded-2xl border border-rassa-border bg-rassa-surface p-5 dark:border-rassa-border-dark dark:bg-rassa-surface-dark">
+    <View className="border-rassa-border bg-rassa-surface dark:border-rassa-border-dark dark:bg-rassa-surface-dark mt-4 rounded-2xl border p-5">
       {/* Header */}
       <Pressable
         onPress={() => {
@@ -119,7 +119,7 @@ export default function ChangePassword({
         className="flex-row items-center gap-2.5"
       >
         <MaterialCommunityIcons name="lock-outline" size={22} color={c.brand} />
-        <Text className="flex-1 text-base font-bold tracking-tight text-rassa-fg dark:text-rassa-fg-dark">
+        <Text className="text-rassa-fg dark:text-rassa-fg-dark flex-1 text-base font-bold tracking-tight">
           Cambiar Contraseña
         </Text>
         <MaterialCommunityIcons
@@ -149,7 +149,7 @@ export default function ChangePassword({
 
           {/* Current Password */}
           <Text
-            className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark"
+            className="text-rassa-muted dark:text-rassa-muted-dark mb-1 text-xs font-semibold tracking-wide uppercase"
             style={{
               marginTop: passwordSuccess || passwordError ? 4 : 20,
             }}
@@ -170,7 +170,7 @@ export default function ChangePassword({
           />
 
           {/* New Password */}
-          <Text className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark">
+          <Text className="text-rassa-muted dark:text-rassa-muted-dark mb-1 text-xs font-semibold tracking-wide uppercase">
             Nueva Contraseña (mín. {MIN_PASSWORD_LENGTH} caracteres) *
           </Text>
           <TextInput
@@ -187,7 +187,7 @@ export default function ChangePassword({
           />
 
           {/* Confirm Password */}
-          <Text className="mb-1 text-xs font-semibold uppercase tracking-wide text-rassa-muted dark:text-rassa-muted-dark">
+          <Text className="text-rassa-muted dark:text-rassa-muted-dark mb-1 text-xs font-semibold tracking-wide uppercase">
             Confirmar Nueva Contraseña *
           </Text>
           <TextInput

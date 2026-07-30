@@ -174,7 +174,7 @@ export default function ProfileEditForm({
         avatarSize={64}
         paddingVertical={24}
       >
-        <Text className="text-lg font-bold tracking-tight text-rassa-fg dark:text-rassa-fg-dark">
+        <Text className="text-rassa-fg dark:text-rassa-fg-dark text-lg font-bold tracking-tight">
           {user?.email}
         </Text>
       </ProfileHeader>
@@ -182,7 +182,7 @@ export default function ProfileEditForm({
       <FeedbackBanner type="success" message={successMessage} colors={c} />
       <FeedbackBanner type="error" message={errorMessage} colors={c} />
 
-      <View className="rounded-2xl border border-rassa-border bg-rassa-surface p-5 dark:border-rassa-border-dark dark:bg-rassa-surface-dark">
+      <View className="border-rassa-border bg-rassa-surface dark:border-rassa-border-dark dark:bg-rassa-surface-dark rounded-2xl border p-5">
         <EditFormBody
           colors={c}
           nombre={nombre}

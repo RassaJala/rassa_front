@@ -31,8 +31,9 @@ import type {
   FarmerStackParamList,
   Unidad,
 } from '@/types';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 import { parseApiList } from '@/utils/apiResponse';
+
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
@@ -539,6 +540,7 @@ export default function ProductFormScreen({
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {images.map((img, index) => {
                 if (img.markedForDeletion) return null;
+
                 return (
                   <View
                     key={

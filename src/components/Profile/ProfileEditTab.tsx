@@ -10,6 +10,8 @@ import { Button, SegmentedButtons, TextInput } from 'react-native-paper';
 
 import CatalogSelector from '@/components/CatalogSelector';
 import { BRAND_RED_CORAL } from '@/constants/brandColors';
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
 import type { Localidad, Municipio } from '@/types';
 import { cleanAddress, cleanName, formatPhoneNumber } from '@/utils/validation';
 
@@ -64,9 +66,23 @@ export default function ProfileEditTab({
   location,
   callbacks,
 }: ProfileEditTabProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+
+  const catalogColors = {
+    muted: isDark ? colors.admMutedD : colors.admMutedL,
+    border: isDark ? colors.admBorderD : colors.admBorderL,
+    surface: isDark ? colors.admSurfaceD : colors.admSurfaceL,
+    fg: isDark ? colors.admFgD : colors.admFgL,
+    errorBg: isDark ? colors.admErrorBgD : colors.admErrorBgL,
+    errorBorder: isDark ? colors.admErrorBorderD : colors.admErrorBorderL,
+    errorText: isDark ? colors.admErrorTextD : colors.admErrorTextL,
+    errorAction: isDark ? colors.admErrorActionD : colors.admErrorActionL,
+  };
+
   return (
     <View className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <Text className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-brand-ink dark:border-gray-800 dark:text-gray-100">
+      <Text className="text-brand-ink mb-4 border-b border-gray-200 pb-2 text-lg font-bold dark:border-gray-800 dark:text-gray-100">
         Editar Perfil
       </Text>
 
@@ -161,6 +177,7 @@ export default function ProfileEditTab({
         refetchMunicipios={location.refetchMunicipios}
         refetchLocalidades={location.refetchLocalidades}
         setErrorMessage={callbacks.setErrorMessage}
+        catalogColors={catalogColors}
       />
 
       <Button

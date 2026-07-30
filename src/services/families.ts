@@ -1,4 +1,4 @@
-/* globals console */
+// console is a built-in global — no need to declare it
 
 import type { Family, FamilyMember, SearchUserResult } from '@/types';
 

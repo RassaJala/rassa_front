@@ -21,7 +21,9 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@/common/*": ["../packages/common/src/*"],
+      "@root/*": ["../src/*"]
     }
   },
   "include": ["src"]

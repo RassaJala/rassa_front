@@ -2,7 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminRoute } from '~/components/guards/AdminRoute';
 import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
 import { DashboardLayout } from '~/components/layout/DashboardLayout';
-import { LoginScreen, RegisterScreen } from './auth';
+import { LoginScreen } from './Login';
+import { RegisterScreen } from './Register';
 import { FarmerProducts, FarmerOrders } from './farmer';
 import { SellerSales } from './seller';
 import { VendorPanelScreen } from './VendorPanelScreen';
@@ -27,7 +28,7 @@ function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="text-center">
-        <h1 className="text-6xl font-bold text-brand-green-forest">404</h1>
+        <h1 className="text-brand-green-forest text-6xl font-bold">404</h1>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
           Página no encontrada
         </p>
@@ -42,7 +43,7 @@ function RootRedirect() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-red-coral dark:border-gray-700" />
+        <div className="border-t-brand-red-coral h-8 w-8 animate-spin rounded-full border-4 border-gray-200 dark:border-gray-700" />
       </div>
     );
   }
