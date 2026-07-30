@@ -2,6 +2,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { DataTable } from '../components/layout/DataTable';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 import type { Column, Role } from '../types';
 
 // --- Types ---
@@ -23,6 +24,7 @@ interface AdminProductRow {
   categoria: string;
   agricultor: string;
   estado: 'Activo' | 'Inactivo';
+  imagen_url?: string | null;
 }
 
 interface AdminOrderRow {
@@ -203,7 +205,17 @@ const userColumns: Column<UserRow>[] = [
 ];
 
 const adminProductColumns: Column<AdminProductRow>[] = [
-  { key: 'nombre', label: 'Nombre', sortable: true },
+  {
+    key: 'nombre',
+    label: 'Nombre',
+    sortable: true,
+    render: (p) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ProductThumbnail src={p.imagen_url} alt={p.nombre} />
+        {p.nombre}
+      </span>
+    ),
+  },
   {
     key: 'precio',
     label: 'Precio',
