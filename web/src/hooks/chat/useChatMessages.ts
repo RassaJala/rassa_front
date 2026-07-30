@@ -49,12 +49,19 @@ export function useChatMessages(
             if (typeof msg.id === 'number') {
               if (seenIds.has(msg.id)) return false;
               seenIds.add(msg.id);
-              realContents.add(`${msg.conversacion}-${msg.remitente}-${msg.contenido}`);
+              realContents.add(
+                `${msg.conversacion}-${msg.remitente}-${msg.contenido}`,
+              );
               return true;
             }
             const tempKey = `${msg.conversacion}-${msg.remitente}-${msg.contenido}-${msg.creado_en}`;
             if (seenTempKeys.has(tempKey)) return false;
-            if (realContents.has(`${msg.conversacion}-${msg.remitente}-${msg.contenido}`)) return false;
+            if (
+              realContents.has(
+                `${msg.conversacion}-${msg.remitente}-${msg.contenido}`,
+              )
+            )
+              return false;
             seenTempKeys.add(tempKey);
             return true;
           }),

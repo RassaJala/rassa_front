@@ -26,11 +26,20 @@ export function ConversationItem({
         className="flex w-full animate-pulse items-center gap-3 px-4 py-3"
         style={{ borderBottom: `1px solid ${c.border}` }}
       >
-        <div className="h-10 w-10 rounded-full" style={{ background: c.border }} />
+        <div
+          className="h-10 w-10 rounded-full"
+          style={{ background: c.border }}
+        />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <div className="h-3 w-32 rounded" style={{ background: c.border }} />
-            <div className="h-3 w-12 rounded" style={{ background: c.border }} />
+            <div
+              className="h-3 w-32 rounded"
+              style={{ background: c.border }}
+            />
+            <div
+              className="h-3 w-12 rounded"
+              style={{ background: c.border }}
+            />
           </div>
           <div className="h-3 w-48 rounded" style={{ background: c.border }} />
         </div>
