@@ -23,6 +23,8 @@ export function ProductPickerModal({
 }) {
   const [search, setSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -30,11 +32,11 @@ export function ProductPickerModal({
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     }
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  }, []);
 
   const queryLower = search.toLowerCase();
   const filtered = catalog.filter(

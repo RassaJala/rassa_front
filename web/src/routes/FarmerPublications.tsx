@@ -24,6 +24,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Toast, type ToastState } from '../components/ui/Toast';
 
 const PAGE_SIZE = 10;
@@ -60,6 +61,10 @@ export function FarmerPublications() {
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [detailPub, setDetailPub] = useState<Publicacion | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    id: number;
+    kind: 'delete' | 'close';
+  } | null>(null);
 
   const [filterMonth, setFilterMonth] = useState(0);
   const [filterYear, setFilterYear] = useState(0);
@@ -133,7 +138,11 @@ export function FarmerPublications() {
   }
 
   async function handleDelete(id: number) {
-    if (!window.confirm('¿Eliminar esta publicación?')) return;
+    setConfirmAction({ id, kind: 'delete' });
+  }
+
+  async function executeDelete(id: number) {
+    setConfirmAction(null);
     try {
       await deleteMutation.mutateAsync(id);
       showToast('Publicación eliminada.');
@@ -152,7 +161,11 @@ export function FarmerPublications() {
   }
 
   async function handleClose(id: number) {
-    if (!window.confirm('¿Cerrar esta publicación?')) return;
+    setConfirmAction({ id, kind: 'close' });
+  }
+
+  async function executeClose(id: number) {
+    setConfirmAction(null);
     try {
       await closeMutation.mutateAsync(id);
       showToast('Publicación cerrada.');
@@ -170,6 +183,32 @@ export function FarmerPublications() {
           pub={detailPub}
           onClose={() => setDetailPub(null)}
           colors={colors}
+        />
+      )}
+
+      {confirmAction && (
+        <ConfirmDialog
+          title={
+            confirmAction.kind === 'delete'
+              ? 'Eliminar publicación'
+              : 'Cerrar publicación'
+          }
+          message={
+            confirmAction.kind === 'delete'
+              ? '¿Eliminar esta publicación? Esta acción no se puede deshacer.'
+              : '¿Cerrar esta publicación? Los clientes no podrán verla.'
+          }
+          confirmLabel={confirmAction.kind === 'delete' ? 'Eliminar' : 'Cerrar'}
+          variant={confirmAction.kind === 'delete' ? 'danger' : 'default'}
+          colors={colors}
+          onConfirm={() => {
+            if (confirmAction.kind === 'delete') {
+              void executeDelete(confirmAction.id);
+            } else {
+              void executeClose(confirmAction.id);
+            }
+          }}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
 
@@ -349,7 +388,7 @@ export function FarmerPublications() {
             </Button>
           }
         />
-      ) : listToRender.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon="🔍"
           title="Sin resultados"
@@ -390,7 +429,7 @@ export function FarmerPublications() {
                 </tr>
               </thead>
               <tbody>
-                {listToRender.map((pub) => {
+                {filtered.map((pub) => {
                   const badge = getStatusBadge(pub.estado);
                   const productos = pub.productos ?? [];
                   return (
@@ -400,7 +439,10 @@ export function FarmerPublications() {
                       style={{
                         borderBottom: `1px solid ${colors.border}`,
                       }}
-                      onClick={() => setDetailPub(pub)}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('button')) return;
+                        setDetailPub(pub);
+                      }}
                     >
                       <td
                         className="px-[18px] py-4 text-[15px] font-semibold"
@@ -471,7 +513,7 @@ export function FarmerPublications() {
 
           {/* Mobile cards */}
           <div className="flex flex-col gap-3 md:hidden">
-            {listToRender.map((pub) => {
+            {filtered.map((pub) => {
               const badge = getStatusBadge(pub.estado);
               return (
                 <div

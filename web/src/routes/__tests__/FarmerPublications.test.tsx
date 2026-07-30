@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -74,7 +74,6 @@ function fakePub(overrides: Record<string, unknown> = {}) {
 describe('FarmerPublications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -161,10 +160,13 @@ describe('FarmerPublications', () => {
     } as never);
     mockMutateAsync.mockResolvedValue(undefined);
     render(<FarmerPublications />);
-    const btns = screen.getAllByText('Eliminar');
-    await userEvent.click(btns[0]!);
-    expect(window.confirm).toHaveBeenCalledWith('¿Eliminar esta publicación?');
-    expect(mockMutateAsync).toHaveBeenCalledWith(1);
+    await userEvent.click(screen.getAllByText('Eliminar')[0]!);
+    expect(await screen.findByRole('heading', { name: 'Eliminar publicación' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByText('Eliminar'));
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith(1);
+    });
   });
 
   it('calls publish', async () => {
@@ -182,7 +184,6 @@ describe('FarmerPublications', () => {
   });
 
   it('does not call mutate when confirm is rejected', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     mockedUsePublicaciones.mockReturnValue({
       data: { data: { results: [fakePub()] } },
       isLoading: false,
@@ -190,8 +191,9 @@ describe('FarmerPublications', () => {
       refetch: mockRefetch,
     } as never);
     render(<FarmerPublications />);
-    const btns = screen.getAllByText('Eliminar');
-    await userEvent.click(btns[0]!);
+    const actionBtns = screen.getAllByText('Eliminar');
+    await userEvent.click(actionBtns[0]!);
+    await userEvent.click(await screen.findByText('Cancelar'));
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
@@ -204,10 +206,13 @@ describe('FarmerPublications', () => {
     } as never);
     mockMutateAsync.mockResolvedValue(undefined);
     render(<FarmerPublications />);
-    const btns = screen.getAllByText('Cerrar');
-    await userEvent.click(btns[0]!);
-    expect(window.confirm).toHaveBeenCalledWith('¿Cerrar esta publicación?');
-    expect(mockMutateAsync).toHaveBeenCalledWith(1);
+    await userEvent.click(screen.getAllByText('Cerrar')[0]!);
+    expect(await screen.findByRole('heading', { name: 'Cerrar publicación' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByText('Cerrar'));
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith(1);
+    });
   });
 
   it('shows toast on mutation error', async () => {

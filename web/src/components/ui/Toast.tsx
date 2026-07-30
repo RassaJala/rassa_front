@@ -39,7 +39,7 @@ export function Toast({
       cancelAnimationFrame(tick);
       clearTimeout(dismissTimer);
     };
-  }, [toast]);
+  }, [toast, isError]);
 
   useEffect(() => {
     if (!visible && toast) {
