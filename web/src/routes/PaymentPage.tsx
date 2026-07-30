@@ -9,6 +9,11 @@ import api from '../services/api';
 import { createPago, fetchTiposPago } from '../services/payments';
 import type { TipoPago } from '../services/payments';
 
+// ── Constants ──────────────────────────────────────────────
+
+const STATUS_READY = 'listo_para_retirar';
+const INPUT_MAX_LENGTH = 200;
+
 // ── Types ──────────────────────────────────────────────────
 
 interface OrderDetail {
@@ -44,17 +49,22 @@ export function PaymentPage() {
       return data;
     },
     enabled: !!orderId,
+    staleTime: 30_000,
   });
 
   // Fetch payment types
   const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
     queryKey: ['tipos-pago'],
     queryFn: fetchTiposPago,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
   const pagoMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTipo || !order) throw new Error('Datos incompletos');
+      if (!orderId || isNaN(Number(orderId)))
+        throw new Error('ID de pedido inválido');
       const trimmedRef = referencia.trim();
       return createPago({
         pedido: Number(orderId),
@@ -63,11 +73,18 @@ export function PaymentPage() {
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
     },
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      void queryClient.invalidateQueries({
-        queryKey: ['pedido', Number(orderId)],
-      });
+    onSuccess: async (data) => {
+      try {
+        localStorage.setItem('last_payment_id', String(data.id_pago));
+      } catch {
+        /* ignore */
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['pedido', Number(orderId)],
+        }),
+      ]).catch(() => {});
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
     },
     onError: (err: unknown) => {
@@ -97,7 +114,7 @@ export function PaymentPage() {
   });
 
   const isLoading = orderLoading || tiposLoading;
-  const isReady = order?.estado_actual === 'listo_para_retirar';
+  const isReady = order?.estado_actual === STATUS_READY;
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
@@ -276,6 +293,7 @@ export function PaymentPage() {
             : 'Seleccioná un método de pago primero'
         }
         disabled={!selectedTipo}
+        maxLength={INPUT_MAX_LENGTH}
         className="mb-6 w-full rounded-xl px-4 py-3 text-[15px] outline-none"
         style={{
           border: `1.5px solid ${border}`,

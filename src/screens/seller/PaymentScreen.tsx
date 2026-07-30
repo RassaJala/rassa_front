@@ -19,6 +19,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { createPago, fetchTiposPago } from '@/services/payments';
+import * as Storage from '@/services/storage';
 import { useTheme } from '@/store/ThemeContext';
 import type {
   OrderDetail,
@@ -27,6 +28,12 @@ import type {
   TipoPago,
 } from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
+
+// ── Constants ──────────────────────────────────────────────
+
+const STATUS_READY = 'listo_para_retirar';
+const LAST_PAYMENT_KEY = 'last_payment_id';
+const INPUT_MAX_LENGTH = 200;
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -453,6 +460,7 @@ function PaymentFormView({
           }
           placeholderTextColor={muted}
           editable={selectedTipo !== null}
+          maxLength={INPUT_MAX_LENGTH}
           style={{
             backgroundColor: surface,
             borderRadius: 14,
@@ -537,12 +545,16 @@ export default function PaymentScreen(): React.JSX.Element {
       const res = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return res.data;
     },
+    enabled: !!orderId,
+    staleTime: 30_000,
   });
 
   // Fetch payment types
   const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
     queryKey: ['tipos-pago'],
     queryFn: fetchTiposPago,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
   const pagoMutation = useMutation({
@@ -556,9 +568,12 @@ export default function PaymentScreen(): React.JSX.Element {
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
     },
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      void queryClient.invalidateQueries({ queryKey: ['pedido', orderId] });
+    onSuccess: async (data) => {
+      await Storage.setItemAsync(LAST_PAYMENT_KEY, String(data.id_pago));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
+        queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
+      ]).catch(() => {});
       navigation.replace('Receipt', { paymentId: data.id_pago });
     },
     onError: (error: unknown) => {
@@ -573,7 +588,7 @@ export default function PaymentScreen(): React.JSX.Element {
   });
 
   const isLoading = orderLoading || tiposLoading;
-  const isReady = order?.estado_actual === 'listo_para_retirar';
+  const isReady = order?.estado_actual === STATUS_READY;
 
   if (isLoading) {
     return <LoadingView bg={bg} brand={brand} />;

@@ -210,7 +210,7 @@ export interface PaymentDetail {
 export type AdminStackParamList = {
   AdminPanel: undefined;
   AdminProfile: undefined;
-  Payment: { readonly orderId: number; readonly orderTotal?: string };
+  Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
@@ -328,7 +328,7 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
-  Payment: { readonly orderId: number; readonly orderTotal?: string };
+  Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
   Chat: {
     conversationId: number;

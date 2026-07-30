@@ -59,6 +59,7 @@ export default function ReceiptScreen(): React.JSX.Element {
   } = useQuery({
     queryKey: ['pago', paymentId],
     queryFn: () => fetchPago(paymentId),
+    enabled: !!paymentId,
   });
 
   if (isLoading) {
