@@ -36,13 +36,21 @@ export const handlers = [
 
   http.post(`${BASE}/publicaciones/:id/publish/`, ({ params }) =>
     HttpResponse.json({
-      data: { ...fakePub, id_publicacion: Number(params.id), estado: 'publicado' },
+      data: {
+        ...fakePub,
+        id_publicacion: Number(params.id),
+        estado: 'publicado',
+      },
     }),
   ),
 
   http.post(`${BASE}/publicaciones/:id/close/`, ({ params }) =>
     HttpResponse.json({
-      data: { ...fakePub, id_publicacion: Number(params.id), estado: 'cerrado' },
+      data: {
+        ...fakePub,
+        id_publicacion: Number(params.id),
+        estado: 'cerrado',
+      },
     }),
   ),
 ];

@@ -58,7 +58,9 @@ describe('FarmerPublications — integration', () => {
     await waitFor(() => {
       expect(publishCalled).toBe(true);
     });
-    expect(await screen.findByText('Publicación publicada.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Publicación publicada.'),
+    ).toBeInTheDocument();
   });
 
   it('shows error toast when publish fails', async () => {

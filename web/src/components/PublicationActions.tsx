@@ -45,9 +45,15 @@ interface ActionDef {
   };
 }
 
-function getActions(
-  { estado, pubId, isMutating, onEdit, onPublish, onDelete, onClose }: PubActionContext,
-): ActionDef[] {
+function getActions({
+  estado,
+  pubId,
+  isMutating,
+  onEdit,
+  onPublish,
+  onDelete,
+  onClose,
+}: PubActionContext): ActionDef[] {
   if (estado === 'borrador') {
     return [
       {
@@ -56,7 +62,11 @@ function getActions(
         onClick: () => onEdit(pubId),
         style: (c) => ({
           buttonVariant: 'ghost',
-          iconStyle: { border: `1px solid ${c.border}`, background: c.surface, color: c.fg },
+          iconStyle: {
+            border: `1px solid ${c.border}`,
+            background: c.surface,
+            color: c.fg,
+          },
         }),
       },
       {
@@ -66,7 +76,11 @@ function getActions(
         onClick: () => void onPublish(pubId),
         style: (c) => ({
           buttonVariant: 'secondary',
-          iconStyle: { border: `1px solid ${c.brand}`, background: c.accentBg, color: c.brand },
+          iconStyle: {
+            border: `1px solid ${c.brand}`,
+            background: c.accentBg,
+            color: c.brand,
+          },
         }),
       },
       {
@@ -76,7 +90,11 @@ function getActions(
         onClick: () => void onDelete(pubId),
         style: (c) => ({
           buttonVariant: 'ghost',
-          iconStyle: { border: `1px solid ${c.border}`, background: c.surface, color: c.coral },
+          iconStyle: {
+            border: `1px solid ${c.border}`,
+            background: c.surface,
+            color: c.coral,
+          },
         }),
       },
     ];
@@ -90,7 +108,11 @@ function getActions(
         onClick: () => void onClose(pubId),
         style: (c) => ({
           buttonVariant: 'secondary',
-          iconStyle: { border: `1px solid ${c.coral}`, background: c.accentBg, color: c.coral },
+          iconStyle: {
+            border: `1px solid ${c.coral}`,
+            background: c.accentBg,
+            color: c.coral,
+          },
         }),
       },
     ];
@@ -101,7 +123,11 @@ function getActions(
 const ICON_WRAPPER_CLASS =
   'grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]';
 
-function renderAction(action: ActionDef, variant: 'button' | 'icon', colors: AppColors): JSX.Element {
+function renderAction(
+  action: ActionDef,
+  variant: 'button' | 'icon',
+  colors: AppColors,
+): JSX.Element {
   const s = action.style(colors);
   if (variant === 'button') {
     return (
