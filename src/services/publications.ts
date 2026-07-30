@@ -54,6 +54,7 @@ export async function getPublicaciones(params?: {
 export async function getPublicacion(
   id: number,
 ): Promise<ApiResponse<Publicacion>> {
+  assertValidId(id, 'publicacionId');
   const { data } = await api.get<ApiResponse<Publicacion>>(
     `/publicaciones/${String(id)}/`,
   );
@@ -100,6 +101,7 @@ export async function closePublicacion(
 export async function getProductosSemanales(
   pubId: number,
 ): Promise<ApiResponse<ProductoSemanal[]>> {
+  assertValidId(pubId, 'publicacionId');
   const { data } = await api.get<ApiResponse<ProductoSemanal[]>>(
     `/publicaciones/${String(pubId)}/productos/`,
   );

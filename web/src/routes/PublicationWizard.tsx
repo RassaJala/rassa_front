@@ -1,0 +1,698 @@
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ProductPickerModal } from '../components/ProductPickerModal';
+import { Button } from '../components/ui/Button';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Toast, type ToastState } from '../components/ui/Toast';
+import { FechaStep } from '../components/wizard/FechaStep';
+import { ProductosStep } from '../components/wizard/ProductosStep';
+import { PublicarStep } from '../components/wizard/PublicarStep';
+import { ResumenStep } from '../components/wizard/ResumenStep';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_IMAGE_SIZE_MB,
+} from '../constants/api';
+import { useAppColors } from '../hooks/useAppColors';
+import {
+  useAddProductoSemanal,
+  useCatalogProductos,
+  useCreatePublicacion,
+  useDeleteProductoSemanal,
+  useProductosSemanales,
+  usePublicacion,
+  usePublishPublicacion,
+  useUnidades,
+  useUpdateProductoSemanal,
+  useUploadProductoSemanalImagen,
+} from '../hooks/usePublications';
+import {
+  getPublicacion,
+  type Producto,
+  type Publicacion,
+} from '../services/publications';
+import { deleteOrphans } from '../utils/deleteOrphans';
+import { revokeBlobUrl } from '../utils/imageHelpers';
+import { logError } from '../utils/logger';
+import { persistItems } from '../utils/persistItems';
+import { runPersist as runPersistCore } from '../utils/runPersist';
+import {
+  type ItemValidation,
+  type WizardItemDraft,
+  canJumpToStep,
+  formatDate,
+  generateTempId,
+  getNextMonday,
+  getWeekNumber,
+  validateAllItems,
+  validateItem,
+} from '../utils/publicationWizard';
+import { publishAfterPersist } from '../utils/publishAfterPersist';
+import { upsertItems } from '../utils/upsertItems';
+
+// ── Types ──────────────────────────────────────────────────
+
+type WizardStep = 'fecha' | 'productos' | 'resumen' | 'publicar';
+
+const WIZARD_STEPS: WizardStep[] = [
+  'fecha',
+  'productos',
+  'resumen',
+  'publicar',
+];
+
+const STEP_LABELS: Record<WizardStep, string> = {
+  fecha: 'Fecha',
+  productos: 'Productos',
+  resumen: 'Resumen',
+  publicar: 'Publicar',
+};
+
+// ── PublicationWizard ──────────────────────────────────────
+
+export function PublicationWizard() {
+  const colors = useAppColors();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
+  const pubId = isEditing ? Number(id) : 0;
+  const invalidId = isEditing && (Number.isNaN(pubId) || pubId <= 0);
+
+  // ── Step state ──
+  const [stepIndex, setStepIndex] = useState(0);
+  const currentStep = WIZARD_STEPS[stepIndex] ?? 'fecha';
+
+  // ── Items ──
+  const [items, setItems] = useState<WizardItemDraft[]>([]);
+  const [validations, setValidations] = useState<Map<string, ItemValidation>>(
+    new Map(),
+  );
+
+  // ── Hooks (all data via TanStack Query) ──
+  const catalogQuery = useCatalogProductos();
+  const unidadesQuery = useUnidades();
+  const pubQuery = usePublicacion(pubId);
+  const itemsQuery = useProductosSemanales(pubId);
+
+  const createMutation = useCreatePublicacion();
+  const publishMutation = usePublishPublicacion();
+  const addItemMutation = useAddProductoSemanal();
+  const updateItemMutation = useUpdateProductoSemanal();
+  const removeItemMutation = useDeleteProductoSemanal();
+  const uploadMutation = useUploadProductoSemanalImagen();
+
+  // ── UI state ──
+  const [showPicker, setShowPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const pubRef = useRef<Publicacion | null>(null);
+  const mountedRef = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // ── Initialize items from server data (editing mode) ──
+  const itemsInitializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isEditing || itemsInitializedRef.current) return;
+    if (pubQuery.data && itemsQuery.data && catalogQuery.data) {
+      const pub = pubQuery.data.data;
+      pubRef.current = pub;
+
+      const catalog = catalogQuery.data?.data?.results ?? [];
+      const catalogMap = new Map(
+        catalog.map((p) => [p.id_producto, p.nombre_producto]),
+      );
+
+      const existingItems: WizardItemDraft[] = (
+        itemsQuery.data?.data ?? []
+      ).map((p) => ({
+        tempId: String(p.id_producto_semanal),
+        isNew: false,
+        fk_producto: p.fk_producto,
+        nombre_producto: catalogMap.get(p.fk_producto) ?? '',
+        fk_unidad: p.fk_unidad,
+        stock: String(p.stock),
+        precio: p.precio,
+        foto: p.foto,
+        imageFile: null,
+        imagePreview: null,
+      }));
+      setItems(existingItems);
+      itemsInitializedRef.current = true;
+    }
+
+    return () => {
+      itemsInitializedRef.current = false;
+    };
+  }, [isEditing, id, pubQuery.data, itemsQuery.data]);
+
+  // ── Cleanup on unmount ──
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      abortRef.current?.abort();
+      for (const item of itemsRef.current) {
+        revokeBlobUrl(item.imagePreview);
+      }
+    };
+  }, []);
+
+  // ── beforeunload when items changed ──
+  const [persisted, setPersisted] = useState(false);
+  useEffect(() => {
+    if (items.length === 0 || persisted) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [items.length, persisted]);
+
+  // ── Date helpers ──
+  const pubData = isEditing ? pubQuery.data?.data : undefined;
+  const nextMonday =
+    isEditing && pubData
+      ? new Date(pubData.fecha_publicacion)
+      : getNextMonday();
+  const weekNumber =
+    isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
+
+  // ── Navigation ──
+  function nextStep() {
+    if (currentStep === 'productos' && !validateAndMarkItems()) return;
+    setStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
+  }
+
+  function prevStep() {
+    setStepIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function jumpToStep(idx: number) {
+    if (!canJumpToStep(idx, stepIndex, WIZARD_STEPS, items)) return;
+    setStepIndex(idx);
+  }
+
+  // ── Items CRUD ──
+  function addItem(producto: Producto) {
+    const already = items.some((i) => i.fk_producto === producto.id_producto);
+    if (already) return;
+
+    const newItem: WizardItemDraft = {
+      tempId: generateTempId(),
+      isNew: true,
+      fk_producto: producto.id_producto,
+      nombre_producto: producto.nombre_producto,
+      fk_unidad: 0,
+      stock: '',
+      precio: String(producto.precio),
+      foto: null,
+      imageFile: null,
+      imagePreview: null,
+    };
+    setItems((prev) => [...prev, newItem]);
+  }
+
+  function removeItem(tempId: string) {
+    const item = items.find((i) => i.tempId === tempId);
+    revokeBlobUrl(item?.imagePreview ?? null);
+
+    setItems((prev) => prev.filter((i) => i.tempId !== tempId));
+    setValidations((prev) => {
+      const next = new Map(prev);
+      next.delete(tempId);
+      return next;
+    });
+  }
+
+  function updateItem(
+    tempId: string,
+    field: keyof WizardItemDraft,
+    value: string | number | null,
+  ) {
+    setItems((prev) =>
+      prev.map((i) => (i.tempId === tempId ? { ...i, [field]: value } : i)),
+    );
+    setValidations((prev) => {
+      const next = new Map(prev);
+      next.delete(tempId);
+      return next;
+    });
+  }
+
+  function validateAndMarkItems(): boolean {
+    const validationResults = new Map<string, ItemValidation>();
+    let hasError = false;
+    for (const item of items) {
+      const errs = validateItem(item);
+      if (Object.keys(errs).length > 0) {
+        validationResults.set(item.tempId, errs);
+        hasError = true;
+      }
+    }
+    setValidations(validationResults);
+    return !hasError;
+  }
+
+  // ── Image handling ──
+  function handleImageSelect(tempId: string, file: File) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setError(`La imagen no puede superar ${String(MAX_IMAGE_SIZE_MB)} MB.`);
+      return;
+    }
+
+    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+      setError('Formato de imagen no válido. Usá JPG, PNG, WebP o GIF.');
+      return;
+    }
+
+    // Revoke previous blob URL if replacing
+    const prev = items.find((i) => i.tempId === tempId);
+    revokeBlobUrl(prev?.imagePreview ?? null);
+
+    const preview = URL.createObjectURL(file);
+    setItems((prevItems) =>
+      prevItems.map((i) =>
+        i.tempId === tempId
+          ? { ...i, imageFile: file, imagePreview: preview }
+          : i,
+      ),
+    );
+  }
+
+  function handleImageRemove(tempId: string) {
+    const item = items.find((i) => i.tempId === tempId);
+    revokeBlobUrl(item?.imagePreview ?? null);
+
+    setItems((prev) =>
+      prev.map((i) =>
+        i.tempId === tempId ? { ...i, imageFile: null, imagePreview: null } : i,
+      ),
+    );
+  }
+
+  // ── Phase 1: Upsert items ──
+  async function upsertItemsWrapper(
+    pubId: number,
+    signal?: AbortSignal,
+  ): Promise<{
+    tempIdToServerId: Map<string, number>;
+    newServerIds: number[];
+    updatedServerIds: number[];
+  }> {
+    return upsertItems(
+      pubId,
+      items.map((i) => ({
+        tempId: i.tempId,
+        isNew: i.isNew,
+        fk_producto: i.fk_producto,
+        fk_unidad: i.fk_unidad,
+        stock: i.stock,
+        precio: i.precio,
+        imageFile: i.imageFile,
+      })),
+      {
+        add: (vars) => addItemMutation.mutateAsync(vars),
+        update: (vars) => updateItemMutation.mutateAsync(vars),
+        uploadImage: (vars) => uploadMutation.mutateAsync(vars),
+        hasServerPub: pubRef.current !== null,
+      },
+      signal,
+    );
+  }
+
+  // ── Phase 2: Refresh pubRef snapshot ──
+  async function refreshSnapshot(pubId: number): Promise<void> {
+    const refreshed = await qc.fetchQuery({
+      queryKey: ['publicaciones', pubId],
+      queryFn: () => getPublicacion(pubId),
+      staleTime: 0,
+    });
+    pubRef.current = refreshed.data;
+  }
+
+  // ── Phase 3: Delete orphan items ──
+  async function deleteOrphansWrapper(
+    pubId: number,
+    tempIdToServerId: Map<string, number>,
+    signal?: AbortSignal,
+  ): Promise<number> {
+    const currentIds = new Set<string>(
+      [...tempIdToServerId.values()].map(String),
+    );
+    for (const item of items) {
+      const syncedId = tempIdToServerId.get(item.tempId);
+      if (syncedId !== undefined) {
+        currentIds.add(String(syncedId));
+      } else {
+        const parsed = Number(item.tempId);
+        if (!Number.isNaN(parsed) && parsed > 0) currentIds.add(String(parsed));
+      }
+    }
+
+    return deleteOrphans(
+      pubId,
+      pubRef.current?.productos ?? [],
+      currentIds,
+      {
+        removeItem: (vars) => removeItemMutation.mutateAsync(vars),
+      },
+      signal,
+    );
+  }
+
+  // ── Persist items to server (with rollback) ──
+  async function persistItemsWrapper(
+    pubId: number,
+    signal?: AbortSignal,
+  ): Promise<{
+    orphanFailures: number;
+    failedUploads: number;
+    tempIdToServerId: Map<string, number>;
+  }> {
+    let tempIdToServerId = new Map<string, number>();
+
+    const result = await persistItems(
+      pubId,
+      {
+        upsertItems: async (pid, sig) => {
+          const mapping = await upsertItemsWrapper(pid, sig);
+          tempIdToServerId = mapping.tempIdToServerId;
+          return mapping;
+        },
+        refreshSnapshot: (pid) => refreshSnapshot(pid),
+        deleteOrphans: (pid, map, sig) => deleteOrphansWrapper(pid, map, sig),
+        removeItem: (pid, itemId) =>
+          removeItemMutation.mutateAsync({ pubId: pid, itemId }),
+        logCleanupFailure: (itemId, err) => {
+          logError('publications.rollbackCleanup', err, { itemId });
+        },
+      },
+      signal,
+    );
+
+    return {
+      orphanFailures: result.orphanFailures,
+      failedUploads: result.failedUploads,
+      tempIdToServerId,
+    };
+  }
+
+  // ── Shared persist orchestration ──
+  async function handleRunPersist(opts: {
+    successMsg: string;
+    afterPersist?: (pubId: number) => Promise<void>;
+  }): Promise<void> {
+    await runPersistCore(
+      {
+        savingRef,
+        abortRef,
+        mountedRef,
+        pubRef,
+        createFn: () => createMutation.mutateAsync(undefined),
+        persistItemsFn: (pubId, signal) => persistItemsWrapper(pubId, signal),
+        onSaving: setSaving,
+        onError: setError,
+        onToast: (message, type) => setToast({ message, type }),
+        onTempIdSync: setItems,
+        onPersisted: () => setPersisted(true),
+      },
+      opts,
+    );
+  }
+
+  // ── Save draft ──
+  function handleSaveDraft() {
+    if (!validateAllItems(items)) {
+      setError('Corregí los errores en los productos antes de continuar.');
+      return;
+    }
+    void handleRunPersist({ successMsg: 'Borrador guardado.' });
+  }
+
+  // ── Publish ──
+  function handlePublish() {
+    if (!validateAllItems(items)) {
+      setError('Corregí los errores en los productos antes de continuar.');
+      return;
+    }
+    void handleRunPersist({
+      successMsg: '¡Publicación publicada!',
+      afterPersist: (pubId) =>
+        publishAfterPersist(
+          pubId,
+          (id) => publishMutation.mutateAsync(id),
+          () => void navigate('/agricultor/publicaciones'),
+          mountedRef,
+        ),
+    });
+  }
+
+  // ── Toast ──
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  // ── Loading state ──
+  if (invalidId) {
+    return (
+      <div className="py-12 text-center">
+        <p className="mb-3" style={{ color: colors.coral }}>
+          ID de publicación inválido.
+        </p>
+        <Button
+          variant="secondary"
+          onClick={() => void navigate('/agricultor/publicaciones')}
+        >
+          Volver
+        </Button>
+      </div>
+    );
+  }
+
+  if (isEditing && (pubQuery.isLoading || itemsQuery.isLoading)) {
+    return <LoadingSpinner className="py-20" />;
+  }
+
+  if (isEditing && (pubQuery.isError || itemsQuery.isError)) {
+    return (
+      <div className="py-12 text-center">
+        <p className="mb-3" style={{ color: colors.coral }}>
+          {itemsQuery.isError
+            ? 'No se pudieron cargar los productos de la publicación.'
+            : 'No se pudo cargar la publicación.'}
+        </p>
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void pubQuery.refetch();
+              void itemsQuery.refetch();
+            }}
+          >
+            Reintentar
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => void navigate('/agricultor/publicaciones')}
+          >
+            Volver
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const catalog = catalogQuery.data?.data?.results ?? [];
+  const unidades = unidadesQuery.data?.data ?? [];
+  const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
+  const selectedIds = new Set(items.map((i) => i.fk_producto));
+  const hasItemErrors = !validateAllItems(items);
+
+  return (
+    <div className="relative w-full px-4 md:px-6">
+      {/* Toast */}
+      <Toast toast={toast} onDone={() => setToast(null)} />
+
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: colors.fg }}>
+            {isEditing
+              ? `Editar Publicación — Semana ${weekNumber}`
+              : `Nueva Publicación — Semana ${weekNumber}`}
+          </h1>
+          <p className="mt-1 text-[14px]" style={{ color: colors.muted }}>
+            {formatDate(nextMonday)}
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={() => void navigate('/agricultor/publicaciones')}
+        >
+          ✕ Cerrar
+        </Button>
+      </div>
+
+      {/* Step indicator */}
+      <div
+        className="mb-6 flex gap-1 p-1"
+        style={{
+          background: colors.bg,
+          borderRadius: 12,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        {WIZARD_STEPS.map((step, idx) => {
+          const isActive = idx === stepIndex;
+          const isDone = idx < stepIndex;
+          return (
+            <button
+              key={step}
+              onClick={() => jumpToStep(idx)}
+              className="flex-1 cursor-pointer px-3 py-2.5 font-[inherit] text-[13px] font-semibold"
+              style={{
+                borderRadius: 10,
+                border: 'none',
+                background: isActive ? colors.surface : 'transparent',
+                color: isActive
+                  ? colors.fg
+                  : isDone
+                    ? colors.brand
+                    : colors.muted,
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              {isDone ? '✓ ' : ''}
+              {STEP_LABELS[step]}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div
+          className="mb-4 rounded-xl px-4 py-3 text-[14px]"
+          style={{
+            background: 'rgba(222,57,58,0.08)',
+            border: '1px solid rgba(222,57,58,0.2)',
+            color: colors.coral,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* Step content */}
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        {currentStep === 'fecha' && (
+          <FechaStep
+            weekNumber={weekNumber}
+            nextMonday={nextMonday}
+            colors={colors}
+          />
+        )}
+
+        {currentStep === 'productos' && (
+          <ProductosStep
+            items={items}
+            validations={validations}
+            saving={saving}
+            colors={colors}
+            unidades={unidades}
+            loadingCatalog={loadingCatalog}
+            onAddItem={() => setShowPicker(true)}
+            onRemoveItem={removeItem}
+            onUpdateItem={updateItem}
+            onImageSelect={handleImageSelect}
+            onImageRemove={handleImageRemove}
+          />
+        )}
+
+        {currentStep === 'resumen' && (
+          <ResumenStep
+            weekNumber={weekNumber}
+            nextMonday={nextMonday}
+            items={items}
+            unidades={unidades}
+            colors={colors}
+          />
+        )}
+
+        {currentStep === 'publicar' && (
+          <PublicarStep weekNumber={weekNumber} items={items} colors={colors} />
+        )}
+      </div>
+
+      {/* Footer navigation */}
+      <div
+        className="mt-4 flex items-center justify-between rounded-2xl px-6 py-4"
+        style={{
+          background: colors.surface,
+          border: `1px solid ${colors.border}`,
+        }}
+      >
+        <div>
+          {stepIndex > 0 && (
+            <Button variant="ghost" onClick={prevStep}>
+              ← Anterior
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {currentStep === 'publicar' ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => void handleSaveDraft()}
+                disabled={saving || items.length === 0 || hasItemErrors}
+              >
+                {saving ? 'Guardando…' : 'Guardar borrador'}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => void handlePublish()}
+                disabled={saving || items.length === 0 || hasItemErrors}
+              >
+                {saving ? 'Publicando…' : '🚀 Publicar'}
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={nextStep}
+              disabled={currentStep === 'productos' && items.length === 0}
+            >
+              Siguiente →
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Product picker modal */}
+      {showPicker && (
+        <ProductPickerModal
+          catalog={catalog}
+          catalogError={catalogQuery.isError}
+          onRetryCatalog={() => void catalogQuery.refetch()}
+          selectedIds={selectedIds}
+          onSelect={addItem}
+          onClose={() => setShowPicker(false)}
+          colors={colors}
+        />
+      )}
+    </div>
+  );
+}

@@ -5,6 +5,8 @@ import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen } from './Login';
 import { RegisterScreen } from './Register';
 import { FarmerProducts, FarmerOrders } from './farmer';
+import { FarmerPublications } from './FarmerPublications';
+import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
 import { VendorPanelScreen } from './VendorPanelScreen';
 import { AdminDashboard } from './AdminDashboard';
@@ -93,6 +95,15 @@ export function AppRouter() {
               <Routes>
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
+                <Route path="publicaciones" element={<FarmerPublications />} />
+                <Route
+                  path="publicaciones/nueva"
+                  element={<PublicationWizard />}
+                />
+                <Route
+                  path="publicaciones/:id/editar"
+                  element={<PublicationWizard />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />

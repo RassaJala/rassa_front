@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../constants/api';
 import { Button } from './ui/Button';
 import { FormField } from './ui/FormField';
 import { FormSelect } from './ui/FormSelect';
@@ -8,6 +9,7 @@ import { TextArea } from './ui/TextArea';
 import type { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
 import { uploadProductImages } from '../services/productImageUpload';
+import { mediaUrl } from '../utils/mediaUrl';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -38,19 +40,6 @@ export interface Producto {
 
 interface ApiResponse<T> {
   data: T;
-}
-
-// ── Helpers ────────────────────────────────────────────────
-
-const BASE = (
-  import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
-).replace(/\/api\/?$/, '');
-
-export function mediaUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
-  return `${BASE}${clean}`;
 }
 
 // ── Form State ─────────────────────────────────────────────
@@ -254,10 +243,10 @@ export function ProductFormModal({
 
     const valid: File[] = [];
     for (const f of files) {
-      if (f.size > 5 * 1024 * 1024) {
+      if (f.size > MAX_IMAGE_SIZE_BYTES) {
         setErrors((p) => ({
           ...p,
-          images: `"${f.name}" supera 5 MB.`,
+          images: `"${f.name}" supera ${String(MAX_IMAGE_SIZE_MB)} MB.`,
         }));
         continue;
       }
