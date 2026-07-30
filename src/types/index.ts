@@ -187,6 +187,7 @@ export type AdminStackParamList = {
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
+  UserForm: undefined;
   Chat: {
     conversationId: number;
     title: string;
@@ -236,6 +237,7 @@ export type BuyerTabsParamList = {
 
 export type BuyerStackParamList = {
   BuyerTabs: NavigatorScreenParams<BuyerTabsParamList> | undefined;
+  Catalog: undefined;
   OrderDetail: { orderId: number };
   Profile: undefined;
   ProductDetail: {

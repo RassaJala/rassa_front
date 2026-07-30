@@ -13,7 +13,9 @@ bun run lint # eslint (flat config in config/eslint.config.ts)
 bun run lint:fix # eslint --fix
 bun run format # prettier --write .
 bun run format:check # prettier --check .
-CI order (.github/workflows/ci.yml): typecheck → lint → format:check. There are no tests configured — test scripts do not exist.
+bun run test # jest (jest-expo + @testing-library/react-native)
+
+CI (.github/workflows/ci.yml): typecheck → lint → format:check.
 
 ## TypeScript strictness
 
@@ -27,6 +29,7 @@ noImplicitReturns — every code path must return.
 ## Path aliases
 
 @/* and ~/* both resolve to src/. Use them — do not use relative ../../ chains.
+@/common/* resolves to packages/common/src/. @rassa/chat resolves to packages/chat/src/.
 
 ## Architecture layers (enforced by ESLint boundaries)
 
@@ -35,7 +38,7 @@ Dependency flow is unidirectional:
 screens → features → components → hooks → services → api
 A lower layer cannot import a higher layer. The eslint-plugin-boundaries rule will error on violations. If you need cross-cutting logic, place it in hooks/ or services/.
 
-features/ is defined in boundaries but does not exist yet — use it when you need feature-specific logic that screens/ should not contain.
+features/ exists (currently has chat/) — use it for feature-specific logic that screens/ should not contain.
 
 ## ESLint quirks
 
@@ -46,6 +49,8 @@ react-native/no-color-literals: error — never hardcode colors; use src/constan
 react-native/no-inline-styles: warn — prefer NativeWind classes.
 unused-imports/no-unused-imports: error — dead imports are caught; the TS no-unused-vars rule is off (delegated).
 Cognitive complexity limit is 15 (sonarjs).
+no-explicit-any: error — avoid `any` types.
+no-floating-promises: error — all promises must be awaited or explicitly ignored.
 unicorn/filename-case is off — React Native PascalCase components are fine.
 
 ## NativeWind (Tailwind for RN)
@@ -60,28 +65,30 @@ If Tailwind classes stop working, check these four files first.
 
 ## Prettier
 
-Config in config/prettier.config.mjs. Key settings: single quotes, trailing commas (all), 80 char width, LF line endings, prettier-plugin-tailwindcss for automatic class sorting.
+Config in config/prettier.config.mjs. Key settings: single quotes, trailing commas (all), 80 char width, LF line endings. Note: prettier-plugin-tailwindcss is installed but commented out in the config.
 
 ## Git hooks (Lefthook)
 
 lefthook.yml runs:
 
 commit-msg: commitlint (conventional commits, max 100 char header).
-pre-commit: lint-staged → prettier + eslint --fix + tsc on staged .ts/.tsx files.
+pre-commit: three parallel jobs — prettier --check, eslint (check-only, no --fix), tsc --noEmit on staged .ts/.tsx files.
 Commit format: type(scope): description — types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. See CONTRIBUTING.md for examples.
 
 ## API / networking
 
-src/services/api.ts creates an Axios instance pointing to EXPO_PUBLIC_API_URL (defaults to http://localhost:8000/api). It attaches JWT from AsyncStorage and clears tokens on 401. All API calls should go through this instance.
+src/services/api.ts creates an Axios instance pointing to EXPO_PUBLIC_API_URL (defaults to http://localhost:8000/api). It attaches JWT from AsyncStorage, handles 401 with single-flight token refresh, and uses axios-retry for network/5xx errors. All API calls should go through this instance.
 
 ## Screen structure
 
 src/screens/
 auth/ # LoginScreen, RegisterScreen
-buyer/ # HomeScreen, ProductDetailScreen
-farmer/ # MyProductsScreen, AddProductScreen
-admin/ # AdminPanelScreen
+buyer/ # HomeScreen, ProductDetailScreen, OrderDetailScreen, OrderHistoryScreen
+farmer/ # FarmerHomeScreen, FarmerDashboardScreen, ProductListScreen, ProductFormScreen, PublicationWizardScreen
+admin/ # AdminDashboardScreen, AdminPanelScreen, AdminProductsScreen, AdminUsersScreen, + category/localidad/municipio/unit management
 families/ # FamilyListScreen, FamilyDetailScreen, FamilyFormScreen
+common/ # SplashScreen, ProfileScreen, CarritoScreen, OnboardingScreen, NotificationsScreen
+seller/ # SalesScreen, ProfileSellerScreen, HomeSellerScreen
 
 ## Communication guidelines
 

@@ -1,174 +1,199 @@
-import React, { useCallback } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import React from 'react';
+import { Alert, FlatList, Image, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors } from '@/constants/colors';
-import { useCart } from '@/store/CartContext';
+import { colors, themeColors } from '@/constants/colors';
+import { mediaUrl } from '@/services/api';
+import { useCartStore } from '@/store/cartStore';
+import type { CartItem } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
-import type { BuyerStackParamList } from '@/types';
-import { formatPrice, safePrice } from '@/utils/format';
 
-type Nav = NativeStackNavigationProp<BuyerStackParamList>;
+// ── Cart color tokens from theme ──
+function cartColors(isDark: boolean) {
+  return {
+    rowBg: isDark ? colors.cartRowBgD : colors.cartRowBg,
+    placeholderBg: isDark
+      ? colors.cartPlaceholderBgD
+      : colors.cartPlaceholderBg,
+    btnBg: isDark ? colors.cartBtnBgD : colors.cartBtnBg,
+    btnDisabledBg: isDark
+      ? colors.cartBtnDisabledBgD
+      : colors.cartBtnDisabledBg,
+  };
+}
 
-export default function CarritoScreen(): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
-  const navigation = useNavigation<Nav>();
-  const cart = useCart();
-
-  const bg = isDark ? colors.admBgD : colors.admBgL;
-  const fg = isDark ? colors.admFgD : colors.admFgL;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-
-  const handleCheckout = useCallback(() => {
-    navigation.navigate('Checkout');
-  }, [navigation]);
-
-  const renderItem = useCallback(
-    ({ item }: { readonly item: (typeof cart.items)[number] }) => (
+function CartRow({
+  item,
+  onRemove,
+  onInc,
+  onDec,
+  fg,
+  muted,
+  isDark,
+}: {
+  item: CartItem;
+  onRemove: () => void;
+  onInc: () => void;
+  onDec: () => void;
+  fg: string;
+  muted: string;
+  isDark: boolean;
+}) {
+  const cc = cartColors(isDark);
+  const atStockLimit = item.cantidad >= item.stock;
+  const atMinLimit = item.cantidad <= 1;
+  const uri = mediaUrl(item.foto);
+  return (
+    <View
+      className="mb-3 flex-row items-center rounded-2xl px-4 py-3"
+      style={{ backgroundColor: cc.rowBg }}
+    >
+      {/* Image */}
       <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: border,
-          padding: 14,
-          marginBottom: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}
+        className="items-center justify-center overflow-hidden rounded-xl"
+        style={{ width: 60, height: 60, backgroundColor: cc.placeholderBg }}
       >
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '600',
-              color: fg,
-            }}
-            numberOfLines={1}
-          >
-            {item.nombre_producto}
-          </Text>
-          <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-            {formatPrice(safePrice(item.precio))} / ud.
-          </Text>
-        </View>
+        {uri ? (
+          <Image
+            source={{ uri }}
+            style={{ width: 60, height: 60 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <MaterialCommunityIcons
+            name="image-off-outline"
+            size={28}
+            color={muted}
+          />
+        )}
+      </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Pressable
-            onPress={() =>
-              cart.updateQuantity(item.id_producto_semanal, item.cantidad - 1)
-            }
-            style={({ pressed }) => ({
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: isDark
-                ? colors.admInactiveBgD
-                : colors.admInactiveBgL,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name="minus" size={18} color={fg} />
-          </Pressable>
-
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: fg,
-              minWidth: 24,
-              textAlign: 'center',
-            }}
-          >
-            {item.cantidad}
-          </Text>
-
-          <Pressable
-            onPress={() =>
-              cart.updateQuantity(item.id_producto_semanal, item.cantidad + 1)
-            }
-            style={({ pressed }) => ({
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: brand,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <MaterialCommunityIcons
-              name="plus"
-              size={18}
-              color={colors.iconWhite}
-            />
-          </Pressable>
-        </View>
-
+      {/* Info */}
+      <View className="ml-3 flex-1">
         <Text
+          className="text-sm font-semibold"
+          style={{ color: fg }}
+          numberOfLines={1}
+        >
+          {item.producto}
+        </Text>
+        <Text className="mt-0.5 text-xs" style={{ color: muted }}>
+          ${item.precio}/{item.unidad}
+        </Text>
+      </View>
+
+      {/* Quantity controls */}
+      <View className="flex-row items-center">
+        <Pressable
+          testID="qty-dec"
+          onPress={onDec}
+          disabled={atMinLimit}
+          accessibilityLabel="Decrementar cantidad"
+          className="items-center justify-center rounded-full"
           style={{
-            fontSize: 15,
-            fontWeight: '700',
-            color: fg,
-            marginLeft: 12,
-            minWidth: 60,
-            textAlign: 'right',
+            width: 28,
+            height: 28,
+            backgroundColor: atMinLimit ? cc.btnDisabledBg : cc.btnBg,
           }}
         >
-          {formatPrice(safePrice(item.precio) * item.cantidad)}
+          <MaterialCommunityIcons
+            name="minus"
+            size={16}
+            color={atMinLimit ? muted : fg}
+          />
+        </Pressable>
+
+        <Text
+          className="mx-2 text-sm font-bold"
+          style={{ color: fg, minWidth: 20, textAlign: 'center' }}
+        >
+          {item.cantidad}
         </Text>
 
         <Pressable
-          onPress={() => cart.removeItem(item.id_producto_semanal)}
-          style={({ pressed }) => ({
-            marginLeft: 8,
-            opacity: pressed ? 0.6 : 1,
-          })}
-          hitSlop={8}
+          testID="qty-inc"
+          onPress={onInc}
+          disabled={atStockLimit}
+          accessibilityLabel="Incrementar cantidad"
+          className="items-center justify-center rounded-full"
+          style={{
+            width: 28,
+            height: 28,
+            backgroundColor: atStockLimit ? cc.btnDisabledBg : cc.btnBg,
+          }}
         >
           <MaterialCommunityIcons
-            name="close-circle"
-            size={22}
+            name="plus"
+            size={16}
+            color={atStockLimit ? muted : fg}
+          />
+        </Pressable>
+      </View>
+
+      {/* Subtotal + remove */}
+      <View className="ml-3 items-end" style={{ minWidth: 60 }}>
+        <Text className="text-sm font-bold" style={{ color: colors.primary }}>
+          ${(item.precio * item.cantidad).toFixed(2)}
+        </Text>
+        <Pressable testID="remove-item" onPress={onRemove} className="mt-1">
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={16}
             color={colors.error}
           />
         </Pressable>
       </View>
-    ),
-    [surface, border, fg, muted, brand, isDark, cart],
+    </View>
   );
+}
 
-  const keyExtractor = useCallback(
-    (item: (typeof cart.items)[number]) => String(item.id_producto_semanal),
-    [cart],
+function handleClearCart(clearCart: () => void) {
+  Alert.alert(
+    'Vaciar carrito',
+    '¿Estás seguro? Se eliminarán todos los productos.',
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Vaciar', style: 'destructive', onPress: clearCart },
+    ],
   );
+}
 
-  if (cart.items.length === 0) {
+export default function CarritoScreen(): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const tc = themeColors(isDark);
+  const items = useCartStore((s) => s.items);
+  const removeItem = useCartStore((s) => s.removeItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const total = useCartStore((s) => s.total);
+
+  const totalItems = items.reduce((s, i) => s + i.cantidad, 0);
+
+  if (items.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
         <View
           style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
+            padding: 16,
           }}
         >
-          <MaterialCommunityIcons name="cart-outline" size={64} color={muted} />
+          <MaterialCommunityIcons
+            name="cart-outline"
+            size={64}
+            color={tc.muted}
+          />
           <Text
             style={{
               marginTop: 16,
               fontSize: 22,
               fontWeight: '700',
-              color: fg,
-              letterSpacing: -0.3,
+              color: tc.fg,
             }}
           >
             Carrito vacío
@@ -177,118 +202,106 @@ export default function CarritoScreen(): React.JSX.Element {
             style={{
               marginTop: 8,
               fontSize: 14,
-              color: muted,
+              color: tc.muted,
               textAlign: 'center',
             }}
           >
-            Agrega productos desde el catálogo para empezar tu pedido.
+            Agregá productos desde el catálogo para comenzar tu compra.
           </Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Header */}
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8 }}>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
-          }}
-        >
-          Carrito
-        </Text>
-        <Text style={{ fontSize: 14, color: muted, marginTop: 2 }}>
-          {cart.totalItems} {cart.totalItems === 1 ? 'producto' : 'productos'}
-        </Text>
-      </View>
-
-      {/* Items */}
-      <FlatList
-        data={cart.items}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Bottom bar — total + checkout */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: surface,
-          borderTopWidth: 1,
-          borderTopColor: border,
-          paddingHorizontal: 20,
-          paddingTop: 14,
-          paddingBottom: 32,
-        }}
-      >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 14, color: muted }}>Subtotal</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-            {formatPrice(cart.subtotal)}
-          </Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
+      <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: 16 }}>
+        {/* Header */}
         <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 4,
-          }}
+          className="mb-4 flex-row items-center justify-between"
+          style={{ paddingTop: 12 }}
         >
-          <Text style={{ fontSize: 14, color: muted }}>IVA (21%)</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-            {formatPrice(cart.iva)}
+          <Text className="text-2xl font-bold" style={{ color: tc.fg }}>
+            Mi Carrito
           </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 8,
-            paddingTop: 8,
-            borderTopWidth: 1,
-            borderTopColor: border,
-          }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
-            Total
-          </Text>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: brand }}>
-            {formatPrice(cart.total)}
-          </Text>
-        </View>
-
-        <Pressable
-          onPress={handleCheckout}
-          style={({ pressed }) => ({
-            backgroundColor: brand,
-            borderRadius: 12,
-            paddingVertical: 14,
-            alignItems: 'center',
-            marginTop: 12,
-            opacity: pressed ? 0.8 : 1,
-          })}
-        >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: colors.iconWhite,
-            }}
+          <Pressable
+            testID="clear-cart"
+            onPress={() => handleClearCart(clearCart)}
           >
-            Ir a pagar
-          </Text>
-        </Pressable>
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: colors.error }}
+            >
+              Vaciar
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Items */}
+        <FlatList
+          data={items}
+          keyExtractor={(i) => i.id_producto_semanal.toString()}
+          renderItem={({ item }) => (
+            <CartRow
+              item={item}
+              fg={tc.fg}
+              muted={tc.muted}
+              isDark={isDark}
+              onRemove={() => removeItem(item.id_producto_semanal)}
+              onInc={() =>
+                updateQuantity(item.id_producto_semanal, item.cantidad + 1)
+              }
+              onDec={() =>
+                updateQuantity(item.id_producto_semanal, item.cantidad - 1)
+              }
+            />
+          )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Total + Checkout */}
+        <View
+          className="mb-4 rounded-2xl px-5 py-4"
+          style={{
+            backgroundColor: tc.surface,
+            borderTopWidth: 1,
+            borderTopColor: tc.border,
+          }}
+        >
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-base" style={{ color: tc.muted }}>
+              {totalItems} productos
+            </Text>
+            <View className="flex-row items-baseline">
+              <Text className="mr-1 text-xs" style={{ color: tc.muted }}>
+                Total
+              </Text>
+              <Text className="text-xl font-bold" style={{ color: tc.fg }}>
+                ${total().toFixed(2)}
+              </Text>
+            </View>
+          </View>
+          <Pressable
+            testID="checkout-btn"
+            className="items-center justify-center rounded-xl py-3.5"
+            style={{ backgroundColor: tc.brand }}
+            onPress={() =>
+              Alert.alert(
+                'Próximamente',
+                'El flujo de pago estará disponible pronto.',
+              )
+            }
+          >
+            <Text
+              className="text-base font-bold"
+              style={{ color: colors.iconWhite }}
+            >
+              Continuar compra
+            </Text>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

@@ -343,7 +343,7 @@ export function useProfileCatalog() {
       setMunicipios(items);
       return items;
     } catch (err) {
-      if (axios.isCancel(err)) return;
+      if (axios.isCancel(err)) return [];
       if (axios.isAxiosError(err)) {
         if (!err.response) {
           setCatalogError('Error de red — verifica tu conexión.');
@@ -355,6 +355,7 @@ export function useProfileCatalog() {
       } else {
         setCatalogError('Error inesperado al cargar municipios.');
       }
+      return [];
     } finally {
       setLoadingMunicipios(false);
     }

@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
@@ -52,7 +53,7 @@ let pendingRequests: Array<{
 }> = [];
 
 async function refreshAccessToken(
-  originalRequest: ReturnType<typeof api>['config'],
+  originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
   const refreshToken = sessionStorage.getItem('refresh_token');
   if (!refreshToken) throw new Error('No refresh token');
