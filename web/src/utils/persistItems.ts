@@ -8,6 +8,7 @@ export interface PersistItemsDeps {
     tempIdToServerId: Map<string, number>;
     newServerIds: number[];
     updatedServerIds: number[];
+    failedUploads: number;
   }>;
   refreshSnapshot: (pubId: number) => Promise<void>;
   deleteOrphans: (
@@ -27,15 +28,18 @@ export async function persistItems(
   let newServerIds: number[] = [];
   let updatedServerIds: number[] = [];
   let orphanFailures = 0;
+  let failedUploads = 0;
   let itemsSaved = false;
   try {
     const {
       tempIdToServerId,
       newServerIds: ids,
       updatedServerIds: updatedIds,
+      failedUploads: fails,
     } = await deps.upsertItems(pubId, signal);
     newServerIds = ids;
     updatedServerIds = updatedIds;
+    failedUploads = fails;
     itemsSaved = true;
 
     await deps.refreshSnapshot(pubId);
@@ -74,5 +78,5 @@ export async function persistItems(
     }
     throw err;
   }
-  return { orphanFailures };
+  return { orphanFailures, failedUploads };
 }

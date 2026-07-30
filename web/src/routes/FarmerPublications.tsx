@@ -121,7 +121,6 @@ export function FarmerPublications() {
     setFilterMinProducts(0);
   }
 
-  const listToRender = filtered;
   const filtersActive =
     filterMonth > 0 || filterYear > 0 || filterMinProducts > 0;
 

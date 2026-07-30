@@ -1,5 +1,10 @@
 // ── Extracted upsert logic — testable via DI ────────────────
 
+import { logError } from './logger';
+import { withTimeout } from './withTimeout';
+
+const IMAGE_UPLOAD_TIMEOUT_MS = 30_000;
+
 export interface WizardItemInput {
   tempId: string;
   isNew: boolean;
@@ -34,6 +39,7 @@ export interface UpsertItemsDeps {
     pubId: number;
     itemId: number;
     formData: FormData;
+    signal?: AbortSignal;
   }) => Promise<unknown>;
   hasServerPub: boolean;
 }
@@ -42,6 +48,7 @@ export interface UpsertItemsResult {
   tempIdToServerId: Map<string, number>;
   newServerIds: number[];
   updatedServerIds: number[];
+  failedUploads: number;
 }
 
 export const MAX_PRODUCTS = 50;
@@ -60,6 +67,7 @@ export async function upsertItems(
   const newServerIds: number[] = [];
   const updatedServerIds: number[] = [];
   const tempIdToServerId = new Map<string, number>();
+  let failedUploads = 0;
 
   for (const item of items) {
     if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
@@ -95,9 +103,23 @@ export async function upsertItems(
       if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
       const formData = new FormData();
       formData.append('imagen', item.imageFile);
-      await deps.uploadImage({ pubId, itemId, formData });
+      const uploadController = new AbortController();
+      const onAbort = () => uploadController.abort();
+      signal?.addEventListener('abort', onAbort, { once: true });
+      try {
+        await withTimeout(
+          deps.uploadImage({ pubId, itemId, formData, signal: uploadController.signal }),
+          IMAGE_UPLOAD_TIMEOUT_MS,
+          uploadController,
+        );
+      } catch (uploadErr) {
+        failedUploads++;
+        logError('upsertItems:imageUpload', uploadErr, { pubId, itemId });
+      } finally {
+        signal?.removeEventListener('abort', onAbort);
+      }
     }
   }
 
-  return { tempIdToServerId, newServerIds, updatedServerIds };
+  return { tempIdToServerId, newServerIds, updatedServerIds, failedUploads };
 }
