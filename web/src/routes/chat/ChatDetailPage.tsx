@@ -53,9 +53,7 @@ export function ChatDetailPage() {
   const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
   const realCountRef = useRef(0);
 
-  const realMessages = messages.filter(
-    (m) => typeof m.id === 'number',
-  );
+  const realMessages = messages.filter((m) => typeof m.id === 'number');
   realCountRef.current = realMessages.length;
 
   useEffect(() => {
