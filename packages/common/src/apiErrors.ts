@@ -59,7 +59,8 @@ function isAxiosError(error: unknown): error is {
 }
 
 function parseAxiosError(error: unknown): string | null {
-  const candidate = error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate =
+    error instanceof Error && error.cause !== undefined ? error.cause : error;
 
   if (!isAxiosError(candidate)) return null;
 
@@ -115,7 +116,8 @@ export function extractApiError(
   fieldKeys: string[],
   defaultMessage = 'Error del servidor. Intenta de nuevo.',
 ): string {
-  const candidate = error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate =
+    error instanceof Error && error.cause !== undefined ? error.cause : error;
 
   if (!isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
@@ -192,7 +194,8 @@ export function extractFieldErrors(
   error: unknown,
   fieldKeys: string[],
 ): { fields: Record<string, string>; general: string | null } {
-  const candidate = error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate =
+    error instanceof Error && error.cause !== undefined ? error.cause : error;
 
   if (!isAxiosError(candidate)) {
     return {

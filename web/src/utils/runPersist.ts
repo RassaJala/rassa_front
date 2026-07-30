@@ -64,10 +64,8 @@ export async function runPersist(
           return;
         }
 
-        const { orphanFailures, failedUploads, tempIdToServerId } = await deps.persistItemsFn(
-          pub.id_publicacion,
-          controller.signal,
-        );
+        const { orphanFailures, failedUploads, tempIdToServerId } =
+          await deps.persistItemsFn(pub.id_publicacion, controller.signal);
 
         deps.onTempIdSync((prev) =>
           prev.map((i) => {

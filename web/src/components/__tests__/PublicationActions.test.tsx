@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { PublicationActions, getStatusBadge, productCountLabel } from '../PublicationActions';
+import {
+  PublicationActions,
+  getStatusBadge,
+  productCountLabel,
+} from '../PublicationActions';
 import type { Publicacion } from '../../services/publications';
 
 const baseColors = {
@@ -191,10 +195,22 @@ describe('PublicationActions', () => {
 
 describe('getStatusBadge', () => {
   it('returns correct variant for each estado', () => {
-    expect(getStatusBadge('borrador')).toEqual({ variant: 'warning', label: 'Borrador' });
-    expect(getStatusBadge('publicado')).toEqual({ variant: 'success', label: 'Publicada' });
-    expect(getStatusBadge('cerrado')).toEqual({ variant: 'default', label: 'Cerrada' });
-    expect(getStatusBadge('cancelado')).toEqual({ variant: 'error', label: 'Cancelada' });
+    expect(getStatusBadge('borrador')).toEqual({
+      variant: 'warning',
+      label: 'Borrador',
+    });
+    expect(getStatusBadge('publicado')).toEqual({
+      variant: 'success',
+      label: 'Publicada',
+    });
+    expect(getStatusBadge('cerrado')).toEqual({
+      variant: 'default',
+      label: 'Cerrada',
+    });
+    expect(getStatusBadge('cancelado')).toEqual({
+      variant: 'error',
+      label: 'Cancelada',
+    });
   });
 });
 

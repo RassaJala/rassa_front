@@ -21,7 +21,14 @@ const api = axios.create({
 
 const SERVER_ERROR_THRESHOLD = 500;
 
-const IDEMPOTENT_METHODS = new Set(['get', 'head', 'put', 'delete', 'options', 'trace']);
+const IDEMPOTENT_METHODS = new Set([
+  'get',
+  'head',
+  'put',
+  'delete',
+  'options',
+  'trace',
+]);
 
 axiosRetry(api, {
   retries: 3,

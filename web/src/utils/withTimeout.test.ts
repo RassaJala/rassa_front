@@ -27,18 +27,18 @@ describe('withTimeout', () => {
   it('rejects with original error when promise rejects fast', async () => {
     const controller = new AbortController();
     await expect(
-      withTimeout(Promise.reject(new Error('original error')), 1000, controller),
+      withTimeout(
+        Promise.reject(new Error('original error')),
+        1000,
+        controller,
+      ),
     ).rejects.toThrow('original error');
     expect(controller.signal.aborted).toBe(false);
   });
 
   it('preserves the resolved value', async () => {
     const controller = new AbortController();
-    const value = await withTimeout(
-      Promise.resolve(42),
-      1000,
-      controller,
-    );
+    const value = await withTimeout(Promise.resolve(42), 1000, controller);
     expect(value).toBe(42);
   });
 

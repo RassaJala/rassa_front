@@ -397,7 +397,11 @@ export function PublicationWizard() {
       signal,
     );
 
-    return { orphanFailures: result.orphanFailures, failedUploads: result.failedUploads, tempIdToServerId };
+    return {
+      orphanFailures: result.orphanFailures,
+      failedUploads: result.failedUploads,
+      tempIdToServerId,
+    };
   }
 
   // ── Shared persist orchestration ──

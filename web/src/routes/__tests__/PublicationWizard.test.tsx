@@ -580,9 +580,7 @@ describe('PublicationWizard', () => {
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('🚀 Publicar'));
       await waitFor(() => {
-        expect(
-          screen.getByText('¡Publicación publicada!'),
-        ).toBeInTheDocument();
+        expect(screen.getByText('¡Publicación publicada!')).toBeInTheDocument();
       });
       expect(mockedPersistItems).toHaveBeenCalled();
       expect(mockedPublishAfterPersist).toHaveBeenCalled();

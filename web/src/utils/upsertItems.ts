@@ -60,9 +60,7 @@ export async function upsertItems(
   signal?: AbortSignal,
 ): Promise<UpsertItemsResult> {
   if (items.length > MAX_PRODUCTS) {
-    throw new Error(
-      `Máximo ${MAX_PRODUCTS} productos por publicación.`,
-    );
+    throw new Error(`Máximo ${MAX_PRODUCTS} productos por publicación.`);
   }
   const newServerIds: number[] = [];
   const updatedServerIds: number[] = [];
@@ -108,7 +106,12 @@ export async function upsertItems(
       signal?.addEventListener('abort', onAbort, { once: true });
       try {
         await withTimeout(
-          deps.uploadImage({ pubId, itemId, formData, signal: uploadController.signal }),
+          deps.uploadImage({
+            pubId,
+            itemId,
+            formData,
+            signal: uploadController.signal,
+          }),
           IMAGE_UPLOAD_TIMEOUT_MS,
           uploadController,
         );

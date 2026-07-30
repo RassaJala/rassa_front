@@ -217,7 +217,7 @@ describe('upsertItems', () => {
     await expect(upsertItems(1, items, deps)).rejects.toThrow('update failed');
   });
 
-  it('propagates image upload error', async () => {
+  it('tracks failed image upload as failedUploads', async () => {
     const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
     const deps = makeUpsertDeps({
       uploadImage: vi.fn().mockRejectedValue(new Error('upload failed')),
@@ -227,7 +227,9 @@ describe('upsertItems', () => {
       makeItem({ tempId: 'local_2' }),
     ];
 
-    await expect(upsertItems(1, items, deps)).rejects.toThrow('upload failed');
+    const result = await upsertItems(1, items, deps);
+    expect(result.failedUploads).toBe(1);
+    expect(result.tempIdToServerId.size).toBe(2);
   });
 
   it('continues to next item after image upload', async () => {
@@ -346,7 +348,7 @@ describe('upsertItems', () => {
     expect(result.tempIdToServerId.size).toBe(2);
   });
 
-  it('stops on image upload failure', async () => {
+  it('continues processing after image upload failure', async () => {
     const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
     const deps = makeUpsertDeps({
       uploadImage: vi.fn().mockRejectedValue(new Error('upload failed')),
@@ -356,7 +358,10 @@ describe('upsertItems', () => {
       makeItem({ tempId: 'local_2' }),
     ];
 
-    await expect(upsertItems(1, items, deps)).rejects.toThrow('upload failed');
+    const result = await upsertItems(1, items, deps);
+    expect(deps.add).toHaveBeenCalledTimes(2);
+    expect(result.failedUploads).toBe(1);
+    expect(result.tempIdToServerId.size).toBe(2);
   });
 
   it('rejects when items exceed MAX_PRODUCTS', async () => {
