@@ -174,9 +174,8 @@ export function FarmerProducts() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get('/categorias/');
-      const result = data.data;
-      return Array.isArray(result) ? result : (result?.results ?? []);
+      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
+      return data.data;
     },
     staleTime: 60_000,
   });
@@ -184,9 +183,8 @@ export function FarmerProducts() {
   const { data: unidades = [] } = useQuery<Unidad[]>({
     queryKey: ['unidades'],
     queryFn: async () => {
-      const { data } = await api.get('/unidades/');
-      const result = data.data;
-      return Array.isArray(result) ? result : (result?.results ?? []);
+      const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
+      return data.data;
     },
     staleTime: 60_000,
   });

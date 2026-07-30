@@ -3,9 +3,7 @@ import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
-const API_URL =
-  (import.meta as unknown as { env: { VITE_API_URL?: string } }).env
-    .VITE_API_URL ?? '/api';
+const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 

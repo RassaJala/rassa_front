@@ -1,3 +1,4 @@
+import { colors } from '../../../src/constants/colors';
 import { useAppColors } from '../../hooks/useAppColors';
 
 interface ProductThumbnailProps {
@@ -6,9 +7,6 @@ interface ProductThumbnailProps {
   fallbackEmoji?: string;
   size?: number;
 }
-
-const THUMB_BG = '#E8F5E9';
-const THUMB_BG_DARK = '#1C2D22';
 
 export function ProductThumbnail({
   src,
@@ -28,7 +26,9 @@ export function ProductThumbnail({
         flexShrink: 0,
         display: 'grid',
         placeItems: 'center',
-        background: isDark ? THUMB_BG_DARK : THUMB_BG,
+        background: isDark
+          ? colors.admSurfaceD
+          : colors.activeGreenBg,
       }}
     >
       {src ? (

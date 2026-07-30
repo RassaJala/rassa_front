@@ -1,16 +1,18 @@
+import { type Mock } from 'vitest';
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test file */
 import api from '../services/api';
 import { uploadImage } from '../services/productImageUpload';
 
-jest.mock('../services/api', () => ({
+vi.mock('../services/api', () => ({
   __esModule: true,
-  default: { post: jest.fn() },
+  default: { post: vi.fn() },
 }));
 
-const mockPost = api.post as jest.Mock;
+const mockPost = api.post as Mock;
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 function makeFile(name = 'foto.jpg', type = 'image/jpeg'): File {
