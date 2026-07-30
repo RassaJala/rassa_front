@@ -219,7 +219,7 @@ export function VendorPanelScreen() {
               <Button
                 variant="primary"
                 disabled={busy}
-                    onClick={() => {
+                onClick={() => {
                   if (o.estado_actual === 'listo_para_retirar') {
                     navigate(`/vendedor/cobrar/${o.id_pedido}`);
                   } else {

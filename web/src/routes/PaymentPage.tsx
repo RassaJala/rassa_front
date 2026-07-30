@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
-import { useAppColors } from "../hooks/useAppColors";
-import api from "../services/api";
-import { createPago, fetchTiposPago } from "../services/payments";
-import type { TipoPago } from "../services/payments";
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useAppColors } from '../hooks/useAppColors';
+import api from '../services/api';
+import { createPago, fetchTiposPago } from '../services/payments';
+import type { TipoPago } from '../services/payments';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export function PaymentPage() {
   const { brand, fg, muted, border, surface, coral, bg, accentBg } = colors;
 
   const [selectedTipo, setSelectedTipo] = useState<number | null>(null);
-  const [referencia, setReferencia] = useState("");
+  const [referencia, setReferencia] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   // Fetch order detail
@@ -38,7 +38,7 @@ export function PaymentPage() {
     isError: orderError,
     refetch: refetchOrder,
   } = useQuery<OrderDetail>({
-    queryKey: ["pedido", Number(orderId)],
+    queryKey: ['pedido', Number(orderId)],
     queryFn: async () => {
       const { data } = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return data;
@@ -48,13 +48,13 @@ export function PaymentPage() {
 
   // Fetch payment types
   const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
-    queryKey: ["tipos-pago"],
+    queryKey: ['tipos-pago'],
     queryFn: fetchTiposPago,
   });
 
   const pagoMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTipo || !order) throw new Error("Datos incompletos");
+      if (!selectedTipo || !order) throw new Error('Datos incompletos');
       const trimmedRef = referencia.trim();
       return createPago({
         pedido: Number(orderId),
@@ -64,9 +64,9 @@ export function PaymentPage() {
       });
     },
     onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      void queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       void queryClient.invalidateQueries({
-        queryKey: ["pedido", Number(orderId)],
+        queryKey: ['pedido', Number(orderId)],
       });
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
     },
@@ -74,9 +74,9 @@ export function PaymentPage() {
       if (axios.isAxiosError(err) && err.response?.data) {
         const data = err.response.data as Record<string, unknown>;
         const msg =
-          typeof data.detail === "string"
+          typeof data.detail === 'string'
             ? data.detail
-            : typeof data.message === "string"
+            : typeof data.message === 'string'
               ? data.message
               : null;
         if (msg) {
@@ -84,7 +84,7 @@ export function PaymentPage() {
           return;
         }
         // Check per-field errors
-        for (const key of ["pedido", "tipo_pago", "monto", "referencia"]) {
+        for (const key of ['pedido', 'tipo_pago', 'monto', 'referencia']) {
           const val = data[key];
           if (Array.isArray(val) && val[0]) {
             setFieldError(String(val[0]));
@@ -92,12 +92,12 @@ export function PaymentPage() {
           }
         }
       }
-      setFieldError("Error al registrar el pago. Intentá de nuevo.");
+      setFieldError('Error al registrar el pago. Intentá de nuevo.');
     },
   });
 
   const isLoading = orderLoading || tiposLoading;
-  const isReady = order?.estado_actual === "listo_para_retirar";
+  const isReady = order?.estado_actual === 'listo_para_retirar';
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
@@ -120,7 +120,7 @@ export function PaymentPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/vendedor/pedidos")}
+            onClick={() => navigate('/vendedor/pedidos')}
             className="cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold"
             style={{ borderColor: border, color: brand }}
           >
@@ -138,11 +138,11 @@ export function PaymentPage() {
           Pedido no disponible para cobro
         </p>
         <p className="mb-6 text-sm" style={{ color: muted }}>
-          Estado actual: {order.estado_actual.replace(/_/g, " ")}
+          Estado actual: {order.estado_actual.replace(/_/g, ' ')}
         </p>
         <button
           type="button"
-          onClick={() => navigate("/vendedor/pedidos")}
+          onClick={() => navigate('/vendedor/pedidos')}
           className="cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold"
           style={{ borderColor: border, color: brand }}
         >
@@ -158,7 +158,7 @@ export function PaymentPage() {
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate("/vendedor/pedidos")}
+          onClick={() => navigate('/vendedor/pedidos')}
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border text-lg"
           style={{ borderColor: border, color: fg }}
         >
@@ -181,7 +181,7 @@ export function PaymentPage() {
           Pedido #{order.id_pedido}
         </p>
         <p className="mt-1 text-lg font-bold" style={{ color: fg }}>
-          {order.cliente_nombre ?? "Cliente"}
+          {order.cliente_nombre ?? 'Cliente'}
         </p>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm" style={{ color: muted }}>
@@ -216,7 +216,7 @@ export function PaymentPage() {
               }}
               className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors"
               style={{
-                background: selected ? accentBg : "transparent",
+                background: selected ? accentBg : 'transparent',
                 marginBottom: tiposPago.length > 1 ? 6 : 0,
               }}
             >
@@ -239,7 +239,7 @@ export function PaymentPage() {
                   color: selected ? brand : fg,
                 }}
               >
-                {tipo.nombre === "Efectivo" ? "💵" : "🏦"} {tipo.nombre}
+                {tipo.nombre === 'Efectivo' ? '💵' : '🏦'} {tipo.nombre}
               </span>
             </button>
           );
@@ -256,7 +256,7 @@ export function PaymentPage() {
 
       {/* Reference field */}
       <h2 className="mb-2 text-base font-bold" style={{ color: fg }}>
-        Referencia{" "}
+        Referencia{' '}
         <span className="text-sm font-normal" style={{ color: muted }}>
           (opcional)
         </span>
@@ -270,10 +270,10 @@ export function PaymentPage() {
         placeholder={
           selectedTipo
             ? tiposPago.find((t) => t.id_tipo_pago === selectedTipo)?.nombre ===
-              "Transferencia"
-              ? "Número de transferencia"
-              : "Nota o referencia"
-            : "Seleccioná un método de pago primero"
+              'Transferencia'
+              ? 'Número de transferencia'
+              : 'Nota o referencia'
+            : 'Seleccioná un método de pago primero'
         }
         disabled={!selectedTipo}
         className="mb-6 w-full rounded-xl px-4 py-3 text-[15px] outline-none"
@@ -290,7 +290,7 @@ export function PaymentPage() {
         type="button"
         onClick={() => {
           if (!selectedTipo) {
-            setFieldError("Seleccioná un método de pago");
+            setFieldError('Seleccioná un método de pago');
             return;
           }
           pagoMutation.mutate();
@@ -308,7 +308,7 @@ export function PaymentPage() {
             Registrando...
           </>
         ) : (
-          "Registrar Pago"
+          'Registrar Pago'
         )}
       </button>
     </div>

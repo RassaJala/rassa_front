@@ -98,7 +98,8 @@ export default function SalesScreen(): React.JSX.Element {
   const white = colors.iconWhite;
   const redCoral = colors.brandRedCoral;
 
-  const navigation = useNavigation<NativeStackNavigationProp<SellerStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<SellerStackParamList>>();
 
   const [filter, setFilter] = useState<PedidoEstado | ''>('');
   const [toast, setToast] = useState<{

@@ -321,7 +321,9 @@ export default function ReceiptScreen(): React.JSX.Element {
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.iconWhite }}>
+          <Text
+            style={{ fontSize: 17, fontWeight: '700', color: colors.iconWhite }}
+          >
             Volver a pedidos
           </Text>
         </Pressable>

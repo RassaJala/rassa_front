@@ -38,7 +38,7 @@ export default function UserCard({
   const textDisabled = isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB';
   const roleBtnBg = isSelf ? bgDisabled : bgEnabled;
   const roleBtnTextColor = isSelf ? textDisabled : muted;
-  const thumbColor = isSelf ? muted : (isActive ? brand : muted);
+  const thumbColor = isSelf ? muted : isActive ? brand : muted;
   const showTuBadge = isSelf;
   const roleBadgeOpacity = isSelf ? 0.5 : 1;
   const stateText = isActive ? 'Activo' : 'Inactivo';

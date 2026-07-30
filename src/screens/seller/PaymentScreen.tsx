@@ -20,7 +20,12 @@ import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { createPago, fetchTiposPago } from '@/services/payments';
 import { useTheme } from '@/store/ThemeContext';
-import type { OrderDetail, PaymentDetail, SellerStackParamList, TipoPago } from '@/types';
+import type {
+  OrderDetail,
+  PaymentDetail,
+  SellerStackParamList,
+  TipoPago,
+} from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
 
 // ── Types ──────────────────────────────────────────────────
@@ -123,17 +128,48 @@ function ErrorView({
   readonly refetch: () => void;
 }): React.JSX.Element {
   return (
-    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-      <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-      <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={48}
+        color={muted}
+      />
+      <Text
+        style={{
+          marginTop: 12,
+          fontSize: 15,
+          color: muted,
+          textAlign: 'center',
+        }}
+      >
         Error al cargar el pedido
       </Text>
       <Pressable
         onPress={() => void refetch()}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          marginTop: 16,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: border,
+        }}
       >
         <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-        <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>Reintentar</Text>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+          Reintentar
+        </Text>
       </Pressable>
     </View>
   );
@@ -147,7 +183,14 @@ function LoadingView({
   readonly brand: string;
 }): React.JSX.Element {
   return (
-    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <ActivityIndicator size="large" color={brand} />
     </View>
   );
@@ -169,14 +212,41 @@ function NotReadyView({
   readonly onGoBack: () => void;
 }): React.JSX.Element {
   return (
-    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-      <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
-        Este pedido no está listo para cobro.{'\n'}Estado actual: {estado.replace(/_/g, ' ')}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={48}
+        color={muted}
+      />
+      <Text
+        style={{
+          marginTop: 12,
+          fontSize: 15,
+          color: muted,
+          textAlign: 'center',
+        }}
+      >
+        Este pedido no está listo para cobro.{'\n'}Estado actual:{' '}
+        {estado.replace(/_/g, ' ')}
       </Text>
       <Pressable
         onPress={onGoBack}
-        style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
+        style={{
+          marginTop: 16,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: border,
+        }}
       >
         <Text style={{ fontWeight: '600', color: brand }}>Volver</Text>
       </Pressable>
@@ -223,29 +293,77 @@ function PaymentFormView({
   readonly fieldErrors: Record<string, string>;
   readonly setFieldErrors: (v: Record<string, string>) => void;
   readonly navigation: Nav;
-  readonly pagoMutation: UseMutationResult<PaymentDetail, unknown, void, unknown>;
+  readonly pagoMutation: UseMutationResult<
+    PaymentDetail,
+    unknown,
+    void,
+    unknown
+  >;
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View
+        style={{
+          paddingTop: 60,
+          paddingHorizontal: 20,
+          paddingBottom: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
-          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: surface, borderWidth: 1, borderColor: border, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
         </Pressable>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>Registrar Pago</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
+          Registrar Pago
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Order info card */}
-        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: border, padding: 16, marginBottom: 20 }}>
-          <Text style={{ fontSize: 13, color: muted }}>Pedido #{order.id_pedido}</Text>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: fg, marginTop: 2 }}>
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: border,
+            padding: 16,
+            marginBottom: 20,
+          }}
+        >
+          <Text style={{ fontSize: 13, color: muted }}>
+            Pedido #{order.id_pedido}
+          </Text>
+          <Text
+            style={{ fontSize: 17, fontWeight: '700', color: fg, marginTop: 2 }}
+          >
             {order.cliente_nombre ?? 'Cliente'}
           </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: 10,
+            }}
+          >
             <Text style={{ fontSize: 14, color: muted }}>Total a cobrar</Text>
             <Text style={{ fontSize: 24, fontWeight: '700', color: brand }}>
               ${Number(order.total).toFixed(2)}
@@ -254,8 +372,26 @@ function PaymentFormView({
         </View>
 
         {/* Payment method */}
-        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 10 }}>Método de pago</Text>
-        <View style={{ backgroundColor: surface, borderRadius: 14, borderWidth: 1, borderColor: fieldErrors.tipo_pago ? errorColor : border, padding: 12, marginBottom: 20 }}>
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: '700',
+            color: fg,
+            marginBottom: 10,
+          }}
+        >
+          Método de pago
+        </Text>
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: fieldErrors.tipo_pago ? errorColor : border,
+            padding: 12,
+            marginBottom: 20,
+          }}
+        >
           {tiposPago.map((tipo) => (
             <PaymentMethodOption
               key={tipo.id_tipo_pago}
@@ -274,13 +410,32 @@ function PaymentFormView({
             />
           ))}
           {fieldErrors.tipo_pago ? (
-            <Text style={{ fontSize: 13, color: errorColor, marginTop: 6, marginLeft: 4 }}>{fieldErrors.tipo_pago}</Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: errorColor,
+                marginTop: 6,
+                marginLeft: 4,
+              }}
+            >
+              {fieldErrors.tipo_pago}
+            </Text>
           ) : null}
         </View>
 
         {/* Reference field */}
-        <Text style={{ fontSize: 16, fontWeight: '700', color: fg, marginBottom: 6 }}>
-          Referencia <Text style={{ color: muted, fontWeight: '400', fontSize: 13 }}>(opcional)</Text>
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: '700',
+            color: fg,
+            marginBottom: 6,
+          }}
+        >
+          Referencia{' '}
+          <Text style={{ color: muted, fontWeight: '400', fontSize: 13 }}>
+            (opcional)
+          </Text>
         </Text>
         <TextInput
           value={referencia}
@@ -288,11 +443,14 @@ function PaymentFormView({
             setReferencia(t);
             setFieldErrors({});
           }}
-          placeholder={selectedTipo
-            ? (tiposPago.find((t) => t.id_tipo_pago === selectedTipo)?.nombre === 'Transferencia'
-              ? 'Número de transferencia'
-              : 'Nota o referencia')
-            : 'Selecciona un método de pago primero'}
+          placeholder={
+            selectedTipo
+              ? tiposPago.find((t) => t.id_tipo_pago === selectedTipo)
+                  ?.nombre === 'Transferencia'
+                ? 'Número de transferencia'
+                : 'Nota o referencia'
+              : 'Selecciona un método de pago primero'
+          }
           placeholderTextColor={muted}
           editable={selectedTipo !== null}
           style={{
@@ -404,7 +562,12 @@ export default function PaymentScreen(): React.JSX.Element {
       navigation.replace('Receipt', { paymentId: data.id_pago });
     },
     onError: (error: unknown) => {
-      const detail = extractApiError(error, ['pedido', 'tipo_pago', 'monto', 'referencia']);
+      const detail = extractApiError(error, [
+        'pedido',
+        'tipo_pago',
+        'monto',
+        'referencia',
+      ]);
       Alert.alert('Error', detail);
     },
   });
@@ -418,7 +581,13 @@ export default function PaymentScreen(): React.JSX.Element {
 
   if (orderError || !order) {
     return (
-      <ErrorView bg={bg} muted={muted} brand={brand} border={border} refetch={refetchOrder} />
+      <ErrorView
+        bg={bg}
+        muted={muted}
+        brand={brand}
+        border={border}
+        refetch={refetchOrder}
+      />
     );
   }
 

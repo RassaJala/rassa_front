@@ -1,20 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
-import { useAppColors } from "../hooks/useAppColors";
-import { fetchPago } from "../services/payments";
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useAppColors } from '../hooks/useAppColors';
+import { fetchPago } from '../services/payments';
 
 // ── Helpers ────────────────────────────────────────────────
 
 function formatearFecha(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  return d.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -56,7 +56,7 @@ export function ReceiptPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["pago", Number(paymentId)],
+    queryKey: ['pago', Number(paymentId)],
     queryFn: () => fetchPago(Number(paymentId)),
     enabled: !!paymentId,
   });
@@ -82,7 +82,7 @@ export function ReceiptPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/vendedor/pedidos")}
+            onClick={() => navigate('/vendedor/pedidos')}
             className="cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold"
             style={{ borderColor: border, color: brand }}
           >
@@ -99,7 +99,7 @@ export function ReceiptPage() {
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate("/vendedor/pedidos")}
+          onClick={() => navigate('/vendedor/pedidos')}
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border text-lg"
           style={{ borderColor: border, color: fg }}
         >
@@ -136,7 +136,7 @@ export function ReceiptPage() {
         />
         <DetailRow
           label="Cliente"
-          value={pago.cliente_nombre ?? "—"}
+          value={pago.cliente_nombre ?? '—'}
           colors={colors}
         />
         <DetailRow
@@ -208,7 +208,7 @@ export function ReceiptPage() {
       {/* Back button */}
       <button
         type="button"
-        onClick={() => navigate("/vendedor/pedidos")}
+        onClick={() => navigate('/vendedor/pedidos')}
         className="flex w-full cursor-pointer items-center justify-center rounded-xl py-4 text-lg font-bold text-white transition-opacity"
         style={{ background: brand }}
       >
