@@ -142,4 +142,3 @@ export async function getUnidades(): Promise<ApiResponse<Unidad[]>> {
   const list = parseApiList<Unidad>(response.data);
   return { ok: true, data: list } as ApiResponse<Unidad[]>;
 }
-

@@ -122,7 +122,6 @@ function buildInitialForm(producto?: Producto): FormState {
   };
 }
 
-
 // ── Validation ─────────────────────────────────────────────
 
 function validate(form: FormState): Record<string, string> {
@@ -155,15 +154,10 @@ function buildPayload(form: FormState) {
 
 // ── Image helpers ──────────────────────────────────────────
 
-async function deleteImages(
-  productId: number,
-  ids: number[],
-): Promise<void> {
+async function deleteImages(productId: number, ids: number[]): Promise<void> {
   await Promise.all(
     ids.map((id) =>
-      api
-        .delete(`/productos/${productId}/imagen/${id}/`)
-        .catch(console.error),
+      api.delete(`/productos/${productId}/imagen/${id}/`).catch(console.error),
     ),
   );
 }
@@ -234,7 +228,6 @@ export function ProductFormModal({
       isMounted = false;
     };
   }, [producto?.id_producto]);
-
 
   // ponytail: confirmación al cerrar con cambios sin guardar (#31)
   const handleClose = useCallback(() => {
@@ -418,9 +411,7 @@ export function ProductFormModal({
                       alt=""
                     />
                   </div>
-                  <span
-                    className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                  >
+                  <span className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white">
                     {img.es_principal ? 'Principal' : ''}
                   </span>
                   <button
@@ -449,9 +440,7 @@ export function ProductFormModal({
                       alt=""
                     />
                   </div>
-                  <span
-                    className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-                  >
+                  <span className="absolute left-1 top-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white">
                     {form.existingImages.length === 0 && i === 0
                       ? 'Principal'
                       : ''}
@@ -478,7 +467,6 @@ export function ProductFormModal({
               >
                 <span className="text-2xl">📷</span>
               </div>
-
             </div>
 
             {errors.images && (

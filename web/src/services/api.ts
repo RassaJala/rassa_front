@@ -17,7 +17,6 @@ const api = axios.create({
   baseURL: API_URL,
   timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
-
 });
 
 const SERVER_ERROR_THRESHOLD = 500;

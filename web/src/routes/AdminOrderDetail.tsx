@@ -38,7 +38,6 @@ export function AdminOrderDetail() {
     retry: false,
   });
 
-
   const entries = data ?? [];
 
   // ── Styles ──
@@ -188,7 +187,6 @@ export function AdminOrderDetail() {
                 🔄 Reintentar
               </button>
             )}
-
           </div>
         )}
 

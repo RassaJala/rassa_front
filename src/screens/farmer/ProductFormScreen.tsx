@@ -34,7 +34,6 @@ import type {
 import { extractApiError } from '@/utils/apiErrors';
 import { parseApiList } from '@/utils/apiResponse';
 
-
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
   'ProductForm'
@@ -668,7 +667,6 @@ export default function ProductFormScreen({
               </Pressable>
             </View>
           </View>
-
 
           {/* Nombre */}
           <View>
