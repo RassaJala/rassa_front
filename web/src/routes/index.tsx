@@ -18,6 +18,7 @@ import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
 import { AdminOrderDetail } from './AdminOrderDetail';
 import { BuyerHome } from './BuyerHome';
+import { BuyerCatalog } from './BuyerCatalog';
 import { BuyerCart } from './BuyerCart';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
@@ -148,6 +149,7 @@ export function AppRouter() {
             <DashboardLayout role="cliente">
               <Routes>
                 <Route index element={<BuyerHome />} />
+                <Route path="catalogo" element={<BuyerCatalog />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />

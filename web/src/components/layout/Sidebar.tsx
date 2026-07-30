@@ -72,6 +72,12 @@ const roleNavMap: Record<string, NavItem[]> = {
   ],
   cliente: [
     { key: 'home', label: 'Inicio', icon: '🏠', path: '/cliente' },
+    {
+      key: 'catalog',
+      label: 'Catálogo',
+      icon: '🛍️',
+      path: '/cliente/catalogo',
+    },
     { key: 'cart', label: 'Carrito', icon: '🛒', path: '/cliente/carrito' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/cliente/pedidos' },
     { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/cliente/perfil' },
@@ -171,7 +177,7 @@ export function Sidebar({ role }: { role: Role }) {
           <NavLink
             key={item.key}
             to={item.path}
-            end={item.key === 'dashboard'}
+            end
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
