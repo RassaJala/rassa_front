@@ -69,9 +69,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
   publicar: 'Publicar',
 };
 
-const ERROR_BG = 'rgba(222,57,58,0.08)';
-const ERROR_BORDER = 'rgba(222,57,58,0.2)';
-
 // ── PublicationWizard ──────────────────────────────────────
 
 export function PublicationWizard() {
@@ -167,14 +164,16 @@ export function PublicationWizard() {
   }, []);
 
   // ── beforeunload when items changed ──
+  const [persisted, setPersisted] = useState(false);
   useEffect(() => {
-    if (items.length === 0) return;
+    if (items.length === 0 || persisted) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
+      e.returnValue = '';
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [items.length]);
+  }, [items.length, persisted]);
 
   // ── Date helpers ──
   const pubData = isEditing ? pubQuery.data?.data : undefined;
@@ -374,6 +373,7 @@ export function PublicationWizard() {
     signal?: AbortSignal,
   ): Promise<{
     orphanFailures: number;
+    failedUploads: number;
     tempIdToServerId: Map<string, number>;
   }> {
     let tempIdToServerId = new Map<string, number>();
@@ -397,7 +397,7 @@ export function PublicationWizard() {
       signal,
     );
 
-    return { orphanFailures: result.orphanFailures, tempIdToServerId };
+    return { orphanFailures: result.orphanFailures, failedUploads: result.failedUploads, tempIdToServerId };
   }
 
   // ── Shared persist orchestration ──
@@ -417,6 +417,7 @@ export function PublicationWizard() {
         onError: setError,
         onToast: (message, type) => setToast({ message, type }),
         onTempIdSync: setItems,
+        onPersisted: () => setPersisted(true),
       },
       opts,
     );
@@ -575,8 +576,8 @@ export function PublicationWizard() {
         <div
           className="mb-4 rounded-xl px-4 py-3 text-[14px]"
           style={{
-            background: ERROR_BG,
-            border: `1px solid ${ERROR_BORDER}`,
+            background: 'rgba(222,57,58,0.08)',
+            border: '1px solid rgba(222,57,58,0.2)',
             color: colors.coral,
           }}
         >

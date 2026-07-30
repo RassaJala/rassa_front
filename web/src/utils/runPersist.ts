@@ -15,6 +15,7 @@ export interface RunPersistDeps {
     signal?: AbortSignal,
   ) => Promise<{
     orphanFailures: number;
+    failedUploads: number;
     tempIdToServerId: Map<string, number>;
   }>;
   onSaving: (v: boolean) => void;
@@ -25,6 +26,7 @@ export interface RunPersistDeps {
       prev: Array<{ tempId: string; isNew: boolean }>,
     ) => Array<{ tempId: string; isNew: boolean }>,
   ) => void;
+  onPersisted?: () => void;
 }
 
 export interface RunPersistOptions {
@@ -62,7 +64,7 @@ export async function runPersist(
           return;
         }
 
-        const { orphanFailures, tempIdToServerId } = await deps.persistItemsFn(
+        const { orphanFailures, failedUploads, tempIdToServerId } = await deps.persistItemsFn(
           pub.id_publicacion,
           controller.signal,
         );
@@ -79,6 +81,8 @@ export async function runPersist(
 
         await opts.afterPersist?.(pub.id_publicacion);
 
+        deps.onPersisted?.();
+
         if (deps.mountedRef.current) {
           deps.onToast(opts.successMsg, 'success');
           if (orphanFailures > 0) {
@@ -90,6 +94,16 @@ export async function runPersist(
                 );
               }
             }, TOAST_ORPHAN_DELAY_MS);
+          }
+          if (failedUploads > 0) {
+            setTimeout(() => {
+              if (deps.mountedRef.current) {
+                deps.onToast(
+                  `${failedUploads} imagen${failedUploads !== 1 ? 'es' : ''} no se pudo${failedUploads !== 1 ? 'ieron' : ''} subir.`,
+                  'error',
+                );
+              }
+            }, TOAST_ORPHAN_DELAY_MS + 500);
           }
         }
       })(),
