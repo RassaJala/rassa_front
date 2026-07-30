@@ -59,6 +59,50 @@ interface ProductImageState {
   markedForDeletion?: boolean | undefined;
 }
 
+function parseInitialCategory(prod: Producto): number | null {
+  if (typeof prod.categoria === 'object' && prod.categoria !== null) {
+    return prod.categoria.id_categoria;
+  }
+  if (typeof prod.categoria === 'number') {
+    return prod.categoria;
+  }
+  const raw = prod as unknown as Record<string, unknown>;
+  return (raw.fk_categoria as number | null) ?? null;
+}
+
+function parseInitialUnidad(prod: Producto): number | null {
+  if (typeof prod.unidad === 'object' && prod.unidad !== null) {
+    return prod.unidad.id_unidad;
+  }
+  if (typeof prod.unidad === 'number') {
+    return prod.unidad;
+  }
+  const raw = prod as unknown as Record<string, unknown>;
+  return (raw.fk_unidad as number | null) ?? null;
+}
+
+function parseInitialImages(prod: Producto): ProductImageState[] {
+  if (prod.imagenes && prod.imagenes.length > 0) {
+    return prod.imagenes.map((img) => ({
+      id: img.id_imagen,
+      uri: mediaUrl(img.url) ?? img.url,
+      base64: undefined,
+      isPrimary: img.es_principal,
+    }));
+  }
+  const fallbackImage = prod.imagen_principal ?? prod.imagen;
+  if (fallbackImage) {
+    return [
+      {
+        uri: mediaUrl(fallbackImage) ?? fallbackImage,
+        isPrimary: true,
+        base64: undefined,
+      },
+    ];
+  }
+  return [];
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity -- product form with image/upload/validation logic
 export default function ProductFormScreen({
   navigation,
@@ -83,6 +127,7 @@ export default function ProductFormScreen({
   const accentBg = isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)';
   const coralBg = isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)';
   const overlay = 'rgba(0,0,0,0.5)';
+  const darkBadgeOverlay = 'rgba(0,0,0,0.7)';
   const separatorColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
 
   const { productoId } = route.params;
@@ -153,48 +198,9 @@ export default function ProductFormScreen({
       setPrecio(existingProduct.precio);
       setStock(String(existingProduct.stock));
       setEsPerecedero(existingProduct.es_perecedero);
-
-      const catId =
-        typeof existingProduct.categoria === 'object' &&
-        existingProduct.categoria !== null
-          ? (existingProduct.categoria as Category).id_categoria
-          : typeof existingProduct.categoria === 'number'
-            ? existingProduct.categoria
-            : ((existingProduct as unknown as Record<string, unknown>).fk_categoria as number | null) ?? null;
-      setCategoriaId(catId);
-
-      const unId =
-        typeof existingProduct.unidad === 'object' &&
-        existingProduct.unidad !== null
-          ? (existingProduct.unidad as Unidad).id_unidad
-          : typeof existingProduct.unidad === 'number'
-            ? existingProduct.unidad
-            : ((existingProduct as unknown as Record<string, unknown>).fk_unidad as number | null) ?? null;
-      setUnidadId(unId);
-
-
-      if (existingProduct.imagenes && existingProduct.imagenes.length > 0) {
-        setImages(
-          existingProduct.imagenes.map((img) => ({
-            id: img.id_imagen,
-            uri: mediaUrl(img.url) ?? img.url,
-            base64: undefined,
-            isPrimary: img.es_principal,
-          })),
-        );
-      } else {
-        const fallbackImage =
-          existingProduct.imagen_principal ?? existingProduct.imagen;
-        if (fallbackImage) {
-          setImages([
-            {
-              uri: mediaUrl(fallbackImage) ?? fallbackImage,
-              isPrimary: true,
-              base64: undefined,
-            },
-          ]);
-        }
-      }
+      setCategoriaId(parseInitialCategory(existingProduct));
+      setUnidadId(parseInitialUnidad(existingProduct));
+      setImages(parseInitialImages(existingProduct));
     }
   }, [existingProduct]);
 
@@ -575,7 +581,7 @@ export default function ProductFormScreen({
                             position: 'absolute',
                             bottom: 4,
                             left: 4,
-                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            backgroundColor: darkBadgeOverlay,
                             borderRadius: 4,
                             paddingHorizontal: 6,
                             paddingVertical: 2,
