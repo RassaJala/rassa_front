@@ -64,8 +64,8 @@ export interface SendMessageWithMediaPayload {
   contenido?: string;
   tipo_documento: AttachmentType;
   documento: File | { uri: string; name: string; type: string };
-  remitente?: number;
-  remitente_nombre?: string;
+  remitente: number;
+  remitente_nombre: string;
 }
 
 export interface CreateGroupPayload {

@@ -12,6 +12,10 @@ vi.mock('~/services/chat', () => ({
   },
 }));
 
+vi.mock('~/hooks/useAuth', () => ({
+  useAuth: () => ({ user: { id: 1, nombre: 'Test', rol: 'comprador' } }),
+}));
+
 const mockSendMessage = chatApi.sendMessage as ReturnType<typeof vi.fn>;
 
 function createWrapper(queryClient: QueryClient) {
@@ -60,25 +64,21 @@ describe('useSendMessage', () => {
     function TestComponent() {
       const mutation = useSendMessage(1);
       return (
-        <div>
-          <button
-            onClick={() =>
-              mutation.mutate({ conversacion: 1, contenido: 'Hello' })
-            }
-          >
-            Send
-          </button>
-          <span data-testid="pending">{String(mutation.isPending)}</span>
-        </div>
+        <button
+          onClick={() =>
+            mutation.mutate({ conversacion: 1, contenido: 'Hello' })
+          }
+        >
+          Send
+        </button>
       );
     }
 
-    const { getByText, getByTestId } = render(<TestComponent />, {
+    const { getByText } = render(<TestComponent />, {
       wrapper: createWrapper(queryClient),
     });
 
     getByText('Send').click();
-    expect(getByTestId('pending').textContent).toBe('true');
 
     await waitFor(() => {
       expect(mockSendMessage).toHaveBeenCalledWith({

@@ -13,10 +13,6 @@ export function useDeleteMessage(
   return useMutation({
     mutationFn: (messageId) => chatApi.deleteMessage(messageId),
     onMutate: async (messageId) => {
-      await queryClient.cancelQueries({
-        queryKey: messagesKey(conversationId),
-      });
-
       const previousMessages = queryClient.getQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
