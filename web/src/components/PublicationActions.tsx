@@ -34,122 +34,100 @@ export function productCountLabel(count: number): string {
   return `${count} producto${count !== 1 ? 's' : ''}`;
 }
 
-function renderActionsForEstado(
-  {
-    estado,
-    pubId,
-    isMutating,
-    onEdit,
-    onPublish,
-    onDelete,
-    onClose,
-    colors,
-  }: PubActionContext,
-  variant: 'button' | 'icon',
-): JSX.Element | null {
+interface ActionDef {
+  label: string;
+  iconTitle?: string;
+  disabled?: boolean;
+  onClick: () => void;
+  style: (colors: AppColors) => {
+    buttonVariant?: 'ghost' | 'secondary' | 'primary';
+    iconStyle?: React.CSSProperties;
+  };
+}
+
+function getActions(
+  { estado, pubId, isMutating, onEdit, onPublish, onDelete, onClose }: PubActionContext,
+): ActionDef[] {
   if (estado === 'borrador') {
-    if (variant === 'button') {
-      return (
-        <>
-          <Button
-            variant="ghost"
-            className="!px-3 !py-1.5 !text-[13px]"
-            onClick={() => onEdit(pubId)}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="secondary"
-            className="!px-3 !py-1.5 !text-[13px]"
-            disabled={isMutating}
-            onClick={() => void onPublish(pubId)}
-          >
-            Publicar
-          </Button>
-          <Button
-            variant="ghost"
-            className="!px-3 !py-1.5 !text-[13px]"
-            disabled={isMutating}
-            onClick={() => void onDelete(pubId)}
-          >
-            Eliminar
-          </Button>
-        </>
-      );
-    }
-    return (
-      <>
-        <button
-          onClick={() => onEdit(pubId)}
-          title="Editar"
-          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-          style={{
-            border: `1px solid ${colors.border}`,
-            background: colors.surface,
-            color: colors.fg,
-          }}
-        >
-          Editar
-        </button>
-        <button
-          onClick={() => void onPublish(pubId)}
-          disabled={isMutating}
-          title="Publicar"
-          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-          style={{
-            border: `1px solid ${colors.brand}`,
-            background: colors.accentBg,
-            color: colors.brand,
-          }}
-        >
-          Publicar
-        </button>
-        <button
-          onClick={() => void onDelete(pubId)}
-          disabled={isMutating}
-          title="Eliminar"
-          className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-          style={{
-            border: `1px solid ${colors.border}`,
-            background: colors.surface,
-            color: colors.coral,
-          }}
-        >
-          Eliminar
-        </button>
-      </>
-    );
+    return [
+      {
+        label: 'Editar',
+        iconTitle: 'Editar',
+        onClick: () => onEdit(pubId),
+        style: (c) => ({
+          buttonVariant: 'ghost',
+          iconStyle: { border: `1px solid ${c.border}`, background: c.surface, color: c.fg },
+        }),
+      },
+      {
+        label: 'Publicar',
+        iconTitle: 'Publicar',
+        disabled: isMutating,
+        onClick: () => void onPublish(pubId),
+        style: (c) => ({
+          buttonVariant: 'secondary',
+          iconStyle: { border: `1px solid ${c.brand}`, background: c.accentBg, color: c.brand },
+        }),
+      },
+      {
+        label: 'Eliminar',
+        iconTitle: 'Eliminar',
+        disabled: isMutating,
+        onClick: () => void onDelete(pubId),
+        style: (c) => ({
+          buttonVariant: 'ghost',
+          iconStyle: { border: `1px solid ${c.border}`, background: c.surface, color: c.coral },
+        }),
+      },
+    ];
   }
   if (estado === 'publicado') {
-    if (variant === 'button') {
-      return (
-        <Button
-          variant="secondary"
-          className="!px-3 !py-1.5 !text-[13px]"
-          disabled={isMutating}
-          onClick={() => void onClose(pubId)}
-        >
-          Cerrar
-        </Button>
-      );
-    }
+    return [
+      {
+        label: 'Cerrar',
+        iconTitle: 'Cerrar',
+        disabled: isMutating,
+        onClick: () => void onClose(pubId),
+        style: (c) => ({
+          buttonVariant: 'secondary',
+          iconStyle: { border: `1px solid ${c.coral}`, background: c.accentBg, color: c.coral },
+        }),
+      },
+    ];
+  }
+  return [];
+}
+
+const ICON_WRAPPER_CLASS =
+  'grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]';
+
+function renderAction(action: ActionDef, variant: 'button' | 'icon', colors: AppColors): JSX.Element {
+  const s = action.style(colors);
+  if (variant === 'button') {
     return (
-      <button
-        onClick={() => void onClose(pubId)}
-        disabled={isMutating}
-        title="Cerrar"
-        className="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] text-[15px]"
-        style={{
-          border: `1px solid ${colors.coral}`,
-          background: colors.accentBg,
-          color: colors.coral,
-        }}
+      <Button
+        key={action.label}
+        variant={s.buttonVariant ?? 'ghost'}
+        className="!px-3 !py-1.5 !text-[13px]"
+        disabled={action.disabled}
+        onClick={action.onClick}
       >
-        Cerrar
-      </button>
+        {action.label}
+      </Button>
     );
   }
-  return null;
+  return (
+    <button
+      key={action.label}
+      onClick={action.onClick}
+      disabled={action.disabled}
+      title={action.iconTitle}
+      className={ICON_WRAPPER_CLASS}
+      style={s.iconStyle as React.CSSProperties | undefined}
+    >
+      {action.label}
+    </button>
+  );
 }
 
 // ── PublicationActions ──────────────────────────────────────
@@ -173,21 +151,19 @@ export function PublicationActions({
   colors: AppColors;
   variant?: 'icon' | 'button';
 }) {
+  const actions = getActions({
+    estado: pub.estado,
+    pubId: pub.id_publicacion,
+    isMutating,
+    onEdit,
+    onPublish,
+    onDelete,
+    onClose,
+    colors,
+  });
   return (
     <div className="flex gap-1.5">
-      {renderActionsForEstado(
-        {
-          estado: pub.estado,
-          pubId: pub.id_publicacion,
-          isMutating,
-          onEdit,
-          onPublish,
-          onDelete,
-          onClose,
-          colors,
-        },
-        variant,
-      )}
+      {actions.map((a) => renderAction(a, variant, colors))}
     </div>
   );
 }
