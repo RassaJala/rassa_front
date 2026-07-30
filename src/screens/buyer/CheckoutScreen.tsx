@@ -22,56 +22,54 @@ import { formatPrice, safePrice } from '@/utils/format';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList, 'Checkout'>;
 
+/** Extrae mensajes de error de arrays dentro de un objeto DRF */
+function extractFieldMessages(data: Record<string, unknown>): string | null {
+  const messages: string[] = [];
+  for (const value of Object.values(data)) {
+    if (Array.isArray(value)) {
+      for (const msg of value) {
+        if (typeof msg === 'string') messages.push(msg);
+      }
+    }
+  }
+  return messages.length > 0 ? messages.join(' ') : null;
+}
+
+/** Mapa de status HTTP a mensajes de error conocidos */
+const HTTP_ERROR_MAP: Record<number, string> = {
+  401: 'Tu sesión expiró. Inicia sesión nuevamente.',
+  403: 'No tienes permisos para crear pedidos.',
+  500: 'Error interno del servidor. Intenta más tarde.',
+};
+
 /**
  * Intenta extraer un mensaje legible desde el error del backend.
- * Soporta: timeout, sin conexión, 401, { detail }, { message },
- * field-level arrays, y códigos HTTP comunes.
  */
 function extractError(error: unknown): string {
   if (!axios.isAxiosError(error)) {
     return 'Ocurrió un error inesperado. Intenta de nuevo.';
   }
 
-  // Timeout
   if (error.code === 'ECONNABORTED') {
     return 'La conexión tardó demasiado. Verifica tu conexión e intenta de nuevo.';
   }
 
-  // Sin conexión / no hubo respuesta del servidor
   if (!error.response) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
   }
 
-  const data = error.response?.data as Record<string, unknown> | undefined;
+  const status = error.response.status;
+  const knownMessage = HTTP_ERROR_MAP[status];
+  if (knownMessage) return knownMessage;
 
-  // 401 — sesión expirada
-  if (error.response?.status === 401) {
-    return 'Tu sesión expiró. Inicia sesión nuevamente.';
-  }
+  const data = error.response.data as Record<string, unknown> | undefined;
+  if (!data) return 'Error al procesar el pedido. Intenta de nuevo.';
 
-  // DRF ValidationError: { "detail": "mensaje" }
-  if (data && typeof data.detail === 'string') return data.detail;
+  if (typeof data.detail === 'string') return data.detail;
+  if (typeof data.message === 'string') return data.message;
 
-  // Custom ok_response: { "message": "mensaje" }
-  if (data && typeof data.message === 'string') return data.message;
-
-  // DRF field-level errors: collect string messages without exposing field names
-  if (data) {
-    const messages: string[] = [];
-    for (const value of Object.values(data)) {
-      if (Array.isArray(value)) {
-        for (const msg of value) {
-          if (typeof msg === 'string') messages.push(msg);
-        }
-      }
-    }
-    if (messages.length > 0) return messages.join(' ');
-  }
-
-  // Http-level status
-  const status = error.response?.status;
-  if (status === 403) return 'No tienes permisos para crear pedidos.';
-  if (status === 500) return 'Error interno del servidor. Intenta más tarde.';
+  const fieldMsg = extractFieldMessages(data);
+  if (fieldMsg) return fieldMsg;
 
   return 'Error al procesar el pedido. Intenta de nuevo.';
 }
