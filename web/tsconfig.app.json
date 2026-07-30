@@ -23,7 +23,8 @@
       "@/*": ["./src/*"],
       "~/*": ["./src/*"],
       "@/common/*": ["../packages/common/src/*"],
-      "@root/*": ["../src/*"]
+      "@root/*": ["../src/*"],
+      "@rassa/chat": ["../packages/chat/src"]
     }
   },
   "include": ["src"]

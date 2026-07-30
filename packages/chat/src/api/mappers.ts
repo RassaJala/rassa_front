@@ -27,12 +27,12 @@ export function mapConversation(raw: BackendConversation): Conversation {
   return {
     id: raw.id_conversacion,
     nombre: raw.nombre,
-    tipo: raw.tipo ? 'grupal' : 'privada',
+    tipo: raw.tipo as 'privada' | 'grupal',
     es_familia: raw.es_familia ?? false,
     ultimo_mensaje: raw.ultimo_mensaje,
     ultimo_mensaje_fecha: raw.ultimo_mensaje_creado_en,
     no_leidos: raw.no_leidos ?? 0,
-    participante_nombre: raw.nombre,
+    participante_nombre: raw.tipo === 'grupal' ? '' : raw.nombre,
     participante_avatar: null,
   };
 }

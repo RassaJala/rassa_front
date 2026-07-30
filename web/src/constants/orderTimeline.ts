@@ -1,13 +1,8 @@
-import type { OrderStatusHistory } from '../types';
+export { normalizeOrderHistoryResponse } from '@root/constants/orderTimeline';
 
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
-export function normalizeOrderHistoryResponse(response: {
-  data: OrderStatusHistory[];
-}): OrderStatusHistory[] {
-  return response.data;
-}
 export function isNotFoundError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false;
   const err = error as { response?: { status?: number } };
@@ -29,6 +24,7 @@ export const STATUS_LABELS: Record<string, string> = {
   listo_para_retirar: 'Listo para retirar',
   entregado: 'Entregado',
   cancelado: 'Cancelado',
+  activo: 'Activo',
 };
 
 export function formatTimestamp(iso: string): string {

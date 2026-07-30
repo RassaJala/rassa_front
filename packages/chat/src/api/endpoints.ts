@@ -9,9 +9,6 @@ export const CREATE_GROUP_PATH = '/chat/conversaciones/crear-grupal/';
 export const messagesPath = (conversationId: number, page: number): string =>
   `/chat/conversaciones/${conversationId}/mensajes/?page=${page}`;
 
-export const messageReadPath = (messageId: number): string =>
-  `/chat/mensajes/${messageId}/leer/`;
-
 export const messageEditPath = (messageId: number): string =>
   `/chat/mensajes/${messageId}/editar/`;
 
@@ -26,3 +23,9 @@ export const renameGroupPath = (conversationId: number): string =>
 
 export const addGroupMemberPath = (conversationId: number): string =>
   `/chat/conversaciones/${conversationId}/agregar-integrante/`;
+
+export const conversationReadPath = (conversationId: number): string =>
+  `/chat/conversaciones/${conversationId}/leer/`;
+
+export const searchUsersPath = (q: string): string =>
+  `/chat/usuarios/buscar/?q=${encodeURIComponent(q)}`;

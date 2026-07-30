@@ -1,63 +1,85 @@
-import type { AppColors } from '../../hooks/useAppColors';
-import { Button } from './Button';
+import { useAppColors } from '~/hooks/useAppColors';
 
 interface ConfirmDialogProps {
+  open: boolean;
   title: string;
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'default';
-  colors: AppColors;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 export function ConfirmDialog({
+  open,
   title,
   message,
-  confirmLabel = 'Confirmar',
+  confirmLabel = 'Eliminar',
   cancelLabel = 'Cancelar',
-  variant = 'default',
-  colors,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps) {
+}: Readonly<ConfirmDialogProps>) {
+  const c = useAppColors();
+
+  if (!open) return null;
+
   return (
-    <div
-      role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
-      onClick={onCancel}
+    <dialog
+      open
+      onCancel={(e) => {
+        e.preventDefault();
+        onCancel();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-0"
     >
+      <button
+        type="button"
+        aria-label="Cerrar"
+        className="absolute inset-0 cursor-default border-0 bg-transparent p-0"
+        style={{ background: 'rgba(0,0,0,0.5)' }}
+        onClick={onCancel}
+      />
       <div
-        className="w-full max-w-sm rounded-2xl p-6"
+        className="relative z-10 flex w-full max-w-sm flex-col overflow-hidden rounded-2xl"
         style={{
-          background: colors.surface,
-          border: `1px solid ${colors.border}`,
+          background: c.surface,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-2 text-lg font-bold" style={{ color: colors.fg }}>
-          {title}
-        </h3>
-        <p className="mb-6 text-[14px]" style={{ color: colors.muted }}>
-          {message}
-        </p>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={onCancel}>
+        <div className="px-5 py-4">
+          <h3 className="text-base font-semibold" style={{ color: c.fg }}>
+            {title}
+          </h3>
+          <p className="mt-2 text-sm" style={{ color: c.muted }}>
+            {message}
+          </p>
+        </div>
+        <div
+          className="flex justify-end gap-2.5 px-5 py-4"
+          style={{ borderTop: `1px solid ${c.border}` }}
+        >
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              borderColor: c.coral,
+              color: c.coral,
+              background: 'transparent',
+            }}
+          >
             {cancelLabel}
-          </Button>
-          <Button
-            variant={variant === 'danger' ? 'primary' : 'primary'}
+          </button>
+          <button
+            type="button"
             onClick={onConfirm}
-            style={
-              variant === 'danger' ? { background: colors.coral } : undefined
-            }
+            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity"
+            style={{ background: c.coral }}
           >
             {confirmLabel}
-          </Button>
+          </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

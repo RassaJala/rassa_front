@@ -64,6 +64,8 @@ export interface SendMessageWithMediaPayload {
   contenido?: string;
   tipo_documento: AttachmentType;
   documento: File | { uri: string; name: string; type: string };
+  remitente: number;
+  remitente_nombre: string;
 }
 
 export interface CreateGroupPayload {
@@ -77,4 +79,18 @@ export interface RenameGroupPayload {
 
 export interface AddGroupMemberPayload {
   fk_usuario: number;
+}
+
+export interface SearchUserResult {
+  id_usuario: number;
+  nombre_completo: string;
+  correo: string;
+  rol: string;
+}
+
+export interface SearchUser {
+  idUsuario: number;
+  nombreCompleto: string;
+  correo: string;
+  rol: string;
 }

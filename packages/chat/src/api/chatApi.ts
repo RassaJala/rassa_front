@@ -12,9 +12,20 @@ import type {
   Message,
   PaginatedResponse,
   RenameGroupPayload,
+  SearchUser,
+  SearchUserResult,
   SendMessagePayload,
   SendMessageWithMediaPayload,
 } from '../domain/types';
+
+function mapSearchUser(raw: SearchUserResult): SearchUser {
+  return {
+    idUsuario: raw.id_usuario,
+    nombreCompleto: raw.nombre_completo,
+    correo: raw.correo,
+    rol: raw.rol,
+  };
+}
 import { appendDocument } from './adapters';
 import type {
   BackendConversation,
@@ -29,13 +40,15 @@ import {
   SEND_MEDIA_PATH,
   SEND_MESSAGE_PATH,
   addGroupMemberPath,
+  conversationReadPath,
   groupMembersPath,
   messageDeletePath,
   messageEditPath,
-  messageReadPath,
   messagesPath,
   renameGroupPath,
+  searchUsersPath,
 } from './endpoints';
+
 import { mapConversation, mapGroupMember, mapMessage } from './mappers';
 
 // Unwrap the {ok, data, mensaje} envelope. Throws on ok === false.
@@ -59,9 +72,13 @@ export interface ChatApi {
   createPrivateConversation(
     payload: CreateConversationPayload,
   ): Promise<Conversation>;
-  markMessageAsRead(messageId: number): Promise<Message>;
-  editMessage(messageId: number, contenido: string): Promise<Message>;
-  deleteMessage(messageId: number): Promise<Message>;
+  markConversationAsRead(conversationId: number): Promise<void>;
+  editMessage(
+    messageId: number,
+    contenido: string,
+    conversationId?: number,
+  ): Promise<Message>;
+  deleteMessage(messageId: number): Promise<void>;
   sendMessageWithMedia(payload: SendMessageWithMediaPayload): Promise<Message>;
   getGroupMembers(conversationId: number): Promise<GroupMember[]>;
   createGroup(payload: CreateGroupPayload): Promise<Conversation>;
@@ -72,14 +89,18 @@ export interface ChatApi {
   addGroupMember(
     conversationId: number,
     payload: AddGroupMemberPayload,
-  ): Promise<GroupMember>;
+  ): Promise<void>;
+  searchUsers(q: string, signal?: AbortSignal): Promise<SearchUser[]>;
 }
 
 export function createChatApi(http: AxiosInstance): ChatApi {
   const api: ChatApi = {
     async getConversations() {
       const res = await http.get(CONVERSATIONS_PATH);
-      const rawList = unwrap<BackendConversation[]>(res);
+      const raw = unwrap<
+        BackendConversation[] | PaginatedResponse<BackendConversation>
+      >(res);
+      const rawList = Array.isArray(raw) ? raw : raw.results;
       return {
         count: rawList.length,
         next: null,
@@ -90,12 +111,22 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async getMessages(conversationId, page) {
       const res = await http.get(messagesPath(conversationId, page));
-      const rawPaginated = unwrap<PaginatedResponse<BackendMessage>>(res);
+      const raw = unwrap<BackendMessage[] | PaginatedResponse<BackendMessage>>(
+        res,
+      );
+      if (Array.isArray(raw)) {
+        return {
+          count: raw.length,
+          next: null,
+          previous: null,
+          results: raw.map((m) => mapMessage(m, conversationId)),
+        };
+      }
       return {
-        count: rawPaginated.count,
-        next: rawPaginated.next,
-        previous: rawPaginated.previous,
-        results: rawPaginated.results.map((m) => mapMessage(m, conversationId)),
+        count: raw.count,
+        next: raw.next,
+        previous: raw.previous,
+        results: (raw.results ?? []).map((m) => mapMessage(m, conversationId)),
       };
     },
 
@@ -116,15 +147,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
           ? data.id_conversacion
           : data.id;
 
-      // TODO(backend): a second GET is fired to fetch participant metadata.
-      // Have /chat/conversaciones/crear-privada/ return the full Conversation
-      // so this extra request can be removed.
-      const conversations = await api.getConversations();
-      const existing = conversations.results.find((c) => c.id === id);
-      if (existing) {
-        return existing;
-      }
-
+      // Return minimal Conversation; onSuccess invalidates queries and refetch completes it.
       return {
         id,
         nombre: '',
@@ -138,39 +161,20 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       };
     },
 
-    async markMessageAsRead(messageId) {
-      const res = await http.patch(messageReadPath(messageId));
-      void unwrap(res);
-      return {
-        id: messageId,
-        conversacion: 0,
-        remitente: 0,
-        remitente_nombre: '',
-        contenido: '',
-        creado_en: '',
-        leido: true,
-      };
+    async markConversationAsRead(conversationId) {
+      const res = await http.patch(conversationReadPath(conversationId));
+      unwrap(res);
     },
 
-    async editMessage(messageId, contenido) {
+    async editMessage(messageId, contenido, conversationId) {
       const res = await http.patch(messageEditPath(messageId), { contenido });
       const raw = unwrap<BackendMessage>(res);
-      return mapMessage(raw);
+      return mapMessage(raw, conversationId);
     },
 
     async deleteMessage(messageId) {
       const res = await http.patch(messageDeletePath(messageId));
-      void unwrap(res);
-      return {
-        id: messageId,
-        conversacion: 0,
-        remitente: 0,
-        remitente_nombre: '',
-        contenido: '',
-        creado_en: '',
-        leido: false,
-        activo: false,
-      };
+      unwrap(res);
     },
 
     async sendMessageWithMedia(payload) {
@@ -193,8 +197,8 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       return {
         id: data.id_mensaje,
         conversacion: payload.conversacion,
-        remitente: 0,
-        remitente_nombre: '',
+        remitente: payload.remitente,
+        remitente_nombre: payload.remitente_nombre,
         contenido: payload.contenido ?? '',
         creado_en: new Date().toISOString(),
         leido: false,
@@ -260,13 +264,14 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async addGroupMember(conversationId, payload) {
       const res = await http.post(addGroupMemberPath(conversationId), payload);
-      void unwrap<unknown>(res);
-      return {
-        id: 0,
-        nombre: '',
-        rol: '',
-        avatar: null,
-      };
+      unwrap(res);
+    },
+
+    async searchUsers(q, signal) {
+      if (q.length < 3) return [];
+      const res = await http.get(searchUsersPath(q), signal ? { signal } : {});
+      const data = unwrap<SearchUserResult[]>(res);
+      return data.map(mapSearchUser);
     },
   };
 
