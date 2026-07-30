@@ -32,7 +32,7 @@ export function mapConversation(raw: BackendConversation): Conversation {
     ultimo_mensaje: raw.ultimo_mensaje,
     ultimo_mensaje_fecha: raw.ultimo_mensaje_creado_en,
     no_leidos: raw.no_leidos ?? 0,
-    participante_nombre: raw.nombre,
+    participante_nombre: raw.tipo === 'grupal' ? '' : raw.nombre,
     participante_avatar: null,
   };
 }

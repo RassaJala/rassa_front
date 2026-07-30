@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
@@ -49,7 +49,12 @@ export function ChatDetailPage() {
     return () => clearTimeout(timer);
   }, [conversationId]);
 
+  const endRef = useRef<HTMLDivElement>(null);
   const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length]);
 
   const handleSend = (text: string) => {
     sendMessage.mutate(
@@ -150,6 +155,7 @@ export function ChatDetailPage() {
             onDelete={handleDelete}
           />
         ))}
+        <div ref={endRef} />
       </div>
 
       {/* Input */}

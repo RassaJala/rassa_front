@@ -9,9 +9,6 @@ export const CREATE_GROUP_PATH = '/chat/conversaciones/crear-grupal/';
 export const messagesPath = (conversationId: number, page: number): string =>
   `/chat/conversaciones/${conversationId}/mensajes/?page=${page}`;
 
-export const messageReadPath = (messageId: number): string =>
-  `/chat/mensajes/${messageId}/leer/`;
-
 export const messageEditPath = (messageId: number): string =>
   `/chat/mensajes/${messageId}/editar/`;
 

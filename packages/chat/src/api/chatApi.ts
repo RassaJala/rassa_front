@@ -79,7 +79,7 @@ export interface ChatApi {
   addGroupMember(
     conversationId: number,
     payload: AddGroupMemberPayload,
-  ): Promise<GroupMember>;
+  ): Promise<void>;
   searchUsers(q: string, signal?: AbortSignal): Promise<SearchUserResult[]>;
 }
 
@@ -262,13 +262,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async addGroupMember(conversationId, payload) {
       const res = await http.post(addGroupMemberPath(conversationId), payload);
-      void unwrap<unknown>(res);
-      return {
-        id: 0,
-        nombre: '',
-        rol: '',
-        avatar: null,
-      };
+      unwrap(res);
     },
 
     async searchUsers(q, signal) {

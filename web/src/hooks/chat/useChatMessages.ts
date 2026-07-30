@@ -31,8 +31,26 @@ export function useChatMessages(
       return undefined;
     },
     initialPageParam: 1,
-    refetchInterval: POLL_MS,
+    refetchInterval: (query) => {
+      if (query.state.isInvalidated) return false;
+      return POLL_MS;
+    },
     refetchIntervalInBackground: false,
     staleTime: 5_000,
+    select: (data) => {
+      const seen = new Set<string>();
+      return {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          results: page.results.filter((msg) => {
+            const key = `${msg.conversacion}-${msg.remitente}-${msg.contenido}-${msg.creado_en}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }),
+        })),
+      };
+    },
   });
 }

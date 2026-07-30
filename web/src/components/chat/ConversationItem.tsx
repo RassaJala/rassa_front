@@ -24,6 +24,7 @@ export function ConversationItem({
     <button
       type="button"
       disabled={!user?.rol}
+      title={!user?.rol ? 'Cargando usuario…' : displayName}
       onClick={() =>
         user?.rol &&
         navigate(`/${user.rol}/chat/${conversation.id}`, {
