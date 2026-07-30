@@ -3,11 +3,6 @@ import type { OrderStatusHistory } from '../types';
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
-export function normalizeOrderHistoryResponse(response: {
-  data: OrderStatusHistory[];
-}): OrderStatusHistory[] {
-  return response.data;
-}
 export function isNotFoundError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false;
   const err = error as { response?: { status?: number } };
@@ -71,8 +66,6 @@ export const STATUS_COLORS: Record<string, string> = {
 export function getStatusColor(status: string, fallback: string): string {
   return STATUS_COLORS[status] ?? fallback;
 }
-
-import type { OrderStatusHistory } from '../types';
 
 // ponytail: single normalizer shared by mobile hook and web route
 export function normalizeOrderHistoryResponse(
