@@ -1,4 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
+
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
@@ -14,7 +15,7 @@ function isPublic(url: string): boolean {
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10_000,
+  timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
 });
 

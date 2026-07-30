@@ -8,7 +8,6 @@ export function normalizeOrderHistoryResponse(response: {
 }): OrderStatusHistory[] {
   return response.data;
 }
-
 export function isNotFoundError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false;
   const err = error as { response?: { status?: number } };
@@ -60,7 +59,7 @@ export function buildDescription(entry: {
   return `${fromLabel} → ${toLabel}`;
 }
 
-const STATUS_COLORS: Record<string, string> = {
+export const STATUS_COLORS: Record<string, string> = {
   pendiente: '#f59e0b',
   confirmado: '#22c55e',
   en_preparacion: '#3b82f6',
