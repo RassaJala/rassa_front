@@ -18,8 +18,8 @@ import {
   productCountLabel,
 } from '../components/PublicationActions';
 import { DetailModal } from '../components/PublicationDetailModal';
-import { Pagination } from '../components/PublicationPagination';
 import { PageHeader } from '../components/layout/PageHeader';
+import { Pagination } from '../components/PublicationPagination';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -50,10 +50,6 @@ const MONTHS = [
   { value: 11, label: 'Noviembre' },
   { value: 12, label: 'Diciembre' },
 ];
-
-
-
-
 
 // ── FarmerPublications ─────────────────────────────────────
 
@@ -138,45 +134,33 @@ export function FarmerPublications() {
     void navigate(`/agricultor/publicaciones/${String(id)}/editar`);
   }
 
-  async function handleMutation(
-    mutate: (id: number) => Promise<unknown>,
-    id: number,
-    successMsg: string,
-    confirmMsg?: string,
-  ) {
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
+  async function handleDelete(id: number) {
+    if (!window.confirm('¿Eliminar esta publicación?')) return;
     try {
-      await mutate(id);
-      showToast(successMsg);
+      await deleteMutation.mutateAsync(id);
+      showToast('Publicación eliminada.');
     } catch (err) {
       showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
 
-  function handleDelete(id: number) {
-    void handleMutation(
-      (i) => deleteMutation.mutateAsync(i),
-      id,
-      'Publicación eliminada.',
-      '¿Eliminar esta publicación?',
-    );
+  async function handlePublish(id: number) {
+    try {
+      await publishMutation.mutateAsync(id);
+      showToast('Publicación publicada.');
+    } catch (err) {
+      showToast(extractApiError(err, ['detail', 'message']), true);
+    }
   }
 
-  function handlePublish(id: number) {
-    void handleMutation(
-      (i) => publishMutation.mutateAsync(i),
-      id,
-      'Publicación publicada.',
-    );
-  }
-
-  function handleClose(id: number) {
-    void handleMutation(
-      (i) => closeMutation.mutateAsync(i),
-      id,
-      'Publicación cerrada.',
-      '¿Cerrar esta publicación?',
-    );
+  async function handleClose(id: number) {
+    if (!window.confirm('¿Cerrar esta publicación?')) return;
+    try {
+      await closeMutation.mutateAsync(id);
+      showToast('Publicación cerrada.');
+    } catch (err) {
+      showToast(extractApiError(err, ['detail', 'message']), true);
+    }
   }
 
   return (

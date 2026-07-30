@@ -21,11 +21,21 @@ const api = axios.create({
 
 const SERVER_ERROR_THRESHOLD = 500;
 
+const IDEMPOTENT_METHODS = new Set(['get', 'head', 'put', 'delete', 'options', 'trace']);
+
 axiosRetry(api, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
-    return axiosRetry.isNetworkOrIdempotentRequestError(error);
+    if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
+    if (
+      error.response?.status !== undefined &&
+      error.response.status >= SERVER_ERROR_THRESHOLD
+    ) {
+      const method = error.config?.method?.toLowerCase() ?? '';
+      return IDEMPOTENT_METHODS.has(method);
+    }
+    return false;
   },
 });
 

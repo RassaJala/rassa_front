@@ -13,8 +13,6 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
-  PERSIST_TIMEOUT_MS,
-  TOAST_ORPHAN_DELAY_MS,
 } from '../constants/api';
 import { useAppColors } from '../hooks/useAppColors';
 import {
@@ -34,12 +32,11 @@ import {
   type Producto,
   type Publicacion,
 } from '../services/publications';
-import { extractApiError } from '../utils/apiErrors';
 import { deleteOrphans } from '../utils/deleteOrphans';
 import { revokeBlobUrl } from '../utils/imageHelpers';
 import { logError } from '../utils/logger';
 import { persistItems } from '../utils/persistItems';
-import { withTimeout } from '../utils/withTimeout';
+import { runPersist as runPersistCore } from '../utils/runPersist';
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -404,89 +401,25 @@ export function PublicationWizard() {
   }
 
   // ── Shared persist orchestration ──
-  async function runPersist(opts: {
+  async function handleRunPersist(opts: {
     successMsg: string;
     afterPersist?: (pubId: number) => Promise<void>;
   }): Promise<void> {
-    if (savingRef.current) return;
-    savingRef.current = true;
-    setSaving(true);
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    try {
-      await withTimeout(
-        (async () => {
-          if (controller.signal.aborted) return;
-          setError(null);
-          let pub = pubRef.current;
-          if (!pub) {
-            const result = await createMutation.mutateAsync(undefined);
-            pub = result.data;
-            pubRef.current = pub;
-          }
-          if (!pub) {
-            if (mountedRef.current) {
-              setError('No se pudo crear la publicación.');
-            }
-            return;
-          }
-
-          const { orphanFailures, tempIdToServerId } =
-            await persistItemsWrapper(pub.id_publicacion, controller.signal);
-          // Apply server ID mapping only after full persist succeeds
-          setItems((prev) =>
-            prev.map((i) => {
-              const serverId = tempIdToServerId.get(i.tempId);
-              if (serverId !== undefined) {
-                return { ...i, tempId: String(serverId), isNew: false };
-              }
-              return i;
-            }),
-          );
-          await opts.afterPersist?.(pub.id_publicacion);
-
-          if (mountedRef.current) {
-            setToast({ message: opts.successMsg, type: 'success' });
-            if (orphanFailures > 0) {
-              setTimeout(() => {
-                if (mountedRef.current) {
-                  setToast({
-                    message: `${orphanFailures} producto${orphanFailures !== 1 ? 's' : ''} antiguo${orphanFailures !== 1 ? 's' : ''} no se pudo${orphanFailures !== 1 ? 'ron' : ''} eliminar.`,
-                    type: 'error',
-                  });
-                }
-              }, TOAST_ORPHAN_DELAY_MS);
-            }
-          }
-        })(),
-        PERSIST_TIMEOUT_MS,
-        controller,
-      );
-    } catch (err) {
-      if (controller.signal.aborted) {
-        if (mountedRef.current) {
-          setError(null);
-          setToast({ message: 'Operación cancelada.', type: 'error' });
-        }
-        return;
-      }
-      if (err instanceof Error && err.message === 'timeout') {
-        if (mountedRef.current) {
-          setError('La operación tardó demasiado. Intentá de nuevo.');
-        }
-      } else {
-        logError('publications.persist', err);
-        if (mountedRef.current) {
-          setError(extractApiError(err, ['detail', 'message']));
-        }
-      }
-    } finally {
-      abortRef.current = null;
-      savingRef.current = false;
-      if (mountedRef.current) setSaving(false);
-    }
+    await runPersistCore(
+      {
+        savingRef,
+        abortRef,
+        mountedRef,
+        pubRef,
+        createFn: () => createMutation.mutateAsync(undefined),
+        persistItemsFn: (pubId, signal) => persistItemsWrapper(pubId, signal),
+        onSaving: setSaving,
+        onError: setError,
+        onToast: (message, type) => setToast({ message, type }),
+        onTempIdSync: setItems,
+      },
+      opts,
+    );
   }
 
   // ── Save draft ──
@@ -495,7 +428,7 @@ export function PublicationWizard() {
       setError('Corregí los errores en los productos antes de continuar.');
       return;
     }
-    void runPersist({ successMsg: 'Borrador guardado.' });
+    void handleRunPersist({ successMsg: 'Borrador guardado.' });
   }
 
   // ── Publish ──
@@ -504,7 +437,7 @@ export function PublicationWizard() {
       setError('Corregí los errores en los productos antes de continuar.');
       return;
     }
-    void runPersist({
+    void handleRunPersist({
       successMsg: '¡Publicación publicada!',
       afterPersist: (pubId) =>
         publishAfterPersist(

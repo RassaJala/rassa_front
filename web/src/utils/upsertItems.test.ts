@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  MAX_ITEMS_PER_PUBLICATION,
+  MAX_PRODUCTS,
   upsertItems,
   type UpsertItemsDeps,
   type WizardItemInput,
@@ -217,7 +217,7 @@ describe('upsertItems', () => {
     await expect(upsertItems(1, items, deps)).rejects.toThrow('update failed');
   });
 
-  it('does not throw on image upload error', async () => {
+  it('propagates image upload error', async () => {
     const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
     const deps = makeUpsertDeps({
       uploadImage: vi.fn().mockRejectedValue(new Error('upload failed')),
@@ -227,9 +227,7 @@ describe('upsertItems', () => {
       makeItem({ tempId: 'local_2' }),
     ];
 
-    const result = await upsertItems(1, items, deps);
-    expect(result.tempIdToServerId.size).toBe(2);
-    expect(deps.uploadImage).toHaveBeenCalledTimes(1);
+    await expect(upsertItems(1, items, deps)).rejects.toThrow('upload failed');
   });
 
   it('continues to next item after image upload', async () => {
@@ -348,7 +346,7 @@ describe('upsertItems', () => {
     expect(result.tempIdToServerId.size).toBe(2);
   });
 
-  it('handles image upload failure gracefully and continues', async () => {
+  it('stops on image upload failure', async () => {
     const file = new File(['blob'], 'test.jpg', { type: 'image/jpeg' });
     const deps = makeUpsertDeps({
       uploadImage: vi.fn().mockRejectedValue(new Error('upload failed')),
@@ -358,33 +356,30 @@ describe('upsertItems', () => {
       makeItem({ tempId: 'local_2' }),
     ];
 
-    const result = await upsertItems(1, items, deps);
-    expect(deps.add).toHaveBeenCalledTimes(2);
-    expect(deps.uploadImage).toHaveBeenCalledTimes(1);
-    expect(result.tempIdToServerId.size).toBe(2);
+    await expect(upsertItems(1, items, deps)).rejects.toThrow('upload failed');
   });
 
-  it('rejects when items exceed MAX_ITEMS_PER_PUBLICATION', async () => {
+  it('rejects when items exceed MAX_PRODUCTS', async () => {
     const deps = makeUpsertDeps();
-    const items = Array.from({ length: MAX_ITEMS_PER_PUBLICATION + 1 }, (_, i) =>
+    const items = Array.from({ length: MAX_PRODUCTS + 1 }, (_, i) =>
       makeItem({ tempId: `local_${i}`, fk_producto: i + 1 }),
     );
 
     await expect(upsertItems(1, items, deps)).rejects.toThrow(
-      `Máximo ${String(MAX_ITEMS_PER_PUBLICATION)} productos por publicación.`,
+      `Máximo ${String(MAX_PRODUCTS)} productos por publicación.`,
     );
     expect(deps.add).not.toHaveBeenCalled();
   });
 
-  it('accepts exactly MAX_ITEMS_PER_PUBLICATION items', async () => {
+  it('accepts exactly MAX_PRODUCTS items', async () => {
     const deps = makeUpsertDeps();
-    const items = Array.from({ length: MAX_ITEMS_PER_PUBLICATION }, (_, i) =>
+    const items = Array.from({ length: MAX_PRODUCTS }, (_, i) =>
       makeItem({ tempId: `local_${i}`, fk_producto: i + 1 }),
     );
 
     const result = await upsertItems(1, items, deps);
-    expect(deps.add).toHaveBeenCalledTimes(MAX_ITEMS_PER_PUBLICATION);
-    expect(result.tempIdToServerId.size).toBe(MAX_ITEMS_PER_PUBLICATION);
+    expect(deps.add).toHaveBeenCalledTimes(MAX_PRODUCTS);
+    expect(result.tempIdToServerId.size).toBe(MAX_PRODUCTS);
   });
 
   it('throws when server returns null data for create', async () => {

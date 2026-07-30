@@ -1,12 +1,5 @@
 // ── Extracted upsert logic — testable via DI ────────────────
 
-import { logError } from './logger';
-import { withTimeout } from './withTimeout';
-
-const UPLOAD_TIMEOUT_MS = 30_000;
-
-export const MAX_ITEMS_PER_PUBLICATION = 50;
-
 export interface WizardItemInput {
   tempId: string;
   isNew: boolean;
@@ -51,18 +44,19 @@ export interface UpsertItemsResult {
   updatedServerIds: number[];
 }
 
+export const MAX_PRODUCTS = 50;
+
 export async function upsertItems(
   pubId: number,
   items: WizardItemInput[],
   deps: UpsertItemsDeps,
   signal?: AbortSignal,
 ): Promise<UpsertItemsResult> {
-  if (items.length > MAX_ITEMS_PER_PUBLICATION) {
+  if (items.length > MAX_PRODUCTS) {
     throw new Error(
-      `Máximo ${String(MAX_ITEMS_PER_PUBLICATION)} productos por publicación.`,
+      `Máximo ${MAX_PRODUCTS} productos por publicación.`,
     );
   }
-
   const newServerIds: number[] = [];
   const updatedServerIds: number[] = [];
   const tempIdToServerId = new Map<string, number>();
@@ -101,16 +95,7 @@ export async function upsertItems(
       if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
       const formData = new FormData();
       formData.append('imagen', item.imageFile);
-      const uploadController = new AbortController();
-      try {
-        await withTimeout(
-          deps.uploadImage({ pubId, itemId, formData }),
-          UPLOAD_TIMEOUT_MS,
-          uploadController,
-        );
-      } catch (uploadErr) {
-        logError('upsertItems:imageUpload', uploadErr, { pubId, itemId });
-      }
+      await deps.uploadImage({ pubId, itemId, formData });
     }
   }
 
