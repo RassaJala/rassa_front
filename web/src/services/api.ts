@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
@@ -12,9 +12,11 @@ function isPublic(url: string): boolean {
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15_000,
+  timeout: 10_000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+const SERVER_ERROR_THRESHOLD = 500;
 
 axiosRetry(api, {
   retries: 3,
@@ -22,7 +24,9 @@ axiosRetry(api, {
   retryCondition: (error) => {
     return (
       error.config?.method === 'get' &&
-      axiosRetry.isNetworkOrIdempotentRequestError(error)
+      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        (error.response?.status !== undefined &&
+          error.response.status >= SERVER_ERROR_THRESHOLD))
     );
   },
 });
@@ -48,7 +52,7 @@ let pendingRequests: Array<{
 }> = [];
 
 async function refreshAccessToken(
-  originalRequest: ReturnType<typeof api>['config'],
+  originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
   const refreshToken = sessionStorage.getItem('refresh_token');
   if (!refreshToken) throw new Error('No refresh token');

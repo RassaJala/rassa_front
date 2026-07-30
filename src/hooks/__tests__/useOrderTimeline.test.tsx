@@ -119,4 +119,29 @@ describe('useOrderTimeline', () => {
     });
     expect(result.current.entries).toEqual([]);
   }, 10000);
+
+  it('does not fetch for negative orderId', () => {
+    const { result } = renderHook(() => useOrderTimeline(-1), {
+      wrapper: createWrapper(),
+    });
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(result.current.entries).toEqual([]);
+  });
+
+  it('does not retry on 404 error', async () => {
+    const axios404 = new Error('Not found');
+    (axios404 as unknown as Record<string, unknown>).isAxiosError = true;
+    (axios404 as unknown as Record<string, unknown>).response = { status: 404 };
+    mockGet.mockRejectedValue(axios404);
+
+    const { result } = renderHook(() => useOrderTimeline(1), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true), {
+      timeout: 5000,
+    });
+    // retry: false means zero retries even on 404 — entries should be empty
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(result.current.entries).toEqual([]);
+  }, 10000);
 });

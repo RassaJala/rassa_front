@@ -1,4 +1,4 @@
-/* globals console */
+// globals console is unnecessary — console is a built-in global
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -38,7 +38,7 @@ import type {
   FamilyMember,
   SearchUserResult,
 } from '@/types';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 
 type Route = RouteProp<AdminStackParamList, 'FamilyDetail'>;
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'FamilyDetail'>;

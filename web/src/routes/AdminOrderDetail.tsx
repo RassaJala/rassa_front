@@ -7,13 +7,13 @@ import {
   formatTimestamp,
   getStatusColor,
   isNotFoundError,
-  isWrappedData,
+  normalizeOrderHistoryResponse,
   STALE_TIME,
   STATUS_LABELS,
-} from '../../src/constants/orderTimeline';
+} from '@root/constants/orderTimeline';
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
-import type { OrderStatusHistory } from '../../src/types';
+import type { OrderStatusHistory } from '@root/types';
 
 // ponytail: module-scoped styles to avoid recreation on every render
 const SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg) } }`;
@@ -64,16 +64,13 @@ export function AdminOrderDetail() {
     queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
       const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
-      const body = res.data;
-      // ponytail: backend usually returns array directly, fallback for wrapped response
-      if (Array.isArray(body)) return body as OrderStatusHistory[];
-      if (isWrappedData(body)) return body.data as OrderStatusHistory[];
-      return [];
+      return normalizeOrderHistoryResponse(res.data);
     },
     enabled: isValidId,
     staleTime: STALE_TIME,
-    refetchOnWindowFocus: false,
-    // ponytail: axios-retry handles retries globally, no amplification needed
+    refetchOnWindowFocus: true,
+    // axios-retry (web api.ts:19-30) ya aplica 3 reintentos con exponentialDelay
+    // a GET sobre errores de red o 5xx. `retry: false` evita doble reintento.
     retry: false,
   });
 
@@ -161,7 +158,20 @@ export function AdminOrderDetail() {
                 ? 'Pedido no encontrado'
                 : 'Error al cargar el historial'}
             </p>
-            {!isNotFoundError(error) && (
+            {isNotFoundError(error) ? (
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  ...btnStyle,
+                  marginTop: 16,
+                  background: surface,
+                  border: `1.5px solid ${border}`,
+                  color: brand,
+                }}
+              >
+                ← Volver
+              </button>
+            ) : (
               <button
                 onClick={() => void refetch()}
                 style={{

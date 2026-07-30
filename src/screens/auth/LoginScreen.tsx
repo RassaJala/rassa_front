@@ -13,10 +13,13 @@ import {
 } from 'react-native';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
+import type { AuthStackParamList } from '@/types';
 import { getLoginErrorMessage } from '@/utils/authError';
 
 // ── Palette ────────────────────────────────────────────────────────────
@@ -427,6 +430,8 @@ function Md3Field({
 
 export default function LoginScreen(): React.JSX.Element {
   const { login } = useAuth();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const c = isDark ? dark : light;
@@ -636,6 +641,29 @@ export default function LoginScreen(): React.JSX.Element {
               </Text>
             </Pressable>
           </View>
+
+          <Pressable
+            onPress={() => navigation.navigate('Register')}
+            style={{ marginTop: 16, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '500',
+                color: c.muted,
+              }}
+            >
+              ¿No tienes cuenta?{' '}
+              <Text
+                style={{
+                  color: c.brand,
+                  fontWeight: '700',
+                }}
+              >
+                Crear cuenta
+              </Text>
+            </Text>
+          </Pressable>
         </Animated.View>
 
         <View style={{ height: 48 }} />

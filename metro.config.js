@@ -11,6 +11,7 @@ config.resolver.extraNodeModules = {
 
 config.watchFolders = [
   ...(config.watchFolders ?? []),
+  path.resolve(__dirname, 'packages/common'),
   path.resolve(__dirname, 'packages/chat'),
 ];
 

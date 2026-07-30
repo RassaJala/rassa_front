@@ -1,41 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
-import { Platform } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import DatePickerModal from '@/components/DatePickerModal';
-
-// ── Mock DateTimePicker ─────────────────────────────
-const mockOnValueChange = jest.fn();
-let mockDateTimePickerValue = new Date(2000, 0, 15);
-
-jest.mock('@react-native-community/datetimepicker', () => ({
-  __esModule: true,
-  default: jest.fn(
-    ({
-      value,
-      onChange,
-      testID: _testID,
-    }: {
-      readonly value: Date;
-      readonly onChange: (e: unknown, d?: Date) => void;
-      readonly testID: string;
-    }) => {
-      mockDateTimePickerValue = value;
-      mockOnValueChange.mockImplementation(onChange);
-      return null;
-    },
-  ),
-}));
-
-// ── Helpers ─────────────────────────────────────────
-function mockAndroid(): void {
-  jest.replaceProperty(Platform, 'OS', 'android');
-}
-
-function mockIOS(): void {
-  jest.replaceProperty(Platform, 'OS', 'ios');
-}
 
 // ── Tests ───────────────────────────────────────────
 describe('DatePickerModal', () => {
@@ -43,134 +10,192 @@ describe('DatePickerModal', () => {
     jest.clearAllMocks();
   });
 
-  describe('on Android', () => {
-    beforeEach(() => {
-      mockAndroid();
-    });
-
-    it('no renderiza nada cuando visible=false', () => {
-      const result = render(
-        <DatePickerModal
-          visible={false}
-          onClose={jest.fn()}
-          onSelectDate={jest.fn()}
-        />,
-      );
-      expect(result.toJSON()).toBeNull();
-    });
-
-    it('renderiza DateTimePicker nativo cuando visible=true', () => {
-      const { getByTestId } = render(
-        <DatePickerModal
-          visible
-          onClose={jest.fn()}
-          onSelectDate={jest.fn()}
-        />,
-      );
-
-      expect(getByTestId('dateTimePicker')).toBeTruthy();
-    });
-
-    it('llama onSelectDate y onClose al seleccionar fecha', () => {
-      const onSelectDate = jest.fn();
-      const onClose = jest.fn();
-
-      render(
-        <DatePickerModal
-          visible
-          onClose={onClose}
-          onSelectDate={onSelectDate}
-        />,
-      );
-
-      // Simulate native picker selection
-      mockOnValueChange.mock.calls[0]?.[1] &&
-        mockOnValueChange(
-          { type: 'set', nativeEvent: { timestamp: 0, utcOffset: 0 } },
-          new Date(2000, 0, 15),
-        );
-
-      expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
+  it('no renderiza nada cuando visible=false', () => {
+    const result = render(
+      <DatePickerModal
+        visible={false}
+        onClose={jest.fn()}
+        onSelectDate={jest.fn()}
+      />,
+    );
+    expect(result.toJSON()).toBeNull();
   });
 
-  describe('on iOS', () => {
-    beforeEach(() => {
-      mockIOS();
-    });
+  it('muestra paso de años al abrir sin initialDate', () => {
+    const { getByText } = render(
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
+    );
 
-    it('no renderiza overlay cuando visible=false', () => {
-      const { queryByTestId } = render(
-        <DatePickerModal
-          visible={false}
-          onClose={jest.fn()}
-          onSelectDate={jest.fn()}
-        />,
-      );
+    expect(getByText('Fecha de Nacimiento')).toBeTruthy();
+    expect(getByText('Cancelar')).toBeTruthy();
+    // Should show recent years
+    expect(getByText(String(new Date().getFullYear() - 18))).toBeTruthy();
+    expect(getByText(String(new Date().getFullYear() - 19))).toBeTruthy();
+  });
 
-      expect(queryByTestId('modal-overlay')).toBeNull();
-    });
+  it('inicializa desde initialDate y muestra día seleccionado', () => {
+    const { getAllByText } = render(
+      <DatePickerModal
+        visible
+        onClose={jest.fn()}
+        onSelectDate={jest.fn()}
+        initialDate="1995-06-20"
+      />,
+    );
 
-    it('renderiza Modal con picker y botón Hecho cuando visible=true', () => {
-      const { getByTestId, getByText } = render(
-        <DatePickerModal
-          visible
-          onClose={jest.fn()}
-          onSelectDate={jest.fn()}
-        />,
-      );
+    // Should show the year list with 1995 highlighted
+    expect(getAllByText('1995').length).toBeGreaterThan(0);
+    // Month tab should show the selected month
+    expect(getAllByText('Junio').length).toBeGreaterThan(0);
+    // Day tab should show the selected day (appears in both tab and grid)
+    expect(getAllByText('20').length).toBeGreaterThan(0);
+  });
 
-      expect(getByTestId('modal-overlay')).toBeTruthy();
-      expect(getByTestId('dateTimePicker')).toBeTruthy();
-      expect(getByText('Hecho')).toBeTruthy();
-    });
+  it('flujo completo: Año → Mes → Día llama onSelectDate y onClose', () => {
+    const onSelectDate = jest.fn();
+    const onClose = jest.fn();
 
-    it('inicializa desde initialDate', () => {
-      const { getByTestId } = render(
-        <DatePickerModal
-          visible
-          onClose={jest.fn()}
-          onSelectDate={jest.fn()}
-          initialDate="1995-06-20"
-        />,
-      );
+    const { getByText } = render(
+      <DatePickerModal visible onClose={onClose} onSelectDate={onSelectDate} />,
+    );
 
-      // The picker should receive the parsed initialDate
-      const picker = getByTestId('dateTimePicker');
-      expect(picker).toBeTruthy();
-      // value prop was set from initialDate
-      expect(mockDateTimePickerValue.toISOString()).toContain('1995-06-20');
-    });
+    // Step 1: Select year
+    fireEvent.press(getByText('1995'));
+    // Step 2: Select month
+    fireEvent.press(getByText('Junio'));
+    // Step 3: Select day
+    fireEvent.press(getByText('20'));
 
-    it('cierra al presionar el overlay', () => {
-      const onClose = jest.fn();
+    expect(onSelectDate).toHaveBeenCalledWith('1995-06-20');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 
-      const { getByTestId } = render(
-        <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
-      );
+  it('botón Hecho funciona cuando hay día seleccionado', () => {
+    const onSelectDate = jest.fn();
+    const onClose = jest.fn();
 
-      fireEvent.press(getByTestId('modal-overlay'));
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
+    const { getByText } = render(
+      <DatePickerModal
+        visible
+        onClose={onClose}
+        onSelectDate={onSelectDate}
+        initialDate="1995-06-20"
+      />,
+    );
 
-    it('llama onSelectDate y onClose al presionar Hecho', () => {
-      const onSelectDate = jest.fn();
-      const onClose = jest.fn();
+    fireEvent.press(getByText('Hecho'));
 
-      const { getByText } = render(
-        <DatePickerModal
-          visible
-          onClose={onClose}
-          onSelectDate={onSelectDate}
-          initialDate="2000-01-15"
-        />,
-      );
+    expect(onSelectDate).toHaveBeenCalledWith('1995-06-20');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 
-      fireEvent.press(getByText('Hecho'));
+  it('cierra al presionar el overlay', () => {
+    const onClose = jest.fn();
 
-      expect(onSelectDate).toHaveBeenCalledWith('2000-01-15');
-      expect(onClose).toHaveBeenCalledTimes(1);
-    });
+    const { getByTestId } = render(
+      <DatePickerModal visible onClose={onClose} onSelectDate={jest.fn()} />,
+    );
+
+    fireEvent.press(getByTestId('modal-overlay'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('puede navegar entre pasos con el tab bar', () => {
+    const { getByText, getAllByText } = render(
+      <DatePickerModal
+        visible
+        onClose={jest.fn()}
+        onSelectDate={jest.fn()}
+        initialDate="1995-06-20"
+      />,
+    );
+
+    // "20" appears in both tab bar and day grid
+    expect(getAllByText('20').length).toBeGreaterThan(1);
+
+    // Go back to year step
+    fireEvent.press(getByText('Año'));
+    expect(getAllByText('1995').length).toBeGreaterThan(0);
+
+    // Go to month step
+    fireEvent.press(getByText('Mes'));
+    expect(getAllByText('Junio').length).toBeGreaterThan(0);
+  });
+
+  it('cambia día y Hecho confirma el nuevo valor', () => {
+    const onSelectDate = jest.fn();
+    const onClose = jest.fn();
+
+    const { getByText } = render(
+      <DatePickerModal
+        visible
+        onClose={onClose}
+        onSelectDate={onSelectDate}
+        initialDate="1995-06-15"
+      />,
+    );
+
+    // Day 15 is pre-selected, tap day 10 instead
+    fireEvent.press(getByText('10'));
+    // Auto-confirms on day selection
+    expect(onSelectDate).toHaveBeenCalledWith('1995-06-10');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('muestra años en rango correcto (18-120 años atrás)', () => {
+    const { getByText, queryByText } = render(
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
+    );
+
+    const currentYear = new Date().getFullYear();
+    // Max adult year (18 years ago)
+    expect(getByText(String(currentYear - 18))).toBeTruthy();
+    // Min year (121 years ago from max — YEARS_BACK=103 items, last index=102)
+    expect(getByText(String(currentYear - 18 - 102))).toBeTruthy();
+    // Future years should NOT appear
+    expect(queryByText(String(currentYear))).toBeNull();
+  });
+
+  it('meses están en español', () => {
+    const { getByText } = render(
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
+    );
+
+    // Select any year to advance to month step
+    fireEvent.press(getByText(String(new Date().getFullYear() - 18)));
+
+    // All 12 months in Spanish
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    for (const m of months) {
+      expect(getByText(m)).toBeTruthy();
+    }
+  });
+
+  it('días correctos para febrero en año bisiesto', () => {
+    const { getByText, queryByText } = render(
+      <DatePickerModal visible onClose={jest.fn()} onSelectDate={jest.fn()} />,
+    );
+
+    // Select a known leap year
+    fireEvent.press(getByText('2004'));
+    fireEvent.press(getByText('Febrero'));
+
+    // Feb 2004 has 29 days
+    expect(getByText('29')).toBeTruthy();
+    // Day 30 should NOT exist
+    expect(queryByText('30')).toBeNull();
   });
 });

@@ -1,3 +1,5 @@
+import type { OrderStatusHistory } from '@/types';
+
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
@@ -5,14 +7,6 @@ export function isNotFoundError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false;
   const err = error as { response?: { status?: number } };
   return err.response?.status === 404;
-}
-
-interface WrappedData {
-  data: unknown;
-}
-
-export function isWrappedData(value: unknown): value is WrappedData {
-  return value != null && typeof value === 'object' && 'data' in value;
 }
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -24,17 +18,17 @@ export const STATUS_LABELS: Record<string, string> = {
   cancelado: 'Cancelado',
 };
 
-export function formatTimestamp(iso: string): string {
+export function formatTimestamp(iso: string | null): string {
+  if (iso == null) return '—';
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const hh = String(d.getUTCHours()).padStart(2, '0');
-    const min = String(d.getUTCMinutes()).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
     return `${dd}/${mm} ${hh}:${min}`;
   } catch {
-    console.warn('[orderTimeline] Invalid timestamp:', iso);
     return '—';
   }
 }
@@ -63,4 +57,16 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function getStatusColor(status: string, fallback: string): string {
   return STATUS_COLORS[status] ?? fallback;
+}
+
+// ponytail: single normalizer shared by mobile hook and web route
+export function normalizeOrderHistoryResponse(
+  body: unknown,
+): OrderStatusHistory[] {
+  if (Array.isArray(body)) return body as OrderStatusHistory[];
+  if (body != null && typeof body === 'object' && 'data' in body) {
+    if (Array.isArray(body.data)) return body.data as OrderStatusHistory[];
+    return [];
+  }
+  return [];
 }
