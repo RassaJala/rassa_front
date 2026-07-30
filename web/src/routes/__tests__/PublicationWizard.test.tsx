@@ -571,6 +571,54 @@ describe('PublicationWizard', () => {
       const publishBtn = screen.getByText('🚀 Publicar');
       expect(publishBtn.closest('button')).not.toBeDisabled();
     });
+
+    it('triggers publishAfterPersist on click', async () => {
+      const user = userEvent.setup();
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      await addItemAndFill(user);
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('🚀 Publicar'));
+      await waitFor(() => {
+        expect(mockedPublishAfterPersist).toHaveBeenCalledOnce();
+      });
+      const callArg = mockedPublishAfterPersist.mock.calls[0];
+      expect(callArg?.[0]).toBe(1);
+      expect(typeof callArg?.[1]).toBe('function');
+      expect(typeof callArg?.[2]).toBe('function');
+    });
+
+    it('navigates after publishAfterPersist resolves', async () => {
+      mockedPublishAfterPersist.mockImplementation(
+        async (_pubId, _publishFn, navigateFn) => { navigateFn(); },
+      );
+      const user = userEvent.setup();
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      await addItemAndFill(user);
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('🚀 Publicar'));
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/agricultor/publicaciones',
+        );
+      });
+    });
+
+    it('shows error when publishAfterPersist rejects', async () => {
+      mockedPublishAfterPersist.mockRejectedValue(
+        new Error('Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.'),
+      );
+      const user = userEvent.setup();
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      await addItemAndFill(user);
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('Siguiente →'));
+      await user.click(screen.getByText('🚀 Publicar'));
+      expect(
+        await screen.findByText('Se guardó el borrador, pero falló la publicación. Intentá publicar desde la lista.'),
+      ).toBeInTheDocument();
+    });
   });
 
   describe('edge cases', () => {

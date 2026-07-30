@@ -19,10 +19,8 @@ describe('mediaUrl', () => {
     expect(mediaUrl('')).toBeNull();
   });
 
-  it('passes through absolute HTTP URLs from trusted domains', () => {
-    expect(mediaUrl('http://localhost:8000/img.jpg')).toBe(
-      'http://localhost:8000/img.jpg',
-    );
+  it('rejects localhost HTTP URLs (not trusted for security)', () => {
+    expect(mediaUrl('http://localhost:8000/img.jpg')).toBeNull();
   });
 
   it('passes through absolute HTTPS URLs from trusted domains', () => {
@@ -86,10 +84,8 @@ describe('mediaUrl', () => {
     expect(mediaUrl('https://evil.com/payload.jpg')).toBeNull();
   });
 
-  it('passes through URLs from trusted domains', () => {
-    expect(mediaUrl('http://localhost:3000/img.png')).toBe(
-      'http://localhost:3000/img.png',
-    );
+  it('rejects localhost HTTP URLs even from other port (not trusted)', () => {
+    expect(mediaUrl('http://localhost:3000/img.png')).toBeNull();
   });
 
   it('returns null for malformed URLs', () => {

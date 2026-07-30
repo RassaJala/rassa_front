@@ -9,7 +9,7 @@ try {
   // BASE is a relative path — no host to derive
 }
 
-const TRUSTED_DOMAINS = [BASE_HOST, 'localhost', '127.0.0.1'].filter(Boolean);
+const TRUSTED_DOMAINS = [BASE_HOST].filter(Boolean);
 
 const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript|blob|file):/i;
 
@@ -35,8 +35,6 @@ export function mediaUrl(path: string | null | undefined): string | null {
       const url = new URL(path);
       const host = url.hostname;
       if (
-        host === 'localhost' ||
-        host === '127.0.0.1' ||
         TRUSTED_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`))
       ) {
         if (url.username || url.password) return null;

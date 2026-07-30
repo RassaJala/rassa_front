@@ -25,11 +25,7 @@ axiosRetry(api, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
-    return (
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      (error.response?.status !== undefined &&
-        error.response.status >= SERVER_ERROR_THRESHOLD)
-    );
+    return axiosRetry.isNetworkOrIdempotentRequestError(error);
   },
 });
 

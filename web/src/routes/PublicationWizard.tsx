@@ -39,6 +39,7 @@ import { deleteOrphans } from '../utils/deleteOrphans';
 import { revokeBlobUrl } from '../utils/imageHelpers';
 import { logError } from '../utils/logger';
 import { persistItems } from '../utils/persistItems';
+import { withTimeout } from '../utils/withTimeout';
 import {
   type ItemValidation,
   type WizardItemDraft,
@@ -73,29 +74,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 const ERROR_BG = 'rgba(222,57,58,0.08)';
 const ERROR_BORDER = 'rgba(222,57,58,0.2)';
-
-function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  controller: AbortController,
-): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      controller.abort();
-      reject(new Error('timeout'));
-    }, ms);
-    void promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      },
-    );
-  });
-}
 
 // ── PublicationWizard ──────────────────────────────────────
 
@@ -175,7 +153,7 @@ export function PublicationWizard() {
     return () => {
       itemsInitializedRef.current = false;
     };
-  }, [isEditing, id, pubQuery.data, itemsQuery.data, catalogQuery.data]);
+  }, [isEditing, id, pubQuery.data, itemsQuery.data]);
 
   // ── Cleanup on unmount ──
   const itemsRef = useRef(items);
@@ -190,6 +168,16 @@ export function PublicationWizard() {
       }
     };
   }, []);
+
+  // ── beforeunload when items changed ──
+  useEffect(() => {
+    if (items.length === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [items.length]);
 
   // ── Date helpers ──
   const pubData = isEditing ? pubQuery.data?.data : undefined;
@@ -605,7 +593,7 @@ export function PublicationWizard() {
           </p>
         </div>
         <Button
-          variant="ghost"
+          variant="secondary"
           onClick={() => void navigate('/agricultor/publicaciones')}
         >
           ✕ Cerrar

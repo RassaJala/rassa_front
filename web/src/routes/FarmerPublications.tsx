@@ -17,6 +17,8 @@ import {
   getStatusBadge,
   productCountLabel,
 } from '../components/PublicationActions';
+import { DetailModal } from '../components/PublicationDetailModal';
+import { Pagination } from '../components/PublicationPagination';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -49,233 +51,9 @@ const MONTHS = [
   { value: 12, label: 'Diciembre' },
 ];
 
-// ── DetailModal ───────────────────────────────────────────
 
-function DetailModal({
-  pub,
-  onClose,
-  colors,
-}: {
-  pub: Publicacion;
-  onClose: () => void;
-  colors: AppColors;
-}) {
-  const productos = pub.productos ?? [];
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.5)' }}
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-2xl p-6"
-        style={{
-          background: colors.surface,
-          border: `1px solid ${colors.border}`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold" style={{ color: colors.fg }}>
-              Semana {pub.semana}
-            </h2>
-            <p className="text-[13px]" style={{ color: colors.muted }}>
-              {formatDate(new Date(pub.fecha_publicacion), { short: true })}
-            </p>
-          </div>
-          <Badge variant={getStatusBadge(pub.estado).variant}>
-            {getStatusBadge(pub.estado).label}
-          </Badge>
-        </div>
 
-        <p
-          className="mb-4 text-[14px] font-semibold"
-          style={{ color: colors.fg }}
-        >
-          {productCountLabel(productos.length)}
-        </p>
-
-        {productos.length === 0 ? (
-          <p className="text-[13px]" style={{ color: colors.muted }}>
-            Esta publicación no tiene productos.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {productos.map((p) => {
-              const img = mediaUrl(p.foto);
-              return (
-                <div
-                  key={p.id_producto_semanal}
-                  className="flex items-center gap-4 rounded-xl p-3"
-                  style={{
-                    background: colors.bg,
-                    border: `1px solid ${colors.border}`,
-                  }}
-                >
-                  {img ? (
-                    <img
-                      src={img}
-                      alt=""
-                      className="h-14 w-14 rounded-lg object-cover"
-                      onError={hideBrokenImage}
-                    />
-                  ) : (
-                    <div
-                      className="flex h-14 w-14 items-center justify-center rounded-lg text-[22px]"
-                      style={{ background: colors.border }}
-                    >
-                      📦
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="truncate text-[14px] font-semibold"
-                      style={{ color: colors.fg }}
-                    >
-                      Producto #{p.fk_producto}
-                    </p>
-                    <div className="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
-                      <span style={{ color: colors.muted }}>
-                        Stock: {p.stock}
-                      </span>
-                      <span style={{ color: colors.brand }}>${p.precio}</span>
-                      <Badge
-                        variant={p.estado === 'activo' ? 'success' : 'default'}
-                      >
-                        {p.estado}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-6 flex justify-end">
-          <Button variant="ghost" onClick={onClose}>
-            Cerrar
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Pagination ────────────────────────────────────────────
-
-function Pagination({
-  page,
-  totalPages,
-  onChange,
-  colors,
-}: {
-  page: number;
-  totalPages: number;
-  onChange: (p: number) => void;
-  colors: AppColors;
-}) {
-  if (totalPages <= 1) return null;
-
-  const pages: number[] = [];
-  const start = Math.max(1, page - 2);
-  const end = Math.min(totalPages, page + 2);
-  for (let i = start; i <= end; i++) pages.push(i);
-
-  return (
-    <div
-      className="flex items-center justify-center gap-1.5 px-[18px] py-4"
-      style={{
-        borderTop: `1px solid ${colors.border}`,
-      }}
-    >
-      <button
-        disabled={page <= 1}
-        onClick={() => onChange(page - 1)}
-        className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
-        style={{
-          background: colors.bg,
-          color: colors.muted,
-          border: `1px solid ${colors.border}`,
-        }}
-      >
-        Anterior
-      </button>
-
-      {start > 1 && (
-        <>
-          <button
-            onClick={() => onChange(1)}
-            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
-            style={{
-              background: colors.bg,
-              color: colors.muted,
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            1
-          </button>
-          {start > 2 && (
-            <span className="px-1 text-[13px]" style={{ color: colors.muted }}>
-              ...
-            </span>
-          )}
-        </>
-      )}
-
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onChange(p)}
-          className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
-          style={{
-            background: p === page ? colors.brand : colors.bg,
-            color: p === page ? '#fff' : colors.muted,
-            border: `1px solid ${p === page ? colors.brand : colors.border}`,
-          }}
-        >
-          {p}
-        </button>
-      ))}
-
-      {end < totalPages && (
-        <>
-          {end < totalPages - 1 && (
-            <span className="px-1 text-[13px]" style={{ color: colors.muted }}>
-              ...
-            </span>
-          )}
-          <button
-            onClick={() => onChange(totalPages)}
-            className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium"
-            style={{
-              background: colors.bg,
-              color: colors.muted,
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-
-      <button
-        disabled={page >= totalPages}
-        onClick={() => onChange(page + 1)}
-        className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40"
-        style={{
-          background: colors.bg,
-          color: colors.muted,
-          border: `1px solid ${colors.border}`,
-        }}
-      >
-        Siguiente
-      </button>
-    </div>
-  );
-}
 
 // ── FarmerPublications ─────────────────────────────────────
 
@@ -360,33 +138,45 @@ export function FarmerPublications() {
     void navigate(`/agricultor/publicaciones/${String(id)}/editar`);
   }
 
-  async function handleDelete(id: number) {
-    if (!window.confirm('¿Eliminar esta publicación?')) return;
+  async function handleMutation(
+    mutate: (id: number) => Promise<unknown>,
+    id: number,
+    successMsg: string,
+    confirmMsg?: string,
+  ) {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
     try {
-      await deleteMutation.mutateAsync(id);
-      showToast('Publicación eliminada.');
+      await mutate(id);
+      showToast(successMsg);
     } catch (err) {
       showToast(extractApiError(err, ['detail', 'message']), true);
     }
   }
 
-  async function handlePublish(id: number) {
-    try {
-      await publishMutation.mutateAsync(id);
-      showToast('Publicación publicada.');
-    } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
-    }
+  function handleDelete(id: number) {
+    void handleMutation(
+      (i) => deleteMutation.mutateAsync(i),
+      id,
+      'Publicación eliminada.',
+      '¿Eliminar esta publicación?',
+    );
   }
 
-  async function handleClose(id: number) {
-    if (!window.confirm('¿Cerrar esta publicación?')) return;
-    try {
-      await closeMutation.mutateAsync(id);
-      showToast('Publicación cerrada.');
-    } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
-    }
+  function handlePublish(id: number) {
+    void handleMutation(
+      (i) => publishMutation.mutateAsync(i),
+      id,
+      'Publicación publicada.',
+    );
+  }
+
+  function handleClose(id: number) {
+    void handleMutation(
+      (i) => closeMutation.mutateAsync(i),
+      id,
+      'Publicación cerrada.',
+      '¿Cerrar esta publicación?',
+    );
   }
 
   return (
