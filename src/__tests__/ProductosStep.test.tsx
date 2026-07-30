@@ -3,7 +3,7 @@ import React from 'react';
 
 import { fireEvent, render } from '@testing-library/react-native';
 
-import ProductosStep from '@/components/wizard/ProductosStep';
+import ProductosStep from '@/components/wizard/StepProductos';
 import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
 
 jest.mock('@expo/vector-icons', () => {
@@ -66,7 +66,11 @@ describe('ProductosStep', () => {
     onRemove: jest.fn(),
     onPickImage: jest.fn(),
     onAddProduct: jest.fn(),
-    isDark: false,
+    surface: '#ffffff',
+    border: '#e0e0e0',
+    fg: '#1a1a1a',
+    muted: '#666666',
+    brand: '#007bff',
   };
 
   beforeEach(() => {

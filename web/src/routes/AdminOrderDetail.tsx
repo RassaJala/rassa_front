@@ -29,7 +29,9 @@ export function AdminOrderDetail() {
   >({
     queryKey: ['order-history', orderId] as const,
     queryFn: async () => {
-      const res = await api.get<unknown>(`/pedidos/${orderId}/historial`);
+      const res = await api.get<{ data: OrderStatusHistory[] }>(
+        `/pedidos/${orderId}/historial`,
+      );
       return normalizeOrderHistoryResponse(res.data);
     },
     enabled: isValidId,

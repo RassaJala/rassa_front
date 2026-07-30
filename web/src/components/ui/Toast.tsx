@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import { TOAST_DISMISS_MS, TOAST_EXIT_MS } from '../../constants/api';
+import { useAppColors } from '../../hooks/useAppColors';
 
 export interface ToastState {
   message: string;
@@ -13,29 +16,45 @@ export function Toast({
   toast: ToastState | null;
   onDone: () => void;
 }) {
+  const colors = useAppColors();
   const [visible, setVisible] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+
+  const isError = toast?.type === 'error';
 
   useEffect(() => {
     if (!toast) {
       setVisible(false);
       return;
     }
-    // Small tick to trigger enter animation
     const tick = requestAnimationFrame(() => setVisible(true));
-    const timer = setTimeout(() => {
+    const delay = isError ? TOAST_DISMISS_MS * 2 : TOAST_DISMISS_MS;
+    const dismissTimer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDone, 300);
-    }, 3000);
+    }, delay);
     return () => {
       cancelAnimationFrame(tick);
-      clearTimeout(timer);
+      clearTimeout(dismissTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [toast, isError]);
+
+  useEffect(() => {
+    if (!visible && toast) {
+      const t = setTimeout(() => {
+        // Only fire onDone if toast hasn't been replaced
+        if (toastRef.current === toast) {
+          onDoneRef.current();
+        }
+      }, TOAST_EXIT_MS);
+      return () => clearTimeout(t);
+    }
+  }, [visible, toast]);
 
   if (!toast) return null;
 
-  const isError = toast.type === 'error';
   return (
     <div
       style={{
@@ -43,9 +62,12 @@ export function Toast({
         top: 16,
         right: 16,
         zIndex: 9999,
-        padding: '12px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '12px 16px',
         borderRadius: 10,
-        background: isError ? '#DE393A' : '#24563C',
+        background: isError ? colors.coral : colors.brand,
         color: '#fff',
         fontSize: 14,
         fontWeight: 600,
@@ -53,11 +75,34 @@ export function Toast({
         transition: 'opacity 0.3s, transform 0.3s',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(-8px)',
-        pointerEvents: 'none',
+        pointerEvents: visible ? 'auto' : 'none',
         maxWidth: 360,
       }}
     >
-      {toast.message}
+      <span style={{ flex: 1 }}>{toast.message}</span>
+      {isError && (
+        <button
+          onClick={() => setVisible(false)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: 16,
+            lineHeight: 1,
+            padding: 0,
+            opacity: 0.8,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '0.8';
+          }}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }

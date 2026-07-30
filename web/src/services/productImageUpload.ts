@@ -36,8 +36,15 @@ async function uploadOne(
         throw imgErr;
       }
       if (attempt === 1) throw new Error(sanitizeError(imgErr));
-      // Wait before retry (exponential backoff, avoid thundering herd)
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(resolve, 1000 * (attempt + 1));
+        const onAbort = () => {
+          clearTimeout(timer);
+          reject(new DOMException('Aborted', 'AbortError'));
+        };
+        signal?.addEventListener('abort', onAbort, { once: true });
+      });
     }
   }
 }

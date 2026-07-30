@@ -48,6 +48,12 @@ const roleNavMap: Record<string, NavItem[]> = {
       path: '/agricultor/productos',
     },
     {
+      key: 'publications',
+      label: 'Publicaciones',
+      icon: '📋',
+      path: '/agricultor/publicaciones',
+    },
+    {
       key: 'orders',
       label: 'Pedidos',
       icon: '📦',
