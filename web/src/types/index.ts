@@ -111,3 +111,11 @@ export interface SearchUserResult {
 export interface ApiResponse<T> {
   data: T;
 }
+
+export interface OrderStatusHistory {
+  readonly id_historial: number;
+  readonly estado_anterior: string | null;
+  readonly estado_nuevo: string;
+  readonly creado_en: string;
+  readonly cambiado_por_nombre: string | null;
+}
