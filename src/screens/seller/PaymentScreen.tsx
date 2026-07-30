@@ -106,6 +106,69 @@ function PaymentMethodOption({
   );
 }
 
+// ── Helpers ────────────────────────────────────────────────
+
+function ErrorView({
+  bg,
+  muted,
+  brand,
+  border,
+  refetch,
+}: {
+  readonly bg: string;
+  readonly muted: string;
+  readonly brand: string;
+  readonly border: string;
+  readonly refetch: () => void;
+}): React.JSX.Element {
+  return (
+    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+      <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
+      <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
+        Error al cargar el pedido
+      </Text>
+      <Pressable
+        onPress={() => void refetch()}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
+      >
+        <MaterialCommunityIcons name="refresh" size={18} color={brand} />
+        <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>Reintentar</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function NotReadyView({
+  bg,
+  muted,
+  brand,
+  border,
+  estado,
+  onGoBack,
+}: {
+  readonly bg: string;
+  readonly muted: string;
+  readonly brand: string;
+  readonly border: string;
+  readonly estado: string;
+  readonly onGoBack: () => void;
+}): React.JSX.Element {
+  return (
+    <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
+      <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
+        Este pedido no está listo para cobro.{'\n'}Estado actual: {estado.replace(/_/g, ' ')}
+      </Text>
+      <Pressable
+        onPress={onGoBack}
+        style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
+      >
+        <Text style={{ fontWeight: '600', color: brand }}>Volver</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export default function PaymentScreen(): React.JSX.Element {
@@ -185,36 +248,20 @@ export default function PaymentScreen(): React.JSX.Element {
 
   if (orderError || !order) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
-          Error al cargar el pedido
-        </Text>
-        <Pressable
-          onPress={() => void refetchOrder()}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>Reintentar</Text>
-        </Pressable>
-      </View>
+      <ErrorView bg={bg} muted={muted} brand={brand} border={border} refetch={refetchOrder} />
     );
   }
 
   if (!isReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={muted} />
-        <Text style={{ marginTop: 12, fontSize: 15, color: muted, textAlign: 'center' }}>
-          Este pedido no está listo para cobro.{'\n'}Estado actual: {order.estado_actual.replace(/_/g, ' ')}
-        </Text>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: border }}
-        >
-          <Text style={{ fontWeight: '600', color: brand }}>Volver</Text>
-        </Pressable>
-      </View>
+      <NotReadyView
+        bg={bg}
+        muted={muted}
+        brand={brand}
+        border={border}
+        estado={order.estado_actual}
+        onGoBack={() => navigation.goBack()}
+      />
     );
   }
 
