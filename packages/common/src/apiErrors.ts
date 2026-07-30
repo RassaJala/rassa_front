@@ -54,7 +54,7 @@ function isAxiosError(error: unknown): error is {
     typeof error === 'object' &&
     error !== null &&
     error instanceof Error &&
-    (error as Record<string, unknown>).isAxiosError === true
+    (error as unknown as Record<string, unknown>).isAxiosError === true
   );
 }
 
