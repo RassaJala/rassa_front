@@ -4,14 +4,17 @@ import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
-import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
+import type {
+  WizardItemDraft,
+  WizardItemValidation,
+} from '@/hooks/usePublicationWizard';
 import type { Producto } from '@/services/productos';
 
 interface StepResumenProps {
   items: WizardItemDraft[];
   allProductos: Producto[];
   unidades: { id_unidad: number; tipo: string }[];
-  itemValidations: Map<string, unknown>;
+  itemValidations: Map<string, WizardItemValidation>;
   surface: string;
   border: string;
   fg: string;

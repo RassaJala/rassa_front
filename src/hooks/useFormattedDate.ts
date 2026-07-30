@@ -28,7 +28,7 @@ const months = [
 function getNextMonday(from: Date): Date {
   const d = new Date(from);
   const dayOfWeek = d.getDay();
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
   d.setDate(d.getDate() + daysUntilMonday);
   d.setHours(0, 0, 0, 0);
   return d;
