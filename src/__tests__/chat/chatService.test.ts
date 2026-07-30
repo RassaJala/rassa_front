@@ -328,8 +328,8 @@ describe('chat service', () => {
     );
     expect(result).toEqual([
       {
-        id_usuario: 5,
-        nombre_completo: 'Ana',
+        idUsuario: 5,
+        nombreCompleto: 'Ana',
         correo: 'ana@test.com',
         rol: 'comprador',
       },
