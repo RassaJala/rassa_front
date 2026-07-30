@@ -1,5 +1,3 @@
-/* globals clearTimeout, setTimeout -- Required for React Native timers */
-
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -26,9 +24,11 @@ import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserFormScreen from '@/screens/admin/UserFormScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import CatalogScreen from '@/screens/buyer/CatalogScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
@@ -36,7 +36,7 @@ import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
-import ProfileScreen from '@/screens/common/profile/ProfileScreen';
+import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
@@ -273,6 +273,20 @@ function BuyerTabs() {
         }}
       />
       <BuyerTab.Screen
+        name="Catalog"
+        component={CatalogScreen}
+        options={{
+          tabBarLabel: 'Catálogo',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="storefront-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <BuyerTab.Screen
         name="Carrito"
         component={CarritoScreen}
         options={{
@@ -483,6 +497,7 @@ function AdminScreens() {
       <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
       <AdminStack.Screen name="Payment" component={PaymentScreen} />
       <AdminStack.Screen name="Receipt" component={ReceiptScreen} />
+      <AdminStack.Screen name="UserForm" component={UserFormScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen

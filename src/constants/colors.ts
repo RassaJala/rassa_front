@@ -66,8 +66,14 @@ export const colors = {
   admCoralBgD: 'rgba(232,74,74,0.12)',
   admPumpkinBgL: 'rgba(242,169,0,0.07)',
   admPumpkinBgD: 'rgba(212,160,32,0.12)',
-  admErrorBgL: '#FDEDEE',
-  admErrorBgD: '#3D2023',
+  admErrorBgL: 'rgba(254,242,242,1)',
+  admErrorBgD: 'rgba(127,29,29,0.2)',
+  admErrorBorderL: '#fca5a5',
+  admErrorBorderD: 'rgba(153,27,27,0.5)',
+  admErrorTextL: '#dc2626',
+  admErrorTextD: '#f87171',
+  admErrorActionL: '#b91c1c',
+  admErrorActionD: '#fca5a5',
   // ── Status badge tokens ──
   statusBorradorBg: 'rgba(242,169,0,0.12)',
   statusBorradorFg: '#F2A900',
@@ -77,6 +83,15 @@ export const colors = {
   statusCerradoFg: '#6B7280',
   statusCanceladoBg: 'rgba(222,57,58,0.12)',
   statusCanceladoFg: '#DE393A',
+  // ── Cart-specific tokens ──
+  cartRowBg: 'rgba(128,128,128,0.08)',
+  cartRowBgD: 'rgba(255,255,255,0.05)',
+  cartPlaceholderBg: 'rgba(128,128,128,0.1)',
+  cartPlaceholderBgD: 'rgba(255,255,255,0.08)',
+  cartBtnBg: 'rgba(128,128,128,0.15)',
+  cartBtnBgD: 'rgba(255,255,255,0.1)',
+  cartBtnDisabledBg: 'rgba(128,128,128,0.08)',
+  cartBtnDisabledBgD: 'rgba(255,255,255,0.04)',
 };
 
 export interface ThemeColors {

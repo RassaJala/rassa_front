@@ -214,6 +214,7 @@ export type AdminStackParamList = {
   Receipt: { readonly paymentId: number };
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
+  UserForm: undefined;
   Chat: {
     conversationId: number;
     title: string;
@@ -261,6 +262,7 @@ export type BuyerTabsParamList = {
 
 export type BuyerStackParamList = {
   BuyerTabs: undefined;
+  Catalog: undefined;
   OrderDetail: { orderId: number };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };

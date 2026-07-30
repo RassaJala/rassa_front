@@ -2,7 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminRoute } from '~/components/guards/AdminRoute';
 import { ProtectedRoute } from '~/components/guards/ProtectedRoute';
 import { DashboardLayout } from '~/components/layout/DashboardLayout';
-import { LoginScreen, RegisterScreen } from './auth';
+import { LoginScreen } from './Login';
+import { RegisterScreen } from './Register';
 import { FarmerProducts, FarmerOrders } from './farmer';
 import { SellerSales } from './seller';
 import { VendorPanelScreen } from './VendorPanelScreen';
@@ -19,6 +20,7 @@ import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
 import { AdminOrderDetail } from './AdminOrderDetail';
 import { BuyerHome } from './BuyerHome';
+import { BuyerCatalog } from './BuyerCatalog';
 import { BuyerCart } from './BuyerCart';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
@@ -151,6 +153,7 @@ export function AppRouter() {
             <DashboardLayout role="cliente">
               <Routes>
                 <Route index element={<BuyerHome />} />
+                <Route path="catalogo" element={<BuyerCatalog />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />

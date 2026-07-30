@@ -1,5 +1,3 @@
-/* globals console, setTimeout -- Required for React Native logging and timers */
-
 import type { ReactNode } from 'react';
 import React, {
   createContext,

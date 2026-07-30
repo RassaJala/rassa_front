@@ -26,7 +26,7 @@ interface Props {
 
 const COMPACT_BREAKPOINT = 400;
 
- 
+
 export default function FarmerHomeScreen({
   navigation,
 }: Props): React.JSX.Element {

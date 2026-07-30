@@ -20,7 +20,7 @@ import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import type { Order, PedidoEstado, SellerStackParamList } from '@/types';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 
 interface FilterOption {
   readonly label: string;
