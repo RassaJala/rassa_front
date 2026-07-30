@@ -68,9 +68,9 @@ export default function Toast({
   const bgClass =
     type === 'success'
       ? 'bg-brand-green-forest'
-      : type === 'error'
+      : (type === 'error'
         ? 'bg-brand-red-coral'
-        : 'bg-gray-800 dark:bg-gray-700';
+        : 'bg-gray-800 dark:bg-gray-700');
 
   return (
     <View className="pointer-events-box-none absolute right-4 bottom-24 left-4 z-50">

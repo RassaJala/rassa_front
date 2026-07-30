@@ -11,13 +11,15 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
-import type { Order, PedidoEstado } from '@/types';
+import type { Order, PedidoEstado, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiError';
 
 interface FilterOption {
@@ -62,9 +64,9 @@ const ACCIONES: Readonly<Record<string, Accion | null>> = {
     color: colors.info,
   },
   listo_para_retirar: {
-    label: 'Entregar',
+    label: 'Cobrar',
     estado: 'entregado',
-    icon: 'handshake',
+    icon: 'cash',
     color: colors.success,
   },
   entregado: null,
@@ -95,6 +97,8 @@ export default function SalesScreen(): React.JSX.Element {
   const activeBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const white = colors.iconWhite;
   const redCoral = colors.brandRedCoral;
+
+  const navigation = useNavigation<NativeStackNavigationProp<SellerStackParamList>>();
 
   const [filter, setFilter] = useState<PedidoEstado | ''>('');
   const [toast, setToast] = useState<{
@@ -282,10 +286,16 @@ export default function SalesScreen(): React.JSX.Element {
             {accion ? (
               <Pressable
                 onPress={() => {
-                  statusMutation.mutate({
-                    pedidoId: item.id_pedido,
-                    nuevoEstado: accion.estado,
-                  });
+                  if (item.estado_actual === 'listo_para_retirar') {
+                    navigation.navigate('Payment', {
+                      orderId: item.id_pedido,
+                    });
+                  } else {
+                    statusMutation.mutate({
+                      pedidoId: item.id_pedido,
+                      nuevoEstado: accion.estado,
+                    });
+                  }
                 }}
                 disabled={busy}
                 style={{
@@ -383,6 +393,7 @@ export default function SalesScreen(): React.JSX.Element {
       brand,
       white,
       redCoral,
+      navigation,
       statusMutation,
       cancelMutation,
       accionNoTerminal,

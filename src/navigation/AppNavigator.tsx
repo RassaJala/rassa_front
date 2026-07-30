@@ -47,7 +47,9 @@ import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
@@ -458,6 +460,8 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="Payment" component={PaymentScreen} />
+      <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}
@@ -477,6 +481,8 @@ function AdminScreens() {
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
       <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
+      <AdminStack.Screen name="Payment" component={PaymentScreen} />
+      <AdminStack.Screen name="Receipt" component={ReceiptScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen

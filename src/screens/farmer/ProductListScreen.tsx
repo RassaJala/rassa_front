@@ -642,12 +642,12 @@ export default function ProductListScreen({
                       paddingHorizontal: 8,
                       paddingVertical: 2,
                       backgroundColor: item.estado
-                        ? isDark
+                        ? (isDark
                           ? 'rgba(74,138,99,0.2)'
-                          : '#DCFCE7'
-                        : isDark
+                          : '#DCFCE7')
+                        : (isDark
                           ? 'rgba(255,255,255,0.1)'
-                          : '#F3F4F6',
+                          : '#F3F4F6'),
                     }}
                   >
                     <Text
@@ -655,9 +655,9 @@ export default function ProductListScreen({
                         fontSize: 11,
                         fontWeight: '600',
                         color: item.estado
-                          ? isDark
+                          ? (isDark
                             ? '#4ADE80'
-                            : brand
+                            : brand)
                           : muted,
                       }}
                     >
@@ -837,18 +837,18 @@ export default function ProductListScreen({
                   onPress={item.action}
                   style={({ pressed }) => ({
                     backgroundColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? 'rgba(222,57,58,0.1)'
-                        : 'rgba(222,57,58,0.07)'
-                      : isDark
+                        : 'rgba(222,57,58,0.07)')
+                      : (isDark
                         ? 'rgba(255,255,255,0.05)'
-                        : 'rgba(0,0,0,0.03)',
+                        : 'rgba(0,0,0,0.03)'),
                     borderRadius: 16,
                     borderWidth: isLast ? 1 : 0,
                     borderColor: isLast
-                      ? isDark
+                      ? (isDark
                         ? 'rgba(222,57,58,0.25)'
-                        : 'rgba(222,57,58,0.15)'
+                        : 'rgba(222,57,58,0.15)')
                       : 'transparent',
                     opacity: pressed ? 0.7 : 1,
                   })}
