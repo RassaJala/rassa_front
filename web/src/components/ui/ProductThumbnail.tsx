@@ -26,9 +26,7 @@ export function ProductThumbnail({
         flexShrink: 0,
         display: 'grid',
         placeItems: 'center',
-        background: isDark
-          ? colors.admSurfaceD
-          : colors.activeGreenBg,
+        background: isDark ? colors.admSurfaceD : colors.activeGreenBg,
       }}
     >
       {src ? (
