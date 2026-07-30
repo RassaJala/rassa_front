@@ -20,7 +20,7 @@ import api from '@/services/api';
 import { createPago, fetchTiposPago } from '@/services/payments';
 import { useTheme } from '@/store/ThemeContext';
 import type { OrderDetail, SellerStackParamList, TipoPago } from '@/types';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 
 // ── Types ──────────────────────────────────────────────────
 
