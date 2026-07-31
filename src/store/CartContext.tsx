@@ -56,37 +56,38 @@ const MAX_CART_ITEMS = 50;
 
 // ── Reducer (exportado para testing) ────────────────────────
 
+function handleAddItem(state: CartState, payload: CartItem): CartState {
+  if (payload.cantidad <= 0) return state;
+  const capped = Math.min(payload.cantidad, payload.stock);
+  if (capped <= 0) return state;
+
+  const existing = state.items.find(
+    (i) => i.id_producto_semanal === payload.id_producto_semanal,
+  );
+  if (existing) {
+    const newQty = Math.min(existing.cantidad + capped, existing.stock);
+    if (newQty <= 0) return state;
+    return {
+      items: state.items.map((i) =>
+        i.id_producto_semanal === payload.id_producto_semanal
+          ? { ...i, cantidad: newQty }
+          : i,
+      ),
+    };
+  }
+  if (state.items.length >= MAX_CART_ITEMS) return state;
+  return {
+    items: [
+      ...state.items,
+      { ...payload, cantidad: capped },
+    ],
+  };
+}
+
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
-    case 'ADD_ITEM': {
-      if (action.payload.cantidad <= 0) return state;
-      const capped = Math.min(action.payload.cantidad, action.payload.stock);
-      if (capped <= 0) return state;
-      const existing = state.items.find(
-        (i) => i.id_producto_semanal === action.payload.id_producto_semanal,
-      );
-      if (existing) {
-        const newQty = Math.min(existing.cantidad + capped, existing.stock);
-        if (newQty <= 0) return state;
-        return {
-          items: state.items.map((i) =>
-            i.id_producto_semanal === action.payload.id_producto_semanal
-              ? { ...i, cantidad: newQty }
-              : i,
-          ),
-        };
-      }
-      if (state.items.length >= MAX_CART_ITEMS) return state;
-      return {
-        items: [
-          ...state.items,
-          {
-            ...action.payload,
-            cantidad: capped,
-          },
-        ],
-      };
-    }
+    case 'ADD_ITEM':
+      return handleAddItem(state, action.payload);
     case 'REMOVE_ITEM':
       return {
         items: state.items.filter(

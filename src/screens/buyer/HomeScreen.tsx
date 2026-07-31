@@ -17,9 +17,6 @@ import {
 } from '@/components/ProfileDrawer';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
-
-const FAVORITE_INITIAL_VALUE = 8;
-const SECTION_TOP_PADDING = 48;
 import { useFormattedDate } from '@/hooks/useFormattedDate';
 import { usePublicacionesCurrent } from '@/hooks/usePublicacionesCurrent';
 import type { ProductoSemanalPublic } from '@/services/publications';
@@ -27,6 +24,9 @@ import { useCartStore } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerTabsParamList } from '@/types';
 import { formatPrice } from '@/utils/format';
+
+const FAVORITE_INITIAL_VALUE = 8;
+const SECTION_TOP_PADDING = 48;
 
   const styles = StyleSheet.create({
     // ProductsContent

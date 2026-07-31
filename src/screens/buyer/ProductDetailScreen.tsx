@@ -215,7 +215,7 @@ export default function ProductDetailScreen(): React.JSX.Element {
     setAdded(true);
     if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current);
     addedTimeoutRef.current = setTimeout(() => setAdded(false), FEEDBACK_DURATION_MS);
-  }, [addItem, productoSemanalId, nombreProducto, precio, stock, cantidad, unidad, farmerName]);
+  }, [addItem, productoSemanalId, nombreProducto, precio, stock, farmerName, unidad]);
 
   const handleIncrement = useCallback(() => {
     if (cantidad < stock) {
