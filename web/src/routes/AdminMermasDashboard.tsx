@@ -1,13 +1,24 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+import {
+  extractProducts,
+  formatDateInput,
+  groupBy,
+  periodLabel,
+  WASTE_DETAIL_LIMIT,
+  WASTE_PAGE_SIZE,
+  WASTE_RETRY_LIMIT,
+  WASTE_STALE_TIME_MS,
+  type MermaResumenItem,
+  type MermaResumenResponse,
+} from '@/common/waste';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { PageHeader } from '../components/layout/PageHeader';
 import { fetchMermaResumen } from '../services/waste';
-import type { MermaResumenItem, MermaResumenResponse } from '../services/waste';
 
 // --- Error boundary ---
 
@@ -25,13 +36,12 @@ class DashboardErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(
-        '[DashboardErrorBoundary] Error capturado:',
-        error,
-        errorInfo,
-      );
-    }
+    // Always log: production monitoring depends on this surface.
+    console.error(
+      '[DashboardErrorBoundary] Error capturado:',
+      error,
+      errorInfo,
+    );
   }
 
   handleRetry = () => {
@@ -62,67 +72,6 @@ class DashboardErrorBoundary extends Component<
     }
     return this.props.children;
   }
-}
-
-// --- Helpers ---
-
-function toLocalDate(iso: string): Date | null {
-  const datePart = iso.slice(0, 10);
-  const parts = datePart.split('-').map(Number);
-  if (parts.length < 2 || !parts[0] || !parts[1]) return null;
-  return new Date(parts[0], parts[1] - 1, parts[2] ?? 1);
-}
-
-function getMonthLabel(iso: string): string {
-  const d = toLocalDate(iso);
-  if (!d || isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
-}
-
-function getWeekLabel(iso: string): string {
-  const d = toLocalDate(iso);
-  if (!d || isNaN(d.getTime())) return iso;
-  const day = d.toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-  });
-  return `Sem ${getWeekNumber(d)} (${day})`;
-}
-
-function getWeekNumber(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const diff = date.getTime() - start.getTime();
-  return Math.ceil((diff + 86_400_000) / (7 * 86_400_000));
-}
-
-function periodLabel(iso: string, agrupacion: string): string {
-  return agrupacion === 'semana' ? getWeekLabel(iso) : getMonthLabel(iso);
-}
-
-// --- Aggregations ---
-
-function groupBy<T>(
-  items: T[],
-  key: (x: T) => string,
-  sum: (x: T) => number,
-): { nombre: string; total: number }[] {
-  const map = new Map<string, number>();
-  for (const item of items) {
-    map.set(key(item), (map.get(key(item)) ?? 0) + sum(item));
-  }
-  return Array.from(map.entries())
-    .map(([nombre, total]) => ({ nombre, total }))
-    .sort((a, b) => b.total - a.total);
-}
-
-function extractProducts(detalle: MermaResumenItem[]) {
-  const seen = new Map<number, string>();
-  for (const d of detalle) {
-    if (!seen.has(d.producto_id)) {
-      seen.set(d.producto_id, d.producto_nombre);
-    }
-  }
-  return Array.from(seen.entries()).map(([id, nombre]) => ({ id, nombre }));
 }
 
 // --- Colors ---
@@ -382,8 +331,6 @@ function SummaryCards({
 
 // --- Main component ---
 
-const PAGE_SIZE = 10;
-
 export function AdminMermasDashboard() {
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
@@ -391,8 +338,8 @@ export function AdminMermasDashboard() {
   const [agruparPor, setAgruparPor] = useState<'mes' | 'semana'>('mes');
   const [pagina, setPagina] = useState(1);
 
-  // Today for date inputs max attribute
-  const today = new Date().toISOString().slice(0, 10);
+  // Today for date inputs max attribute (local date, avoids UTC off-by-one)
+  const today = formatDateInput(new Date());
 
   // Retry limit
   const retryCountRef = useRef(0);
@@ -415,7 +362,7 @@ export function AdminMermasDashboard() {
       }),
     enabled: !isDateRangeInvalid,
     placeholderData: (prev: MermaResumenResponse | undefined) => prev,
-    staleTime: 5 * 60 * 1000,
+    staleTime: WASTE_STALE_TIME_MS,
     retry: false,
   });
 
@@ -423,6 +370,22 @@ export function AdminMermasDashboard() {
   useEffect(() => {
     if (resumenQuery.data) retryCountRef.current = 0;
   }, [resumenQuery.data]);
+
+  // If the selected product no longer exists in the data, drop the filter
+  // instead of showing an empty dashboard with a stale selection.
+  const products = useMemo(
+    () => extractProducts(resumenQuery.data?.detalle ?? []),
+    [resumenQuery.data?.detalle],
+  );
+  useEffect(() => {
+    if (
+      productoId !== undefined &&
+      products.length > 0 &&
+      !products.some((p) => p.id === productoId)
+    ) {
+      setProductoId(undefined);
+    }
+  }, [products, productoId]);
 
   // --- Filter handlers (reset page synchronously) ---
 
@@ -446,11 +409,6 @@ export function AdminMermasDashboard() {
 
   // Query result — explicit destructure for type safety
   const resumen: MermaResumenResponse | undefined = resumenQuery.data;
-
-  const products = useMemo(
-    () => extractProducts(resumen?.detalle ?? []),
-    [resumen?.detalle],
-  );
 
   const productRanking = useMemo(
     () =>
@@ -493,7 +451,7 @@ export function AdminMermasDashboard() {
   );
 
   const totalPaginas = useMemo(
-    () => Math.ceil((resumen?.detalle.length ?? 0) / PAGE_SIZE),
+    () => Math.ceil((resumen?.detalle.length ?? 0) / WASTE_PAGE_SIZE),
     [resumen?.detalle],
   );
 
@@ -504,8 +462,8 @@ export function AdminMermasDashboard() {
   const detallePaginado = useMemo(
     () =>
       (resumen?.detalle ?? []).slice(
-        (paginaSegura - 1) * PAGE_SIZE,
-        paginaSegura * PAGE_SIZE,
+        (paginaSegura - 1) * WASTE_PAGE_SIZE,
+        paginaSegura * WASTE_PAGE_SIZE,
       ),
     [resumen?.detalle, paginaSegura],
   );
@@ -534,8 +492,11 @@ export function AdminMermasDashboard() {
     () => Math.max(...decisionBreakdown.map((d) => d.total), 1),
     [decisionBreakdown],
   );
+  // Full-page spinner only on the initial load; refetches keep showing data.
   const isLoading =
-    resumenQuery.isPending && resumenQuery.fetchStatus !== 'idle';
+    resumenQuery.isPending &&
+    resumenQuery.fetchStatus !== 'idle' &&
+    !resumenQuery.data;
   const isError = resumenQuery.isError;
   const hasFilters = Boolean(
     fechaDesde || fechaHasta || productoId !== undefined,
@@ -552,8 +513,8 @@ export function AdminMermasDashboard() {
     );
   }
 
-  if (isError) {
-    const maxedOut = retryCountRef.current >= 3;
+  if (isError && !resumen) {
+    const maxedOut = retryCountRef.current >= WASTE_RETRY_LIMIT;
     return (
       <>
         <PageHeader title="Dashboard de Mermas" />
@@ -603,6 +564,28 @@ export function AdminMermasDashboard() {
     <DashboardErrorBoundary>
       <div>
         <PageHeader title="Dashboard de Mermas" />
+
+        {/* Refetch failure banner — keeps the last loaded data visible */}
+        {isError && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
+            <span>
+              No se pudieron actualizar los datos. Mostrando la última
+              información cargada.
+            </span>
+            {retryCountRef.current < WASTE_RETRY_LIMIT && (
+              <button
+                type="button"
+                onClick={() => {
+                  retryCountRef.current += 1;
+                  resumenQuery.refetch();
+                }}
+                className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+              >
+                Reintentar
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Filters */}
         <FilterBar
@@ -779,6 +762,12 @@ export function AdminMermasDashboard() {
               <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">
                 Detalle de mermas
               </h3>
+              {resumen.detalle.length >= WASTE_DETAIL_LIMIT && (
+                <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                  Mostrando los primeros {WASTE_DETAIL_LIMIT} registros del
+                  detalle.
+                </p>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left text-sm">
                   <thead>

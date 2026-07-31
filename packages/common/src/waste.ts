@@ -1,0 +1,171 @@
+// Shared waste-dashboard domain: types, date/aggregation helpers and constants.
+// Used by both the mobile app (src/services/waste.ts, MermaResumenScreen) and the
+// web app (web/src/services/waste.ts, AdminMermasDashboard).
+
+import { MONTH_NAMES } from './dates';
+
+// --- Types -------------------------------------------------------------------
+
+export interface MermaResumenItem {
+  periodo: string;
+  producto_nombre: string;
+  producto_id: number;
+  decision_nombre: string;
+  decision_id: number;
+  total_cantidad: number;
+  total_mermas: number;
+}
+
+export interface MermaResumenResponse {
+  agrupacion: 'mes' | 'semana';
+  total_general: number;
+  producto_mas_afectado: { nombre: string; total: number } | null;
+  detalle: MermaResumenItem[];
+}
+
+export interface ResumenParams {
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  producto_id?: number;
+  agrupar_por?: 'mes' | 'semana';
+}
+
+export interface ProductOption {
+  id: number;
+  nombre: string;
+}
+
+// --- Constants ---------------------------------------------------------------
+
+export const DAY_MS = 86_400_000;
+export const WEEK_MS = 7 * DAY_MS;
+export const WASTE_PAGE_SIZE = 10;
+export const WASTE_DETAIL_LIMIT = 100;
+export const WASTE_RETRY_LIMIT = 3;
+export const WASTE_STALE_TIME_MS = 5 * 60 * 1000;
+
+// --- Date helpers ------------------------------------------------------------
+// Backend sends full ISO datetimes ("2026-07-01T00:00:00-03:00"); only the date
+// part matters. parseDate is strict YYYY-MM-DD; toLocalDate tolerates datetimes.
+
+export function toLocalDate(iso: string): Date | null {
+  const datePart = iso.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
+  const [y, m, d] = datePart.split('-').map(Number);
+  if (y === undefined || m === undefined || d === undefined) return null;
+  const date = new Date(y, m - 1, d);
+  if (
+    date.getFullYear() !== y ||
+    date.getMonth() !== m - 1 ||
+    date.getDate() !== d
+  ) {
+    return null;
+  }
+  return date;
+}
+
+export function parseDate(raw: string): Date | null {
+  return toLocalDate(raw);
+}
+
+// ISO 8601 week number — matches Django's TruncWeek (Monday-based).
+export function getWeekNumber(date: Date): number {
+  const target = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+  const dayNum = target.getUTCDay() || 7; // Monday = 1 ... Sunday = 7
+  target.setUTCDate(target.getUTCDate() + 4 - dayNum); // move to Thursday
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  return Math.ceil(((target.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
+}
+
+export function getMonthLabel(iso: string): string {
+  const d = toLocalDate(iso);
+  if (!d || isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+}
+
+export function getWeekLabel(iso: string): string {
+  const d = toLocalDate(iso);
+  if (!d || isNaN(d.getTime())) return iso;
+  const day = d.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+  });
+  return `Sem ${getWeekNumber(d)} (${day})`;
+}
+
+export function periodLabel(iso: string, agrupacion: string): string {
+  return agrupacion === 'semana' ? getWeekLabel(iso) : getMonthLabel(iso);
+}
+
+export function formatDisplayDate(iso: string): string {
+  const d = toLocalDate(iso);
+  if (!d || isNaN(d.getTime())) return iso;
+  return `${d.getDate()} de ${MONTH_NAMES[d.getMonth()] ?? ''} ${d.getFullYear()}`;
+}
+
+// Local YYYY-MM-DD for <input type="date"> max/values (avoids UTC off-by-one).
+export function formatDateInput(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function toDateString(year: number, month: number, day: number): string {
+  const m = String(month + 1).padStart(2, '0');
+  const d = String(day).padStart(2, '0');
+  return `${year}-${m}-${d}`;
+}
+
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+export function parseInitialDate(
+  dateStr?: string,
+): { year: number; month: number; day: number } | null {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  const parts = dateStr.split('-').map(Number);
+  return {
+    year: parts[0] ?? new Date().getFullYear(),
+    month: (parts[1] ?? 1) - 1,
+    day: parts[2] ?? 1,
+  };
+}
+
+// --- Aggregations ------------------------------------------------------------
+
+export function groupBy<T>(
+  items: T[],
+  key: (x: T) => string,
+  sum: (x: T) => number,
+): { nombre: string; total: number }[] {
+  const map = new Map<string, number>();
+  for (const item of items) {
+    map.set(key(item), (map.get(key(item)) ?? 0) + sum(item));
+  }
+  return Array.from(map.entries())
+    .map(([nombre, total]) => ({ nombre, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+export function extractProducts(detalle: MermaResumenItem[]): ProductOption[] {
+  const seen = new Map<number, string>();
+  for (const d of detalle) {
+    if (!seen.has(d.producto_id)) {
+      seen.set(d.producto_id, d.producto_nombre);
+    }
+  }
+  return Array.from(seen.entries()).map(([id, nombre]) => ({ id, nombre }));
+}
+
+// Stable hash used to pick a fallback color for unknown decision names.
+export function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
