@@ -571,8 +571,15 @@ export function AdminMermasDashboard() {
         {isStale && (
           <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
             <span>
-              No se pudieron cargar los datos para los filtros seleccionados.
-              Mostrando datos de la selección anterior.
+              No se pudieron cargar los datos para los filtros seleccionados.{' '}
+              Mostrando datos de la última consulta exitosa.
+              <span className="block text-xs text-red-600/80 dark:text-red-400/80">
+                Actualizado:{' '}
+                {new Date(resumenQuery.dataUpdatedAt).toLocaleString('es-MX', {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </span>
             </span>
             {retryCountRef.current < WASTE_RETRY_LIMIT &&
               (isFetching ? (

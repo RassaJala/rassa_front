@@ -215,6 +215,19 @@ export default function MermaResumenScreen({
 
   const products = useMemo(() => extractProducts(detalle), [detalle]);
 
+  // Describe the applied filters so the error box can show what failed.
+  const errorContext = useMemo(() => {
+    const parts: string[] = [];
+    if (appliedDesde) parts.push(`desde ${appliedDesde}`);
+    if (appliedHasta) parts.push(`hasta ${appliedHasta}`);
+    if (productoId !== undefined) {
+      const name = products.find((p) => p.id === productoId)?.nombre;
+      parts.push(name ? `producto «${name}»` : `producto id ${productoId}`);
+    }
+    parts.push(agruparPor === 'mes' ? 'por mes' : 'por semana');
+    return parts.join(', ');
+  }, [appliedDesde, appliedHasta, productoId, agruparPor, products]);
+
   // If the selected product no longer exists in the data, drop the filter
   // instead of showing an empty dashboard with a stale selection.
   useEffect(() => {
@@ -311,6 +324,7 @@ export default function MermaResumenScreen({
             {error !== null && (
               <MermaErrorBox
                 message={error}
+                context={errorContext}
                 retryCount={retryCountRef.current}
                 onRetry={() => void fetchData()}
               />

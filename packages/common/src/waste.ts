@@ -37,7 +37,7 @@ export interface ProductOption {
 
 // --- Constants ---------------------------------------------------------------
 
-export const DAY_MS = 86_400_000;
+export const DAY_MS_IN_MS = 86_400_000;
 export const WASTE_PAGE_SIZE = 10;
 export const WASTE_DETAIL_LIMIT = 100;
 export const WASTE_RETRY_LIMIT = 3;
@@ -84,7 +84,9 @@ export function getWeekNumber(date: Date): number {
   const dayNum = target.getUTCDay() || 7; // Monday = 1 ... Sunday = 7
   target.setUTCDate(target.getUTCDate() + 4 - dayNum); // move to Thursday
   const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-  return Math.ceil(((target.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
+  return Math.ceil(
+    ((target.getTime() - yearStart.getTime()) / DAY_MS_IN_MS + 1) / 7,
+  );
 }
 
 export function getMonthLabel(iso: string): string {
@@ -225,9 +227,30 @@ export interface DecisionPalette {
   defaultColor: string;
 }
 
+// Default hex palette used by the mobile app when no palette is passed. The
+// 'donar' and 'tirar' entries mirror the admBrand (#24563C) and brandRedCoral
+// (#DE393A) tokens from the mobile theme; they are kept as literals so
+// packages/common has no dependency on the mobile theme constants.
+export const DEFAULT_DECISION_PALETTE: DecisionPalette = {
+  donar: '#24563C',
+  tirar: '#DE393A',
+  compostar: '#CED295',
+  fallback: [
+    '#E46C38',
+    '#D52E7A',
+    '#EEAA6F',
+    '#B2C2B2',
+    '#AEC0BC',
+    '#A19FB6',
+    '#24563C',
+    '#D8D3C8',
+  ],
+  defaultColor: '#9CA3AF',
+};
+
 export function getDecisionColor(
   decision: string,
-  palette: DecisionPalette,
+  palette: DecisionPalette = DEFAULT_DECISION_PALETTE,
 ): string {
   const key = decision.toLowerCase().trim();
   if (key === DECISION_DONAR) return palette.donar;

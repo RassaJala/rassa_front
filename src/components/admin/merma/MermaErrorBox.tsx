@@ -9,12 +9,14 @@ import { useTheme } from '@/store/ThemeContext';
 
 interface Props {
   readonly message: string;
+  readonly context?: string;
   readonly retryCount: number;
   readonly onRetry: () => void;
 }
 
 export function MermaErrorBox({
   message,
+  context,
   retryCount,
   onRetry,
 }: Props): React.JSX.Element {
@@ -24,16 +26,29 @@ export function MermaErrorBox({
   const border = isDark ? colors.admErrorBorderD : colors.admErrorBorderL;
   const text = isDark ? colors.admErrorTextD : colors.admErrorTextL;
   const action = isDark ? colors.admErrorActionD : colors.admErrorActionL;
+  const maxedOut = retryCount >= WASTE_RETRY_LIMIT;
 
   return (
     <View style={[styles.box, { backgroundColor: bg, borderColor: border }]}>
       <MaterialCommunityIcons name="alert-circle" size={22} color={text} />
-      <Text style={[styles.text, { color: text }]}>
-        {retryCount >= WASTE_RETRY_LIMIT
-          ? 'No pudimos cargar los datos. Contactá al administrador.'
-          : message}
-      </Text>
-      {retryCount < WASTE_RETRY_LIMIT && (
+      <View style={styles.content}>
+        <Text style={[styles.text, { color: text }]}>
+          {maxedOut
+            ? 'No pudimos cargar los datos. Contactá al administrador.'
+            : message}
+        </Text>
+        {context ? (
+          <Text style={[styles.detail, { color: text }]}>
+            Filtros aplicados: {context}
+          </Text>
+        ) : null}
+        {!maxedOut && (
+          <Text style={[styles.detail, { color: text }]}>
+            Si el problema continúa, contactá al administrador.
+          </Text>
+        )}
+      </View>
+      {!maxedOut && (
         <Pressable onPress={onRetry}>
           <Text style={[styles.action, { color: action }]}>Reintentar</Text>
         </Pressable>
@@ -52,6 +67,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  text: { fontSize: 14, fontWeight: '500', flex: 1 },
+  content: { flex: 1, gap: 4 },
+  text: { fontSize: 14, fontWeight: '500' },
+  detail: { fontSize: 12, fontWeight: '400', opacity: 0.85 },
   action: { fontSize: 13, fontWeight: '700' },
 });
