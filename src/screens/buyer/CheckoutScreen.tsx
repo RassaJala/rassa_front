@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,6 +33,9 @@ import { formatPrice } from '@/utils/format';
 const IVA_RATE = 0.21;
 const HEADER_TOP_PADDING = 60;
 const SCROLL_BOTTOM_PADDING = 200;
+
+/** Marca de error del backend cuando el pedido excede el límite de crédito */
+const CREDIT_LIMIT_PATTERN = /l[ií]mite de cr[eé]dito/i;
 
 const styles = StyleSheet.create({
   emptyCartCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -75,6 +79,16 @@ type Nav = NativeStackNavigationProp<BuyerStackParamList, 'Checkout'>;
 
 function sanitizeMessage(msg: string): string {
   return msg.replace(/<[^>]*>/g, '').slice(0, 200);
+}
+
+/** Muestra una alerta nativa cuando el pedido excede el límite de crédito */
+function showCreditLimitAlert(message: string): void {
+  Alert.alert('Límite de crédito excedido', message, [{ text: 'Entendido' }]);
+}
+
+/** Detecta si el mensaje del backend corresponde a límite de crédito */
+function isCreditLimitError(message: string): boolean {
+  return CREDIT_LIMIT_PATTERN.test(message);
 }
 
 /** Extrae mensajes de error de arrays dentro de un objeto DRF */
@@ -271,7 +285,13 @@ export default function CheckoutScreen(): React.JSX.Element {
       },
       onError: (err) => {
         isSubmittingRef.current = false;
-        if (isMountedRef.current) setErrorMsg(extractError(err));
+        if (!isMountedRef.current) return;
+        const message = extractError(err);
+        if (isCreditLimitError(message)) {
+          showCreditLimitAlert(message);
+          return;
+        }
+        setErrorMsg(message);
       },
     });
   }, [cartItems, createPedidoMutation, navigation, clearCart]);
