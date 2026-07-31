@@ -7,6 +7,14 @@ import { fireEvent, render } from '@testing-library/react-native';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import { useCartStore } from '@/store/cartStore';
 
+const mockNavigate = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
   default: {
@@ -124,17 +132,13 @@ describe('CarritoScreen', () => {
     );
   });
 
-  it('checkout button triggers alert', () => {
+  it('navigates to Checkout when pressing Continuar compra', () => {
     useCartStore.setState({ items: [mockItem] });
-    const spy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
     const { getByTestId } = render(<CarritoScreen />);
     fireEvent.press(getByTestId('checkout-btn'));
 
-    expect(spy).toHaveBeenCalledWith(
-      'Próximamente',
-      'El flujo de pago estará disponible pronto.',
-    );
+    expect(mockNavigate).toHaveBeenCalledWith('Checkout');
   });
 
   it('disables + button at stock limit', () => {

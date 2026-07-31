@@ -3,12 +3,17 @@ import { Alert, FlatList, Image, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, themeColors } from '@/constants/colors';
 import { mediaUrl } from '@/services/api';
 import { useCartStore } from '@/store/cartStore';
 import type { CartItem } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
+import type { BuyerStackParamList } from '@/types';
+
+type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
 // ── Cart color tokens from theme ──
 function cartColors(isDark: boolean) {
@@ -164,6 +169,7 @@ export default function CarritoScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const tc = themeColors(isDark);
+  const navigation = useNavigation<Nav>();
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -286,12 +292,7 @@ export default function CarritoScreen(): React.JSX.Element {
             testID="checkout-btn"
             className="items-center justify-center rounded-xl py-3.5"
             style={{ backgroundColor: tc.brand }}
-            onPress={() =>
-              Alert.alert(
-                'Próximamente',
-                'El flujo de pago estará disponible pronto.',
-              )
-            }
+            onPress={() => navigation.navigate('Checkout')}
           >
             <Text
               className="text-base font-bold"
