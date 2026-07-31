@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getColors } from '../constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
@@ -19,6 +20,7 @@ export function BuyerCart() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const clearCart = useCartStore((s) => s.clearCart);
   const total = useCartStore((s) => s.total);
+  const navigate = useNavigate();
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');
 
@@ -179,7 +181,7 @@ export function BuyerCart() {
       <button
         className="mt-4 w-full rounded-xl py-3 text-sm font-bold text-white hover:opacity-90"
         style={{ backgroundColor: c.brand }}
-        onClick={() => alert('El flujo de pago estará disponible pronto.')}
+        onClick={() => navigate('/cliente/checkout')}
       >
         Continuar compra
       </button>

@@ -53,4 +53,21 @@ export const handlers = [
       },
     }),
   ),
+
+  // POST /pedidos/ responde envuelto en { data: Pedido } — el default resuelve
+  // el pedido #45; los casos de error se sobreescriben por test con server.use.
+  http.post(`${BASE}/pedidos/`, () =>
+    HttpResponse.json({
+      data: {
+        id_pedido: 45,
+        cliente_nombre: 'Cliente Demo',
+        estado: 'pendiente',
+        subtotal: '25.00',
+        iva: '5.25',
+        total: '30.25',
+        detalles: [],
+        creado_en: '2026-07-31T13:00:00Z',
+      },
+    }),
+  ),
 ];
