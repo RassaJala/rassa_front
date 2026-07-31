@@ -19,7 +19,7 @@
       },
       "package": "com.rassa.app"
     },
-    "plugins": [],
+    "plugins": ["expo-audio"],
     "web": {
       "bundler": "metro",
       "port": 8083

@@ -7,13 +7,14 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { useSendMessage } from '~/hooks/chat/useSendMessage';
 import { useEditMessage } from '~/hooks/chat/useEditMessage';
 import { useDeleteMessage } from '~/hooks/chat/useDeleteMessage';
+import { useSendMessageWithMedia } from '~/hooks/chat/useSendMessageWithMedia';
 import { useMarkAsRead } from '~/hooks/chat/useMarkAsRead';
 import { ChatBubble } from '~/components/chat/ChatBubble';
 import { ChatInput } from '~/components/chat/ChatInput';
 import { MessageEditModal } from '~/components/chat/MessageEditModal';
 import { ConfirmDialog } from '~/components/ui/ConfirmDialog';
 import { Toast, type ToastState } from '~/components/ui/Toast';
-import type { Message } from '@rassa/chat';
+import type { AttachmentType, Message } from '@rassa/chat';
 
 interface ChatLocationState {
   tipo?: 'privada' | 'grupal';
@@ -31,8 +32,15 @@ export function ChatDetailPage() {
   const tipo =
     currentConv?.tipo ?? (location.state as ChatLocationState | null)?.tipo;
 
-  const { data, isLoading } = useChatMessages(conversationId);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useChatMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
+  const sendMedia = useSendMessageWithMedia(conversationId);
   const editMessage = useEditMessage(conversationId);
   const deleteMessage = useDeleteMessage(conversationId);
   const markAsRead = useMarkAsRead();
@@ -49,7 +57,12 @@ export function ChatDetailPage() {
     return () => clearTimeout(timer);
   }, [conversationId]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef(0);
+  const prevPageCountRef = useRef(0);
+  const initialRenderRef = useRef(true);
+
   const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
   const realCountRef = useRef(0);
 
@@ -57,8 +70,32 @@ export function ChatDetailPage() {
   realCountRef.current = realMessages.length;
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      endRef.current?.scrollIntoView({ behavior: 'auto' });
+    } else {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [realCountRef.current]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const pageCount = data?.pages.length ?? 0;
+    if (!container || !prevScrollHeightRef.current || prevPageCountRef.current === pageCount) return;
+    const newScrollHeight = container.scrollHeight;
+    container.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+    prevPageCountRef.current = pageCount;
+    prevScrollHeightRef.current = 0;
+  }, [data?.pages.length]);
+
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || !hasNextPage || isFetchingNextPage) return;
+    if (container.scrollTop < 50) {
+      prevScrollHeightRef.current = container.scrollHeight;
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSend = (text: string) => {
     sendMessage.mutate(
@@ -66,6 +103,23 @@ export function ChatDetailPage() {
       {
         onError: () =>
           setToast({ message: 'Error al enviar mensaje', type: 'error' }),
+      },
+    );
+  };
+
+  const handleSendMedia = (file: File, tipo: AttachmentType, contenido?: string) => {
+    sendMedia.mutate(
+      {
+        conversacion: conversationId,
+        tipo_documento: tipo,
+        documento: file,
+        contenido,
+        remitente: user?.id ?? 0,
+        remitente_nombre: user?.nombre ?? 'Tú',
+      },
+      {
+        onError: () =>
+          setToast({ message: 'Error al enviar archivo', type: 'error' }),
       },
     );
   };
@@ -132,7 +186,20 @@ export function ChatDetailPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto px-4 py-4"
+        onScroll={handleScroll}
+      >
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-2">
+            <div
+              className="h-4 w-4 animate-spin rounded-full border-2"
+              style={{ borderColor: c.border, borderTopColor: c.brand }}
+            />
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div
@@ -163,7 +230,7 @@ export function ChatDetailPage() {
       </div>
 
       {/* Input */}
-      <ChatInput onSend={handleSend} disabled={sendMessage.isPending} />
+      <ChatInput onSend={handleSend} onSendMedia={handleSendMedia} disabled={sendMessage.isPending || sendMedia.isPending} />
 
       {/* Edit modal */}
       {editingMessage && (

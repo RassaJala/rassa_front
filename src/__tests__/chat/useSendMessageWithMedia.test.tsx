@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
-import React from 'react';
-import { Text, View } from 'react-native';
+import React from "react";
+import { Text, View } from "react-native";
 
-import { messagesKey } from '@rassa/chat';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, waitFor } from '@testing-library/react-native';
-import '@testing-library/jest-native/extend-expect';
+import { messagesKey } from "@rassa/chat";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, render, waitFor } from "@testing-library/react-native";
+import "@testing-library/jest-native/extend-expect";
 
-import { useSendMessageWithMedia } from '@/features/chat/hooks/useSendMessageWithMedia';
-import api from '@/services/api';
+import { useSendMessageWithMedia } from "@/features/chat/hooks/useSendMessageWithMedia";
+import api from "@/services/api";
 
-jest.mock('@/services/api');
-jest.mock('@/store/AuthContext', () => ({
+jest.mock("@/services/api");
+jest.mock("@/store/AuthContext", () => ({
   useAuth: () => ({
-    user: { id: 1, nombre: 'Test User' },
+    user: { id: 1, nombre: "Test User" },
   }),
 }));
 
@@ -26,12 +26,12 @@ const backendMediaResponse = {
     data: {
       id_mensaje: 100,
       id_documento: 200,
-      url_documento: 'documentos/test.jpg',
+      url_documento: "documentos/test.jpg",
     },
   },
 };
 
-describe('useSendMessageWithMedia', () => {
+describe("useSendMessageWithMedia", () => {
   const existingMessages = {
     pages: [
       {
@@ -43,9 +43,9 @@ describe('useSendMessageWithMedia', () => {
             id: 1,
             conversacion: 1,
             remitente: 2,
-            remitente_nombre: 'Other',
-            contenido: 'Existing',
-            creado_en: '2026-01-01T00:00:00Z',
+            remitente_nombre: "Other",
+            contenido: "Existing",
+            creado_en: "2026-01-01T00:00:00Z",
             leido: true,
           },
         ],
@@ -77,15 +77,15 @@ describe('useSendMessageWithMedia', () => {
           onPress={() =>
             mutation.mutate({
               conversacion: 1,
-              contenido: 'Check this',
-              tipo_documento: 'imagen',
+              contenido: "Check this",
+              tipo_documento: "imagen",
               documento: {
-                uri: 'file:///test.jpg',
-                name: 'test.jpg',
-                type: 'image/jpeg',
+                uri: "file:///test.jpg",
+                name: "test.jpg",
+                type: "image/jpeg",
               },
               remitente: 1,
-              remitente_nombre: 'Test User',
+              remitente_nombre: "Test User",
             })
           }
         >
@@ -102,13 +102,13 @@ describe('useSendMessageWithMedia', () => {
       </QueryClientProvider>,
     );
 
-  it('adds optimistic message immediately on mutate', async () => {
+  it("adds optimistic message immediately on mutate", async () => {
     mockApiPost.mockResolvedValue(backendMediaResponse);
 
     const { getByTestId } = renderComponent();
 
     await act(async () => {
-      getByTestId('send-media').props.onPress();
+      getByTestId("send-media").props.onPress();
     });
 
     const cached = queryClient.getQueryData<{
@@ -116,37 +116,37 @@ describe('useSendMessageWithMedia', () => {
     }>(messagesKey(1));
 
     const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
-    expect(allMessages.some((m) => m.contenido === 'Check this')).toBe(true);
+    expect(allMessages.some((m) => m.contenido === "Check this")).toBe(true);
   });
 
-  it('calls API with FormData via multipart endpoint', async () => {
+  it("calls API with FormData via multipart endpoint", async () => {
     mockApiPost.mockResolvedValue(backendMediaResponse);
 
     const { getByTestId } = renderComponent();
 
     await act(async () => {
-      getByTestId('send-media').props.onPress();
+      getByTestId("send-media").props.onPress();
     });
 
     expect(mockApiPost).toHaveBeenCalledWith(
-      '/chat/mensajes/enviar-con-documento/',
+      "/chat/mensajes/enviar-con-documento/",
       expect.any(FormData),
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      { headers: { "Content-Type": null } },
     );
 
     const formData = mockApiPost.mock.calls[0]?.[1] as FormData;
     const entries = Array.from(formData.entries());
-    expect(entries.some(([key]) => key === 'fk_conversacion')).toBe(true);
-    expect(entries.some(([key]) => key === 'conversacion')).toBe(false);
+    expect(entries.some(([key]) => key === "conversacion")).toBe(true);
+    expect(entries.some(([key]) => key === "fk_conversacion")).toBe(false);
   });
 
-  it('replaces optimistic id with server id on success', async () => {
+  it("replaces optimistic id with server id on success", async () => {
     mockApiPost.mockResolvedValue(backendMediaResponse);
 
     const { getByTestId } = renderComponent();
 
     await act(async () => {
-      getByTestId('send-media').props.onPress();
+      getByTestId("send-media").props.onPress();
     });
 
     await waitFor(() => {
@@ -154,19 +154,19 @@ describe('useSendMessageWithMedia', () => {
         pages: { results: { id: number; contenido: string }[] }[];
       }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
-      const msg = allMessages.find((m) => m.contenido === 'Check this');
+      const msg = allMessages.find((m) => m.contenido === "Check this");
       expect(msg).toBeDefined();
       expect(msg?.id).toBe(100);
     });
   });
 
-  it('rolls back on error', async () => {
-    mockApiPost.mockRejectedValue(new Error('Upload failed'));
+  it("rolls back on error", async () => {
+    mockApiPost.mockRejectedValue(new Error("Upload failed"));
 
     const { getByTestId } = renderComponent();
 
     await act(async () => {
-      getByTestId('send-media').props.onPress();
+      getByTestId("send-media").props.onPress();
     });
 
     await waitFor(() => {
@@ -174,7 +174,7 @@ describe('useSendMessageWithMedia', () => {
         pages: { results: { id: number; contenido: string }[] }[];
       }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
-      expect(allMessages.some((m) => m.contenido === 'Check this')).toBe(false);
+      expect(allMessages.some((m) => m.contenido === "Check this")).toBe(false);
     });
   });
 });

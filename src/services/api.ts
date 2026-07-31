@@ -211,5 +211,10 @@ export function mediaUrl(path: string | null | undefined): string | null {
   const base = baseURL.replace(/\/api\/?$/, '');
   // ponytail: sanitizar path para evitar traversal (#34)
   const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
-  return `${base}${clean}`;
+  const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
+  try {
+    return `${base}${encodeURI(prefixed)}`;
+  } catch {
+    return null;
+  }
 }

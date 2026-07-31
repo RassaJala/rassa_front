@@ -179,7 +179,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async sendMessageWithMedia(payload) {
       const formData = new FormData();
-      formData.append('fk_conversacion', String(payload.conversacion));
+      formData.append('conversacion', String(payload.conversacion));
       formData.append('tipo_documento', payload.tipo_documento);
       if (payload.contenido) {
         formData.append('contenido', payload.contenido);
@@ -187,7 +187,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       appendDocument(formData, payload.documento);
 
       const res = await http.post(SEND_MEDIA_PATH, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': null },
       });
       const data = unwrap<{
         id_mensaje: number;

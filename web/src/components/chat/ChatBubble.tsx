@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { useAppColors } from '~/hooks/useAppColors';
-import { useAuth } from '~/hooks/useAuth';
-import { useCanModifyMessage } from '~/hooks/chat/useCanModifyMessage';
-import type { Message } from '@rassa/chat';
-import { formatMessageTime } from '@rassa/chat';
+import { useEffect, useRef, useState } from "react";
+import { useAppColors } from "~/hooks/useAppColors";
+import { useAuth } from "~/hooks/useAuth";
+import { useCanModifyMessage } from "~/hooks/chat/useCanModifyMessage";
+import { mediaUrl } from "~/utils/mediaUrl";
+import type { Message } from "@rassa/chat";
+import { formatMessageTime } from "@rassa/chat";
 
 interface ChatBubbleProps {
   message: Message;
@@ -29,8 +30,8 @@ export function ChatBubble({
         setShowMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showMenu]);
 
   const isOwn = user?.id === message.remitente;
@@ -38,11 +39,29 @@ export function ChatBubble({
 
   if (!isActive) return null;
 
+  const handleDownloadAudio = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}>
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-2`}>
       <div
         className={`relative max-w-[75%] rounded-2xl px-4 py-2 ${
-          isOwn ? 'rounded-br-md' : 'rounded-bl-md'
+          isOwn ? "rounded-br-md" : "rounded-bl-md"
         }`}
         style={{
           background: isOwn ? c.brand : c.surface,
@@ -59,8 +78,61 @@ export function ChatBubble({
           </div>
         )}
 
+        {/* Attachments */}
+        {message.adjuntos?.map((att) => {
+          const src = mediaUrl(att.archivo) ?? att.archivo;
+          return (
+            <div key={att.id} className="mb-1">
+              {att.tipo === "imagen" ? (
+                <img
+                  src={src}
+                  alt={att.nombre || "Imagen"}
+                  className="max-w-full rounded-lg"
+                  style={{ maxHeight: 240 }}
+                />
+              ) : att.tipo === "audio" ? (
+                <div className="flex items-center gap-2">
+                  <audio
+                    controls
+                    preload="metadata"
+                    src={src}
+                    className="max-w-full"
+                    style={{ width: 240, height: 40 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleDownloadAudio(src, att.nombre || "audio")
+                    }
+                    className="cursor-pointer border-none bg-transparent p-1 text-sm"
+                    style={{ color: isOwn ? c.onBrand : c.fg }}
+                    title="Descargar audio"
+                    aria-label="Descargar audio"
+                  >
+                    ⬇
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                  style={{
+                    background: isOwn
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <span>{att.tipo === "audio" ? "🎵" : "🎬"}</span>
+                  <span className="truncate flex-1">
+                    {att.nombre || "Archivo"}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {/* Message content */}
-        <div className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>
+        <div className="text-sm" style={{ whiteSpace: "pre-wrap" }}>
           {message.contenido}
           {message.editado && (
             <span className="ml-1 text-xs italic" style={{ opacity: 0.6 }}>
@@ -72,7 +144,7 @@ export function ChatBubble({
         {/* Timestamp + menu trigger */}
         <div
           className={`mt-1 flex items-center gap-2 ${
-            isOwn ? 'justify-end' : 'justify-start'
+            isOwn ? "justify-end" : "justify-start"
           }`}
         >
           <span

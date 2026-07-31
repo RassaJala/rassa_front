@@ -7,6 +7,8 @@ export interface BackendMessage {
   leido: boolean;
   editado: boolean;
   creado_en: string;
+  tipo?: "texto" | "imagen" | "audio" | "video";
+  url_documento?: string | null;
 }
 
 export interface BackendConversation {
