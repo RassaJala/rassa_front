@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
 
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import ChatBubble from '@/features/chat/components/ChatBubble';
@@ -11,6 +11,16 @@ import type { Message } from '@/types/chat';
 jest.mock('@/store/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 1, nombre: 'Test User' },
+  }),
+}));
+
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    themePreference: 'system',
+    isLoaded: true,
+    toggleColorScheme: jest.fn(),
+    setThemePreference: jest.fn(),
   }),
 }));
 
@@ -95,11 +105,57 @@ describe('ChatBubble — media', () => {
     expect(getByText('voice.mp3')).toBeTruthy();
   });
 
-  it('renders video attachment with play icon', () => {
+  it('renders video attachment with download button', () => {
     const { getByLabelText } = render(
       <ChatBubble message={videoMessage} isOwn={true} />,
     );
-    expect(getByLabelText('Reproducir video: clip.mp4')).toBeTruthy();
+    expect(getByLabelText('Descargar video: clip.mp4')).toBeTruthy();
+  });
+
+  it('renders image attachment with download button', () => {
+    const { getByLabelText } = render(
+      <ChatBubble message={imageMessage} isOwn={true} />,
+    );
+    expect(getByLabelText('Descargar imagen: photo.jpg')).toBeTruthy();
+  });
+
+  it('opens image modal when image is pressed', () => {
+    const { getByLabelText } = render(
+      <ChatBubble message={imageMessage} isOwn={true} />,
+    );
+    fireEvent.press(getByLabelText('Ampliar imagen: photo.jpg'));
+    expect(getByLabelText('Imagen ampliada')).toBeTruthy();
+  });
+
+  it('shows message text below image in modal', () => {
+    const { getByLabelText, getAllByText } = render(
+      <ChatBubble message={textWithImageMessage} isOwn={true} />,
+    );
+    fireEvent.press(getByLabelText('Ampliar imagen: photo.jpg'));
+    expect(getAllByText('Look at this!').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders audio attachment with download button', () => {
+    const { getByLabelText } = render(
+      <ChatBubble message={audioMessage} isOwn={false} />,
+    );
+    expect(getByLabelText('Descargar audio: voice.mp3')).toBeTruthy();
+  });
+
+  it('seeks audio when progress bar is pressed', () => {
+    const { useAudioPlayer } = jest.requireMock('expo-audio') as {
+      useAudioPlayer: jest.Mock;
+    };
+    const { getByLabelText } = render(
+      <ChatBubble message={audioMessage} isOwn={false} />,
+    );
+    const bar = getByLabelText('Progreso de audio: voice.mp3');
+    fireEvent(bar, 'layout', {
+      nativeEvent: { layout: { width: 200, height: 12, x: 0, y: 0 } },
+    });
+    fireEvent(bar, 'press', { nativeEvent: { locationX: 100 } });
+    const player = useAudioPlayer.mock.results.at(-1)?.value;
+    expect(player.seekTo).toHaveBeenCalledWith(60);
   });
 
   it('renders text content alongside attachment', () => {

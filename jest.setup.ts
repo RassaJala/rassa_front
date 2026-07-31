@@ -63,4 +63,48 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+// Mock expo-audio / expo-video (native modules unavailable in Jest)
+jest.mock('expo-audio', () => {
+  const player = {
+    id: 'audio-player',
+    playing: false,
+    currentTime: 0,
+    duration: 120,
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn(),
+    replace: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    currentStatus: { playing: false, currentTime: 0, duration: 120 },
+  };
+  return {
+    useAudioPlayer: jest.fn(() => player),
+    useAudioPlayerStatus: jest.fn(() => player.currentStatus),
+    setAudioModeAsync: jest.fn(async () => undefined),
+  };
+});
+
+jest.mock('expo-video', () => {
+  const player = {
+    id: 'video-player',
+    playing: false,
+    loop: false,
+    muted: false,
+    currentTime: 0,
+    duration: 0,
+    play: jest.fn(),
+    pause: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+  };
+  return {
+    useVideoPlayer: jest.fn(() => player),
+    VideoView: () => null,
+  };
+});
+
+// Mock expo-linear-gradient (native component unavailable in Jest)
+jest.mock('expo-linear-gradient', () => ({
+  LinearGradient: () => null,
+}));
+
 export {};

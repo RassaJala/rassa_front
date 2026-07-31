@@ -5,6 +5,7 @@ import type { Message } from '@rassa/chat';
 
 vi.mock('~/hooks/useAppColors', () => ({
   useAppColors: () => ({
+    isDark: false,
     brand: '#24563C',
     onBrand: '#FFFFFF',
     coral: '#DE393A',
@@ -43,6 +44,26 @@ describe('ChatBubble', () => {
       <ChatBubble message={baseMessage} onEdit={vi.fn()} onDelete={vi.fn()} />,
     );
     expect(screen.getByText('Hello world')).toBeDefined();
+  });
+
+  it('applies white gradient background with shadow to own bubble in light mode', () => {
+    render(
+      <ChatBubble message={baseMessage} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    const bubble = screen.getByText('Hello world').parentElement as HTMLElement;
+    expect(bubble.style.background).toContain('linear-gradient');
+    expect(bubble.style.background).toContain('rgb(255, 255, 255)');
+    expect(bubble.style.boxShadow).toContain('rgba');
+    expect(bubble.style.border).toContain('2px solid');
+  });
+
+  it('applies shadow to other bubble in light mode', () => {
+    const otherMessage: Message = { ...baseMessage, remitente: 2 };
+    render(
+      <ChatBubble message={otherMessage} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    const bubble = screen.getByText('Hello world').parentElement as HTMLElement;
+    expect(bubble.style.boxShadow).toContain('rgba');
   });
 
   it('shows own message with justify-end alignment', () => {
@@ -143,5 +164,112 @@ describe('ChatBubble', () => {
     fireEvent.click(screen.getByLabelText('Opciones de mensaje'));
     fireEvent.click(screen.getByText('Eliminar'));
     expect(onDelete).toHaveBeenCalledWith(baseMessage.id);
+  });
+
+  it('renders image attachment with download button', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 1,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    expect(screen.getByAltText('foto.jpg')).toBeDefined();
+    expect(screen.getByLabelText('Descargar imagen')).toBeDefined();
+  });
+
+  it('opens image modal when image is clicked', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 4,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByAltText('foto.jpg'));
+    expect(screen.getByAltText('Imagen ampliada: foto.jpg')).toBeDefined();
+  });
+
+  it('shows message text in image modal', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 5,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByAltText('foto.jpg'));
+    expect(screen.getAllByText('Hello world').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders video attachment with player and download button', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 2,
+          mensaje: 1,
+          archivo: '/documentos/clip.mp4',
+          tipo: 'video',
+          nombre: 'clip.mp4',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    expect(container.querySelector('video')).toBeDefined();
+    expect(screen.getByLabelText('Descargar video')).toBeDefined();
+  });
+
+  it('renders audio attachment with download button', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 3,
+          mensaje: 1,
+          archivo: '/documentos/audio.mp3',
+          tipo: 'audio',
+          nombre: 'audio.mp3',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    expect(screen.getByLabelText('Descargar audio')).toBeDefined();
+    const audio = container.querySelector('audio') as HTMLAudioElement;
+    expect(audio.className).toContain('msg-audio');
+    expect(audio.style.getPropertyValue('--msg-audio-accent')).toBeTruthy();
   });
 });

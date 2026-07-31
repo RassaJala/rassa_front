@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
@@ -32,13 +38,8 @@ export function ChatDetailPage() {
   const tipo =
     currentConv?.tipo ?? (location.state as ChatLocationState | null)?.tipo;
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useChatMessages(conversationId);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useChatMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
   const sendMedia = useSendMessageWithMedia(conversationId);
   const editMessage = useEditMessage(conversationId);
@@ -81,7 +82,12 @@ export function ChatDetailPage() {
   useEffect(() => {
     const container = containerRef.current;
     const pageCount = data?.pages.length ?? 0;
-    if (!container || !prevScrollHeightRef.current || prevPageCountRef.current === pageCount) return;
+    if (
+      !container ||
+      !prevScrollHeightRef.current ||
+      prevPageCountRef.current === pageCount
+    )
+      return;
     const newScrollHeight = container.scrollHeight;
     container.scrollTop = newScrollHeight - prevScrollHeightRef.current;
     prevPageCountRef.current = pageCount;
@@ -107,7 +113,11 @@ export function ChatDetailPage() {
     );
   };
 
-  const handleSendMedia = (file: File, tipo: AttachmentType, contenido?: string) => {
+  const handleSendMedia = (
+    file: File,
+    tipo: AttachmentType,
+    contenido?: string,
+  ) => {
     sendMedia.mutate(
       {
         conversacion: conversationId,
@@ -154,7 +164,10 @@ export function ChatDetailPage() {
   };
 
   return (
-    <div className="flex flex-col" style={{ position: 'absolute', inset: 0, background: c.bg }}>
+    <div
+      className="flex flex-col"
+      style={{ position: 'absolute', inset: 0, background: c.bg }}
+    >
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3"
@@ -188,7 +201,18 @@ export function ChatDetailPage() {
       {/* Messages */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-4 py-4"
+        className="chat-scroll flex-1 overflow-y-auto px-4 py-4"
+        style={
+          {
+            background: c.bg,
+            '--chat-scroll-thumb': c.isDark
+              ? 'rgba(157,168,157,0.45)'
+              : 'rgba(0,0,0,0.25)',
+            '--chat-scroll-thumb-hover': c.isDark
+              ? 'rgba(157,168,157,0.65)'
+              : 'rgba(0,0,0,0.4)',
+          } as CSSProperties
+        }
         onScroll={handleScroll}
       >
         {isFetchingNextPage && (
@@ -230,7 +254,11 @@ export function ChatDetailPage() {
       </div>
 
       {/* Input */}
-      <ChatInput onSend={handleSend} onSendMedia={handleSendMedia} disabled={sendMessage.isPending || sendMedia.isPending} />
+      <ChatInput
+        onSend={handleSend}
+        onSendMedia={handleSendMedia}
+        disabled={sendMessage.isPending || sendMedia.isPending}
+      />
 
       {/* Edit modal */}
       {editingMessage && (
