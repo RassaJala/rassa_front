@@ -34,6 +34,12 @@ const adminNav: NavItem[] = [
     icon: '📍',
     path: '/admin/localidades',
   },
+  {
+    key: 'waste',
+    label: 'Mermas',
+    icon: '📉',
+    path: '/admin/mermas',
+  },
   { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
   { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
 ];

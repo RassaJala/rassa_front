@@ -181,6 +181,7 @@ export interface CreditLimit {
 // ── Navigation param lists ────────────────────────────────
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  MermaResumen: undefined;
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
