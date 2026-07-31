@@ -1,56 +1,56 @@
-import React from "react";
+import React from 'react';
 
-import { fireEvent, render } from "@testing-library/react-native";
+import { fireEvent, render } from '@testing-library/react-native';
 
-import OrderSuccessScreen from "@/screens/common/OrderSuccessScreen";
+import OrderSuccessScreen from '@/screens/common/OrderSuccessScreen';
 
 const mockNavigate = jest.fn();
 
-jest.mock("@react-navigation/native", () => ({
+jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: mockNavigate,
   }),
   useRoute: () => ({
     params: {
       orderId: 45,
-      total: "174.00",
-      estado: "pendiente",
+      total: '174.00',
+      estado: 'pendiente',
     },
   }),
 }));
 
-jest.mock("@/store/ThemeContext", () => ({
+jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({
-    colorScheme: "light",
+    colorScheme: 'light',
     toggleColorScheme: jest.fn(),
   }),
 }));
 
-jest.mock("@expo/vector-icons", () => ({
-  MaterialCommunityIcons: "MaterialCommunityIcons",
+jest.mock('@expo/vector-icons', () => ({
+  MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe("OrderSuccessScreen", () => {
-  it("renderiza número de pedido, total y estado", () => {
+describe('OrderSuccessScreen', () => {
+  it('renderiza número de pedido, total y estado', () => {
     const { getByText } = render(<OrderSuccessScreen />);
 
-    expect(getByText("¡Pedido confirmado!")).toBeTruthy();
-    expect(getByText("Pedido N° 45")).toBeTruthy();
-    expect(getByText("$174.00")).toBeTruthy();
-    expect(getByText("pendiente")).toBeTruthy();
+    expect(getByText('¡Pedido confirmado!')).toBeTruthy();
+    expect(getByText('Pedido N° 45')).toBeTruthy();
+    expect(getByText('$174.00')).toBeTruthy();
+    expect(getByText('pendiente')).toBeTruthy();
   });
 
-  it("navega al inicio al presionar Volver al inicio", () => {
+  it('navega al inicio al presionar Volver al inicio', () => {
     const { getByTestId } = render(<OrderSuccessScreen />);
 
-    fireEvent.press(getByTestId("back-home-btn"));
+    fireEvent.press(getByTestId('back-home-btn'));
 
-    expect(mockNavigate).toHaveBeenCalledWith("BuyerTabs", {
-      screen: "Home",
+    expect(mockNavigate).toHaveBeenCalledWith('BuyerTabs', {
+      screen: 'Home',
     });
   });
 });

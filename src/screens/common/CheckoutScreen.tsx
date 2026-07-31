@@ -1,35 +1,35 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   Text,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Sentry from "@sentry/react-native";
-import { useMutation } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Sentry from '@sentry/react-native';
+import { useMutation } from '@tanstack/react-query';
 
-import FormErrorBanner from "@/components/FormErrorBanner";
-import { colors, themeColors } from "@/constants/colors";
-import { createOrder } from "@/services/orders";
-import type { CreateOrderPayload } from "@/services/orders";
-import { useCartStore } from "@/store/cartStore";
-import type { CartItem } from "@/store/cartStore";
-import { useTheme } from "@/store/ThemeContext";
-import type { BuyerStackParamList } from "@/types";
-import { isSafeDetail, parseApiError } from "@/utils/apiErrors";
+import FormErrorBanner from '@/components/FormErrorBanner';
+import { colors, themeColors } from '@/constants/colors';
+import { createOrder } from '@/services/orders';
+import type { CreateOrderPayload } from '@/services/orders';
+import { useCartStore } from '@/store/cartStore';
+import type { CartItem } from '@/store/cartStore';
+import { useTheme } from '@/store/ThemeContext';
+import type { BuyerStackParamList } from '@/types';
+import { isSafeDetail, parseApiError } from '@/utils/apiErrors';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
 const IVA_RATE = 0.21;
-const ORDER_ERROR_FALLBACK = "Error al procesar el pedido. Intente de nuevo.";
+const ORDER_ERROR_FALLBACK = 'Error al procesar el pedido. Intente de nuevo.';
 const CHECKOUT_AMBIGUOUS_ERROR =
-  "No pudimos confirmar si tu pedido se creó. Revisá Mis Pedidos antes de intentar de nuevo.";
+  'No pudimos confirmar si tu pedido se creó. Revisá Mis Pedidos antes de intentar de nuevo.';
 
 function extractCheckoutError(error: unknown): string {
   const parsed = parseApiError(error, ORDER_ERROR_FALLBACK);
@@ -53,27 +53,27 @@ function extractResponseDataError(error: unknown): string | null {
     error instanceof Error && error.cause !== undefined ? error.cause : error;
   const data = (candidate as { response?: { data?: unknown } })?.response?.data;
 
-  if (typeof data === "string") {
+  if (typeof data === 'string') {
     const trimmed = data.trim();
     if (
-      trimmed === "" ||
-      trimmed.startsWith("<") ||
-      trimmed.includes("Traceback (most recent call last)") ||
-      trimmed.includes("django.db")
+      trimmed === '' ||
+      trimmed.startsWith('<') ||
+      trimmed.includes('Traceback (most recent call last)') ||
+      trimmed.includes('django.db')
     ) {
       return null;
     }
     return trimmed;
   }
 
-  if (data === null || typeof data !== "object") {
+  if (data === null || typeof data !== 'object') {
     return null;
   }
 
   // DRF non-field errors llegan como array de strings: ["Stock insuficiente..."]
   if (Array.isArray(data)) {
     const first = (data as unknown[])[0];
-    if (first !== undefined && String(first).trim() !== "") {
+    if (first !== undefined && String(first).trim() !== '') {
       return String(first);
     }
     return null;
@@ -83,9 +83,9 @@ function extractResponseDataError(error: unknown): string | null {
 }
 
 function extractRecordError(record: Record<string, unknown>): string | null {
-  for (const key of ["detail", "message", "error"] as const) {
+  for (const key of ['detail', 'message', 'error'] as const) {
     const value = record[key];
-    if (typeof value === "string" && value !== "" && isSafeDetail(value)) {
+    if (typeof value === 'string' && value !== '' && isSafeDetail(value)) {
       return value;
     }
   }
@@ -147,7 +147,7 @@ function CheckoutRow({
 
 export default function CheckoutScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const tc = themeColors(isDark);
   const navigation = useNavigation<Nav>();
   const items = useCartStore((s) => s.items);
@@ -174,14 +174,14 @@ export default function CheckoutScreen(): React.JSX.Element {
     try {
       const order = await orderMutation.mutateAsync(payload);
       useCartStore.getState().clearCart();
-      navigation.replace("OrderSuccess", {
+      navigation.replace('OrderSuccess', {
         orderId: order.id_pedido,
         total: String(order.total),
         estado: order.estado,
       });
     } catch (error) {
       Sentry.captureException(error, {
-        tags: { flow: "checkout", step: "createOrder" },
+        tags: { flow: 'checkout', step: 'createOrder' },
       });
       if (isAmbiguousOrderError(error)) {
         setErrorMessage(CHECKOUT_AMBIGUOUS_ERROR);
@@ -193,12 +193,12 @@ export default function CheckoutScreen(): React.JSX.Element {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={["top"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
         <View
           style={{
             flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
             padding: 16,
           }}
         >
@@ -211,7 +211,7 @@ export default function CheckoutScreen(): React.JSX.Element {
             style={{
               marginTop: 16,
               fontSize: 22,
-              fontWeight: "700",
+              fontWeight: '700',
               color: tc.fg,
             }}
           >
@@ -222,7 +222,7 @@ export default function CheckoutScreen(): React.JSX.Element {
               marginTop: 8,
               fontSize: 14,
               color: tc.muted,
-              textAlign: "center",
+              textAlign: 'center',
             }}
           >
             Agregá productos desde el catálogo para comenzar tu compra.
@@ -241,7 +241,7 @@ export default function CheckoutScreen(): React.JSX.Element {
   const buttonBg = orderMutation.isPending ? disabledBg : tc.brand;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
       <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: 16 }}>
         {/* Header */}
         <View

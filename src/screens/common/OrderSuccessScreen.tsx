@@ -1,22 +1,22 @@
-import React from "react";
-import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, themeColors } from "@/constants/colors";
-import { useTheme } from "@/store/ThemeContext";
-import type { BuyerStackParamList } from "@/types";
+import { colors, themeColors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
+import type { BuyerStackParamList } from '@/types';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
-type Route = RouteProp<BuyerStackParamList, "OrderSuccess">;
+type Route = RouteProp<BuyerStackParamList, 'OrderSuccess'>;
 
 export default function OrderSuccessScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
   const tc = themeColors(isDark);
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -24,12 +24,12 @@ export default function OrderSuccessScreen(): React.JSX.Element {
   const { orderId, total, estado } = route.params;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
       <View
         style={{
           flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 24,
         }}
       >
@@ -42,7 +42,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
           style={{
             marginTop: 20,
             fontSize: 24,
-            fontWeight: "700",
+            fontWeight: '700',
             color: tc.fg,
           }}
         >
@@ -55,7 +55,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
           style={{
             marginTop: 4,
             fontSize: 20,
-            fontWeight: "700",
+            fontWeight: '700',
             color: tc.fg,
           }}
         >
@@ -73,9 +73,9 @@ export default function OrderSuccessScreen(): React.JSX.Element {
           <Text
             style={{
               fontSize: 12,
-              fontWeight: "600",
+              fontWeight: '600',
               color: tc.brand,
-              textTransform: "capitalize",
+              textTransform: 'capitalize',
             }}
           >
             {estado}
@@ -84,7 +84,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
 
         <Pressable
           testID="back-home-btn"
-          onPress={() => navigation.navigate("BuyerTabs", { screen: "Home" })}
+          onPress={() => navigation.navigate('BuyerTabs', { screen: 'Home' })}
           style={{
             marginTop: 32,
             backgroundColor: tc.brand,
@@ -94,7 +94,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
           }}
         >
           <Text
-            style={{ fontSize: 15, fontWeight: "700", color: colors.iconWhite }}
+            style={{ fontSize: 15, fontWeight: '700', color: colors.iconWhite }}
           >
             Volver al inicio
           </Text>

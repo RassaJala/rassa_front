@@ -1,6 +1,6 @@
-import type { ApiResponse } from "@/types";
+import type { ApiResponse } from '@/types';
 
-import api from "./api";
+import api from './api';
 
 // ── Types ────────────────────────────────────────────────
 
@@ -39,6 +39,6 @@ export async function createOrder(
   payload: CreateOrderPayload,
 ): Promise<Pedido> {
   // Backend envuelve la respuesta: { ok, message, data: Pedido }
-  const { data } = await api.post<ApiResponse<Pedido>>("/pedidos/", payload);
+  const { data } = await api.post<ApiResponse<Pedido>>('/pedidos/', payload);
   return data.data;
 }
