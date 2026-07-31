@@ -3,11 +3,10 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { createPago, fetchTiposPago, type TipoPago } from '@/common/payments';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
-import { createPago, fetchTiposPago } from '../services/payments';
-import type { TipoPago } from '../services/payments';
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -55,7 +54,7 @@ export function PaymentPage() {
   // Fetch payment types
   const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
     queryKey: ['tipos-pago'],
-    queryFn: fetchTiposPago,
+    queryFn: () => fetchTiposPago(api),
     staleTime: Infinity,
     gcTime: Infinity,
   });
@@ -66,7 +65,7 @@ export function PaymentPage() {
       if (!orderId || isNaN(Number(orderId)))
         throw new Error('ID de pedido inválido');
       const trimmedRef = referencia.trim();
-      return createPago({
+      return createPago(api, {
         pedido: Number(orderId),
         tipo_pago: selectedTipo,
         monto: order.total,

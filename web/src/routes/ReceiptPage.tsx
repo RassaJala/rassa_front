@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { fetchPago } from '@/common/payments';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
-import { fetchPago } from '../services/payments';
+import api from '../services/api';
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ export function ReceiptPage() {
     refetch,
   } = useQuery({
     queryKey: ['pago', Number(paymentId)],
-    queryFn: () => fetchPago(Number(paymentId)),
+    queryFn: () => fetchPago(api, Number(paymentId)),
     enabled: !!paymentId,
   });
 

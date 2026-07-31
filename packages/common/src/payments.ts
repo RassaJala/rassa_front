@@ -1,4 +1,6 @@
-import api from './api';
+import type { AxiosInstance } from 'axios';
+
+// ── Payment types ─────────────────────────────────────────
 
 export interface TipoPago {
   readonly id_tipo_pago: number;
@@ -33,19 +35,29 @@ export interface CreatePagoPayload {
   readonly referencia?: string;
 }
 
-export async function fetchTiposPago(): Promise<TipoPago[]> {
+// ── Service ───────────────────────────────────────────────
+// Shared by the mobile app (src/) and the web app (web/). Each platform has
+// its own axios instance (src/services/api.ts vs web/src/services/api.ts)
+// with different baseURL resolution, interceptors and retry config, and
+// neither can be imported from this shared package, so callers pass their own
+// api instance as the first argument.
+export async function fetchTiposPago(api: AxiosInstance): Promise<TipoPago[]> {
   const res = await api.get<TipoPago[]>('/tipos-pago/');
   return res.data;
 }
 
 export async function createPago(
+  api: AxiosInstance,
   payload: CreatePagoPayload,
 ): Promise<PaymentDetail> {
   const res = await api.post<PaymentDetail>('/pagos/', payload);
   return res.data;
 }
 
-export async function fetchPago(id: number): Promise<PaymentDetail> {
+export async function fetchPago(
+  api: AxiosInstance,
+  id: number,
+): Promise<PaymentDetail> {
   const res = await api.get<PaymentDetail>(`/pagos/${id}/`);
   return res.data;
 }

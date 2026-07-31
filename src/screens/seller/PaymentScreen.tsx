@@ -16,17 +16,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
+import { createPago, fetchTiposPago } from '@/common/payments';
+import type { PaymentDetail, TipoPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
-import { createPago, fetchTiposPago } from '@/services/payments';
 import * as Storage from '@/services/storage';
 import { useTheme } from '@/store/ThemeContext';
-import type {
-  OrderDetail,
-  PaymentDetail,
-  SellerStackParamList,
-  TipoPago,
-} from '@/types';
+import type { OrderDetail, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
 
 // ── Constants ──────────────────────────────────────────────
@@ -552,7 +548,7 @@ export default function PaymentScreen(): React.JSX.Element {
   // Fetch payment types
   const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
     queryKey: ['tipos-pago'],
-    queryFn: fetchTiposPago,
+    queryFn: () => fetchTiposPago(api),
     staleTime: Infinity,
     gcTime: Infinity,
   });
@@ -561,7 +557,7 @@ export default function PaymentScreen(): React.JSX.Element {
     mutationFn: async () => {
       if (!selectedTipo || !order) throw new Error('Datos incompletos');
       const trimmedRef = referencia.trim();
-      return createPago({
+      return createPago(api, {
         pedido: orderId,
         tipo_pago: selectedTipo,
         monto: order.total,

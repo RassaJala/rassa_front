@@ -13,8 +13,9 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import { fetchPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
-import { fetchPago } from '@/services/payments';
+import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import type { SellerStackParamList } from '@/types';
 
@@ -58,7 +59,7 @@ export default function ReceiptScreen(): React.JSX.Element {
     refetch,
   } = useQuery({
     queryKey: ['pago', paymentId],
-    queryFn: () => fetchPago(paymentId),
+    queryFn: () => fetchPago(api, paymentId),
     enabled: !!paymentId,
   });
 
