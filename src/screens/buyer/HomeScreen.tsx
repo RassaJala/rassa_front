@@ -28,40 +28,40 @@ import { formatPrice } from '@/utils/format';
 const FAVORITE_INITIAL_VALUE = 8;
 const SECTION_TOP_PADDING = 48;
 
-  const styles = StyleSheet.create({
-    // ProductsContent
-    loadingContainer: { paddingVertical: 40, alignItems: 'center' },
-    errorContainer: { alignItems: 'center', paddingVertical: 32, gap: 12 },
-    emptyContainer: { alignItems: 'center', paddingVertical: 32 },
-    productsWrapper: { gap: 10 },
+const styles = StyleSheet.create({
+  // ProductsContent
+  loadingContainer: { paddingVertical: 40, alignItems: 'center' },
+  errorContainer: { alignItems: 'center', paddingVertical: 32, gap: 12 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 32 },
+  productsWrapper: { gap: 10 },
 
-    // ProductCard
-    cardRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-    },
-    addToCartBtnText: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.iconWhite,
-    },
+  // ProductCard
+  cardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  addToCartBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.iconWhite,
+  },
 
-    // HomeScreen
-    scrollContent: { paddingBottom: 32 },
-    headerWrapper: { paddingTop: SECTION_TOP_PADDING, paddingHorizontal: 20 },
-    headerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-    },
-    iconRow: { flexDirection: 'row', gap: 10 },
-    statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
-    productsSection: { paddingHorizontal: 20, marginTop: 8 },
-    flexOne: { flex: 1 },
-    listItemWrapper: { paddingHorizontal: 20 },
-    itemSeparator: { height: 10 },
-  });
+  // HomeScreen
+  scrollContent: { paddingBottom: 32 },
+  headerWrapper: { paddingTop: SECTION_TOP_PADDING, paddingHorizontal: 20 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  iconRow: { flexDirection: 'row', gap: 10 },
+  statsRow: { flexDirection: 'row', gap: 10, paddingVertical: 24 },
+  productsSection: { paddingHorizontal: 20, marginTop: 8 },
+  flexOne: { flex: 1 },
+  listItemWrapper: { paddingHorizontal: 20 },
+  itemSeparator: { height: 10 },
+});
 
 type Nav = BottomTabNavigationProp<BuyerTabsParamList>;
 
@@ -275,10 +275,7 @@ function ProductCard({
   return (
     <Pressable
       onPress={() => handleProductPress(producto, farmerId, farmerName)}
-      style={({ pressed }) => [
-        cardStyles.card,
-        { opacity: pressed ? 0.9 : 1 },
-      ]}
+      style={({ pressed }) => [cardStyles.card, { opacity: pressed ? 0.9 : 1 }]}
     >
       <View style={styles.cardRow}>
         <View style={styles.flexOne}>
@@ -298,7 +295,10 @@ function ProductCard({
         disabled={inCart}
         style={({ pressed }) => [
           cardStyles.addBtn,
-          { backgroundColor: inCart ? muted : brand, opacity: pressed ? 0.8 : 1 },
+          {
+            backgroundColor: inCart ? muted : brand,
+            opacity: pressed ? 0.8 : 1,
+          },
         ]}
       >
         <Text style={styles.addToCartBtnText}>
@@ -478,9 +478,7 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
       {/* Products section */}
       <View style={styles.productsSection}>
         <Text style={hsStyles.sectionTitle}>Productos disponibles</Text>
-        <Text style={hsStyles.sectionSubtitle}>
-          Esta semana en tu mercado
-        </Text>
+        <Text style={hsStyles.sectionSubtitle}>Esta semana en tu mercado</Text>
       </View>
     </>
   );

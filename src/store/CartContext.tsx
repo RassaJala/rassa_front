@@ -77,10 +77,7 @@ function handleAddItem(state: CartState, payload: CartItem): CartState {
   }
   if (state.items.length >= MAX_CART_ITEMS) return state;
   return {
-    items: [
-      ...state.items,
-      { ...payload, cantidad: capped },
-    ],
+    items: [...state.items, { ...payload, cantidad: capped }],
   };
 }
 
@@ -118,7 +115,6 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return { items: action.payload };
     default:
       if (__DEV__) {
-         
         console.warn('Carrito: acción desconocida', action);
       }
       return state;

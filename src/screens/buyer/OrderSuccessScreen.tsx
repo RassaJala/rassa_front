@@ -20,7 +20,8 @@ export default function OrderSuccessScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { orderId, total } = route.params;
-  const safeTotal = typeof total === 'string' || typeof total === 'number' ? Number(total) : 0;
+  const safeTotal =
+    typeof total === 'string' || typeof total === 'number' ? Number(total) : 0;
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -152,9 +153,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
         </View>
 
         {/* Title */}
-        <Text style={dynStyles.title}>
-          ¡Pedido confirmado!
-        </Text>
+        <Text style={dynStyles.title}>¡Pedido confirmado!</Text>
 
         <Text style={dynStyles.subtitle}>
           Tu pedido ha sido registrado exitosamente. El agricultor recibirá la
@@ -164,17 +163,13 @@ export default function OrderSuccessScreen(): React.JSX.Element {
         {/* Order details card */}
         <View style={dynStyles.orderCard}>
           <Text style={dynStyles.orderLabel}>Número de pedido</Text>
-          <Text style={dynStyles.orderId}>
-            #{orderId}
-          </Text>
+          <Text style={dynStyles.orderId}>#{orderId}</Text>
 
           <View style={[styles.divider, dynStyles.dividerColor]} />
 
           <View style={styles.totalRow}>
             <Text style={dynStyles.totalLabel}>Total</Text>
-            <Text style={dynStyles.totalValue}>
-              {formatPrice(safeTotal)}
-            </Text>
+            <Text style={dynStyles.totalValue}>{formatPrice(safeTotal)}</Text>
           </View>
         </View>
 
@@ -195,9 +190,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
             { backgroundColor: brand, opacity: pressed ? 0.8 : 1 },
           ]}
         >
-          <Text style={dynStyles.primaryBtnText}>
-            Ver mis pedidos
-          </Text>
+          <Text style={dynStyles.primaryBtnText}>Ver mis pedidos</Text>
         </Pressable>
 
         <Pressable
@@ -207,9 +200,7 @@ export default function OrderSuccessScreen(): React.JSX.Element {
             { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          <Text style={dynStyles.secondaryBtnText}>
-            Seguir comprando
-          </Text>
+          <Text style={dynStyles.secondaryBtnText}>Seguir comprando</Text>
         </Pressable>
       </View>
     </View>

@@ -36,7 +36,11 @@ const SCROLL_BOTTOM_PADDING = 200;
 const styles = StyleSheet.create({
   emptyCartCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   volverBtnText: { color: colors.iconWhite, fontWeight: '600' },
-  headerTop: { paddingTop: HEADER_TOP_PADDING, paddingHorizontal: 20, paddingBottom: 8 },
+  headerTop: {
+    paddingTop: HEADER_TOP_PADDING,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   scrollContent: { padding: 20, paddingBottom: SCROLL_BOTTOM_PADDING },
   itemRow: {
@@ -322,12 +326,9 @@ export default function CheckoutScreen(): React.JSX.Element {
                 ]}
               >
                 <View style={styles.flexOne}>
-                  <Text style={dynamicStyles.itemName}>
-                    {item.producto}
-                  </Text>
+                  <Text style={dynamicStyles.itemName}>{item.producto}</Text>
                   <Text style={dynamicStyles.itemDetail}>
-                    {item.cantidad} ×{' '}
-                    {formatPrice(item.precio)}
+                    {item.cantidad} × {formatPrice(item.precio)}
                   </Text>
                 </View>
                 <Text style={dynamicStyles.itemPrice}>
@@ -341,12 +342,10 @@ export default function CheckoutScreen(): React.JSX.Element {
         {/* Totales */}
         <Text style={dynamicStyles.sectionTitle}>Totales</Text>
 
-          <View style={dynamicStyles.summaryCard}>
+        <View style={dynamicStyles.summaryCard}>
           <View style={styles.totalsRow}>
             <Text style={dynamicStyles.labelText}>Subtotal</Text>
-            <Text style={dynamicStyles.valueText}>
-              {formatPrice(subtotal)}
-            </Text>
+            <Text style={dynamicStyles.valueText}>{formatPrice(subtotal)}</Text>
           </View>
           <View style={styles.totalsRow}>
             <Text style={dynamicStyles.labelText}>IVA (21%)</Text>
@@ -354,9 +353,7 @@ export default function CheckoutScreen(): React.JSX.Element {
           </View>
           <View style={dynamicStyles.totalRow}>
             <Text style={dynamicStyles.totalLabel}>Total</Text>
-            <Text style={dynamicStyles.totalValue}>
-              {formatPrice(total)}
-            </Text>
+            <Text style={dynamicStyles.totalValue}>{formatPrice(total)}</Text>
           </View>
         </View>
 
@@ -371,29 +368,29 @@ export default function CheckoutScreen(): React.JSX.Element {
               />
               <Text style={styles.errorText}>{errorMsg}</Text>
               <Pressable
-              onPress={() => setErrorMsg(null)}
-              hitSlop={8}
-              style={styles.closeBtn}
+                onPress={() => setErrorMsg(null)}
+                hitSlop={8}
+                style={styles.closeBtn}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={18}
+                  color={colors.error}
+                />
+              </Pressable>
+            </View>
+            <Pressable
+              onPress={() => {
+                setErrorMsg(null);
+                handleConfirm();
+              }}
+              style={({ pressed }) => [
+                dynamicStyles.retryBtn,
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
             >
-              <MaterialCommunityIcons
-                name="close"
-                size={18}
-                color={colors.error}
-              />
+              <Text style={styles.retryText}>Reintentar</Text>
             </Pressable>
-          </View>
-          <Pressable
-            onPress={() => {
-              setErrorMsg(null);
-              handleConfirm();
-            }}
-            style={({ pressed }) => [
-              dynamicStyles.retryBtn,
-              { opacity: pressed ? 0.6 : 1 },
-            ]}
-          >
-            <Text style={styles.retryText}>Reintentar</Text>
-          </Pressable>
           </View>
         ) : null}
       </ScrollView>
@@ -406,7 +403,8 @@ export default function CheckoutScreen(): React.JSX.Element {
           style={({ pressed }) => [
             dynamicStyles.confirmBtn,
             {
-              backgroundColor: isPending || isSubmittingRef.current ? muted : brand,
+              backgroundColor:
+                isPending || isSubmittingRef.current ? muted : brand,
               opacity: pressed && !isPending ? 0.8 : 1,
             },
           ]}

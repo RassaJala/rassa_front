@@ -33,7 +33,9 @@ try {
   for (const [key, value] of Object.entries(pkg.exports)) {
     if (typeof value === 'object' && value !== null && 'import' in value) {
       // eslint-disable-next-line no-console
-      console.log(`[patch-zustand] Removing "import" condition from exports["${key}"]`);
+      console.log(
+        `[patch-zustand] Removing "import" condition from exports["${key}"]`,
+      );
       const { import: _import, ...rest } = value;
       pkg.exports[key] = rest;
       modified = true;
@@ -44,7 +46,9 @@ try {
     writeFileSync(zustandPkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
     console.log('[patch-zustand] ✅ Patched zustand package.json');
   } else {
-    console.log('[patch-zustand] No "import" conditions found, nothing to patch.');
+    console.log(
+      '[patch-zustand] No "import" conditions found, nothing to patch.',
+    );
   }
 } catch (err) {
   console.error('[patch-zustand] Failed:', err);

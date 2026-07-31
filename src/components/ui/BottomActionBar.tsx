@@ -9,7 +9,9 @@ type Props = {
 };
 
 /** Barra inferior absoluta que se superpone al contenido. */
-export default function BottomActionBar({ children }: Props): React.JSX.Element {
+export default function BottomActionBar({
+  children,
+}: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 

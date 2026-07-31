@@ -172,7 +172,8 @@ export default function CarritoScreen(): React.JSX.Element {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const clearCart = useCartStore((s) => s.clearCart);
   const total = useCartStore((s) => s.total);
-  const navigation = useNavigation<NativeStackNavigationProp<BuyerStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<BuyerStackParamList>>();
 
   const totalItems = items.reduce((s, i) => s + i.cantidad, 0);
 

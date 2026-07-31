@@ -214,8 +214,19 @@ export default function ProductDetailScreen(): React.JSX.Element {
     });
     setAdded(true);
     if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current);
-    addedTimeoutRef.current = setTimeout(() => setAdded(false), FEEDBACK_DURATION_MS);
-  }, [addItem, productoSemanalId, nombreProducto, precio, stock, farmerName, unidad]);
+    addedTimeoutRef.current = setTimeout(
+      () => setAdded(false),
+      FEEDBACK_DURATION_MS,
+    );
+  }, [
+    addItem,
+    productoSemanalId,
+    nombreProducto,
+    precio,
+    stock,
+    farmerName,
+    unidad,
+  ]);
 
   const handleIncrement = useCallback(() => {
     if (cantidad < stock) {
@@ -274,9 +285,9 @@ export default function ProductDetailScreen(): React.JSX.Element {
               {
                 backgroundColor:
                   cantidad <= 1
-                    ? (isDark
+                    ? isDark
                       ? colors.admInactiveBgD
-                      : colors.admInactiveBgL)
+                      : colors.admInactiveBgL
                     : brand,
                 opacity: pressed ? 0.6 : 1,
               },
@@ -299,9 +310,9 @@ export default function ProductDetailScreen(): React.JSX.Element {
               {
                 backgroundColor:
                   cantidad >= stock
-                    ? (isDark
+                    ? isDark
                       ? colors.admInactiveBgD
-                      : colors.admInactiveBgL)
+                      : colors.admInactiveBgL
                     : brand,
                 opacity: pressed ? 0.6 : 1,
               },
@@ -345,7 +356,9 @@ export default function ProductDetailScreen(): React.JSX.Element {
           disabled={createPrivateConversation.isPending}
           style={({ pressed }) => [
             dynamicStyles.contactBtn,
-            { opacity: pressed || createPrivateConversation.isPending ? 0.6 : 1 },
+            {
+              opacity: pressed || createPrivateConversation.isPending ? 0.6 : 1,
+            },
           ]}
         >
           <MaterialCommunityIcons name="chat-outline" size={20} color={muted} />
