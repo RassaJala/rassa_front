@@ -100,7 +100,7 @@ export function ChatDetailPage() {
   };
 
   return (
-    <div className="flex h-full flex-col" style={{ background: c.bg }}>
+    <div className="flex flex-col" style={{ position: 'absolute', inset: 0, background: c.bg }}>
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3"
