@@ -36,7 +36,7 @@ export function MermaDateModal({
   muted,
   brand,
   segBg,
-  }: Props): React.JSX.Element | null {
+}: Props): React.JSX.Element | null {
   const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
   const [selYear, setSelYear] = useState<number | null>(null);
   const [selMonth, setSelMonth] = useState<number | null>(null);
