@@ -165,9 +165,6 @@ export default function AdminPanelScreen({
                   icon="package-variant"
                   value={stats.totalProducts.toLocaleString()}
                   label="Productos"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
                   iconBg={accentBg}
                   iconColor={brand}
                 />
@@ -175,9 +172,6 @@ export default function AdminPanelScreen({
                   icon="account-group"
                   value={stats.totalUsers.toLocaleString()}
                   label="Usuarios"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
                   iconBg={coralBg}
                   iconColor={coral}
                 />
@@ -189,9 +183,6 @@ export default function AdminPanelScreen({
                     icon="clipboard-list"
                     value={stats.totalOrders.toLocaleString()}
                     label="Pedidos"
-                    surface={surface}
-                    border={border}
-                    muted={muted}
                     iconBg={pumpkinBg}
                     iconColor={pumpkin}
                   />

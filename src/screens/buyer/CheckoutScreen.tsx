@@ -1,8 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -10,17 +17,61 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
+import { BottomActionBar, HeaderBackButton } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { useCreatePedido } from '@/hooks/useOrders';
 import type { PedidoItemInput } from '@/services/orders';
-import { useCart } from '@/store/CartContext';
+import { useCartStore } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
-import { formatPrice, safePrice } from '@/utils/format';
+import { formatPrice } from '@/utils/format';
+
+const IVA_RATE = 0.21;
+const HEADER_TOP_PADDING = 60;
+const SCROLL_BOTTOM_PADDING = 200;
+
+const styles = StyleSheet.create({
+  emptyCartCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  volverBtnText: { color: colors.iconWhite, fontWeight: '600' },
+  headerTop: { paddingTop: HEADER_TOP_PADDING, paddingHorizontal: 20, paddingBottom: 8 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  scrollContent: { padding: 20, paddingBottom: SCROLL_BOTTOM_PADDING },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  totalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  errorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  errorText: { flex: 1, fontSize: 14, color: colors.error, lineHeight: 20 },
+  closeBtn: { marginTop: 2 },
+  retryText: { fontSize: 14, fontWeight: '600', color: colors.error },
+  confirmBtnText: { fontSize: 16, fontWeight: '700', color: colors.iconWhite },
+  flexOne: { flex: 1 },
+});
+
+function buildPedidoItems(
+  items: ReadonlyArray<{ id_producto_semanal: number; cantidad: number }>,
+): readonly PedidoItemInput[] {
+  return items.map((i) => ({
+    id_producto_semanal: i.id_producto_semanal,
+    cantidad: i.cantidad,
+  }));
+}
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList, 'Checkout'>;
+
+function sanitizeMessage(msg: string): string {
+  return msg.replace(/<[^>]*>/g, '').slice(0, 200);
+}
 
 /** Extrae mensajes de error de arrays dentro de un objeto DRF */
 function extractFieldMessages(data: Record<string, unknown>): string | null {
@@ -65,11 +116,11 @@ function extractError(error: unknown): string {
   const data = error.response.data as Record<string, unknown> | undefined;
   if (!data) return 'Error al procesar el pedido. Intenta de nuevo.';
 
-  if (typeof data.detail === 'string') return data.detail;
-  if (typeof data.message === 'string') return data.message;
+  if (typeof data.detail === 'string') return sanitizeMessage(data.detail);
+  if (typeof data.message === 'string') return sanitizeMessage(data.message);
 
   const fieldMsg = extractFieldMessages(data);
-  if (fieldMsg) return fieldMsg;
+  if (fieldMsg) return sanitizeMessage(fieldMsg);
 
   return 'Error al procesar el pedido. Intenta de nuevo.';
 }
@@ -78,17 +129,28 @@ export default function CheckoutScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
-  const cart = useCart();
-  const createPedido = useCreatePedido();
+  const cartItems = useCartStore((s) => s.items);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const createPedidoMutation = useCreatePedido();
+  const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const isMountedRef = useRef(true);
-  const isMutatingRef = useRef(false);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
+    // Refresca precios de publicaciones al entrar al checkout
+    void queryClient.invalidateQueries({ queryKey: ['publicaciones-current'] });
     return () => {
       isMountedRef.current = false;
     };
-  }, []);
+  }, [queryClient]);
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((acc, i) => acc + i.precio * i.cantidad, 0),
+    [cartItems],
+  );
+  const iva = useMemo(() => subtotal * IVA_RATE, [subtotal]);
+  const total = useMemo(() => subtotal + iva, [subtotal, iva]);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -98,76 +160,133 @@ export default function CheckoutScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const errorBg = isDark ? colors.admErrorBgD : colors.admErrorBgL;
 
+  const dynamicStyles = useMemo(
+    () =>
+      ({
+        emptyCartScreen: { flex: 1, backgroundColor: bg, padding: 16 },
+        emptyCartTitle: {
+          marginTop: 16,
+          fontSize: 18,
+          fontWeight: '700',
+          color: fg,
+          textAlign: 'center',
+        },
+        volverBtn: {
+          marginTop: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 12,
+          borderRadius: 12,
+          backgroundColor: brand,
+        },
+        screen: { flex: 1, backgroundColor: bg },
+        headerTitle: { fontSize: 22, fontWeight: '700', color: fg },
+        sectionTitle: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: fg,
+          marginBottom: 10,
+        },
+        summaryCard: {
+          backgroundColor: surface,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: border,
+          padding: 16,
+          marginBottom: 16,
+        },
+        itemName: { fontSize: 15, fontWeight: '600', color: fg },
+        itemDetail: { fontSize: 13, color: muted, marginTop: 2 },
+        itemPrice: { fontSize: 15, fontWeight: '700', color: fg },
+        labelText: { fontSize: 14, color: muted },
+        valueText: { fontSize: 14, fontWeight: '600', color: fg },
+        totalRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingTop: 8,
+          borderTopWidth: 1,
+          borderTopColor: border,
+        },
+        totalLabel: { fontSize: 18, fontWeight: '700', color: fg },
+        totalValue: { fontSize: 18, fontWeight: '700', color: brand },
+        errorContainer: {
+          backgroundColor: errorBg,
+          borderRadius: 12,
+          padding: 14,
+          marginBottom: 16,
+        },
+        bottomBar: {}, // kept as empty fallback
+        // BottomActionBar component handles the absolute positioning
+        itemBorder: { borderBottomWidth: 1, borderBottomColor: border },
+        retryBtn: {
+          marginTop: 10,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.error,
+          paddingVertical: 8,
+          alignItems: 'center',
+        },
+        confirmBtn: {
+          borderRadius: 12,
+          paddingVertical: 14,
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 8,
+        },
+      }) as const,
+    [bg, fg, muted, surface, border, brand, errorBg],
+  );
+
   const handleConfirm = useCallback(() => {
-    if (isMutatingRef.current) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setErrorMsg(null);
 
-    const items: readonly PedidoItemInput[] = cart.items.map((i) => ({
-      id_producto_semanal: i.id_producto_semanal,
-      cantidad: i.cantidad,
-    }));
+    const items = buildPedidoItems(cartItems);
 
     if (items.length === 0) {
+      isSubmittingRef.current = false;
       setErrorMsg('No hay productos en tu carrito');
       return;
     }
 
-    isMutatingRef.current = true;
-    createPedido.mutate(items, {
+    createPedidoMutation.mutate(items, {
       onSuccess: (response) => {
-        isMutatingRef.current = false;
+        isSubmittingRef.current = false;
         if (!isMountedRef.current) return;
         const pedido = response.data;
         if (!pedido?.id_pedido) {
           setErrorMsg('Respuesta inesperada del servidor.');
           return;
         }
-        cart.clearCart();
+        clearCart();
         navigation.replace('OrderSuccess', {
           orderId: pedido.id_pedido,
           total: pedido.total,
         });
       },
       onError: (err) => {
-        isMutatingRef.current = false;
+        isSubmittingRef.current = false;
         if (isMountedRef.current) setErrorMsg(extractError(err));
       },
     });
-  }, [cart, createPedido, navigation]);
+  }, [cartItems, createPedidoMutation, navigation, clearCart]);
 
-  const isPending = createPedido.isPending;
+  const isPending = createPedidoMutation.isPending;
 
-  if (cart.items.length === 0) {
+  if (cartItems.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: bg, padding: 16 }}>
-        <View
-          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-        >
+      <View style={dynamicStyles.emptyCartScreen}>
+        <View style={styles.emptyCartCenter}>
           <MaterialCommunityIcons name="cart-outline" size={64} color={muted} />
-          <Text
-            style={{
-              marginTop: 16,
-              fontSize: 18,
-              fontWeight: '700',
-              color: fg,
-              textAlign: 'center',
-            }}
-          >
+          <Text style={dynamicStyles.emptyCartTitle}>
             No hay productos en tu carrito
           </Text>
           <Pressable
             onPress={() => navigation.goBack()}
-            style={{
-              marginTop: 16,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 12,
-              backgroundColor: brand,
-            }}
+            style={dynamicStyles.volverBtn}
           >
-            <Text style={{ color: colors.iconWhite, fontWeight: '600' }}>
-              Volver al carrito
-            </Text>
+            <Text style={styles.volverBtnText}>Volver al carrito</Text>
           </Pressable>
         </View>
       </View>
@@ -175,101 +294,43 @@ export default function CheckoutScreen(): React.JSX.Element {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={dynamicStyles.screen}>
       {/* Header */}
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={({ pressed }) => ({
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: surface,
-              borderWidth: 1,
-              borderColor: border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
-          </Pressable>
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: '700',
-              color: fg,
-            }}
-          >
-            Confirmar pedido
-          </Text>
+      <View style={styles.headerTop}>
+        <View style={styles.headerRow}>
+          <HeaderBackButton onPress={() => navigation.goBack()} />
+          <Text style={dynamicStyles.headerTitle}>Confirmar pedido</Text>
         </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 200 }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Resumen de productos */}
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: fg,
-            marginBottom: 10,
-          }}
-        >
-          Resumen del pedido
-        </Text>
+        <Text style={dynamicStyles.sectionTitle}>Resumen del pedido</Text>
 
-        <View
-          style={{
-            backgroundColor: surface,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: border,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          {cart.items.map((item, index) => {
-            const importe = safePrice(item.precio) * item.cantidad;
+        <View style={dynamicStyles.summaryCard}>
+          {cartItems.map((item, index) => {
+            const importe = item.precio * item.cantidad;
             return (
               <View
                 key={item.id_producto_semanal}
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingVertical: 8,
-                  ...(index < cart.items.length - 1
-                    ? { borderBottomWidth: 1, borderBottomColor: border }
-                    : {}),
-                }}
+                style={[
+                  styles.itemRow,
+                  index < cartItems.length - 1 && dynamicStyles.itemBorder,
+                ]}
               >
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: '600',
-                      color: fg,
-                    }}
-                  >
-                    {item.nombre_producto}
+                <View style={styles.flexOne}>
+                  <Text style={dynamicStyles.itemName}>
+                    {item.producto}
                   </Text>
-                  <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
+                  <Text style={dynamicStyles.itemDetail}>
                     {item.cantidad} ×{' '}
-                    {formatPrice(Number.parseFloat(item.precio))}
+                    {formatPrice(item.precio)}
                   </Text>
                 </View>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '700',
-                    color: fg,
-                  }}
-                >
+                <Text style={dynamicStyles.itemPrice}>
                   {formatPrice(importe)}
                 </Text>
               </View>
@@ -278,182 +339,77 @@ export default function CheckoutScreen(): React.JSX.Element {
         </View>
 
         {/* Totales */}
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: fg,
-            marginBottom: 10,
-          }}
-        >
-          Totales
-        </Text>
+        <Text style={dynamicStyles.sectionTitle}>Totales</Text>
 
-        <View
-          style={{
-            backgroundColor: surface,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: border,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginBottom: 6,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: muted }}>Subtotal</Text>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-              {formatPrice(cart.subtotal)}
+          <View style={dynamicStyles.summaryCard}>
+          <View style={styles.totalsRow}>
+            <Text style={dynamicStyles.labelText}>Subtotal</Text>
+            <Text style={dynamicStyles.valueText}>
+              {formatPrice(subtotal)}
             </Text>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginBottom: 6,
-            }}
-          >
-            <Text style={{ fontSize: 14, color: muted }}>IVA (21%)</Text>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: fg }}>
-              {formatPrice(cart.iva)}
-            </Text>
+          <View style={styles.totalsRow}>
+            <Text style={dynamicStyles.labelText}>IVA (21%)</Text>
+            <Text style={dynamicStyles.valueText}>{formatPrice(iva)}</Text>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              paddingTop: 8,
-              borderTopWidth: 1,
-              borderTopColor: border,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '700',
-                color: fg,
-              }}
-            >
-              Total
-            </Text>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '700',
-                color: brand,
-              }}
-            >
-              {formatPrice(cart.total)}
+          <View style={dynamicStyles.totalRow}>
+            <Text style={dynamicStyles.totalLabel}>Total</Text>
+            <Text style={dynamicStyles.totalValue}>
+              {formatPrice(total)}
             </Text>
           </View>
         </View>
 
         {/* Error message */}
         {errorMsg ? (
-          <View
-            style={{
-              backgroundColor: errorBg,
-              borderRadius: 12,
-              padding: 14,
-              marginBottom: 16,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: 10,
-              }}
-            >
+          <View style={dynamicStyles.errorContainer}>
+            <View style={styles.errorRow}>
               <MaterialCommunityIcons
                 name="alert-circle"
                 size={22}
                 color={colors.error}
               />
-              <Text
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  color: colors.error,
-                  lineHeight: 20,
-                }}
-              >
-                {errorMsg}
-              </Text>
+              <Text style={styles.errorText}>{errorMsg}</Text>
               <Pressable
-                onPress={() => setErrorMsg(null)}
-                hitSlop={8}
-                style={{ marginTop: 2 }}
-              >
-                <MaterialCommunityIcons
-                  name="close"
-                  size={18}
-                  color={colors.error}
-                />
-              </Pressable>
-            </View>
-            <Pressable
-              onPress={() => {
-                setErrorMsg(null);
-                handleConfirm();
-              }}
-              style={({ pressed }) => ({
-                marginTop: 10,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: colors.error,
-                paddingVertical: 8,
-                alignItems: 'center',
-                opacity: pressed ? 0.6 : 1,
-              })}
+              onPress={() => setErrorMsg(null)}
+              hitSlop={8}
+              style={styles.closeBtn}
             >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: colors.error,
-                }}
-              >
-                Reintentar
-              </Text>
+              <MaterialCommunityIcons
+                name="close"
+                size={18}
+                color={colors.error}
+              />
             </Pressable>
+          </View>
+          <Pressable
+            onPress={() => {
+              setErrorMsg(null);
+              handleConfirm();
+            }}
+            style={({ pressed }) => [
+              dynamicStyles.retryBtn,
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+          >
+            <Text style={styles.retryText}>Reintentar</Text>
+          </Pressable>
           </View>
         ) : null}
       </ScrollView>
 
       {/* Botón de confirmación */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: surface,
-          borderTopWidth: 1,
-          borderTopColor: border,
-          paddingHorizontal: 20,
-          paddingTop: 14,
-          paddingBottom: 32,
-        }}
-      >
+      <BottomActionBar>
         <Pressable
           onPress={handleConfirm}
-          disabled={isPending}
-          style={({ pressed }) => ({
-            backgroundColor: isPending ? muted : brand,
-            borderRadius: 12,
-            paddingVertical: 14,
-            alignItems: 'center',
-            opacity: pressed && !isPending ? 0.8 : 1,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 8,
-          })}
+          disabled={isPending || isSubmittingRef.current}
+          style={({ pressed }) => [
+            dynamicStyles.confirmBtn,
+            {
+              backgroundColor: isPending || isSubmittingRef.current ? muted : brand,
+              opacity: pressed && !isPending ? 0.8 : 1,
+            },
+          ]}
         >
           {isPending ? (
             <ActivityIndicator size="small" color={colors.iconWhite} />
@@ -464,17 +420,11 @@ export default function CheckoutScreen(): React.JSX.Element {
               color={colors.iconWhite}
             />
           )}
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: colors.iconWhite,
-            }}
-          >
+          <Text style={styles.confirmBtnText}>
             {isPending ? 'Creando pedido...' : 'Confirmar pedido'}
           </Text>
         </Pressable>
-      </View>
+      </BottomActionBar>
     </View>
   );
 }

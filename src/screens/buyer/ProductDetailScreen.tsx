@@ -1,17 +1,60 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { BottomActionBar, HeaderBackButton } from '@/components/ui';
 import { colors, themeColors } from '@/constants/colors';
 import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
-import { useCart } from '@/store/CartContext';
+import { useCartStore } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
-import { formatPrice, safePrice } from '@/utils/format';
+import { formatPrice } from '@/utils/format';
+
+const HEADER_TOP_PADDING = 60;
+const SCROLL_BOTTOM_PADDING = 140;
+const FEEDBACK_DURATION_MS = 2000;
+
+const styles = StyleSheet.create({
+  headerTop: {
+    paddingTop: HEADER_TOP_PADDING,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: SCROLL_BOTTOM_PADDING,
+  },
+  importeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
+  bottomBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.iconWhite,
+  },
+  addedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.success,
+    flex: 1,
+  },
+});
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList, 'ProductDetail'>;
 type Route = RouteProp<BuyerStackParamList, 'ProductDetail'>;
@@ -21,7 +64,7 @@ export default function ProductDetailScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const cart = useCart();
+  const addItem = useCartStore((s) => s.addItem);
   const createPrivateConversation = useCreatePrivateConversation();
 
   const { farmerId } = route.params;
@@ -55,23 +98,124 @@ export default function ProductDetailScreen(): React.JSX.Element {
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const tc = themeColors(isDark);
+  const themeTokens = themeColors(isDark);
+  const addedBg = themeTokens.statusPublicadoBg;
 
-  const importeTotal = safePrice(precio) * cantidad;
+  const dynamicStyles = useMemo(
+    () =>
+      ({
+        screen: { flex: 1, backgroundColor: bg },
+        titleText: { fontSize: 22, fontWeight: '700', color: fg, flex: 1 },
+        productCard: {
+          backgroundColor: surface,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: border,
+          padding: 20,
+          marginBottom: 16,
+        },
+        priceText: {
+          fontSize: 28,
+          fontWeight: '700',
+          color: brand,
+          marginBottom: 12,
+        },
+        unitText: { fontSize: 14, fontWeight: '400', color: muted },
+        farmerRow: {
+          flexDirection: 'row',
+          gap: 20,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: border,
+        },
+        labelSmall: { fontSize: 12, color: muted },
+        valueSmall: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: fg,
+          marginTop: 2,
+        },
+        sectionTitle: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: fg,
+          marginBottom: 10,
+        },
+        qtySelector: {
+          backgroundColor: surface,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: border,
+          padding: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
+        qtyText: {
+          fontSize: 32,
+          fontWeight: '700',
+          color: fg,
+          minWidth: 48,
+          textAlign: 'center',
+        },
+        multiText: { fontSize: 15, color: muted },
+        totalAmount: { fontSize: 18, fontWeight: '700', color: fg },
+        addedConfirmation: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: addedBg,
+          borderRadius: 12,
+          padding: 14,
+          marginTop: 20,
+        },
+        contactText: { fontSize: 14, fontWeight: '600', color: muted },
+        qtyBtn: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        contactBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          marginTop: 20,
+          paddingVertical: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: border,
+        },
+        addToCartBtn: {
+          borderRadius: 12,
+          paddingVertical: 14,
+          alignItems: 'center',
+        },
+        bottomBar: {}, // kept as empty fallback
+        // BottomActionBar component handles the absolute positioning
+      }) as const,
+    [bg, fg, muted, surface, border, brand, addedBg],
+  );
+
+  const importeTotal = Number(precio) * cantidad;
 
   const handleAddToCart = useCallback(() => {
     if (stock <= 0) return;
-    cart.addItem({
+    addItem({
       id_producto_semanal: productoSemanalId,
-      nombre_producto: nombreProducto,
-      precio,
+      producto: nombreProducto,
+      unidad,
+      precio: Number(precio),
+      foto: null,
+      agricultor: farmerName ?? '',
       stock,
-      cantidad,
     });
     setAdded(true);
     if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current);
-    addedTimeoutRef.current = setTimeout(() => setAdded(false), 2000);
-  }, [cart, productoSemanalId, nombreProducto, precio, stock, cantidad]);
+    addedTimeoutRef.current = setTimeout(() => setAdded(false), FEEDBACK_DURATION_MS);
+  }, [addItem, productoSemanalId, nombreProducto, precio, stock, cantidad, unidad, farmerName]);
 
   const handleIncrement = useCallback(() => {
     if (cantidad < stock) {
@@ -86,107 +230,32 @@ export default function ProductDetailScreen(): React.JSX.Element {
   }, [cantidad]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
+    <View style={dynamicStyles.screen}>
       {/* Header */}
-      <View
-        style={{
-          paddingTop: 60,
-          paddingHorizontal: 20,
-          paddingBottom: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => ({
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: surface,
-            borderWidth: 1,
-            borderColor: border,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
-        </Pressable>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: fg, flex: 1 }}>
-          {nombreProducto}
-        </Text>
+      <View style={styles.headerTop}>
+        <HeaderBackButton onPress={() => navigation.goBack()} />
+        <Text style={dynamicStyles.titleText}>{nombreProducto}</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 140 }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Product info */}
-        <View
-          style={{
-            backgroundColor: surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: border,
-            padding: 20,
-            marginBottom: 16,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: '700',
-              color: brand,
-              marginBottom: 12,
-            }}
-          >
+        <View style={dynamicStyles.productCard}>
+          <Text style={dynamicStyles.priceText}>
             {formatPrice(precio)}
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '400',
-                color: muted,
-              }}
-            >
-              {' '}
-              / {unidad}
-            </Text>
+            <Text style={dynamicStyles.unitText}> / {unidad}</Text>
           </Text>
 
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 20,
-              paddingTop: 12,
-              borderTopWidth: 1,
-              borderTopColor: border,
-            }}
-          >
+          <View style={dynamicStyles.farmerRow}>
             <View>
-              <Text style={{ fontSize: 12, color: muted }}>Agricultor</Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: fg,
-                  marginTop: 2,
-                }}
-              >
-                {farmerName}
-              </Text>
+              <Text style={dynamicStyles.labelSmall}>Agricultor</Text>
+              <Text style={dynamicStyles.valueSmall}>{farmerName}</Text>
             </View>
             <View>
-              <Text style={{ fontSize: 12, color: muted }}>Stock</Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '600',
-                  color: fg,
-                  marginTop: 2,
-                }}
-              >
+              <Text style={dynamicStyles.labelSmall}>Stock</Text>
+              <Text style={dynamicStyles.valueSmall}>
                 {stock} {unidad}
               </Text>
             </View>
@@ -194,46 +263,24 @@ export default function ProductDetailScreen(): React.JSX.Element {
         </View>
 
         {/* Quantity selector */}
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: fg,
-            marginBottom: 10,
-          }}
-        >
-          Cantidad
-        </Text>
+        <Text style={dynamicStyles.sectionTitle}>Cantidad</Text>
 
-        <View
-          style={{
-            backgroundColor: surface,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: border,
-            padding: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+        <View style={dynamicStyles.qtySelector}>
           <Pressable
             onPress={handleDecrement}
             disabled={cantidad <= 1}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor:
-                cantidad <= 1
-                  ? isDark
-                    ? colors.admInactiveBgD
-                    : colors.admInactiveBgL
-                  : brand,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
+            style={({ pressed }) => [
+              dynamicStyles.qtyBtn,
+              {
+                backgroundColor:
+                  cantidad <= 1
+                    ? (isDark
+                      ? colors.admInactiveBgD
+                      : colors.admInactiveBgL)
+                    : brand,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
           >
             <MaterialCommunityIcons
               name="minus"
@@ -242,35 +289,23 @@ export default function ProductDetailScreen(): React.JSX.Element {
             />
           </Pressable>
 
-          <Text
-            style={{
-              fontSize: 32,
-              fontWeight: '700',
-              color: fg,
-              minWidth: 48,
-              textAlign: 'center',
-            }}
-          >
-            {cantidad}
-          </Text>
+          <Text style={dynamicStyles.qtyText}>{cantidad}</Text>
 
           <Pressable
             onPress={handleIncrement}
             disabled={cantidad >= stock}
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor:
-                cantidad >= stock
-                  ? isDark
-                    ? colors.admInactiveBgD
-                    : colors.admInactiveBgL
-                  : brand,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
+            style={({ pressed }) => [
+              dynamicStyles.qtyBtn,
+              {
+                backgroundColor:
+                  cantidad >= stock
+                    ? (isDark
+                      ? colors.admInactiveBgD
+                      : colors.admInactiveBgL)
+                    : brand,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
           >
             <MaterialCommunityIcons
               name="plus"
@@ -281,54 +316,24 @@ export default function ProductDetailScreen(): React.JSX.Element {
         </View>
 
         {/* Importe total */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 16,
-            paddingHorizontal: 4,
-          }}
-        >
-          <Text style={{ fontSize: 15, color: muted }}>
+        <View style={styles.importeRow}>
+          <Text style={dynamicStyles.multiText}>
             {cantidad} × {formatPrice(precio)}
           </Text>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: '700',
-              color: fg,
-            }}
-          >
+          <Text style={dynamicStyles.totalAmount}>
             {formatPrice(String(importeTotal))}
           </Text>
         </View>
 
         {/* Added confirmation */}
         {added ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: tc.statusPublicadoBg,
-              borderRadius: 12,
-              padding: 14,
-              marginTop: 20,
-            }}
-          >
+          <View style={dynamicStyles.addedConfirmation}>
             <MaterialCommunityIcons
               name="check-circle"
               size={22}
               color={colors.success}
             />
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: colors.success,
-                flex: 1,
-              }}
-            >
+            <Text style={styles.addedText}>
               {cantidad} × {nombreProducto} agregado al carrito
             </Text>
           </View>
@@ -337,65 +342,39 @@ export default function ProductDetailScreen(): React.JSX.Element {
         {/* Contact farmer */}
         <Pressable
           onPress={handleContactFarmer}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            marginTop: 20,
-            paddingVertical: 12,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-            opacity: pressed ? 0.6 : 1,
-          })}
+          disabled={createPrivateConversation.isPending}
+          style={({ pressed }) => [
+            dynamicStyles.contactBtn,
+            { opacity: pressed || createPrivateConversation.isPending ? 0.6 : 1 },
+          ]}
         >
           <MaterialCommunityIcons name="chat-outline" size={20} color={muted} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+          <Text style={dynamicStyles.contactText}>
             Contactar a {farmerName}
           </Text>
         </Pressable>
       </ScrollView>
 
       {/* Bottom add to cart button */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: surface,
-          borderTopWidth: 1,
-          borderTopColor: border,
-          paddingHorizontal: 20,
-          paddingTop: 14,
-          paddingBottom: 32,
-        }}
-      >
+      <BottomActionBar>
         <Pressable
           onPress={handleAddToCart}
           disabled={stock <= 0}
-          style={({ pressed }) => ({
-            backgroundColor: stock <= 0 ? muted : brand,
-            borderRadius: 12,
-            paddingVertical: 14,
-            alignItems: 'center',
-            opacity: pressed && stock > 0 ? 0.8 : 1,
-          })}
+          style={({ pressed }) => [
+            dynamicStyles.addToCartBtn,
+            {
+              backgroundColor: stock <= 0 ? muted : brand,
+              opacity: pressed && stock > 0 ? 0.8 : 1,
+            },
+          ]}
         >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: colors.iconWhite,
-            }}
-          >
+          <Text style={styles.bottomBtnText}>
             {stock <= 0
               ? 'Sin stock disponible'
               : `Agregar al carrito — ${formatPrice(String(importeTotal))}`}
           </Text>
         </Pressable>
-      </View>
+      </BottomActionBar>
     </View>
   );
 }

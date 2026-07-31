@@ -121,9 +121,6 @@ export default function HomeSellerScreen({
                   icon="cash"
                   value={`$${stats.salesToday.toLocaleString()}`}
                   label="Ventas Hoy"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
                   iconBg={accentBg}
                   iconColor={brand}
                 />
@@ -131,9 +128,6 @@ export default function HomeSellerScreen({
                   icon="chart-line"
                   value={`$${stats.salesWeek.toLocaleString()}`}
                   label="Ventas Semana"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
                   iconBg={coralBg}
                   iconColor={coral}
                 />
@@ -141,9 +135,6 @@ export default function HomeSellerScreen({
                   icon="calendar-month"
                   value={`$${stats.salesMonth.toLocaleString()}`}
                   label="Ventas Mes"
-                  surface={surface}
-                  border={border}
-                  muted={muted}
                   iconBg={pumpkinBg}
                   iconColor={pumpkin}
                 />

@@ -1,3 +1,2 @@
-// Shared UI components will go here.
-// Examples: Button, Input, Card, Badge, etc.
-export {};
+export { default as BottomActionBar } from './BottomActionBar';
+export { default as HeaderBackButton } from './HeaderBackButton';

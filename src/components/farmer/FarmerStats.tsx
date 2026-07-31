@@ -33,9 +33,6 @@ export default function FarmerStats({
           icon="package-variant"
           value={totalProducts}
           label="Productos"
-          surface={theme.surface}
-          border={theme.border}
-          muted={theme.muted}
           iconBg={theme.accentBg}
           iconColor={theme.brand}
         />
@@ -45,9 +42,6 @@ export default function FarmerStats({
           icon="check-circle-outline"
           value={activePublications}
           label="Publicadas"
-          surface={theme.surface}
-          border={theme.border}
-          muted={theme.muted}
           iconBg={theme.coralBg}
           iconColor={theme.coral}
         />
@@ -57,9 +51,6 @@ export default function FarmerStats({
           icon="clipboard-list"
           value={totalPublications}
           label="Total pubs"
-          surface={theme.surface}
-          border={theme.border}
-          muted={theme.muted}
           iconBg={theme.pumpkinBg}
           iconColor={theme.pumpkin}
         />

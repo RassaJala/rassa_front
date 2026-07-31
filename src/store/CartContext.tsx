@@ -3,9 +3,16 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
 } from 'react';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { safePrice } from '@/utils/format';
+
+const CART_STORAGE_KEY = '@rassa/cart';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -17,18 +24,19 @@ export interface CartItem {
   readonly cantidad: number;
 }
 
-interface CartState {
+export interface CartState {
   readonly items: readonly CartItem[];
 }
 
-type CartAction =
+export type CartAction =
   | { readonly type: 'ADD_ITEM'; readonly payload: CartItem }
   | { readonly type: 'REMOVE_ITEM'; readonly payload: number }
   | {
       readonly type: 'UPDATE_QTY';
       readonly payload: { id: number; cantidad: number };
     }
-  | { readonly type: 'CLEAR' };
+  | { readonly type: 'CLEAR' }
+  | { readonly type: 'HYDRATE'; readonly payload: readonly CartItem[] };
 
 interface CartContextType {
   readonly items: readonly CartItem[];
@@ -44,16 +52,11 @@ interface CartContextType {
 }
 
 const IVA_RATE = 0.21;
+const MAX_CART_ITEMS = 50;
 
-/** Convierte un precio string a número, retorna 0 si es inválido */
-function safePrice(value: string): number {
-  const n = Number.parseFloat(value);
-  return Number.isNaN(n) ? 0 : n;
-}
+// ── Reducer (exportado para testing) ────────────────────────
 
-// ── Reducer ─────────────────────────────────────────────────
-
-function cartReducer(state: CartState, action: CartAction): CartState {
+export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_ITEM': {
       if (action.payload.cantidad <= 0) return state;
@@ -73,6 +76,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ),
         };
       }
+      if (state.items.length >= MAX_CART_ITEMS) return state;
       return {
         items: [
           ...state.items,
@@ -109,9 +113,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
     case 'CLEAR':
       return { items: [] };
+    case 'HYDRATE':
+      return { items: action.payload };
     default:
       if (__DEV__) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Carrito: acción desconocida', action);
       }
       return state;
@@ -132,6 +138,37 @@ export function CartProvider({
   children,
 }: CartProviderProps): React.JSX.Element {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [hydrated, setHydrated] = React.useState(false);
+
+  // Hydrate desde AsyncStorage al montar
+  useEffect(() => {
+    void (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(CART_STORAGE_KEY);
+        if (stored) {
+          const items: readonly CartItem[] = JSON.parse(stored) as {
+            id_producto_semanal: number;
+            nombre_producto: string;
+            precio: string;
+            stock: number;
+            cantidad: number;
+          }[];
+          dispatch({ type: 'HYDRATE', payload: items });
+        }
+      } catch {
+        // Si falla la lectura, arrancamos vacío
+      } finally {
+        setHydrated(true);
+      }
+    })();
+  }, []);
+
+  // Persistir después de cada cambio (excepto HYDRATE inicial)
+  useEffect(() => {
+    if (!hydrated) return;
+    void AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
+  }, [state.items, hydrated]);
+
   const subtotal = useMemo(
     () =>
       state.items.reduce(

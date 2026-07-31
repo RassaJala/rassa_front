@@ -3,13 +3,13 @@ import { Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { colors } from '@/constants/colors';
+import { useTheme } from '@/store/ThemeContext';
+
 interface StatCardProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   value: string | number;
   label: string;
-  surface: string;
-  border: string;
-  muted: string;
   iconBg: string;
   iconColor: string;
 }
@@ -18,12 +18,15 @@ export default function StatCard({
   icon,
   value,
   label,
-  surface,
-  border,
-  muted,
   iconBg,
   iconColor,
 }: StatCardProps): React.JSX.Element {
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const border = isDark ? colors.admBorderD : colors.admBorderL;
+  const muted = isDark ? colors.admMutedD : colors.admMutedL;
+
   return (
     <View
       style={{
