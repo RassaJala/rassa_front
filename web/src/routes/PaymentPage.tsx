@@ -5,11 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   createPago,
   esEfectivo,
-  esTransferencia,
   fetchTiposPago,
   ORDER_STATUS_READY,
 } from '@/common/payments';
-import type { TipoPago } from '@/common/payments';
 import { QUERY_STALE_TIME } from '../constants/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
@@ -39,9 +37,8 @@ export function PaymentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const colors = useAppColors();
-  const { brand, fg, muted, border, surface, coral, bg, accentBg } = colors;
+  const { brand, fg, muted, border, surface, coral } = colors;
 
-  const [selectedTipo, setSelectedTipo] = useState<number | null>(null);
   const [referencia, setReferencia] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
 
@@ -75,17 +72,16 @@ export function PaymentPage() {
     retry: 1,
   });
 
-  const selectedTipoObj = tiposPago.find(
-    (t) => t.id_tipo_pago === selectedTipo,
-  );
+  // Cash is the only accepted payment method: resolve its id without a picker.
+  const tipoEfectivo = tiposPago.find(esEfectivo) ?? tiposPago[0] ?? null;
 
   const pagoMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTipo || !order) throw new Error('Datos incompletos');
+      if (!tipoEfectivo || !order) throw new Error('Datos incompletos');
       const trimmedRef = referencia.trim();
       return createPago(api, {
         pedido: orderId,
-        tipo_pago: selectedTipo,
+        tipo_pago: tipoEfectivo.id_tipo_pago,
         monto: order.total,
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
@@ -234,52 +230,15 @@ export function PaymentPage() {
         Método de pago
       </h2>
       <div
-        className="mb-6 rounded-2xl border p-3"
+        className="mb-6 rounded-2xl border p-4"
         style={{
           background: surface,
           borderColor: fieldError ? coral : border,
         }}
       >
-        {tiposPago.map((tipo: TipoPago) => {
-          const selected = selectedTipo === tipo.id_tipo_pago;
-          return (
-            <button
-              key={tipo.id_tipo_pago}
-              type="button"
-              onClick={() => {
-                setSelectedTipo(tipo.id_tipo_pago);
-                setFieldError(null);
-              }}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors"
-              style={{
-                background: selected ? accentBg : 'transparent',
-                marginBottom: tiposPago.length > 1 ? 6 : 0,
-              }}
-            >
-              <span
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2"
-                style={{
-                  borderColor: selected ? brand : border,
-                }}
-              >
-                {selected && (
-                  <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ background: brand }}
-                  />
-                )}
-              </span>
-              <span
-                className="text-lg font-semibold"
-                style={{
-                  color: selected ? brand : fg,
-                }}
-              >
-                {esEfectivo(tipo) ? '💵' : '🏦'} {tipo.nombre}
-              </span>
-            </button>
-          );
-        })}
+        <span className="text-lg font-semibold" style={{ color: fg }}>
+          💵 {tipoEfectivo?.nombre ?? 'Efectivo'}
+        </span>
         {fieldError && (
           <p
             className="ml-1 mt-1.5 text-xs font-medium"
@@ -303,21 +262,13 @@ export function PaymentPage() {
           setReferencia(e.target.value);
           setFieldError(null);
         }}
-        placeholder={
-          selectedTipo
-            ? selectedTipoObj && esTransferencia(selectedTipoObj)
-              ? 'Número de transferencia'
-              : 'Nota o referencia'
-            : 'Seleccioná un método de pago primero'
-        }
-        disabled={!selectedTipo}
+        placeholder="Nota o referencia"
         maxLength={INPUT_MAX_LENGTH}
         className="mb-6 w-full rounded-xl px-4 py-3 text-[15px] outline-none"
         style={{
           border: `1.5px solid ${border}`,
           background: surface,
           color: fg,
-          opacity: selectedTipo ? 1 : 0.5,
         }}
       />
 
@@ -326,13 +277,9 @@ export function PaymentPage() {
         type="button"
         data-testid="submit-payment-button"
         onClick={() => {
-          if (!selectedTipo) {
-            setFieldError('Seleccioná un método de pago');
-            return;
-          }
           pagoMutation.mutate();
         }}
-        disabled={pagoMutation.isPending || !selectedTipo}
+        disabled={pagoMutation.isPending || !tipoEfectivo}
         className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-4 text-lg font-bold text-white transition-opacity disabled:cursor-not-allowed"
         style={{
           background: pagoMutation.isPending ? muted : brand,

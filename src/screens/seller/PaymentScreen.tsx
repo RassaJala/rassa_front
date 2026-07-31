@@ -19,7 +19,6 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import {
   createPago,
   esEfectivo,
-  esTransferencia,
   fetchTiposPago,
   ORDER_STATUS_READY,
 } from '@/common/payments';
@@ -39,86 +38,6 @@ const INPUT_MAX_LENGTH = 200;
 
 type Nav = NativeStackNavigationProp<SellerStackParamList, 'Payment'>;
 type Route = RouteProp<SellerStackParamList, 'Payment'>;
-
-// ── Helpers ────────────────────────────────────────────────
-
-function PaymentMethodOption({
-  tipo,
-  selected,
-  onSelect,
-  brand,
-  border,
-  muted,
-  fg,
-  activeBg,
-  tiposCount,
-}: {
-  readonly tipo: TipoPago;
-  readonly selected: boolean;
-  readonly onSelect: () => void;
-  readonly brand: string;
-  readonly border: string;
-  readonly muted: string;
-  readonly fg: string;
-  readonly activeBg: string;
-  readonly tiposCount: number;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      testID="payment-method-option"
-      onPress={onSelect}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 12,
-        borderRadius: 12,
-        backgroundColor: selected ? activeBg : colors.transparent,
-        marginBottom: tiposCount > 1 ? 8 : 0,
-      }}
-    >
-      <View
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: 11,
-          borderWidth: 2,
-          borderColor: selected ? brand : border,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 14,
-        }}
-      >
-        {selected ? (
-          <View
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: 6,
-              backgroundColor: brand,
-            }}
-          />
-        ) : null}
-      </View>
-      <MaterialCommunityIcons
-        name={esEfectivo(tipo) ? 'cash' : 'bank-transfer'}
-        size={22}
-        color={selected ? brand : muted}
-      />
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: selected ? '700' : '500',
-          color: selected ? brand : fg,
-          marginLeft: 12,
-          flex: 1,
-        }}
-      >
-        {tipo.nombre}
-      </Text>
-    </Pressable>
-  );
-}
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -269,13 +188,10 @@ function PaymentFormView({
   brand,
   border,
   surface,
-  activeBg,
   white,
   error: errorColor,
   order,
-  tiposPago,
-  selectedTipo,
-  setSelectedTipo,
+  tipoEfectivo,
   referencia,
   setReferencia,
   fieldErrors,
@@ -289,13 +205,10 @@ function PaymentFormView({
   readonly brand: string;
   readonly border: string;
   readonly surface: string;
-  readonly activeBg: string;
   readonly white: string;
   readonly error: string;
   readonly order: OrderDetail;
-  readonly tiposPago: TipoPago[];
-  readonly selectedTipo: number | null;
-  readonly setSelectedTipo: (v: number | null) => void;
+  readonly tipoEfectivo: TipoPago | null;
   readonly referencia: string;
   readonly setReferencia: (v: string) => void;
   readonly fieldErrors: Record<string, string>;
@@ -308,10 +221,6 @@ function PaymentFormView({
     unknown
   >;
 }) {
-  const selectedTipoObj = tiposPago.find(
-    (t) => t.id_tipo_pago === selectedTipo,
-  );
-
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
@@ -400,27 +309,22 @@ function PaymentFormView({
             borderRadius: 14,
             borderWidth: 1,
             borderColor: fieldErrors.tipo_pago ? errorColor : border,
-            padding: 12,
+            padding: 14,
             marginBottom: 20,
           }}
         >
-          {tiposPago.map((tipo) => (
-            <PaymentMethodOption
-              key={tipo.id_tipo_pago}
-              tipo={tipo}
-              selected={selectedTipo === tipo.id_tipo_pago}
-              onSelect={() => {
-                setSelectedTipo(tipo.id_tipo_pago);
-                setFieldErrors({});
-              }}
-              brand={brand}
-              border={border}
-              muted={muted}
-              fg={fg}
-              activeBg={activeBg}
-              tiposCount={tiposPago.length}
-            />
-          ))}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <MaterialCommunityIcons name="cash" size={22} color={brand} />
+            <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>
+              {tipoEfectivo?.nombre ?? 'Efectivo'}
+            </Text>
+          </View>
           {fieldErrors.tipo_pago ? (
             <Text
               style={{
@@ -455,15 +359,8 @@ function PaymentFormView({
             setReferencia(t);
             setFieldErrors({});
           }}
-          placeholder={
-            selectedTipo
-              ? selectedTipoObj && esTransferencia(selectedTipoObj)
-                ? 'Número de transferencia'
-                : 'Nota o referencia'
-              : 'Selecciona un método de pago primero'
-          }
+          placeholder="Nota o referencia"
           placeholderTextColor={muted}
-          editable={selectedTipo !== null}
           maxLength={INPUT_MAX_LENGTH}
           style={{
             backgroundColor: surface,
@@ -474,7 +371,6 @@ function PaymentFormView({
             fontSize: 15,
             color: fg,
             marginBottom: 24,
-            opacity: selectedTipo ? 1 : 0.5,
           }}
         />
 
@@ -482,13 +378,9 @@ function PaymentFormView({
         <Pressable
           testID="submit-payment-button"
           onPress={() => {
-            if (!selectedTipo) {
-              setFieldErrors({ tipo_pago: 'Selecciona un método de pago' });
-              return;
-            }
             pagoMutation.mutate();
           }}
-          disabled={pagoMutation.isPending || !selectedTipo}
+          disabled={pagoMutation.isPending || !tipoEfectivo}
           style={{
             backgroundColor: pagoMutation.isPending ? muted : brand,
             borderRadius: 14,
@@ -530,11 +422,9 @@ export default function PaymentScreen(): React.JSX.Element {
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const activeBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const white = colors.iconWhite;
   const error = colors.error;
 
-  const [selectedTipo, setSelectedTipo] = useState<number | null>(null);
   const [referencia, setReferencia] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -568,13 +458,16 @@ export default function PaymentScreen(): React.JSX.Element {
     retry: 1,
   });
 
+  // Cash is the only accepted payment method: resolve its id without a picker.
+  const tipoEfectivo = tiposPago.find(esEfectivo) ?? tiposPago[0] ?? null;
+
   const pagoMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTipo || !order) throw new Error('Datos incompletos');
+      if (!tipoEfectivo || !order) throw new Error('Datos incompletos');
       const trimmedRef = referencia.trim();
       return createPago(api, {
         pedido: orderId,
-        tipo_pago: selectedTipo,
+        tipo_pago: tipoEfectivo.id_tipo_pago,
         monto: order.total,
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
@@ -649,13 +542,10 @@ export default function PaymentScreen(): React.JSX.Element {
       brand={brand}
       border={border}
       surface={surface}
-      activeBg={activeBg}
       white={white}
       error={error}
       order={order}
-      tiposPago={tiposPago}
-      selectedTipo={selectedTipo}
-      setSelectedTipo={setSelectedTipo}
+      tipoEfectivo={tipoEfectivo}
       referencia={referencia}
       setReferencia={setReferencia}
       fieldErrors={fieldErrors}

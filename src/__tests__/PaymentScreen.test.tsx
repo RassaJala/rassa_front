@@ -142,10 +142,13 @@ describe('PaymentScreen', () => {
   });
 
   it('submits payment with correct payload and navigates to Receipt', async () => {
-    const { findByTestId, getByTestId, getByText } = renderScreen();
+    const { findByTestId, getByTestId, findByText, queryByTestId } =
+      renderScreen();
     await findByTestId('submit-payment-button');
 
-    fireEvent.press(getByText('Efectivo'));
+    // Cash is the only payment method: fixed line, no method selector.
+    expect(queryByTestId('payment-method-option')).toBeNull();
+    expect(await findByText('Efectivo')).toBeTruthy();
     fireEvent.press(getByTestId('submit-payment-button'));
 
     await waitFor(() =>
@@ -167,10 +170,9 @@ describe('PaymentScreen', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     mockedCreatePago.mockRejectedValue(new Error('Network error'));
 
-    const { findByTestId, getByTestId, getByText } = renderScreen();
+    const { findByTestId, getByTestId } = renderScreen();
     await findByTestId('submit-payment-button');
 
-    fireEvent.press(getByText('Efectivo'));
     fireEvent.press(getByTestId('submit-payment-button'));
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalled());
@@ -193,7 +195,6 @@ describe('PaymentScreen', () => {
     const { findByTestId, getByTestId, getByText } = renderScreen();
     await findByTestId('submit-payment-button');
 
-    fireEvent.press(getByText('Efectivo'));
     fireEvent.press(getByTestId('submit-payment-button'));
 
     // Wait until the pending state is rendered ("Registrando...")

@@ -131,8 +131,8 @@ describe('PaymentPage', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const efectivo = await screen.findByText(/Efectivo/i);
-    await user.click(efectivo);
+    // Cash is the only payment method: fixed line, no method selector.
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
     await user.click(screen.getByTestId('submit-payment-button'));
 
     await waitFor(() =>
@@ -157,8 +157,7 @@ describe('PaymentPage', () => {
     mockedCreatePago.mockRejectedValue(new Error('Network error'));
     renderPage();
 
-    const efectivo = await screen.findByText(/Efectivo/i);
-    await user.click(efectivo);
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
     await user.click(screen.getByTestId('submit-payment-button'));
 
     expect(await screen.findByText(/Network error/i)).toBeTruthy();
@@ -182,8 +181,7 @@ describe('PaymentPage', () => {
     );
     renderPage();
 
-    const efectivo = await screen.findByText(/Efectivo/i);
-    await user.click(efectivo);
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
     await user.click(screen.getByTestId('submit-payment-button'));
 
     await waitFor(() =>

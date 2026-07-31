@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ORDER_STATUS_READY } from '@/common/payments';
+import { fetchPagoPorPedido, ORDER_STATUS_READY } from '@/common/payments';
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
@@ -183,6 +183,29 @@ export function VendorPanelScreen() {
 
   const isRowPending = (id: number) => pendingIds.has(id);
 
+  const verRecibo = async (pedidoId: number) => {
+    setPendingIds((prev) => new Set(prev).add(pedidoId));
+    try {
+      const pago = await fetchPagoPorPedido(api, pedidoId);
+      if (pago) {
+        navigate(`/vendedor/recibo/${pago.id_pago}`);
+      } else {
+        setToast({
+          message: 'No hay un recibo registrado para este pedido',
+          type: 'error',
+        });
+      }
+    } catch {
+      setToast({ message: 'Error al consultar el recibo', type: 'error' });
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(pedidoId);
+        return next;
+      });
+    }
+  };
+
   const columns: Column<PedidoRow>[] = [
     { key: 'id_pedido', label: 'N°', sortable: true },
     { key: 'cliente_nombre', label: 'Cliente', sortable: true },
@@ -249,6 +272,17 @@ export function VendorPanelScreen() {
                 }}
               >
                 Cancelar
+              </Button>
+            ) : null}
+            {o.estado_actual === 'entregado' ? (
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  void verRecibo(o.id_pedido);
+                }}
+              >
+                Ver recibo
               </Button>
             ) : null}
           </div>

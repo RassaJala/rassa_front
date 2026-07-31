@@ -35,8 +35,20 @@ jest.mock('@/services/api', () => ({
 
 jest.mock('@/components/Toast', () => {
   const ReactActual = jest.requireActual('react');
-  return function MockToast() {
-    return ReactActual.createElement('Toast');
+  return function MockToast({
+    visible,
+    message,
+  }: {
+    visible: boolean;
+    message: string;
+  }) {
+    return visible
+      ? ReactActual.createElement(
+          'Toast',
+          null,
+          ReactActual.createElement('Text', null, message),
+        )
+      : null;
   };
 });
 
@@ -59,6 +71,29 @@ const mockOrderPending = {
   total: '90.00',
   estado_actual: 'pendiente',
   creado_en: '2026-07-24T10:00:00Z',
+};
+
+const mockOrderDelivered = {
+  id_pedido: 7,
+  cliente_nombre: 'Cliente Entregado',
+  total: '85.00',
+  estado_actual: 'entregado',
+  creado_en: '2026-07-24T10:00:00Z',
+};
+
+const mockPago = {
+  id_pago: 9,
+  folio: 'PAG-0009',
+  pedido: 7,
+  tipo_pago: 1,
+  tipo_pago_nombre: 'Efectivo',
+  cliente_nombre: 'Cliente Entregado',
+  cliente_id: 7,
+  monto: '85.00',
+  referencia: '',
+  total_pedido: '85.00',
+  productos: [],
+  fecha_pago: '2026-07-30T12:00:00Z',
 };
 
 function renderScreen() {
@@ -105,6 +140,36 @@ describe('SalesScreen', () => {
         nuevo_estado: 'confirmado',
       }),
     );
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('shows Ver recibo on entregado orders and navigates to Receipt with the payment id', async () => {
+    api.get
+      .mockResolvedValueOnce({ data: { results: [mockOrderDelivered] } })
+      .mockResolvedValueOnce({ data: { results: [mockPago] } });
+
+    const { findByText } = renderScreen();
+    const verRecibo = await findByText('Ver recibo');
+    fireEvent.press(verRecibo);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
+    );
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast when there is no payment for an entregado order', async () => {
+    api.get
+      .mockResolvedValueOnce({ data: { results: [mockOrderDelivered] } })
+      .mockResolvedValueOnce({ data: { results: [] } });
+
+    const { findByText } = renderScreen();
+    const verRecibo = await findByText('Ver recibo');
+    fireEvent.press(verRecibo);
+
+    await expect(
+      findByText('No hay un recibo registrado para este pedido'),
+    ).resolves.toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

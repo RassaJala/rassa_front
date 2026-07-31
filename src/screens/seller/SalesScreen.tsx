@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ORDER_STATUS_READY } from '@/common/payments';
+import { fetchPagoPorPedido, ORDER_STATUS_READY } from '@/common/payments';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -206,6 +206,29 @@ export default function SalesScreen(): React.JSX.Element {
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const verRecibo = useCallback(
+    async (pedidoId: number) => {
+      setPendingIds((prev) => new Set(prev).add(pedidoId));
+      try {
+        const pago = await fetchPagoPorPedido(api, pedidoId);
+        if (pago) {
+          navigation.navigate('Receipt', { paymentId: pago.id_pago });
+        } else {
+          showToast('No hay un recibo registrado para este pedido', 'error');
+        }
+      } catch {
+        showToast('Error al consultar el recibo', 'error');
+      } finally {
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pedidoId);
+          return next;
+        });
+      }
+    },
+    [navigation, showToast],
+  );
+
   const accionNoTerminal = useMemo(
     () =>
       new Set([
@@ -382,6 +405,36 @@ export default function SalesScreen(): React.JSX.Element {
                 </Text>
               </Pressable>
             ) : null}
+            {item.estado_actual === 'entregado' ? (
+              <Pressable
+                onPress={() => {
+                  void verRecibo(item.id_pedido);
+                }}
+                disabled={busy}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: brand,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  opacity: busy ? 0.5 : 1,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="receipt"
+                  size={16}
+                  color={brand}
+                />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
+                  Ver recibo
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       );
@@ -400,6 +453,7 @@ export default function SalesScreen(): React.JSX.Element {
       cancelMutation,
       accionNoTerminal,
       isRowPending,
+      verRecibo,
     ],
   );
 

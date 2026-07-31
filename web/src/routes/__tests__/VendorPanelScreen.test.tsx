@@ -84,6 +84,29 @@ const mockOrderPending = {
   creado_en: '2026-07-24T10:00:00Z',
 };
 
+const mockOrderDelivered = {
+  id_pedido: 7,
+  cliente_nombre: 'Cliente Entregado',
+  total: '85.00',
+  estado_actual: 'entregado',
+  creado_en: '2026-07-24T10:00:00Z',
+};
+
+const mockPago = {
+  id_pago: 9,
+  folio: 'PAG-0009',
+  pedido: 7,
+  tipo_pago: 1,
+  tipo_pago_nombre: 'Efectivo',
+  cliente_nombre: 'Cliente Entregado',
+  cliente_id: 7,
+  monto: '85.00',
+  referencia: '',
+  total_pedido: '85.00',
+  productos: [],
+  fecha_pago: '2026-07-30T12:00:00Z',
+};
+
 function renderPanel() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -136,6 +159,44 @@ describe('VendorPanelScreen', () => {
         nuevo_estado: 'confirmado',
       }),
     );
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('shows Ver recibo on entregado orders and navigates to the receipt page', async () => {
+    mockedApi.get.mockResolvedValueOnce({
+      data: { results: [mockOrderDelivered] },
+    });
+    mockedApi.get.mockResolvedValueOnce({ data: { results: [mockPago] } });
+    const user = userEvent.setup();
+    renderPanel();
+
+    const verRecibo = await screen.findByRole('button', {
+      name: /Ver recibo/i,
+    });
+    await user.click(verRecibo);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9'),
+    );
+    expect(mockedApi.patch).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast when there is no payment for an entregado order', async () => {
+    mockedApi.get.mockResolvedValueOnce({
+      data: { results: [mockOrderDelivered] },
+    });
+    mockedApi.get.mockResolvedValueOnce({ data: { results: [] } });
+    const user = userEvent.setup();
+    renderPanel();
+
+    const verRecibo = await screen.findByRole('button', {
+      name: /Ver recibo/i,
+    });
+    await user.click(verRecibo);
+
+    expect(
+      await screen.findByText(/No hay un recibo registrado/i),
+    ).toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

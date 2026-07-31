@@ -15,10 +15,6 @@ export function esEfectivo(tipo: { readonly nombre: string }): boolean {
   return tipo.nombre === 'Efectivo';
 }
 
-export function esTransferencia(tipo: { readonly nombre: string }): boolean {
-  return tipo.nombre === 'Transferencia';
-}
-
 export interface PaymentProduct {
   readonly nombre: string;
   readonly precio: string;
@@ -72,4 +68,16 @@ export async function fetchPago(
 ): Promise<PaymentDetail> {
   const res = await api.get<PaymentDetail>(`/pagos/${id}/`);
   return res.data;
+}
+
+export async function fetchPagoPorPedido(
+  api: AxiosInstance,
+  pedidoId: number,
+): Promise<PaymentDetail | null> {
+  const res = await api.get<PaymentDetail[] | { results?: PaymentDetail[] }>(
+    `/pagos/?pedido=${pedidoId}`,
+  );
+  const body = res.data;
+  const pagos = Array.isArray(body) ? body : (body.results ?? []);
+  return pagos[0] ?? null;
 }
