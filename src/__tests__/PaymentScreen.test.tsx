@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test files are less strict */
 import React from 'react';
 
+import { Alert } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import PaymentScreen from '@/screens/seller/PaymentScreen';
 import { createPago, fetchTiposPago } from '@/common/payments';
+import type { PaymentDetail } from '@/common/payments';
 
 const mockReplace = jest.fn();
 const mockGoBack = jest.fn();
@@ -41,16 +43,13 @@ jest.mock('@/services/api', () => ({
   },
 }));
 
-jest.mock('@/services/storage', () => ({
-  setItemAsync: jest.fn().mockResolvedValue(undefined),
-}));
-
 const api = jest.requireMock('@/services/api').default as {
   get: jest.Mock;
   post: jest.Mock;
 };
 
 jest.mock('@/common/payments', () => ({
+  ...jest.requireActual('@/common/payments'),
   fetchTiposPago: jest.fn(),
   createPago: jest.fn(),
   fetchPago: jest.fn(),
@@ -111,10 +110,9 @@ describe('PaymentScreen', () => {
     });
   });
 
-  it('renders loading state first', () => {
-    const { getByTestId } = renderScreen();
-    // LoadingView renders an ActivityIndicator; mock queries resolve in waitFor
-    expect(getByTestId).toBeDefined();
+  it('renders the payment form after queries resolve', async () => {
+    const { findByTestId } = renderScreen();
+    expect(await findByTestId('submit-payment-button')).toBeTruthy();
   });
 
   it('shows error view when order fetch fails', async () => {
@@ -144,11 +142,11 @@ describe('PaymentScreen', () => {
   });
 
   it('submits payment with correct payload and navigates to Receipt', async () => {
-    const { findByText, getAllByText } = renderScreen();
-    await findByText('Efectivo');
+    const { findByTestId, getByTestId, getByText } = renderScreen();
+    await findByTestId('submit-payment-button');
 
-    fireEvent.press(getAllByText('Efectivo')[0] as never);
-    fireEvent.press(getAllByText('Registrar Pago')[1] as never);
+    fireEvent.press(getByText('Efectivo'));
+    fireEvent.press(getByTestId('submit-payment-button'));
 
     await waitFor(() =>
       expect(mockedCreatePago).toHaveBeenCalledWith(
@@ -160,6 +158,65 @@ describe('PaymentScreen', () => {
         }),
       ),
     );
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
+    );
+  });
+
+  it('shows an alert and re-enables submit when createPago fails', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockedCreatePago.mockRejectedValue(new Error('Network error'));
+
+    const { findByTestId, getByTestId, getByText } = renderScreen();
+    await findByTestId('submit-payment-button');
+
+    fireEvent.press(getByText('Efectivo'));
+    fireEvent.press(getByTestId('submit-payment-button'));
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+    expect(alertSpy.mock.calls[0]?.[1]).toMatch(/error/i);
+    // Seller can retry after the failure: a second press calls createPago again
+    fireEvent.press(getByTestId('submit-payment-button'));
+    await waitFor(() => expect(mockedCreatePago).toHaveBeenCalledTimes(2));
+    alertSpy.mockRestore();
+  });
+
+  it('disables the submit button while the payment is pending (no double tap)', async () => {
+    let resolveCreate: (value: PaymentDetail) => void = () => {};
+    mockedCreatePago.mockImplementation(
+      () =>
+        new Promise<PaymentDetail>((resolve) => {
+          resolveCreate = resolve;
+        }),
+    );
+
+    const { findByTestId, getByTestId, getByText } = renderScreen();
+    await findByTestId('submit-payment-button');
+
+    fireEvent.press(getByText('Efectivo'));
+    fireEvent.press(getByTestId('submit-payment-button'));
+
+    // Wait until the pending state is rendered ("Registrando...")
+    await waitFor(() => expect(getByText('Registrando...')).toBeTruthy());
+
+    // A second tap while pending must NOT create a second payment
+    fireEvent.press(getByTestId('submit-payment-button'));
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
+
+    resolveCreate({
+      id_pago: 9,
+      folio: 'PAG-0009',
+      pedido: 5,
+      tipo_pago: 1,
+      tipo_pago_nombre: 'Efectivo',
+      cliente_nombre: 'Cliente Test',
+      cliente_id: 4,
+      monto: '119.48',
+      referencia: '',
+      total_pedido: '119.48',
+      productos: [],
+      fecha_pago: '2026-07-30T12:00:00Z',
+    });
     await waitFor(() =>
       expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
     );

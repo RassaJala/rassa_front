@@ -1,23 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { formatearFecha } from '@/common/dates';
 import { fetchPago } from '@/common/payments';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
 
 // ── Helpers ────────────────────────────────────────────────
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function DetailRow({
   label,
@@ -95,7 +85,7 @@ export function ReceiptPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button

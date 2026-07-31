@@ -24,7 +24,8 @@ vi.mock('../../hooks/useAppColors', () => ({
   }),
 }));
 
-vi.mock('@/common/payments', () => ({
+vi.mock('@/common/payments', async () => ({
+  ...(await vi.importActual('@/common/payments')),
   fetchTiposPago: vi.fn(),
   createPago: vi.fn(),
   fetchPago: vi.fn(),

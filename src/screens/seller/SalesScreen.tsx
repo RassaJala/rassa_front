@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ORDER_STATUS_READY } from '@/common/payments';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -287,7 +288,7 @@ export default function SalesScreen(): React.JSX.Element {
             {accion ? (
               <Pressable
                 onPress={() => {
-                  if (item.estado_actual === 'listo_para_retirar') {
+                  if (item.estado_actual === ORDER_STATUS_READY) {
                     navigation.navigate('Payment', {
                       orderId: item.id_pedido,
                     });

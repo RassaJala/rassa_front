@@ -1,16 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { createPago, fetchTiposPago, type TipoPago } from '@/common/payments';
+import {
+  createPago,
+  esEfectivo,
+  esTransferencia,
+  fetchTiposPago,
+  ORDER_STATUS_READY,
+} from '@/common/payments';
+import type { TipoPago } from '@/common/payments';
+import { QUERY_STALE_TIME } from '../constants/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
+import { extractApiError } from '../utils/apiErrors';
 
 // ── Constants ──────────────────────────────────────────────
 
-const STATUS_READY = 'listo_para_retirar';
 const INPUT_MAX_LENGTH = 200;
 
 // ── Types ──────────────────────────────────────────────────
@@ -25,7 +32,10 @@ interface OrderDetail {
 // ── Component ──────────────────────────────────────────────
 
 export function PaymentPage() {
-  const { orderId } = useParams<{ orderId: string }>();
+  const { orderId: rawOrderId } = useParams<{ orderId: string }>();
+  const orderId = Number(rawOrderId);
+  const orderIdValid =
+    rawOrderId !== undefined && Number.isInteger(orderId) && orderId > 0;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const colors = useAppColors();
@@ -42,81 +52,91 @@ export function PaymentPage() {
     isError: orderError,
     refetch: refetchOrder,
   } = useQuery<OrderDetail>({
-    queryKey: ['pedido', Number(orderId)],
+    queryKey: ['pedido', orderId],
     queryFn: async () => {
       const { data } = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return data;
     },
-    enabled: !!orderId,
-    staleTime: 30_000,
+    enabled: orderIdValid,
+    staleTime: QUERY_STALE_TIME,
   });
 
   // Fetch payment types
-  const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
+  const {
+    data: tiposPago = [],
+    isLoading: tiposLoading,
+    isError: tiposError,
+    refetch: refetchTipos,
+  } = useQuery({
     queryKey: ['tipos-pago'],
     queryFn: () => fetchTiposPago(api),
     staleTime: Infinity,
     gcTime: Infinity,
+    retry: 1,
   });
+
+  const selectedTipoObj = tiposPago.find(
+    (t) => t.id_tipo_pago === selectedTipo,
+  );
 
   const pagoMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTipo || !order) throw new Error('Datos incompletos');
-      if (!orderId || isNaN(Number(orderId)))
-        throw new Error('ID de pedido inválido');
       const trimmedRef = referencia.trim();
       return createPago(api, {
-        pedido: Number(orderId),
+        pedido: orderId,
         tipo_pago: selectedTipo,
         monto: order.total,
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
     },
-    onSuccess: async (data) => {
-      try {
-        localStorage.setItem('last_payment_id', String(data.id_pago));
-      } catch {
-        /* ignore */
-      }
-      await Promise.all([
+    onSuccess: (data) => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
-        queryClient.invalidateQueries({
-          queryKey: ['pedido', Number(orderId)],
-        }),
+        queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
       ]).catch(() => {});
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
     },
     onError: (err: unknown) => {
-      if (axios.isAxiosError(err) && err.response?.data) {
-        const data = err.response.data as Record<string, unknown>;
-        const msg =
-          typeof data.detail === 'string'
-            ? data.detail
-            : typeof data.message === 'string'
-              ? data.message
-              : null;
-        if (msg) {
-          setFieldError(msg);
-          return;
-        }
-        // Check per-field errors
-        for (const key of ['pedido', 'tipo_pago', 'monto', 'referencia']) {
-          const val = data[key];
-          if (Array.isArray(val) && val[0]) {
-            setFieldError(String(val[0]));
-            return;
-          }
-        }
-      }
-      setFieldError('Error al registrar el pago. Intentá de nuevo.');
+      setFieldError(
+        extractApiError(err, ['pedido', 'tipo_pago', 'monto', 'referencia']),
+      );
     },
   });
 
   const isLoading = orderLoading || tiposLoading;
-  const isReady = order?.estado_actual === STATUS_READY;
+  const isReady = order?.estado_actual === ORDER_STATUS_READY;
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
+  }
+
+  if (tiposError) {
+    return (
+      <div className="py-20 text-center">
+        <p className="mb-4 text-lg" style={{ color: muted }}>
+          Error al cargar los métodos de pago
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => void refetchTipos()}
+            className="cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold"
+            style={{ borderColor: border, color: brand }}
+          >
+            Reintentar
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/vendedor/pedidos')}
+            className="cursor-pointer rounded-lg border px-4 py-2 text-sm font-semibold"
+            style={{ borderColor: border, color: brand }}
+          >
+            Volver a pedidos
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (orderError || !order) {
@@ -169,7 +189,7 @@ export function PaymentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button
@@ -255,7 +275,7 @@ export function PaymentPage() {
                   color: selected ? brand : fg,
                 }}
               >
-                {tipo.nombre === 'Efectivo' ? '💵' : '🏦'} {tipo.nombre}
+                {esEfectivo(tipo) ? '💵' : '🏦'} {tipo.nombre}
               </span>
             </button>
           );
@@ -285,8 +305,7 @@ export function PaymentPage() {
         }}
         placeholder={
           selectedTipo
-            ? tiposPago.find((t) => t.id_tipo_pago === selectedTipo)?.nombre ===
-              'Transferencia'
+            ? selectedTipoObj && esTransferencia(selectedTipoObj)
               ? 'Número de transferencia'
               : 'Nota o referencia'
             : 'Seleccioná un método de pago primero'
@@ -305,6 +324,7 @@ export function PaymentPage() {
       {/* Submit button */}
       <button
         type="button"
+        data-testid="submit-payment-button"
         onClick={() => {
           if (!selectedTipo) {
             setFieldError('Seleccioná un método de pago');

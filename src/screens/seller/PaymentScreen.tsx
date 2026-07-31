@@ -16,19 +16,23 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { createPago, fetchTiposPago } from '@/common/payments';
+import {
+  createPago,
+  esEfectivo,
+  esTransferencia,
+  fetchTiposPago,
+  ORDER_STATUS_READY,
+} from '@/common/payments';
 import type { PaymentDetail, TipoPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
+import { STALE_TIME } from '@/constants/orderTimeline';
 import api from '@/services/api';
-import * as Storage from '@/services/storage';
 import { useTheme } from '@/store/ThemeContext';
 import type { OrderDetail, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
 
 // ── Constants ──────────────────────────────────────────────
 
-const STATUS_READY = 'listo_para_retirar';
-const LAST_PAYMENT_KEY = 'last_payment_id';
 const INPUT_MAX_LENGTH = 200;
 
 // ── Types ──────────────────────────────────────────────────
@@ -61,6 +65,7 @@ function PaymentMethodOption({
 }): React.JSX.Element {
   return (
     <Pressable
+      testID="payment-method-option"
       onPress={onSelect}
       style={{
         flexDirection: 'row',
@@ -96,7 +101,7 @@ function PaymentMethodOption({
         ) : null}
       </View>
       <MaterialCommunityIcons
-        name={tipo.nombre === 'Efectivo' ? 'cash' : 'bank-transfer'}
+        name={esEfectivo(tipo) ? 'cash' : 'bank-transfer'}
         size={22}
         color={selected ? brand : muted}
       />
@@ -303,6 +308,10 @@ function PaymentFormView({
     unknown
   >;
 }) {
+  const selectedTipoObj = tiposPago.find(
+    (t) => t.id_tipo_pago === selectedTipo,
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
@@ -448,8 +457,7 @@ function PaymentFormView({
           }}
           placeholder={
             selectedTipo
-              ? tiposPago.find((t) => t.id_tipo_pago === selectedTipo)
-                  ?.nombre === 'Transferencia'
+              ? selectedTipoObj && esTransferencia(selectedTipoObj)
                 ? 'Número de transferencia'
                 : 'Nota o referencia'
               : 'Selecciona un método de pago primero'
@@ -472,6 +480,7 @@ function PaymentFormView({
 
         {/* Submit button */}
         <Pressable
+          testID="submit-payment-button"
           onPress={() => {
             if (!selectedTipo) {
               setFieldErrors({ tipo_pago: 'Selecciona un método de pago' });
@@ -542,15 +551,21 @@ export default function PaymentScreen(): React.JSX.Element {
       return res.data;
     },
     enabled: !!orderId,
-    staleTime: 30_000,
+    staleTime: STALE_TIME,
   });
 
   // Fetch payment types
-  const { data: tiposPago = [], isLoading: tiposLoading } = useQuery({
+  const {
+    data: tiposPago = [],
+    isLoading: tiposLoading,
+    isError: tiposError,
+    refetch: refetchTipos,
+  } = useQuery({
     queryKey: ['tipos-pago'],
     queryFn: () => fetchTiposPago(api),
     staleTime: Infinity,
     gcTime: Infinity,
+    retry: 1,
   });
 
   const pagoMutation = useMutation({
@@ -564,9 +579,8 @@ export default function PaymentScreen(): React.JSX.Element {
         ...(trimmedRef ? { referencia: trimmedRef } : {}),
       });
     },
-    onSuccess: async (data) => {
-      await Storage.setItemAsync(LAST_PAYMENT_KEY, String(data.id_pago));
-      await Promise.all([
+    onSuccess: (data) => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
       ]).catch(() => {});
@@ -584,10 +598,22 @@ export default function PaymentScreen(): React.JSX.Element {
   });
 
   const isLoading = orderLoading || tiposLoading;
-  const isReady = order?.estado_actual === STATUS_READY;
+  const isReady = order?.estado_actual === ORDER_STATUS_READY;
 
   if (isLoading) {
     return <LoadingView bg={bg} brand={brand} />;
+  }
+
+  if (tiposError) {
+    return (
+      <ErrorView
+        bg={bg}
+        muted={muted}
+        brand={brand}
+        border={border}
+        refetch={refetchTipos}
+      />
+    );
   }
 
   if (orderError || !order) {

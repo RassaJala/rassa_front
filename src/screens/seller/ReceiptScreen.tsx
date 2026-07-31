@@ -13,6 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import { formatearFecha } from '@/common/dates';
 import { fetchPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -23,17 +24,6 @@ import type { SellerStackParamList } from '@/types';
 
 type Nav = NativeStackNavigationProp<SellerStackParamList, 'Receipt'>;
 type Route = RouteProp<SellerStackParamList, 'Receipt'>;
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 // ── Component ──────────────────────────────────────────────
 

@@ -33,7 +33,8 @@ vi.mock('../../services/api', () => ({
   },
 }));
 
-vi.mock('@/common/payments', () => ({
+vi.mock('@/common/payments', async () => ({
+  ...(await vi.importActual('@/common/payments')),
   fetchTiposPago: vi.fn(),
   createPago: vi.fn(),
   fetchPago: vi.fn(),
@@ -130,9 +131,9 @@ describe('PaymentPage', () => {
     const user = userEvent.setup();
     renderPage();
 
-    const efectivo = await screen.findByText('💵 Efectivo');
+    const efectivo = await screen.findByText(/Efectivo/i);
     await user.click(efectivo);
-    await user.click(screen.getByRole('button', { name: 'Registrar Pago' }));
+    await user.click(screen.getByTestId('submit-payment-button'));
 
     await waitFor(() =>
       expect(mockedCreatePago).toHaveBeenCalledWith(
@@ -144,6 +145,69 @@ describe('PaymentPage', () => {
         }),
       ),
     );
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
+        replace: true,
+      }),
+    );
+  });
+
+  it('shows an error message when createPago fails and allows retry', async () => {
+    const user = userEvent.setup();
+    mockedCreatePago.mockRejectedValue(new Error('Network error'));
+    renderPage();
+
+    const efectivo = await screen.findByText(/Efectivo/i);
+    await user.click(efectivo);
+    await user.click(screen.getByTestId('submit-payment-button'));
+
+    expect(await screen.findByText(/Network error/i)).toBeTruthy();
+    // Button is enabled again so the seller can retry
+    await waitFor(() =>
+      expect(
+        (screen.getByTestId('submit-payment-button') as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
+    );
+  });
+
+  it('disables the submit button while the payment is pending (no double tap)', async () => {
+    const user = userEvent.setup();
+    let resolveCreate: (v: unknown) => void = () => {};
+    mockedCreatePago.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
+    );
+    renderPage();
+
+    const efectivo = await screen.findByText(/Efectivo/i);
+    await user.click(efectivo);
+    await user.click(screen.getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(
+        (screen.getByTestId('submit-payment-button') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true),
+    );
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
+
+    resolveCreate({
+      id_pago: 9,
+      folio: 'PAG-0009',
+      pedido: 5,
+      tipo_pago: 1,
+      tipo_pago_nombre: 'Efectivo',
+      cliente_nombre: 'Cliente Test',
+      cliente_id: 4,
+      monto: '119.48',
+      referencia: '',
+      total_pedido: '119.48',
+      productos: [],
+      fecha_pago: '2026-07-30T12:00:00Z',
+    });
     await waitFor(() =>
       expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
         replace: true,

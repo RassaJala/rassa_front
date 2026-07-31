@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ORDER_STATUS_READY } from '@/common/payments';
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
@@ -220,7 +221,7 @@ export function VendorPanelScreen() {
                 variant="primary"
                 disabled={busy}
                 onClick={() => {
-                  if (o.estado_actual === 'listo_para_retirar') {
+                  if (o.estado_actual === ORDER_STATUS_READY) {
                     navigate(`/vendedor/cobrar/${o.id_pedido}`);
                   } else {
                     statusMutation.mutate({

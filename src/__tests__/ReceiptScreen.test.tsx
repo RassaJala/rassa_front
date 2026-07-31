@@ -34,6 +34,7 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 jest.mock('@/common/payments', () => ({
+  ...jest.requireActual('@/common/payments'),
   fetchTiposPago: jest.fn(),
   createPago: jest.fn(),
   fetchPago: jest.fn(),

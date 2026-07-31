@@ -1,10 +1,22 @@
 import type { AxiosInstance } from 'axios';
 
+// ── Shared constants ───────────────────────────────────────
+
+export const ORDER_STATUS_READY = 'listo_para_retirar';
+
 // ── Payment types ─────────────────────────────────────────
 
 export interface TipoPago {
   readonly id_tipo_pago: number;
   readonly nombre: string;
+}
+
+export function esEfectivo(tipo: { readonly nombre: string }): boolean {
+  return tipo.nombre === 'Efectivo';
+}
+
+export function esTransferencia(tipo: { readonly nombre: string }): boolean {
+  return tipo.nombre === 'Transferencia';
 }
 
 export interface PaymentProduct {
