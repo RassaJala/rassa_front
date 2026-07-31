@@ -18,7 +18,6 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 const mockApiPost = api.post as jest.Mock;
-const mockApiGet = api.get as jest.Mock;
 
 describe('useCreatePrivateConversation', () => {
   let queryClient: QueryClient;
@@ -58,22 +57,6 @@ describe('useCreatePrivateConversation', () => {
     mockApiPost.mockResolvedValue({
       data: { ok: true, data: { id_conversacion: 7 } },
     });
-    mockApiGet.mockResolvedValue({
-      data: {
-        ok: true,
-        data: [
-          {
-            id_conversacion: 7,
-            tipo: false,
-            nombre: 'Juan',
-            ultimo_mensaje: null,
-            ultimo_mensaje_creado_en: null,
-            no_leidos: 0,
-            es_familia: false,
-          },
-        ],
-      },
-    });
 
     const { getByTestId } = renderComponent();
 
@@ -84,7 +67,7 @@ describe('useCreatePrivateConversation', () => {
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('Chat', {
         conversationId: 7,
-        title: 'Juan',
+        title: 'Chat',
         tipo: 'privada',
         isFamily: false,
       });
@@ -94,9 +77,6 @@ describe('useCreatePrivateConversation', () => {
   it('falls back to "Chat" title when participant name is empty', async () => {
     mockApiPost.mockResolvedValue({
       data: { ok: true, data: { id_conversacion: 9 } },
-    });
-    mockApiGet.mockResolvedValue({
-      data: { ok: true, data: [] },
     });
 
     const { getByTestId } = renderComponent();

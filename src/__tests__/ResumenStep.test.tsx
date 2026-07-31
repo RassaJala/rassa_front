@@ -3,7 +3,7 @@ import React from 'react';
 
 import { render } from '@testing-library/react-native';
 
-import ResumenStep from '@/components/wizard/ResumenStep';
+import ResumenStep from '@/components/wizard/StepResumen';
 import type {
   WizardItemDraft,
   WizardItemValidation,
@@ -66,7 +66,11 @@ describe('ResumenStep', () => {
     allProductos: sampleProductos,
     unidades: sampleUnidades,
     itemValidations: new Map<string, WizardItemValidation>(),
-    isDark: false,
+    surface: '#ffffff',
+    border: '#e0e0e0',
+    fg: '#1a1a1a',
+    muted: '#666666',
+    brand: '#007bff',
   };
 
   it('shows empty state when no items', () => {

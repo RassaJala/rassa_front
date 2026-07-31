@@ -8,6 +8,8 @@ export function useAppColors() {
   return {
     isDark,
     brand: isDark ? '#4A8A63' : '#24563C',
+    // NOTE: onBrand is intentionally static white — brand text always needs max contrast; if brand bg ever lightens, this must become dynamic
+    onBrand: '#FFFFFF',
     coral: '#DE393A',
     muted: isDark ? '#9DA89D' : '#5E6B5E',
     border: isDark ? '#2A332A' : '#E2E6DF',

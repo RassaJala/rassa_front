@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { IconButton, Menu } from 'react-native-paper';
 
-import { formatTime } from '@rassa/chat';
+import { formatMessageTime } from '@rassa/chat';
 
 import { useCanModifyMessage } from '@/features/chat/hooks/useCanModifyMessage';
 import { useAuth } from '@/store/AuthContext';
@@ -150,7 +150,7 @@ export default function ChatBubble({
                 isOwn ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              {formatTime(message.creado_en)}
+              {formatMessageTime(message.creado_en)}
               {message.editado ? ' · editado' : ''}
             </Text>
           </Pressable>

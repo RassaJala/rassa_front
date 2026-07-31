@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { formatTimestamp } from '@rassa/chat';
+import { formatConversationTime } from '@rassa/chat';
 import type { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -59,7 +59,7 @@ export default function ConversationItem({
               : conversation.participante_nombre}
           </Text>
           <Text className="text-xs text-gray-500 dark:text-gray-400">
-            {formatTimestamp(conversation.ultimo_mensaje_fecha)}
+            {formatConversationTime(conversation.ultimo_mensaje_fecha)}
           </Text>
         </View>
 

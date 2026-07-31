@@ -11,9 +11,10 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["vite/client"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": false,
+    "exactOptionalPropertyTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
@@ -22,7 +23,8 @@
       "@/*": ["./src/*"],
       "~/*": ["./src/*"],
       "@/common/*": ["../packages/common/src/*"],
-      "@root/*": ["../src/*"]
+      "@root/*": ["../src/*"],
+      "@rassa/chat": ["../packages/chat/src"]
     }
   },
   "include": ["src"]

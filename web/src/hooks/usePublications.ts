@@ -1,0 +1,199 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationOptions } from '@tanstack/react-query';
+
+import { logError } from '../utils/logger';
+import { QUERY_OPTIONS } from '../constants/api';
+import type {
+  AddProductoPayload as AddProductoServicePayload,
+  ApiResponse,
+  Producto,
+  ProductoSemanal,
+  Publicacion,
+  PublicacionEstado,
+  PublicacionList,
+  UpdateProductoPayload as UpdateProductoServicePayload,
+} from '../services/publications';
+import * as publicationsApi from '../services/publications';
+
+// ── Error logging helper ──────────────────────────────────
+
+function logMutationError(context: string, error: unknown): void {
+  logError(`publications.${context}`, error);
+}
+
+// ── Mutation factory ──────────────────────────────────────
+
+type InvalidateKeys =
+  | ['publicaciones']
+  | ['publicaciones', number]
+  | ['publicaciones', number, 'productos'];
+
+function usePubMutation<TData, TVariables>(
+  context: string,
+  mutationFn: (vars: TVariables) => Promise<TData>,
+  invalidateKeys: (vars: TVariables) => InvalidateKeys[],
+  options?: UseMutationOptions<TData, unknown, TVariables>,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn,
+    ...options,
+    onSuccess: (data, vars) => {
+      for (const key of invalidateKeys(vars)) {
+        void qc.invalidateQueries({ queryKey: key });
+      }
+      // TanStack Query v5 dropped the third context argument
+      options?.onSuccess?.(data, vars, undefined as never);
+    },
+    onError: (err: unknown, vars: TVariables) => {
+      logMutationError(context, err);
+      // TanStack Query v5 dropped the third context argument
+      options?.onError?.(err, vars, undefined as never);
+    },
+  });
+}
+
+// ── Queries ────────────────────────────────────────────────
+
+export function usePublicaciones(estado?: PublicacionEstado, page = 1) {
+  return useQuery<ApiResponse<PublicacionList>>({
+    queryKey: ['publicaciones', { estado, page }],
+    queryFn: () =>
+      publicationsApi.getPublicaciones({
+        ...(estado ? { estado } : {}),
+        page,
+      }),
+    ...QUERY_OPTIONS,
+  });
+}
+
+export function usePublicacion(id: number) {
+  return useQuery<ApiResponse<Publicacion>>({
+    queryKey: ['publicaciones', id],
+    queryFn: () => publicationsApi.getPublicacion(id),
+    enabled: id > 0,
+    ...QUERY_OPTIONS,
+  });
+}
+
+export function useProductosSemanales(pubId: number) {
+  return useQuery<ApiResponse<ProductoSemanal[]>>({
+    queryKey: ['publicaciones', pubId, 'productos'],
+    queryFn: () => publicationsApi.getProductosSemanales(pubId),
+    enabled: pubId > 0,
+    ...QUERY_OPTIONS,
+  });
+}
+
+export function useCatalogProductos() {
+  return useQuery<ApiResponse<{ results: Producto[] }>>({
+    queryKey: ['productos-catalog'],
+    queryFn: publicationsApi.getCatalogProductos,
+    ...QUERY_OPTIONS,
+  });
+}
+
+export function useUnidades() {
+  return useQuery<ApiResponse<Array<{ id_unidad: number; tipo: string }>>>({
+    queryKey: ['unidades'],
+    queryFn: publicationsApi.getUnidades,
+    ...QUERY_OPTIONS,
+  });
+}
+
+// ── Publicacion mutations ──────────────────────────────────
+
+export function useCreatePublicacion() {
+  return usePubMutation(
+    'createPublicacion',
+    publicationsApi.createPublicacion,
+    () => [['publicaciones']],
+  );
+}
+
+export function useDeletePublicacion() {
+  return usePubMutation(
+    'deletePublicacion',
+    publicationsApi.deletePublicacion,
+    () => [['publicaciones']],
+  );
+}
+
+export function usePublishPublicacion() {
+  return usePubMutation(
+    'publishPublicacion',
+    publicationsApi.publishPublicacion,
+    (id: number) => [['publicaciones'], ['publicaciones', id]],
+  );
+}
+
+export function useClosePublicacion() {
+  return usePubMutation(
+    'closePublicacion',
+    publicationsApi.closePublicacion,
+    (id: number) => [['publicaciones'], ['publicaciones', id]],
+  );
+}
+
+// ── ProductoSemanal mutations ──────────────────────────────
+
+type AddProductoHookPayload = {
+  pubId: number;
+  payload: AddProductoServicePayload;
+};
+
+type UpdateProductoHookPayload = {
+  pubId: number;
+  itemId: number;
+  payload: UpdateProductoServicePayload;
+};
+
+type DeleteProductoPayload = { pubId: number; itemId: number };
+
+type UploadImagenPayload = {
+  pubId: number;
+  itemId: number;
+  formData: FormData;
+};
+
+const productoKeys = (pubId: number): InvalidateKeys[] => [
+  ['publicaciones'],
+  ['publicaciones', pubId],
+  ['publicaciones', pubId, 'productos'],
+];
+
+export function useAddProductoSemanal() {
+  return usePubMutation(
+    'addProductoSemanal',
+    ({ pubId, payload }: AddProductoHookPayload) =>
+      publicationsApi.addProductoSemanal(pubId, payload),
+    (v) => productoKeys(v.pubId),
+  );
+}
+
+export function useUpdateProductoSemanal() {
+  return usePubMutation(
+    'updateProductoSemanal',
+    ({ pubId, itemId, payload }: UpdateProductoHookPayload) =>
+      publicationsApi.updateProductoSemanal(pubId, itemId, payload),
+    (v) => productoKeys(v.pubId),
+  );
+}
+
+export function useDeleteProductoSemanal() {
+  return usePubMutation(
+    'deleteProductoSemanal',
+    ({ pubId, itemId }: DeleteProductoPayload) =>
+      publicationsApi.deleteProductoSemanal(pubId, itemId),
+    (v) => productoKeys(v.pubId),
+  );
+}
+
+export function useUploadProductoSemanalImagen() {
+  return usePubMutation(
+    'uploadProductoSemanalImagen',
+    ({ pubId, itemId, formData }: UploadImagenPayload) =>
+      publicationsApi.uploadProductoSemanalImagen(pubId, itemId, formData),
+    (v) => productoKeys(v.pubId),
+  );
+}

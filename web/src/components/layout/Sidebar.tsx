@@ -41,6 +41,7 @@ const adminNav: NavItem[] = [
     path: '/admin/mermas',
   },
   { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
+  { key: 'chat', label: 'Chat', icon: '💬', path: '/admin/chat' },
   { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
 ];
 
@@ -54,11 +55,18 @@ const roleNavMap: Record<string, NavItem[]> = {
       path: '/agricultor/productos',
     },
     {
+      key: 'publications',
+      label: 'Publicaciones',
+      icon: '📋',
+      path: '/agricultor/publicaciones',
+    },
+    {
       key: 'orders',
       label: 'Pedidos',
       icon: '📦',
       path: '/agricultor/pedidos',
     },
+    { key: 'chat', label: 'Chat', icon: '💬', path: '/agricultor/chat' },
     {
       key: 'profile',
       label: 'Mi Perfil',
@@ -69,6 +77,7 @@ const roleNavMap: Record<string, NavItem[]> = {
   vendedor: [
     { key: 'sales', label: 'Ventas', icon: '📊', path: '/vendedor/ventas' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/vendedor/pedidos' },
+    { key: 'chat', label: 'Chat', icon: '💬', path: '/vendedor/chat' },
     {
       key: 'profile',
       label: 'Mi Perfil',
@@ -78,8 +87,15 @@ const roleNavMap: Record<string, NavItem[]> = {
   ],
   cliente: [
     { key: 'home', label: 'Inicio', icon: '🏠', path: '/cliente' },
+    {
+      key: 'catalog',
+      label: 'Catálogo',
+      icon: '🛍️',
+      path: '/cliente/catalogo',
+    },
     { key: 'cart', label: 'Carrito', icon: '🛒', path: '/cliente/carrito' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/cliente/pedidos' },
+    { key: 'chat', label: 'Chat', icon: '💬', path: '/cliente/chat' },
     { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/cliente/perfil' },
   ],
 };
@@ -177,7 +193,7 @@ export function Sidebar({ role }: { role: Role }) {
           <NavLink
             key={item.key}
             to={item.path}
-            end={item.key === 'dashboard'}
+            end
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',

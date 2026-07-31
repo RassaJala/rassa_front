@@ -5,6 +5,8 @@ import { DashboardLayout } from '~/components/layout/DashboardLayout';
 import { LoginScreen } from './Login';
 import { RegisterScreen } from './Register';
 import { FarmerProducts, FarmerOrders } from './farmer';
+import { FarmerPublications } from './FarmerPublications';
+import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
 import { VendorPanelScreen } from './VendorPanelScreen';
 import { AdminDashboard } from './AdminDashboard';
@@ -19,11 +21,23 @@ import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
 import { AdminOrderDetail } from './AdminOrderDetail';
 import { BuyerHome } from './BuyerHome';
+import { BuyerCatalog } from './BuyerCatalog';
 import { BuyerCart } from './BuyerCart';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
 import { ProfilePage } from './ProfilePage';
+import { ChatListPage } from './chat/ChatListPage';
+import { ChatDetailPage } from './chat/ChatDetailPage';
+import { GroupDetailPage } from './chat/GroupDetailPage';
+import { StartChatPage } from './chat/StartChatPage';
 import { useAuth } from '../hooks/useAuth';
+
+const CHAT_ROUTE_CONFIGS = [
+  { path: 'chat', element: <ChatListPage /> },
+  { path: 'chat/nuevo', element: <StartChatPage /> },
+  { path: 'chat/:id', element: <ChatDetailPage /> },
+  { path: 'chat/:id/grupo', element: <GroupDetailPage /> },
+];
 
 function NotFound() {
   return (
@@ -82,7 +96,19 @@ export function AppRouter() {
               <Routes>
                 <Route path="productos" element={<FarmerProducts />} />
                 <Route path="pedidos" element={<FarmerOrders />} />
+                <Route path="publicaciones" element={<FarmerPublications />} />
+                <Route
+                  path="publicaciones/nueva"
+                  element={<PublicationWizard />}
+                />
+                <Route
+                  path="publicaciones/:id/editar"
+                  element={<PublicationWizard />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route
                   path="*"
                   element={<Navigate to="/agricultor/productos" replace />}
@@ -103,6 +129,9 @@ export function AppRouter() {
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route
                   path="*"
                   element={<Navigate to="/vendedor/ventas" replace />}
@@ -135,6 +164,9 @@ export function AppRouter() {
                 <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="mermas" element={<AdminMermasDashboard />} />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route path="*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </DashboardLayout>
@@ -150,10 +182,14 @@ export function AppRouter() {
             <DashboardLayout role="cliente">
               <Routes>
                 <Route index element={<BuyerHome />} />
+                <Route path="catalogo" element={<BuyerCatalog />} />
                 <Route path="carrito" element={<BuyerCart />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                {CHAT_ROUTE_CONFIGS.map((cfg) => (
+                  <Route key={cfg.path} path={cfg.path} element={cfg.element} />
+                ))}
                 <Route path="*" element={<Navigate to="/cliente" replace />} />
               </Routes>
             </DashboardLayout>

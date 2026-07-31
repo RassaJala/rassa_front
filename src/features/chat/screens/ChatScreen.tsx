@@ -142,9 +142,11 @@ export default function ChatScreen(): React.JSX.Element {
         conversacion: conversationId,
         tipo_documento: kind,
         documento: { uri: file.uri, name: file.name, type: file.type },
+        remitente: user?.id ?? 0,
+        remitente_nombre: user?.nombre ?? '',
       });
     },
-    [conversationId, sendMediaMutation],
+    [conversationId, sendMediaMutation, user],
   );
 
   const handleEndReached = useCallback(() => {

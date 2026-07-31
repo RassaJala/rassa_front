@@ -84,6 +84,8 @@ describe('useSendMessageWithMedia', () => {
                 name: 'test.jpg',
                 type: 'image/jpeg',
               },
+              remitente: 1,
+              remitente_nombre: 'Test User',
             })
           }
         >
