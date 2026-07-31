@@ -6,6 +6,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatDisplayDate } from '@/common/waste';
 import { colors } from '@/constants/colors';
 
+import type { MermaPalette } from './colors';
+
 export type PickerTarget = 'desde' | 'hasta';
 export type AgruparPor = 'mes' | 'semana';
 
@@ -22,14 +24,7 @@ interface Props {
   readonly onAgrupar: (value: AgruparPor) => void;
   readonly onApply: () => void;
   readonly onReset: () => void;
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly border: string;
-  readonly brand: string;
-  readonly bg: string;
-  readonly segBg: string;
-  readonly coral: string;
+  readonly palette: MermaPalette;
 }
 
 export function MermaFilterBar({
@@ -45,15 +40,9 @@ export function MermaFilterBar({
   onAgrupar,
   onApply,
   onReset,
-  surface,
-  fg,
-  muted,
-  border,
-  brand,
-  bg,
-  segBg,
-  coral,
+  palette,
 }: Props): React.JSX.Element {
+  const { surface, fg, muted, border, brand, bg, segBg, coral } = palette;
   return (
     <View
       style={[styles.card, { backgroundColor: surface, borderColor: border }]}
@@ -63,6 +52,7 @@ export function MermaFilterBar({
           <Text style={[styles.label, { color: muted }]}>Desde</Text>
           <Pressable
             onPress={() => onOpenDate('desde')}
+            accessibilityLabel="Fecha desde"
             style={[
               styles.dateField,
               { backgroundColor: bg, borderColor: border },
@@ -90,6 +80,7 @@ export function MermaFilterBar({
           <Text style={[styles.label, { color: muted }]}>Hasta</Text>
           <Pressable
             onPress={() => onOpenDate('hasta')}
+            accessibilityLabel="Fecha hasta"
             style={[
               styles.dateField,
               { backgroundColor: bg, borderColor: border },
@@ -119,6 +110,7 @@ export function MermaFilterBar({
           <Text style={[styles.label, { color: muted }]}>Producto</Text>
           <Pressable
             onPress={onOpenProduct}
+            accessibilityLabel="Selector de producto"
             style={[
               styles.dateField,
               { backgroundColor: bg, borderColor: border },
@@ -203,6 +195,7 @@ export function MermaFilterBar({
         {showReset ? (
           <Pressable
             onPress={onReset}
+            accessibilityLabel="Limpiar filtros"
             style={[
               styles.resetBtn,
               { borderColor: border, backgroundColor: surface },

@@ -38,15 +38,23 @@ export interface ProductOption {
 // --- Constants ---------------------------------------------------------------
 
 export const DAY_MS = 86_400_000;
-export const WEEK_MS = 7 * DAY_MS;
 export const WASTE_PAGE_SIZE = 10;
 export const WASTE_DETAIL_LIMIT = 100;
 export const WASTE_RETRY_LIMIT = 3;
 export const WASTE_STALE_TIME_MS = 5 * 60 * 1000;
 
+// Decision strings shared by the mobile and web dashboards.
+export const DECISION_DONAR = 'donar';
+export const DECISION_TIRAR = 'tirar';
+export const DECISION_COMPOSTAR = 'compostar';
+
+export type DecisionMerma =
+  typeof DECISION_DONAR | typeof DECISION_TIRAR | typeof DECISION_COMPOSTAR;
+
 // --- Date helpers ------------------------------------------------------------
 // Backend sends full ISO datetimes ("2026-07-01T00:00:00-03:00"); only the date
-// part matters. parseDate is strict YYYY-MM-DD; toLocalDate tolerates datetimes.
+// part matters. parseDate is a direct alias of toLocalDate (kept as a
+// backward-compatible name for callers that only pass strict YYYY-MM-DD).
 
 export function toLocalDate(iso: string): Date | null {
   const datePart = iso.slice(0, 10);
@@ -168,4 +176,63 @@ export function hashString(value: string): number {
     hash = (hash * 31 + value.charCodeAt(i)) | 0;
   }
   return Math.abs(hash);
+}
+
+// --- Envelope + query builder ------------------------------------------------
+
+export interface WasteEnvelope<T> {
+  ok: boolean;
+  data?: T;
+  message?: string;
+}
+
+// Unwrap the {ok, data} envelope returned by the merma endpoints. Throws when
+// ok === false or data is missing.
+export function unwrapWasteEnvelope<T>(envelope: {
+  ok: boolean;
+  data?: T;
+  message?: string;
+}): T {
+  if (envelope.ok === false || envelope.data === undefined) {
+    throw new Error(envelope.message ?? 'Error en la respuesta del servidor');
+  }
+  return envelope.data;
+}
+
+// Build the /mermas/resumen/ URL with the query params the backend expects
+// (fecha_desde, fecha_hasta, producto_id, agrupar_por).
+export function buildResumenUrl(params: ResumenParams): string {
+  const query = new URLSearchParams();
+  if (params.fecha_desde) query.set('fecha_desde', params.fecha_desde);
+  if (params.fecha_hasta) query.set('fecha_hasta', params.fecha_hasta);
+  if (params.producto_id !== undefined) {
+    query.set('producto_id', String(params.producto_id));
+  }
+  if (params.agrupar_por) query.set('agrupar_por', params.agrupar_por);
+  const qs = query.toString();
+  return qs ? `/mermas/resumen/?${qs}` : '/mermas/resumen/';
+}
+
+// --- Decision colors ----------------------------------------------------------
+// One algorithm for both apps: platform-specific color tokens are supplied via
+// the palette (hex on mobile, Tailwind classes on web).
+
+export interface DecisionPalette {
+  donar: string;
+  tirar: string;
+  compostar: string;
+  fallback: readonly string[];
+  defaultColor: string;
+}
+
+export function getDecisionColor(
+  decision: string,
+  palette: DecisionPalette,
+): string {
+  const key = decision.toLowerCase().trim();
+  if (key === DECISION_DONAR) return palette.donar;
+  if (key === DECISION_TIRAR) return palette.tirar;
+  if (key === DECISION_COMPOSTAR) return palette.compostar;
+  const idx = hashString(key) % palette.fallback.length;
+  return palette.fallback[idx] ?? palette.defaultColor;
 }

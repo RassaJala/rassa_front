@@ -70,7 +70,58 @@ describe('waste aggregations', () => {
     ]);
   });
 
-  it('extractProducts dedupes by producto_id keeping first name', () => {
+  it('groupBy handles a single record and empty input', () => {
+    expect(
+      groupBy(
+        [{ nombre: 'a', total: 7 }],
+        (x) => x.nombre,
+        (x) => x.total,
+      ),
+    ).toEqual([{ nombre: 'a', total: 7 }]);
+    expect(
+      groupBy(
+        [] as { nombre: string; total: number }[],
+        (x) => x.nombre,
+        (x) => x.total,
+      ),
+    ).toEqual([]);
+  });
+
+  it('groupBy aggregates identical keys into one entry', () => {
+    const items = [
+      { nombre: 'a', total: 2 },
+      { nombre: 'a', total: 3 },
+      { nombre: 'a', total: 1 },
+    ];
+    expect(
+      groupBy(
+        items,
+        (x) => x.nombre,
+        (x) => x.total,
+      ),
+    ).toEqual([{ nombre: 'a', total: 6 }]);
+  });
+
+  it('groupBy sums zero and negative quantities', () => {
+    const items = [
+      { nombre: 'a', total: 0 },
+      { nombre: 'a', total: -2 },
+      { nombre: 'b', total: -1 },
+    ];
+    expect(
+      groupBy(
+        items,
+        (x) => x.nombre,
+        (x) => x.total,
+      ),
+    ).toEqual([
+      { nombre: 'b', total: -1 },
+      { nombre: 'a', total: -2 },
+    ]);
+  });
+
+  it('extractProducts returns empty for an empty detail and keeps first name on duplicates', () => {
+    expect(extractProducts([])).toEqual([]);
     const detalle = [
       {
         periodo: '2026-07-01',
@@ -106,7 +157,9 @@ describe('waste aggregations', () => {
     ]);
   });
 
-  it('hashString is stable for the same input', () => {
-    expect(hashString('compostar')).toBe(hashString('compostar'));
+  it('hashString is deterministic and differs across inputs', () => {
+    expect(hashString('manzana')).toBe(835999604);
+    expect(hashString('pera')).toBe(3437284);
+    expect(hashString('manzana')).not.toBe(hashString('pera'));
   });
 });

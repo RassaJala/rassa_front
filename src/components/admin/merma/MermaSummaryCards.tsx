@@ -5,29 +5,22 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
 
+import type { MermaPalette } from './colors';
+
 interface Props {
   readonly totalGeneral: number;
   readonly totalRegistros: number;
   readonly productoMasAfectado: { nombre: string; total: number } | null;
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly border: string;
-  readonly brand: string;
-  readonly coral: string;
+  readonly palette: MermaPalette;
 }
 
 export function MermaSummaryCards({
   totalGeneral,
   totalRegistros,
   productoMasAfectado,
-  surface,
-  fg,
-  muted,
-  border,
-  brand,
-  coral,
+  palette,
 }: Props): React.JSX.Element {
+  const { surface, fg, muted, border, brand, coral } = palette;
   return (
     <View style={styles.row}>
       <View

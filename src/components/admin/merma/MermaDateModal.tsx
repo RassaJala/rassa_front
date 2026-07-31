@@ -12,16 +12,14 @@ import { getDaysInMonth, parseInitialDate, toDateString } from '@/common/waste';
 import { colors } from '@/constants/colors';
 import { MONTH_NAMES } from '@/constants/dates';
 
+import type { MermaPalette } from './colors';
+
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelectDate: (iso: string) => void;
   readonly initialDate?: string;
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly brand: string;
-  readonly segBg: string;
+  readonly palette: MermaPalette;
 }
 
 const YEARS_RANGE = 5;
@@ -31,12 +29,9 @@ export function MermaDateModal({
   onClose,
   onSelectDate,
   initialDate,
-  surface,
-  fg,
-  muted,
-  brand,
-  segBg,
+  palette,
 }: Props): React.JSX.Element | null {
+  const { surface, fg, muted, brand, segBg } = palette;
   const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
   const [selYear, setSelYear] = useState<number | null>(null);
   const [selMonth, setSelMonth] = useState<number | null>(null);
@@ -105,6 +100,7 @@ export function MermaDateModal({
       <Pressable className="flex-1 justify-end bg-black/50" onPress={onClose}>
         <Pressable
           onPress={(e) => e.stopPropagation()}
+          testID="date-modal"
           style={{
             backgroundColor: surface,
             borderTopLeftRadius: 16,

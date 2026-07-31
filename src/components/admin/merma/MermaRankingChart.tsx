@@ -1,6 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { WASTE_DETAIL_LIMIT } from '@/common/waste';
+
+import type { MermaPalette } from './colors';
 import { getDecisionColor } from './colors';
 
 export interface RankingItem {
@@ -12,12 +15,9 @@ interface Props {
   readonly isSingleProduct: boolean;
   readonly ranking: RankingItem[];
   readonly maxTotal: number;
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly border: string;
-  readonly coral: string;
+  readonly truncated: boolean;
   readonly isDark: boolean;
+  readonly palette: MermaPalette;
 }
 
 // Palette for ranked bars; module-scope so color literals are not inline styles.
@@ -42,13 +42,11 @@ export function MermaRankingChart({
   isSingleProduct,
   ranking,
   maxTotal,
-  surface,
-  fg,
-  muted,
-  border,
-  coral,
+  truncated,
   isDark,
+  palette,
 }: Props): React.JSX.Element {
+  const { surface, fg, muted, border, coral } = palette;
   return (
     <View
       style={[styles.card, { backgroundColor: surface, borderColor: border }]}
@@ -63,6 +61,11 @@ export function MermaRankingChart({
           ? 'Cantidad de unidades por cada decisión tomada'
           : 'La barra más larga = el producto que más pérdidas genera'}
       </Text>
+      {truncated ? (
+        <Text style={[styles.caption, { color: muted }]}>
+          Basado en los primeros {WASTE_DETAIL_LIMIT} registros.
+        </Text>
+      ) : null}
       {ranking.length > 0 ? (
         ranking.map((item, idx) => {
           const pct = (item.total / maxTotal) * 100;
@@ -113,6 +116,12 @@ const styles = StyleSheet.create({
   card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
   title: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
   subtitle: { fontSize: 12, fontWeight: '500', marginBottom: 14 },
+  caption: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    fontWeight: '500',
+    marginBottom: 12,
+  },
   barItem: { marginBottom: 12 },
   labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   rank: { width: 22, fontSize: 12, fontWeight: '600' },

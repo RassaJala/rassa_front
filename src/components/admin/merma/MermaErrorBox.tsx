@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { WASTE_RETRY_LIMIT } from '@/common/waste';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/store/ThemeContext';
 
@@ -11,8 +12,6 @@ interface Props {
   readonly retryCount: number;
   readonly onRetry: () => void;
 }
-
-const MAX_RETRIES = 3;
 
 export function MermaErrorBox({
   message,
@@ -30,11 +29,11 @@ export function MermaErrorBox({
     <View style={[styles.box, { backgroundColor: bg, borderColor: border }]}>
       <MaterialCommunityIcons name="alert-circle" size={22} color={text} />
       <Text style={[styles.text, { color: text }]}>
-        {retryCount >= MAX_RETRIES
+        {retryCount >= WASTE_RETRY_LIMIT
           ? 'No pudimos cargar los datos. Contactá al administrador.'
           : message}
       </Text>
-      {retryCount < MAX_RETRIES && (
+      {retryCount < WASTE_RETRY_LIMIT && (
         <Pressable onPress={onRetry}>
           <Text style={[styles.action, { color: action }]}>Reintentar</Text>
         </Pressable>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -64,9 +64,9 @@ describe('AdminMermasDashboard', () => {
   it('shows spinner on initial load', () => {
     mockFetch.mockReturnValue(new Promise(() => {})); // never resolves
 
-    const { container } = renderDashboard();
+    renderDashboard();
 
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('shows error state with retry when the fetch fails', async () => {
@@ -100,5 +100,34 @@ describe('AdminMermasDashboard', () => {
     expect(screen.getByText('Detalle de mermas')).toBeInTheDocument();
     expect(screen.getAllByText('Manzana').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Pera').length).toBeGreaterThan(0);
+  });
+
+  it('shows the stale-data banner when a refetch fails after data was loaded', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockResumen)
+      .mockRejectedValueOnce(new Error('Network error'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AdminMermasDashboard />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+
+    // A refetch of the loaded query fails; previous data is kept as placeholder.
+    await act(async () => {
+      queryClient.invalidateQueries();
+    });
+
+    expect(
+      await screen.findByText(
+        /No se pudieron cargar los datos para los filtros seleccionados/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Datos desactualizados')).toBeInTheDocument();
   });
 });

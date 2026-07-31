@@ -4,20 +4,24 @@ import { useQuery } from '@tanstack/react-query';
 import {
   extractProducts,
   formatDateInput,
+  getDecisionColor,
   groupBy,
   periodLabel,
   WASTE_DETAIL_LIMIT,
   WASTE_PAGE_SIZE,
   WASTE_RETRY_LIMIT,
   WASTE_STALE_TIME_MS,
+  type DecisionPalette,
   type MermaResumenItem,
   type MermaResumenResponse,
 } from '@/common/waste';
-import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { PageHeader } from '../components/layout/PageHeader';
+import { DetailTable } from '../components/admin/merma/DetailTable';
+import { PeriodTrendCard } from '../components/admin/merma/PeriodTrendCard';
+import { RankingBar } from '../components/admin/merma/RankingBar';
 import { fetchMermaResumen } from '../services/waste';
 
 // --- Error boundary ---
@@ -84,35 +88,23 @@ function rankColor(index: number, total: number): string {
   return 'bg-brand-green-forest/60 dark:bg-brand-green-forest/50';
 }
 
-const decisionColorMap = new Map<string, string>([
-  ['donar', 'bg-brand-green-forest'],
-  ['tirar', 'bg-brand-red-coral'],
-  ['compostar', 'bg-brand-green-olive'],
-]);
-
-const fallbackColors = [
-  'bg-brand-orange',
-  'bg-brand-magenta',
-  'bg-brand-mountain-top',
-  'bg-brand-mountain-bot',
-  'bg-brand-green-sage',
-  'bg-brand-mountain-mid',
-  'bg-brand-primary-dark',
-  'bg-brand-skin',
-];
-
-function getDecisionColor(decision: string): string {
-  const key = decision.toLowerCase().trim();
-  const mapped = decisionColorMap.get(key);
-  if (mapped) return mapped;
-
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash * 31 + key.charCodeAt(i)) | 0;
-  }
-  const idx = Math.abs(hash) % fallbackColors.length;
-  return fallbackColors[idx] ?? 'bg-gray-400';
-}
+// Tailwind class tokens for the shared decision-color algorithm (see @/common/waste).
+const decisionPalette: DecisionPalette = {
+  donar: 'bg-brand-green-forest',
+  tirar: 'bg-brand-red-coral',
+  compostar: 'bg-brand-green-olive',
+  fallback: [
+    'bg-brand-orange',
+    'bg-brand-magenta',
+    'bg-brand-mountain-top',
+    'bg-brand-mountain-bot',
+    'bg-brand-green-sage',
+    'bg-brand-mountain-mid',
+    'bg-brand-primary-dark',
+    'bg-brand-skin',
+  ],
+  defaultColor: 'bg-gray-400',
+};
 
 function findSelectedProductName(
   detalle: MermaResumenItem[],
@@ -124,11 +116,6 @@ function findSelectedProductName(
   }
   return undefined;
 }
-
-const variantMap: Record<string, 'success' | 'error' | 'warning'> = {
-  donar: 'success',
-  tirar: 'error',
-};
 
 const inputClass =
   'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-green-forest focus:ring-1 focus:ring-brand-green-forest dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100';
@@ -339,7 +326,7 @@ export function AdminMermasDashboard() {
   const [pagina, setPagina] = useState(1);
 
   // Today for date inputs max attribute (local date, avoids UTC off-by-one)
-  const today = formatDateInput(new Date());
+  const today = useMemo(() => formatDateInput(new Date()), []);
 
   // Retry limit
   const retryCountRef = useRef(0);
@@ -456,7 +443,6 @@ export function AdminMermasDashboard() {
   );
 
   // 0 means empty dataset — pagination stays hidden (checked below)
-  const mostrarPaginacion = totalPaginas > 1;
   const paginaSegura = Math.min(pagina, Math.max(totalPaginas, 1));
 
   const detallePaginado = useMemo(
@@ -498,6 +484,7 @@ export function AdminMermasDashboard() {
     resumenQuery.fetchStatus !== 'idle' &&
     !resumenQuery.data;
   const isError = resumenQuery.isError;
+  const isFetching = resumenQuery.isFetching;
   const hasFilters = Boolean(
     fechaDesde || fechaHasta || productoId !== undefined,
   );
@@ -528,16 +515,22 @@ export function AdminMermasDashboard() {
           }
           action={
             !maxedOut ? (
-              <button
-                type="button"
-                onClick={() => {
-                  retryCountRef.current += 1;
-                  resumenQuery.refetch();
-                }}
-                className="mt-3 rounded-lg bg-brand-green-forest px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-forest/90"
-              >
-                Reintentar
-              </button>
+              isFetching ? (
+                <span className="mt-3 block text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Reintentando…
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    retryCountRef.current += 1;
+                    resumenQuery.refetch();
+                  }}
+                  className="mt-3 rounded-lg bg-brand-green-forest px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-forest/90"
+                >
+                  Reintentar
+                </button>
+              )
             ) : undefined
           }
         />
@@ -559,31 +552,45 @@ export function AdminMermasDashboard() {
   }
 
   const isEmpty = resumen.detalle.length === 0;
+  const isTruncated = resumen.detalle.length >= WASTE_DETAIL_LIMIT;
+  const isStale = resumenQuery.isError;
 
   return (
     <DashboardErrorBoundary>
       <div>
         <PageHeader title="Dashboard de Mermas" />
 
+        {/* Truncation notice — API caps the detail at WASTE_DETAIL_LIMIT */}
+        {isTruncated && (
+          <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Mostrando los primeros {WASTE_DETAIL_LIMIT} registros
+          </p>
+        )}
+
         {/* Refetch failure banner — keeps the last loaded data visible */}
-        {isError && (
+        {isStale && (
           <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
             <span>
-              No se pudieron actualizar los datos. Mostrando la última
-              información cargada.
+              No se pudieron cargar los datos para los filtros seleccionados.
+              Mostrando datos de la selección anterior.
             </span>
-            {retryCountRef.current < WASTE_RETRY_LIMIT && (
-              <button
-                type="button"
-                onClick={() => {
-                  retryCountRef.current += 1;
-                  resumenQuery.refetch();
-                }}
-                className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
-              >
-                Reintentar
-              </button>
-            )}
+            {retryCountRef.current < WASTE_RETRY_LIMIT &&
+              (isFetching ? (
+                <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-300">
+                  Reintentando…
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    retryCountRef.current += 1;
+                    resumenQuery.refetch();
+                  }}
+                  className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+                >
+                  Reintentar
+                </button>
+              ))}
           </div>
         )}
 
@@ -611,7 +618,14 @@ export function AdminMermasDashboard() {
             message="No se encontraron mermas con los filtros seleccionados."
           />
         ) : (
-          <>
+          <div className={isStale ? 'opacity-70' : ''}>
+            {/* Stale badge — the shown data does not match the selected filters */}
+            {isStale && (
+              <span className="mb-4 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                Datos desactualizados
+              </span>
+            )}
+
             {/* Summary cards */}
             <SummaryCards
               totalGeneral={resumen.total_general}
@@ -632,29 +646,26 @@ export function AdminMermasDashboard() {
                     <span className="font-semibold">{selectedProductName}</span>{' '}
                     según la decisión tomada
                   </p>
+                  {isTruncated && (
+                    <p className="mb-4 text-xs italic text-gray-400 dark:text-gray-500">
+                      Basado en los primeros {WASTE_DETAIL_LIMIT} registros.
+                    </p>
+                  )}
                   {decisionBreakdown.length > 0 ? (
                     <div className="flex flex-col gap-3">
-                      {decisionBreakdown.map((item) => {
-                        const pct = (item.total / maxDecision) * 100;
-                        return (
-                          <div key={item.nombre}>
-                            <div className="mb-1 flex items-center justify-between text-sm">
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
-                                {item.nombre}
-                              </span>
-                              <span className="ml-2 font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                                {item.total} uds
-                              </span>
-                            </div>
-                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${getDecisionColor(item.nombre)}`}
-                                style={{ width: `${Math.max(pct, 2)}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {decisionBreakdown.map((item) => (
+                        <RankingBar
+                          key={item.nombre}
+                          label={item.nombre}
+                          total={item.total}
+                          maxTotal={maxDecision}
+                          barClass={getDecisionColor(
+                            item.nombre,
+                            decisionPalette,
+                          )}
+                          suffix=" uds"
+                        />
+                      ))}
                     </div>
                   ) : (
                     <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -671,32 +682,23 @@ export function AdminMermasDashboard() {
                     Comparación de pérdidas totales entre productos — la barra
                     más larga = el producto que más pérdidas genera
                   </p>
+                  {isTruncated && (
+                    <p className="mb-4 text-xs italic text-gray-400 dark:text-gray-500">
+                      Basado en los primeros {WASTE_DETAIL_LIMIT} registros.
+                    </p>
+                  )}
                   {productRanking.length > 0 ? (
                     <div className="flex flex-col gap-3">
-                      {productRanking.map((item, idx) => {
-                        const pct = (item.total / maxProductTotal) * 100;
-                        return (
-                          <div key={item.nombre}>
-                            <div className="mb-1 flex items-center justify-between text-sm">
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
-                                <span className="mr-1.5 text-xs text-gray-400">
-                                  {idx + 1}.
-                                </span>
-                                {item.nombre}
-                              </span>
-                              <span className="ml-2 font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                                {item.total}
-                              </span>
-                            </div>
-                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${rankColor(idx, productRanking.length)}`}
-                                style={{ width: `${Math.max(pct, 2)}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {productRanking.map((item, idx) => (
+                        <RankingBar
+                          key={item.nombre}
+                          label={item.nombre}
+                          total={item.total}
+                          maxTotal={maxProductTotal}
+                          barClass={rankColor(idx, productRanking.length)}
+                          rank={idx + 1}
+                        />
+                      ))}
                     </div>
                   ) : (
                     <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -707,155 +709,27 @@ export function AdminMermasDashboard() {
               )}
 
               {/* Period trend chart */}
-              <Card className="lg:col-span-2">
-                <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                  Evolución por {agruparPor === 'mes' ? 'mes' : 'semana'}
-                </h3>
-                <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-                  Cada barra = total de unidades mermadas en ese período
-                  {isSingleProduct && (
-                    <>
-                      {' '}
-                      para{' '}
-                      <span className="font-semibold">
-                        {selectedProductName}
-                      </span>
-                    </>
-                  )}
-                </p>
-                {periodData.length > 0 ? (
-                  <div className="flex h-[180px] items-end gap-1.5">
-                    {periodData.map((item) => {
-                      const pct = (item.total / maxPeriod) * 100;
-                      return (
-                        <div
-                          key={item.nombre}
-                          className="flex flex-1 flex-col items-center gap-1"
-                        >
-                          <span className="text-[11px] font-bold tabular-nums text-gray-600 dark:text-gray-400">
-                            {item.total}
-                          </span>
-                          <div
-                            className="w-full max-w-[32px] rounded-t-sm bg-brand-green-forest/80 dark:bg-brand-green-forest/70"
-                            style={{
-                              height: `${Math.max(pct, 4)}%`,
-                              minHeight: 6,
-                            }}
-                          />
-                          <span className="text-center text-[10px] font-medium uppercase tracking-tight text-gray-500 dark:text-gray-400">
-                            {item.nombre}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No hay suficientes datos para mostrar tendencia.
-                  </p>
-                )}
-              </Card>
+              <PeriodTrendCard
+                agruparPor={agruparPor}
+                data={periodData}
+                maxTotal={maxPeriod}
+                selectedProductName={selectedProductName}
+                isSingleProduct={isSingleProduct}
+                truncated={isTruncated}
+              />
             </div>
 
             {/* Detail table */}
-            <Card>
-              <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">
-                Detalle de mermas
-              </h3>
-              {resumen.detalle.length >= WASTE_DETAIL_LIMIT && (
-                <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
-                  Mostrando los primeros {WASTE_DETAIL_LIMIT} registros del
-                  detalle.
-                </p>
-              )}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left text-sm">
-                  <thead>
-                    <tr>
-                      {[
-                        'Período',
-                        'Producto',
-                        'Decisión',
-                        'Cantidad',
-                        'Registros',
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="pb-2 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detallePaginado.map((item, idx) => (
-                      <tr
-                        key={`${item.producto_id}-${item.decision_id}-${item.periodo}-${idx}`}
-                        className="border-t border-gray-100 dark:border-gray-800"
-                      >
-                        <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
-                          {periodLabel(item.periodo, agruparPor)}
-                        </td>
-                        <td className="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
-                          {item.producto_nombre}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <Badge
-                            variant={
-                              variantMap[
-                                item.decision_nombre.toLowerCase().trim()
-                              ] ?? 'warning'
-                            }
-                          >
-                            {item.decision_nombre}
-                          </Badge>
-                        </td>
-                        <td className="py-3 pr-4 font-semibold text-brand-red-coral">
-                          {item.total_cantidad}
-                        </td>
-                        <td className="py-3 text-gray-600 dark:text-gray-400">
-                          {item.total_mermas}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination — hidden when 0 or 1 pages */}
-              {mostrarPaginacion && (
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-800">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Página {paginaSegura} de {totalPaginas}
-                    {' — '}
-                    {resumen.detalle.length} registros en total
-                  </p>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      disabled={paginaSegura <= 1}
-                      onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-                    >
-                      Anterior
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={paginaSegura >= totalPaginas}
-                      onClick={() =>
-                        setPagina((p) => Math.min(totalPaginas, p + 1))
-                      }
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </>
+            <DetailTable
+              rows={detallePaginado}
+              detailLength={resumen.detalle.length}
+              agruparPor={agruparPor}
+              totalPaginas={totalPaginas}
+              paginaSegura={paginaSegura}
+              onPrev={() => setPagina((p) => Math.max(1, p - 1))}
+              onNext={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+            />
+          </div>
         )}
       </div>
     </DashboardErrorBoundary>

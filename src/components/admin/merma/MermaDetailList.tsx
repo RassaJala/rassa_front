@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { periodLabel, WASTE_DETAIL_LIMIT } from '@/common/waste';
 import type { MermaResumenItem } from '@/common/waste';
 
+import type { MermaPalette } from './colors';
 import { getDecisionColor } from './colors';
 
 interface Props {
@@ -16,11 +17,7 @@ interface Props {
   readonly paginaSegura: number;
   readonly onPrev: () => void;
   readonly onNext: () => void;
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly border: string;
-  readonly coral: string;
+  readonly palette: MermaPalette;
 }
 
 export function MermaDetailList({
@@ -31,12 +28,9 @@ export function MermaDetailList({
   paginaSegura,
   onPrev,
   onNext,
-  surface,
-  fg,
-  muted,
-  border,
-  coral,
+  palette,
 }: Props): React.JSX.Element {
+  const { surface, fg, muted, border, coral } = palette;
   return (
     <View
       style={[styles.card, { backgroundColor: surface, borderColor: border }]}
@@ -91,6 +85,7 @@ export function MermaDetailList({
             <Pressable
               disabled={paginaSegura <= 1}
               onPress={onPrev}
+              accessibilityLabel="Página anterior"
               style={[
                 styles.pageBtn,
                 {
@@ -109,6 +104,7 @@ export function MermaDetailList({
             <Pressable
               disabled={paginaSegura >= totalPaginas}
               onPress={onNext}
+              accessibilityLabel="Página siguiente"
               style={[
                 styles.pageBtn,
                 {

@@ -23,9 +23,11 @@ import {
   groupBy,
   parseDate,
   periodLabel,
+  WASTE_DETAIL_LIMIT,
   WASTE_PAGE_SIZE,
 } from '@/common/waste';
-import type { MermaResumenResponse } from '@/common/waste';
+import type { MermaResumenResponse, ResumenParams } from '@/common/waste';
+import type { MermaPalette } from '@/components/admin/merma/colors';
 import { MermaDateModal } from '@/components/admin/merma/MermaDateModal';
 import { MermaDetailList } from '@/components/admin/merma/MermaDetailList';
 import { MermaErrorBox } from '@/components/admin/merma/MermaErrorBox';
@@ -55,6 +57,16 @@ interface Props {
 
 // --- Component ---------------------------------------------------------------
 
+function fetchErrorMessage(e: unknown): string {
+  if (axios.isAxiosError(e)) {
+    const status = e.response?.status;
+    return status !== undefined && status < 500
+      ? 'No se pudieron cargar los datos. Revisá los filtros y probá de nuevo.'
+      : 'Error al cargar los datos.';
+  }
+  return 'Error de conexión. Verificá tu conexión e intentá de nuevo.';
+}
+
 export default function MermaResumenScreen({
   navigation,
 }: Props): React.JSX.Element {
@@ -63,6 +75,17 @@ export default function MermaResumenScreen({
   const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const coral = colors.brandRedCoral;
   const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
+
+  const palette: MermaPalette = {
+    surface,
+    fg,
+    muted,
+    border,
+    brand,
+    bg,
+    segBg,
+    coral,
+  };
 
   // Date picker state
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
@@ -104,10 +127,10 @@ export default function MermaResumenScreen({
     setLoading(true);
     setError(null);
     try {
-      const params: Record<string, string> = { agrupar_por: agruparPor };
+      const params: ResumenParams = { agrupar_por: agruparPor };
       if (appliedDesde) params.fecha_desde = appliedDesde;
       if (appliedHasta) params.fecha_hasta = appliedHasta;
-      if (productoId !== undefined) params.producto_id = String(productoId);
+      if (productoId !== undefined) params.producto_id = productoId;
       const result = await fetchMermaResumen(params);
       if (id !== fetchRef.current) return; // stale, discard
       retryCountRef.current = 0;
@@ -116,17 +139,8 @@ export default function MermaResumenScreen({
     } catch (e) {
       if (id !== fetchRef.current) return;
       retryCountRef.current += 1;
-      console.error(e);
-      if (axios.isAxiosError(e)) {
-        const status = e.response?.status;
-        setError(
-          status !== undefined && status < 500
-            ? 'No se pudieron cargar los datos. Revisá los filtros y probá de nuevo.'
-            : 'Error al cargar los datos.',
-        );
-      } else {
-        setError('Error de conexión. Verificá tu conexión e intentá de nuevo.');
-      }
+      console.error(e instanceof Error ? e.message : e);
+      setError(fetchErrorMessage(e));
     } finally {
       if (id === fetchRef.current) setLoading(false);
     }
@@ -139,6 +153,7 @@ export default function MermaResumenScreen({
 
   // Handlers
   const handleApply = () => {
+    if (isDateRangeInvalid) return;
     setAppliedDesde(draftDesde);
     setAppliedHasta(draftHasta);
   };
@@ -225,6 +240,8 @@ export default function MermaResumenScreen({
   );
 
   const isEmpty = detalle.length === 0 && !loading;
+  const isTruncated = detalle.length >= WASTE_DETAIL_LIMIT;
+  const isRetrying = loading && data !== null && retryCountRef.current > 0;
   const showReset =
     appliedDesde !== '' ||
     appliedHasta !== '' ||
@@ -267,6 +284,12 @@ export default function MermaResumenScreen({
               <View style={{ width: 40 }} />
             </View>
 
+            {isTruncated ? (
+              <Text style={[styles.truncationNotice, { color: muted }]}>
+                Mostrando los primeros {WASTE_DETAIL_LIMIT} registros
+              </Text>
+            ) : null}
+
             {/* ═══ Filters ═══ */}
             <MermaFilterBar
               draftDesde={draftDesde}
@@ -281,14 +304,7 @@ export default function MermaResumenScreen({
               onAgrupar={setAgruparPor}
               onApply={handleApply}
               onReset={handleReset}
-              surface={surface}
-              fg={fg}
-              muted={muted}
-              border={border}
-              brand={brand}
-              bg={bg}
-              segBg={segBg}
-              coral={coral}
+              palette={palette}
             />
 
             {/* ═══ Error (initial load or refetch failure) ═══ */}
@@ -299,6 +315,16 @@ export default function MermaResumenScreen({
                 onRetry={() => void fetchData()}
               />
             )}
+
+            {/* ═══ Retry feedback (refetch after a previous failure) ═══ */}
+            {isRetrying ? (
+              <View style={styles.retryingBox}>
+                <ActivityIndicator size="small" color={brand} />
+                <Text style={[styles.retryingText, { color: muted }]}>
+                  Reintentando…
+                </Text>
+              </View>
+            ) : null}
 
             {/* ═══ Loading (only when there is nothing to show yet) ═══ */}
             {loading && data === null ? (
@@ -354,35 +380,24 @@ export default function MermaResumenScreen({
                       totalGeneral={data.total_general}
                       productoMasAfectado={data.producto_mas_afectado}
                       totalRegistros={totalRegistros}
-                      surface={surface}
-                      fg={fg}
-                      muted={muted}
-                      border={border}
-                      brand={brand}
-                      coral={coral}
+                      palette={palette}
                     />
 
                     <MermaRankingChart
                       isSingleProduct={isSingleProduct}
                       ranking={productRanking}
                       maxTotal={maxProductTotal}
-                      surface={surface}
-                      fg={fg}
-                      muted={muted}
-                      border={border}
-                      coral={coral}
+                      truncated={isTruncated}
                       isDark={isDark}
+                      palette={palette}
                     />
 
                     <MermaTrendChart
                       data={periodData}
                       maxTotal={maxPeriod}
                       agruparPor={agruparPor}
-                      surface={surface}
-                      fg={fg}
-                      muted={muted}
-                      border={border}
-                      brand={brand}
+                      truncated={isTruncated}
+                      palette={palette}
                     />
 
                     <MermaDetailList
@@ -399,11 +414,7 @@ export default function MermaResumenScreen({
                         setPagina((p) => Math.min(totalPaginas, p + 1));
                         scrollTop();
                       }}
-                      surface={surface}
-                      fg={fg}
-                      muted={muted}
-                      border={border}
-                      coral={coral}
+                      palette={palette}
                     />
                   </>
                 )}
@@ -425,11 +436,7 @@ export default function MermaResumenScreen({
             setPickerTarget(null);
           }}
           initialDate={pickerTarget === 'desde' ? draftDesde : draftHasta}
-          surface={surface}
-          fg={fg}
-          muted={muted}
-          brand={brand}
-          segBg={segBg}
+          palette={palette}
         />
 
         {/* ═══ Product picker modal ═══ */}
@@ -442,11 +449,7 @@ export default function MermaResumenScreen({
           }}
           selectedId={productoId}
           products={products}
-          surface={surface}
-          fg={fg}
-          muted={muted}
-          brand={brand}
-          bg={bg}
+          palette={palette}
         />
       </View>
     </ErrorBoundary>
@@ -465,6 +468,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
   },
+  truncationNotice: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  retryingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  retryingText: { fontSize: 13, fontWeight: '600' },
   backBtn: {
     width: 40,
     height: 40,

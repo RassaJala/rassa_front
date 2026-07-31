@@ -12,17 +12,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
 
+import type { MermaPalette } from './colors';
+
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelect: (id: number | undefined) => void;
   readonly selectedId: number | undefined;
   readonly products: { id: number; nombre: string }[];
-  readonly surface: string;
-  readonly fg: string;
-  readonly muted: string;
-  readonly brand: string;
-  readonly bg: string;
+  readonly palette: MermaPalette;
 }
 
 export function MermaProductPickerModal({
@@ -31,12 +29,9 @@ export function MermaProductPickerModal({
   onSelect,
   selectedId,
   products,
-  surface,
-  fg,
-  muted,
-  brand,
-  bg,
+  palette,
 }: Props): React.JSX.Element {
+  const { surface, fg, muted, brand, bg } = palette;
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -67,6 +62,7 @@ export function MermaProductPickerModal({
       >
         <Pressable
           onPress={() => {}}
+          testID="product-picker-modal"
           style={{
             backgroundColor: surface,
             borderRadius: 16,
