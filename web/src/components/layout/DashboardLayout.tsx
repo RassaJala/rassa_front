@@ -26,7 +26,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         }}
       >
         <Topbar role={role} />
-        <main style={{ flex: 1, padding: '28px 32px 40px', overflowY: 'auto', position: 'relative' }}>
+        <main
+          style={{
+            flex: 1,
+            padding: '28px 32px 40px',
+            overflowY: 'auto',
+            position: 'relative',
+          }}
+        >
           {children}
         </main>
       </div>
