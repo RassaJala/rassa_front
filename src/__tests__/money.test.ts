@@ -1,4 +1,9 @@
-import { formatMoney, parseMoney } from '@/utils/money';
+import {
+  computeTotals,
+  formatMoney,
+  IVA_RATE,
+  parseMoney,
+} from '@/utils/money';
 
 describe('formatMoney', () => {
   it('formats valid numbers with two decimals', () => {
@@ -34,5 +39,33 @@ describe('parseMoney', () => {
     expect(parseMoney(null)).toBe(0);
     expect(parseMoney('abc')).toBe(0);
     expect(parseMoney(Infinity)).toBe(0);
+  });
+});
+
+describe('computeTotals', () => {
+  it('calcula subtotal, IVA (21%) y total sobre los items', () => {
+    const totals = computeTotals([
+      { precio: 2.5, cantidad: 2 },
+      { precio: 1, cantidad: 3 },
+    ]);
+
+    expect(totals.subtotal).toBe(8);
+    expect(totals.iva).toBeCloseTo(1.68, 5);
+    expect(totals.total).toBeCloseTo(9.68, 5);
+  });
+
+  it('devuelve ceros con una lista vacía', () => {
+    expect(computeTotals([])).toEqual({ subtotal: 0, iva: 0, total: 0 });
+  });
+
+  it('respeta precios no enteros y cantidades fraccionarias', () => {
+    const totals = computeTotals([{ precio: 0.33, cantidad: 3 }]);
+
+    expect(totals.subtotal).toBeCloseTo(0.99, 5);
+    expect(totals.total).toBeCloseTo(0.99 * (1 + IVA_RATE), 5);
+  });
+
+  it('expone IVA_RATE como única fuente de la tasa', () => {
+    expect(IVA_RATE).toBe(0.21);
   });
 });

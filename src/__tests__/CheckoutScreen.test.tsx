@@ -1,13 +1,17 @@
 import React from 'react';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import { IN_FLIGHT_ORDER_KEY } from '@/services/checkoutPersistence';
+import type { InFlightOrderRecord } from '@/services/checkoutPersistence';
 import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import {
   createOrder,
   findMatchingOrder,
+  findOrderByRecord,
   InvalidOrderEnvelopeError,
 } from '@/services/orders';
 import type { Pedido } from '@/services/orders';
@@ -62,6 +66,7 @@ jest.mock('@/services/orders', () => {
   return {
     createOrder: jest.fn(),
     findMatchingOrder: jest.fn().mockResolvedValue(null),
+    findOrderByRecord: jest.fn().mockResolvedValue(null),
     InvalidOrderEnvelopeError,
   };
 });
@@ -69,6 +74,18 @@ jest.mock('@/services/orders', () => {
 const mockCreateOrder = createOrder as jest.MockedFunction<typeof createOrder>;
 const mockFindMatchingOrder = findMatchingOrder as jest.MockedFunction<
   typeof findMatchingOrder
+>;
+const mockFindOrderByRecord = findOrderByRecord as jest.MockedFunction<
+  typeof findOrderByRecord
+>;
+const mockStorageGetItem = AsyncStorage.getItem as jest.MockedFunction<
+  typeof AsyncStorage.getItem
+>;
+const mockStorageSetItem = AsyncStorage.setItem as jest.MockedFunction<
+  typeof AsyncStorage.setItem
+>;
+const mockStorageRemoveItem = AsyncStorage.removeItem as jest.MockedFunction<
+  typeof AsyncStorage.removeItem
 >;
 
 const mockItem = {
@@ -104,6 +121,24 @@ const mockPedido: Pedido = {
   creado_en: '2026-07-30T12:00:00Z',
 };
 
+// Snapshot of a checkout attempt interrupted between a successful POST and
+// clearCart (app killed): the record is what a later mount must reconcile.
+const inFlightRecord: InFlightOrderRecord = {
+  idempotencyKey: 'checkout-testkey-1',
+  payload: { items: [{ id_producto_semanal: 1, cantidad: 2 }] },
+  productNames: ['Tomate'],
+  total: 5,
+  createdAt: '2026-07-30T12:00:00Z',
+};
+
+function seedInFlightRecord(): void {
+  mockStorageGetItem.mockImplementation((key) =>
+    key === IN_FLIGHT_ORDER_KEY
+      ? Promise.resolve(JSON.stringify(inFlightRecord))
+      : Promise.resolve(null),
+  );
+}
+
 function renderScreen() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -121,6 +156,10 @@ function renderScreen() {
 beforeEach(() => {
   jest.clearAllMocks();
   mockFindMatchingOrder.mockResolvedValue(null);
+  mockFindOrderByRecord.mockResolvedValue(null);
+  // clearAllMocks keeps implementations; reset the storage reads so no test
+  // leaks an in-flight record into the next one.
+  mockStorageGetItem.mockImplementation(() => Promise.resolve(null));
   useCartStore.setState({ items: [] });
 });
 
@@ -183,6 +222,9 @@ describe('CheckoutScreen', () => {
     mockCreateOrder.mockResolvedValue(mockPedido);
 
     const { getByTestId } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -193,9 +235,29 @@ describe('CheckoutScreen', () => {
             { id_producto_semanal: 2, cantidad: 3 },
           ],
         },
-        expect.anything(),
+        // Client-side idempotency key passed to createOrder.
+        expect.any(String),
       );
     });
+
+    // The in-flight record is persisted BEFORE the POST: the setItem call
+    // order must precede the createOrder call.
+    const setCallIndex = mockStorageSetItem.mock.calls.findIndex(
+      ([key]) => key === IN_FLIGHT_ORDER_KEY,
+    );
+    expect(setCallIndex).toBeGreaterThanOrEqual(0);
+    expect(
+      mockStorageSetItem.mock.invocationCallOrder[setCallIndex],
+    ).toBeLessThan(mockCreateOrder.mock.invocationCallOrder[0] ?? 0);
+
+    // The persisted snapshot carries the same totals the render shows: both
+    // sides derive from the single computeTotals source of truth.
+    expect(mockStorageSetItem.mock.calls[setCallIndex]?.[1]).toContain(
+      '"total":9.68',
+    );
+    expect(mockStorageSetItem.mock.calls[setCallIndex]?.[1]).toContain(
+      '"payload":{"items":[{"id_producto_semanal":1,"cantidad":2},{"id_producto_semanal":2,"cantidad":3}]}',
+    );
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('OrderSuccess', {
@@ -213,6 +275,8 @@ describe('CheckoutScreen', () => {
       }),
     );
     expect(useCartStore.getState().items).toHaveLength(0);
+    // Confirmed success removes the in-flight record.
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
   });
 
   it('muestra el error del backend y conserva el carrito sin navegar', async () => {
@@ -229,6 +293,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -259,6 +326,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -288,6 +358,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText, queryByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -313,6 +386,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText, queryByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -338,6 +414,9 @@ describe('CheckoutScreen', () => {
     );
 
     const { getByTestId } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     // El pedido sigue en vuelo: dejar que el estado pending se commitee
@@ -363,6 +442,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -395,6 +477,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, queryByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -438,6 +523,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -452,6 +540,13 @@ describe('CheckoutScreen', () => {
     expect(useCartStore.getState().items).toHaveLength(1);
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
+    // The in-flight record is KEPT on ambiguous failures: the server may still
+    // commit the order, and the next mount reconciles it again.
+    expect(mockStorageSetItem).toHaveBeenCalledWith(
+      IN_FLIGHT_ORDER_KEY,
+      expect.any(String),
+    );
+    expect(mockStorageRemoveItem).not.toHaveBeenCalled();
   });
 
   it('reconcilia: si el listado de pedidos falla, muestra el mensaje ambiguo sin romper el flujo', async () => {
@@ -464,6 +559,9 @@ describe('CheckoutScreen', () => {
     mockFindMatchingOrder.mockRejectedValue(new Error('listado falló'));
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -490,6 +588,9 @@ describe('CheckoutScreen', () => {
     );
 
     const { getByTestId } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     const button = getByTestId('confirm-order-btn');
 
     // Both presses in the same act: no re-render happens in between, so
@@ -525,6 +626,9 @@ describe('CheckoutScreen', () => {
     mockFindMatchingOrder.mockResolvedValue(null);
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -557,6 +661,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, queryByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -585,6 +692,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -605,6 +715,9 @@ describe('CheckoutScreen', () => {
     mockFindMatchingOrder.mockResolvedValue(null);
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -632,6 +745,9 @@ describe('CheckoutScreen', () => {
     mockFindMatchingOrder.mockResolvedValue(null);
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     await waitFor(() => {
@@ -657,6 +773,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     expect(
@@ -675,6 +794,9 @@ describe('CheckoutScreen', () => {
     });
 
     const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
     fireEvent.press(getByTestId('confirm-order-btn'));
 
     expect(
@@ -683,6 +805,209 @@ describe('CheckoutScreen', () => {
       ),
     ).toBeTruthy();
     expect(mockCreateOrder).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('R4-005: tras un kill de app con pedido existente, reconcilia el registro en vuelo y navega al éxito sin re-POST', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    seedInFlightRecord();
+    mockFindOrderByRecord.mockResolvedValue({
+      id_pedido: 45,
+      cliente_nombre: 'Ana Ramírez',
+      vendedor_nombre: null,
+      total: '5.00',
+      estado_actual: 'pendiente',
+      creado_en: '2026-07-30T12:00:00Z',
+    });
+
+    renderScreen();
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('OrderSuccess', {
+        orderId: 45,
+        total: '5.00',
+        estado: 'pendiente',
+      });
+    });
+
+    // The interrupted order is recovered as success: no duplicate POST, cart
+    // cleared, record removed.
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+    expect(mockFindOrderByRecord).toHaveBeenCalledWith({
+      payload: inFlightRecord.payload,
+      productNames: inFlightRecord.productNames,
+      total: inFlightRecord.total,
+    });
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'checkout',
+        data: expect.objectContaining({ orderId: 45, reconciled: true }),
+      }),
+    );
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+    expect(useCartStore.getState().items).toHaveLength(0);
+  });
+
+  it('JD-B-001: sin pedido coincidente muestra la advertencia y conserva el registro hasta un intento nuevo', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    seedInFlightRecord();
+    mockFindOrderByRecord.mockResolvedValue(null);
+
+    const { getByTestId, getByText } = renderScreen();
+
+    // A possibly-committed record is never silently discarded: the warning
+    // asks the user to check Mis Pedidos before re-submitting.
+    await waitFor(() => {
+      expect(
+        getByText(
+          'Es posible que tu pedido anterior ya se haya creado. Revisá Mis Pedidos antes de confirmar de nuevo.',
+        ),
+      ).toBeTruthy();
+    });
+
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+    // The stale record is kept (not discarded): it is only overwritten when a
+    // fresh attempt starts.
+    expect(mockStorageRemoveItem).not.toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+    expect(useCartStore.getState().items).toHaveLength(1);
+
+    // A fresh POST is still allowed: the new attempt overwrites the record.
+    mockCreateOrder.mockResolvedValue(mockPedido);
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    await waitFor(() => {
+      expect(mockCreateOrder).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('JD-A-001: bloquea Confirmar mientras el reconcile del mount está pendiente y no duplica el pedido', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    seedInFlightRecord();
+
+    // The mount reconcile's match call stays pending: the race window between
+    // the async read + match and a fresh confirm tap.
+    let resolveReconcile!: (
+      value: Awaited<ReturnType<typeof findOrderByRecord>>,
+    ) => void;
+    mockFindOrderByRecord.mockReturnValue(
+      new Promise((resolve) => {
+        resolveReconcile = resolve;
+      }),
+    );
+
+    const { getByTestId } = renderScreen();
+
+    // The reconcile is pending (holds the in-flight guard): a confirm tap must
+    // be blocked, not start a fresh POST that the reconcile could clobber.
+    fireEvent.press(getByTestId('confirm-order-btn'));
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+
+    // The reconcile settles with a match: it recovers the interrupted order as
+    // success. No fresh POST ever fired, so no duplicate-order path exists.
+    await act(async () => {
+      resolveReconcile({
+        id_pedido: 45,
+        cliente_nombre: 'Ana Ramírez',
+        vendedor_nombre: null,
+        total: '5.00',
+        estado_actual: 'pendiente',
+        creado_en: '2026-07-30T12:00:00Z',
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('OrderSuccess', {
+        orderId: 45,
+        total: '5.00',
+        estado: 'pendiente',
+      });
+    });
+
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+    expect(useCartStore.getState().items).toHaveLength(0);
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+  });
+
+  it('JD-A-001: el reconcile sin match no borra el registro de un intento nuevo mientras está pendiente', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    seedInFlightRecord();
+
+    let resolveReconcile!: (
+      value: Awaited<ReturnType<typeof findOrderByRecord>>,
+    ) => void;
+    mockFindOrderByRecord.mockReturnValue(
+      new Promise((resolve) => {
+        resolveReconcile = resolve;
+      }),
+    );
+
+    const { getByTestId, getByText } = renderScreen();
+
+    // Reconcile pending: confirm is blocked, so no fresh record exists yet.
+    fireEvent.press(getByTestId('confirm-order-btn'));
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+    expect(mockStorageSetItem).not.toHaveBeenCalledWith(
+      IN_FLIGHT_ORDER_KEY,
+      expect.any(String),
+    );
+
+    // Reconcile settles with no match: the possibly-committed record is KEPT
+    // and a warning is surfaced instead of a silent discard.
+    await act(async () => {
+      resolveReconcile(null);
+    });
+
+    await waitFor(() => {
+      expect(
+        getByText(
+          'Es posible que tu pedido anterior ya se haya creado. Revisá Mis Pedidos antes de confirmar de nuevo.',
+        ),
+      ).toBeTruthy();
+    });
+    expect(mockStorageRemoveItem).not.toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+
+    // A fresh attempt is still allowed and overwrites the kept record.
+    mockCreateOrder.mockResolvedValue(mockPedido);
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    await waitFor(() => {
+      expect(mockCreateOrder).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('R4-005: ante un rechazo definitivo (4xx), descarta el registro en vuelo y conserva el carrito', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    mockCreateOrder.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          detail:
+            "Stock insuficiente para 'Tomate'. Disponible: 2, solicitado: 5.",
+        },
+      },
+    });
+
+    const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    await waitFor(() => {
+      expect(
+        getByText(
+          "Stock insuficiente para 'Tomate'. Disponible: 2, solicitado: 5.",
+        ),
+      ).toBeTruthy();
+    });
+
+    // The 4xx is a definitive rejection: the server never committed the order,
+    // so the stale record is removed and the cart is kept for a retry.
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+    expect(useCartStore.getState().items).toHaveLength(1);
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });

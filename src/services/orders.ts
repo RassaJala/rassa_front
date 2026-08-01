@@ -1,4 +1,10 @@
-import type { ApiResponse, Order, OrderItem, PedidoEstado } from '@/types';
+import type {
+  ApiResponse,
+  Order,
+  OrderDetail,
+  OrderItem,
+  PedidoEstado,
+} from '@/types';
 
 import api from './api';
 
@@ -50,10 +56,18 @@ export class InvalidOrderEnvelopeError extends Error {
 
 export async function createOrder(
   payload: CreateOrderPayload,
+  idempotencyKey?: string,
 ): Promise<Pedido> {
   // Backend envuelve la respuesta: { ok, message, data: Pedido }
-  const { data } = await api.post<ApiResponse<Pedido>>('/pedidos/', payload);
-  const order = data?.data;
+  // The Idempotency-Key header is best-effort: servers that ignore unknown
+  // headers are unaffected. The client-side in-flight record is the real
+  // duplicate-order safety net, so this header is never relied upon.
+  const response = idempotencyKey
+    ? await api.post<ApiResponse<Pedido>>('/pedidos/', payload, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      })
+    : await api.post<ApiResponse<Pedido>>('/pedidos/', payload);
+  const order = response.data?.data;
   if (!order || typeof order.id_pedido !== 'number') {
     throw new InvalidOrderEnvelopeError();
   }
@@ -107,6 +121,73 @@ export async function findMatchingOrder(
   }
 
   return null;
+}
+
+/**
+ * Input for the mount-time reconciliation matcher. Grouped structurally (not
+ * importing checkoutPersistence: services must not depend on sibling services)
+ * so the persisted in-flight record can constrain the match.
+ */
+export interface OrderRecordMatchInput {
+  readonly payload: CreateOrderPayload;
+  readonly productNames: string[];
+  readonly total: number;
+}
+
+/**
+ * Mount-time reconciliation after an app kill: recovers a stale in-flight
+ * record whose POST already committed server-side. Unlike findMatchingOrder,
+ * this does NOT apply the 60s recency window — the persisted record itself
+ * constrains the match (exact item names + quantities from the record payload
+ * against the candidate order's detail items, plus total ±epsilon and
+ * estado_actual === 'pendiente'), so an order created minutes or hours ago is
+ * still matchable when the record exists. Candidates are narrowed by the list
+ * (pendiente + total), then each candidate's detail is fetched to verify the
+ * item composition before accepting the match.
+ */
+export async function findOrderByRecord(
+  input: OrderRecordMatchInput,
+): Promise<Order | null> {
+  const { payload, total } = input;
+  // An empty payload never creates an order server-side.
+  if (payload.items.length === 0) {
+    return null;
+  }
+
+  const response = await api.get<{ results?: OrderListItem[] }>('/pedidos/');
+
+  for (const candidate of response.data.results ?? []) {
+    if (candidate.estado_actual !== 'pendiente') continue;
+    if (!totalsMatch(candidate.total, total)) continue;
+    const detail = await api.get<OrderDetail>(
+      `/pedidos/${candidate.id_pedido}/`,
+    );
+    if (itemsMatchRecord(detail.data.detalles, input)) {
+      return toOrder(candidate);
+    }
+  }
+
+  return null;
+}
+
+function itemsMatchRecord(
+  detalles: OrderItem[],
+  input: OrderRecordMatchInput,
+): boolean {
+  const { payload, productNames } = input;
+  if (detalles.length !== payload.items.length) return false;
+  if (detalles.length !== productNames.length) return false;
+
+  // The backend creates detalles in payload order, which equals the cart
+  // order, but compare as sorted multisets so ordering differences never
+  // produce a false negative.
+  const actual = detalles
+    .map((d) => `${d.nombre_producto.trim()}|${d.cantidad}`)
+    .sort();
+  const expected = payload.items
+    .map((item, i) => `${(productNames[i] ?? '').trim()}|${item.cantidad}`)
+    .sort();
+  return actual.every((key, i) => key === expected[i]);
 }
 
 function isRecentPendiente(candidate: OrderListItem): boolean {

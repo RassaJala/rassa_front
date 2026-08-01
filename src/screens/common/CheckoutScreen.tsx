@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,8 +19,15 @@ import EmptyCart from '@/components/EmptyCart';
 import FormErrorBanner from '@/components/FormErrorBanner';
 import { colors, themeColors } from '@/constants/colors';
 import {
+  clearInFlightOrder,
+  createIdempotencyKey,
+  getInFlightOrder,
+  saveInFlightOrder,
+} from '@/services/checkoutPersistence';
+import {
   createOrder,
   findMatchingOrder,
+  findOrderByRecord,
   InvalidOrderEnvelopeError,
 } from '@/services/orders';
 import type { CreateOrderPayload } from '@/services/orders';
@@ -30,17 +37,30 @@ import type { CartItem } from '@/store/cartStore';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
 import { parseApiError } from '@/utils/apiErrors';
-import { formatMoney } from '@/utils/money';
+import { computeTotals, formatMoney, IVA_RATE } from '@/utils/money';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
-const IVA_RATE = 0.21;
+// A client-generated key identifies this checkout attempt end-to-end. It is
+// sent as an Idempotency-Key header (best-effort) and persisted in the
+// in-flight record used to reconcile an app kill between POST and clearCart.
+interface OrderAttempt {
+  payload: CreateOrderPayload;
+  idempotencyKey: string;
+}
+
 const IVA_LABEL = `IVA (${Math.round(IVA_RATE * 100)}%)`;
 const ORDER_ERROR_FALLBACK = 'Error al procesar el pedido. Intente de nuevo.';
 const CHECKOUT_AMBIGUOUS_ERROR =
   'No pudimos confirmar si tu pedido se creó. Revisá Mis Pedidos antes de intentar de nuevo.';
 const CART_INVALID_ERROR =
   'El carrito contiene productos con cantidades inválidas. Revisá el carrito e intentá de nuevo.';
+// Shown when the mount reconcile finds no matching order but the persisted
+// in-flight record may still correspond to a committed order (e.g. the record
+// predates the fuzzy 60s match window). The record is kept until the user
+// acknowledges or a fresh attempt overwrites it.
+const ORDER_MAY_EXIST_WARNING =
+  'Es posible que tu pedido anterior ya se haya creado. Revisá Mis Pedidos antes de confirmar de nuevo.';
 
 function extractCheckoutError(error: unknown): string {
   return parseApiError(error, ORDER_ERROR_FALLBACK);
@@ -137,14 +157,94 @@ export default function CheckoutScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const items = useCartStore((s) => s.items);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Set when the mount reconcile found no matching order but kept the
+  // possibly-committed in-flight record, asking the user to check Mis Pedidos
+  // before re-submitting (JD-B-001).
+  const [reconcileWarning, setReconcileWarning] = useState<string | null>(null);
   // Same-tick double-submit guard: `isPending` only updates on re-render, so
   // two taps in the same frame could both pass the render-state check. A ref
   // is set synchronously before the POST starts and cleared in `finally`.
   const inFlightRef = useRef(false);
+  // Runs once per mount: an app kill between a successful POST and clearCart
+  // leaves an in-flight record that must be reconciled before the user can
+  // place a fresh order.
+  const reconciledOnMountRef = useRef(false);
 
   const orderMutation = useMutation({
-    mutationFn: createOrder,
+    mutationFn: (attempt: OrderAttempt) =>
+      createOrder(attempt.payload, attempt.idempotencyKey),
   });
+
+  useEffect(() => {
+    if (reconciledOnMountRef.current) {
+      return;
+    }
+    reconciledOnMountRef.current = true;
+
+    let cancelled = false;
+    // Mutual exclusion with handleConfirm (JD-A-001): the mount reconcile
+    // reads and clears the same in-flight record the submit path manages, so
+    // a confirm tap while the reconcile's async read + match is still pending
+    // must be blocked. The submit path guards on inFlightRef, so the reconcile
+    // holds the same guard until it settles.
+    inFlightRef.current = true;
+
+    void (async () => {
+      try {
+        const record = await getInFlightOrder();
+        if (cancelled || record === null) {
+          return;
+        }
+        try {
+          const existing = await findOrderByRecord({
+            payload: record.payload,
+            productNames: record.productNames,
+            total: record.total,
+          });
+          if (cancelled) {
+            return;
+          }
+          if (existing === null) {
+            // No match server-side, but the record may still correspond to a
+            // committed order (e.g. created >60s ago and thus outside the
+            // fuzzy match window, or the list is paginated). Never silently
+            // discard a possibly-committed record: warn the user and keep it
+            // until a fresh attempt overwrites it (JD-B-001).
+            setReconcileWarning(ORDER_MAY_EXIST_WARNING);
+            return;
+          }
+          // The order WAS created before the kill: recover the success state
+          // instead of letting the user re-submit and duplicate the order.
+          Sentry.addBreadcrumb({
+            category: 'checkout',
+            message: 'Pedido en vuelo reconciliado tras interrupción',
+            level: 'info',
+            data: {
+              orderId: existing.id_pedido,
+              reconciled: true,
+              stale: true,
+            },
+          });
+          useCartStore.getState().clearCart();
+          await clearInFlightOrder();
+          navigation.replace('OrderSuccess', {
+            orderId: existing.id_pedido,
+            total: existing.total,
+            estado: existing.estado_actual,
+          });
+        } catch {
+          // Reconciliation failed (offline, list error): keep the record so a
+          // later mount can retry instead of risking a duplicate order.
+        }
+      } finally {
+        inFlightRef.current = false;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigation]);
 
   const handleConfirm = useCallback(async () => {
     if (inFlightRef.current || orderMutation.isPending) {
@@ -163,6 +263,9 @@ export default function CheckoutScreen(): React.JSX.Element {
     inFlightRef.current = true;
 
     setErrorMessage(null);
+    // A fresh attempt starts now: it overwrites the in-flight record, so any
+    // prior "may already have been created" warning no longer applies.
+    setReconcileWarning(null);
 
     const payload: CreateOrderPayload = {
       items: items.map((i) => ({
@@ -170,18 +273,32 @@ export default function CheckoutScreen(): React.JSX.Element {
         cantidad: i.cantidad,
       })),
     };
-
-    // Same totals math as the render section below (subtotal + IVA 21%).
-    const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-    const iva = subtotal * IVA_RATE;
-    const total = subtotal + iva;
+    // Single source of truth for the totals: the same computeTotals() the
+    // render path uses, so the reconciled math can never drift from what the
+    // user saw on screen.
+    const totals = computeTotals(items);
     const productNames = items.map((i) => i.producto);
+    const idempotencyKey = createIdempotencyKey();
+
+    // Persist the in-flight attempt BEFORE issuing the POST: if the app is
+    // killed after the server commits but before clearCart runs, the next
+    // mount reconciles this record instead of re-submitting a duplicate.
+    await saveInFlightOrder({
+      idempotencyKey,
+      payload,
+      productNames,
+      total: totals.total,
+      createdAt: new Date().toISOString(),
+    });
 
     try {
       // createOrder validates the envelope and throws
       // InvalidOrderEnvelopeError when `data` is missing, so a resolved order
       // is guaranteed to carry a numeric id_pedido before the cart is cleared.
-      const order = await orderMutation.mutateAsync(payload);
+      const order = await orderMutation.mutateAsync({
+        payload,
+        idempotencyKey,
+      });
       // Record the created order id so a later ambiguous failure can be
       // correlated with this successful creation.
       Sentry.addBreadcrumb({
@@ -191,6 +308,7 @@ export default function CheckoutScreen(): React.JSX.Element {
         data: { orderId: order.id_pedido },
       });
       useCartStore.getState().clearCart();
+      await clearInFlightOrder();
       navigation.replace('OrderSuccess', {
         orderId: order.id_pedido,
         total: String(order.total),
@@ -214,7 +332,7 @@ export default function CheckoutScreen(): React.JSX.Element {
           // before telling the user the outcome is unknown.
           const existing = await findMatchingOrder(
             payload,
-            total,
+            totals.total,
             productNames,
           );
           if (existing !== null) {
@@ -227,6 +345,7 @@ export default function CheckoutScreen(): React.JSX.Element {
               data: { orderId: existing.id_pedido, reconciled: true },
             });
             useCartStore.getState().clearCart();
+            await clearInFlightOrder();
             navigation.replace('OrderSuccess', {
               orderId: existing.id_pedido,
               total: existing.total,
@@ -235,11 +354,17 @@ export default function CheckoutScreen(): React.JSX.Element {
             return;
           }
         } catch {
-          // Reconciliation failed (e.g. the list request errored): fall through
-          // to the ambiguous message so the user is never left blocked.
+          // Reconciliation failed (e.g. the list request errored): fall
+          // through to the ambiguous message so the user is never blocked.
         }
+        // No match: KEEP the in-flight record — the server may still commit
+        // the order — and let the next mount reconcile it again.
         setErrorMessage(CHECKOUT_AMBIGUOUS_ERROR);
       } else {
+        // Definitive rejection (4xx with body) or a pure client/network
+        // failure: the server never committed the order, so the in-flight
+        // record is stale.
+        await clearInFlightOrder();
         setErrorMessage(extractCheckoutError(error));
       }
     } finally {
@@ -251,22 +376,21 @@ export default function CheckoutScreen(): React.JSX.Element {
     return <EmptyCart isDark={isDark} />;
   }
 
-  const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-  const iva = subtotal * IVA_RATE;
-  const total = subtotal + iva;
+  const { subtotal, iva, total } = computeTotals(items);
   const disabledBg = isDark
     ? colors.cartBtnDisabledBgD
     : colors.cartBtnDisabledBg;
   const buttonBg = orderMutation.isPending ? disabledBg : tc.brand;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
-      <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: 16 }}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: tc.bg }}
+      edges={['top']}
+    >
+      <View className="flex-1 px-4 pt-2">
         {/* Header */}
-        <View
-          className="mb-4 flex-row items-center justify-between"
-          style={{ paddingTop: 12 }}
-        >
+        <View className="mb-4 flex-row items-center justify-between pt-3">
           <Text className="text-2xl font-bold" style={{ color: tc.fg }}>
             Confirmar pedido
           </Text>
@@ -293,6 +417,25 @@ export default function CheckoutScreen(): React.JSX.Element {
 
         <FormErrorBanner message={errorMessage} isDark={isDark} />
 
+        {reconcileWarning !== null && (
+          <View
+            className="mt-3 flex-row items-center"
+            style={{ backgroundColor: tc.surface }}
+          >
+            <MaterialCommunityIcons
+              name="alert-circle-outline"
+              size={16}
+              color={colors.warning}
+            />
+            <Text
+              className="ml-1.5 flex-1 text-sm"
+              style={{ color: colors.warning }}
+            >
+              {reconcileWarning}
+            </Text>
+          </View>
+        )}
+
         {/* Items */}
         <FlatList
           data={items}
@@ -311,12 +454,8 @@ export default function CheckoutScreen(): React.JSX.Element {
 
         {/* Totals */}
         <View
-          className="mb-4 rounded-2xl px-5 py-4"
-          style={{
-            backgroundColor: tc.surface,
-            borderTopWidth: 1,
-            borderTopColor: tc.border,
-          }}
+          className="mb-4 rounded-2xl border-t px-5 py-4"
+          style={{ backgroundColor: tc.surface, borderTopColor: tc.border }}
         >
           <View className="mb-1 flex-row items-center justify-between">
             <Text className="text-sm" style={{ color: tc.muted }}>
