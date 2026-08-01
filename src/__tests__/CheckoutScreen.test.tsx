@@ -7,7 +7,9 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import { IN_FLIGHT_ORDER_KEY } from '@/services/checkoutPersistence';
 import type { InFlightOrderRecord } from '@/services/checkoutPersistence';
-import CheckoutScreen from '@/screens/common/CheckoutScreen';
+import CheckoutScreen, {
+  resolveCartAfterRecovery,
+} from '@/screens/common/CheckoutScreen';
 import {
   createOrder,
   findMatchingOrder,
@@ -20,13 +22,18 @@ import { useCartStore } from '@/store/cartStore';
 const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
 const mockGoBack = jest.fn();
+// Stable navigation object: react-navigation's useNavigation returns the same
+// reference across renders. A per-render literal would change the identity of
+// the screen's useEffect dep [navigation] and cancel a pending mount
+// reconcile on the first state update.
+const mockNavigation = {
+  navigate: mockNavigate,
+  replace: mockReplace,
+  goBack: mockGoBack,
+};
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: mockNavigate,
-    replace: mockReplace,
-    goBack: mockGoBack,
-  }),
+  useNavigation: () => mockNavigation,
 }));
 
 jest.mock('@/store/ThemeContext', () => ({
@@ -882,6 +889,90 @@ describe('CheckoutScreen', () => {
     });
   });
 
+  it('R3-B-002: tras un kill, conserva los items agregados después del intento (fuera del payload del registro)', async () => {
+    // Live cart: the recovered payload line (Tomate x2) PLUS a new line the
+    // user added after the interrupted attempt (Lechuga x3, never ordered).
+    useCartStore.setState({ items: [mockItem, mockItem2] });
+    seedInFlightRecord();
+    mockFindOrderByRecord.mockResolvedValue({
+      id_pedido: 45,
+      cliente_nombre: 'Ana Ramírez',
+      vendedor_nombre: null,
+      total: '5.00',
+      estado_actual: 'pendiente',
+      creado_en: '2026-07-30T12:00:00Z',
+    });
+
+    const { getByText, queryByText } = renderScreen();
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('OrderSuccess', {
+        orderId: 45,
+        total: '5.00',
+        estado: 'pendiente',
+      });
+    });
+
+    // No wholesale clearCart: only the recovered payload line (Tomate) is
+    // removed — it belongs to the recovered order — while Lechuga, which was
+    // never ordered, survives in the cart and is still rendered.
+    const cart = useCartStore.getState().items;
+    expect(cart).toHaveLength(1);
+    expect(cart[0]?.id_producto_semanal).toBe(2);
+    expect(cart[0]?.producto).toBe('Lechuga');
+    expect(getByText('Lechuga')).toBeTruthy();
+    expect(queryByText('Tomate')).toBeNull();
+    // The recovered order's record is still cleared on success.
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+  });
+
+  it('R3-B-001: deshabilita Confirmar pedido y muestra un indicador mientras el reconcile del mount está pendiente', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    seedInFlightRecord();
+
+    let resolveReconcile!: (
+      value: Awaited<ReturnType<typeof findOrderByRecord>>,
+    ) => void;
+    mockFindOrderByRecord.mockReturnValue(
+      new Promise((resolve) => {
+        resolveReconcile = resolve;
+      }),
+    );
+
+    const { getByTestId } = renderScreen();
+
+    // While the mount reconcile is in flight the confirm button is disabled
+    // and shows a pending indicator instead of its label: taps are not
+    // silently dropped.
+    const button = getByTestId('confirm-order-btn');
+    expect(button.props.accessibilityState).toMatchObject({ disabled: true });
+    expect(getByTestId('confirm-order-loading')).toBeTruthy();
+
+    fireEvent.press(button);
+    expect(mockCreateOrder).not.toHaveBeenCalled();
+
+    // Once the reconcile settles with a match, the interrupted order is
+    // recovered as success.
+    await act(async () => {
+      resolveReconcile({
+        id_pedido: 45,
+        cliente_nombre: 'Ana Ramírez',
+        vendedor_nombre: null,
+        total: '5.00',
+        estado_actual: 'pendiente',
+        creado_en: '2026-07-30T12:00:00Z',
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('OrderSuccess', {
+        orderId: 45,
+        total: '5.00',
+        estado: 'pendiente',
+      });
+    });
+  });
+
   it('JD-A-001: bloquea Confirmar mientras el reconcile del mount está pendiente y no duplica el pedido', async () => {
     useCartStore.setState({ items: [mockItem] });
     seedInFlightRecord();
@@ -1010,5 +1101,46 @@ describe('CheckoutScreen', () => {
     expect(useCartStore.getState().items).toHaveLength(1);
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolveCartAfterRecovery', () => {
+  it('quita solo las líneas cubiertas por el payload y conserva las líneas nuevas', () => {
+    expect(
+      resolveCartAfterRecovery(
+        [mockItem, mockItem2],
+        inFlightRecord.payload.items,
+      ),
+    ).toEqual([mockItem2]);
+  });
+
+  it('devuelve un carrito vacío cuando coincide exactamente con el payload (equivalente a clearCart)', () => {
+    expect(
+      resolveCartAfterRecovery([mockItem], inFlightRecord.payload.items),
+    ).toEqual([]);
+  });
+
+  it('JD-A-001: resta la cantidad registrada y conserva el delta nunca pedido cuando el carrito vivo supera el payload', () => {
+    expect(
+      resolveCartAfterRecovery(
+        [{ ...mockItem, cantidad: 5 }],
+        inFlightRecord.payload.items,
+      ),
+    ).toEqual([{ ...mockItem, cantidad: 3 }]);
+  });
+
+  it('JD-A-001: elimina la línea del payload cuando el delta vivo no supera lo registrado', () => {
+    expect(
+      resolveCartAfterRecovery(
+        [{ ...mockItem, cantidad: 1 }],
+        inFlightRecord.payload.items,
+      ),
+    ).toEqual([]);
+  });
+
+  it('conserva todo el carrito cuando ninguna línea del carrito está en el payload', () => {
+    expect(
+      resolveCartAfterRecovery([mockItem2], inFlightRecord.payload.items),
+    ).toEqual([mockItem2]);
   });
 });

@@ -87,6 +87,37 @@ function isAmbiguousOrderError(error: unknown): boolean {
   return false;
 }
 
+// Recovery cart resolution (exported for tests): after an app kill the mount
+// reconcile may find the interrupted order already committed server-side. The
+// recovered order covers `cantidad` units of each record-payload product, so
+// those units are subtracted from the matching live line: a line keeps only
+// the never-ordered delta (liveQty - recordedQty) and is dropped when no delta
+// remains. Lines added after the interrupted attempt (never ordered) are
+// preserved unchanged. When the live cart matches the payload exactly the
+// result is an empty cart, identical to a wholesale clearCart.
+export function resolveCartAfterRecovery(
+  items: readonly CartItem[],
+  recoveredLines: readonly { id_producto_semanal: number; cantidad: number }[],
+): CartItem[] {
+  const recordedQtyById = new Map<number, number>(
+    recoveredLines.map((line): [number, number] => [
+      line.id_producto_semanal,
+      line.cantidad,
+    ]),
+  );
+  return items.flatMap((item) => {
+    const recordedQty = recordedQtyById.get(item.id_producto_semanal);
+    if (recordedQty === undefined) {
+      // Not covered by the recovered order: the line was never ordered.
+      return [item];
+    }
+    const remainingQty = item.cantidad - recordedQty;
+    // The recovered order consumed `recordedQty` units of this product: keep
+    // the line only when a never-ordered delta survives the subtraction.
+    return remainingQty > 0 ? [{ ...item, cantidad: remainingQty }] : [];
+  });
+}
+
 // Persisted carts can hold stale quantities or ids (items added days ago,
 // stock changed since). This is UX pre-validation only: the backend revalidates
 // under lock and remains the source of truth. Returns the message for the
@@ -165,6 +196,10 @@ export default function CheckoutScreen(): React.JSX.Element {
   // two taps in the same frame could both pass the render-state check. A ref
   // is set synchronously before the POST starts and cleared in `finally`.
   const inFlightRef = useRef(false);
+  // True while the mount reconcile is pending: the confirm button is disabled
+  // (and shows a pending indicator) so taps during the reconcile window are
+  // not silently dropped (R3-B-001).
+  const [reconciling, setReconciling] = useState(false);
   // Runs once per mount: an app kill between a successful POST and clearCart
   // leaves an in-flight record that must be reconciled before the user can
   // place a fresh order.
@@ -188,6 +223,7 @@ export default function CheckoutScreen(): React.JSX.Element {
     // must be blocked. The submit path guards on inFlightRef, so the reconcile
     // holds the same guard until it settles.
     inFlightRef.current = true;
+    setReconciling(true);
 
     void (async () => {
       try {
@@ -225,7 +261,22 @@ export default function CheckoutScreen(): React.JSX.Element {
               stale: true,
             },
           });
-          useCartStore.getState().clearCart();
+          // R3-B-002: never wipe cart lines the user added after the
+          // interrupted attempt — the recovered order only covers the record
+          // payload. The recorded quantity is subtracted from each matching
+          // live line: a line keeps only the never-ordered delta (dropped
+          // when no delta remains); everything else stays. When the live cart
+          // matches the payload exactly, the resolution is an empty cart,
+          // preserving the previous wholesale clearCart behavior.
+          const remainingItems = resolveCartAfterRecovery(
+            useCartStore.getState().items,
+            record.payload.items,
+          );
+          if (remainingItems.length === 0) {
+            useCartStore.getState().clearCart();
+          } else {
+            useCartStore.setState({ items: remainingItems });
+          }
           await clearInFlightOrder();
           navigation.replace('OrderSuccess', {
             orderId: existing.id_pedido,
@@ -238,6 +289,7 @@ export default function CheckoutScreen(): React.JSX.Element {
         }
       } finally {
         inFlightRef.current = false;
+        setReconciling(false);
       }
     })();
 
@@ -380,7 +432,8 @@ export default function CheckoutScreen(): React.JSX.Element {
   const disabledBg = isDark
     ? colors.cartBtnDisabledBgD
     : colors.cartBtnDisabledBg;
-  const buttonBg = orderMutation.isPending ? disabledBg : tc.brand;
+  const buttonBusy = orderMutation.isPending || reconciling;
+  const buttonBg = buttonBusy ? disabledBg : tc.brand;
 
   return (
     <SafeAreaView
@@ -489,11 +542,15 @@ export default function CheckoutScreen(): React.JSX.Element {
             testID="confirm-order-btn"
             className="mt-4 items-center justify-center rounded-xl py-3.5"
             style={{ backgroundColor: buttonBg }}
-            disabled={orderMutation.isPending}
+            disabled={buttonBusy}
             onPress={() => void handleConfirm()}
           >
-            {orderMutation.isPending ? (
-              <ActivityIndicator size="small" color={colors.iconWhite} />
+            {buttonBusy ? (
+              <ActivityIndicator
+                testID="confirm-order-loading"
+                size="small"
+                color={colors.iconWhite}
+              />
             ) : (
               <Text
                 className="text-base font-bold"
