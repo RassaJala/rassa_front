@@ -13,7 +13,7 @@ vi.mock('../services/waste', () => ({
 const mockFetch = vi.mocked(fetchMermaResumen);
 
 const mockResumen = {
-  agrupacion: 'mes',
+  agrupacion: 'mes' as const,
   total_general: 12,
   producto_mas_afectado: { nombre: 'Manzana', total: 8 },
   detalle: [
@@ -39,7 +39,7 @@ const mockResumen = {
 };
 
 const emptyResumen = {
-  agrupacion: 'mes',
+  agrupacion: 'mes' as const,
   total_general: 0,
   producto_mas_afectado: null,
   detalle: [],

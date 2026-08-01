@@ -14,6 +14,7 @@ import {
   type DecisionPalette,
   type MermaResumenItem,
   type MermaResumenResponse,
+  type ResumenParams,
 } from '@/common/waste';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -340,13 +341,15 @@ export function AdminMermasDashboard() {
 
   const resumenQuery = useQuery({
     queryKey: ['merma-resumen', fechaDesde, fechaHasta, productoId, agruparPor],
-    queryFn: () =>
-      fetchMermaResumen({
-        fecha_desde: fechaDesde || undefined,
-        fecha_hasta: fechaHasta || undefined,
-        producto_id: productoId,
+    queryFn: () => {
+      const params: ResumenParams = {
         agrupar_por: agruparPor,
-      }),
+        ...(fechaDesde ? { fecha_desde: fechaDesde } : {}),
+        ...(fechaHasta ? { fecha_hasta: fechaHasta } : {}),
+        ...(productoId !== undefined ? { producto_id: productoId } : {}),
+      };
+      return fetchMermaResumen(params);
+    },
     enabled: !isDateRangeInvalid,
     placeholderData: (prev: MermaResumenResponse | undefined) => prev,
     staleTime: WASTE_STALE_TIME_MS,
@@ -720,7 +723,9 @@ export function AdminMermasDashboard() {
                 agruparPor={agruparPor}
                 data={periodData}
                 maxTotal={maxPeriod}
-                selectedProductName={selectedProductName}
+                {...(selectedProductName !== undefined
+                  ? { selectedProductName }
+                  : {})}
                 isSingleProduct={isSingleProduct}
                 truncated={isTruncated}
               />

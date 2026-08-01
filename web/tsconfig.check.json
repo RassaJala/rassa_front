@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": [
+    "src/routes/AdminMermasDashboard.tsx",
+    "src/components/admin/merma/**/*",
+    "src/services/waste.ts",
+    "src/test-setup.ts",
+    "src/__tests__/AdminMermasDashboard.test.tsx",
+    "../packages/common/src/waste.ts",
+    "../packages/common/src/dates.ts"
+  ]
+}
