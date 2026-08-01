@@ -136,6 +136,65 @@ export default function FarmerQuickActions({
           </View>
         </View>
       </Pressable>
+
+      <Pressable
+        onPress={() => navigation.navigate('ChatList')}
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.surface,
+            borderWidth: 1,
+            borderColor: theme.border,
+            borderRadius: 16,
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            marginTop: 10,
+          }}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.pumpkinBg,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="chat-outline"
+              size={22}
+              color={theme.pumpkin}
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: theme.fg,
+                marginBottom: 2,
+              }}
+              numberOfLines={1}
+            >
+              Chat
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: theme.muted,
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              Mensajé con tus clientes
+            </Text>
+          </View>
+        </View>
+      </Pressable>
     </>
   );
 }

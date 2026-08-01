@@ -17,7 +17,6 @@ export default function GroupDetailScreen(): React.JSX.Element {
   const route = useRoute<RouteProp<ChatStackParamList, 'GroupDetail'>>();
   const { conversationId, isFamily } = route.params;
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
 
   const { data: members, isLoading, error } = useGroupMembers(conversationId);
   const renameMutation = useRenameGroup(conversationId);
@@ -26,7 +25,7 @@ export default function GroupDetailScreen(): React.JSX.Element {
   const [renameVisible, setRenameVisible] = useState(false);
   const [addMemberVisible, setAddMemberVisible] = useState(false);
 
-  const canEdit = isAdmin && !isFamily;
+  const canManage = user?.role !== 'buyer' && !isFamily;
 
   if (isLoading) {
     return (
@@ -48,7 +47,7 @@ export default function GroupDetailScreen(): React.JSX.Element {
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-950">
-      {canEdit ? (
+      {canManage ? (
         <View className="flex-row gap-3 border-b border-gray-200 p-4 dark:border-gray-800">
           <Text
             onPress={() => setRenameVisible(true)}

@@ -79,24 +79,28 @@ export function GroupDetailPage() {
         <h1 className="flex-1 text-base font-bold" style={{ color: c.fg }}>
           Detalle del grupo
         </h1>
-        <button
-          type="button"
-          onClick={() => setShowRename(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-medium"
-          style={{ color: c.brand }}
-          aria-label="Renombrar grupo"
-        >
-          Renombrar
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowAddMember(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-medium"
-          style={{ color: c.brand }}
-          aria-label="Agregar miembro"
-        >
-          + Miembro
-        </button>
+        {user?.rol !== 'cliente' && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowRename(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Renombrar grupo"
+            >
+              Renombrar
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddMember(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Agregar miembro"
+            >
+              + Miembro
+            </button>
+          </>
+        )}
       </div>
 
       {/* Members */}

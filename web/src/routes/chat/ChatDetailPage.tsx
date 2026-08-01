@@ -16,6 +16,11 @@ import { useDeleteMessage } from '~/hooks/chat/useDeleteMessage';
 import { useSendMessageWithMedia } from '~/hooks/chat/useSendMessageWithMedia';
 import { useMarkAsRead } from '~/hooks/chat/useMarkAsRead';
 import { ChatBubble } from '~/components/chat/ChatBubble';
+import {
+  decideScroll,
+  initialScrollState,
+  type ScrollState,
+} from '~/utils/chatScroll';
 import { ChatInput } from '~/components/chat/ChatInput';
 import { MessageEditModal } from '~/components/chat/MessageEditModal';
 import { ConfirmDialog } from '~/components/ui/ConfirmDialog';
@@ -62,22 +67,48 @@ export function ChatDetailPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
   const prevPageCountRef = useRef(0);
-  const initialRenderRef = useRef(true);
+  const initialScrollPendingRef = useRef(false);
+  const scrollStateRef = useRef<ScrollState>({ ...initialScrollState });
 
   const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
-  const realCountRef = useRef(0);
-
-  const realMessages = messages.filter((m) => typeof m.id === 'number');
-  realCountRef.current = realMessages.length;
+  const realCount = messages.filter((m) => typeof m.id === 'number').length;
 
   useEffect(() => {
-    if (initialRenderRef.current) {
-      initialRenderRef.current = false;
+    scrollStateRef.current = { ...initialScrollState };
+    initialScrollPendingRef.current = false;
+    prevScrollHeightRef.current = 0;
+    prevPageCountRef.current = 0;
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (realCount === 0) return;
+    const pageCount = data?.pages.length ?? 0;
+    const { action, next } = decideScroll(
+      scrollStateRef.current,
+      pageCount,
+      realCount,
+    );
+    scrollStateRef.current = next;
+    if (action === 'initial') {
+      initialScrollPendingRef.current = true;
       endRef.current?.scrollIntoView({ behavior: 'auto' });
-    } else {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: 'auto' });
+      });
+      window.setTimeout(() => {
+        initialScrollPendingRef.current = false;
+      }, 300);
+    } else if (action === 'append') {
+      const container = containerRef.current;
+      const nearBottom = container
+        ? container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 80
+        : true;
+      if (nearBottom) {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
-  }, [realCountRef.current]);
+  }, [realCount, data?.pages.length]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -95,6 +126,7 @@ export function ChatDetailPage() {
   }, [data?.pages.length]);
 
   const handleScroll = useCallback(() => {
+    if (initialScrollPendingRef.current) return;
     const container = containerRef.current;
     if (!container || !hasNextPage || isFetchingNextPage) return;
     if (container.scrollTop < 50) {
@@ -102,6 +134,17 @@ export function ChatDetailPage() {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleMediaLoad = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 80;
+    if (nearBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, []);
 
   const handleSend = (text: string) => {
     sendMessage.mutate(
@@ -248,6 +291,7 @@ export function ChatDetailPage() {
             message={msg}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onMediaLoad={handleMediaLoad}
           />
         ))}
         <div ref={endRef} />

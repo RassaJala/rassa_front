@@ -6,12 +6,11 @@ import '@testing-library/jest-native/extend-expect';
 
 import GroupDetailScreen from '@/features/chat/screens/GroupDetailScreen';
 import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
 
 jest.mock('@/services/api');
 jest.mock('@/store/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 1, nombre: 'Admin User', role: 'admin' },
-  }),
+  useAuth: jest.fn(),
 }));
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light' }),
@@ -32,12 +31,16 @@ jest.mock('@react-navigation/native', () => {
 });
 
 const mockApiGet = api.get as jest.Mock;
+const mockUseAuth = useAuth as jest.Mock;
 
 describe('GroupDetailScreen', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 1, nombre: 'Admin User', role: 'admin' },
+    });
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false, gcTime: 0 },
@@ -90,6 +93,20 @@ describe('GroupDetailScreen', () => {
     await waitFor(() => {
       expect(getByText('Renombrar')).toBeTruthy();
       expect(getByText('Agregar integrante')).toBeTruthy();
+    });
+  });
+
+  it('hides edit buttons for buyer role', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, nombre: 'Buyer User', role: 'buyer' },
+    });
+    mockApiGet.mockResolvedValue({ data: { data: [] } });
+
+    const { queryByText } = renderScreen();
+
+    await waitFor(() => {
+      expect(queryByText('Renombrar')).toBeNull();
+      expect(queryByText('Agregar integrante')).toBeNull();
     });
   });
 

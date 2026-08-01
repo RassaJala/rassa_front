@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
+import { useAudioRecorder } from '~/hooks/chat/useAudioRecorder';
 import type { AttachmentType } from '@rassa/chat';
 import { ATTACHMENT_TYPES } from '@rassa/chat';
 
@@ -28,6 +29,7 @@ export function ChatInput({
   disabled,
 }: Readonly<ChatInputProps>) {
   const c = useAppColors();
+  const recorder = useAudioRecorder();
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -40,10 +42,20 @@ export function ChatInput({
     ta.style.height = `${ta.scrollHeight}px`;
   };
 
+  const handleStopRecording = async () => {
+    const file = await recorder.stopRecording();
+    if (!file || !onSendMedia) return;
+    onSendMedia(file, ATTACHMENT_TYPES.AUDIO);
+  };
+
   const handleSend = () => {
     if (selectedFile && onSendMedia) {
       const trimmed = text.trim();
-      onSendMedia(selectedFile, detectAttachmentType(selectedFile), trimmed || undefined);
+      onSendMedia(
+        selectedFile,
+        detectAttachmentType(selectedFile),
+        trimmed || undefined,
+      );
       setSelectedFile(null);
       setText('');
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -86,9 +98,7 @@ export function ChatInput({
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
           style={{ background: c.bg, border: `1px solid ${c.border}` }}
         >
-          <span style={{ color: c.muted }}>
-            {selectedFile.name}
-          </span>
+          <span style={{ color: c.muted }}>{selectedFile.name}</span>
           <span
             className="rounded px-1.5 py-0.5 text-xs font-medium text-white"
             style={{ background: c.brand }}
@@ -107,59 +117,108 @@ export function ChatInput({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        {onSendMedia && (
-          <>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={disabled}
-              className="mb-0.5 cursor-pointer border-none bg-transparent p-1 text-lg disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ color: c.muted }}
-              aria-label="Adjuntar archivo"
-            >
-              📎
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,audio/*,video/*"
-              className="hidden"
-              onChange={handleFileChange}
-              aria-hidden="true"
-            />
-          </>
-        )}
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            autoResize();
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder="Escribí un mensaje..."
-          disabled={disabled}
-          className="max-h-32 flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none"
-          style={{
-            borderColor: c.inputBorder,
-            background: c.bg,
-            color: c.fg,
-          }}
-          aria-label="Escribir mensaje"
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={disabled || !canSend}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ background: c.brand }}
-          aria-label="Enviar mensaje"
-        >
-          Enviar
-        </button>
-      </div>
+      {recorder.error && (
+        <p className="text-xs" style={{ color: c.coral }}>
+          {recorder.error}
+        </p>
+      )}
+
+      {recorder.isRecording ? (
+        <div className="flex items-center gap-3 py-1">
+          <span
+            className="h-2.5 w-2.5 animate-pulse rounded-full"
+            style={{ background: c.coral }}
+            aria-hidden="true"
+          />
+          <span className="text-sm font-medium" style={{ color: c.fg }}>
+            Grabando… {recorder.elapsed}s
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleStopRecording()}
+            className="ml-auto cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-white"
+            style={{ background: c.brand }}
+            aria-label="Detener y enviar audio"
+          >
+            Detener y enviar
+          </button>
+          <button
+            type="button"
+            onClick={recorder.cancelRecording}
+            className="cursor-pointer border-none bg-transparent text-sm"
+            style={{ color: c.coral }}
+            aria-label="Cancelar grabación"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-end gap-2">
+          {onSendMedia && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={disabled}
+                className="mb-0.5 cursor-pointer border-none bg-transparent p-1 text-lg disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ color: c.muted }}
+                aria-label="Adjuntar archivo"
+              >
+                📎
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,audio/*,video/*"
+                className="hidden"
+                onChange={handleFileChange}
+                aria-hidden="true"
+              />
+              {recorder.isSupported && (
+                <button
+                  type="button"
+                  onClick={() => void recorder.startRecording()}
+                  disabled={disabled}
+                  className="mb-0.5 cursor-pointer border-none bg-transparent p-1 text-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ color: c.muted }}
+                  aria-label="Grabar audio"
+                >
+                  🎙️
+                </button>
+              )}
+            </>
+          )}
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              autoResize();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribí un mensaje..."
+            disabled={disabled}
+            className="max-h-32 flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+            style={{
+              borderColor: c.inputBorder,
+              background: c.bg,
+              color: c.fg,
+            }}
+            aria-label="Escribir mensaje"
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={disabled || !canSend}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: c.brand }}
+            aria-label="Enviar mensaje"
+          >
+            Enviar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

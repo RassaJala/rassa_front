@@ -1,5 +1,6 @@
 import '~/styles/global.css';
 import React from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import {
   MD3DarkTheme,
   MD3LightTheme,
@@ -70,10 +71,12 @@ export default function App(): React.JSX.Element {
         <PaperProvider theme={theme}>
           <AuthProvider>
             <ErrorBoundary>
-              <NavigationContainer>
-                <AppNavigator />
-                <StatusBar style="auto" />
-              </NavigationContainer>
+              <KeyboardProvider preload={false}>
+                <NavigationContainer>
+                  <AppNavigator />
+                  <StatusBar style="auto" />
+                </NavigationContainer>
+              </KeyboardProvider>
             </ErrorBoundary>
           </AuthProvider>
         </PaperProvider>

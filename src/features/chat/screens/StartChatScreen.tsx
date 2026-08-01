@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import ChatUserSearchPicker from '@/features/chat/components/ChatUserSearchPicker';
 import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
 import { useAuth } from '@/store/AuthContext';
-import type { ChatStackParamList } from '@/types/chat';
+import type { ChatStackParamList, SearchUser } from '@/types/chat';
 
 type NavigationProp = NativeStackNavigationProp<ChatStackParamList>;
 
@@ -17,20 +18,28 @@ export default function StartChatScreen(): React.JSX.Element {
   const createPrivateChat = useCreatePrivateConversation();
 
   const [isPrivate, setIsPrivate] = useState(false);
-  const [userId, setUserId] = useState('');
+  const [selected, setSelected] = useState<SearchUser[]>([]);
 
-  const isNumeric = /^\d+$/.test(userId);
-  const isNotEmpty = userId.trim().length > 0;
-  const isNotSelf = userId !== String(user?.id ?? '');
-  const isValid = isNumeric && isNotEmpty && isNotSelf;
+  const currentUser = selected[0] ?? null;
+  const isSelfChat =
+    currentUser !== null &&
+    user?.id !== undefined &&
+    currentUser.idUsuario === user.id;
+  const isValid = currentUser !== null && !isSelfChat;
 
-  const handlePrivateChat = () => {
-    if (!isValid || createPrivateChat.isPending) return;
-
-    createPrivateChat.mutate({ fk_usuario: Number(userId) });
+  const handleToggle = (searchUser: SearchUser) => {
+    setSelected((prev) =>
+      prev.some((s) => s.idUsuario === searchUser.idUsuario)
+        ? []
+        : [searchUser],
+    );
   };
 
-  const isSelfChat = isNotEmpty && isNumeric && !isNotSelf;
+  const handlePrivateChat = () => {
+    if (!currentUser || isSelfChat || createPrivateChat.isPending) return;
+
+    createPrivateChat.mutate({ fk_usuario: currentUser.idUsuario });
+  };
 
   return (
     <View className="flex-1 bg-gray-50 p-4 dark:bg-gray-950">
@@ -64,14 +73,10 @@ export default function StartChatScreen(): React.JSX.Element {
             Chat privado
           </Text>
 
-          <TextInput
-            label="ID de usuario"
-            value={userId}
-            onChangeText={setUserId}
-            mode="outlined"
-            keyboardType="numeric"
-            accessibilityLabel="ID de usuario"
-            accessibilityHint="Ingresa el ID numérico del usuario"
+          <ChatUserSearchPicker
+            selected={selected}
+            onToggle={handleToggle}
+            placeholder="Buscar por nombre o correo..."
           />
 
           {isSelfChat ? (
@@ -82,13 +87,18 @@ export default function StartChatScreen(): React.JSX.Element {
 
           {createPrivateChat.isError ? (
             <Text className="text-sm text-red-500">
-              No se pudo crear la conversación. Verifica el ID e intenta de
-              nuevo
+              No se pudo crear la conversación. Intenta de nuevo
             </Text>
           ) : null}
 
           <View className="flex-row gap-2">
-            <Button mode="text" onPress={() => setIsPrivate(false)}>
+            <Button
+              mode="text"
+              onPress={() => {
+                setIsPrivate(false);
+                setSelected([]);
+              }}
+            >
               Volver
             </Button>
             <Button

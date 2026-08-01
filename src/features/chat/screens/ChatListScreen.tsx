@@ -15,7 +15,7 @@ export default function ChatListScreen(): React.JSX.Element {
   const navigation =
     useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const canManage = user?.role !== 'buyer';
 
   const conversations = data?.results ?? [];
 
@@ -43,7 +43,7 @@ export default function ChatListScreen(): React.JSX.Element {
         <Text className="text-center text-base text-gray-500 dark:text-gray-400">
           No hay conversaciones aún
         </Text>
-        {isAdmin ? (
+        {canManage ? (
           <FAB
             icon="plus"
             label="Nuevo chat"
@@ -66,7 +66,7 @@ export default function ChatListScreen(): React.JSX.Element {
         )}
         contentContainerStyle={{ paddingVertical: 8 }}
       />
-      {isAdmin ? (
+      {canManage ? (
         <FAB
           icon="plus"
           label="Nuevo chat"

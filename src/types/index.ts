@@ -250,7 +250,7 @@ export type BuyerStackParamList = {
 };
 
 export type AdminTabsParamList = {
-  AdminPanel: undefined;
+  AdminInicio: undefined;
   AdminProducts: undefined;
   CategoryList: undefined;
   UnitList: undefined;
@@ -278,6 +278,8 @@ export type FarmerStackParamList = {
     title: string;
     isFamily?: boolean | undefined;
   };
+  CreateGroup: undefined;
+  StartChat: undefined;
 };
 
 export interface SearchUserResult {
@@ -309,4 +311,6 @@ export type SellerStackParamList = {
     title: string;
     isFamily?: boolean | undefined;
   };
+  CreateGroup: undefined;
+  StartChat: undefined;
 };

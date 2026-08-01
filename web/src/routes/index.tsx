@@ -29,11 +29,13 @@ import { ChatListPage } from './chat/ChatListPage';
 import { ChatDetailPage } from './chat/ChatDetailPage';
 import { GroupDetailPage } from './chat/GroupDetailPage';
 import { StartChatPage } from './chat/StartChatPage';
+import { CreateGroupPage } from './chat/CreateGroupPage';
 import { useAuth } from '../hooks/useAuth';
 
 const CHAT_ROUTE_CONFIGS = [
   { path: 'chat', element: <ChatListPage /> },
   { path: 'chat/nuevo', element: <StartChatPage /> },
+  { path: 'chat/nuevo/grupo', element: <CreateGroupPage /> },
   { path: 'chat/:id', element: <ChatDetailPage /> },
   { path: 'chat/:id/grupo', element: <GroupDetailPage /> },
 ];

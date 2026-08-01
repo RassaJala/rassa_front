@@ -62,12 +62,14 @@ interface ChatBubbleProps {
   message: Message;
   onEdit: (message: Message) => void;
   onDelete: (messageId: number) => void;
+  onMediaLoad?: () => void;
 }
 
 export function ChatBubble({
   message,
   onEdit,
   onDelete,
+  onMediaLoad,
 }: Readonly<ChatBubbleProps>) {
   const c = useAppColors();
   const { user } = useAuth();
@@ -139,18 +141,27 @@ export function ChatBubble({
             <div key={att.id} className="mb-1">
               {att.tipo === "imagen" ? (
                 <div>
-                  <img
-                    src={src}
-                    alt={att.nombre || "Imagen"}
-                    className="max-w-full cursor-pointer rounded-lg"
-                    style={{ maxHeight: 240 }}
+                  <div
+                    className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg"
+                    style={{
+                      height: 240,
+                      background: "rgba(0,0,0,0.05)",
+                    }}
                     onClick={() =>
                       setSelectedImage({
                         src,
                         alt: att.nombre || "Imagen",
                       })
                     }
-                  />
+                  >
+                    <img
+                      src={src}
+                      alt={att.nombre || "Imagen"}
+                      className="max-h-full max-w-full rounded-lg object-contain"
+                      onLoad={onMediaLoad}
+                      onError={onMediaLoad}
+                    />
+                  </div>
                   <div className="mt-1 flex justify-end">
                     <DownloadButton
                       src={src}
@@ -192,13 +203,19 @@ export function ChatBubble({
                 </div>
               ) : att.tipo === "video" ? (
                 <div>
-                  <video
-                    controls
-                    preload="metadata"
-                    src={src}
-                    className="max-w-full rounded-lg bg-black"
-                    style={{ maxHeight: 240 }}
-                  />
+                  <div
+                    className="flex items-center justify-center overflow-hidden rounded-lg bg-black"
+                    style={{ height: 240 }}
+                  >
+                    <video
+                      controls
+                      preload="metadata"
+                      src={src}
+                      className="max-h-full max-w-full object-contain"
+                      onLoadedMetadata={onMediaLoad}
+                      onError={onMediaLoad}
+                    />
+                  </div>
                   <div className="mt-1 flex justify-end">
                     <DownloadButton
                       src={src}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -7,28 +7,28 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { IconButton, Menu } from "react-native-paper";
+} from 'react-native';
+import { IconButton, Menu } from 'react-native-paper';
 
 import {
   setAudioModeAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
-} from "expo-audio";
-import { File, Paths } from "expo-file-system";
-import { LinearGradient } from "expo-linear-gradient";
-import * as Sharing from "expo-sharing";
-import { useVideoPlayer, VideoView } from "expo-video";
+} from 'expo-audio';
+import { File, Paths } from 'expo-file-system';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Sharing from 'expo-sharing';
+import { useVideoPlayer, VideoView } from 'expo-video';
 
-import { formatMessageTime } from "@rassa/chat";
+import { formatMessageTime } from '@rassa/chat';
 
-import { colors } from "@/constants/colors";
-import { useCanModifyMessage } from "@/features/chat/hooks/useCanModifyMessage";
-import { mediaUrl } from "@/services/api";
-import { useAuth } from "@/store/AuthContext";
-import { useTheme } from "@/store/ThemeContext";
-import type { Attachment, Message } from "@/types/chat";
-import { ATTACHMENT_TYPES } from "@/types/chat";
+import { colors, themeColors } from '@/constants/colors';
+import { useCanModifyMessage } from '@/features/chat/hooks/useCanModifyMessage';
+import { mediaUrl } from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
+import { useTheme } from '@/store/ThemeContext';
+import type { Attachment, Message } from '@/types/chat';
+import { ATTACHMENT_TYPES } from '@/types/chat';
 
 interface ChatBubbleProps {
   message: Message;
@@ -43,40 +43,53 @@ function resolveMediaUri(path: string): string {
 }
 
 function formatAudioTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+  if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
   const minutes = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+function mixHex(hexA: string, hexB: string, weightB: number): string {
+  const a = hexA.replace('#', '');
+  const b = hexB.replace('#', '');
+  const channels = [0, 2, 4].map((i) => {
+    const channelA = Number.parseInt(a.slice(i, i + 2), 16);
+    const channelB = Number.parseInt(b.slice(i, i + 2), 16);
+    return Math.round(channelA * (1 - weightB) + channelB * weightB)
+      .toString(16)
+      .padStart(2, '0');
+  });
+  return `#${channels.join('')}`;
 }
 
 function mimeTypeFor(name: string): string {
   const lower = name.toLowerCase();
-  if (lower.endsWith(".mp3")) return "audio/mpeg";
-  if (lower.endsWith(".m4a")) return "audio/mp4";
-  if (lower.endsWith(".ogg")) return "audio/ogg";
-  if (lower.endsWith(".wav")) return "audio/wav";
-  if (lower.endsWith(".mp4")) return "video/mp4";
-  if (lower.endsWith(".webm")) return "video/webm";
-  if (lower.endsWith(".mov")) return "video/quicktime";
-  if (lower.endsWith(".m4v")) return "video/x-m4v";
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-  if (lower.endsWith(".png")) return "image/png";
-  if (lower.endsWith(".gif")) return "image/gif";
-  if (lower.endsWith(".webp")) return "image/webp";
-  return "application/octet-stream";
+  if (lower.endsWith('.mp3')) return 'audio/mpeg';
+  if (lower.endsWith('.m4a')) return 'audio/mp4';
+  if (lower.endsWith('.ogg')) return 'audio/ogg';
+  if (lower.endsWith('.wav')) return 'audio/wav';
+  if (lower.endsWith('.mp4')) return 'video/mp4';
+  if (lower.endsWith('.webm')) return 'video/webm';
+  if (lower.endsWith('.mov')) return 'video/quicktime';
+  if (lower.endsWith('.m4v')) return 'video/x-m4v';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  return 'application/octet-stream';
 }
 
 function defaultFileName(attachment: Attachment): string {
   if (attachment.nombre) return attachment.nombre;
   switch (attachment.tipo) {
     case ATTACHMENT_TYPES.IMAGEN:
-      return "imagen.jpg";
+      return 'imagen.jpg';
     case ATTACHMENT_TYPES.VIDEO:
-      return "video.mp4";
+      return 'video.mp4';
     case ATTACHMENT_TYPES.AUDIO:
-      return "audio.wav";
+      return 'audio.wav';
     default:
-      return "archivo";
+      return 'archivo';
   }
 }
 
@@ -84,8 +97,8 @@ async function downloadAttachment(attachment: Attachment): Promise<void> {
   try {
     if (!(await Sharing.isAvailableAsync())) {
       Alert.alert(
-        "Descarga no disponible",
-        "Compartir no está disponible en este dispositivo.",
+        'Descarga no disponible',
+        'Compartir no está disponible en este dispositivo.',
       );
       return;
     }
@@ -97,19 +110,50 @@ async function downloadAttachment(attachment: Attachment): Promise<void> {
     );
     await Sharing.shareAsync(downloaded.uri, {
       mimeType: mimeTypeFor(fileName),
-      dialogTitle: "Descargar archivo",
+      dialogTitle: 'Descargar archivo',
     });
   } catch {
-    Alert.alert("Error", "No se pudo descargar el archivo.");
+    Alert.alert('Error', 'No se pudo descargar el archivo.');
   }
 }
 
-function AudioPlayer({
+function audioPalette(
+  isOwn: boolean,
+  isDark: boolean,
+): Readonly<{
+  container: string;
+  track: string;
+  fill: string;
+}> {
+  if (isOwn) {
+    return {
+      container: isDark ? 'bg-black/25' : 'bg-black/5',
+      track: isDark ? 'bg-white/20' : 'bg-black/10',
+      fill: isDark ? 'bg-white/80' : 'bg-gray-800',
+    };
+  }
+  return {
+    container: isDark ? 'bg-black/20' : 'bg-black/5',
+    track: 'bg-gray-300 dark:bg-gray-600',
+    fill: 'bg-brand-green-forest',
+  };
+}
+
+function AudioPlayerInner({
   attachment,
   isOwn,
 }: Readonly<{ attachment: Attachment; isOwn: boolean }>) {
   const player = useAudioPlayer(resolveMediaUri(attachment.archivo));
   const status = useAudioPlayerStatus(player);
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const theme = themeColors(isDark);
+  const accentColor = isOwn
+    ? isDark
+      ? colors.iconWhite
+      : theme.fg
+    : theme.muted;
+  const palette = audioPalette(isOwn, isDark);
   const [trackWidth, setTrackWidth] = useState(0);
 
   useEffect(() => {
@@ -117,10 +161,14 @@ function AudioPlayer({
   }, []);
 
   const togglePlayback = () => {
-    if (status.playing) {
-      player.pause();
-    } else {
-      player.play();
+    try {
+      if (status.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    } catch {
+      return;
     }
   };
 
@@ -130,27 +178,28 @@ function AudioPlayer({
 
   const seekTo = (locationX: number) => {
     if (duration <= 0 || trackWidth <= 0) return;
-    void player.seekTo((locationX / trackWidth) * duration);
+    try {
+      void player.seekTo((locationX / trackWidth) * duration);
+    } catch {
+      return;
+    }
   };
 
   return (
     <View
-      className={`mb-1 flex-row items-center gap-2 rounded-lg px-3 py-2 ${
-        isOwn ? "bg-white/10" : "bg-gray-100 dark:bg-gray-800"
-      }`}
+      className={`mb-1 flex-row items-center gap-2 rounded-lg px-3 py-2 ${palette.container}`}
     >
       <IconButton
-        icon={status.playing ? "pause" : "play"}
+        icon={status.playing ? 'pause' : 'play'}
         size={20}
-        iconColor={isOwn ? "#ffffff" : "#6b7280"}
+        iconColor={accentColor}
         onPress={togglePlayback}
         accessibilityLabel={`Reproducir audio: ${attachment.nombre}`}
       />
       <View className="flex-1 gap-1">
         <Text
-          className={`text-xs ${
-            isOwn ? "text-white/80" : "text-gray-600 dark:text-gray-300"
-          }`}
+          className="text-xs"
+          style={{ color: accentColor }}
           numberOfLines={1}
         >
           {attachment.nombre}
@@ -163,31 +212,23 @@ function AudioPlayer({
           accessibilityLabel={`Progreso de audio: ${attachment.nombre}`}
         >
           <View
-            className={`h-1.5 overflow-hidden rounded-full ${
-              isOwn ? "bg-white/20" : "bg-gray-300 dark:bg-gray-600"
-            }`}
+            className={`h-1.5 overflow-hidden rounded-full ${palette.track}`}
           >
             <View
-              className={`h-full rounded-full ${
-                isOwn ? "bg-white/80" : "bg-brand-green-forest"
-              }`}
+              className={`h-full rounded-full ${palette.fill}`}
               style={{ width: `${progress}%` }}
             />
           </View>
         </Pressable>
-        <Text
-          className={`text-xs ${
-            isOwn ? "text-white/50" : "text-gray-400 dark:text-gray-500"
-          }`}
-        >
-          {formatAudioTime(status.currentTime)} /{" "}
+        <Text className="text-xs" style={{ color: accentColor }}>
+          {formatAudioTime(status.currentTime)} /{' '}
           {formatAudioTime(status.duration)}
         </Text>
       </View>
       <IconButton
         icon="download"
         size={20}
-        iconColor={isOwn ? "#ffffff" : "#6b7280"}
+        iconColor={accentColor}
         onPress={() => void downloadAttachment(attachment)}
         accessibilityLabel={`Descargar audio: ${attachment.nombre}`}
       />
@@ -195,10 +236,16 @@ function AudioPlayer({
   );
 }
 
+const AudioPlayer = React.memo(
+  AudioPlayerInner,
+  (prev, next) =>
+    prev.attachment.id === next.attachment.id && prev.isOwn === next.isOwn,
+);
+
 function VideoPlayer({
   attachment,
-  isOwn,
-}: Readonly<{ attachment: Attachment; isOwn: boolean }>) {
+  accentColor,
+}: Readonly<{ attachment: Attachment; accentColor: string }>) {
   const player = useVideoPlayer(resolveMediaUri(attachment.archivo));
   return (
     <View className="mb-1 gap-1">
@@ -211,7 +258,7 @@ function VideoPlayer({
         <IconButton
           icon="download"
           size={20}
-          iconColor={isOwn ? "#ffffff" : "#6b7280"}
+          iconColor={accentColor}
           onPress={() => void downloadAttachment(attachment)}
           accessibilityLabel={`Descargar video: ${attachment.nombre}`}
         />
@@ -226,17 +273,18 @@ function bubbleGradientFor(
 ): readonly [string, string] {
   if (isOwn) {
     return isDark
-      ? [colors.admBrandD, colors.brandGreenForest]
-      : [colors.admBrandL, colors.brandGreenForest];
+      ? [colors.admSurfaceD, mixHex(colors.admSurfaceD, colors.shadow, 0.12)]
+      : [colors.surface, mixHex(colors.surface, colors.shadow, 0.05)];
   }
   return isDark
-    ? [colors.admSurfaceD, colors.brandInk]
-    : [colors.surface, colors.admBorderL];
+    ? [colors.admSurfaceD, mixHex(colors.admSurfaceD, colors.shadow, 0.08)]
+    : [colors.surface, mixHex(colors.surface, colors.brandPrimary, 0.06)];
 }
 
 function renderAttachment(
   attachment: Attachment,
   isOwn: boolean,
+  accentColor: string,
   onImagePress: (uri: string) => void,
 ): React.JSX.Element {
   switch (attachment.tipo) {
@@ -259,7 +307,7 @@ function renderAttachment(
             <IconButton
               icon="download"
               size={20}
-              iconColor={isOwn ? "#ffffff" : "#6b7280"}
+              iconColor={accentColor}
               onPress={() => void downloadAttachment(attachment)}
               accessibilityLabel={`Descargar imagen: ${attachment.nombre}`}
             />
@@ -267,16 +315,12 @@ function renderAttachment(
         </View>
       );
     case ATTACHMENT_TYPES.VIDEO:
-      return <VideoPlayer attachment={attachment} isOwn={isOwn} />;
+      return <VideoPlayer attachment={attachment} accentColor={accentColor} />;
     case ATTACHMENT_TYPES.AUDIO:
       return <AudioPlayer attachment={attachment} isOwn={isOwn} />;
     default:
       return (
-        <Text
-          className={`text-xs italic ${
-            isOwn ? "text-white/60" : "text-gray-400"
-          }`}
-        >
+        <Text className="text-xs italic" style={{ color: accentColor }}>
           Archivo adjunto no soportado
         </Text>
       );
@@ -291,12 +335,31 @@ export default function ChatBubble({
 }: Readonly<ChatBubbleProps>): React.JSX.Element {
   const { user } = useAuth();
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
+  const theme = themeColors(isDark);
+  const ownTextColor = isDark ? colors.iconWhite : theme.fg;
+  const accentColor = isOwn ? ownTextColor : theme.muted;
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const { canEdit, canDelete } = useCanModifyMessage(message);
 
   const bubbleGradient = bubbleGradientFor(isOwn, isDark);
+
+  const bubbleStyle = {
+    borderWidth: 2,
+    borderColor: isDark
+      ? colors.admBorderD
+      : mixHex(colors.admBorderL, colors.shadow, 0.2),
+    ...(isDark
+      ? {}
+      : {
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 6,
+          elevation: 3,
+        }),
+  };
 
   const isDeleted = message.activo === false;
   const isAuthor = user?.id === message.remitente;
@@ -306,7 +369,7 @@ export default function ChatBubble({
     return (
       <View
         className={`mb-2 max-w-[80%] rounded-2xl px-4 py-2 ${
-          isOwn ? "self-end" : "self-start"
+          isOwn ? 'self-end' : 'self-start'
         }`}
       >
         <Text className="text-sm text-gray-400 italic dark:text-gray-500">
@@ -321,75 +384,79 @@ export default function ChatBubble({
       <Menu
         visible={menuVisible}
         onDismiss={() => setMenuVisible(false)}
-      anchor={
-        <View
-          className={`mb-2 max-w-[80%] overflow-hidden rounded-2xl px-4 py-2 ${
-            isOwn ? "self-end rounded-br-md" : "self-start rounded-bl-md"
-          }`}
-          onStartShouldSetResponder={() => false}
-        >
-          <LinearGradient
-            colors={bubbleGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <Pressable
-            onLongPress={() => {
-              if (showMenu) setMenuVisible(true);
-            }}
-            accessibilityRole="button"
+        anchor={
+          <View
+            className={`mb-2 max-w-[80%] overflow-hidden rounded-2xl px-4 py-2 ${
+              isOwn ? 'self-end rounded-br-md' : 'self-start rounded-bl-md'
+            }`}
+            style={bubbleStyle}
+            onStartShouldSetResponder={() => false}
           >
-            {!isOwn && (
-              <Text className="mb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                {message.remitente_nombre}
-              </Text>
-            )}
-
-            {message.adjuntos?.map((att) => (
-              <React.Fragment key={att.id}>
-                {renderAttachment(att, isOwn, (uri) =>
-                  setSelectedImageUri(uri),
-                )}
-              </React.Fragment>
-            ))}
-
-            {message.contenido ? (
-              <Text
-                className={`text-base ${isOwn ? "text-white" : "text-gray-900 dark:text-gray-100"}`}
-              >
-                {message.contenido}
-              </Text>
-            ) : null}
-
-            <Text
-              className={`mt-1 self-end text-xs ${
-                isOwn ? "text-white/70" : "text-gray-500 dark:text-gray-400"
-              }`}
+            <LinearGradient
+              colors={bubbleGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Pressable
+              onLongPress={() => {
+                if (showMenu) setMenuVisible(true);
+              }}
+              accessibilityRole="button"
             >
-              {formatMessageTime(message.creado_en)}
-              {message.editado ? " · editado" : ""}
-            </Text>
-          </Pressable>
-        </View>
-      }
-    >
-      <Menu.Item
-        onPress={() => {
-          setMenuVisible(false);
-          onEdit?.(message);
-        }}
-        title="Editar"
-        disabled={!canEdit}
-      />
-      <Menu.Item
-        onPress={() => {
-          setMenuVisible(false);
-          onDelete?.(message.id);
-        }}
-        title="Eliminar"
-        disabled={!canDelete}
-      />
+              {!isOwn && (
+                <Text
+                  className="mb-1 text-xs font-semibold"
+                  style={{ color: theme.muted }}
+                >
+                  {message.remitente_nombre}
+                </Text>
+              )}
+
+              {message.adjuntos?.map((att) => (
+                <React.Fragment key={att.id}>
+                  {renderAttachment(att, isOwn, accentColor, (uri) =>
+                    setSelectedImageUri(uri),
+                  )}
+                </React.Fragment>
+              ))}
+
+              {message.contenido ? (
+                <Text
+                  className="text-base"
+                  style={{ color: isOwn ? ownTextColor : theme.fg }}
+                >
+                  {message.contenido}
+                </Text>
+              ) : null}
+
+              <Text
+                className="mt-1 self-end text-xs"
+                style={{ color: accentColor }}
+              >
+                {formatMessageTime(message.creado_en)}
+                {message.editado ? ' · editado' : ''}
+              </Text>
+            </Pressable>
+          </View>
+        }
+      >
+        <Menu.Item
+          onPress={() => {
+            setMenuVisible(false);
+            onEdit?.(message);
+          }}
+          title="Editar"
+          disabled={!canEdit}
+        />
+        <Menu.Item
+          onPress={() => {
+            setMenuVisible(false);
+            onDelete?.(message.id);
+          }}
+          title="Eliminar"
+          disabled={!canDelete}
+        />
       </Menu>
       <Modal
         visible={selectedImageUri !== null}
@@ -406,7 +473,7 @@ export default function ChatBubble({
           {selectedImageUri !== null && (
             <Image
               source={{ uri: selectedImageUri }}
-              className={`${message.contenido ? "h-[70%]" : "h-[85%]"} w-full rounded-lg`}
+              className={`${message.contenido ? 'h-[70%]' : 'h-[85%]'} w-full rounded-lg`}
               resizeMode="contain"
               accessibilityLabel="Imagen ampliada"
             />

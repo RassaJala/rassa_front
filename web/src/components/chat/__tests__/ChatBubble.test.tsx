@@ -187,6 +187,84 @@ describe('ChatBubble', () => {
     expect(screen.getByLabelText('Descargar imagen')).toBeDefined();
   });
 
+  it('reserves fixed height for image attachments to avoid layout shift', () => {
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 6,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble message={message} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    );
+    const img = container.querySelector('img') as HTMLImageElement;
+    const wrapper = img.parentElement as HTMLElement;
+    expect(wrapper.style.height).toBe('240px');
+  });
+
+  it('calls onMediaLoad when an image finishes loading', () => {
+    const onMediaLoad = vi.fn();
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 7,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble
+        message={message}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onMediaLoad={onMediaLoad}
+      />,
+    );
+    const img = container.querySelector('img') as HTMLImageElement;
+    fireEvent.load(img);
+    expect(onMediaLoad).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onMediaLoad when an image fails to load', () => {
+    const onMediaLoad = vi.fn();
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 8,
+          mensaje: 1,
+          archivo: '/documentos/foto.jpg',
+          tipo: 'imagen',
+          nombre: 'foto.jpg',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble
+        message={message}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onMediaLoad={onMediaLoad}
+      />,
+    );
+    const img = container.querySelector('img') as HTMLImageElement;
+    fireEvent.error(img);
+    expect(onMediaLoad).toHaveBeenCalledTimes(1);
+  });
+
   it('opens image modal when image is clicked', () => {
     const message: Message = {
       ...baseMessage,
@@ -248,6 +326,34 @@ describe('ChatBubble', () => {
     );
     expect(container.querySelector('video')).toBeDefined();
     expect(screen.getByLabelText('Descargar video')).toBeDefined();
+  });
+
+  it('calls onMediaLoad when video metadata loads', () => {
+    const onMediaLoad = vi.fn();
+    const message: Message = {
+      ...baseMessage,
+      adjuntos: [
+        {
+          id: 9,
+          mensaje: 1,
+          archivo: '/documentos/clip.mp4',
+          tipo: 'video',
+          nombre: 'clip.mp4',
+          tamaño: 0,
+        },
+      ],
+    };
+    const { container } = render(
+      <ChatBubble
+        message={message}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onMediaLoad={onMediaLoad}
+      />,
+    );
+    const video = container.querySelector('video') as HTMLVideoElement;
+    fireEvent(video, new Event('loadedmetadata'));
+    expect(onMediaLoad).toHaveBeenCalledTimes(1);
   });
 
   it('renders audio attachment with download button', () => {

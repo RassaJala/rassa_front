@@ -17,12 +17,10 @@
       "adaptiveIcon": {
         "backgroundColor": "#16a34a"
       },
-      "package": "com.rassa.app"
+      "package": "com.rassa.app",
+      "softwareKeyboardLayoutMode": "resize"
     },
-    "plugins": [
-      "expo-audio",
-      "expo-video"
-    ],
+    "plugins": ["expo-audio", "expo-video"],
     "web": {
       "bundler": "metro",
       "port": 8083

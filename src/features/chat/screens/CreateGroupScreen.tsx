@@ -1,35 +1,41 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 
+import ChatUserSearchPicker from '@/features/chat/components/ChatUserSearchPicker';
 import { useCreateGroup } from '@/features/chat/hooks/useCreateGroup';
+import type { SearchUser } from '@/types/chat';
 
 export default function CreateGroupScreen(): React.JSX.Element {
   const [name, setName] = useState('');
-  const [membersText, setMembersText] = useState('');
+  const [selected, setSelected] = useState<SearchUser[]>([]);
   const createGroupMutation = useCreateGroup();
+
+  const handleToggle = (user: SearchUser) => {
+    setSelected((prev) =>
+      prev.some((s) => s.idUsuario === user.idUsuario)
+        ? prev.filter((s) => s.idUsuario !== user.idUsuario)
+        : [...prev, user],
+    );
+  };
 
   const handleCreate = () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
-
-    const memberIds = membersText
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((id) => !Number.isNaN(id) && id > 0);
-
-    if (memberIds.length === 0) return;
+    if (!trimmed || selected.length === 0) return;
 
     createGroupMutation.mutate({
       nombre: trimmed,
-      fk_usuarios: memberIds,
+      fk_usuarios: selected.map((u) => u.idUsuario),
     });
   };
 
-  const isValid = name.trim().length > 0 && membersText.trim().length > 0;
+  const isValid = name.trim().length > 0 && selected.length > 0;
 
   return (
-    <View className="flex-1 bg-gray-50 p-4 dark:bg-gray-950">
+    <ScrollView
+      className="flex-1 bg-gray-50 dark:bg-gray-950"
+      contentContainerStyle={{ padding: 16 }}
+    >
       <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-gray-100">
         Crear grupo
       </Text>
@@ -39,31 +45,37 @@ export default function CreateGroupScreen(): React.JSX.Element {
         value={name}
         onChangeText={setName}
         mode="outlined"
+        accessibilityLabel="Nombre del grupo"
         className="mb-4"
       />
 
-      <TextInput
-        label="IDs de miembros (separados por coma)"
-        value={membersText}
-        onChangeText={setMembersText}
-        mode="outlined"
-        keyboardType="numeric"
-        className="mb-4"
-      />
-
-      <Text className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-        Ingresa los IDs de los usuarios que quieres agregar al grupo, separados
-        por comas. Ejemplo: 1, 2, 3
+      <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+        Agregar integrantes
       </Text>
+
+      <ChatUserSearchPicker
+        selected={selected}
+        onToggle={handleToggle}
+        placeholder="Buscar por nombre o correo..."
+      />
+
+      <View className="mt-2 mb-4">
+        <Text className="text-xs text-gray-500 dark:text-gray-400">
+          {selected.length > 0
+            ? `${selected.length} integrante(s) seleccionado(s)`
+            : 'Busca usuarios por nombre o correo para agregarlos al grupo.'}
+        </Text>
+      </View>
 
       <Button
         mode="contained"
         onPress={handleCreate}
         disabled={!isValid || createGroupMutation.isPending}
         loading={createGroupMutation.isPending}
+        testID="crear-grupo-button"
       >
         Crear grupo
       </Button>
-    </View>
+    </ScrollView>
   );
 }

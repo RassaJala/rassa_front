@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Modal, Portal, TextInput } from 'react-native-paper';
+import { Modal, Portal } from 'react-native-paper';
 
 import { colors } from '@/constants/colors';
+import ChatUserSearchPicker from '@/features/chat/components/ChatUserSearchPicker';
 import { useTheme } from '@/store/ThemeContext';
+import type { SearchUser } from '@/types/chat';
 
 interface AddMemberModalProps {
   visible: boolean;
@@ -20,21 +22,31 @@ export default function AddMemberModal({
 }: Readonly<AddMemberModalProps>): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const [userIdText, setUserIdText] = useState('');
+  const [selected, setSelected] = useState<SearchUser[]>([]);
+
+  const handleToggle = (user: SearchUser) => {
+    setSelected((prev) =>
+      prev.some((s) => s.idUsuario === user.idUsuario) ? [] : [user],
+    );
+  };
 
   const handleAdd = () => {
-    const userId = Number(userIdText);
-    if (!Number.isNaN(userId) && userId > 0) {
-      onAdd(userId);
-      setUserIdText('');
-    }
+    const user = selected[0];
+    if (!user) return;
+    onAdd(user.idUsuario);
+    setSelected([]);
+  };
+
+  const handleDismiss = () => {
+    setSelected([]);
+    onDismiss();
   };
 
   return (
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={onDismiss}
+        onDismiss={handleDismiss}
         contentContainerStyle={{
           margin: 24,
           borderRadius: 16,
@@ -45,20 +57,21 @@ export default function AddMemberModal({
         <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
           Agregar integrante
         </Text>
-        <TextInput
-          label="ID del usuario"
-          value={userIdText}
-          onChangeText={setUserIdText}
-          keyboardType="numeric"
-          mode="outlined"
+        <ChatUserSearchPicker
+          selected={selected}
+          onToggle={handleToggle}
+          placeholder="Buscar por nombre o correo..."
         />
         <View className="mt-4 flex-row justify-end gap-4">
-          <Pressable onPress={onDismiss}>
+          <Pressable onPress={handleDismiss}>
             <Text className="text-sm text-gray-500">Cancelar</Text>
           </Pressable>
-          <Pressable onPress={handleAdd} disabled={adding}>
+          <Pressable
+            onPress={handleAdd}
+            disabled={adding || selected.length === 0}
+          >
             <Text
-              className={`text-sm font-medium ${adding ? 'text-gray-400' : 'text-green-600'}`}
+              className={`text-sm font-medium ${adding || selected.length === 0 ? 'text-gray-400' : 'text-green-600'}`}
             >
               {adding ? 'Agregando...' : 'Agregar'}
             </Text>
