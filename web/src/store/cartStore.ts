@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const CART_STORAGE_KEY = 'rassa-cart';
+
 export interface CartItem {
   id_producto_semanal: number;
   producto: string;
@@ -80,6 +82,19 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
       },
     }),
-    { name: 'rassa-cart' },
+    { name: CART_STORAGE_KEY },
   ),
 );
+
+// S-9: cross-tab sync. zustand's persist middleware does NOT listen to
+// `storage` events (verified in v5), so a cart change made in another tab
+// would otherwise go unnoticed until a full reload. React to storage events
+// for our own key by re-reading the persisted value — the `storage` event
+// fires only in OTHER tabs, so this never loops back into the writing tab.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === CART_STORAGE_KEY) {
+      void useCartStore.persist.rehydrate();
+    }
+  });
+}

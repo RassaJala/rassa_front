@@ -6,6 +6,11 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: 'Límite de peticiones excedido. Intenta más tarde.',
 };
 
+// Shared across clients: the sanitized message shown when the backend returns
+// HTML / a traceback body instead of JSON (never render the raw body — R10).
+export const INTERNAL_SERVER_HTML_MESSAGE =
+  'Error interno del servidor. Revisa los logs del backend.';
+
 function parseHtmlOrStringError(data: string, status?: number): string {
   const trimmed = data.trim();
 
@@ -20,7 +25,7 @@ function parseHtmlOrStringError(data: string, status?: number): string {
         status,
       );
     }
-    return 'Error interno del servidor. Revisa los logs del backend.';
+    return INTERNAL_SERVER_HTML_MESSAGE;
   }
   return trimmed;
 }

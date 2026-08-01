@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { INTERNAL_SERVER_HTML_MESSAGE } from '~/utils/apiErrors';
 
 vi.mock('./api', () => ({
   default: {
@@ -7,16 +8,25 @@ vi.mock('./api', () => ({
   },
 }));
 
+import { PEDIDO_45 } from '../mocks/fixtures';
 import api from './api';
 import {
+  clampOrderItems,
   createOrder,
   extractOrderError,
   isAmbiguousOrderError,
+  MALFORMED_RESPONSE_MSG,
+  MalformedOrderResponseError,
+  ORDER_ERROR_DEFAULT,
 } from './orders';
 
 const mockedApi = vi.mocked(api);
 
-const CONFIG: AxiosRequestConfig = { url: '/pedidos/', method: 'post' };
+const CONFIG: InternalAxiosRequestConfig = {
+  url: '/pedidos/',
+  method: 'post',
+  headers: new axios.AxiosHeaders(),
+};
 
 function axiosErrorWithResponse(status: number, data: unknown): AxiosError {
   return new AxiosError(
@@ -41,24 +51,13 @@ function axiosErrorWithoutResponse(
   return new AxiosError(message, code, CONFIG);
 }
 
-const PEDIDO = {
-  id_pedido: 45,
-  cliente_nombre: 'Cliente Demo',
-  estado: 'pendiente',
-  subtotal: '25.00',
-  iva: '5.25',
-  total: '30.25',
-  detalles: [],
-  creado_en: '2026-07-31T13:00:00Z',
-};
-
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe('createOrder', () => {
   it('POSTs the exact payload to /pedidos/ and unwraps data.data', async () => {
-    mockedApi.post.mockResolvedValue({ data: { data: PEDIDO } });
+    mockedApi.post.mockResolvedValue({ data: { data: PEDIDO_45 } });
     const payload = { items: [{ id_producto_semanal: 1, cantidad: 2 }] };
 
     const result = await createOrder(payload);
@@ -66,7 +65,78 @@ describe('createOrder', () => {
     expect(mockedApi.post).toHaveBeenCalledWith('/pedidos/', payload, {
       'axios-retry': { retries: 0 },
     });
-    expect(result).toEqual(PEDIDO);
+    expect(result).toEqual(PEDIDO_45);
+  });
+
+  it('W-4: sends the Idempotency-Key header when an idempotency key is provided', async () => {
+    mockedApi.post.mockResolvedValue({ data: { data: PEDIDO_45 } });
+    const payload = { items: [{ id_producto_semanal: 1, cantidad: 2 }] };
+
+    await createOrder(payload, 'checkout-abc123');
+
+    expect(mockedApi.post).toHaveBeenCalledWith('/pedidos/', payload, {
+      'axios-retry': { retries: 0 },
+      headers: { 'Idempotency-Key': 'checkout-abc123' },
+    });
+  });
+
+  it('W-4: omits the Idempotency-Key header when no key is provided', async () => {
+    mockedApi.post.mockResolvedValue({ data: { data: PEDIDO_45 } });
+    const payload = { items: [{ id_producto_semanal: 1, cantidad: 2 }] };
+
+    await createOrder(payload);
+
+    expect(mockedApi.post).toHaveBeenCalledWith('/pedidos/', payload, {
+      'axios-retry': { retries: 0 },
+    });
+  });
+});
+
+describe('createOrder — response shape validation (W-3)', () => {
+  it('W-3: rejects a 2xx body without the { data: Pedido } envelope', async () => {
+    mockedApi.post.mockResolvedValue({ data: {} });
+
+    await expect(createOrder({ items: [] })).rejects.toBeInstanceOf(
+      MalformedOrderResponseError,
+    );
+  });
+
+  it('W-3: rejects a raw Pedido at the top level (unwrapped)', async () => {
+    mockedApi.post.mockResolvedValue({ data: PEDIDO_45 });
+
+    await expect(createOrder({ items: [] })).rejects.toBeInstanceOf(
+      MalformedOrderResponseError,
+    );
+  });
+
+  it('W-3: rejects an array body', async () => {
+    mockedApi.post.mockResolvedValue({ data: [PEDIDO_45] });
+
+    await expect(createOrder({ items: [] })).rejects.toBeInstanceOf(
+      MalformedOrderResponseError,
+    );
+  });
+
+  it('W-3: rejects a non-numeric id_pedido', async () => {
+    mockedApi.post.mockResolvedValue({
+      data: { data: { ...PEDIDO_45, id_pedido: '45' } },
+    });
+
+    await expect(createOrder({ items: [] })).rejects.toBeInstanceOf(
+      MalformedOrderResponseError,
+    );
+  });
+
+  it('W-3: the classified error is user-safe and NOT ambiguous', async () => {
+    mockedApi.post.mockResolvedValue({ data: {} });
+
+    const err: unknown = await createOrder({ items: [] }).catch(
+      (e: unknown) => e,
+    );
+
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe(MALFORMED_RESPONSE_MSG);
+    expect(isAmbiguousOrderError(err)).toBe(false);
   });
 });
 
@@ -83,7 +153,7 @@ describe('extractOrderError', () => {
 
   it('falls back to the default message when the array body is empty', () => {
     expect(extractOrderError(axiosErrorWithResponse(400, []))).toBe(
-      'Error del servidor. Intenta de nuevo.',
+      ORDER_ERROR_DEFAULT,
     );
   });
 
@@ -92,9 +162,7 @@ describe('extractOrderError', () => {
       'Traceback (most recent call last):\n  File "/app/views.py", line 42',
     ]);
 
-    expect(extractOrderError(err)).toBe(
-      'Error del servidor. Intenta de nuevo.',
-    );
+    expect(extractOrderError(err)).toBe(ORDER_ERROR_DEFAULT);
   });
 
   it('delegates to extractApiError for an object body with detail', () => {
@@ -109,15 +177,31 @@ describe('extractOrderError', () => {
     expect(extractOrderError(err)).toBe('Cantidad inválida');
   });
 
+  it('W-1: sanitizes an unsafe message field (5xx HTML/traceback body)', () => {
+    const err = axiosErrorWithResponse(500, {
+      message:
+        '<html><body><pre>Traceback (most recent call last)</pre></body></html>',
+    });
+
+    expect(extractOrderError(err)).toBe(ORDER_ERROR_DEFAULT);
+  });
+
+  it('W-1: sanitizes a Django traceback in the message field', () => {
+    const err = axiosErrorWithResponse(500, {
+      message:
+        'Traceback (most recent call last):\n  File "/app/views.py", line 42, in post',
+    });
+
+    expect(extractOrderError(err)).toBe(ORDER_ERROR_DEFAULT);
+  });
+
   it('R8/R10: sanitizes a 5xx HTML/traceback string body', () => {
     const err = axiosErrorWithResponse(
       500,
       '<html><body><pre>Traceback (most recent call last)</pre></body></html>',
     );
 
-    expect(extractOrderError(err)).toBe(
-      'Error interno del servidor. Revisa los logs del backend.',
-    );
+    expect(extractOrderError(err)).toBe(INTERNAL_SERVER_HTML_MESSAGE);
   });
 
   it('JD-001-B: a bare Error surfaces its own message (Sesión expirada)', () => {
@@ -177,5 +261,67 @@ describe('isAmbiguousOrderError', () => {
 
     expect(isAmbiguousOrderError(fake)).toBe(false);
     expect(axios.isAxiosError(fake)).toBe(false);
+  });
+
+  it('S-12: ERR_CANCELED is NOT ambiguous (request never left the client)', () => {
+    expect(
+      isAmbiguousOrderError(axiosErrorWithoutResponse('ERR_CANCELED')),
+    ).toBe(false);
+  });
+
+  it('S-12: a real axios CanceledError is NOT ambiguous', () => {
+    const canceled = new axios.CanceledError('canceled', CONFIG, undefined);
+
+    expect(isAmbiguousOrderError(canceled)).toBe(false);
+  });
+});
+
+describe('clampOrderItems (W-2)', () => {
+  const line = (id: number, cantidad: number, stock: number) => ({
+    id_producto_semanal: id,
+    cantidad,
+    stock,
+  });
+
+  it('keeps integer quantities within [1, stock]', () => {
+    const result = clampOrderItems([line(1, 1, 10), line(2, 10, 10)]);
+
+    expect(result.items).toEqual([
+      { id_producto_semanal: 1, cantidad: 1 },
+      { id_producto_semanal: 2, cantidad: 10 },
+    ]);
+    expect(result.skipped).toEqual([]);
+  });
+
+  it('skips zero and negative quantities', () => {
+    const result = clampOrderItems([
+      line(1, 0, 10),
+      line(2, -3, 10),
+      line(3, 2, 10),
+    ]);
+
+    expect(result.items).toEqual([{ id_producto_semanal: 3, cantidad: 2 }]);
+    expect(result.skipped).toEqual([1, 2]);
+  });
+
+  it('skips quantities above stock', () => {
+    const result = clampOrderItems([line(1, 11, 10), line(2, 5, 5)]);
+
+    expect(result.items).toEqual([{ id_producto_semanal: 2, cantidad: 5 }]);
+    expect(result.skipped).toEqual([1]);
+  });
+
+  it('skips non-integer and NaN quantities', () => {
+    const result = clampOrderItems([line(1, 2.5, 10), line(2, Number.NaN, 10)]);
+
+    expect(result.items).toEqual([]);
+    expect(result.skipped).toEqual([1, 2]);
+  });
+
+  it('returns an empty result for an empty candidate list', () => {
+    const result = clampOrderItems([]);
+
+    expect(result.items).toEqual([]);
+    expect(result.skipped).toEqual([]);
   });
 });

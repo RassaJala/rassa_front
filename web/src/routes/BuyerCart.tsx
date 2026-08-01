@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getColors } from '../constants/colors';
+import { cartCardStyle } from '../constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCartStore } from '../store/cartStore';
 
@@ -24,15 +25,7 @@ export function BuyerCart() {
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');
 
-  const cardStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-    borderRadius: 12,
-    border: `1px solid ${c.border}`,
-    backgroundColor: c.surface,
-    padding: 16,
-  };
+  const cardStyle = cartCardStyle(c.border, c.surface);
 
   const qtyBtnStyle: React.CSSProperties = {
     display: 'flex',
