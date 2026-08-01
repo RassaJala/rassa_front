@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import EmptyCart from '@/components/EmptyCart';
 import { colors, themeColors } from '@/constants/colors';
 import { mediaUrl } from '@/services/api';
 import { useCartStore } from '@/store/cartStore';
@@ -179,44 +180,7 @@ export default function CarritoScreen(): React.JSX.Element {
   const totalItems = items.reduce((s, i) => s + i.cantidad, 0);
 
   if (items.length === 0) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="cart-outline"
-            size={64}
-            color={tc.muted}
-          />
-          <Text
-            style={{
-              marginTop: 16,
-              fontSize: 22,
-              fontWeight: '700',
-              color: tc.fg,
-            }}
-          >
-            Carrito vacío
-          </Text>
-          <Text
-            style={{
-              marginTop: 8,
-              fontSize: 14,
-              color: tc.muted,
-              textAlign: 'center',
-            }}
-          >
-            Agregá productos desde el catálogo para comenzar tu compra.
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <EmptyCart isDark={isDark} />;
   }
 
   return (

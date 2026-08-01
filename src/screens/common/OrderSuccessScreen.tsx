@@ -10,6 +10,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, themeColors } from '@/constants/colors';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
+import { formatMoney } from '@/utils/money';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 type Route = RouteProp<BuyerStackParamList, 'OrderSuccess'>;
@@ -24,59 +25,33 @@ export default function OrderSuccessScreen(): React.JSX.Element {
   const { orderId, total, estado } = route.params;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: tc.bg }} edges={['top']}>
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-        }}
-      >
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: tc.bg }}
+      edges={['top']}
+    >
+      <View className="flex-1 items-center justify-center px-6">
         <MaterialCommunityIcons
           name="check-circle"
           size={88}
           color={colors.success}
         />
-        <Text
-          style={{
-            marginTop: 20,
-            fontSize: 24,
-            fontWeight: '700',
-            color: tc.fg,
-          }}
-        >
+        <Text className="mt-5 text-2xl font-bold" style={{ color: tc.fg }}>
           ¡Pedido confirmado!
         </Text>
-        <Text style={{ marginTop: 8, fontSize: 16, color: tc.muted }}>
+        <Text className="mt-2 text-base" style={{ color: tc.muted }}>
           {`Pedido N° ${orderId}`}
         </Text>
-        <Text
-          style={{
-            marginTop: 4,
-            fontSize: 20,
-            fontWeight: '700',
-            color: tc.fg,
-          }}
-        >
-          {`$${Number(total).toFixed(2)}`}
+        <Text className="mt-1 text-xl font-bold" style={{ color: tc.fg }}>
+          {formatMoney(total)}
         </Text>
         <View
-          style={{
-            marginTop: 12,
-            backgroundColor: tc.accentBg,
-            borderRadius: 8,
-            paddingHorizontal: 12,
-            paddingVertical: 4,
-          }}
+          className="mt-3 rounded-lg px-3 py-1"
+          style={{ backgroundColor: tc.accentBg }}
         >
           <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: tc.brand,
-              textTransform: 'capitalize',
-            }}
+            className="text-xs font-semibold capitalize"
+            style={{ color: tc.brand }}
           >
             {estado}
           </Text>
@@ -85,16 +60,12 @@ export default function OrderSuccessScreen(): React.JSX.Element {
         <Pressable
           testID="back-home-btn"
           onPress={() => navigation.navigate('BuyerTabs', { screen: 'Home' })}
-          style={{
-            marginTop: 32,
-            backgroundColor: tc.brand,
-            borderRadius: 12,
-            paddingHorizontal: 32,
-            paddingVertical: 14,
-          }}
+          className="mt-8 rounded-xl px-8 py-3.5"
+          style={{ backgroundColor: tc.brand }}
         >
           <Text
-            style={{ fontSize: 15, fontWeight: '700', color: colors.iconWhite }}
+            className="text-[15px] font-bold"
+            style={{ color: colors.iconWhite }}
           >
             Volver al inicio
           </Text>
