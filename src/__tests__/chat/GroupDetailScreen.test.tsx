@@ -1,12 +1,14 @@
 import React from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import GroupDetailScreen from '@/features/chat/screens/GroupDetailScreen';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
+
+const mockCreateChat = jest.fn();
 
 jest.mock('@/services/api');
 jest.mock('@/store/AuthContext', () => ({
@@ -14,6 +16,12 @@ jest.mock('@/store/AuthContext', () => ({
 }));
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light' }),
+}));
+jest.mock('@/features/chat/hooks/useCreatePrivateConversation', () => ({
+  useCreatePrivateConversation: () => ({
+    mutate: mockCreateChat,
+    isPending: false,
+  }),
 }));
 jest.mock('@react-navigation/native', () => {
   const mockRoute = {
@@ -120,5 +128,58 @@ describe('GroupDetailScreen', () => {
         '/chat/conversaciones/1/integrantes/',
       );
     });
+  });
+
+  it('shows a chat button and creates a private conversation for other members', async () => {
+    mockApiGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id_miembro: 1,
+            id_usuario: 10,
+            nombre_completo: 'Alice',
+            correo: 'alice@test.com',
+            creado_en: '2026-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    const { getByText } = renderScreen();
+
+    await waitFor(() => {
+      expect(getByText('Chatear')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('Chatear'));
+
+    expect(mockCreateChat).toHaveBeenCalledWith({ fk_usuario: 10 });
+  });
+
+  it('hides the chat button for the current user', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 10, nombre: 'Alice', role: 'admin' },
+    });
+    mockApiGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id_miembro: 1,
+            id_usuario: 10,
+            nombre_completo: 'Alice',
+            correo: 'alice@test.com',
+            creado_en: '2026-01-01T00:00:00Z',
+          },
+        ],
+      },
+    });
+
+    const { queryByText } = renderScreen();
+
+    await waitFor(() => {
+      expect(queryByText('Alice')).toBeTruthy();
+    });
+
+    expect(queryByText('Chatear')).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ChatListPage } from '../chat/ChatListPage';
@@ -46,7 +46,7 @@ vi.mock('~/hooks/chat/useConversations', () => ({
 }));
 
 vi.mock('~/hooks/chat/useGroupMembers', () => ({
-  useGroupMembers: () => ({ data: [], isLoading: false }),
+  useGroupMembers: () => mockUseGroupMembers(),
 }));
 
 vi.mock('~/hooks/chat/useRenameGroup', () => ({
@@ -57,17 +57,24 @@ vi.mock('~/hooks/chat/useAddGroupMember', () => ({
   useAddGroupMember: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+const mockCreatePrivateConversation = vi.fn();
 vi.mock('~/hooks/chat/useCreatePrivateConversation', () => ({
-  useCreatePrivateConversation: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreatePrivateConversation: () => ({
+    mutate: mockCreatePrivateConversation,
+    isPending: false,
+  }),
 }));
 
 vi.mock('~/hooks/chat/useSearchUsers', () => ({
   useSearchUsers: () => ({ results: [], loading: false, error: null }),
 }));
 
+const mockUseGroupMembers = vi.fn();
+
 describe('chat role gates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseGroupMembers.mockReturnValue({ data: [], isLoading: false });
   });
 
   it('hides the "Nuevo chat" button for cliente users', () => {
@@ -150,5 +157,58 @@ describe('chat role gates', () => {
     );
     expect(screen.getByText('Renombrar')).toBeInTheDocument();
     expect(screen.getByText('+ Miembro')).toBeInTheDocument();
+  });
+
+  it('shows a chat button that opens a private conversation for other members', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 1, rol: 'admin' },
+    });
+    mockUseGroupMembers.mockReturnValue({
+      data: [
+        {
+          id: 10,
+          idUsuario: 10,
+          nombre: 'Alice',
+          rol: 'vendedor',
+          avatar: null,
+        },
+      ],
+      isLoading: false,
+    });
+    render(
+      <MemoryRouter initialEntries={['/chat/1/grupo']}>
+        <GroupDetailPage />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Chatear con Alice' }));
+    expect(mockCreatePrivateConversation).toHaveBeenCalledWith({
+      fk_usuario: 10,
+    });
+  });
+
+  it('hides the chat button for the current user', () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 10, rol: 'admin' },
+    });
+    mockUseGroupMembers.mockReturnValue({
+      data: [
+        {
+          id: 10,
+          idUsuario: 10,
+          nombre: 'Alice',
+          rol: 'vendedor',
+          avatar: null,
+        },
+      ],
+      isLoading: false,
+    });
+    render(
+      <MemoryRouter initialEntries={['/chat/1/grupo']}>
+        <GroupDetailPage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Chatear con Alice' }),
+    ).not.toBeInTheDocument();
   });
 });

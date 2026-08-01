@@ -85,6 +85,10 @@ jest.mock('@/features/chat/components/AttachmentPicker', () => {
   return { __esModule: true, default: MockPicker };
 });
 
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light' }),
+}));
+
 type MockRecorder = {
   isRecording: boolean;
   uri: string | null;

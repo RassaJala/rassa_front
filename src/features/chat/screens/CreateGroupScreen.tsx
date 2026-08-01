@@ -33,10 +33,10 @@ export default function CreateGroupScreen(): React.JSX.Element {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50 dark:bg-gray-950"
+      className="flex-1 bg-rassa-bg dark:bg-rassa-bg-dark"
       contentContainerStyle={{ padding: 16 }}
     >
-      <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-gray-100">
+      <Text className="mb-4 text-lg font-bold text-rassa-fg dark:text-rassa-fg-dark">
         Crear grupo
       </Text>
 
@@ -49,7 +49,7 @@ export default function CreateGroupScreen(): React.JSX.Element {
         className="mb-4"
       />
 
-      <Text className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+      <Text className="mb-2 text-sm font-medium text-rassa-fg dark:text-rassa-fg-dark">
         Agregar integrantes
       </Text>
 
@@ -60,7 +60,7 @@ export default function CreateGroupScreen(): React.JSX.Element {
       />
 
       <View className="mt-2 mb-4">
-        <Text className="text-xs text-gray-500 dark:text-gray-400">
+        <Text className="text-xs text-rassa-muted dark:text-rassa-muted-dark">
           {selected.length > 0
             ? `${selected.length} integrante(s) seleccionado(s)`
             : 'Busca usuarios por nombre o correo para agregarlos al grupo.'}

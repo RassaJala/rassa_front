@@ -4,6 +4,7 @@ import { TextInput } from 'react-native-paper';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { colors } from '@/constants/colors';
 import { useChatUserSearch } from '@/features/chat/hooks/useChatUserSearch';
 import { useTheme } from '@/store/ThemeContext';
 import type { SearchUser } from '@/types/chat';
@@ -44,14 +45,14 @@ export default function ChatUserSearchPicker({
               onPress={() => onToggle(user)}
               accessibilityLabel={`Quitar ${user.nombreCompleto}`}
             >
-              <View className="flex-row items-center gap-1 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 dark:border-green-800 dark:bg-green-900/30">
-                <Text className="text-sm text-gray-800 dark:text-gray-100">
+              <View className="flex-row items-center gap-1 rounded-full border border-rassa-active-bg bg-rassa-active-bg px-3 py-1.5 dark:border-rassa-active-bg-dark dark:bg-rassa-active-bg-dark">
+                <Text className="text-sm text-rassa-fg dark:text-rassa-fg-dark">
                   {user.nombreCompleto}
                 </Text>
                 <MaterialCommunityIcons
                   name="close"
                   size={14}
-                  color={isDark ? '#9DA89D' : '#5E6B5E'}
+                  color={isDark ? colors.admMutedD : colors.admMutedL}
                 />
               </View>
             </Pressable>
@@ -70,19 +71,19 @@ export default function ChatUserSearchPicker({
 
       {showDropdown ? (
         <ScrollView
-          className="mt-1 max-h-48 rounded-lg border border-gray-200 dark:border-gray-700"
+          className="mt-1 max-h-48 rounded-lg border border-rassa-border dark:border-rassa-border-dark"
           keyboardShouldPersistTaps="handled"
         >
           {isSearching ? (
-            <Text className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <Text className="px-3 py-2 text-sm text-rassa-muted dark:text-rassa-muted-dark">
               Buscando…
             </Text>
           ) : null}
           {!isSearching && error ? (
-            <Text className="px-3 py-2 text-sm text-red-500">{error}</Text>
+            <Text className="px-3 py-2 text-sm text-rassa-error">{error}</Text>
           ) : null}
           {!isSearching && !error && filtered.length === 0 ? (
-            <Text className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <Text className="px-3 py-2 text-sm text-rassa-muted dark:text-rassa-muted-dark">
               Sin resultados
             </Text>
           ) : null}
@@ -93,10 +94,10 @@ export default function ChatUserSearchPicker({
               accessibilityLabel={`Seleccionar ${user.nombreCompleto}`}
               className="px-3 py-2"
             >
-              <Text className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <Text className="text-sm font-medium text-rassa-fg dark:text-rassa-fg-dark">
                 {user.nombreCompleto}
               </Text>
-              <Text className="text-xs text-gray-500 dark:text-gray-400">
+              <Text className="text-xs text-rassa-muted dark:text-rassa-muted-dark">
                 {user.correo} · {user.rol}
               </Text>
             </Pressable>

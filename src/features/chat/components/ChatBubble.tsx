@@ -10,12 +10,12 @@ import {
   View,
 } from 'react-native';
 import { IconButton, Menu } from 'react-native-paper';
-import Video, {
-  type OnBufferData,
-  type OnLoadData,
-  type OnProgressData,
-  type VideoRef,
-  ViewType,
+import Video, { ViewType } from 'react-native-video';
+import type {
+  OnBufferData,
+  OnLoadData,
+  OnProgressData,
+  VideoRef,
 } from 'react-native-video';
 
 import {
@@ -137,12 +137,12 @@ function audioPalette(
     return {
       container: isDark ? 'bg-black/25' : 'bg-black/5',
       track: isDark ? 'bg-white/20' : 'bg-black/10',
-      fill: isDark ? 'bg-white/80' : 'bg-gray-800',
+      fill: isDark ? 'bg-white/80' : 'bg-rassa-fg',
     };
   }
   return {
     container: isDark ? 'bg-black/20' : 'bg-black/5',
-    track: 'bg-gray-300 dark:bg-gray-600',
+    track: 'bg-rassa-border dark:bg-rassa-border-dark',
     fill: 'bg-brand-green-forest',
   };
 }
@@ -404,7 +404,7 @@ function InlineVideo({
               accessibilityRole="adjustable"
               accessibilityLabel={`Progreso de video: ${attachment.nombre}`}
             >
-              <View className="h-1.5 overflow-hidden rounded-full bg-gray-300 dark:bg-gray-600">
+              <View className="h-1.5 overflow-hidden rounded-full bg-rassa-border dark:bg-rassa-border-dark">
                 <View
                   className="h-full rounded-full bg-brand-green-forest"
                   style={{ width: `${progress}%` }}
@@ -640,7 +640,7 @@ export default function ChatBubble({
           isOwn ? 'self-end' : 'self-start'
         }`}
       >
-        <Text className="text-sm text-gray-400 italic dark:text-gray-500">
+        <Text className="text-sm text-rassa-muted italic dark:text-rassa-muted-dark">
           Mensaje eliminado
         </Text>
       </View>

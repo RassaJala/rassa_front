@@ -43,11 +43,11 @@ export default function RenameGroupModal({
         contentContainerStyle={{
           margin: 24,
           borderRadius: 16,
-          backgroundColor: isDark ? colors.brandInk : colors.surface,
+          backgroundColor: isDark ? colors.admSurfaceD : colors.admSurfaceL,
           padding: 24,
         }}
       >
-        <Text className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+        <Text className="mb-4 text-lg font-bold text-rassa-fg dark:text-rassa-fg-dark">
           Renombrar grupo
         </Text>
         <TextInput
@@ -58,11 +58,17 @@ export default function RenameGroupModal({
         />
         <View className="mt-4 flex-row justify-end gap-4">
           <Pressable onPress={onDismiss}>
-            <Text className="text-sm text-gray-500">Cancelar</Text>
+            <Text className="text-sm text-rassa-muted dark:text-rassa-muted-dark">
+              Cancelar
+            </Text>
           </Pressable>
           <Pressable onPress={handleSave} disabled={saving}>
             <Text
-              className={`text-sm font-medium ${saving ? 'text-gray-400' : 'text-green-600'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                saving
+                  ? 'bg-rassa-border text-rassa-muted dark:bg-rassa-border-dark dark:text-rassa-muted-dark'
+                  : 'bg-rassa-brand text-white dark:bg-rassa-brand-dark'
+              }`}
             >
               {saving ? 'Guardando...' : 'Guardar'}
             </Text>

@@ -21,7 +21,7 @@ export default function ChatListScreen(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <View className="flex-1 items-center justify-center bg-rassa-bg dark:bg-rassa-bg-dark">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -29,8 +29,8 @@ export default function ChatListScreen(): React.JSX.Element {
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+      <View className="flex-1 items-center justify-center bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
+        <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
           Error al cargar conversaciones. Toca Reintentar.
         </Text>
       </View>
@@ -39,8 +39,8 @@ export default function ChatListScreen(): React.JSX.Element {
 
   if (conversations.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+      <View className="flex-1 items-center justify-center bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
+        <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
           No hay conversaciones aún
         </Text>
         {canManage ? (
@@ -56,7 +56,7 @@ export default function ChatListScreen(): React.JSX.Element {
   }
 
   return (
-    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
+    <View className="flex-1 bg-rassa-bg dark:bg-rassa-bg-dark">
       <FlatList
         data={conversations}
         keyExtractor={(item) => String(item.id)}
@@ -83,7 +83,7 @@ function ItemSeparator({ count }: Readonly<{ count: number }>) {
     <View
       // include count as accessibility label so the component receives data via props
       accessibilityLabel={`separator-${count}`}
-      className="h-px bg-gray-200 dark:bg-gray-800"
+      className="h-px bg-rassa-border dark:bg-rassa-border-dark"
     />
   );
 }

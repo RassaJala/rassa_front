@@ -6,6 +6,7 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { useGroupMembers } from '~/hooks/chat/useGroupMembers';
 import { useRenameGroup } from '~/hooks/chat/useRenameGroup';
 import { useAddGroupMember } from '~/hooks/chat/useAddGroupMember';
+import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { GroupMemberItem } from '~/components/chat/GroupMemberItem';
 import { RenameGroupModal } from '~/components/chat/RenameGroupModal';
 import { AddMemberModal } from '~/components/chat/AddMemberModal';
@@ -27,6 +28,7 @@ export function GroupDetailPage() {
   const { data: members, isLoading } = useGroupMembers(conversationId);
   const renameGroup = useRenameGroup(conversationId);
   const addGroupMember = useAddGroupMember(conversationId);
+  const createChat = useCreatePrivateConversation();
 
   const [showRename, setShowRename] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -124,7 +126,16 @@ export function GroupDetailPage() {
         )}
 
         {members?.map((member) => (
-          <GroupMemberItem key={member.id} member={member} />
+          <GroupMemberItem
+            key={member.id}
+            member={member}
+            chatDisabled={createChat.isPending}
+            {...(member.idUsuario === user?.id
+              ? {}
+              : {
+                  onChat: (m) => createChat.mutate({ fk_usuario: m.idUsuario }),
+                })}
+          />
         ))}
       </div>
 

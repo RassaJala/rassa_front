@@ -42,10 +42,10 @@ export default function StartChatScreen(): React.JSX.Element {
   };
 
   return (
-    <View className="flex-1 bg-gray-50 p-4 dark:bg-gray-950">
+    <View className="flex-1 bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
       {!isPrivate ? (
         <View className="gap-4">
-          <Text className="mb-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+          <Text className="mb-2 text-lg font-bold text-rassa-fg dark:text-rassa-fg-dark">
             Iniciar conversación
           </Text>
 
@@ -69,7 +69,7 @@ export default function StartChatScreen(): React.JSX.Element {
         </View>
       ) : (
         <View className="gap-4">
-          <Text className="mb-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+          <Text className="mb-2 text-lg font-bold text-rassa-fg dark:text-rassa-fg-dark">
             Chat privado
           </Text>
 
@@ -80,13 +80,13 @@ export default function StartChatScreen(): React.JSX.Element {
           />
 
           {isSelfChat ? (
-            <Text className="text-sm text-red-500">
+            <Text className="text-sm text-rassa-error">
               No puedes iniciar un chat contigo mismo
             </Text>
           ) : null}
 
           {createPrivateChat.isError ? (
-            <Text className="text-sm text-red-500">
+            <Text className="text-sm text-rassa-error">
               No se pudo crear la conversación. Intenta de nuevo
             </Text>
           ) : null}

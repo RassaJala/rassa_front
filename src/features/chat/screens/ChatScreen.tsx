@@ -210,7 +210,7 @@ export default function ChatScreen(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <View className="flex-1 items-center justify-center bg-rassa-bg dark:bg-rassa-bg-dark">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -218,8 +218,8 @@ export default function ChatScreen(): React.JSX.Element {
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+      <View className="flex-1 items-center justify-center bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
+        <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
           Error al cargar mensajes. Toca Reintentar.
         </Text>
       </View>
@@ -228,12 +228,12 @@ export default function ChatScreen(): React.JSX.Element {
 
   return (
     <Animated.View
-      className="flex-1 bg-gray-50 dark:bg-gray-950"
+      className="flex-1 bg-rassa-bg dark:bg-rassa-bg-dark"
       style={{ paddingBottom: keyboardHeight }}
     >
       {sortedMessages.length === 0 ? (
         <View className="flex-1 items-center justify-center p-4">
-          <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+          <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
             No hay mensajes aún. ¡Escribe el primero!
           </Text>
         </View>

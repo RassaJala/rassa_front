@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { colors } from '@/constants/colors';
+import { colors, themeColors } from '@/constants/colors';
 import AttachmentPicker from '@/features/chat/components/AttachmentPicker';
 import { useAudioRecorder } from '@/features/chat/hooks/useAudioRecorder';
+import { useTheme } from '@/store/ThemeContext';
 import { ATTACHMENT_TYPES } from '@/types/chat';
 import type { AttachmentType } from '@/types/chat';
 
@@ -48,6 +49,10 @@ export default function ChatInput({
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedKind, setSelectedKind] = useState<AttachmentType | null>(null);
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+  const theme = themeColors(isDark);
+  const iconMuted = isDark ? colors.admMutedD : colors.admMutedL;
 
   const canSend = text.trim().length > 0 || selectedFile !== null;
 
@@ -87,7 +92,7 @@ export default function ChatInput({
 
   return (
     <View
-      className="border-t border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900"
+      className="border-t border-rassa-border bg-rassa-surface p-2 dark:border-rassa-border-dark dark:bg-rassa-surface-dark"
       style={{ paddingBottom: insets.bottom + 6 }}
     >
       {recorder.error ? (
@@ -96,21 +101,21 @@ export default function ChatInput({
         </Text>
       ) : null}
       {selectedFile ? (
-        <View className="mb-1 flex-row items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800">
+        <View className="mb-1 flex-row items-center gap-2 rounded-lg border border-rassa-border bg-rassa-bg px-2 py-1.5 dark:border-rassa-border-dark dark:bg-rassa-surface-dark">
           <MaterialCommunityIcons
             name={TYPE_ICON[selectedKind ?? ATTACHMENT_TYPES.IMAGEN]}
             size={18}
-            color={colors.textSecondary}
+            color={iconMuted}
           />
           <Text
-            className="flex-1 text-sm text-gray-700 dark:text-gray-200"
+            className="flex-1 text-sm text-rassa-fg dark:text-rassa-fg-dark"
             numberOfLines={1}
           >
             {selectedFile.name}
           </Text>
           <View
             className="rounded px-1.5 py-0.5"
-            style={{ backgroundColor: colors.brandPrimary }}
+            style={{ backgroundColor: theme.brand }}
           >
             <Text className="text-xs font-medium text-white">
               {TYPE_LABEL[selectedKind ?? ATTACHMENT_TYPES.IMAGEN]}
@@ -121,11 +126,7 @@ export default function ChatInput({
             accessibilityLabel="Quitar archivo"
             hitSlop={8}
           >
-            <MaterialCommunityIcons
-              name="close"
-              size={18}
-              color={colors.textSecondary}
-            />
+            <MaterialCommunityIcons name="close" size={18} color={iconMuted} />
           </Pressable>
         </View>
       ) : null}
@@ -133,15 +134,15 @@ export default function ChatInput({
         {recorder.isRecording ? (
           <>
             <View className="flex-1 flex-row items-center gap-2">
-              <View className="h-2.5 w-2.5 rounded-full bg-red-500" />
-              <Text className="text-sm text-gray-700 dark:text-gray-200">
+              <View className="h-2.5 w-2.5 rounded-full bg-rassa-error" />
+              <Text className="text-sm text-rassa-fg dark:text-rassa-fg-dark">
                 Grabando… {recorder.elapsed}s
               </Text>
             </View>
             <IconButton
               icon="stop"
               size={24}
-              iconColor="#DE393A"
+              iconColor={theme.brand}
               style={{ margin: 0 }}
               accessibilityLabel="Detener y enviar audio"
               onPress={() => void handleStopRecording()}
@@ -149,7 +150,7 @@ export default function ChatInput({
             <IconButton
               icon="close"
               size={24}
-              iconColor="#6b7280"
+              iconColor={iconMuted}
               style={{ margin: 0 }}
               accessibilityLabel="Cancelar grabación"
               onPress={() => void recorder.cancelRecording()}
@@ -162,7 +163,7 @@ export default function ChatInput({
                 <IconButton
                   icon="paperclip"
                   size={24}
-                  iconColor="#6b7280"
+                  iconColor={iconMuted}
                   style={{ margin: 0 }}
                   accessibilityLabel="Adjuntar archivo"
                 />
@@ -173,7 +174,7 @@ export default function ChatInput({
               <IconButton
                 icon="microphone"
                 size={24}
-                iconColor="#6b7280"
+                iconColor={iconMuted}
                 style={{ margin: 0 }}
                 accessibilityLabel="Grabar audio"
                 onPress={() => void recorder.startRecording()}
@@ -189,7 +190,7 @@ export default function ChatInput({
               numberOfLines={1}
               dense
               style={{ flex: 1 }}
-              contentStyle={{ minHeight: 44 }}
+              contentStyle={{ minHeight: 44, textAlignVertical: 'center' }}
               outlineStyle={{ borderRadius: 24 }}
             />
 
@@ -198,7 +199,7 @@ export default function ChatInput({
               size={24}
               disabled={!canSend}
               onPress={handleSend}
-              iconColor="#DE393A"
+              iconColor={theme.brand}
               style={{ margin: 0 }}
               accessibilityLabel="Enviar mensaje"
             />

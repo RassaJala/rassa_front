@@ -194,6 +194,8 @@ function AdminTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -309,6 +311,8 @@ function BuyerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -464,6 +468,8 @@ function SellerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons

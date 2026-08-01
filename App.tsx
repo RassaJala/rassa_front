@@ -9,7 +9,12 @@ import {
 
 import { StatusBar } from 'expo-status-bar';
 
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
+import type { Theme as NavigationTheme } from '@react-navigation/native';
 import {
   QueryCache,
   QueryClient,
@@ -18,6 +23,7 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { colors } from '@/constants/colors';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
@@ -41,8 +47,20 @@ export default function App(): React.JSX.Element {
   const { colorScheme } = useColorScheme();
   const brandCoral = '#DE393A';
 
-  const brandCoralLight = '#FEF2F2'; // red-50 tint — active segment background (light)
-  const brandCoralDark = '#3B1212'; // dark coral tint — active segment background (dark)
+  const isDark = colorScheme === 'dark';
+
+  const navigationTheme: NavigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      primary: isDark ? colors.admBrandD : colors.admBrandL,
+      background: isDark ? colors.admBgD : colors.admBgL,
+      card: isDark ? colors.admSurfaceD : colors.admSurfaceL,
+      text: isDark ? colors.admFgD : colors.admFgL,
+      border: isDark ? colors.admBorderD : colors.admBorderL,
+      notification: brandCoral,
+    },
+  };
 
   const theme =
     colorScheme === 'dark'
@@ -50,18 +68,18 @@ export default function App(): React.JSX.Element {
           ...MD3DarkTheme,
           colors: {
             ...MD3DarkTheme.colors,
-            primary: brandCoral,
-            secondaryContainer: brandCoralDark,
-            onSecondaryContainer: brandCoral,
+            primary: colors.admBrandD,
+            secondaryContainer: colors.admActiveBgD,
+            onSecondaryContainer: colors.admBrandD,
           },
         }
       : {
           ...MD3LightTheme,
           colors: {
             ...MD3LightTheme.colors,
-            primary: brandCoral,
-            secondaryContainer: brandCoralLight,
-            onSecondaryContainer: brandCoral,
+            primary: colors.admBrandL,
+            secondaryContainer: colors.admActiveBgL,
+            onSecondaryContainer: colors.admBrandL,
           },
         };
 
@@ -72,7 +90,7 @@ export default function App(): React.JSX.Element {
           <AuthProvider>
             <ErrorBoundary>
               <KeyboardProvider preload={false}>
-                <NavigationContainer>
+                <NavigationContainer theme={navigationTheme}>
                   <AppNavigator />
                   <StatusBar style="auto" />
                 </NavigationContainer>
