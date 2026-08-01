@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -96,6 +96,7 @@ describe('PaymentPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    window.localStorage.clear();
     mockedApi.get.mockImplementation((path: string) => {
       if (path === '/pedidos/5/') {
         return Promise.resolve({ data: mockOrder });
@@ -152,6 +153,7 @@ describe('PaymentPage', () => {
           tipo_pago: 1,
           monto: '119.48',
         }),
+        expect.any(String),
       ),
     );
     await waitFor(() =>
@@ -181,8 +183,14 @@ describe('PaymentPage', () => {
 
   it('navigates to the receipt when createPago fails but the payment exists (reconciliation)', async () => {
     const user = userEvent.setup();
+    // Pre-POST check finds nothing; the onError reconciliation finds the
+    // payment that the failed POST actually created server-side.
+    let reconcileCalls = 0;
+    mockedFetchPagoPorPedido.mockImplementation(() => {
+      reconcileCalls += 1;
+      return Promise.resolve(reconcileCalls === 1 ? null : mockPago);
+    });
     mockedCreatePago.mockRejectedValue(new Error('Network error'));
-    mockedFetchPagoPorPedido.mockResolvedValue(mockPago);
     renderPage();
 
     expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
@@ -238,5 +246,51 @@ describe('PaymentPage', () => {
         replace: true,
       }),
     );
+  });
+
+  it('same-frame double press does not create a second payment', async () => {
+    renderPage();
+
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
+    const button = screen.getByTestId('submit-payment-button');
+    // Two synchronous clicks before any await: the in-flight guard must stop
+    // the second one, even though isPending has not rendered yet.
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
+        replace: true,
+      }),
+    );
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
+  });
+
+  it('retry after timeout never double-charges', async () => {
+    const user = userEvent.setup();
+    // First pre-POST check and the onError reconciliation both find nothing;
+    // once the second press happens, the server-side payment is visible.
+    let reconcileCalls = 0;
+    mockedFetchPagoPorPedido.mockImplementation(() => {
+      reconcileCalls += 1;
+      return Promise.resolve(reconcileCalls < 3 ? null : mockPago);
+    });
+    mockedCreatePago.mockRejectedValueOnce(new Error('Network error'));
+    renderPage();
+
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
+    await user.click(screen.getByTestId('submit-payment-button'));
+    expect(await screen.findByText(/Network error/i)).toBeTruthy();
+
+    // Second attempt: the pre-POST reconciliation finds the payment that the
+    // first POST created, so no second POST is sent.
+    await user.click(screen.getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
+        replace: true,
+      }),
+    );
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
   });
 });

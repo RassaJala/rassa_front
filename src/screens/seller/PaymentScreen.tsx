@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 import {
+  createIdempotencyKey,
   createPago,
   esEfectivo,
   fetchPagoPorPedido,
@@ -27,6 +28,7 @@ import type { PaymentDetail, TipoPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import { STALE_TIME } from '@/constants/orderTimeline';
 import api from '@/services/api';
+import * as Storage from '@/services/storage';
 import { useTheme } from '@/store/ThemeContext';
 import type { OrderDetail, SellerStackParamList } from '@/types';
 import { extractApiError } from '@/utils/apiErrors';
@@ -41,6 +43,17 @@ type Nav = NativeStackNavigationProp<SellerStackParamList, 'Payment'>;
 type Route = RouteProp<SellerStackParamList, 'Payment'>;
 
 // ── Helpers ────────────────────────────────────────────────
+
+// One stable idempotency key per order, persisted so a retry (even after a
+// reload) reuses the same key and the backend can dedupe the POST.
+async function getIdempotencyKey(orderId: number): Promise<string> {
+  const storageKey = `idem_pago_${orderId}`;
+  const existing = await Storage.getItemAsync(storageKey);
+  if (existing) return existing;
+  const fresh = createIdempotencyKey();
+  Storage.setItemAsync(storageKey, fresh).catch(() => {});
+  return fresh;
+}
 
 function ErrorView({
   bg,
@@ -199,6 +212,7 @@ function PaymentFormView({
   setFieldErrors,
   navigation,
   pagoMutation,
+  onSubmit,
 }: {
   readonly bg: string;
   readonly fg: string;
@@ -221,6 +235,7 @@ function PaymentFormView({
     void,
     unknown
   >;
+  readonly onSubmit: () => void;
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -378,9 +393,7 @@ function PaymentFormView({
         {/* Submit button */}
         <Pressable
           testID="submit-payment-button"
-          onPress={() => {
-            pagoMutation.mutate();
-          }}
+          onPress={onSubmit}
           disabled={pagoMutation.isPending || !tipoEfectivo}
           style={{
             backgroundColor: pagoMutation.isPending ? muted : brand,
@@ -429,6 +442,9 @@ export default function PaymentScreen(): React.JSX.Element {
 
   const [referencia, setReferencia] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Synchronous guard: closes the same-frame gap between press and the
+  // mutation's isPending render, which would otherwise allow a double POST.
+  const paymentInFlight = useRef(false);
 
   // Fetch order detail
   const {
@@ -466,13 +482,22 @@ export default function PaymentScreen(): React.JSX.Element {
   const pagoMutation = useMutation({
     mutationFn: async () => {
       if (!tipoEfectivo || !order) throw new Error('Datos incompletos');
+      // Reconcile before POST: if a payment already exists for this order, a
+      // previous request actually succeeded — reuse it instead of charging
+      // twice. Idempotency-Key then dedupes any race that slips through.
+      const existing = await fetchPagoPorPedido(api, orderId);
+      if (existing) return existing;
       const trimmedRef = referencia.trim();
-      return createPago(api, {
-        pedido: orderId,
-        tipo_pago: tipoEfectivo.id_tipo_pago,
-        monto: order.total,
-        ...(trimmedRef ? { referencia: trimmedRef } : {}),
-      });
+      return createPago(
+        api,
+        {
+          pedido: orderId,
+          tipo_pago: tipoEfectivo.id_tipo_pago,
+          monto: order.total,
+          ...(trimmedRef ? { referencia: trimmedRef } : {}),
+        },
+        await getIdempotencyKey(orderId),
+      );
     },
     onSuccess: (data) => {
       void Promise.all([
@@ -480,6 +505,7 @@ export default function PaymentScreen(): React.JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
       ]).catch(() => {});
       navigation.replace('Receipt', { paymentId: data.id_pago });
+      paymentInFlight.current = false;
     },
     onError: async (error: unknown) => {
       try {
@@ -493,6 +519,7 @@ export default function PaymentScreen(): React.JSX.Element {
             queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
           ]).catch(() => {});
           navigation.replace('Receipt', { paymentId: pago.id_pago });
+          paymentInFlight.current = false;
           return;
         }
       } catch {
@@ -505,6 +532,7 @@ export default function PaymentScreen(): React.JSX.Element {
         'referencia',
       ]);
       Alert.alert('Error', detail);
+      paymentInFlight.current = false;
     },
   });
 
@@ -570,6 +598,11 @@ export default function PaymentScreen(): React.JSX.Element {
       setFieldErrors={setFieldErrors}
       navigation={navigation}
       pagoMutation={pagoMutation}
+      onSubmit={() => {
+        if (paymentInFlight.current) return;
+        paymentInFlight.current = true;
+        pagoMutation.mutate();
+      }}
     />
   );
 }

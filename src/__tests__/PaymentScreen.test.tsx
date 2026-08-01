@@ -47,6 +47,11 @@ jest.mock('@/services/api', () => ({
   },
 }));
 
+jest.mock('@/services/storage', () => ({
+  getItemAsync: jest.fn().mockResolvedValue(null),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 const api = jest.requireMock('@/services/api').default as {
   get: jest.Mock;
   post: jest.Mock;
@@ -78,6 +83,21 @@ const mockOrder = {
 
 const mockTipos = [{ id_tipo_pago: 1, nombre: 'Efectivo' }];
 
+const mockPago = {
+  id_pago: 9,
+  folio: 'PAG-0009',
+  pedido: 5,
+  tipo_pago: 1,
+  tipo_pago_nombre: 'Efectivo',
+  cliente_nombre: 'Cliente Test',
+  cliente_id: 4,
+  monto: '119.48',
+  referencia: '',
+  total_pedido: '119.48',
+  productos: [],
+  fecha_pago: '2026-07-30T12:00:00Z',
+};
+
 function renderScreen() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -103,20 +123,7 @@ describe('PaymentScreen', () => {
     api.post.mockResolvedValue({ data: {} });
     mockedFetchTiposPago.mockResolvedValue(mockTipos);
     mockedFetchPagoPorPedido.mockResolvedValue(null);
-    mockedCreatePago.mockResolvedValue({
-      id_pago: 9,
-      folio: 'PAG-0009',
-      pedido: 5,
-      tipo_pago: 1,
-      tipo_pago_nombre: 'Efectivo',
-      cliente_nombre: 'Cliente Test',
-      cliente_id: 4,
-      monto: '119.48',
-      referencia: '',
-      total_pedido: '119.48',
-      productos: [],
-      fecha_pago: '2026-07-30T12:00:00Z',
-    });
+    mockedCreatePago.mockResolvedValue(mockPago);
   });
 
   it('renders the payment form after queries resolve', async () => {
@@ -168,6 +175,7 @@ describe('PaymentScreen', () => {
           tipo_pago: 1,
           monto: '119.48',
         }),
+        expect.any(String),
       ),
     );
     await waitFor(() =>
@@ -194,21 +202,14 @@ describe('PaymentScreen', () => {
 
   it('navigates to Receipt when createPago fails but the payment exists (reconciliation)', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    mockedCreatePago.mockRejectedValue(new Error('Network error'));
-    mockedFetchPagoPorPedido.mockResolvedValue({
-      id_pago: 9,
-      folio: 'PAG-0009',
-      pedido: 5,
-      tipo_pago: 1,
-      tipo_pago_nombre: 'Efectivo',
-      cliente_nombre: 'Cliente Test',
-      cliente_id: 4,
-      monto: '119.48',
-      referencia: '',
-      total_pedido: '119.48',
-      productos: [],
-      fecha_pago: '2026-07-30T12:00:00Z',
+    // Pre-POST check finds nothing; the onError reconciliation finds the
+    // payment that the failed POST actually created server-side.
+    let reconcileCalls = 0;
+    mockedFetchPagoPorPedido.mockImplementation(() => {
+      reconcileCalls += 1;
+      return Promise.resolve(reconcileCalls === 1 ? null : mockPago);
     });
+    mockedCreatePago.mockRejectedValue(new Error('Network error'));
 
     const { findByTestId, getByTestId } = renderScreen();
     await findByTestId('submit-payment-button');
@@ -244,22 +245,52 @@ describe('PaymentScreen', () => {
     fireEvent.press(getByTestId('submit-payment-button'));
     expect(mockedCreatePago).toHaveBeenCalledTimes(1);
 
-    resolveCreate({
-      id_pago: 9,
-      folio: 'PAG-0009',
-      pedido: 5,
-      tipo_pago: 1,
-      tipo_pago_nombre: 'Efectivo',
-      cliente_nombre: 'Cliente Test',
-      cliente_id: 4,
-      monto: '119.48',
-      referencia: '',
-      total_pedido: '119.48',
-      productos: [],
-      fecha_pago: '2026-07-30T12:00:00Z',
-    });
+    resolveCreate(mockPago);
     await waitFor(() =>
       expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
     );
+  });
+
+  it('same-frame double press does not create a second payment', async () => {
+    const { findByTestId, getByTestId } = renderScreen();
+    await findByTestId('submit-payment-button');
+
+    // Two synchronous presses before any await: the in-flight guard must stop
+    // the second one, even though isPending has not rendered yet.
+    fireEvent.press(getByTestId('submit-payment-button'));
+    fireEvent.press(getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
+    );
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
+  });
+
+  it('retry after timeout never double-charges', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    // First pre-POST check and the onError reconciliation both find nothing;
+    // once the second press happens, the server-side payment is visible.
+    let reconcileCalls = 0;
+    mockedFetchPagoPorPedido.mockImplementation(() => {
+      reconcileCalls += 1;
+      return Promise.resolve(reconcileCalls < 3 ? null : mockPago);
+    });
+    mockedCreatePago.mockRejectedValueOnce(new Error('Network error'));
+
+    const { findByTestId, getByTestId } = renderScreen();
+    await findByTestId('submit-payment-button');
+
+    fireEvent.press(getByTestId('submit-payment-button'));
+    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+
+    // Second attempt: the pre-POST reconciliation finds the payment that the
+    // first POST created, so no second POST is sent.
+    fireEvent.press(getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
+    );
+    expect(mockedCreatePago).toHaveBeenCalledTimes(1);
+    alertSpy.mockRestore();
   });
 });

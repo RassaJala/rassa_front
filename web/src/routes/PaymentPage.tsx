@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
+  createIdempotencyKey,
   createPago,
   esEfectivo,
   fetchPagoPorPedido,
@@ -28,6 +29,19 @@ interface OrderDetail {
   estado_actual: string;
 }
 
+// ── Helpers ────────────────────────────────────────────────
+
+// One stable idempotency key per order, persisted so a retry (even after a
+// reload) reuses the same key and the backend can dedupe the POST.
+function getIdempotencyKey(orderId: number): string {
+  const storageKey = `idem_pago_${orderId}`;
+  const existing = window.localStorage.getItem(storageKey);
+  if (existing) return existing;
+  const fresh = createIdempotencyKey();
+  window.localStorage.setItem(storageKey, fresh);
+  return fresh;
+}
+
 // ── Component ──────────────────────────────────────────────
 
 export function PaymentPage() {
@@ -42,6 +56,9 @@ export function PaymentPage() {
 
   const [referencia, setReferencia] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
+  // Synchronous guard: closes the same-frame gap between click and the
+  // mutation's isPending render, which would otherwise allow a double POST.
+  const paymentInFlight = useRef(false);
 
   // Fetch order detail
   const {
@@ -79,13 +96,22 @@ export function PaymentPage() {
   const pagoMutation = useMutation({
     mutationFn: async () => {
       if (!tipoEfectivo || !order) throw new Error('Datos incompletos');
+      // Reconcile before POST: if a payment already exists for this order, a
+      // previous request actually succeeded — reuse it instead of charging
+      // twice. Idempotency-Key then dedupes any race that slips through.
+      const existing = await fetchPagoPorPedido(api, orderId);
+      if (existing) return existing;
       const trimmedRef = referencia.trim();
-      return createPago(api, {
-        pedido: orderId,
-        tipo_pago: tipoEfectivo.id_tipo_pago,
-        monto: order.total,
-        ...(trimmedRef ? { referencia: trimmedRef } : {}),
-      });
+      return createPago(
+        api,
+        {
+          pedido: orderId,
+          tipo_pago: tipoEfectivo.id_tipo_pago,
+          monto: order.total,
+          ...(trimmedRef ? { referencia: trimmedRef } : {}),
+        },
+        getIdempotencyKey(orderId),
+      );
     },
     onSuccess: (data) => {
       void Promise.all([
@@ -93,6 +119,7 @@ export function PaymentPage() {
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
       ]).catch(() => {});
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
+      paymentInFlight.current = false;
     },
     onError: async (err: unknown) => {
       try {
@@ -106,6 +133,7 @@ export function PaymentPage() {
             queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
           ]).catch(() => {});
           navigate(`/vendedor/recibo/${pago.id_pago}`, { replace: true });
+          paymentInFlight.current = false;
           return;
         }
       } catch {
@@ -114,6 +142,7 @@ export function PaymentPage() {
       setFieldError(
         extractApiError(err, ['pedido', 'tipo_pago', 'monto', 'referencia']),
       );
+      paymentInFlight.current = false;
     },
   });
 
@@ -294,6 +323,8 @@ export function PaymentPage() {
         type="button"
         data-testid="submit-payment-button"
         onClick={() => {
+          if (paymentInFlight.current) return;
+          paymentInFlight.current = true;
           pagoMutation.mutate();
         }}
         disabled={pagoMutation.isPending || !tipoEfectivo}

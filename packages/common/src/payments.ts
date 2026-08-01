@@ -54,11 +54,28 @@ export async function fetchTiposPago(api: AxiosInstance): Promise<TipoPago[]> {
   return res.data;
 }
 
+// Per-order idempotency key so a retried POST can never charge the buyer twice:
+// the backend should reject a repeat POST for the same (pedido, key) pair.
+export function createIdempotencyKey(): string {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof (crypto as { randomUUID?: () => string }).randomUUID === 'function'
+  ) {
+    return (crypto as { randomUUID: () => string }).randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export async function createPago(
   api: AxiosInstance,
   payload: CreatePagoPayload,
+  idempotencyKey?: string,
 ): Promise<PaymentDetail> {
-  const res = await api.post<PaymentDetail>('/pagos/', payload);
+  const res = idempotencyKey
+    ? await api.post<PaymentDetail>('/pagos/', payload, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      })
+    : await api.post<PaymentDetail>('/pagos/', payload);
   return res.data;
 }
 
