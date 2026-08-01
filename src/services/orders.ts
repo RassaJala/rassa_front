@@ -141,9 +141,13 @@ export interface OrderRecordMatchInput {
  * constrains the match (exact item names + quantities from the record payload
  * against the candidate order's detail items, plus total ±epsilon and
  * estado_actual === 'pendiente'), so an order created minutes or hours ago is
- * still matchable when the record exists. Candidates are narrowed by the list
- * (pendiente + total), then each candidate's detail is fetched to verify the
- * item composition before accepting the match.
+ * still matchable when the record exists.
+ *
+ * The match is bounded to the MOST RECENT pending order matching the total:
+ * an older identical pending order from a previous attempt must never be
+ * attributed to this interrupted checkout (it would show a wrong orderId and
+ * leave the real new order unreconciled). A non-matching newest candidate
+ * therefore returns null instead of falling back to older orders.
  */
 export async function findOrderByRecord(
   input: OrderRecordMatchInput,
@@ -156,15 +160,25 @@ export async function findOrderByRecord(
 
   const response = await api.get<{ results?: OrderListItem[] }>('/pedidos/');
 
-  for (const candidate of response.data.results ?? []) {
-    if (candidate.estado_actual !== 'pendiente') continue;
-    if (!totalsMatch(candidate.total, total)) continue;
-    const detail = await api.get<OrderDetail>(
-      `/pedidos/${candidate.id_pedido}/`,
-    );
-    if (itemsMatchRecord(detail.data.detalles, input)) {
-      return toOrder(candidate);
-    }
+  // The list order is not trusted: pick the newest pendiente candidate that
+  // matches the total by created date, then verify only it against the record.
+  const newestCandidate = (response.data.results ?? [])
+    .filter(
+      (candidate) =>
+        candidate.estado_actual === 'pendiente' &&
+        totalsMatch(candidate.total, total),
+    )
+    .sort((a, b) => orderDateMs(b) - orderDateMs(a))[0];
+
+  if (newestCandidate === undefined) {
+    return null;
+  }
+
+  const detail = await api.get<OrderDetail>(
+    `/pedidos/${newestCandidate.id_pedido}/`,
+  );
+  if (itemsMatchRecord(detail.data.detalles, input)) {
+    return toOrder(newestCandidate);
   }
 
   return null;
@@ -194,6 +208,13 @@ function isRecentPendiente(candidate: OrderListItem): boolean {
   if (candidate.estado_actual !== 'pendiente') return false;
   const created = new Date(candidate.creado_en).getTime();
   return !Number.isNaN(created) && Date.now() - created <= RECONCILE_WINDOW_MS;
+}
+
+// Milliseconds since epoch for a candidate's creation date; unparseable dates
+// sort as oldest so they never win a recency-bound match.
+function orderDateMs(candidate: OrderListItem): number {
+  const created = new Date(candidate.creado_en).getTime();
+  return Number.isNaN(created) ? 0 : created;
 }
 
 function totalsMatch(candidateTotal: string, expectedTotal: number): boolean {

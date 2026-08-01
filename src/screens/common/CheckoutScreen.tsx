@@ -67,19 +67,31 @@ function extractCheckoutError(error: unknown): string {
 }
 
 // Only errors where the server may have already committed the order are
-// ambiguous: no-response timeouts (ECONNABORTED) and 5xx responses (proxy,
-// gateway, server timeout). Pure client/network failures (offline, DNS,
-// refused) cannot have created an order, and 4xx with a body is a definitive
-// rejection.
+// ambiguous: no-response failures where the request may have reached the
+// server (timeout, connection dropped after send, generic network failure)
+// and 5xx responses (proxy, gateway, server timeout). Only no-response
+// failures that provably never reached the server (DNS resolution, refused
+// connection, unreachable host/network) and 4xx with a body are definitive
+// rejections.
+const NEVER_REACHED_SERVER_CODES = new Set([
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNREFUSED',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+]);
+
 function isAmbiguousOrderError(error: unknown): boolean {
   const candidate =
     error instanceof Error && error.cause !== undefined ? error.cause : error;
   if (axios.isAxiosError(candidate)) {
     if (candidate.response === undefined) {
-      // The request was in-flight long enough for the server to commit
-      // (timeout). Pure client/network failures (offline, DNS, refused)
-      // cannot have created an order.
-      return candidate.code === 'ECONNABORTED';
+      // No HTTP response: the request may still have reached the server and
+      // committed the order (timeout, connection dropped after send, generic
+      // ERR_NETWORK). Only failures that provably never reached the server
+      // are definitive rejections; anything else is ambiguous and reconciled
+      // against the order list before a retry is allowed.
+      return !NEVER_REACHED_SERVER_CODES.has(candidate.code ?? '');
     }
     // 5xx (proxy/gateway/timeout) may have committed before failing.
     return candidate.response.status >= 500;

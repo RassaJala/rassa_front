@@ -690,12 +690,105 @@ describe('CheckoutScreen', () => {
     ).toBeNull();
   });
 
-  it('no reconcilia con error de red puro (ERR_NETWORK): muestra error sanitizado y conserva el carrito', async () => {
+  it('R4: trata ERR_NETWORK (sin respuesta) como ambiguo y reconcilia contra la lista', async () => {
     useCartStore.setState({ items: [mockItem] });
     mockCreateOrder.mockRejectedValue({
       isAxiosError: true,
       code: 'ERR_NETWORK',
       message: 'Network Error',
+    });
+    mockFindMatchingOrder.mockResolvedValue(null);
+
+    const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    // A dropped connection may have reached the server and committed the
+    // order, so ERR_NETWORK is ambiguous: the order list is reconciled and the
+    // ambiguous message (not a definitive error) is shown.
+    await waitFor(() => {
+      expect(
+        getByText(
+          'No pudimos confirmar si tu pedido se creó. Revisá Mis Pedidos antes de intentar de nuevo.',
+        ),
+      ).toBeTruthy();
+    });
+
+    expect(mockFindMatchingOrder).toHaveBeenCalledTimes(1);
+    expect(useCartStore.getState().items).toHaveLength(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    // The in-flight record is KEPT: the server may still commit the order, and
+    // a later mount reconciles it again instead of risking a duplicate.
+    expect(mockStorageRemoveItem).not.toHaveBeenCalled();
+  });
+
+  it('R4: trata ETIMEDOUT (sin respuesta) como ambiguo y reconcilia contra la lista', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    mockCreateOrder.mockRejectedValue({
+      isAxiosError: true,
+      code: 'ETIMEDOUT',
+      message: 'connect ETIMEDOUT',
+    });
+    mockFindMatchingOrder.mockResolvedValue(null);
+
+    const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    await waitFor(() => {
+      expect(
+        getByText(
+          'No pudimos confirmar si tu pedido se creó. Revisá Mis Pedidos antes de intentar de nuevo.',
+        ),
+      ).toBeTruthy();
+    });
+
+    expect(mockFindMatchingOrder).toHaveBeenCalledTimes(1);
+    expect(useCartStore.getState().items).toHaveLength(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('R4: no reconcilia con fallo de DNS (ENOTFOUND): nunca llegó al servidor, error definitivo', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    mockCreateOrder.mockRejectedValue({
+      isAxiosError: true,
+      code: 'ENOTFOUND',
+      message: 'getaddrinfo ENOTFOUND api.example.com',
+    });
+
+    const { getByTestId, getByText } = renderScreen();
+    // The mount reconcile (JD-A-001) holds the in-flight guard while its async
+    // read settles; flush it before pressing so the confirm is not blocked.
+    await act(async () => {});
+    fireEvent.press(getByTestId('confirm-order-btn'));
+
+    await waitFor(() => {
+      expect(
+        getByText('Error al procesar el pedido. Intente de nuevo.'),
+      ).toBeTruthy();
+    });
+
+    // DNS resolution never reached a server, so no order can exist: definitive
+    // rejection, no reconciliation, stale in-flight record discarded.
+    expect(mockFindMatchingOrder).not.toHaveBeenCalled();
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
+    expect(useCartStore.getState().items).toHaveLength(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('R4: no reconcilia con conexión rechazada (ECONNREFUSED): nunca llegó al servidor, error definitivo', async () => {
+    useCartStore.setState({ items: [mockItem] });
+    mockCreateOrder.mockRejectedValue({
+      isAxiosError: true,
+      code: 'ECONNREFUSED',
+      message: 'connect ECONNREFUSED 127.0.0.1:8000',
     });
 
     const { getByTestId, getByText } = renderScreen();
@@ -711,6 +804,7 @@ describe('CheckoutScreen', () => {
     });
 
     expect(mockFindMatchingOrder).not.toHaveBeenCalled();
+    expect(mockStorageRemoveItem).toHaveBeenCalledWith(IN_FLIGHT_ORDER_KEY);
     expect(useCartStore.getState().items).toHaveLength(1);
     expect(mockReplace).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();

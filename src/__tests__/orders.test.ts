@@ -326,6 +326,117 @@ describe('findOrderByRecord', () => {
     expect(mockGet).toHaveBeenLastCalledWith('/pedidos/60/');
   });
 
+  it('R4: el pedido pendiente más reciente gana, no un pedido idéntico más viejo (aunque venga primero en la lista)', async () => {
+    // The older identical pending order (70, 1h) comes FIRST in the API list;
+    // the list order is not trusted, so the match must be bounded by recency.
+    const oldIso = new Date(Date.now() - 3_600_000).toISOString();
+    const newIso = new Date(Date.now() - 5_000).toISOString();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id_pedido: 70,
+            cliente_nombre: 'Ana Ramírez',
+            vendedor_nombre: null,
+            total: '5.00',
+            estado_actual: 'pendiente',
+            creado_en: oldIso,
+          },
+          {
+            id_pedido: 71,
+            cliente_nombre: 'Ana Ramírez',
+            vendedor_nombre: null,
+            total: '5.00',
+            estado_actual: 'pendiente',
+            creado_en: newIso,
+          },
+        ],
+      },
+    } as never);
+    // Only the newest candidate's detail is fetched.
+    mockGet.mockResolvedValueOnce({
+      data: {
+        id_pedido: 71,
+        cliente_nombre: 'Ana Ramírez',
+        vendedor_nombre: null,
+        total: '5.00',
+        estado_actual: 'pendiente',
+        creado_en: newIso,
+        detalles: [
+          {
+            id_detalle: 1,
+            nombre_producto: 'Tomate',
+            precio_unitario: '2.50',
+            cantidad: 2,
+            importe: '5.00',
+          },
+        ],
+      },
+    } as never);
+
+    const result = await findOrderByRecord(input);
+
+    expect(result?.id_pedido).toBe(71);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockGet).toHaveBeenLastCalledWith('/pedidos/71/');
+  });
+
+  it('R4: no cae a un pedido idéntico más viejo cuando el más reciente no coincide con el registro', async () => {
+    // The newest pending order (72) does NOT match the record; the older one
+    // (73) DOES. The recency bound must refuse the older attribution instead
+    // of showing a wrong orderId and leaving the real new order unreconciled.
+    const oldIso = new Date(Date.now() - 3_600_000).toISOString();
+    const newIso = new Date(Date.now() - 5_000).toISOString();
+    mockGet.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id_pedido: 73,
+            cliente_nombre: 'Ana Ramírez',
+            vendedor_nombre: null,
+            total: '5.00',
+            estado_actual: 'pendiente',
+            creado_en: oldIso,
+          },
+          {
+            id_pedido: 72,
+            cliente_nombre: 'Ana Ramírez',
+            vendedor_nombre: null,
+            total: '5.00',
+            estado_actual: 'pendiente',
+            creado_en: newIso,
+          },
+        ],
+      },
+    } as never);
+    mockGet.mockResolvedValueOnce({
+      data: {
+        id_pedido: 72,
+        cliente_nombre: 'Ana Ramírez',
+        vendedor_nombre: null,
+        total: '5.00',
+        estado_actual: 'pendiente',
+        creado_en: newIso,
+        detalles: [
+          {
+            id_detalle: 1,
+            nombre_producto: 'Lechuga',
+            precio_unitario: '5.00',
+            cantidad: 1,
+            importe: '5.00',
+          },
+        ],
+      },
+    } as never);
+
+    const result = await findOrderByRecord(input);
+
+    expect(result).toBeNull();
+    // 73's detail is never fetched: an older identical order is not eligible.
+    expect(mockGet).toHaveBeenCalledTimes(2); // list + detail of 72 only
+    expect(mockGet).toHaveBeenLastCalledWith('/pedidos/72/');
+  });
+
   it('devuelve null cuando los ítems del detalle no coinciden con el registro', async () => {
     const iso = new Date(Date.now() - 5_000).toISOString();
     mockListResults([
