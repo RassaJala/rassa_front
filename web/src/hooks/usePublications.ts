@@ -42,13 +42,13 @@ function usePubMutation<TData, TVariables>(
       for (const key of invalidateKeys(vars)) {
         void qc.invalidateQueries({ queryKey: key });
       }
-      // TanStack Query v5 dropped the third context argument
-      options?.onSuccess?.(data, vars, undefined as never);
+      // TanStack Query v5 passes (data, vars, context, mutationFnContext)
+      options?.onSuccess?.(data, vars, undefined as never, undefined as never);
     },
     onError: (err: unknown, vars: TVariables) => {
       logMutationError(context, err);
-      // TanStack Query v5 dropped the third context argument
-      options?.onError?.(err, vars, undefined as never);
+      // TanStack Query v5 passes (err, vars, context, mutationFnContext)
+      options?.onError?.(err, vars, undefined as never, undefined as never);
     },
   });
 }

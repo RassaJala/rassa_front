@@ -83,7 +83,7 @@ describe('deleteOrphans', () => {
       .mockResolvedValueOnce(undefined);
     const deps = makeDeps({ removeItem });
     const serverItems = [makeServerItem(1), makeServerItem(2)];
-    const currentIds = new Set();
+    const currentIds = new Set<string>();
 
     const result = await deleteOrphans(1, serverItems, currentIds, deps);
     expect(result).toBe(1);
@@ -99,7 +99,7 @@ describe('deleteOrphans', () => {
       makeServerItem(2),
       makeServerItem(3),
     ];
-    const currentIds = new Set();
+    const currentIds = new Set<string>();
 
     const result = await deleteOrphans(1, serverItems, currentIds, deps);
     expect(result).toBe(3);
@@ -108,7 +108,7 @@ describe('deleteOrphans', () => {
   it('passes correct pubId to removeItem', async () => {
     const deps = makeDeps();
     const serverItems = [makeServerItem(42)];
-    const currentIds = new Set();
+    const currentIds = new Set<string>();
 
     await deleteOrphans(99, serverItems, currentIds, deps);
     expect(deps.removeItem).toHaveBeenCalledWith({ pubId: 99, itemId: 42 });
@@ -137,7 +137,7 @@ describe('deleteOrphans', () => {
       makeServerItem(2),
       makeServerItem(3),
     ];
-    const currentIds = new Set();
+    const currentIds = new Set<string>();
 
     await expect(
       deleteOrphans(1, serverItems, currentIds, deps, controller.signal),
@@ -200,7 +200,7 @@ describe('deleteOrphans', () => {
 
   it('handles empty serverIds array', async () => {
     const deps = makeDeps();
-    const result = await deleteOrphans(1, [], new Set('1', '2'), deps);
+    const result = await deleteOrphans(1, [], new Set(['1', '2']), deps);
     expect(result).toBe(0);
     expect(deps.removeItem).not.toHaveBeenCalled();
   });

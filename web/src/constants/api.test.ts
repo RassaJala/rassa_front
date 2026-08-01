@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   ALLOWED_IMAGE_TYPES,
-  assertValidId,
   CATALOG_PAGE_SIZE,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,

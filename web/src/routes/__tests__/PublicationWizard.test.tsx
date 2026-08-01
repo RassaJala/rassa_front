@@ -217,7 +217,10 @@ describe('PublicationWizard', () => {
     vi.clearAllMocks();
     mockParams.current = {};
     setupHooks();
-    mockedPersistItems.mockResolvedValue({ orphanFailures: 0 });
+    mockedPersistItems.mockResolvedValue({
+      orphanFailures: 0,
+      failedUploads: 0,
+    });
     mockedPublishAfterPersist.mockResolvedValue(undefined);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
@@ -488,7 +491,10 @@ describe('PublicationWizard', () => {
     });
 
     it('shows saving state while persisting', async () => {
-      let resolvePersist: (v: { orphanFailures: number }) => void;
+      let resolvePersist: (v: {
+        orphanFailures: number;
+        failedUploads: number;
+      }) => void;
       mockedPersistItems.mockReturnValue(
         new Promise((resolve) => {
           resolvePersist = resolve;
@@ -506,7 +512,7 @@ describe('PublicationWizard', () => {
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('Guardar borrador'));
       expect(screen.getByText('Guardando…')).toBeInTheDocument();
-      resolvePersist!({ orphanFailures: 0 });
+      resolvePersist!({ orphanFailures: 0, failedUploads: 0 });
       await waitFor(() => {
         expect(screen.queryByText('Guardando…')).not.toBeInTheDocument();
       });

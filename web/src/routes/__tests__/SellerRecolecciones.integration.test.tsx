@@ -1,0 +1,127 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+
+import { ThemeProvider } from '../../providers/ThemeProvider';
+
+vi.mock('~/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: {
+      id: 1,
+      rol: 'vendedor',
+      email: 'vendedor@rassa.com',
+      nombre: 'Vendedor',
+    },
+  }),
+}));
+
+import { SellerRecolecciones } from '../SellerRecolecciones';
+
+function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <MemoryRouter>
+      <ThemeProvider>
+        <QueryClientProvider client={qc}>
+          <SellerRecolecciones />
+        </QueryClientProvider>
+      </ThemeProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('SellerRecolecciones — integration', () => {
+  it('fetches and displays recolecciones from the API', async () => {
+    renderPage();
+    expect(await screen.findByText('Juan Pérez')).toBeInTheDocument();
+    expect(screen.getAllByText('Pendiente').length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByRole('button', { name: 'Iniciar ruta' }),
+    ).toBeInTheDocument();
+  });
+
+  it('transitions estado and shows success toast', async () => {
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    const iniciarRuta = screen.getByRole('button', { name: 'Iniciar ruta' });
+    await userEvent.click(iniciarRuta);
+
+    expect(
+      await screen.findByText('Estado actualizado correctamente.'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: 'Iniciar ruta' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getAllByRole('button', { name: 'Recolectado' }),
+      ).toHaveLength(2);
+    });
+  });
+
+  it('cancels a recoleccion via confirm dialog', async () => {
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(
+      screen.getByText(
+        '¿Estás seguro de que querés cancelar esta recolección?',
+      ),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }));
+
+    expect(
+      await screen.findByText('Recolección cancelada.'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: 'Cancelar' }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('opens the schedule modal and programs a recoleccion', async () => {
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: /Nueva/ }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /Programar recolección/ }),
+      ).toBeInTheDocument();
+    });
+
+    const agricultorRow = await screen.findByRole('button', {
+      name: /Ana Ram\u00edrez/,
+    });
+    await userEvent.click(agricultorRow);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Programar recolección/ }),
+    );
+
+    expect(
+      await screen.findByText('Recolección programada correctamente.'),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('Ana Ramírez')).toBeInTheDocument();
+  });
+
+  it('keeps duplicate markers when the list is filtered', async () => {
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelado' }));
+    await screen.findByText('No hay recolecciones en este estado');
+
+    await userEvent.click(screen.getByRole('button', { name: /Nueva/ }));
+
+    expect(await screen.findByText('Ya tiene recolección')).toBeInTheDocument();
+  });
+});

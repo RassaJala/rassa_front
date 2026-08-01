@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { resetRecoleccionesMock } from './mocks/handlers';
 import { server } from './mocks/server';
 
 Object.defineProperty(window, 'matchMedia', {
@@ -16,5 +17,8 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  resetRecoleccionesMock();
+});
 afterAll(() => server.close());

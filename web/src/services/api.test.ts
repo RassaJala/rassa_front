@@ -59,11 +59,15 @@ vi.mock('axios', () => {
   };
 });
 
-vi.mock('axios-retry', () => ({
-  default: vi.fn(),
-  isNetworkOrIdempotentRequestError: vi.fn(() => false),
-  exponentialDelay: vi.fn(() => 1000),
-}));
+const mockAxiosRetry = vi.fn();
+const mockIsNetworkOrIdempotentRequestError = vi.fn(() => false);
+vi.mock('axios-retry', () => {
+  Object.assign(mockAxiosRetry, {
+    isNetworkOrIdempotentRequestError: mockIsNetworkOrIdempotentRequestError,
+    exponentialDelay: vi.fn(() => 1000),
+  });
+  return { default: mockAxiosRetry };
+});
 
 const mockRedirect = vi.fn();
 vi.mock('./navigate', () => ({
@@ -95,7 +99,7 @@ describe('api.ts token interceptor', () => {
     await loadApi();
 
     expect(requestFns.length).toBeGreaterThan(0);
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/publicaciones/',
       headers: {} as Record<string, string>,
     });
@@ -108,7 +112,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'test-access-token');
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/token/',
       headers: {} as Record<string, string>,
     });
@@ -123,7 +127,7 @@ describe('api.ts token interceptor', () => {
     await loadApi();
 
     expect(responseFns.length).toBeGreaterThan(0);
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
 
     const error401 = {
       config: {
@@ -159,7 +163,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
 
     const error401 = {
       config: {
@@ -187,7 +191,7 @@ describe('api.ts token interceptor', () => {
 
   it('passes through non-401 errors', async () => {
     await loadApi();
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
 
     const error500 = {
       config: { url: '/publicaciones/' },
@@ -202,7 +206,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
 
     const error401Refresh = {
       config: {
@@ -226,7 +230,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', '');
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/publicaciones/',
       headers: {} as Record<string, string>,
     });
@@ -239,7 +243,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'test-token');
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/auth/register/',
       headers: {} as Record<string, string>,
     });
@@ -254,7 +258,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -281,7 +285,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'old-token');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -309,7 +313,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'old-token');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -337,7 +341,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -364,7 +368,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'slow-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -393,7 +397,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'old-token');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -419,7 +423,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'old-token');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error500 = {
       config: {
         url: '/publicaciones/',
@@ -434,12 +438,13 @@ describe('api.ts token interceptor', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  it('refresh fails with malformed response (no access field)', async () => {
+  it('refresh fails with malformed response (no access field) — clears tokens and redirects', async () => {
     localStorage.setItem('token', 'old-token');
+    localStorage.setItem('user', 'some-user');
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -452,8 +457,13 @@ describe('api.ts token interceptor', () => {
     mockAxiosPost.mockResolvedValueOnce({ data: { refresh: 'new-refresh' } });
     mockInstanceGet.mockResolvedValue({ data: { id: 1 } });
 
-    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
-    expect(localStorage.getItem('token')).toBe('undefined');
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(sessionStorage.getItem('refresh_token')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
   });
 
   it('multiple simultaneous 401 requests coalesce into one refresh', async () => {
@@ -461,7 +471,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     let resolveRefresh!: (value: { data: { access: string } }) => void;
     mockAxiosPost.mockImplementationOnce(
       () =>
@@ -503,7 +513,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -529,7 +539,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -559,7 +569,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     let resolveRefresh!: (value: { data: { access: string } }) => void;
     mockAxiosPost.mockImplementationOnce(
       () =>
@@ -603,7 +613,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     let resolveRefresh!: (value: { data: { access: string } }) => void;
     mockAxiosPost.mockImplementationOnce(
       () =>
@@ -640,7 +650,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -661,13 +671,100 @@ describe('api.ts token interceptor', () => {
     expect(localStorage.getItem('token')).toBeNull();
   });
 
-  // ── Edge cases: token handling ───────────────────────────
+  it('does not re-refresh when the retried request gets 401 again (breaks the loop)', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0]!;
+    const error401 = {
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'new-token' } });
+
+    let retriedConfig: Record<string, unknown> | undefined;
+    mockInstanceGet.mockImplementationOnce((config) => {
+      retriedConfig = config;
+      const retry401 = {
+        config,
+        headers: { Authorization: 'Bearer new-token' } as Record<
+          string,
+          string
+        >,
+        method: 'get',
+        response: { status: 401 },
+      };
+      return Promise.reject(retry401);
+    });
+
+    // Primer ciclo: refresh OK pero el reintento devuelve 401 otra vez.
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    // Simulamos que el 401 del reintento pasa de nuevo por el interceptor:
+    // debe cerrar sesión y NO lanzar un segundo refresh.
+    await expect(
+      interceptor.onRejected({
+        config: retriedConfig,
+        response: { status: 401 },
+      }),
+    ).rejects.toThrow();
+
+    expect(mockAxiosPost).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(sessionStorage.getItem('refresh_token')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
+  });
+
+  it('clears the refresh-retry marker after a successful retry so later 401s refresh again', async () => {
+    localStorage.setItem('token', 'old-token');
+    sessionStorage.setItem('refresh_token', 'refresh-123');
+    await loadApi();
+
+    const interceptor = responseFns[0]!;
+    const error401 = {
+      config: {
+        url: '/publicaciones/',
+        headers: {} as Record<string, string>,
+        method: 'get',
+      },
+      response: { status: 401 },
+    };
+
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'new-token' } });
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
+
+    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
+
+    // El reintento con token fresco termina OK: el interceptor de éxito debe
+    // limpiar el marcador, o un 401 futuro cerraría sesión en vez de refrescar.
+    await responseFns[0]!.onFulfilled({
+      config: error401.config,
+      data: { id: 1 },
+    });
+
+    mockAxiosPost.mockResolvedValueOnce({ data: { access: 'token-2' } });
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 2 } });
+
+    await expect(interceptor.onRejected(error401)).resolves.toBeDefined();
+
+    expect(mockAxiosPost).toHaveBeenCalledTimes(2);
+    expect(localStorage.getItem('token')).toBe('token-2');
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
 
   it('attaches token with special characters', async () => {
     localStorage.setItem('token', 'token-with-$pecial_chars!@#');
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/publicaciones/',
       headers: {} as Record<string, string>,
     });
@@ -681,7 +778,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', longToken);
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: '/publicaciones/',
       headers: {} as Record<string, string>,
     });
@@ -694,7 +791,7 @@ describe('api.ts token interceptor', () => {
     localStorage.setItem('token', 'test-token');
     await loadApi();
 
-    const config = requestFns[0]({
+    const config = requestFns[0]!({
       url: undefined,
       headers: {} as Record<string, string>,
     });
@@ -719,7 +816,7 @@ describe('api.ts token interceptor', () => {
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
 
-    const interceptor = responseFns[0];
+    const interceptor = responseFns[0]!;
     const error401 = {
       config: {
         url: '/publicaciones/',
@@ -740,5 +837,135 @@ describe('api.ts token interceptor', () => {
     if (originalDescriptor) {
       Object.defineProperty(window, 'location', originalDescriptor);
     }
+  });
+});
+
+describe('api.ts axios-retry retryCondition', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function getRetryCondition() {
+    vi.resetModules();
+    await import('./api');
+    await new Promise((r) => setTimeout(r, 0));
+    const config = mockAxiosRetry.mock.calls[0]?.[1] as {
+      retryCondition: (error: {
+        config?: { method?: string };
+        response?: { status?: number };
+      }) => boolean;
+    };
+    if (!config) throw new Error('axiosRetry not configured');
+    return config.retryCondition;
+  }
+
+  it('does not retry POST on network error even when retry helper says yes', async () => {
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+
+    expect(retryCondition({ config: { method: 'post' } })).toBe(false);
+  });
+
+  it('does not retry PATCH on network error', async () => {
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+
+    expect(retryCondition({ config: { method: 'patch' } })).toBe(false);
+  });
+
+  it('retries GET on network error', async () => {
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+
+    expect(retryCondition({ config: { method: 'get' } })).toBe(true);
+  });
+
+  it('retries GET on 5xx server error', async () => {
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(false);
+    const retryCondition = await getRetryCondition();
+
+    expect(
+      retryCondition({ config: { method: 'get' }, response: { status: 503 } }),
+    ).toBe(true);
+  });
+
+  it('does not retry POST on 5xx server error', async () => {
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(false);
+    const retryCondition = await getRetryCondition();
+
+    expect(
+      retryCondition({ config: { method: 'post' }, response: { status: 503 } }),
+    ).toBe(false);
+  });
+
+  it('keeps retries available by renewing a stale window', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+    const config = { method: 'get', url: '/recolecciones/' };
+
+    nowSpy.mockReturnValue(1_000_000);
+    expect(retryCondition({ config })).toBe(true); // arranca la ventana
+
+    // Dentro de la ventana: reintenta normal.
+    nowSpy.mockReturnValue(1_000_000 + 5_000);
+    expect(retryCondition({ config })).toBe(true);
+
+    // Ventana vencida: se renueva y la retryability se evalúa de inmediato
+    // (el presupuesto real por dispatch lo acota `retries: 2` de axios-retry).
+    nowSpy.mockReturnValue(1_000_000 + 11_000);
+    expect(retryCondition({ config })).toBe(true);
+
+    // La ventana renovada vuelve a contar desde el último fallo.
+    nowSpy.mockReturnValue(1_000_000 + 16_000);
+    expect(retryCondition({ config })).toBe(true);
+  });
+
+  it('keeps independent retry budgets per query params on the same URL', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+    const pendientes = {
+      method: 'get',
+      url: '/recolecciones/',
+      params: { estado: 'pendiente' },
+    };
+    const enRuta = {
+      method: 'get',
+      url: '/recolecciones/',
+      params: { estado: 'en_ruta' },
+    };
+
+    nowSpy.mockReturnValue(1_000_000);
+    expect(retryCondition({ config: pendientes })).toBe(true);
+    expect(retryCondition({ config: enRuta })).toBe(true);
+
+    // Ambas fallan a la vez: no se consumen presupuesto entre sí.
+    nowSpy.mockReturnValue(1_000_000 + 5_000);
+    expect(retryCondition({ config: pendientes })).toBe(true);
+    expect(retryCondition({ config: enRuta })).toBe(true);
+  });
+
+  it('clears the window entry after a successful response', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+    const config = { method: 'get', url: '/recolecciones/' };
+
+    nowSpy.mockReturnValue(1_000_000);
+    expect(retryCondition({ config })).toBe(true);
+
+    const onFulfilled = responseFns[responseFns.length - 1]!.onFulfilled;
+    await onFulfilled({ config, data: {} });
+
+    // Sin entrada, un error posterior arranca una ventana nueva.
+    nowSpy.mockReturnValue(1_000_000 + 20_000);
+    expect(retryCondition({ config })).toBe(true);
   });
 });

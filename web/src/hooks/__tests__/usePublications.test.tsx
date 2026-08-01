@@ -196,7 +196,7 @@ describe('usePublications — queries', () => {
   });
 
   it('useCatalogProductos fetches catalog', async () => {
-    mockedApi.getCatalogProductos.mockResolvedValue(FAKE_CATALOG);
+    mockedApi.getCatalogProductos.mockResolvedValue(FAKE_CATALOG as never);
     const { result } = renderHook(() => useCatalogProductos(), {
       wrapper: createWrapper(),
     });
@@ -299,7 +299,7 @@ describe('usePublications — mutations', () => {
     const { result } = renderHook(() => useCreatePublicacion(), {
       wrapper: createWrapper(),
     });
-    const res = await result.current.mutateAsync();
+    const res = await result.current.mutateAsync(undefined);
     expect(mockedApi.createPublicacion).toHaveBeenCalledOnce();
     expect(res.data.id_publicacion).toBe(1);
   });
@@ -342,7 +342,7 @@ describe('usePublications — mutations', () => {
 
   it('useAddProductoSemanal succeeds', async () => {
     mockedApi.addProductoSemanal.mockResolvedValue({
-      data: { id_producto_semanal: 200 },
+      data: { id_producto_semanal: 200 } as never,
     });
     const { result } = renderHook(() => useAddProductoSemanal(), {
       wrapper: createWrapper(),
@@ -355,7 +355,7 @@ describe('usePublications — mutations', () => {
 
   it('useUpdateProductoSemanal succeeds', async () => {
     mockedApi.updateProductoSemanal.mockResolvedValue({
-      data: { id_producto_semanal: 100 },
+      data: { id_producto_semanal: 100 } as never,
     });
     const { result } = renderHook(() => useUpdateProductoSemanal(), {
       wrapper: createWrapper(),
@@ -420,7 +420,9 @@ describe('usePublications — mutations', () => {
     const { result } = renderHook(() => useCreatePublicacion(), {
       wrapper: createWrapper(),
     });
-    await expect(result.current.mutateAsync()).rejects.toThrow('create failed');
+    await expect(result.current.mutateAsync(undefined)).rejects.toThrow(
+      'create failed',
+    );
     expect(logError).toHaveBeenCalledWith(
       'publications.createPublicacion',
       expect.any(Error),
@@ -513,7 +515,7 @@ describe('usePublications — mutations', () => {
         <QueryClientProvider client={qc}>{children}</QueryClientProvider>
       ),
     });
-    await result.current.mutateAsync();
+    await result.current.mutateAsync(undefined);
     expect(qc.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['publicaciones'],
     });
@@ -554,7 +556,7 @@ describe('usePublications — mutations', () => {
     const { result: publish } = renderHook(() => usePublishPublicacion(), {
       wrapper: createWrapper(),
     });
-    const res = await create.current.mutateAsync();
+    const res = await create.current.mutateAsync(undefined);
     expect(res.data.id_publicacion).toBe(1);
     await del.current.mutateAsync(1);
     expect(mockedApi.deletePublicacion).toHaveBeenCalledWith(

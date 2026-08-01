@@ -200,7 +200,8 @@ export function FarmerPublications() {
         }
         confirmLabel={confirmAction?.kind === 'delete' ? 'Eliminar' : 'Cerrar'}
         onConfirm={() => {
-          if (confirmAction?.kind === 'delete') {
+          if (!confirmAction) return;
+          if (confirmAction.kind === 'delete') {
             void executeDelete(confirmAction.id);
           } else {
             void executeClose(confirmAction.id);

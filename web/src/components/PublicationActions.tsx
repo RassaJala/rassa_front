@@ -1,6 +1,5 @@
 import type { AppColors } from '../hooks/useAppColors';
 import type { Publicacion, PublicacionEstado } from '../services/publications';
-import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 
 // ── Shared types & helpers ──────────────────────────────────
@@ -127,7 +126,7 @@ function renderAction(
   action: ActionDef,
   variant: 'button' | 'icon',
   colors: AppColors,
-): JSX.Element {
+): React.JSX.Element {
   const s = action.style(colors);
   if (variant === 'button') {
     return (

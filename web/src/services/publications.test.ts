@@ -244,7 +244,7 @@ describe('getCatalogProductos', () => {
     mockedApi.get.mockResolvedValue({ data: { data: catalog } });
     const result = await getCatalogProductos();
     expect(result.data.results).toHaveLength(1);
-    expect(result.data.results[0].id_producto).toBe(1);
+    expect(result.data.results[0]!.id_producto).toBe(1);
   });
 });
 
@@ -263,7 +263,7 @@ describe('getUnidades', () => {
     mockedApi.get.mockResolvedValue({ data: { data: unidades } });
     const result = await getUnidades();
     expect(result.data).toHaveLength(2);
-    expect(result.data[0].tipo).toBe('kg');
+    expect(result.data[0]!.tipo).toBe('kg');
   });
 });
 
@@ -277,7 +277,7 @@ describe('getProductosSemanales', () => {
     const result = await getProductosSemanales(42);
     expect(mockedApi.get).toHaveBeenCalledWith('/publicaciones/42/productos/');
     expect(result.data).toHaveLength(2);
-    expect(result.data[0].fk_producto).toBe(10);
+    expect(result.data[0]!.fk_producto).toBe(10);
   });
 });
 
@@ -554,7 +554,7 @@ describe('edge cases', () => {
       },
     });
     const result = await getPublicaciones();
-    expect(result.data.results[0].id_publicacion).toBe(1);
+    expect(result.data.results[0]!.id_publicacion).toBe(1);
   });
 
   it('getPublicaciones with malformed response (not array in results)', async () => {

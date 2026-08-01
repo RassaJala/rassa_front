@@ -62,7 +62,8 @@ axiosRetry(api, {
     return (
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
+          error.response.status >= SERVER_ERROR_THRESHOLD) ||
+        error.response?.status === 429) &&
       error.config?.method !== 'post'
     );
   },
@@ -212,4 +213,17 @@ export function mediaUrl(path: string | null | undefined): string | null {
   // ponytail: sanitizar path para evitar traversal (#34)
   const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
   return `${base}${clean}`;
+}
+
+/**
+ * Indica si una URL puede seguirse de forma segura con las credenciales del
+ * cliente: solo rutas relativas o absolutas del mismo origen que la API.
+ */
+export function isApiUrl(url: string): boolean {
+  if (url.startsWith('/')) return true;
+  try {
+    return new URL(url).origin === new URL(baseURL).origin;
+  } catch {
+    return false;
+  }
 }

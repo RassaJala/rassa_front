@@ -305,6 +305,7 @@ export function PublicationWizard() {
     tempIdToServerId: Map<string, number>;
     newServerIds: number[];
     updatedServerIds: number[];
+    failedUploads: number;
   }> {
     return upsertItems(
       pubId,
@@ -420,7 +421,8 @@ export function PublicationWizard() {
         onSaving: setSaving,
         onError: setError,
         onToast: (message, type) => setToast({ message, type }),
-        onTempIdSync: setItems,
+        onTempIdSync: (updater) =>
+          setItems((prev) => updater(prev) as WizardItemDraft[]),
         onPersisted: () => setPersisted(true),
       },
       opts,

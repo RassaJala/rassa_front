@@ -174,7 +174,7 @@ export function ProductFormModal({
   onSaved,
 }: ProductFormModalProps) {
   const qc = useQueryClient();
-  const { brand, coral, muted, border, surface, fg, accentBg } = colors;
+  const { brand, coral, border, surface, fg, accentBg } = colors;
   const fileRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(producto);
 
