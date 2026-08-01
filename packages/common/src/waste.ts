@@ -3,6 +3,7 @@
 // web app (web/src/services/waste.ts, AdminMermasDashboard).
 
 import { MONTH_NAMES } from './dates';
+import { API_RETRY_LIMIT } from './networking';
 
 // --- Types -------------------------------------------------------------------
 
@@ -40,7 +41,7 @@ export interface ProductOption {
 export const DAY_MS_IN_MS = 86_400_000;
 export const WASTE_PAGE_SIZE = 10;
 export const WASTE_DETAIL_LIMIT = 100;
-export const WASTE_RETRY_LIMIT = 3;
+export const WASTE_RETRY_LIMIT = API_RETRY_LIMIT;
 export const WASTE_STALE_TIME_MS = 5 * 60 * 1000;
 
 // Decision strings shared by the mobile and web dashboards.

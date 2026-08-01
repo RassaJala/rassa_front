@@ -1,6 +1,8 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 import axiosRetry from 'axios-retry';
+
+import { API_RETRY_LIMIT } from '@/common/networking';
 import { redirect } from './navigate';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -31,7 +33,7 @@ const IDEMPOTENT_METHODS = new Set([
 ]);
 
 axiosRetry(api, {
-  retries: 3,
+  retries: API_RETRY_LIMIT,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;

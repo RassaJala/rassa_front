@@ -361,6 +361,13 @@ export function AdminMermasDashboard() {
     if (resumenQuery.data) retryCountRef.current = 0;
   }, [resumenQuery.data]);
 
+  // Log failures for observability (Sentry is not installed on web yet).
+  useEffect(() => {
+    if (resumenQuery.isError) {
+      console.error('Failed to load merma summary', resumenQuery.error);
+    }
+  }, [resumenQuery.isError, resumenQuery.error]);
+
   // If the selected product no longer exists in the data, drop the filter
   // instead of showing an empty dashboard with a stale selection.
   const products = useMemo(

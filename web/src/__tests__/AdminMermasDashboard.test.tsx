@@ -1,8 +1,16 @@
-import { act, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { WASTE_DETAIL_LIMIT } from '@/common/waste';
 import { AdminMermasDashboard } from '../routes/AdminMermasDashboard';
 import { fetchMermaResumen } from '../services/waste';
 
@@ -129,5 +137,96 @@ describe('AdminMermasDashboard', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('Datos desactualizados')).toBeInTheDocument();
+  });
+
+  it('refetches with the new query params when a filter changes', async () => {
+    mockFetch.mockResolvedValue(mockResumen);
+
+    renderDashboard();
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Semana' }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenLastCalledWith({ agrupar_por: 'semana' });
+    });
+  });
+
+  it('blocks the query and shows a warning when the date range is invalid', async () => {
+    mockFetch.mockResolvedValue(mockResumen);
+
+    renderDashboard();
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    const dateInputs =
+      document.querySelectorAll<HTMLInputElement>('input[type="date"]');
+    const desde = dateInputs[0];
+    const hasta = dateInputs[1];
+    if (desde === undefined || hasta === undefined) {
+      throw new Error('Expected two date inputs in the filter bar');
+    }
+
+    await act(async () => {
+      fireEvent.change(desde, { target: { value: '2026-07-10' } });
+      fireEvent.change(hasta, { target: { value: '2026-07-01' } });
+    });
+
+    expect(
+      screen.getByText('La fecha «Hasta» debe ser mayor o igual a «Desde».'),
+    ).toBeInTheDocument();
+    expect(mockFetch).not.toHaveBeenCalledWith({
+      agrupar_por: 'mes',
+      fecha_desde: '2026-07-10',
+      fecha_hasta: '2026-07-01',
+    });
+  });
+
+  it('refetches when the Reintentar button is clicked', async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce(mockResumen);
+
+    renderDashboard();
+
+    expect(
+      await screen.findByText('Error al cargar datos'),
+    ).toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the truncation notice when the detail reaches the limit', async () => {
+    mockFetch.mockResolvedValue({
+      agrupacion: 'mes' as const,
+      total_general: 100,
+      producto_mas_afectado: { nombre: 'Manzana', total: 100 },
+      detalle: Array.from({ length: WASTE_DETAIL_LIMIT }, () => ({
+        periodo: '2026-07-01T00:00:00-03:00',
+        producto_nombre: 'Manzana',
+        producto_id: 1,
+        decision_nombre: 'tirar',
+        decision_id: 1,
+        total_cantidad: 1,
+        total_mermas: 1,
+      })),
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        `Mostrando los primeros ${WASTE_DETAIL_LIMIT} registros`,
+      ),
+    ).toBeInTheDocument();
   });
 });
