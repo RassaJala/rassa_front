@@ -1,4 +1,5 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import * as Sentry from '@sentry/react';
 import { useQuery } from '@tanstack/react-query';
 
 import {
@@ -47,6 +48,7 @@ class DashboardErrorBoundary extends Component<
       error,
       errorInfo,
     );
+    Sentry.captureException(error);
   }
 
   handleRetry = () => {
