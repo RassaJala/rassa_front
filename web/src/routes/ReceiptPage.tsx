@@ -27,7 +27,7 @@ function DetailRow({
         {label}
       </span>
       <span
-        className="max-w-[60%] text-sm font-semibold"
+        className="max-w-[60%] text-right text-sm font-semibold"
         style={{ color: colors.fg }}
       >
         {value}
@@ -42,7 +42,7 @@ export function ReceiptPage() {
   const { paymentId } = useParams<{ paymentId: string }>();
   const navigate = useNavigate();
   const colors = useAppColors();
-  const { brand, fg, muted, border, surface } = colors;
+  const { brand, fg, muted, border, surface, bg, accentBg } = colors;
 
   const {
     data: pago,
@@ -80,6 +80,11 @@ export function ReceiptPage() {
     );
   }
 
+  const totalProductos = pago.productos.reduce(
+    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
+    0,
+  );
+
   return (
     <div>
       <PageHeader
@@ -97,10 +102,18 @@ export function ReceiptPage() {
       {/* Success banner */}
       <div
         className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-6"
-        style={{ background: brand }}
+        style={{
+          background: brand,
+          boxShadow: '0 8px 24px rgba(36,86,60,0.18)',
+        }}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">✓</span>
+        <div className="flex items-center gap-4">
+          <span
+            className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+            style={{ background: 'rgba(255,255,255,0.18)', color: '#FFFFFF' }}
+          >
+            ✓
+          </span>
           <div>
             <p className="text-xl font-bold text-white">Pago Registrado</p>
             <p className="text-sm text-white/90">
@@ -108,7 +121,14 @@ export function ReceiptPage() {
             </p>
           </div>
         </div>
-        <Badge className="bg-white/15 text-white">{pago.folio}</Badge>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-sm font-medium text-white/80 sm:block">
+            Folio
+          </span>
+          <Badge className="bg-white/15 px-4 py-1.5 text-sm font-bold text-white">
+            {pago.folio}
+          </Badge>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -118,13 +138,17 @@ export function ReceiptPage() {
             Productos
           </h2>
           <div
-            className="overflow-hidden rounded-2xl border"
-            style={{ background: surface, borderColor: border }}
+            className="overflow-hidden rounded-2xl"
+            style={{
+              background: surface,
+              border: `1px solid ${border}`,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
           >
             {/* Table header */}
             <div
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 border-b px-5 py-3 text-xs font-bold uppercase tracking-wide"
-              style={{ color: muted, borderBottomColor: border }}
+              className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-3 text-xs font-bold uppercase tracking-wide"
+              style={{ color: muted, background: bg }}
             >
               <span>Producto</span>
               <span className="w-20 text-center">Cantidad</span>
@@ -134,7 +158,7 @@ export function ReceiptPage() {
             {pago.productos.map((prod, idx) => (
               <div
                 key={`${prod.nombre}-${idx}`}
-                className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3"
+                className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-4"
                 style={
                   idx < pago.productos.length - 1
                     ? { borderBottom: `1px solid ${border}` }
@@ -167,6 +191,21 @@ export function ReceiptPage() {
                 </span>
               </div>
             ))}
+            {/* Subtotal row */}
+            <div
+              className="flex items-center justify-end gap-6 px-6 py-4"
+              style={{ borderTop: `1px solid ${border}` }}
+            >
+              <span className="text-sm font-semibold" style={{ color: muted }}>
+                Subtotal
+              </span>
+              <span
+                className="w-28 text-right text-sm font-bold"
+                style={{ color: fg }}
+              >
+                ${totalProductos.toFixed(2)}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -176,48 +215,56 @@ export function ReceiptPage() {
             Resumen del pago
           </h2>
           <div
-            className="mb-4 rounded-2xl border p-5"
-            style={{ background: surface, borderColor: border }}
-          >
-            <DetailRow label="Folio" value={pago.folio} colors={colors} />
-            <DetailRow
-              label="Fecha"
-              value={formatearFecha(pago.fecha_pago)}
-              colors={colors}
-            />
-            <DetailRow
-              label="Cliente"
-              value={pago.cliente_nombre ?? '—'}
-              colors={colors}
-            />
-            <DetailRow
-              label="Método de pago"
-              value={pago.tipo_pago_nombre}
-              colors={colors}
-            />
-            {pago.referencia ? (
-              <DetailRow
-                label="Referencia"
-                value={pago.referencia}
-                colors={colors}
-              />
-            ) : null}
-          </div>
-
-          <div
-            className="mb-6 flex items-center justify-between rounded-2xl border p-5"
+            className="overflow-hidden rounded-2xl"
             style={{
               background: surface,
-              borderColor: border,
-              borderLeft: `4px solid ${brand}`,
+              border: `1px solid ${border}`,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
           >
-            <span className="text-base font-semibold" style={{ color: fg }}>
-              Total pagado
-            </span>
-            <span className="text-2xl font-bold" style={{ color: brand }}>
-              ${Number(pago.monto).toFixed(2)}
-            </span>
+            <div className="p-5">
+              <DetailRow label="Folio" value={pago.folio} colors={colors} />
+              {pago.pedido ? (
+                <DetailRow
+                  label="Pedido"
+                  value={`#${pago.pedido}`}
+                  colors={colors}
+                />
+              ) : null}
+              <DetailRow
+                label="Fecha"
+                value={formatearFecha(pago.fecha_pago)}
+                colors={colors}
+              />
+              <DetailRow
+                label="Cliente"
+                value={pago.cliente_nombre ?? '—'}
+                colors={colors}
+              />
+              <DetailRow
+                label="Método de pago"
+                value={pago.tipo_pago_nombre}
+                colors={colors}
+              />
+              {pago.referencia ? (
+                <DetailRow
+                  label="Referencia"
+                  value={pago.referencia}
+                  colors={colors}
+                />
+              ) : null}
+            </div>
+            <div
+              className="flex items-center justify-between px-5 py-4"
+              style={{ background: accentBg }}
+            >
+              <span className="text-base font-bold" style={{ color: fg }}>
+                Total pagado
+              </span>
+              <span className="text-2xl font-bold" style={{ color: brand }}>
+                ${Number(pago.monto).toFixed(2)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
