@@ -182,8 +182,6 @@ export interface CreditLimit {
 export type AdminStackParamList = {
   AdminPanel: undefined;
   AdminProfile: undefined;
-  Payment: { readonly orderId: number };
-  Receipt: { readonly paymentId: number };
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
   UserForm: undefined;

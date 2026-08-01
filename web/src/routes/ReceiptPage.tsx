@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { formatearFecha } from '@/common/dates';
 import { fetchPago } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
@@ -39,7 +38,10 @@ function DetailRow({
 // ── Component ──────────────────────────────────────────────
 
 export function ReceiptPage() {
-  const { paymentId } = useParams<{ paymentId: string }>();
+  const { paymentId: rawPaymentId } = useParams<{ paymentId: string }>();
+  const paymentId = Number(rawPaymentId);
+  const paymentIdValid =
+    rawPaymentId !== undefined && Number.isInteger(paymentId) && paymentId > 0;
   const navigate = useNavigate();
   const colors = useAppColors();
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
@@ -50,9 +52,9 @@ export function ReceiptPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['pago', Number(paymentId)],
-    queryFn: () => fetchPago(api, Number(paymentId)),
-    enabled: !!paymentId,
+    queryKey: ['pago', paymentId],
+    queryFn: () => fetchPago(api, paymentId),
+    enabled: paymentIdValid,
   });
 
   if (isLoading) {
@@ -101,33 +103,23 @@ export function ReceiptPage() {
 
       {/* Success banner */}
       <div
-        className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-6"
+        className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl p-6"
         style={{
           background: brand,
           boxShadow: '0 8px 24px rgba(36,86,60,0.18)',
         }}
       >
-        <div className="flex items-center gap-4">
-          <span
-            className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
-            style={{ background: 'rgba(255,255,255,0.18)', color: '#FFFFFF' }}
-          >
-            ✓
-          </span>
-          <div>
-            <p className="text-xl font-bold text-white">Pago Registrado</p>
-            <p className="text-sm text-white/90">
-              El pedido fue marcado como entregado
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm font-medium text-white/80 sm:block">
-            Folio
-          </span>
-          <Badge className="bg-white/15 px-4 py-1.5 text-sm font-bold text-white">
-            {pago.folio}
-          </Badge>
+        <span
+          className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+          style={{ background: 'rgba(255,255,255,0.18)', color: '#FFFFFF' }}
+        >
+          ✓
+        </span>
+        <div>
+          <p className="text-xl font-bold text-white">Pago Registrado</p>
+          <p className="text-sm text-white/90">
+            El pedido fue marcado como entregado
+          </p>
         </div>
       </div>
 

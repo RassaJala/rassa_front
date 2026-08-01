@@ -495,8 +495,6 @@ function AdminScreens() {
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
       <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
-      <AdminStack.Screen name="Payment" component={PaymentScreen} />
-      <AdminStack.Screen name="Receipt" component={ReceiptScreen} />
       <AdminStack.Screen name="UserForm" component={UserFormScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />

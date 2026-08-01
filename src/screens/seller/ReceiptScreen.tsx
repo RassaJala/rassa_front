@@ -33,6 +33,7 @@ export default function ReceiptScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { paymentId } = route.params;
+  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -50,7 +51,7 @@ export default function ReceiptScreen(): React.JSX.Element {
   } = useQuery({
     queryKey: ['pago', paymentId],
     queryFn: () => fetchPago(api, paymentId),
-    enabled: !!paymentId,
+    enabled: paymentIdValid,
   });
 
   if (isLoading) {

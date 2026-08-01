@@ -19,6 +19,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import {
   createPago,
   esEfectivo,
+  fetchPagoPorPedido,
   fetchTiposPago,
   ORDER_STATUS_READY,
 } from '@/common/payments';
@@ -415,6 +416,7 @@ export default function PaymentScreen(): React.JSX.Element {
   const route = useRoute<Route>();
   const queryClient = useQueryClient();
   const { orderId } = route.params;
+  const orderIdValid = Number.isInteger(orderId) && orderId > 0;
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -440,7 +442,7 @@ export default function PaymentScreen(): React.JSX.Element {
       const res = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return res.data;
     },
-    enabled: !!orderId,
+    enabled: orderIdValid,
     staleTime: STALE_TIME,
   });
 
@@ -479,7 +481,23 @@ export default function PaymentScreen(): React.JSX.Element {
       ]).catch(() => {});
       navigation.replace('Receipt', { paymentId: data.id_pago });
     },
-    onError: (error: unknown) => {
+    onError: async (error: unknown) => {
+      try {
+        // The POST may have succeeded server-side with the response lost:
+        // reconcile before showing an error so the seller is not told the
+        // payment failed (and re-submits, charging twice).
+        const pago = await fetchPagoPorPedido(api, orderId);
+        if (pago) {
+          void Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
+            queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
+          ]).catch(() => {});
+          navigation.replace('Receipt', { paymentId: pago.id_pago });
+          return;
+        }
+      } catch {
+        // Reconciliation failed: fall through to the real error message
+      }
       const detail = extractApiError(error, [
         'pedido',
         'tipo_pago',

@@ -6,7 +6,11 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import PaymentScreen from '@/screens/seller/PaymentScreen';
-import { createPago, fetchTiposPago } from '@/common/payments';
+import {
+  createPago,
+  fetchPagoPorPedido,
+  fetchTiposPago,
+} from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 
 const mockReplace = jest.fn();
@@ -53,11 +57,15 @@ jest.mock('@/common/payments', () => ({
   fetchTiposPago: jest.fn(),
   createPago: jest.fn(),
   fetchPago: jest.fn(),
+  fetchPagoPorPedido: jest.fn(),
 }));
 
 const mockedCreatePago = createPago as jest.MockedFunction<typeof createPago>;
 const mockedFetchTiposPago = fetchTiposPago as jest.MockedFunction<
   typeof fetchTiposPago
+>;
+const mockedFetchPagoPorPedido = fetchPagoPorPedido as jest.MockedFunction<
+  typeof fetchPagoPorPedido
 >;
 
 const mockOrder = {
@@ -94,6 +102,7 @@ describe('PaymentScreen', () => {
     });
     api.post.mockResolvedValue({ data: {} });
     mockedFetchTiposPago.mockResolvedValue(mockTipos);
+    mockedFetchPagoPorPedido.mockResolvedValue(null);
     mockedCreatePago.mockResolvedValue({
       id_pago: 9,
       folio: 'PAG-0009',
@@ -180,6 +189,37 @@ describe('PaymentScreen', () => {
     // Seller can retry after the failure: a second press calls createPago again
     fireEvent.press(getByTestId('submit-payment-button'));
     await waitFor(() => expect(mockedCreatePago).toHaveBeenCalledTimes(2));
+    alertSpy.mockRestore();
+  });
+
+  it('navigates to Receipt when createPago fails but the payment exists (reconciliation)', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockedCreatePago.mockRejectedValue(new Error('Network error'));
+    mockedFetchPagoPorPedido.mockResolvedValue({
+      id_pago: 9,
+      folio: 'PAG-0009',
+      pedido: 5,
+      tipo_pago: 1,
+      tipo_pago_nombre: 'Efectivo',
+      cliente_nombre: 'Cliente Test',
+      cliente_id: 4,
+      monto: '119.48',
+      referencia: '',
+      total_pedido: '119.48',
+      productos: [],
+      fecha_pago: '2026-07-30T12:00:00Z',
+    });
+
+    const { findByTestId, getByTestId } = renderScreen();
+    await findByTestId('submit-payment-button');
+
+    fireEvent.press(getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith('Receipt', { paymentId: 9 }),
+    );
+    // No error alert: the payment actually succeeded server-side
+    expect(alertSpy).not.toHaveBeenCalled();
     alertSpy.mockRestore();
   });
 

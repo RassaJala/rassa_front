@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   createPago,
   esEfectivo,
+  fetchPagoPorPedido,
   fetchTiposPago,
   ORDER_STATUS_READY,
 } from '@/common/payments';
@@ -93,7 +94,23 @@ export function PaymentPage() {
       ]).catch(() => {});
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
     },
-    onError: (err: unknown) => {
+    onError: async (err: unknown) => {
+      try {
+        // The POST may have succeeded server-side with the response lost:
+        // reconcile before showing an error so the seller is not told the
+        // payment failed (and re-submits, charging twice).
+        const pago = await fetchPagoPorPedido(api, orderId);
+        if (pago) {
+          void Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
+            queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
+          ]).catch(() => {});
+          navigate(`/vendedor/recibo/${pago.id_pago}`, { replace: true });
+          return;
+        }
+      } catch {
+        // Reconciliation failed: fall through to the real error message
+      }
       setFieldError(
         extractApiError(err, ['pedido', 'tipo_pago', 'monto', 'referencia']),
       );

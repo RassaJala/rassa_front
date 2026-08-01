@@ -66,6 +66,7 @@ describe('ReceiptPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    mockParams.current = { paymentId: '9' };
     mockedFetchPago.mockResolvedValue(mockPago);
   });
 
@@ -102,5 +103,13 @@ describe('ReceiptPage', () => {
 
     renderPage();
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+  });
+
+  it('shows the error state and does not fetch when paymentId is invalid', async () => {
+    mockParams.current = { paymentId: 'abc' };
+    renderPage();
+
+    expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(mockedFetchPago).not.toHaveBeenCalled();
   });
 });

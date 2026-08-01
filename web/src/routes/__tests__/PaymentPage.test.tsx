@@ -38,10 +38,15 @@ vi.mock('@/common/payments', async () => ({
   fetchTiposPago: vi.fn(),
   createPago: vi.fn(),
   fetchPago: vi.fn(),
+  fetchPagoPorPedido: vi.fn(),
 }));
 
 import api from '../../services/api';
-import { createPago, fetchTiposPago } from '@/common/payments';
+import {
+  createPago,
+  fetchPagoPorPedido,
+  fetchTiposPago,
+} from '@/common/payments';
 import { PaymentPage } from '../PaymentPage';
 
 const mockedApi = api as unknown as {
@@ -50,6 +55,7 @@ const mockedApi = api as unknown as {
 };
 const mockedFetchTiposPago = vi.mocked(fetchTiposPago);
 const mockedCreatePago = vi.mocked(createPago);
+const mockedFetchPagoPorPedido = vi.mocked(fetchPagoPorPedido);
 
 const mockOrder = {
   id_pedido: 5,
@@ -59,6 +65,21 @@ const mockOrder = {
 };
 
 const mockTipos = [{ id_tipo_pago: 1, nombre: 'Efectivo' }];
+
+const mockPago = {
+  id_pago: 9,
+  folio: 'PAG-0009',
+  pedido: 5,
+  tipo_pago: 1,
+  tipo_pago_nombre: 'Efectivo',
+  cliente_nombre: 'Cliente Test',
+  cliente_id: 4,
+  monto: '119.48',
+  referencia: '',
+  total_pedido: '119.48',
+  productos: [],
+  fecha_pago: '2026-07-30T12:00:00Z',
+};
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -83,20 +104,8 @@ describe('PaymentPage', () => {
     });
     mockedApi.post.mockResolvedValue({ data: {} });
     mockedFetchTiposPago.mockResolvedValue(mockTipos);
-    mockedCreatePago.mockResolvedValue({
-      id_pago: 9,
-      folio: 'PAG-0009',
-      pedido: 5,
-      tipo_pago: 1,
-      tipo_pago_nombre: 'Efectivo',
-      cliente_nombre: 'Cliente Test',
-      cliente_id: 4,
-      monto: '119.48',
-      referencia: '',
-      total_pedido: '119.48',
-      productos: [],
-      fecha_pago: '2026-07-30T12:00:00Z',
-    });
+    mockedFetchPagoPorPedido.mockResolvedValue(null);
+    mockedCreatePago.mockResolvedValue(mockPago);
   });
 
   it('shows error view when order fetch fails', async () => {
@@ -168,6 +177,24 @@ describe('PaymentPage', () => {
           .disabled,
       ).toBe(false),
     );
+  });
+
+  it('navigates to the receipt when createPago fails but the payment exists (reconciliation)', async () => {
+    const user = userEvent.setup();
+    mockedCreatePago.mockRejectedValue(new Error('Network error'));
+    mockedFetchPagoPorPedido.mockResolvedValue(mockPago);
+    renderPage();
+
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
+    await user.click(screen.getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
+        replace: true,
+      }),
+    );
+    // No error shown: the payment actually succeeded server-side
+    expect(screen.queryByText(/Network error/i)).toBeNull();
   });
 
   it('disables the submit button while the payment is pending (no double tap)', async () => {

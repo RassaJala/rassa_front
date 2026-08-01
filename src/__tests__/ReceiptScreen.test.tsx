@@ -9,6 +9,7 @@ import { fetchPago } from '@/common/payments';
 
 const mockGoBack = jest.fn();
 const mockPopToTop = jest.fn();
+const mockParams = { current: { paymentId: 9 } };
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
@@ -16,7 +17,7 @@ jest.mock('@react-navigation/native', () => ({
     popToTop: mockPopToTop,
   }),
   useRoute: () => ({
-    params: { paymentId: 9 },
+    params: mockParams.current,
     key: 'Receipt-test',
     name: 'Receipt',
   }),
@@ -71,6 +72,7 @@ function renderScreen() {
 describe('ReceiptScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockParams.current = { paymentId: 9 };
     mockedFetchPago.mockResolvedValue(mockPago);
   });
 
@@ -91,5 +93,13 @@ describe('ReceiptScreen', () => {
 
     const { findByText } = renderScreen();
     expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+  });
+
+  it('shows the error state and does not fetch when paymentId is invalid', async () => {
+    mockParams.current = { paymentId: 'abc' as unknown as number };
+
+    const { findByText } = renderScreen();
+    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(mockedFetchPago).not.toHaveBeenCalled();
   });
 });

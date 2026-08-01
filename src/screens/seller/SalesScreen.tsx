@@ -208,6 +208,7 @@ export default function SalesScreen(): React.JSX.Element {
 
   const verRecibo = useCallback(
     async (pedidoId: number) => {
+      if (!Number.isInteger(pedidoId) || pedidoId <= 0) return;
       setPendingIds((prev) => new Set(prev).add(pedidoId));
       try {
         const pago = await fetchPagoPorPedido(api, pedidoId);
@@ -312,9 +313,14 @@ export default function SalesScreen(): React.JSX.Element {
               <Pressable
                 onPress={() => {
                   if (item.estado_actual === ORDER_STATUS_READY) {
-                    navigation.navigate('Payment', {
-                      orderId: item.id_pedido,
-                    });
+                    if (
+                      Number.isInteger(item.id_pedido) &&
+                      item.id_pedido > 0
+                    ) {
+                      navigation.navigate('Payment', {
+                        orderId: item.id_pedido,
+                      });
+                    }
                   } else {
                     statusMutation.mutate({
                       pedidoId: item.id_pedido,
