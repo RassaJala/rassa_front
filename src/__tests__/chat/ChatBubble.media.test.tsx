@@ -287,6 +287,46 @@ describe('ChatBubble — media', () => {
     expect(player.seekTo).toHaveBeenCalledWith(60);
   });
 
+  it('restarts playback after the audio finished', () => {
+    const { useAudioPlayer, useAudioPlayerStatus } = jest.requireMock(
+      'expo-audio',
+    ) as {
+      useAudioPlayer: jest.Mock;
+      useAudioPlayerStatus: jest.Mock;
+    };
+    const originalStatus = useAudioPlayerStatus.getMockImplementation();
+    useAudioPlayerStatus.mockImplementation(() => ({
+      playing: false,
+      currentTime: 120,
+      duration: 120,
+      didJustFinish: true,
+    }));
+    try {
+      const { getByLabelText } = render(
+        <ChatBubble message={audioMessage} isOwn={false} />,
+      );
+      fireEvent.press(getByLabelText('Reproducir audio: voice.mp3'));
+      const player = useAudioPlayer.mock.results.at(-1)?.value;
+      expect(player.seekTo).toHaveBeenCalledWith(0);
+      expect(player.play).toHaveBeenCalled();
+    } finally {
+      if (originalStatus) {
+        useAudioPlayerStatus.mockImplementation(originalStatus);
+      }
+    }
+  });
+
+  it('renders message text below an audio attachment', () => {
+    const audioWithTextMessage: Message = {
+      ...audioMessage,
+      contenido: 'Escucha esta nota',
+    };
+    const { getByText } = render(
+      <ChatBubble message={audioWithTextMessage} isOwn={false} />,
+    );
+    expect(getByText('Escucha esta nota')).toBeTruthy();
+  });
+
   it('renders text content alongside attachment', () => {
     const { getByText } = render(
       <ChatBubble message={textWithImageMessage} isOwn={true} />,

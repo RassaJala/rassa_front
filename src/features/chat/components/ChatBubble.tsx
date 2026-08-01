@@ -172,6 +172,9 @@ function AudioPlayerInner({
     try {
       if (status.playing) {
         player.pause();
+      } else if (status.didJustFinish) {
+        void player.seekTo(0);
+        player.play();
       } else {
         player.play();
       }
@@ -181,8 +184,10 @@ function AudioPlayerInner({
   };
 
   const duration = status.duration;
-  const progress =
-    duration > 0 ? Math.min(100, (status.currentTime / duration) * 100) : 0;
+  const durationKnown = Number.isFinite(duration) && duration > 0;
+  const progress = durationKnown
+    ? Math.min(100, (status.currentTime / duration) * 100)
+    : 0;
 
   const seekTo = (locationX: number) => {
     if (duration <= 0 || trackWidth <= 0) return;
@@ -195,33 +200,31 @@ function AudioPlayerInner({
 
   return (
     <View
-      className={`mb-1 flex-row items-center gap-2 rounded-lg px-3 py-2 ${palette.container}`}
+      className={`mb-1 flex-row items-center gap-3 rounded-lg px-3.5 py-3 ${palette.container}`}
     >
       <IconButton
         icon={status.playing ? 'pause' : 'play'}
-        size={20}
+        size={28}
         iconColor={accentColor}
         onPress={togglePlayback}
         accessibilityLabel={`Reproducir audio: ${attachment.nombre}`}
       />
-      <View className="flex-1 gap-1">
+      <View className="flex-1 gap-2">
         <Text
-          className="text-xs"
+          className="text-sm font-medium"
           style={{ color: accentColor }}
           numberOfLines={1}
         >
           {attachment.nombre}
         </Text>
         <Pressable
-          className="h-3 justify-center"
+          className="h-4 justify-center"
           onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
           onPress={(e) => seekTo(e.nativeEvent.locationX)}
           accessibilityRole="adjustable"
           accessibilityLabel={`Progreso de audio: ${attachment.nombre}`}
         >
-          <View
-            className={`h-1.5 overflow-hidden rounded-full ${palette.track}`}
-          >
+          <View className={`h-2 overflow-hidden rounded-full ${palette.track}`}>
             <View
               className={`h-full rounded-full ${palette.fill}`}
               style={{ width: `${progress}%` }}
@@ -230,12 +233,12 @@ function AudioPlayerInner({
         </Pressable>
         <Text className="text-xs" style={{ color: accentColor }}>
           {formatAudioTime(status.currentTime)} /{' '}
-          {formatAudioTime(status.duration)}
+          {durationKnown ? formatAudioTime(status.duration) : '–:––'}
         </Text>
       </View>
       <IconButton
         icon="download"
-        size={20}
+        size={24}
         iconColor={accentColor}
         onPress={() => void downloadAttachment(attachment)}
         accessibilityLabel={`Descargar audio: ${attachment.nombre}`}
