@@ -77,8 +77,24 @@ describe('ReceiptPage', () => {
       expect(mockedFetchPago).toHaveBeenCalledWith(expect.anything(), 9),
     );
     expect((await screen.findAllByText('PAG-0009')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Pago Registrado')).toBeTruthy();
+    expect(screen.getByText('Productos')).toBeTruthy();
+    expect(screen.getByText('Resumen del pago')).toBeTruthy();
     expect(screen.getByText('Manzana')).toBeTruthy();
     expect(screen.getByText('Cliente Test')).toBeTruthy();
+    expect(screen.getByText('Total pagado')).toBeTruthy();
+  });
+
+  it('renders product rows with quantity, price and subtotal', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Manzana')).toBeTruthy();
+    // Quantity 2x and $59.74 each => importe $119.48 (también en Total pagado)
+    expect(screen.getByText('2')).toBeTruthy();
+    expect(screen.getByText('$59.74')).toBeTruthy();
+    expect(
+      (await screen.findAllByText('$119.48')).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('shows error view when fetch fails', async () => {
