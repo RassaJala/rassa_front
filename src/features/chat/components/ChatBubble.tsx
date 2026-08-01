@@ -18,11 +18,6 @@ import type {
   VideoRef,
 } from 'react-native-video';
 
-import {
-  setAudioModeAsync,
-  useAudioPlayer,
-  useAudioPlayerStatus,
-} from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
@@ -151,8 +146,7 @@ function AudioPlayerInner({
   attachment,
   isOwn,
 }: Readonly<{ attachment: Attachment; isOwn: boolean }>) {
-  const player = useAudioPlayer(resolveMediaUri(attachment.archivo));
-  const status = useAudioPlayerStatus(player);
+  const videoRef = useRef<VideoRef>(null);
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const theme = themeColors(isDark);
@@ -163,49 +157,77 @@ function AudioPlayerInner({
     : theme.muted;
   const palette = audioPalette(isOwn, isDark);
   const [trackWidth, setTrackWidth] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [hasError, setHasError] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
 
-  useEffect(() => {
-    void setAudioModeAsync({ playsInSilentMode: true });
-  }, []);
+  const isLoading = isPlaying && isBuffering;
+
+  const handleLoad = (data: OnLoadData) => {
+    setDuration(data.duration);
+  };
+
+  const handleProgress = (data: OnProgressData) => {
+    setCurrentTime(data.currentTime);
+  };
+
+  const handleBuffer = (data: OnBufferData) => {
+    setIsBuffering(data.isBuffering);
+  };
 
   const togglePlayback = () => {
-    try {
-      if (status.playing) {
-        player.pause();
-      } else if (status.didJustFinish) {
-        void player.seekTo(0);
-        player.play();
-      } else {
-        player.play();
+    if (hasError) return;
+    if (isPlaying) {
+      videoRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      if (duration > 0 && currentTime >= duration - 0.1) {
+        videoRef.current?.seek(0);
       }
-    } catch {
-      return;
+      videoRef.current?.resume();
+      setIsPlaying(true);
     }
   };
 
-  const duration = status.duration;
   const durationKnown = Number.isFinite(duration) && duration > 0;
   const progress = durationKnown
-    ? Math.min(100, (status.currentTime / duration) * 100)
+    ? Math.min(100, (currentTime / duration) * 100)
     : 0;
 
   const seekTo = (locationX: number) => {
     if (duration <= 0 || trackWidth <= 0) return;
-    try {
-      void player.seekTo((locationX / trackWidth) * duration);
-    } catch {
-      return;
-    }
+    videoRef.current?.seek((locationX / trackWidth) * duration);
   };
 
   return (
     <View
       className={`mb-1 flex-row items-center gap-3 rounded-lg px-3.5 py-3 ${palette.container}`}
     >
+      <View className="h-1 w-1 overflow-hidden">
+        <Video
+          ref={videoRef}
+          source={{ uri: resolveMediaUri(attachment.archivo) }}
+          style={StyleSheet.absoluteFill}
+          viewType={ViewType.TEXTURE}
+          controls={false}
+          paused={!isPlaying}
+          ignoreSilentSwitch="ignore"
+          progressUpdateInterval={250}
+          onLoadStart={() => setHasError(false)}
+          onLoad={handleLoad}
+          onProgress={handleProgress}
+          onBuffer={handleBuffer}
+          onEnd={() => setIsPlaying(false)}
+          onError={() => setHasError(true)}
+        />
+      </View>
       <IconButton
-        icon={status.playing ? 'pause' : 'play'}
+        icon={isPlaying ? 'pause' : 'play'}
         size={28}
         iconColor={accentColor}
+        disabled={hasError}
         onPress={togglePlayback}
         accessibilityLabel={`Reproducir audio: ${attachment.nombre}`}
       />
@@ -232,9 +254,19 @@ function AudioPlayerInner({
           </View>
         </Pressable>
         <Text className="text-xs" style={{ color: accentColor }}>
-          {formatAudioTime(status.currentTime)} /{' '}
-          {durationKnown ? formatAudioTime(status.duration) : '–:––'}
+          {formatAudioTime(currentTime)} /{' '}
+          {durationKnown ? formatAudioTime(duration) : '–:––'}
         </Text>
+        {isLoading ? (
+          <Text className="text-xs" style={{ color: accentColor }}>
+            Cargando…
+          </Text>
+        ) : null}
+        {hasError ? (
+          <Text className="text-xs" style={{ color: accentColor }}>
+            No se pudo reproducir el audio.
+          </Text>
+        ) : null}
       </View>
       <IconButton
         icon="download"

@@ -100,6 +100,9 @@ const { default: Video } = jest.requireMock('react-native-video') as {
   default: React.ComponentType<{
     source?: { uri?: string };
     paused?: boolean;
+    onLoad?: (data: { duration: number }) => void;
+    onProgress?: (data: { currentTime: number }) => void;
+    onEnd?: () => void;
   }>;
 };
 
@@ -272,48 +275,36 @@ describe('ChatBubble — media', () => {
   });
 
   it('seeks audio when progress bar is pressed', () => {
-    const { useAudioPlayer } = jest.requireMock('expo-audio') as {
-      useAudioPlayer: jest.Mock;
+    const { __player } = jest.requireMock('react-native-video') as {
+      __player: { seek: jest.Mock };
     };
     const { getByLabelText } = render(
       <ChatBubble message={audioMessage} isOwn={false} />,
     );
+    const video = screen.UNSAFE_getByType(Video);
+    fireEvent(video, 'load', { duration: 120 });
     const bar = getByLabelText('Progreso de audio: voice.mp3');
     fireEvent(bar, 'layout', {
       nativeEvent: { layout: { width: 200, height: 12, x: 0, y: 0 } },
     });
     fireEvent(bar, 'press', { nativeEvent: { locationX: 100 } });
-    const player = useAudioPlayer.mock.results.at(-1)?.value;
-    expect(player.seekTo).toHaveBeenCalledWith(60);
+    expect(__player.seek).toHaveBeenCalledWith(60);
   });
 
   it('restarts playback after the audio finished', () => {
-    const { useAudioPlayer, useAudioPlayerStatus } = jest.requireMock(
-      'expo-audio',
-    ) as {
-      useAudioPlayer: jest.Mock;
-      useAudioPlayerStatus: jest.Mock;
+    const { __player } = jest.requireMock('react-native-video') as {
+      __player: { seek: jest.Mock; resume: jest.Mock };
     };
-    const originalStatus = useAudioPlayerStatus.getMockImplementation();
-    useAudioPlayerStatus.mockImplementation(() => ({
-      playing: false,
-      currentTime: 120,
-      duration: 120,
-      didJustFinish: true,
-    }));
-    try {
-      const { getByLabelText } = render(
-        <ChatBubble message={audioMessage} isOwn={false} />,
-      );
-      fireEvent.press(getByLabelText('Reproducir audio: voice.mp3'));
-      const player = useAudioPlayer.mock.results.at(-1)?.value;
-      expect(player.seekTo).toHaveBeenCalledWith(0);
-      expect(player.play).toHaveBeenCalled();
-    } finally {
-      if (originalStatus) {
-        useAudioPlayerStatus.mockImplementation(originalStatus);
-      }
-    }
+    const { getByLabelText } = render(
+      <ChatBubble message={audioMessage} isOwn={false} />,
+    );
+    const video = screen.UNSAFE_getByType(Video);
+    fireEvent(video, 'load', { duration: 120 });
+    fireEvent(video, 'progress', { currentTime: 120 });
+    fireEvent(video, 'end');
+    fireEvent.press(getByLabelText('Reproducir audio: voice.mp3'));
+    expect(__player.seek).toHaveBeenCalledWith(0);
+    expect(__player.resume).toHaveBeenCalled();
   });
 
   it('renders message text below an audio attachment', () => {
