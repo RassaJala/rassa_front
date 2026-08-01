@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
 import React from 'react';
 
-import { fireEvent, render } from '@testing-library/react-native';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
+import { Alert } from 'react-native';
 
 import ChatBubble from '@/features/chat/components/ChatBubble';
 import { ATTACHMENT_TYPES } from '@/types/chat';
@@ -90,7 +96,36 @@ const textWithImageMessage: Message = {
   contenido: 'Look at this!',
 };
 
+const { default: Video } = jest.requireMock('react-native-video') as {
+  default: React.ComponentType<{
+    source?: { uri?: string };
+    paused?: boolean;
+  }>;
+};
+
 describe('ChatBubble — media', () => {
+  beforeEach(() => {
+    const { __player } = jest.requireMock('react-native-video') as {
+      __player: {
+        seek: jest.Mock;
+        resume: jest.Mock;
+        pause: jest.Mock;
+      };
+    };
+    const { File } = jest.requireMock('expo-file-system') as {
+      File: { mockExists: boolean; downloadFileAsync: jest.Mock };
+    };
+    const { getThumbnailAsync } = jest.requireMock('expo-video-thumbnails') as {
+      getThumbnailAsync: jest.Mock;
+    };
+    __player.seek.mockClear();
+    __player.resume.mockClear();
+    __player.pause.mockClear();
+    File.downloadFileAsync.mockClear();
+    File.mockExists = false;
+    getThumbnailAsync.mockClear();
+  });
+
   it('renders image attachment', () => {
     const { getByLabelText } = render(
       <ChatBubble message={imageMessage} isOwn={true} />,
@@ -110,6 +145,100 @@ describe('ChatBubble — media', () => {
       <ChatBubble message={videoMessage} isOwn={true} />,
     );
     expect(getByLabelText('Descargar video: clip.mp4')).toBeTruthy();
+  });
+
+  it('downloads and plays video when the play button is pressed', async () => {
+    const { File } = jest.requireMock('expo-file-system') as {
+      File: { downloadFileAsync: jest.Mock };
+    };
+    const { getByLabelText } = render(
+      <ChatBubble message={videoMessage} isOwn={true} />,
+    );
+    fireEvent.press(getByLabelText('Reproducir video: clip.mp4'));
+    await waitFor(() =>
+      expect(File.downloadFileAsync).toHaveBeenCalledWith(
+        'https://example.com/clip.mp4',
+        expect.anything(),
+        { idempotent: true },
+      ),
+    );
+    await waitFor(() => {
+      const video = screen.UNSAFE_getByType(Video);
+      expect(video.props.source?.uri).toBe('file:///cache/video_102.mp4');
+      expect(video.props.paused).toBe(false);
+    });
+  });
+
+  it('generates and caches a poster thumbnail after download', async () => {
+    const { getThumbnailAsync } = jest.requireMock('expo-video-thumbnails') as {
+      getThumbnailAsync: jest.Mock;
+    };
+    const { getByLabelText } = render(
+      <ChatBubble message={videoMessage} isOwn={true} />,
+    );
+    fireEvent.press(getByLabelText('Reproducir video: clip.mp4'));
+    await waitFor(() =>
+      expect(getThumbnailAsync).toHaveBeenCalledWith(
+        'file:///cache/video_102.mp4',
+        expect.objectContaining({ time: 0 }),
+      ),
+    );
+  });
+
+  it('does not redownload a video that is already cached', async () => {
+    const { File } = jest.requireMock('expo-file-system') as {
+      File: { mockExists: boolean; downloadFileAsync: jest.Mock };
+    };
+    File.mockExists = true;
+    const { getByLabelText } = render(
+      <ChatBubble message={videoMessage} isOwn={true} />,
+    );
+    expect(screen.UNSAFE_queryByType(Video)).toBeNull();
+    fireEvent.press(getByLabelText('Reproducir video: clip.mp4'));
+    await waitFor(() => {
+      const video = screen.UNSAFE_getByType(Video);
+      expect(video.props.source?.uri).toBe('file:///cache/video_102.mp4');
+      expect(video.props.paused).toBe(false);
+    });
+    expect(File.downloadFileAsync).not.toHaveBeenCalled();
+  });
+
+  it('shows a cached poster without regenerating the thumbnail', async () => {
+    const { File } = jest.requireMock('expo-file-system') as {
+      File: { mockExists: boolean };
+    };
+    const { getThumbnailAsync } = jest.requireMock('expo-video-thumbnails') as {
+      getThumbnailAsync: jest.Mock;
+    };
+    File.mockExists = true;
+    const { getByLabelText } = render(
+      <ChatBubble message={videoMessage} isOwn={true} />,
+    );
+    expect(getByLabelText('clip.mp4')).toBeTruthy();
+    expect(getByLabelText('Reproducir video: clip.mp4')).toBeTruthy();
+    expect(getThumbnailAsync).not.toHaveBeenCalled();
+  });
+
+  it('shows an alert when the video download fails', async () => {
+    const alertSpy = jest
+      .spyOn(Alert, 'alert')
+      .mockImplementation(() => undefined);
+    const { File } = jest.requireMock('expo-file-system') as {
+      File: { downloadFileAsync: jest.Mock };
+    };
+    File.downloadFileAsync.mockRejectedValueOnce(new Error('network error'));
+    const { getByLabelText } = render(
+      <ChatBubble message={videoMessage} isOwn={true} />,
+    );
+    fireEvent.press(getByLabelText('Reproducir video: clip.mp4'));
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'No se pudo reproducir',
+        'No se pudo descargar el video. Inténtalo de nuevo.',
+      ),
+    );
+    expect(screen.UNSAFE_queryByType(Video)).toBeNull();
+    alertSpy.mockRestore();
   });
 
   it('renders image attachment with download button', () => {

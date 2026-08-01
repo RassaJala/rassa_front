@@ -38,8 +38,30 @@ function resolveBaseURL(): string {
 
 const baseURL = resolveBaseURL();
 
-// Guard: reject HTTP in production to prevent credential leakage
-if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
+function isPrivateHost(rawUrl: string): boolean {
+  const withoutScheme = rawUrl.replace(/^https?:\/\//i, '');
+  const host = withoutScheme.split(/[/:]/)[0]?.toLowerCase();
+
+  if (!host) return false;
+
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host === '[::1]' ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(host)
+  );
+}
+
+// Guard: reject HTTP in production to prevent credential leakage,
+// but allow private/LAN hosts so physical devices can reach a local backend.
+if (
+  baseURL.startsWith('http://') &&
+  process.env.NODE_ENV === 'production' &&
+  !isPrivateHost(baseURL)
+) {
   throw new Error(
     'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +
       'Unencrypted HTTP exposes authentication tokens to network interception.',

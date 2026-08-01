@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Modal,
@@ -9,6 +10,13 @@ import {
   View,
 } from 'react-native';
 import { IconButton, Menu } from 'react-native-paper';
+import Video, {
+  type OnBufferData,
+  type OnLoadData,
+  type OnProgressData,
+  type VideoRef,
+  ViewType,
+} from 'react-native-video';
 
 import {
   setAudioModeAsync,
@@ -18,7 +26,7 @@ import {
 import { File, Paths } from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { getThumbnailAsync } from 'expo-video-thumbnails';
 
 import { formatMessageTime } from '@rassa/chat';
 
@@ -242,18 +250,133 @@ const AudioPlayer = React.memo(
     prev.attachment.id === next.attachment.id && prev.isOwn === next.isOwn,
 );
 
-function VideoPlayer({
-  attachment,
+function InlineVideo({
+  uri,
+  posterUri,
+  autoplay,
   accentColor,
-}: Readonly<{ attachment: Attachment; accentColor: string }>) {
-  const player = useVideoPlayer(resolveMediaUri(attachment.archivo));
+  attachment,
+}: Readonly<{
+  uri: string;
+  posterUri: string | null;
+  autoplay: boolean;
+  accentColor: string;
+  attachment: Attachment;
+}>) {
+  const videoRef = useRef<VideoRef>(null);
+  const [isPlaying, setIsPlaying] = useState(autoplay);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [trackWidth, setTrackWidth] = useState(0);
+  const [hasStarted, setHasStarted] = useState(autoplay);
+
+  const isLoading = hasStarted && (isBuffering || duration === 0);
+
+  const handleLoad = (data: OnLoadData) => {
+    setDuration(data.duration);
+    const track = data.videoTracks[0];
+    console.log(
+      '[video-diag]',
+      JSON.stringify({
+        codecs: track?.codecs,
+        width: data.naturalSize.width,
+        height: data.naturalSize.height,
+      }),
+    );
+  };
+
+  const handleProgress = (data: OnProgressData) => {
+    setCurrentTime(data.currentTime);
+  };
+
+  const handleBuffer = (data: OnBufferData) => {
+    setIsBuffering(data.isBuffering);
+  };
+
+  const togglePlayback = () => {
+    if (hasError) return;
+    if (isPlaying) {
+      videoRef.current?.pause();
+      setIsPlaying(false);
+    } else if (hasStarted) {
+      if (duration > 0 && currentTime >= duration - 0.1) {
+        videoRef.current?.seek(0);
+      }
+      videoRef.current?.resume();
+      setIsPlaying(true);
+    } else {
+      setHasStarted(true);
+      setIsPlaying(true);
+    }
+  };
+
+  const progress =
+    duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+
+  const seekTo = (locationX: number) => {
+    if (duration <= 0 || trackWidth <= 0) return;
+    videoRef.current?.seek((locationX / trackWidth) * duration);
+  };
+
   return (
     <View className="mb-1 gap-1">
-      <VideoView
-        player={player}
-        className="h-48 w-48 rounded-lg bg-black"
-        contentFit="contain"
-      />
+      <View className="h-48 w-48 overflow-hidden rounded-lg bg-black">
+        {hasStarted ? (
+          <>
+            <Video
+              ref={videoRef}
+              source={{ uri }}
+              style={StyleSheet.absoluteFill}
+              {...(posterUri ? { poster: { source: { uri: posterUri } } } : {})}
+              resizeMode="contain"
+              viewType={ViewType.TEXTURE}
+              controls={false}
+              paused={!isPlaying}
+              progressUpdateInterval={250}
+              onLoadStart={() => setHasError(false)}
+              onLoad={handleLoad}
+              onProgress={handleProgress}
+              onBuffer={handleBuffer}
+              onEnd={() => setIsPlaying(false)}
+              onError={() => setHasError(true)}
+            />
+            {isLoading ? (
+              <View className="absolute inset-0 items-center justify-center">
+                <ActivityIndicator color="#ffffff" />
+              </View>
+            ) : null}
+            {hasError ? (
+              <View className="absolute inset-0 items-center justify-center px-3">
+                <Text className="text-center text-sm text-white">
+                  No se pudo reproducir el video.
+                </Text>
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <>
+            {posterUri ? (
+              <Image
+                source={{ uri: posterUri }}
+                className="h-48 w-48"
+                resizeMode="cover"
+                accessibilityLabel={attachment.nombre}
+              />
+            ) : null}
+            <View className="absolute inset-0 items-center justify-center">
+              <IconButton
+                icon="play"
+                size={48}
+                iconColor="#ffffff"
+                onPress={togglePlayback}
+                accessibilityLabel={`Reproducir video: ${attachment.nombre}`}
+              />
+            </View>
+          </>
+        )}
+      </View>
       <View className="flex-row items-center justify-end">
         <IconButton
           icon="download"
@@ -263,7 +386,152 @@ function VideoPlayer({
           accessibilityLabel={`Descargar video: ${attachment.nombre}`}
         />
       </View>
+      {hasStarted ? (
+        <View className="flex-row items-center gap-2">
+          <IconButton
+            icon={isPlaying ? 'pause' : 'play'}
+            size={20}
+            iconColor={accentColor}
+            disabled={isLoading || hasError}
+            onPress={togglePlayback}
+            accessibilityLabel={`Reproducir video: ${attachment.nombre}`}
+          />
+          <View className="flex-1 gap-1">
+            <Pressable
+              className="h-3 justify-center"
+              onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+              onPress={(e) => seekTo(e.nativeEvent.locationX)}
+              accessibilityRole="adjustable"
+              accessibilityLabel={`Progreso de video: ${attachment.nombre}`}
+            >
+              <View className="h-1.5 overflow-hidden rounded-full bg-gray-300 dark:bg-gray-600">
+                <View
+                  className="h-full rounded-full bg-brand-green-forest"
+                  style={{ width: `${progress}%` }}
+                />
+              </View>
+            </Pressable>
+            <Text className="text-xs" style={{ color: accentColor }}>
+              {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </View>
+  );
+}
+
+function VideoPlayer({
+  attachment,
+  accentColor,
+}: Readonly<{ attachment: Attachment; accentColor: string }>) {
+  const remoteUri = useMemo(
+    () => resolveMediaUri(attachment.archivo),
+    [attachment.archivo],
+  );
+  const cacheFile = useMemo(
+    () => new File(Paths.cache, `video_${attachment.id}.mp4`),
+    [attachment.id],
+  );
+  const posterFile = useMemo(
+    () => new File(Paths.cache, `poster_${attachment.id}.jpg`),
+    [attachment.id],
+  );
+  const [localUri, setLocalUri] = useState<string | null>(null);
+  const [posterUri, setPosterUri] = useState<string | null>(null);
+  const [autoplay, setAutoplay] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    if (cacheFile.exists) {
+      setLocalUri(cacheFile.uri);
+    }
+  }, [cacheFile]);
+
+  useEffect(() => {
+    if (!localUri) {
+      setPosterUri(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        if (posterFile.exists) {
+          if (!cancelled) setPosterUri(posterFile.uri);
+          return;
+        }
+        const thumbnail = await getThumbnailAsync(localUri, {
+          time: 0,
+          quality: 0.5,
+        });
+        new File(thumbnail.uri).copy(posterFile);
+        if (!cancelled) setPosterUri(posterFile.uri);
+      } catch {
+        return;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [localUri, posterFile]);
+
+  const downloadVideo = async (playAfter: boolean) => {
+    setAutoplay(playAfter);
+    setIsDownloading(true);
+    try {
+      const downloaded = await File.downloadFileAsync(remoteUri, cacheFile, {
+        idempotent: true,
+      });
+      setLocalUri(downloaded.uri);
+    } catch {
+      Alert.alert(
+        'No se pudo reproducir',
+        'No se pudo descargar el video. Inténtalo de nuevo.',
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  if (!localUri) {
+    return (
+      <View className="mb-1 gap-1">
+        <View className="h-48 w-48 items-center justify-center overflow-hidden rounded-lg bg-black">
+          {isDownloading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <IconButton
+              icon="play"
+              size={48}
+              iconColor="#ffffff"
+              disabled={isDownloading}
+              onPress={() => void downloadVideo(true)}
+              accessibilityLabel={`Reproducir video: ${attachment.nombre}`}
+            />
+          )}
+        </View>
+        <View className="flex-row items-center justify-end">
+          <IconButton
+            icon="download"
+            size={20}
+            iconColor={accentColor}
+            disabled={isDownloading}
+            onPress={() => void downloadAttachment(attachment)}
+            accessibilityLabel={`Descargar video: ${attachment.nombre}`}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <InlineVideo
+      uri={localUri}
+      posterUri={posterUri}
+      autoplay={autoplay}
+      accentColor={accentColor}
+      attachment={attachment}
+    />
   );
 }
 

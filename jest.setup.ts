@@ -123,23 +123,75 @@ jest.mock('expo-audio/build/utils/options', () => ({
   createRecordingOptions: (options: unknown) => options,
 }));
 
-jest.mock('expo-video', () => {
+jest.mock('react-native-video', () => {
+  const React = require('react') as typeof import('react');
+  const { View } = jest.requireActual('react-native') as {
+    View: React.ComponentType<{ children?: React.ReactNode }>;
+  };
   const player = {
     id: 'video-player',
-    playing: false,
-    loop: false,
-    muted: false,
-    currentTime: 0,
-    duration: 0,
-    play: jest.fn(),
+    seek: jest.fn(),
+    resume: jest.fn(),
     pause: jest.fn(),
-    addListener: jest.fn(() => ({ remove: jest.fn() })),
   };
+  const Video = React.forwardRef(
+    (props: { children?: React.ReactNode }, ref) => {
+      React.useImperativeHandle(ref, () => player);
+      return React.createElement(View, props);
+    },
+  );
   return {
-    useVideoPlayer: jest.fn(() => player),
-    VideoView: () => null,
+    default: Video,
+    __esModule: true,
+    __player: player,
+    ViewType: { TEXTURE: 0, SURFACE: 1 },
   };
 });
+
+jest.mock('expo-video-thumbnails', () => ({
+  getThumbnailAsync: jest.fn(async () => ({
+    uri: 'file:///cache/poster_thumb.jpg',
+    width: 480,
+    height: 360,
+  })),
+}));
+
+// Mock expo-file-system (native module unavailable in Jest)
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    static mockExists = false;
+    uri: string;
+    exists: boolean;
+    constructor(...parts: unknown[]) {
+      this.uri = parts
+        .map((part) =>
+          typeof part === 'string'
+            ? part
+            : ((part as { uri?: string }).uri ?? String(part)),
+        )
+        .join('/');
+      this.exists = MockFile.mockExists;
+    }
+    copy = jest.fn();
+    static downloadFileAsync = jest.fn(
+      async (_url: string, destination: MockFile) => destination,
+    );
+  }
+  return {
+    File: MockFile,
+    Directory: class {},
+    Paths: { cache: 'file:///cache' },
+  };
+});
+
+// Mock useEvent from expo (relies on native SharedObject/EventEmitter internals)
+jest.mock('expo', () => ({
+  ...jest.requireActual('expo'),
+  useEvent: jest.fn(
+    (_emitter: unknown, _eventName: string, initialValue: unknown): unknown =>
+      initialValue,
+  ),
+}));
 
 // Mock expo-linear-gradient (native component unavailable in Jest)
 jest.mock('expo-linear-gradient', () => ({
