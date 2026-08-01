@@ -210,6 +210,7 @@ export function ScheduleRecoleccionModal({
 
         <div style={{ padding: 20, flex: 1 }}>
           <label
+            htmlFor="fecha-recoleccion"
             style={{
               fontSize: 13,
               fontWeight: 700,
@@ -217,39 +218,45 @@ export function ScheduleRecoleccionModal({
               display: 'block',
             }}
           >
-            Fecha (AAAA-MM-DD)
+            Fecha
           </label>
           <input
+            id="fecha-recoleccion"
+            type="date"
             value={fecha}
+            min={todayString()}
             onChange={(e) => setFecha(e.target.value)}
-            placeholder="AAAA-MM-DD"
             style={inputStyle(colors)}
           />
 
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
             <div style={{ flex: 1 }}>
               <label
+                htmlFor="hora-inicio"
                 style={{ fontSize: 13, fontWeight: 700, color: colors.fg }}
               >
                 Hora inicio
               </label>
               <input
+                id="hora-inicio"
+                type="time"
                 value={horaInicio}
                 onChange={(e) => setHoraInicio(e.target.value)}
-                placeholder="HH:MM (opcional)"
                 style={inputStyle(colors)}
               />
             </div>
             <div style={{ flex: 1 }}>
               <label
+                htmlFor="hora-fin"
                 style={{ fontSize: 13, fontWeight: 700, color: colors.fg }}
               >
                 Hora fin
               </label>
               <input
+                id="hora-fin"
+                type="time"
                 value={horaFin}
                 onChange={(e) => setHoraFin(e.target.value)}
-                placeholder="HH:MM (opcional)"
                 style={inputStyle(colors)}
               />
             </div>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -81,9 +81,9 @@ describe('ScheduleRecoleccionModal — validación', () => {
     renderModal();
     await seleccionarJuan();
 
-    const fechaInput = screen.getByPlaceholderText('AAAA-MM-DD');
-    await userEvent.clear(fechaInput);
-    await userEvent.type(fechaInput, ayer);
+    fireEvent.change(screen.getByLabelText('Fecha'), {
+      target: { value: ayer },
+    });
 
     await userEvent.click(
       screen.getByRole('button', { name: /Programar recolección/ }),
@@ -98,9 +98,12 @@ describe('ScheduleRecoleccionModal — validación', () => {
     renderModal();
     await seleccionarJuan();
 
-    const horas = screen.getAllByPlaceholderText('HH:MM (opcional)');
-    await userEvent.type(horas[0] as HTMLInputElement, '09:00');
-    await userEvent.type(horas[1] as HTMLInputElement, '09:00');
+    fireEvent.change(screen.getByLabelText('Hora inicio'), {
+      target: { value: '09:00' },
+    });
+    fireEvent.change(screen.getByLabelText('Hora fin'), {
+      target: { value: '09:00' },
+    });
 
     await userEvent.click(
       screen.getByRole('button', { name: /Programar recolección/ }),
@@ -110,22 +113,6 @@ describe('ScheduleRecoleccionModal — validación', () => {
       await screen.findByText(
         'La hora de fin debe ser posterior a la de inicio.',
       ),
-    ).toBeInTheDocument();
-  });
-
-  it('rechaza un formato de hora inválido', async () => {
-    renderModal();
-    await seleccionarJuan();
-
-    const horas = screen.getAllByPlaceholderText('HH:MM (opcional)');
-    await userEvent.type(horas[0] as HTMLInputElement, '25:00');
-
-    await userEvent.click(
-      screen.getByRole('button', { name: /Programar recolección/ }),
-    );
-
-    expect(
-      await screen.findByText('La hora de inicio debe tener el formato HH:MM.'),
     ).toBeInTheDocument();
   });
 
