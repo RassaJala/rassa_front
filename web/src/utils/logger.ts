@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/react';
+
 // ── Production-safe logger ──────────────────────────────────
 
 const isDev = import.meta.env.DEV;
@@ -74,18 +76,12 @@ export function logError(
 
   console.warn(`[${context}]`, described, safeExtra);
 
-  try {
-    const { captureException } = await import('@sentry/react');
-    captureException(
-      Object.assign(
-        new Error(
-          `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
-        ),
-        { context, described, extra: safeExtra },
+  Sentry.captureException(
+    Object.assign(
+      new Error(
+        `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
       ),
-    );
-  } catch {
-    // Sentry not available (e.g. not initialized or chunk failed) — console.warn above
-    // already left evidence.
-  }
+      { context, described, extra: safeExtra },
+    ),
+  );
 }
