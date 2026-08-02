@@ -10,6 +10,13 @@ const GENERIC_INTERNAL =
   'Error interno del servidor. Revisa los logs del backend.';
 const GENERIC_SERVER = 'Error del servidor. Intenta de nuevo.';
 
+function isDevEnvironment(): boolean {
+  return (
+    typeof globalThis !== 'undefined' &&
+    (globalThis as { __DEV__?: boolean }).__DEV__ === true
+  );
+}
+
 function isHtmlOrTraceback(data: string): boolean {
   const lower = data.trim().toLowerCase();
   return (
@@ -27,7 +34,7 @@ function isHtmlOrTraceback(data: string): boolean {
 function sanitizeBody(data: string, status?: number): string {
   const trimmed = data.trim();
   if (isHtmlOrTraceback(trimmed)) {
-    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    if (isDevEnvironment()) {
       console.warn(
         '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         status,
@@ -35,7 +42,10 @@ function sanitizeBody(data: string, status?: number): string {
     }
     return GENERIC_INTERNAL;
   }
-  return isSafeDetail(trimmed) ? trimmed : GENERIC_INTERNAL;
+  if (trimmed === '' || !isSafeDetail(trimmed)) {
+    return GENERIC_INTERNAL;
+  }
+  return trimmed;
 }
 
 export function isSafeDetail(detail: string): boolean {
@@ -71,9 +81,9 @@ function isAxiosError(error: unknown): error is {
 }
 
 function unwrapCandidate(error: unknown): unknown {
-  return error instanceof Error && error.cause !== undefined
-    ? error.cause
-    : error;
+  if (!(error instanceof Error)) return error;
+  const cause = (error as Error & { cause?: unknown }).cause;
+  return cause !== undefined ? cause : error;
 }
 
 /** Convierte un item de un array en texto solo si es un primitivo (no objeto). */
@@ -158,10 +168,30 @@ export function parseApiError(
   const status = candidate.response?.status;
   const data = candidate.response?.data;
 
-  if (data && typeof data === 'object') {
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (trimmed !== '' && !trimmed.startsWith('<') && isSafeDetail(trimmed)) {
+      return trimmed;
+    }
+  } else if (Array.isArray(data)) {
+    // DRF non-field errors arrive as a top-level array (["Stock insuficiente..."]).
+    // NOTE: arrays are `typeof 'object'`, so this branch must come before the
+    // generic object branch below.
+    const first = data[0];
+    if (first !== undefined) {
+      const text = String(first).trim();
+      if (text !== '' && isSafeDetail(text)) return text;
+    }
+  } else if (data !== null && typeof data === 'object') {
     const record = data as Record<string, unknown>;
     if (typeof record.detail === 'string' && isSafeDetail(record.detail)) {
       return record.detail;
+    }
+    for (const key of ['message', 'error'] as const) {
+      const value = record[key];
+      if (typeof value === 'string' && value !== '' && isSafeDetail(value)) {
+        return value;
+      }
     }
     const joined = extractFieldList(record);
     if (joined !== null) return joined;
