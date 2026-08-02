@@ -32,10 +32,11 @@ const fakeAgricultores = [
 
 function inicialRecoleccion(): Recoleccion {
   const hoy = todayString();
+  const agricultor = fakeAgricultores[0]!;
   return {
     id_recoleccion: 1,
     fk_agricultor: 10,
-    agricultor_nombre: 'Juan Pérez',
+    agricultor_nombre: nombreCompletoAgricultor(agricultor),
     fecha_recoleccion: hoy,
     hora_inicio: '08:00:00',
     hora_fin: '10:00:00',

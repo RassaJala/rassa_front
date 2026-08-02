@@ -229,13 +229,37 @@ export function useAgricultoresUbicacion(options?: {
         );
         const localidades: Localidad[] = [];
         let fallos = 0;
+        // El deadline del mapa corre un instante después que el del hook
+        // (remaining() se evalúa antes de llamarlo), así que al vencer la pared
+        // el abort llega por la señal del presupuesto y mapWithConcurrency lo
+        // reporta como `abortError`, no como `deadlineError`. Esos items
+        // abortados por el deadline se cuentan como fallos para que la UI avise
+        // con el banner; un abort real del llamador (Date.now() < deadline)
+        // sigue sin contar, porque ahí se trata de una cancelación, no de un
+        // fallo de carga.
+        const deadlineExpirado =
+          budget.signal.aborted && Date.now() >= deadline;
         settled.forEach((result) => {
           if (result.status === 'fulfilled') {
             localidades.push(...result.value);
-          } else if (!isAbortError(result.reason)) {
+          } else if (
+            !isAbortError(result.reason) ||
+            (deadlineExpirado && isAbortError(result.reason))
+          ) {
             fallos += 1;
           }
         });
+        if (deadlineExpirado) {
+          logError(
+            'useAgricultoresUbicacion',
+            new Error('Deadline de carga alcanzado'),
+            {
+              fallos,
+              localidadesCargadas: localidades.length,
+              truncated: agricultoresResult.truncated,
+            },
+          );
+        }
 
         return {
           grupos: groupByUbicacion(

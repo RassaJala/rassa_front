@@ -328,8 +328,14 @@ describe('useAgricultoresUbicacion', () => {
           data: { count: 0, next: null, previous: null, results: [] },
         });
       }),
-      http.get(`${BASE}/municipios/`, () => {
+      http.get(`${BASE}/municipios/`, async () => {
         order.push('municipios');
+        // Marca la fase como terminada al final del handler: lo relevante no es
+        // el orden de despacho (una versión en paralelo lo despacharía igual),
+        // sino que municipios COMPLETA antes de que agricultores arranque — el
+        // presupuesto restante solo se conoce al terminar la fase anterior.
+        await Promise.resolve();
+        order.push('municipios-done');
         return HttpResponse.json({ data: [] });
       }),
     );
@@ -344,7 +350,7 @@ describe('useAgricultoresUbicacion', () => {
 
     // Las fases corren en serie: el presupuesto restante para agricultores solo
     // se conoce cuando municipios termina, y el deadline también cubre municipios.
-    expect(order.indexOf('municipios')).toBeLessThan(
+    expect(order.indexOf('municipios-done')).toBeLessThan(
       order.indexOf('agricultores'),
     );
   });

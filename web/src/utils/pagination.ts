@@ -56,7 +56,7 @@ export async function fetchAllPages<T>(
     options.maxDurationMs !== undefined
       ? setTimeout(() => budget?.abort(), options.maxDurationMs)
       : undefined;
-  const page = mergedSignal(options.signal, budget?.signal);
+  const pageSignal = mergedSignal(options.signal, budget?.signal);
 
   try {
     while (url !== null && depth < maxPages) {
@@ -66,7 +66,7 @@ export async function fetchAllPages<T>(
         const body = await options.fetchPage(
           url,
           depth === 0 ? options.params : undefined,
-          page.signal,
+          pageSignal.signal,
         );
         const current = options.unwrap(body);
         data.push(...(current.results ?? []));
@@ -96,14 +96,14 @@ export async function fetchAllPages<T>(
     // Se remueven los listeners que `mergedSignal` puso sobre la señal del
     // llamador y la del presupuesto; de lo contrario, un `signal` longevo
     // acumularía un listener por cada recorrido paginado.
-    page.cleanup();
+    pageSignal.cleanup();
   }
 
   return { data, truncated: url !== null, errores };
 }
 
 /**
- * Combina la señal del llamador con la presupuesto del deadline en una sola:
+ * Combina la señal del llamador con el presupuesto del deadline en una sola:
  * la página en vuelo se aborta si cualquiera de las dos se aborta. Devuelve
  * junto con la señal una `cleanup` para quitar los listeners cuando el
  * recorrido termina, evitando fugas sobre señales de vida larga.

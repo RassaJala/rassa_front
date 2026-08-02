@@ -108,17 +108,21 @@ axiosRetry(api, {
 
     const key = retryKey(config);
     const now = Date.now();
+    // La retryability se evalúa antes de tocar la ventana: un fallo que no se
+    // va a reintentar (p. ej. un 4xx no idempotente) no debe abrir una ventana
+    // ni consumir uno de los slots del tope.
+    const retryableNow = retryable();
     const entry = requestFailuresByKey.get(key);
     if (entry === undefined || now - entry.start > RETRY_WINDOW_MS) {
       // Ventana nueva o vencida: se reabre y la retryability se evalúa de
       // inmediato. Reabrir (y no devolver false sin renovar) evita envenenar
       // los reintentos futuros de esa URL.
-      openRetryWindow(key, now);
-      return retryable();
+      if (retryableNow) openRetryWindow(key, now);
+      return retryableNow;
     }
     entry.failures += 1;
     if (entry.failures > RETRY_MAX_PER_WINDOW) return false;
-    return retryable();
+    return retryableNow;
   },
 });
 

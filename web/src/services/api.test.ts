@@ -1231,8 +1231,33 @@ describe('api.ts axios-retry retryCondition', () => {
     // Sobre el tope, el mismo request deja de reintentarse hasta que venza.
     expect(retryCondition({ config })).toBe(false);
 
-    // La ventana vencida se reabre: la retryability se evalúa de nuevo.
-    nowSpy.mockReturnValue(1_000_000 + 11_000);
+    // Exactamente en el límite (now - start === RETRY_WINDOW_MS) la ventana
+    // sigue abierta — la comparación es estricta (`>`), así el tope se mantiene.
+    nowSpy.mockReturnValue(1_000_000 + 10_000);
+    expect(retryCondition({ config })).toBe(false);
+
+    // Un ms después la ventana vence, se reabre y la retryability se evalúa.
+    nowSpy.mockReturnValue(1_000_000 + 10_001);
     expect(retryCondition({ config })).toBe(true);
+  });
+
+  it('does not consume retry slots for failures that will not be retried', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(false);
+    const retryCondition = await getRetryCondition();
+    const config = { method: 'get', url: '/recolecciones/' };
+
+    // Un 404 (no retryable) no debe abrir una ventana ni gastar slots: si lo
+    // hiciera, un puñado de 404s acabaría cortando los reintentos del 5xx.
+    nowSpy.mockReturnValue(1_000_000);
+    for (let i = 0; i < 3; i += 1) {
+      expect(retryCondition({ config, response: { status: 404 } })).toBe(false);
+    }
+
+    // El 5xx posterior arranca una ventana nueva con el tope completo.
+    for (let i = 0; i < 6; i += 1) {
+      expect(retryCondition({ config, response: { status: 503 } })).toBe(true);
+    }
+    expect(retryCondition({ config, response: { status: 503 } })).toBe(false);
   });
 });

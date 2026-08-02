@@ -5,7 +5,6 @@ import { logError } from '../utils/logger';
 import { QUERY_OPTIONS } from '../constants/api';
 import type {
   AddProductoPayload as AddProductoServicePayload,
-  ApiResponse,
   Producto,
   ProductoSemanal,
   Publicacion,
@@ -13,6 +12,7 @@ import type {
   PublicacionList,
   UpdateProductoPayload as UpdateProductoServicePayload,
 } from '../services/publications';
+import type { ApiResponse } from '../types';
 import * as publicationsApi from '../services/publications';
 
 // ── Error logging helper ──────────────────────────────────

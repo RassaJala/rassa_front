@@ -140,12 +140,14 @@ export function SellerRecolecciones() {
     // secundario.
     void refetch().then((refreshed) => {
       if (!refreshed.isError) return;
-      // La degradación solo reemplaza el toast de éxito de esta operación: si
-      // mientras tanto se mostró un aviso más reciente (otra acción) o el
-      // `onDone` ya cerró el actual, un error tardío del refetch en segundo
-      // plano no debe pisarlo.
+      // La degradación reemplaza el toast de éxito de esta operación; si ya se
+      // despidió (el éxito vive ~3.3s y en red degradada el refetch puede
+      // fallar mucho después), se muestra igual: la lista quedó desactualizada
+      // y el usuario debe saberlo. Solo se respeta un aviso más reciente de
+      // otra acción (toast distinto), que no debe pisarse.
       setToast((current) =>
-        current?.type === 'success' && current.message === message
+        current == null ||
+        (current.type === 'success' && current.message === message)
           ? {
               message:
                 'El cambio se guardó, pero no se pudo actualizar la lista.',

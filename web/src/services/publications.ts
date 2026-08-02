@@ -46,8 +46,6 @@ export interface PublicacionList {
   results: Publicacion[];
 }
 
-export type { ApiResponse };
-
 export interface AddProductoPayload {
   fk_producto: number;
   fk_unidad: number;
