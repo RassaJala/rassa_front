@@ -18,6 +18,7 @@ import {
   getTabSessionId,
   hasConcurrentCheckout,
   readAmbiguousMarker,
+  readInFlightCheckout,
   readPlacedOrder,
   resolveIdempotencyKey,
   writeAmbiguousMarker,
@@ -44,6 +45,13 @@ const PENDING_LABEL = 'Procesando pedido…';
 const AMBIGUOUS_ACK_LABEL = 'Ya revisé mis pedidos';
 const PLACED_ACK_LABEL = 'Entendido';
 const CREATE_ORDER_MUTATION_KEY = ['create-order'] as const;
+// W-2: shown when a confirm is attempted while an unresolved ambiguous outcome
+// blocks it — the user must acknowledge the warning banner first.
+const AMBIGUOUS_BLOCK_MSG = 'Revisá tus pedidos antes de confirmar de nuevo.';
+// W-7: shown when persisting the guard records fails (quota/incognito) — the
+// confirm aborts instead of firing a POST without its guards in place.
+const WRITE_FAILED_MSG =
+  'No se pudo guardar el estado del pedido. Intentá de nuevo.';
 
 // W-4: the idempotency key identifies one checkout attempt end-to-end; it is
 // sent as an Idempotency-Key header (best-effort) and persisted so retries of
@@ -72,6 +80,18 @@ export function BuyerCheckout() {
   // S-10: synchronous in-flight flag — two handleConfirm calls in the same
   // tick cannot both pass (state-based guards only update after a re-render).
   const inFlightRef = useRef(false);
+  // W-5: tracks whether this checkout instance is still mounted. The
+  // mutation-level onSuccess runs even after unmount — the placed-order record
+  // is only written for HIDDEN successes (the user navigated away), never for
+  // a success the user actually saw.
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // C-1: every callback lives at the MUTATION level so it survives unmount —
   // per-mutate callbacks are dropped together with the observer. The ambiguous
@@ -82,12 +102,26 @@ export function BuyerCheckout() {
     mutationFn: ({ payload, idempotencyKey }: OrderAttempt) =>
       createOrder(payload, idempotencyKey),
     onSuccess: (order) => {
-      clearAmbiguousMarker();
-      clearIdempotencyKey();
-      clearInFlightCheckout();
-      // S-3: even a navigate-away-while-pending success is not silent — the
-      // next checkout mount shows the confirmation (record consumed on read).
-      writePlacedOrder({ id_pedido: order.id_pedido, timestamp: Date.now() });
+      // JD-A-002/JD-B-001: storage bookkeeping in the mutation callbacks is
+      // best-effort — a quota/incognito throw must never abort this path. The
+      // order EXISTS server-side: the cart MUST still clear and the user MUST
+      // still navigate, or a stale cart invites a duplicate order.
+      try {
+        clearAmbiguousMarker();
+        clearIdempotencyKey();
+        clearInFlightCheckout();
+        // W-5: only a HIDDEN success (resolved after navigate-away) writes the
+        // placed-order record. A visible success already navigates to the order
+        // detail, so the next checkout mount must NOT show a stale banner.
+        if (!mountedRef.current) {
+          writePlacedOrder({
+            id_pedido: order.id_pedido,
+            timestamp: Date.now(),
+          });
+        }
+      } catch (e) {
+        console.warn('checkout: success bookkeeping failed', e);
+      }
       setAmbiguousMarker(null);
       useCartStore.getState().clearCart();
       navigate(`/cliente/pedidos/${order.id_pedido}`);
@@ -100,7 +134,13 @@ export function BuyerCheckout() {
             variables?.payload.items ?? [],
           ),
         };
-        writeAmbiguousMarker(marker);
+        // JD-A-002/JD-B-001: persisting the marker is best-effort — a throw
+        // must not prevent the in-memory banner and the observability report.
+        try {
+          writeAmbiguousMarker(marker);
+        } catch (e) {
+          console.warn('checkout: ambiguous marker persistence failed', e);
+        }
         setAmbiguousMarker(marker);
         // S-11: structured observability — the operator must know the order
         // outcome is unknown and may exist server-side.
@@ -109,15 +149,25 @@ export function BuyerCheckout() {
           idempotencyKey: variables?.idempotencyKey,
         });
       } else {
-        clearAmbiguousMarker();
-        clearIdempotencyKey();
+        try {
+          clearAmbiguousMarker();
+          clearIdempotencyKey();
+        } catch (e) {
+          console.warn('checkout: error bookkeeping failed', e);
+        }
         setAmbiguousMarker(null);
         setToast({ message: extractOrderError(err), type: 'error' });
       }
     },
     onSettled: () => {
       inFlightRef.current = false;
-      clearInFlightCheckout();
+      // JD-A-002/JD-B-001: the ref is already reset — a storage throw must not
+      // leave the button dead.
+      try {
+        clearInFlightCheckout();
+      } catch (e) {
+        console.warn('checkout: in-flight cleanup failed', e);
+      }
     },
   });
 
@@ -159,6 +209,14 @@ export function BuyerCheckout() {
   function handleConfirm() {
     if (inFlightRef.current || isOrderInFlight || items.length === 0) return;
 
+    // W-2: an unresolved ambiguous outcome blocks re-confirmation until the
+    // user acknowledges the warning — a blind re-confirm could create a
+    // duplicate order.
+    if (ambiguousMarker !== null) {
+      setToast({ message: AMBIGUOUS_BLOCK_MSG, type: 'error' });
+      return;
+    }
+
     // W-2: defense in depth — re-validate the persisted cart before mapping
     // the payload; the server 400 stays the authority for anything else.
     const { items: payloadItems, skipped } = clampOrderItems(items);
@@ -181,28 +239,59 @@ export function BuyerCheckout() {
     // of the SAME attempt reuses it; a different payload gets a fresh key.
     const fingerprint = computePayloadFingerprint(payloadItems);
     const idempotencyKey = resolveIdempotencyKey(fingerprint);
+    const ownTabSessionId = getTabSessionId();
 
     // S-9: never confirm while ANOTHER tab has a checkout POST in flight —
     // two tabs with a persisted cart must not both create an order.
-    if (hasConcurrentCheckout(getTabSessionId())) {
+    if (hasConcurrentCheckout(ownTabSessionId)) {
       setToast({ message: CONCURRENT_CHECKOUT_MSG, type: 'error' });
       return;
     }
 
     inFlightRef.current = true;
-    // JD-A-002: persist the marker BEFORE the POST. A hard reload or tab close
-    // while the request is pending destroys the JS context before the mutation
-    // onError can run — this write guarantees the next mount still sees the
-    // warning. It is cleared on confirmed success, definitive failure, or
-    // dismissal; the local banner state is not set here so the live instance
-    // only warns once the outcome actually settles.
-    writeAmbiguousMarker({ timestamp: Date.now(), fingerprint });
-    writeInFlightCheckout({
-      tabSessionId: getTabSessionId(),
-      idempotencyKey,
-      timestamp: Date.now(),
-      fingerprint,
-    });
+    // W-7: a storage write failure must never fire a POST without its guards
+    // persisted nor leave the button dead — abort with a toast instead.
+    try {
+      // JD-A-002 (W-8): persist the marker BEFORE the POST to BOTH storages. A
+      // hard reload OR tab close while the request is pending destroys the JS
+      // context before the mutation onError can run — this write guarantees
+      // the next mount still sees the warning. It is cleared on confirmed
+      // success, definitive failure, or dismissal; the local banner state is
+      // not set here so the live instance only warns once the outcome settles.
+      writeAmbiguousMarker({ timestamp: Date.now(), fingerprint });
+      writeInFlightCheckout({
+        tabSessionId: ownTabSessionId,
+        idempotencyKey,
+        timestamp: Date.now(),
+        fingerprint,
+      });
+    } catch {
+      inFlightRef.current = false;
+      // JD-A-001/JD-B-002: roll back the optimistic marker write — the POST
+      // never fired, so no false ambiguous state may survive for the next
+      // checkout mount (it would block re-confirmation of an un-attempted
+      // order).
+      clearAmbiguousMarker();
+      setToast({ message: WRITE_FAILED_MSG, type: 'error' });
+      return;
+    }
+
+    // W-4 (follow-up): write-then-verify — between the hasConcurrentCheckout
+    // check and OUR write, another tab may have won the race. Re-read the
+    // record: if it now belongs to a foreign session, abort. This narrows (not
+    // eliminates) the TOCTOU window — the backend idempotency key is the real
+    // duplicate-order guarantee.
+    const afterWrite = readInFlightCheckout();
+    if (afterWrite !== null && afterWrite.tabSessionId !== ownTabSessionId) {
+      inFlightRef.current = false;
+      // JD-A-001/JD-B-002: the foreign tab's record is untouched (it is a real
+      // in-flight checkout), but OUR optimistic marker write is rolled back —
+      // no POST left this tab.
+      clearAmbiguousMarker();
+      setToast({ message: CONCURRENT_CHECKOUT_MSG, type: 'error' });
+      return;
+    }
+
     mutation.mutate({ payload: { items: payloadItems }, idempotencyKey });
   }
 

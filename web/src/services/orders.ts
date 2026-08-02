@@ -31,16 +31,28 @@ export const AMBIGUOUS_LOG_MARKER = 'checkout/ambiguous-order';
 // ambiguous marker (rassa-checkout-ambiguous) is passed in `extra` so the log
 // line can be correlated with the stored record. Best-effort: the persisted
 // marker remains the durable signal even where logs are not collected.
+// W-6: the console.warn fires in EVERY environment — the dev-only
+// console.error (with stack) is compiled out of production builds, so without
+// this warn an operator would have no signal to grep. Residual debt: there is
+// no Sentry/beacon transport; logs are the only channel.
 export function reportAmbiguousOrder(
   error: unknown,
   extra?: Record<string, unknown>,
 ): void {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(
+    AMBIGUOUS_LOG_MARKER,
+    message,
+    extra ?? {},
+    new Date().toISOString(),
+  );
   logError(AMBIGUOUS_LOG_MARKER, error, extra);
 }
 
-// W-3: a 2xx without a valid { data: Pedido } envelope is a definitive
-// client-side failure — the server answered, so it must NOT be classified as
-// ambiguous (the order may or may not exist).
+// W-3: a 2xx without a valid { data: Pedido } envelope IS AMBIGUOUS — the
+// server answered 2xx, so the order may have been created even though the
+// response is unusable. The client cannot confirm the outcome, so the marker
+// must be persisted and the idempotency key kept (see isAmbiguousOrderError).
 export class MalformedOrderResponseError extends Error {
   constructor() {
     super(MALFORMED_RESPONSE_MSG);
@@ -71,19 +83,25 @@ export interface ClampResult {
 // quantities to the server. Only integer quantities within [1, stock] are
 // kept; everything else is reported as skipped (the server 400 stays the
 // authority, but we never get there with garbage).
+// S-9f: product ids are deduped — the first valid line per product wins and
+// later duplicates are reported as skipped so the payload never carries two
+// lines for the same id_producto_semanal.
 export function clampOrderItems(candidates: OrderLineCandidate[]): ClampResult {
   const items: CreateOrderItem[] = [];
   const skipped: number[] = [];
+  const seen = new Set<number>();
   for (const line of candidates) {
     if (
       Number.isInteger(line.cantidad) &&
       line.cantidad >= 1 &&
-      line.cantidad <= line.stock
+      line.cantidad <= line.stock &&
+      !seen.has(line.id_producto_semanal)
     ) {
       items.push({
         id_producto_semanal: line.id_producto_semanal,
         cantidad: line.cantidad,
       });
+      seen.add(line.id_producto_semanal);
     } else {
       skipped.push(line.id_producto_semanal);
     }
@@ -167,6 +185,11 @@ export function extractOrderError(error: unknown): string {
 // al servidor y no debe clasificarse como "pudo haberse creado".
 export function isAmbiguousOrderError(error: unknown): boolean {
   const candidate = unwrapCause(error);
+  // W-3 (follow-up): a malformed 2xx envelope is ambiguous — the server
+  // answered 2xx, so the order may exist even though the body is unusable.
+  if (candidate instanceof MalformedOrderResponseError) {
+    return true;
+  }
   return (
     axios.isAxiosError(candidate) &&
     candidate.response === undefined &&

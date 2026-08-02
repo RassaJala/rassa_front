@@ -19,35 +19,68 @@ export function computePayloadFingerprint(
   return JSON.stringify(items);
 }
 
+// W-8: the marker is written to BOTH sessionStorage and localStorage. A
+// sessionStorage-only marker dies on tab close — exactly the moment a blind
+// re-confirm (and a duplicate order) becomes likely after the ambiguous
+// failure. localStorage survives tab close, so the next mount still surfaces
+// the warning. Reads prefer sessionStorage (freshest) and fall back to
+// localStorage (durable).
 export function readAmbiguousMarker(): AmbiguousMarker | null {
   if (typeof window === 'undefined') return null;
-  const raw = window.sessionStorage.getItem(AMBIGUOUS_MARKER_KEY);
+  return (
+    readStoredRecord(
+      AMBIGUOUS_MARKER_KEY,
+      isAmbiguousMarker,
+      window.sessionStorage,
+    ) ??
+    readStoredRecord(
+      AMBIGUOUS_MARKER_KEY,
+      isAmbiguousMarker,
+      window.localStorage,
+    )
+  );
+}
+
+// S-9d: shared JSON-record reader — parse + shape-validate a persisted record.
+// Corrupt or wrong-shape records are treated as absent (never block checkout).
+function readStoredRecord<T>(
+  key: string,
+  validate: (value: unknown) => value is T,
+  storage: Storage | null = null,
+): T | null {
+  if (typeof window === 'undefined') return null;
+  const store = storage ?? window.localStorage;
+  const raw = store.getItem(key);
   if (raw === null) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      typeof (parsed as AmbiguousMarker).timestamp === 'number' &&
-      typeof (parsed as AmbiguousMarker).fingerprint === 'string'
-    ) {
-      return parsed as AmbiguousMarker;
-    }
+    if (validate(parsed)) return parsed;
   } catch {
-    // Corrupt marker — treat as absent rather than blocking checkout.
     return null;
   }
   return null;
 }
 
+function isAmbiguousMarker(value: unknown): value is AmbiguousMarker {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as AmbiguousMarker).timestamp === 'number' &&
+    typeof (value as AmbiguousMarker).fingerprint === 'string'
+  );
+}
+
 export function writeAmbiguousMarker(marker: AmbiguousMarker): void {
   if (typeof window === 'undefined') return;
-  window.sessionStorage.setItem(AMBIGUOUS_MARKER_KEY, JSON.stringify(marker));
+  const serialized = JSON.stringify(marker);
+  window.sessionStorage.setItem(AMBIGUOUS_MARKER_KEY, serialized);
+  window.localStorage.setItem(AMBIGUOUS_MARKER_KEY, serialized);
 }
 
 export function clearAmbiguousMarker(): void {
   if (typeof window === 'undefined') return;
   window.sessionStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+  window.localStorage.removeItem(AMBIGUOUS_MARKER_KEY);
 }
 
 // ── Idempotency key (W-4) ────────────────────────────────
@@ -58,6 +91,11 @@ export function clearAmbiguousMarker(): void {
 // SAME attempt reuses it (a server-side dedupe could then collapse the two
 // POSTs into one order), while a DIFFERENT payload — even from another tab —
 // always gets a fresh key.
+// S-9e: SINGLE-RECORD limitation — exactly one idempotency record is kept.
+// Alternating payloads rotate the stored key (F1→K1, F2→K2, F1→K3), so the
+// stable-key guarantee holds ONLY for consecutive retries of the same payload
+// (the re-confirm flow after an ambiguous failure). Interleaved attempts
+// between different payloads cannot be deduped client-side.
 
 export const IDEMPOTENCY_KEY_KEY = 'rassa-checkout-idempotency';
 
@@ -68,31 +106,29 @@ export interface IdempotencyRecord {
 
 // No crypto.randomUUID guarantee on all targets; timestamp + random suffix is
 // unique enough for a client-side idempotency key (mirrors the mobile app).
-export function createIdempotencyKey(): string {
-  return `checkout-${Date.now().toString(36)}-${Math.random()
+// S-9d: shared suffix generator — used by the idempotency key and the tab
+// session id so both ids follow the same shape.
+function randomSuffixId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 10)}`;
 }
 
+export function createIdempotencyKey(): string {
+  return randomSuffixId('checkout');
+}
+
 function readIdempotencyRecord(): IdempotencyRecord | null {
-  if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(IDEMPOTENCY_KEY_KEY);
-  if (raw === null) return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      typeof (parsed as IdempotencyRecord).key === 'string' &&
-      typeof (parsed as IdempotencyRecord).fingerprint === 'string'
-    ) {
-      return parsed as IdempotencyRecord;
-    }
-  } catch {
-    // Corrupt record — treat as absent rather than blocking checkout.
-    return null;
-  }
-  return null;
+  return readStoredRecord(IDEMPOTENCY_KEY_KEY, isIdempotencyRecord);
+}
+
+function isIdempotencyRecord(value: unknown): value is IdempotencyRecord {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as IdempotencyRecord).key === 'string' &&
+    typeof (value as IdempotencyRecord).fingerprint === 'string'
+  );
 }
 
 export function resolveIdempotencyKey(fingerprint: string): string {
@@ -102,10 +138,16 @@ export function resolveIdempotencyKey(fingerprint: string): string {
   }
   const key = createIdempotencyKey();
   if (typeof window !== 'undefined') {
-    window.localStorage.setItem(
-      IDEMPOTENCY_KEY_KEY,
-      JSON.stringify({ key, fingerprint }),
-    );
+    // W-7: persistence is best-effort — quota/incognito must not throw out of
+    // the guard; the key still identifies THIS attempt for its lifetime.
+    try {
+      window.localStorage.setItem(
+        IDEMPOTENCY_KEY_KEY,
+        JSON.stringify({ key, fingerprint }),
+      );
+    } catch {
+      // Swallow — a fresh key is generated next attempt.
+    }
   }
   return key;
 }
@@ -129,23 +171,21 @@ export interface PlacedOrderRecord {
 }
 
 export function readPlacedOrder(): PlacedOrderRecord | null {
-  if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(PLACED_ORDER_KEY);
-  if (raw === null) return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      typeof (parsed as PlacedOrderRecord).id_pedido === 'number' &&
-      typeof (parsed as PlacedOrderRecord).timestamp === 'number'
-    ) {
-      return parsed as PlacedOrderRecord;
-    }
-  } catch {
-    return null;
-  }
-  return null;
+  // W-5: no TTL — the record survives until consumed. A hidden success must
+  // surface its confirmation whenever the user returns (a distraction window
+  // can exceed any short TTL), and the checkout mount clears it once shown, so
+  // it cannot persist forever. Dropping an aged record silently would leave an
+  // empty cart with no banner and invite a re-order of the same items.
+  return readStoredRecord(PLACED_ORDER_KEY, isPlacedOrderRecord);
+}
+
+function isPlacedOrderRecord(value: unknown): value is PlacedOrderRecord {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as PlacedOrderRecord).id_pedido === 'number' &&
+    typeof (value as PlacedOrderRecord).timestamp === 'number'
+  );
 }
 
 export function writePlacedOrder(record: PlacedOrderRecord): void {
@@ -183,39 +223,42 @@ export function getTabSessionId(): string {
   if (typeof window === 'undefined') return '';
   const existing = window.sessionStorage.getItem(TAB_SESSION_ID_KEY);
   if (existing !== null && existing !== '') return existing;
-  const id = `tab-${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
-  window.sessionStorage.setItem(TAB_SESSION_ID_KEY, id);
+  const id = randomSuffixId('tab');
+  // W-7: persistence is best-effort — quota/incognito must not throw out of
+  // the guard; the in-memory id still identifies this tab for this page load.
+  try {
+    window.sessionStorage.setItem(TAB_SESSION_ID_KEY, id);
+  } catch {
+    // Swallow — a fresh id is generated next page load.
+  }
   return id;
 }
 
 export function readInFlightCheckout(): InFlightCheckoutRecord | null {
-  if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(IN_FLIGHT_CHECKOUT_KEY);
-  if (raw === null) return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      typeof (parsed as InFlightCheckoutRecord).tabSessionId === 'string' &&
-      typeof (parsed as InFlightCheckoutRecord).idempotencyKey === 'string' &&
-      typeof (parsed as InFlightCheckoutRecord).timestamp === 'number' &&
-      typeof (parsed as InFlightCheckoutRecord).fingerprint === 'string'
-    ) {
-      const record = parsed as InFlightCheckoutRecord;
-      if (Date.now() - record.timestamp > IN_FLIGHT_CHECKOUT_TTL_MS) {
-        // A stale record (crashed tab) must not block checkout — drop it.
-        clearInFlightCheckout();
-        return null;
-      }
-      return record;
-    }
-  } catch {
+  const record = readStoredRecord(
+    IN_FLIGHT_CHECKOUT_KEY,
+    isInFlightCheckoutRecord,
+  );
+  if (record === null) return null;
+  if (Date.now() - record.timestamp > IN_FLIGHT_CHECKOUT_TTL_MS) {
+    // A stale record (crashed tab) must not block checkout — drop it.
+    clearInFlightCheckout();
     return null;
   }
-  return null;
+  return record;
+}
+
+function isInFlightCheckoutRecord(
+  value: unknown,
+): value is InFlightCheckoutRecord {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as InFlightCheckoutRecord).tabSessionId === 'string' &&
+    typeof (value as InFlightCheckoutRecord).idempotencyKey === 'string' &&
+    typeof (value as InFlightCheckoutRecord).timestamp === 'number' &&
+    typeof (value as InFlightCheckoutRecord).fingerprint === 'string'
+  );
 }
 
 export function writeInFlightCheckout(record: InFlightCheckoutRecord): void {

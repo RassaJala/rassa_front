@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getColors } from '../constants/colors';
 import { cartCardStyle } from '../constants/styles';
@@ -45,15 +46,11 @@ export function BuyerCart() {
     return (
       <>
         <PageHeader title="Mi Carrito" />
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="mb-4 text-5xl">🛒</span>
-          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>
-            Tu carrito está vacío
-          </h3>
-          <p className="mt-1 text-sm" style={{ color: c.muted }}>
-            Agregá productos desde el catálogo para comenzar tu compra.
-          </p>
-        </div>
+        <EmptyState
+          icon="🛒"
+          title="Tu carrito está vacío"
+          message="Agregá productos desde el catálogo para comenzar tu compra."
+        />
       </>
     );
   }

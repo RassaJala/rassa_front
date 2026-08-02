@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AMBIGUOUS_MARKER_KEY,
   clearAmbiguousMarker,
@@ -20,9 +20,15 @@ import {
   writePlacedOrder,
 } from './checkoutGuard';
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('checkoutGuard — ambiguous order marker (C-1)', () => {
   beforeEach(() => {
+    // W-8: the marker is written to BOTH storages — isolation must clear both.
     window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   it('returns null when no marker was written', () => {
@@ -75,6 +81,48 @@ describe('checkoutGuard — ambiguous order marker (C-1)', () => {
     expect(computePayloadFingerprint(items)).toContain('id_producto_semanal');
     expect(computePayloadFingerprint([])).toBe('[]');
   });
+
+  it('W-8: the marker is written to BOTH sessionStorage and localStorage', () => {
+    writeAmbiguousMarker({ timestamp: 1, fingerprint: 'x' });
+
+    expect(window.sessionStorage.getItem(AMBIGUOUS_MARKER_KEY)).not.toBeNull();
+    expect(window.localStorage.getItem(AMBIGUOUS_MARKER_KEY)).not.toBeNull();
+  });
+
+  it('W-8: the marker survives tab close (readable from localStorage after sessionStorage is gone)', () => {
+    writeAmbiguousMarker({ timestamp: 1234, fingerprint: 'survivor' });
+
+    // Simulate tab close: sessionStorage dies, localStorage survives.
+    window.sessionStorage.clear();
+
+    const marker = readAmbiguousMarker();
+    expect(marker).not.toBeNull();
+    expect(marker?.fingerprint).toBe('survivor');
+  });
+
+  it('W-8: clear removes the marker from BOTH storages', () => {
+    writeAmbiguousMarker({ timestamp: 1, fingerprint: 'x' });
+
+    clearAmbiguousMarker();
+
+    expect(window.sessionStorage.getItem(AMBIGUOUS_MARKER_KEY)).toBeNull();
+    expect(window.localStorage.getItem(AMBIGUOUS_MARKER_KEY)).toBeNull();
+    expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('W-8: sessionStorage wins when both storages hold a marker', () => {
+    window.localStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 1, fingerprint: 'stale-local' }),
+    );
+    window.sessionStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 2, fingerprint: 'fresh-session' }),
+    );
+
+    const marker = readAmbiguousMarker();
+    expect(marker?.fingerprint).toBe('fresh-session');
+  });
 });
 
 describe('checkoutGuard — idempotency key (W-4)', () => {
@@ -124,6 +172,18 @@ describe('checkoutGuard — idempotency key (W-4)', () => {
 
     expect(window.localStorage.getItem(IDEMPOTENCY_KEY_KEY)).toBeNull();
   });
+
+  it('W-7: resolveIdempotencyKey does not throw when setItem fails (quota/incognito)', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+    });
+
+    const key = resolveIdempotencyKey('payload-x');
+
+    // The key is still returned for THIS attempt even though persisting it
+    // failed — persistence is best-effort.
+    expect(key).toMatch(/^checkout-/);
+  });
 });
 
 describe('checkoutGuard — placed order notification (S-3)', () => {
@@ -136,11 +196,12 @@ describe('checkoutGuard — placed order notification (S-3)', () => {
   });
 
   it('persists id_pedido and timestamp on write', () => {
-    writePlacedOrder({ id_pedido: 45, timestamp: 1234 });
+    const timestamp = Date.now();
+    writePlacedOrder({ id_pedido: 45, timestamp });
 
     const record = readPlacedOrder();
     expect(record?.id_pedido).toBe(45);
-    expect(record?.timestamp).toBe(1234);
+    expect(record?.timestamp).toBe(timestamp);
   });
 
   it('returns null for a corrupt placed-order record', () => {
@@ -156,6 +217,17 @@ describe('checkoutGuard — placed order notification (S-3)', () => {
 
     expect(readPlacedOrder()).toBeNull();
     expect(window.localStorage.getItem(PLACED_ORDER_KEY)).toBeNull();
+  });
+
+  it('W-5: an old placed-order record is NOT dropped by age — it surfaces until consumed', () => {
+    writePlacedOrder({ id_pedido: 45, timestamp: Date.now() - 120_000 });
+
+    // No TTL: the record survives a long distraction window so a hidden
+    // success always surfaces its confirmation on the next checkout mount (S-3).
+    expect(readPlacedOrder()?.id_pedido).toBe(45);
+    // Consumed on read/dismiss — it cannot persist forever.
+    clearPlacedOrder();
+    expect(readPlacedOrder()).toBeNull();
   });
 });
 
@@ -214,5 +286,15 @@ describe('checkoutGuard — cross-tab in-flight checkout (S-9)', () => {
 
     expect(a.length).toBeGreaterThan(0);
     expect(b).toBe(a);
+  });
+
+  it('W-7: getTabSessionId does not throw when setItem fails (quota/incognito)', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+    });
+
+    const id = getTabSessionId();
+
+    expect(id.length).toBeGreaterThan(0);
   });
 });

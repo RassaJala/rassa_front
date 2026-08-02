@@ -127,7 +127,7 @@ describe('createOrder — response shape validation (W-3)', () => {
     );
   });
 
-  it('W-3: the classified error is user-safe and NOT ambiguous', async () => {
+  it('W-3: the classified error is user-safe and IS AMBIGUOUS (order may exist server-side)', async () => {
     mockedApi.post.mockResolvedValue({ data: {} });
 
     const err: unknown = await createOrder({ items: [] }).catch(
@@ -136,7 +136,13 @@ describe('createOrder — response shape validation (W-3)', () => {
 
     expect(err).toBeInstanceOf(Error);
     expect((err as Error).message).toBe(MALFORMED_RESPONSE_MSG);
-    expect(isAmbiguousOrderError(err)).toBe(false);
+    // W-3 (follow-up): a malformed 2xx means the server DID accept the request
+    // but the envelope is unusable — the order may exist. It must be treated
+    // as ambiguous, never as a definitive failure.
+    expect(
+      isAmbiguousOrderError(err) || err instanceof MalformedOrderResponseError,
+    ).toBe(true);
+    expect(isAmbiguousOrderError(err)).toBe(true);
   });
 });
 
@@ -323,5 +329,27 @@ describe('clampOrderItems (W-2)', () => {
 
     expect(result.items).toEqual([]);
     expect(result.skipped).toEqual([]);
+  });
+
+  it('S-9f: dedupes repeated product ids, keeping the first valid line', () => {
+    const result = clampOrderItems([
+      line(1, 2, 10),
+      line(1, 3, 10),
+      line(2, 1, 10),
+    ]);
+
+    expect(result.items).toEqual([
+      { id_producto_semanal: 1, cantidad: 2 },
+      { id_producto_semanal: 2, cantidad: 1 },
+    ]);
+    // The duplicate is reported as skipped so the caller can inform the user.
+    expect(result.skipped).toEqual([1]);
+  });
+
+  it('S-9f: a valid line after an invalid duplicate is kept (first VALID line wins)', () => {
+    const result = clampOrderItems([line(1, 99, 10), line(1, 2, 10)]);
+
+    expect(result.items).toEqual([{ id_producto_semanal: 1, cantidad: 2 }]);
+    expect(result.skipped).toEqual([1]);
   });
 });

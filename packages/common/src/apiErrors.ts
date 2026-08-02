@@ -62,9 +62,16 @@ function isAxiosError(error: unknown): error is {
   );
 }
 
+// Reads error.cause without requiring lib es2022 (web tsconfig lib is ES2020;
+// `Error.cause` is only typed from ES2022 onward). Shared by every extractor.
+function unwrapCause(error: unknown): unknown {
+  if (!(error instanceof Error)) return error;
+  const cause = (error as { cause?: unknown }).cause;
+  return cause !== undefined ? cause : error;
+}
+
 function parseAxiosError(error: unknown): string | null {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) return null;
 
@@ -120,8 +127,7 @@ export function extractApiError(
   fieldKeys: string[],
   defaultMessage = 'Error del servidor. Intenta de nuevo.',
 ): string {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
@@ -141,12 +147,24 @@ export function extractApiError(
       return record.detail;
     }
   }
-  if (typeof record.message === 'string') return record.message;
+  if (typeof record.message === 'string') {
+    // W-1: `message` must pass the same sanitizer as `detail` — a 5xx HTML /
+    // traceback body in `message` must never render raw in the UI.
+    if (isSafeDetail(record.message)) {
+      return record.message;
+    }
+  }
 
   for (const key of fieldKeys) {
     const value = record[key];
 
-    if (Array.isArray(value) && value[0]) return String(value[0]);
+    if (Array.isArray(value) && value[0]) {
+      const item = String(value[0]);
+      // W-1: array items (DRF field errors) pass through the sanitizer too.
+      if (isSafeDetail(item)) {
+        return item;
+      }
+    }
   }
 
   return defaultMessage;
@@ -198,8 +216,7 @@ export function extractFieldErrors(
   error: unknown,
   fieldKeys: string[],
 ): { fields: Record<string, string>; general: string | null } {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) {
     return {

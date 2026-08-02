@@ -242,6 +242,48 @@ describe('extractApiError', () => {
     expect(result).toBe('Error personalizado.');
   });
 
+  it('W-1: sanitiza un message string con HTML/traceback y devuelve el default', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          message:
+            '<html><body><pre>Traceback (most recent call last)</pre></body></html>',
+        },
+      },
+    };
+    const result = extractApiError(axiosError, []);
+    expect(result).toBe('Error del servidor. Intenta de nuevo.');
+  });
+
+  it('W-1: maneja message como array de strings y devuelve el item seguro', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          message: ["Stock insuficiente para 'Tomate'. Disponible: 2."],
+        },
+      },
+    };
+    const result = extractApiError(axiosError, ['detail', 'message']);
+    expect(result).toBe("Stock insuficiente para 'Tomate'. Disponible: 2.");
+  });
+
+  it('W-1: sanitiza un item array inseguro (traceback) y devuelve el default', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        data: {
+          message: [
+            'Traceback (most recent call last):\n  File "/app/views.py", line 42',
+          ],
+        },
+      },
+    };
+    const result = extractApiError(axiosError, ['detail', 'message']);
+    expect(result).toBe('Error del servidor. Intenta de nuevo.');
+  });
+
   it('devuelve mensaje por defecto si no hay data', () => {
     const axiosError = {
       isAxiosError: true,

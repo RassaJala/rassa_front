@@ -16,6 +16,9 @@ import { ThemeProvider } from '../../providers/ThemeProvider';
 import {
   AMBIGUOUS_MARKER_KEY,
   CONCURRENT_CHECKOUT_MSG,
+  IDEMPOTENCY_KEY_KEY,
+  IN_FLIGHT_CHECKOUT_KEY,
+  PLACED_ORDER_KEY,
   readAmbiguousMarker,
   readPlacedOrder,
   writeAmbiguousMarker,
@@ -24,7 +27,6 @@ import {
 import {
   AMBIGUOUS_LOG_MARKER,
   AMBIGUOUS_MSG,
-  MALFORMED_RESPONSE_MSG,
   ORDER_ERROR_DEFAULT,
 } from '../../services/orders';
 import { useCartStore } from '../../store/cartStore';
@@ -34,6 +36,10 @@ import { BuyerCart } from '../BuyerCart';
 import { BuyerCheckout } from '../BuyerCheckout';
 
 const AMBIGUOUS_ACK_LABEL = 'Ya revisé mis pedidos';
+// Mirrors the module-local constants in BuyerCheckout (UI copy, Spanish voseo).
+const AMBIGUOUS_BLOCK_MSG = 'Revisá tus pedidos antes de confirmar de nuevo.';
+const WRITE_FAILED_MSG =
+  'No se pudo guardar el estado del pedido. Intentá de nuevo.';
 
 // Subtotal 25.00 → IVA 5.25 → Total 30.25 (spec R2 / IVA_RATE 0.21)
 const CART_ITEMS: CartItem[] = [
@@ -114,6 +120,49 @@ function renderCart() {
   );
 }
 
+interface StubOrderOptions {
+  /** Response body (defaults to a successful order envelope). */
+  body?: unknown;
+  /** HTTP status code for the response (default 200). */
+  status?: number;
+  /** Respond with raw text (e.g. an HTML traceback) instead of JSON. */
+  text?: boolean;
+  /** Simulate a network-level failure — no response reaches the client. */
+  fail?: boolean;
+  /** Hold the response open until the returned resolver is called. */
+  deferred?: boolean;
+  /** Runs on every POST with the parsed JSON body (counting/capturing). */
+  onRequest?: (body: unknown) => void;
+}
+
+/**
+ * Installs a POST /api/pedidos/ stub. With `deferred: true` the response is
+ * held open — call the returned resolver to flush it.
+ */
+function stubCreateOrder(
+  options: StubOrderOptions = {},
+): (value: Response) => void {
+  const { body, status, text, fail, deferred, onRequest } = options;
+  let resolveOrder: (value: Response) => void = () => {};
+  const pending: Promise<Response> | null = deferred
+    ? new Promise((resolve) => {
+        resolveOrder = resolve;
+      })
+    : null;
+  const init = status === undefined ? undefined : { status };
+  server.use(
+    http.post('/api/pedidos/', async ({ request }) => {
+      const parsedBody: unknown = await request.json().catch(() => undefined);
+      onRequest?.(parsedBody);
+      if (fail) return HttpResponse.error();
+      if (pending) return pending;
+      if (text) return HttpResponse.text(String(body), init);
+      return HttpResponse.json(body ?? { data: PEDIDO_45 }, init);
+    }),
+  );
+  return resolveOrder;
+}
+
 beforeEach(() => {
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -163,19 +212,15 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R4: confirm sends the exact payload and disables the button while pending', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
     let capturedBody: unknown;
-    server.use(
-      http.post('/api/pedidos/', async ({ request }) => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: (body) => {
         postCount += 1;
-        capturedBody = await request.json();
-        return deferred;
-      }),
-    );
+        capturedBody = body;
+      },
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -203,17 +248,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R9: double-click while the order is in flight sends exactly one POST', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -236,17 +277,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R10: navigate-away-and-return during a pending POST does not duplicate the order and the cart clears on resolve', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     // The MutationCache must survive unmount/remount, so the QueryClient is
     // shared across the two mounts (same cache → pending mutation detected).
@@ -321,14 +358,10 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R6a: 400 top-level string-array body shows actionable text and preserves cart', async () => {
-    server.use(
-      http.post('/api/pedidos/', () =>
-        HttpResponse.json(
-          ["Stock insuficiente para 'Tomate'. Disponible: 2, solicitado: 5."],
-          { status: 400 },
-        ),
-      ),
-    );
+    stubCreateOrder({
+      status: 400,
+      body: ["Stock insuficiente para 'Tomate'. Disponible: 2, solicitado: 5."],
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -345,11 +378,7 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R6b: 400 object body { detail } shows actionable text and preserves cart', async () => {
-    server.use(
-      http.post('/api/pedidos/', () =>
-        HttpResponse.json({ detail: 'Stock insuficiente' }, { status: 400 }),
-      ),
-    );
+    stubCreateOrder({ status: 400, body: { detail: 'Stock insuficiente' } });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -362,7 +391,7 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R7: network failure shows the ambiguous message and preserves cart', async () => {
-    server.use(http.post('/api/pedidos/', () => HttpResponse.error()));
+    stubCreateOrder({ fail: true });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -374,14 +403,11 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('R8: 500 HTML/traceback body shows sanitized generic error and preserves cart', async () => {
-    server.use(
-      http.post('/api/pedidos/', () =>
-        HttpResponse.text(
-          '<html><body><pre>Traceback (most recent call last):\n  File "/app/views.py", line 42, in post\n    raise IntegrityError</pre></body></html>',
-          { status: 500 },
-        ),
-      ),
-    );
+    stubCreateOrder({
+      status: 500,
+      text: true,
+      body: '<html><body><pre>Traceback (most recent call last):\n  File "/app/views.py", line 42, in post\n    raise IntegrityError</pre></body></html>',
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -397,7 +423,7 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('C-1(a): an ambiguous failure while mounted shows the warning banner and persists the marker', async () => {
-    server.use(http.post('/api/pedidos/', () => HttpResponse.error()));
+    stubCreateOrder({ fail: true });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -413,7 +439,7 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('C-1: dismissing the banner clears the marker and hides the warning', async () => {
-    server.use(http.post('/api/pedidos/', () => HttpResponse.error()));
+    stubCreateOrder({ fail: true });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -428,17 +454,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('C-1(b): an ambiguous failure that resolves after unmount surfaces as a warning banner on remount', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     const qc = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -467,19 +489,15 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('JD-A-002: the ambiguous marker is written BEFORE the POST is dispatched', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     // Records the order of marker persistence vs. POST dispatch.
     let markerAtPostDispatch: boolean | null = null;
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         markerAtPostDispatch = readAmbiguousMarker() !== null;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -506,17 +524,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('JD-A-001: an ambiguous failure resolving after a remount-while-pending surfaces the banner on the live instance', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     const qc = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -549,17 +563,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('JD-A-001: dismissing the banner while pending does not hide a later ambiguous resolution', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     const qc = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -593,16 +603,19 @@ describe('BuyerCheckout — integration', () => {
     expect(useCartStore.getState().items).toHaveLength(2);
   });
 
-  it('C-1(c1): the marker is cleared on confirmed success', async () => {
-    writeAmbiguousMarker({ timestamp: 1, fingerprint: 'stale' });
+  it('C-1(c1): a marker written during the attempt is cleared on confirmed success', async () => {
+    const resolveOrder = stubCreateOrder({ deferred: true });
 
     const user = userEvent.setup();
     renderCheckout();
-    // A prior ambiguous failure is surfaced on mount.
-    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
-
+    await screen.findByText('Confirmar pedido');
     await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
 
+    // The marker is persisted BEFORE the POST (JD-A-002) — still pending here.
+    expect(readAmbiguousMarker()).not.toBeNull();
+
+    // …and the confirmed success clears it.
+    resolveOrder(HttpResponse.json({ data: PEDIDO_45 }));
     expect(await screen.findByText('Pedido detalle 45')).toBeInTheDocument();
     expect(useCartStore.getState().items).toHaveLength(0);
     expect(readAmbiguousMarker()).toBeNull();
@@ -610,16 +623,14 @@ describe('BuyerCheckout — integration', () => {
 
   it('C-1(c2): the marker is cleared on a definitive failure', async () => {
     writeAmbiguousMarker({ timestamp: 1, fingerprint: 'stale' });
-    server.use(
-      http.post('/api/pedidos/', () =>
-        HttpResponse.json({ detail: 'Stock insuficiente' }, { status: 400 }),
-      ),
-    );
+    stubCreateOrder({ status: 400, body: { detail: 'Stock insuficiente' } });
 
     const user = userEvent.setup();
     renderCheckout();
     await screen.findByText(AMBIGUOUS_MSG);
 
+    // W-2: an unresolved marker blocks confirm — acknowledge it first.
+    await user.click(screen.getByRole('button', { name: AMBIGUOUS_ACK_LABEL }));
     await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
 
     expect(await screen.findByText('Stock insuficiente')).toBeInTheDocument();
@@ -627,18 +638,23 @@ describe('BuyerCheckout — integration', () => {
     expect(useCartStore.getState().items).toHaveLength(2);
   });
 
-  it('W-3: a malformed 2xx body is a definitive error — no navigation, cart kept', async () => {
-    server.use(http.post('/api/pedidos/', () => HttpResponse.json({})));
+  it('W-3: a malformed 2xx body is AMBIGUOUS — banner, marker kept, key retained, cart preserved', async () => {
+    stubCreateOrder({ body: {} });
 
     const user = userEvent.setup();
     renderCheckout();
     await screen.findByText('Confirmar pedido');
     await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
 
-    expect(await screen.findByText(MALFORMED_RESPONSE_MSG)).toBeInTheDocument();
+    // The server accepted the request but the envelope is unusable — the order
+    // may exist. The ambiguous banner (not a definitive error toast) must show,
+    // the marker must survive, the idempotency key must NOT be cleared, and the
+    // cart must be preserved so the user can verify before re-confirming.
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
     expect(screen.queryByText(/Pedido detalle/)).not.toBeInTheDocument();
+    expect(readAmbiguousMarker()).not.toBeNull();
+    expect(window.localStorage.getItem(IDEMPOTENCY_KEY_KEY)).not.toBeNull();
     expect(useCartStore.getState().items).toHaveLength(2);
-    expect(readAmbiguousMarker()).toBeNull();
   });
 
   it('W-2: an out-of-range persisted quantity is skipped from the payload with a validation message', async () => {
@@ -657,17 +673,13 @@ describe('BuyerCheckout — integration', () => {
         },
       ],
     });
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let capturedBody: unknown;
-    server.use(
-      http.post('/api/pedidos/', async ({ request }) => {
-        capturedBody = await request.json();
-        return deferred;
-      }),
-    );
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: (body) => {
+        capturedBody = body;
+      },
+    });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -694,17 +706,13 @@ describe('BuyerCheckout — integration', () => {
   });
 
   it('S-10: two synchronous submits in the same tick send exactly one POST', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
 
     renderCheckout();
     await screen.findByText('Confirmar pedido');
@@ -754,6 +762,9 @@ describe('BuyerCheckout — integration', () => {
     expect(postCount).toBe(1);
     expect(keys[0]).toMatch(/^checkout-/);
 
+    // W-2: acknowledge the ambiguous banner before re-confirming.
+    await user.click(screen.getByRole('button', { name: AMBIGUOUS_ACK_LABEL }));
+
     // Re-confirm after the ambiguous failure: SAME attempt, SAME payload →
     // the idempotency key must be stable so a server-side dedupe can collapse
     // the two POSTs into one order.
@@ -764,18 +775,241 @@ describe('BuyerCheckout — integration', () => {
     expect(keys[1]).toBe(keys[0]);
   });
 
-  it('S-3: a success resolving after navigate-away surfaces a confirmation notification on the next checkout mount', async () => {
-    let resolveOrder!: (value: Response) => void;
-    const deferred = new Promise<Response>((resolve) => {
-      resolveOrder = resolve;
-    });
+  it('W-2: an unresolved ambiguous marker BLOCKS re-confirmation until acknowledged', async () => {
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    stubCreateOrder({
+      fail: true,
+      onRequest: () => {
         postCount += 1;
-        return deferred;
-      }),
-    );
+      },
+    });
+
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    await screen.findByText(AMBIGUOUS_MSG);
+    expect(postCount).toBe(1);
+
+    // Re-confirm without acknowledging the ambiguous outcome: blocked — a
+    // blind re-confirm could create a duplicate order.
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    expect(await screen.findByText(AMBIGUOUS_BLOCK_MSG)).toBeInTheDocument();
+    expect(postCount).toBe(1);
+
+    // Acknowledge, then re-confirm: the POST goes out.
+    await user.click(screen.getByRole('button', { name: AMBIGUOUS_ACK_LABEL }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    await waitFor(() => {
+      expect(postCount).toBe(2);
+    });
+  });
+
+  it('W-4: write-then-verify — a foreign record landing between check and write aborts with no POST', async () => {
+    let postCount = 0;
+    stubCreateOrder({
+      onRequest: () => {
+        postCount += 1;
+      },
+    });
+
+    // Interleave: whenever OUR in-flight write lands, a foreign tab's record
+    // lands instead (the race between hasConcurrentCheckout and the write).
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === IN_FLIGHT_CHECKOUT_KEY) {
+        originalSetItem.call(
+          this,
+          key,
+          JSON.stringify({
+            tabSessionId: 'tab-FOREIGN',
+            idempotencyKey: 'checkout-foreign',
+            timestamp: Date.now(),
+            fingerprint: 'foreign',
+          }),
+        );
+        return;
+      }
+      originalSetItem.call(this, key, value);
+    });
+
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+
+    expect(
+      await screen.findByText(CONCURRENT_CHECKOUT_MSG),
+    ).toBeInTheDocument();
+    // The abort must happen BEFORE the POST — no request may leave this tab.
+    expect(postCount).toBe(0);
+    // The abort resets the in-flight flag — the button is not left dead.
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pedido' }),
+    ).not.toBeDisabled();
+    expect(useCartStore.getState().items).toHaveLength(2);
+    // JD-A-001/JD-B-002: the pre-POST marker write is rolled back on the abort
+    // — no POST left this tab, so no false ambiguous state may survive for the
+    // next checkout mount.
+    expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('W-7: a storage write failure aborts the confirm with a toast, no POST, and a re-enabled button', async () => {
+    let postCount = 0;
+    stubCreateOrder({
+      onRequest: () => {
+        postCount += 1;
+      },
+    });
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      // JD-A-001/JD-B-002: only the in-flight write fails — the marker write
+      // SUCCEEDS, reproducing the partial-write abort path (marker persisted,
+      // POST never fired). The abort must roll the marker back.
+      if (key === IN_FLIGHT_CHECKOUT_KEY) {
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+      }
+      originalSetItem.call(this, key, value);
+    });
+
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+
+    expect(await screen.findByText(WRITE_FAILED_MSG)).toBeInTheDocument();
+    expect(postCount).toBe(0);
+    const confirmBtn = screen.getByRole('button', {
+      name: 'Confirmar pedido',
+    });
+    expect(confirmBtn).not.toBeDisabled();
+    // A second click retries (and fails the same way) — the button never dies.
+    await user.click(confirmBtn);
+    expect(postCount).toBe(0);
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pedido' }),
+    ).not.toBeDisabled();
+    // JD-A-001/JD-B-002: the marker write that succeeded before the failing
+    // write is rolled back — no POST left this tab, so no false ambiguous
+    // state may survive for the next checkout mount.
+    expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('JD-A-002/JD-B-001: a storage throw in the hidden-success onSuccess still clears the cart and leaves no duplicate-order window', async () => {
+    let postCount = 0;
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
+        postCount += 1;
+      },
+    });
+
+    const qc = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
+    const user = userEvent.setup();
+    const first = renderCheckoutWithClient(qc);
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    expect(postCount).toBe(1);
+
+    // From the resolution on, persisting the placed-order record fails
+    // (quota/incognito). The order EXISTS server-side — the success path must
+    // still clear the cart: a stale cart would let the user re-confirm the
+    // same items and create a second order.
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === PLACED_ORDER_KEY) {
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+      }
+      originalSetItem.call(this, key, value);
+    });
+
+    // Hidden success: resolve after the user navigated away — the mutation
+    // onSuccess runs the placed-order write, which throws. The cart MUST still
+    // clear and the flow must not leave a duplicate-order window.
+    first.unmount();
+    resolveOrder(HttpResponse.json({ data: PEDIDO_45 }));
+
+    await waitFor(() => {
+      expect(useCartStore.getState().items).toHaveLength(0);
+    });
+    expect(postCount).toBe(1);
+  });
+
+  it('JD-A-002/JD-B-001: a writeAmbiguousMarker throw in onError still shows the ambiguous banner', async () => {
+    let postSent = false;
+    stubCreateOrder({
+      fail: true,
+      onRequest: () => {
+        postSent = true;
+      },
+    });
+
+    // After the POST has left the tab, persisting the ambiguous marker fails —
+    // the in-memory banner and the observability report must still surface the
+    // warning (never a silent re-enabled button that invites a duplicate).
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (postSent) {
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+      }
+      originalSetItem.call(this, key, value);
+    });
+
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(useCartStore.getState().items).toHaveLength(2);
+  });
+
+  it('W-5: a VISIBLE success leaves no placed-order banner for the next checkout mount', async () => {
+    const user = userEvent.setup();
+    const first = renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+
+    // The success resolves while the component is still mounted — the user is
+    // navigated to the order detail, so no placed-order record is written.
+    expect(await screen.findByText('Pedido detalle 45')).toBeInTheDocument();
+    expect(readPlacedOrder()).toBeNull();
+
+    // Returning to checkout must NOT show a stale confirmation banner.
+    first.unmount();
+    renderCheckout();
+    expect(
+      screen.queryByText(/Tu pedido N°45 se confirmó/),
+    ).not.toBeInTheDocument();
+    expect(readPlacedOrder()).toBeNull();
+  });
+
+  it('S-3: a success resolving after navigate-away surfaces a confirmation notification on the next checkout mount', async () => {
+    let postCount = 0;
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      onRequest: () => {
+        postCount += 1;
+      },
+    });
 
     const qc = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
@@ -806,12 +1040,11 @@ describe('BuyerCheckout — integration', () => {
 
   it('S-9: a checkout POST in flight from another tab blocks confirmation with a warning', async () => {
     let postCount = 0;
-    server.use(
-      http.post('/api/pedidos/', () => {
+    stubCreateOrder({
+      onRequest: () => {
         postCount += 1;
-        return HttpResponse.json({ data: PEDIDO_45 });
-      }),
-    );
+      },
+    });
     // Simulate another tab: an in-flight checkout record with a foreign tab
     // session id and a fresh timestamp.
     writeInFlightCheckout({
@@ -836,7 +1069,7 @@ describe('BuyerCheckout — integration', () => {
 
   it('S-11: an ambiguous failure is logged with a stable marker and the persisted marker payload', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    server.use(http.post('/api/pedidos/', () => HttpResponse.error()));
+    stubCreateOrder({ fail: true });
 
     const user = userEvent.setup();
     renderCheckout();
@@ -852,6 +1085,27 @@ describe('BuyerCheckout — integration', () => {
     // correlate the log line with the stored ambiguous record.
     const payload = ambiguousCalls[0]?.[2] as
       Record<string, unknown> | undefined;
+    expect(payload?.marker).toEqual(readAmbiguousMarker());
+  });
+
+  it('W-6: an ambiguous failure emits a prod-visible console.warn with the log marker', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stubCreateOrder({ fail: true });
+
+    const user = userEvent.setup();
+    renderCheckout();
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    await screen.findByText(AMBIGUOUS_MSG);
+
+    // The warn line must fire regardless of environment so an operator can
+    // grep production logs for the marker (dev-only console.error is compiled
+    // out in prod builds).
+    const warnCalls = warnSpy.mock.calls.filter((call) =>
+      String(call[0]).includes(AMBIGUOUS_LOG_MARKER),
+    );
+    expect(warnCalls.length).toBeGreaterThan(0);
+    const payload = warnCalls[0]?.[2] as Record<string, unknown> | undefined;
     expect(payload?.marker).toEqual(readAmbiguousMarker());
   });
 });
