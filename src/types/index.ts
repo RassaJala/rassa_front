@@ -190,11 +190,13 @@ export type AdminStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;
@@ -241,11 +243,13 @@ export type BuyerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
 };
 
@@ -272,11 +276,13 @@ export type FarmerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
 };
 
@@ -303,10 +309,12 @@ export type SellerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
 };
