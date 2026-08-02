@@ -8,6 +8,29 @@ import type { CreateOrderItem } from './orders';
 
 export const AMBIGUOUS_MARKER_KEY = 'rassa-checkout-ambiguous';
 
+// WARNING 2 (R4-follow-up): Firefox blocked-storage throws a SecurityError on
+// the sessionStorage/localStorage PROPERTY GETTER itself, not only on
+// getItem/setItem. Every storage access in this module MUST go through these
+// accessors so a throwing getter degrades to null (reads → "absent", writes →
+// no-op) instead of crashing the checkout.
+function getSessionStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 export interface AmbiguousMarker {
   timestamp: number;
   fingerprint: string;
@@ -31,12 +54,12 @@ export function readAmbiguousMarker(): AmbiguousMarker | null {
   const session = readStoredRecord(
     AMBIGUOUS_MARKER_KEY,
     isAmbiguousMarker,
-    window.sessionStorage,
+    getSessionStorage(),
   );
   const local = readStoredRecord(
     AMBIGUOUS_MARKER_KEY,
     isAmbiguousMarker,
-    window.localStorage,
+    getLocalStorage(),
   );
   if (session === null) return local;
   if (local === null) return session;
@@ -55,7 +78,10 @@ function readStoredRecord<T>(
   storage: Storage | null = null,
 ): T | null {
   if (typeof window === 'undefined') return null;
-  const store = storage ?? window.localStorage;
+  const store = storage ?? getLocalStorage();
+  // WARNING 2: a throwing property getter yields null storage — degrade to
+  // "absent" like a corrupt record, never throw out of the guard.
+  if (store === null) return null;
   let raw: string | null;
   try {
     raw = store.getItem(key);
@@ -84,8 +110,11 @@ function isAmbiguousMarker(value: unknown): value is AmbiguousMarker {
 export function writeAmbiguousMarker(marker: AmbiguousMarker): void {
   if (typeof window === 'undefined') return;
   const serialized = JSON.stringify(marker);
-  window.sessionStorage.setItem(AMBIGUOUS_MARKER_KEY, serialized);
-  window.localStorage.setItem(AMBIGUOUS_MARKER_KEY, serialized);
+  // WARNING 2: route through the safe accessors — a throwing property getter
+  // (blocked storage) makes each write a no-op instead of throwing out of the
+  // guard. A setItem failure still propagates for the caller's own try/catch.
+  getSessionStorage()?.setItem(AMBIGUOUS_MARKER_KEY, serialized);
+  getLocalStorage()?.setItem(AMBIGUOUS_MARKER_KEY, serialized);
 }
 
 export function clearAmbiguousMarker(): void {
@@ -93,12 +122,12 @@ export function clearAmbiguousMarker(): void {
   // LOW-2: storage clears are best-effort — a SecurityError (blocked storage)
   // must never abort the confirm/success/error flows.
   try {
-    window.sessionStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+    getSessionStorage()?.removeItem(AMBIGUOUS_MARKER_KEY);
   } catch {
     // Swallow — the marker lingers until a working storage is available.
   }
   try {
-    window.localStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+    getLocalStorage()?.removeItem(AMBIGUOUS_MARKER_KEY);
   } catch {
     // Swallow — the marker lingers until a working storage is available.
   }
@@ -162,7 +191,7 @@ export function resolveIdempotencyKey(fingerprint: string): string {
     // W-7: persistence is best-effort — quota/incognito must not throw out of
     // the guard; the key still identifies THIS attempt for its lifetime.
     try {
-      window.localStorage.setItem(
+      getLocalStorage()?.setItem(
         IDEMPOTENCY_KEY_KEY,
         JSON.stringify({ key, fingerprint }),
       );
@@ -176,7 +205,7 @@ export function resolveIdempotencyKey(fingerprint: string): string {
 export function clearIdempotencyKey(): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.removeItem(IDEMPOTENCY_KEY_KEY);
+    getLocalStorage()?.removeItem(IDEMPOTENCY_KEY_KEY);
   } catch {
     // LOW-2: swallow — best-effort clear, never abort the flow.
   }
@@ -215,13 +244,16 @@ function isPlacedOrderRecord(value: unknown): value is PlacedOrderRecord {
 
 export function writePlacedOrder(record: PlacedOrderRecord): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(PLACED_ORDER_KEY, JSON.stringify(record));
+  // WARNING 2: route through the safe accessor — a throwing property getter
+  // makes the write a no-op instead of throwing out of the guard. A setItem
+  // failure still propagates for the caller's own try/catch (JD-A-002/JD-B-001).
+  getLocalStorage()?.setItem(PLACED_ORDER_KEY, JSON.stringify(record));
 }
 
 export function clearPlacedOrder(): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.removeItem(PLACED_ORDER_KEY);
+    getLocalStorage()?.removeItem(PLACED_ORDER_KEY);
   } catch {
     // LOW-2: swallow — best-effort clear, never abort the flow.
   }
@@ -252,7 +284,7 @@ export function getTabSessionId(): string {
   if (typeof window === 'undefined') return '';
   let existing: string | null = null;
   try {
-    existing = window.sessionStorage.getItem(TAB_SESSION_ID_KEY);
+    existing = getSessionStorage()?.getItem(TAB_SESSION_ID_KEY) ?? null;
   } catch {
     // LOW-2: a blocked read degrades to a fresh id for this page load.
     existing = null;
@@ -262,7 +294,7 @@ export function getTabSessionId(): string {
   // W-7: persistence is best-effort — quota/incognito must not throw out of
   // the guard; the in-memory id still identifies this tab for this page load.
   try {
-    window.sessionStorage.setItem(TAB_SESSION_ID_KEY, id);
+    getSessionStorage()?.setItem(TAB_SESSION_ID_KEY, id);
   } catch {
     // Swallow — a fresh id is generated next page load.
   }
@@ -298,13 +330,17 @@ function isInFlightCheckoutRecord(
 
 export function writeInFlightCheckout(record: InFlightCheckoutRecord): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(IN_FLIGHT_CHECKOUT_KEY, JSON.stringify(record));
+  // WARNING 2: route through the safe accessor — a throwing property getter
+  // makes the write a no-op instead of throwing out of the guard. A setItem
+  // failure still propagates so the caller's write-then-verify abort (W-7)
+  // keeps working.
+  getLocalStorage()?.setItem(IN_FLIGHT_CHECKOUT_KEY, JSON.stringify(record));
 }
 
 export function clearInFlightCheckout(): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.removeItem(IN_FLIGHT_CHECKOUT_KEY);
+    getLocalStorage()?.removeItem(IN_FLIGHT_CHECKOUT_KEY);
   } catch {
     // LOW-2: swallow — best-effort clear, never abort the flow.
   }

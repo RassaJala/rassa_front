@@ -295,11 +295,13 @@ export function BuyerCheckout() {
       // POST left this tab, so no false ambiguous state may survive for the
       // next checkout mount.
       clearAmbiguousMarker();
-      // LOW-1: the in-flight record written at our own write (or raced in
-      // after it) is a phantom here — no POST backed it, and onSettled never
-      // runs (we return before mutation.mutate). Leaving it would block every
-      // tab's checkout for the full ~60s TTL, so clear it.
-      clearInFlightCheckout();
+      // R4-follow-up: the stored record is the WINNER tab's REAL in-flight
+      // record — it passed its own write-then-verify and is about to POST.
+      // Clearing it here would void the S-9 cross-tab guard for the whole
+      // duration of the winner's POST (duplicate-order window), so it is left
+      // intact: the winner's onSettled/onError clears its own record, and a
+      // crashed tab's stale record is already handled by the TTL in
+      // readInFlightCheckout.
       setToast({ message: CONCURRENT_CHECKOUT_MSG, type: 'error' });
       return;
     }

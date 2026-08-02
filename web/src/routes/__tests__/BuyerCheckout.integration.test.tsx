@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   act,
   fireEvent,
@@ -37,6 +38,20 @@ import type { CartItem } from '../../store/cartStore';
 import { INTERNAL_SERVER_HTML_MESSAGE } from '../../utils/apiErrors';
 import { BuyerCart } from '../BuyerCart';
 import { BuyerCheckout } from '../BuyerCheckout';
+
+// WARNING 2: the REAL ThemeProvider reads localStorage in its own useState
+// initializer without a guard, so it cannot mount while the storage property
+// getters throw. These tests target BuyerCheckout's resilience — replace the
+// provider with a passthrough that still provides the theme context.
+vi.mock('../../providers/ThemeProvider', () => ({
+  ThemeProvider: ({ children }: { children: ReactNode }) => children,
+  useTheme: () => ({
+    theme: 'light',
+    resolved: 'light',
+    setTheme: () => {},
+    toggle: () => {},
+  }),
+}));
 
 const AMBIGUOUS_ACK_LABEL = 'Ya revisé mis pedidos';
 // Mirrors the module-local constants in BuyerCheckout (UI copy, Spanish voseo).
@@ -859,10 +874,14 @@ describe('BuyerCheckout — integration', () => {
     // — no POST left this tab, so no false ambiguous state may survive for the
     // next checkout mount.
     expect(readAmbiguousMarker()).toBeNull();
-    // LOW-1: the phantom in-flight record is cleared on the abort — onSettled
-    // never runs (no POST left this tab), so without this the record would
-    // block every tab's checkout for the full ~60s TTL.
-    expect(readInFlightCheckout()).toBeNull();
+    // R4-follow-up (WARNING 1): the stored record is the WINNER tab's real
+    // in-flight record — it passed its own write-then-verify and is about to
+    // POST. Clearing it here would void the S-9 cross-tab guard for the whole
+    // duration of the winner's POST (duplicate-order window). The record must
+    // survive: the winner's onSettled/onError clears its own record, and the
+    // TTL in readInFlightCheckout covers a crashed tab.
+    expect(readInFlightCheckout()?.tabSessionId).toBe('tab-FOREIGN');
+    expect(postCount).toBe(0);
   });
 
   it('W-7: a storage write failure aborts the confirm with a toast, no POST, and a re-enabled button', async () => {
@@ -1174,6 +1193,30 @@ describe('BuyerCheckout — integration', () => {
 
     // The initializers (ambiguous marker / placed-order record) degrade to
     // "absent" — the checkout still renders with the cart items.
+    expect(await screen.findByText('Tomate')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pedido' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('$30.25')).toBeInTheDocument();
+  });
+
+  it('WARNING 2: the checkout mounts without crashing when the storage PROPERTY GETTERS throw a SecurityError', async () => {
+    // Firefox blocked-storage throws on the sessionStorage/localStorage
+    // property getter ITSELF (not only on getItem/setItem). The checkout state
+    // initializers (readAmbiguousMarker / readPlacedOrder /
+    // readInFlightCheckout) must degrade to "absent" instead of crashing the
+    // mount (BuyerCheckout.tsx:70-82).
+    vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+    vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+
+    renderCheckout();
+
+    // The initializers ran and produced a rendered checkout with the cart
+    // items and an enabled confirm button — no crash, no dead UI.
     expect(await screen.findByText('Tomate')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Confirmar pedido' }),

@@ -360,3 +360,57 @@ describe('checkoutGuard — cross-tab in-flight checkout (S-9)', () => {
     expect(id.length).toBeGreaterThan(0);
   });
 });
+
+describe('checkoutGuard — blocked storage PROPERTY GETTERS (WARNING 2)', () => {
+  // Firefox blocked-storage throws a SecurityError on the sessionStorage /
+  // localStorage property getter ITSELF (not just on getItem/setItem). Every
+  // guard function must survive it: reads degrade to "absent", writes/clears
+  // become no-ops, and ids still resolve.
+  beforeEach(() => {
+    vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+    vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+  });
+
+  it('readAmbiguousMarker returns null when the property getters throw', () => {
+    expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('readPlacedOrder returns null when the property getters throw', () => {
+    expect(readPlacedOrder()).toBeNull();
+  });
+
+  it('readInFlightCheckout returns null when the property getters throw', () => {
+    expect(readInFlightCheckout()).toBeNull();
+  });
+
+  it('getTabSessionId still returns a usable id when the property getters throw', () => {
+    const id = getTabSessionId();
+    expect(id.length).toBeGreaterThan(0);
+  });
+
+  it('resolveIdempotencyKey still returns a fresh key when the property getters throw', () => {
+    const key = resolveIdempotencyKey('payload-x');
+    expect(key).toMatch(/^checkout-/);
+  });
+
+  it('write and clear functions never throw when the property getters throw', () => {
+    expect(() => {
+      writeAmbiguousMarker({ timestamp: 1, fingerprint: 'x' });
+      clearAmbiguousMarker();
+      writePlacedOrder({ id_pedido: 1, timestamp: 1 });
+      clearPlacedOrder();
+      writeInFlightCheckout({
+        tabSessionId: 'tab-A',
+        idempotencyKey: 'checkout-k1',
+        timestamp: 1,
+        fingerprint: 'f',
+      });
+      clearInFlightCheckout();
+      clearIdempotencyKey();
+    }).not.toThrow();
+  });
+});
