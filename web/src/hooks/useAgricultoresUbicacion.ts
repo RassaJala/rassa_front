@@ -209,15 +209,27 @@ export function useAgricultoresUbicacion(options?: {
       const deadline = Date.now() + deadlineMs;
       const remaining = () => Math.max(0, deadline - Date.now());
       const budget = new AbortController();
-      const budgetTimer = setTimeout(() => budget.abort(), deadlineMs);
+      // El vencimiento de la pared se marca como estado y no se re-deriva del
+      // reloj: el abort por deadline y el abort del llamador comparten la señal
+      // del presupuesto, y solo el disparo de este timer distingue uno del otro
+      // (un paso atrás del reloj de sistema no puede convertir un deadline en
+      // una cancelación silenciosa).
+      let deadlineAlcanzado = false;
+      const budgetTimer = setTimeout(() => {
+        deadlineAlcanzado = true;
+        budget.abort();
+      }, deadlineMs);
       const onCallerAbort = () => budget.abort();
       if (signal?.aborted) budget.abort();
       else signal?.addEventListener('abort', onCallerAbort, { once: true });
 
-      // El deadline de pared se reconoce por la señal del presupuesto + el
-      // reloj (ver uso en el conteo de fallos y en el catch).
-      const deadlineExpirado = () =>
-        budget.signal.aborted && Date.now() >= deadline;
+      // Un abort cuenta como fallo si no es una cancelación del llamador, o si
+      // fue justo el deadline de pared el que abortó la fase.
+      const contarFallo = (reason: unknown) =>
+        !isAbortError(reason) || deadlineAlcanzado;
+      const esErrorDeadline = (reason: unknown) =>
+        reason instanceof DOMException &&
+        reason.name === 'DeadlineExceededError';
 
       try {
         const municipios = await fetchMunicipios(budget.signal);
@@ -239,21 +251,39 @@ export function useAgricultoresUbicacion(options?: {
         );
         const localidades: Localidad[] = [];
         let fallos = 0;
-        // mapWithConcurrency rechaza los items en vuelo con `abortError` cuando
-        // aborta la señal del presupuesto (el deadline del mapa corre un
-        // instante después que el del hook, así que nunca es el primero en
-        // vencer). Esos items abortados por el deadline se cuentan como fallos
-        // para que la UI avise con el banner; un abort real del llamador
-        // (Date.now() < deadline) sigue sin contar: es una cancelación, no un
-        // fallo de carga.
-        settled.forEach((result) => {
+        let huboDeadline = false;
+        // mapWithConcurrency reporta un item en vuelo interrumpido por el
+        // vencimiento del presupuesto como `deadlineError` (no es un abort), así
+        // que el conteo lo captura con `!isAbortError`; solo los items aún no
+        // despachados pueden quedar como `abortError` del presupuesto, y ese
+        // caso lo cubre `contarFallo` vía `deadlineAlcanzado`. Un abort real del
+        // llamador (antes del deadline) deja la bandera en false y no cuenta: es
+        // una cancelación, no un fallo de carga.
+        // El deadline interno del mapa y el del hook pueden vencer en el mismo
+        // instante (orden sub-milisegundo), así que la pared se reconoce tanto
+        // por la bandera como por un `deadlineError` del mapa.
+        settled.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             localidades.push(...result.value);
-          } else if (!isAbortError(result.reason) || deadlineExpirado()) {
+            return;
+          }
+          const esDeadline = esErrorDeadline(result.reason);
+          if (esDeadline) huboDeadline = true;
+          if (contarFallo(result.reason)) {
             fallos += 1;
+            const municipio = municipiosActivos[index];
+            if (
+              municipio !== undefined &&
+              !isAbortError(result.reason) &&
+              !esDeadline
+            ) {
+              logError('useAgricultoresUbicacion', result.reason, {
+                municipioId: municipio.id_municipio,
+              });
+            }
           }
         });
-        if (deadlineExpirado()) {
+        if (deadlineAlcanzado || huboDeadline) {
           logError(
             'useAgricultoresUbicacion',
             new Error('Deadline de carga alcanzado'),
@@ -275,10 +305,10 @@ export function useAgricultoresUbicacion(options?: {
           errores: agricultoresResult.errores + fallos,
         };
       } catch (error) {
-        // Mismo criterio que el conteo de fallos: un abort que coincide con el
+        // Mismo criterio que el conteo de fallos: un abort disparado por el
         // deadline de pared se registra (es un timeout), el resto de
         // cancelaciones del llamador no.
-        if (!isAbortError(error) || deadlineExpirado()) {
+        if (!isAbortError(error) || deadlineAlcanzado) {
           logError('useAgricultoresUbicacion', error);
         }
         throw error;

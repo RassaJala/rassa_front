@@ -1191,12 +1191,14 @@ describe('api.ts axios-retry retryCondition', () => {
     };
 
     nowSpy.mockReturnValue(1_000_000);
-    expect(retryCondition({ config: pendientes })).toBe(true);
-    expect(retryCondition({ config: enRuta })).toBe(true);
+    // pendientes agota su propio tope (6 admitidos, corte en el 7º).
+    for (let i = 0; i < 6; i += 1) {
+      expect(retryCondition({ config: pendientes })).toBe(true);
+    }
+    expect(retryCondition({ config: pendientes })).toBe(false);
 
-    // Ambas fallan a la vez: no se consumen presupuesto entre sí.
-    nowSpy.mockReturnValue(1_000_000 + 5_000);
-    expect(retryCondition({ config: pendientes })).toBe(true);
+    // enRuta conserva un presupuesto independiente: con una clave compartida
+    // (params fuera de retryKey) también estaría cortado en este punto.
     expect(retryCondition({ config: enRuta })).toBe(true);
   });
 

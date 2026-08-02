@@ -354,6 +354,7 @@ describe('useAgricultoresUbicacion', () => {
   });
 
   it('counts deadline-expired localidad fetches as fallos and logs them', async () => {
+    let localidadesCalled = 0;
     server.use(
       http.get(`${BASE}/recolecciones/agricultores/`, () =>
         HttpResponse.json({
@@ -381,25 +382,199 @@ describe('useAgricultoresUbicacion', () => {
       ),
       // La localidad tarda más que el deadline inyectado: al vencer la pared
       // el fetch se aborta y se descuenta como fallo (banner), no como
-      // cancelación del llamador.
+      // cancelación del llamador. El deadline (300ms) da margen holgado para
+      // que las fases rápidas (municipios/agricultores) terminen antes, y el
+      // delay supera el deadline para garantizar que el fetch esté en vuelo.
       http.get(`${BASE}/localidades/`, async () => {
-        await delay(500);
+        localidadesCalled += 1;
+        await delay(1500);
         return HttpResponse.json({ data: [] });
       }),
     );
 
     const { result } = renderHook(
-      () => useAgricultoresUbicacion({ deadlineMs: 50 }),
+      () => useAgricultoresUbicacion({ deadlineMs: 300 }),
       { wrapper: createWrapper() },
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.isError).toBe(false);
+    // El abort cortó la fase de localidades (no una fase anterior), así que la
+    // paginación no se truncó y el fallo proviene del deadline.
+    expect(localidadesCalled).toBe(1);
+    expect(result.current.truncated).toBe(false);
     expect(result.current.errores).toBe(1);
     expect(logError).toHaveBeenCalledWith(
       'useAgricultoresUbicacion',
       expect.objectContaining({ message: 'Deadline de carga alcanzado' }),
       expect.objectContaining({ fallos: 1 }),
+    );
+  });
+
+  it('keeps fulfilled localidades and counts only the deadline-expired ones', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: {
+            count: 2,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id_usuario: 10,
+                nombre: 'Juan',
+                apellido_paterno: 'Pérez',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 1,
+              },
+              {
+                id_usuario: 11,
+                nombre: 'Ana',
+                apellido_paterno: 'López',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 2,
+              },
+            ],
+          },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [
+            { id_municipio: 1, nombre: 'Jalisco', estado: true },
+            { id_municipio: 2, nombre: 'Colima', estado: true },
+          ],
+        }),
+      ),
+      http.get(`${BASE}/localidades/`, async ({ request }) => {
+        const url = new URL(request.url);
+        const municipioId = Number(url.searchParams.get('municipio_id'));
+        if (municipioId === 1) {
+          return HttpResponse.json({
+            data: [
+              {
+                id_localidad: 1,
+                nombre: 'Guadalajara',
+                municipio_id: 1,
+                estado: true,
+              },
+            ],
+          });
+        }
+        await delay(1500);
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    const { result } = renderHook(
+      () => useAgricultoresUbicacion({ deadlineMs: 300 }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(false);
+    expect(result.current.truncated).toBe(false);
+    expect(result.current.errores).toBe(1);
+    // La localidad cumplida (municipio 1) sigue agrupada pese al fallo del
+    // municipio 2: el presupuesto es compartido, no por fase.
+    expect(
+      result.current.agricultores.flatMap((g) =>
+        g.localidades.map((l) => l.localidadNombre),
+      ),
+    ).toContain('Guadalajara');
+  });
+
+  it('logs a single localidad fetch failure with the municipio id', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: {
+            count: 1,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id_usuario: 10,
+                nombre: 'Juan',
+                apellido_paterno: 'Pérez',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 1,
+              },
+            ],
+          },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [{ id_municipio: 1, nombre: 'Jalisco', estado: true }],
+        }),
+      ),
+      http.get(`${BASE}/localidades/`, () =>
+        HttpResponse.json({ detail: 'Internal error' }, { status: 500 }),
+      ),
+    );
+
+    const { result } = renderHook(() => useAgricultoresUbicacion(), {
+      wrapper: createWrapper(),
+    });
+
+    // El 500 es retryable (axios-retry re-despadcha 2 veces), así que hay que
+    // esperar más allá del waitFor por defecto.
+    await waitFor(() => expect(result.current.isLoading).toBe(false), {
+      timeout: 5000,
+    });
+    expect(result.current.isError).toBe(false);
+    expect(result.current.errores).toBe(1);
+    expect(logError).toHaveBeenCalledWith(
+      'useAgricultoresUbicacion',
+      expect.any(Error),
+      expect.objectContaining({ municipioId: 1 }),
+    );
+  });
+
+  it('does not count a caller cancellation before the deadline as fallos nor log it', async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    let localidadesCalled = 0;
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: { count: 0, next: null, previous: null, results: [] },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [{ id_municipio: 1, nombre: 'Jalisco', estado: true }],
+        }),
+      ),
+      http.get(`${BASE}/localidades/`, async () => {
+        localidadesCalled += 1;
+        await delay(1500);
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    const { result } = renderHook(() => useAgricultoresUbicacion(), {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      ),
+    });
+
+    // La fase de localidades está en vuelo y el deadline por defecto (30s) no
+    // se acerca: la cancelación viene del llamador, no de la pared.
+    await waitFor(() => expect(localidadesCalled).toBe(1));
+    qc.cancelQueries({ queryKey: ['agricultores-ubicacion'] });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(false);
+    expect(result.current.errores).toBe(0);
+    expect(logError).not.toHaveBeenCalledWith(
+      'useAgricultoresUbicacion',
+      expect.objectContaining({ message: 'Deadline de carga alcanzado' }),
     );
   });
 });

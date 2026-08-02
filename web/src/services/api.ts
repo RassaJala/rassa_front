@@ -43,8 +43,9 @@ const IDEMPOTENT_METHODS = new Set([
 const RETRY_WINDOW_MS = 10_000;
 
 // Fallos del mismo request admitidos dentro de una ventana antes de cortar el
-// reintento. Un despacho con `retries: 2` evalúa retryCondition hasta 3 veces;
-// 6 deja espacio para dos despachos completos sin interferir.
+// reintento. Un despacho con `retries: 2` evalúa retryCondition como máximo 2
+// veces (axios-retry corta por retryCount antes de la 3ª); 6 deja espacio para
+// tres despachos completos y corta a partir del 4º dentro de la ventana.
 const RETRY_MAX_PER_WINDOW = 6;
 
 // Cota del rastreo de ventanas: las entradas solo se limpian al responder con
@@ -98,20 +99,15 @@ axiosRetry(api, {
     // limitado y pelea contra los deadlines del llamador.
     if (error.response?.status === 429) return false;
 
-    const retryable = () => {
-      if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
-      return (
-        error.response?.status !== undefined &&
-        error.response.status >= SERVER_ERROR_THRESHOLD
-      );
-    };
-
     const key = retryKey(config);
     const now = Date.now();
     // La retryability se evalúa antes de tocar la ventana: un fallo que no se
     // va a reintentar (p. ej. un 4xx no idempotente) no debe abrir una ventana
     // ni consumir uno de los slots del tope.
-    const retryableNow = retryable();
+    const retryableNow =
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status !== undefined &&
+        error.response.status >= SERVER_ERROR_THRESHOLD);
     const entry = requestFailuresByKey.get(key);
     if (entry === undefined || now - entry.start > RETRY_WINDOW_MS) {
       // Ventana nueva o vencida: se reabre y la retryability se evalúa de
