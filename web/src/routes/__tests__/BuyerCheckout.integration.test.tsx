@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import {
   act,
   fireEvent,
@@ -1161,6 +1161,92 @@ describe('BuyerCheckout — integration', () => {
     first.unmount();
     clearInFlightCheckout();
     renderCheckout();
+    expect(
+      await screen.findByText(/Tu pedido N°45 se confirmó/),
+    ).toBeInTheDocument();
+    expect(readPlacedOrder()).toBeNull();
+  });
+
+  it('R4-W1: the S-3 confirmation banner survives StrictMode double-invocation', async () => {
+    // A hidden success wrote the placed-order record. React dev StrictMode
+    // double-invokes state initializers — a side-effecting initializer would
+    // consume the record on the first call and return null on the second, so
+    // the banner would never show. The consumption must live in an effect.
+    writePlacedOrder({ id_pedido: 45, timestamp: Date.now() });
+
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={['/cliente/checkout']}>
+          <ThemeProvider>
+            <QueryClientProvider
+              client={
+                new QueryClient({
+                  defaultOptions: { mutations: { retry: false } },
+                })
+              }
+            >
+              <Routes>
+                <Route path="/cliente/checkout" element={<BuyerCheckout />} />
+              </Routes>
+            </QueryClientProvider>
+          </ThemeProvider>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+
+    // The confirmation surfaces AND the record is consumed exactly once.
+    expect(
+      await screen.findByText(/Tu pedido N°45 se confirmó/),
+    ).toBeInTheDocument();
+    expect(readPlacedOrder()).toBeNull();
+  });
+
+  it('R4-W2: a placed-order record deferred by an in-flight POST surfaces when the POST settles, without a remount', async () => {
+    let postCount = 0;
+    const resolveOrder = stubCreateOrder({
+      deferred: true,
+      status: 400,
+      body: { detail: 'Bad request' },
+      onRequest: () => {
+        postCount += 1;
+      },
+    });
+
+    const qc = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
+    });
+    const user = userEvent.setup();
+
+    // Step 1-2: mount A, confirm → POST pending; then navigate away.
+    const first = renderCheckoutWithClient(qc);
+    await screen.findByText('Confirmar pedido');
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
+    expect(postCount).toBe(1);
+    first.unmount();
+
+    // Step 3: an earlier HIDDEN success (resolved while A was unmounted) wrote
+    // the placed-order record while POST A is still pending.
+    writePlacedOrder({ id_pedido: 45, timestamp: Date.now() });
+
+    // Step 4: mount B (same QueryClient) while the POST is still in flight —
+    // LOW-4: the banner must NOT claim the order and the record must survive.
+    renderCheckoutWithClient(qc);
+    expect(
+      screen.queryByText(/Tu pedido N°45 se confirmó/),
+    ).not.toBeInTheDocument();
+    expect(readPlacedOrder()).not.toBeNull();
+
+    // Step 5: POST A settles as a DEFINITIVE 400 failure — no navigation, no
+    // ambiguous marker, in-flight record cleared.
+    resolveOrder(HttpResponse.json({ detail: 'Bad request' }, { status: 400 }));
+    await waitFor(() => {
+      expect(readInFlightCheckout()).toBeNull();
+    });
+    expect(screen.queryByText(/Pedido detalle/)).not.toBeInTheDocument();
+    expect(readAmbiguousMarker()).toBeNull();
+
+    // Step 6: the deferred confirmation surfaces on THIS mount — no remount —
+    // and the record is consumed.
     expect(
       await screen.findByText(/Tu pedido N°45 se confirmó/),
     ).toBeInTheDocument();

@@ -69,20 +69,14 @@ export function BuyerCheckout() {
   const [ambiguousMarker, setAmbiguousMarker] =
     useState<AmbiguousMarker | null>(() => readAmbiguousMarker());
   // S-3: an order that succeeded after the user navigated away is surfaced on
-  // the next checkout mount; the record is consumed (cleared) once shown.
+  // the next checkout mount; the record is consumed (cleared) once shown. The
+  // consumption must NOT happen in this initializer — React initializers must
+  // be pure (R4-W1): StrictMode double-invokes them in dev, and a discarded
+  // render would consume the record without ever showing the banner. The
+  // record is consumed in the effect below, which also re-reads it when an
+  // in-flight POST settles (R4-W2).
   const [placedOrder, setPlacedOrder] = useState<PlacedOrderRecord | null>(
-    () => {
-      const record = readPlacedOrder();
-      // LOW-4: consume (clear + surface) the S-3 confirmation ONLY when no
-      // in-flight checkout exists — a return-while-pending mount must not
-      // claim the order was confirmed before the POST has settled. The record
-      // stays until the next mount after the in-flight record is gone.
-      if (record !== null && readInFlightCheckout() === null) {
-        clearPlacedOrder();
-        return record;
-      }
-      return null;
-    },
+    null,
   );
   // S-10: synchronous in-flight flag — two handleConfirm calls in the same
   // tick cannot both pass (state-based guards only update after a re-render).
@@ -197,6 +191,22 @@ export function BuyerCheckout() {
   useEffect(() => {
     if (!isOrderInFlight) {
       setAmbiguousMarker(readAmbiguousMarker());
+    }
+  }, [isOrderInFlight]);
+
+  // R4-W1/R4-W2: consume the placed-order record in an effect, NOT in the
+  // useState initializer (React initializers must be pure — StrictMode
+  // double-invokes them in dev, and a discarded prod render would consume
+  // the record without showing the banner). Mirror the ambiguous-marker
+  // effect: when the in-flight state drops back to idle, re-read the record
+  // so a confirmation deferred by LOW-4 (mount while a POST is pending)
+  // surfaces on THIS mount instead of requiring another one.
+  useEffect(() => {
+    if (isOrderInFlight) return;
+    const record = readPlacedOrder();
+    if (record !== null && readInFlightCheckout() === null) {
+      clearPlacedOrder();
+      setPlacedOrder(record);
     }
   }, [isOrderInFlight]);
 
