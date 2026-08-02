@@ -12,6 +12,7 @@ import { VendorPanelScreen } from './VendorPanelScreen';
 import { PaymentPage } from './PaymentPage';
 import { ReceiptPage } from './ReceiptPage';
 import { AdminDashboard } from './AdminDashboard';
+import { AdminMermasDashboard } from './AdminMermasDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminFamilies } from './AdminFamilies';
 import { AdminFamilyDetail } from './AdminFamilyDetail';
@@ -165,6 +166,7 @@ export function AppRouter() {
                 <Route path="municipios" element={<AdminMunicipios />} />
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
+                <Route path="mermas" element={<AdminMermasDashboard />} />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />
