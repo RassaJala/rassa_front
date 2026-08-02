@@ -5,6 +5,7 @@ import type { Recoleccion, RecoleccionEstado } from '../types/recolecciones';
 import {
   esRecoleccionDuplicada,
   isValidFecha,
+  nombreCompletoAgricultor,
   todayString,
 } from '../utils/recolecciones';
 
@@ -28,16 +29,6 @@ const fakeAgricultores = [
     localidad: 2,
   },
 ];
-
-function nombreCompleto(a: {
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno: string | null;
-}): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
 
 function inicialRecoleccion(): Recoleccion {
   const hoy = todayString();
@@ -181,7 +172,9 @@ export const handlers = [
     const nueva: Recoleccion = {
       id_recoleccion: nextRecoleccionId++,
       fk_agricultor: body.fk_agricultor ?? null,
-      agricultor_nombre: agricultor ? nombreCompleto(agricultor) : 'Agricultor',
+      agricultor_nombre: agricultor
+        ? nombreCompletoAgricultor(agricultor)
+        : 'Agricultor',
       fecha_recoleccion: fecha,
       hora_inicio: body.hora_inicio ?? null,
       hora_fin: body.hora_fin ?? null,

@@ -1,5 +1,20 @@
 import { DIAS, MESES } from '../constants/recolecciones';
 
+/**
+ * Nombre completo de un agricultor a partir de sus partes. Es la única
+ * definición de la unión (nombre + apellidos) para no duplicarla entre el
+ * hook, el selector, el modal y el mock.
+ */
+export function nombreCompletoAgricultor(a: {
+  readonly nombre: string;
+  readonly apellido_paterno: string;
+  readonly apellido_materno: string | null;
+}): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function toDateString(d: Date): string {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');

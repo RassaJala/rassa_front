@@ -4,10 +4,8 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '../../mocks/server';
-import {
-  getFullNameAgricultor,
-  useAgricultoresUbicacion,
-} from '../useAgricultoresUbicacion';
+import { nombreCompletoAgricultor } from '../../utils/recolecciones';
+import { useAgricultoresUbicacion } from '../useAgricultoresUbicacion';
 
 vi.mock('../../utils/logger', () => ({
   logError: vi.fn(),
@@ -26,26 +24,20 @@ function createWrapper() {
   };
 }
 
-describe('getFullNameAgricultor', () => {
+describe('nombreCompletoAgricultor', () => {
   it('joins available name parts', () => {
     expect(
-      getFullNameAgricultor({
-        id_usuario: 1,
+      nombreCompletoAgricultor({
         nombre: 'Ana',
         apellido_paterno: 'Ramírez',
         apellido_materno: null,
-        role: 'farmer',
-        localidad: 1,
       }),
     ).toBe('Ana Ramírez');
     expect(
-      getFullNameAgricultor({
-        id_usuario: 2,
+      nombreCompletoAgricultor({
         nombre: 'Ana',
         apellido_paterno: 'Ramírez',
         apellido_materno: 'López',
-        role: 'farmer',
-        localidad: 1,
       }),
     ).toBe('Ana Ramírez López');
   });
@@ -325,5 +317,35 @@ describe('useAgricultoresUbicacion', () => {
     );
     expect(todos.map((a) => a.id_usuario)).toEqual([10]);
     expect(todos.some((a) => a.nombre === 'Muni')).toBe(false);
+  });
+
+  it('fetches municipios before agricultores so the shared budget is accurate', async () => {
+    const order: string[] = [];
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () => {
+        order.push('agricultores');
+        return HttpResponse.json({
+          data: { count: 0, next: null, previous: null, results: [] },
+        });
+      }),
+      http.get(`${BASE}/municipios/`, () => {
+        order.push('municipios');
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    const { result } = renderHook(() => useAgricultoresUbicacion(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(false);
+    expect(result.current.agricultores).toHaveLength(0);
+
+    // Las fases corren en serie: el presupuesto restante para agricultores solo
+    // se conoce cuando municipios termina, y el deadline también cubre municipios.
+    expect(order.indexOf('municipios')).toBeLessThan(
+      order.indexOf('agricultores'),
+    );
   });
 });

@@ -7,6 +7,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useAppColors } from '../hooks/useAppColors';
+import type { ApiResponse } from '../types';
 import api from '../services/api';
 
 // ── Types ──────────────────────────────────────────────────
@@ -19,10 +20,6 @@ interface Category {
 interface Unidad {
   id_unidad: number;
   tipo: string;
-}
-
-interface ApiResponse<T> {
-  data: T;
 }
 
 // ── Helpers ────────────────────────────────────────────────

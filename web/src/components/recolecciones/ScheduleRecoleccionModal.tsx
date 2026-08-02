@@ -4,7 +4,6 @@ import { CalendarCheck, X } from 'lucide-react';
 
 import {
   type AgricultorListItem,
-  getFullNameAgricultor,
   useAgricultoresUbicacion,
 } from '../../hooks/useAgricultoresUbicacion';
 import { useAppColors } from '../../hooks/useAppColors';
@@ -16,6 +15,7 @@ import type {
 import { extractApiError } from '../../utils/apiErrors';
 import {
   buildDuplicateKeys,
+  nombreCompletoAgricultor,
   normalizeHora,
   todayString,
   validateProgramarForm,
@@ -72,8 +72,12 @@ export function ScheduleRecoleccionModal({
     mutationFn: (payload: RecoleccionPayload) => createRecoleccion(payload),
     onSuccess: () => {
       setError(null);
-      onSaved('Recolección programada correctamente.');
+      // Se cierra el modal antes de invalidar: el fetch de `todas` está gateado
+      // por `modalVisible`, así que invalidarlo con el modal abierto aborta el
+      // refetch al cerrarlo y la lista de duplicados queda con el dato viejo en
+      // la próxima apertura.
       onClose();
+      onSaved('Recolección programada correctamente.');
     },
     onError: (err: unknown) => {
       const detail = extractApiError(err, [
@@ -99,7 +103,9 @@ export function ScheduleRecoleccionModal({
             localidadNombre: localidad.localidadNombre,
             agricultores: localidad.agricultores.filter((a) => {
               if (!termino) return true;
-              return getFullNameAgricultor(a).toLowerCase().includes(termino);
+              return nombreCompletoAgricultor(a)
+                .toLowerCase()
+                .includes(termino);
             }),
           }))
           .filter((localidad) => localidad.agricultores.length > 0),
@@ -292,7 +298,7 @@ export function ScheduleRecoleccionModal({
               <span
                 style={{ fontSize: 14, fontWeight: 600, color: colors.brand }}
               >
-                Seleccionado: {getFullNameAgricultor(agricultor)}
+                Seleccionado: {nombreCompletoAgricultor(agricultor)}
               </span>
             </div>
           ) : null}

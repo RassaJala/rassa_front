@@ -29,15 +29,23 @@ const IDEMPOTENT_METHODS = new Set([
   'trace',
 ]);
 
-// Ventana de reintentos por request (medida por método+url+params). No es un
-// tope que corta el reintento: al vencer, la ventana se renueva y la retryability
-// se evalúa de inmediato. El presupuesto real por despacho lo acota `retries: 2`
-// de axios-retry; los bucles paginados se acotan con `maxDurationMs` del lado
-// del llamador (fetchAllPages / mapWithConcurrency), no aquí. La identidad del
-// config no sobrevive al `mergeConfig` de axios en cada reintento (verificado
-// empíricamente), así que se mide por método+url+params; cada página de un
-// bucle paginado tiene URL distinta y la entrada se limpia al responder.
+// Ventana de reintentos por request (medida por método+url+params). Limita los
+// fallos del mismo request dentro de la ventana: superado el tope, retryCondition
+// devuelve false hasta que la ventana venza. No es un bloqueo permanente: al
+// vencer se reabre y la retryability se evalúa de inmediato (nunca se envenena
+// la URL). El tope es generoso (≈2 despachos completos de `retries: 2`) y solo
+// corta los bucles patológicos del mismo endpoint; cada despacho sigue acotado
+// por `retries: 2` y los recorridos paginados por `maxDurationMs` del llamador.
+// La identidad del config no sobrevive al `mergeConfig` de axios en cada
+// reintento (verificado empíricamente), así que se mide por método+url+params;
+// cada página de un bucle paginado tiene URL distinta y la entrada se limpia al
+// responder con éxito.
 const RETRY_WINDOW_MS = 10_000;
+
+// Fallos del mismo request admitidos dentro de una ventana antes de cortar el
+// reintento. Un despacho con `retries: 2` evalúa retryCondition hasta 3 veces;
+// 6 deja espacio para dos despachos completos sin interferir.
+const RETRY_MAX_PER_WINDOW = 6;
 
 // Cota del rastreo de ventanas: las entradas solo se limpian al responder con
 // éxito, así que un fallo terminal podría dejar la clave huérfana. Se evita un
@@ -45,16 +53,19 @@ const RETRY_WINDOW_MS = 10_000;
 const RETRY_TRACK_LIMIT = 1000;
 
 // Evicción FIFO por inserción (no LRU): renovar una clave no la mueve al
-// final, así que `keys().next()` borra la entrada más antigua. Es benigno: la
-// ventana nunca corta reintentos, solo evita un crecimiento sin límite.
-const requestStartsByKey = new Map<string, number>();
+// final, así que `keys().next()` borra la entrada más antigua.
+const requestFailuresByKey = new Map<
+  string,
+  { readonly start: number; failures: number }
+>();
 
-function trackRetryStart(key: string): void {
-  if (requestStartsByKey.size >= RETRY_TRACK_LIMIT) {
-    const oldest = requestStartsByKey.keys().next().value as string | undefined;
-    if (oldest !== undefined) requestStartsByKey.delete(oldest);
+function openRetryWindow(key: string, now: number): void {
+  if (requestFailuresByKey.size >= RETRY_TRACK_LIMIT) {
+    const oldest = requestFailuresByKey.keys().next().value as
+      string | undefined;
+    if (oldest !== undefined) requestFailuresByKey.delete(oldest);
   }
-  requestStartsByKey.set(key, Date.now());
+  requestFailuresByKey.set(key, { start: now, failures: 1 });
 }
 
 // `config.url` no incluye los query params (viven en `config.params`), así que
@@ -86,20 +97,28 @@ axiosRetry(api, {
     // 429 = throttling: reintentarlo amplifica la carga sobre un endpoint ya
     // limitado y pelea contra los deadlines del llamador.
     if (error.response?.status === 429) return false;
+
+    const retryable = () => {
+      if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
+      return (
+        error.response?.status !== undefined &&
+        error.response.status >= SERVER_ERROR_THRESHOLD
+      );
+    };
+
     const key = retryKey(config);
     const now = Date.now();
-    const started = requestStartsByKey.get(key);
-    if (started === undefined || now - started > RETRY_WINDOW_MS) {
-      // Entrada vencida: renuevo la ventana y sigo evaluando la retryability.
-      // Devolver false sin renovar envenenaría todos los reintentos futuros de
-      // esa URL; renovar mantiene el presupuesto real en `retries: 2`.
-      trackRetryStart(key);
+    const entry = requestFailuresByKey.get(key);
+    if (entry === undefined || now - entry.start > RETRY_WINDOW_MS) {
+      // Ventana nueva o vencida: se reabre y la retryability se evalúa de
+      // inmediato. Reabrir (y no devolver false sin renovar) evita envenenar
+      // los reintentos futuros de esa URL.
+      openRetryWindow(key, now);
+      return retryable();
     }
-    if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
-    return (
-      error.response?.status !== undefined &&
-      error.response.status >= SERVER_ERROR_THRESHOLD
-    );
+    entry.failures += 1;
+    if (entry.failures > RETRY_MAX_PER_WINDOW) return false;
+    return retryable();
   },
 });
 
@@ -207,7 +226,7 @@ async function refreshAccessToken(
 
 api.interceptors.response.use(
   (response) => {
-    requestStartsByKey.delete(retryKey(response.config));
+    requestFailuresByKey.delete(retryKey(response.config));
     // Un reintento con token fresco que terminó OK no debe marcar para siempre
     // la URL: si el marcador sobreviviera, un 401 posterior cerraría sesión
     // directo en vez de volver a refrescar.

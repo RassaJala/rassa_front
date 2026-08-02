@@ -1,10 +1,12 @@
 import {
   type AgricultorListItem,
   type AgricultorUbicacion,
-  getFullNameAgricultor,
 } from '../../hooks/useAgricultoresUbicacion';
 import { useAppColors } from '../../hooks/useAppColors';
-import { recoleccionDuplicateKey } from '../../utils/recolecciones';
+import {
+  nombreCompletoAgricultor,
+  recoleccionDuplicateKey,
+} from '../../utils/recolecciones';
 
 interface AgricultorSelectorProps {
   readonly grupos: readonly AgricultorUbicacion[];
@@ -215,7 +217,7 @@ function AgricultorRow({
           flexShrink: 1,
         }}
       >
-        {getFullNameAgricultor(agricultor)}
+        {nombreCompletoAgricultor(agricultor)}
       </span>
       {duplicado ? (
         <span

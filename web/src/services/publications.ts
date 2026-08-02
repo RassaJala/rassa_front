@@ -3,6 +3,7 @@ import {
   UPLOAD_TIMEOUT_MS,
   assertValidId,
 } from '../constants/api';
+import type { ApiResponse } from '../types';
 import api from './api';
 
 // ── Types ──────────────────────────────────────────────────
@@ -45,9 +46,7 @@ export interface PublicacionList {
   results: Publicacion[];
 }
 
-export interface ApiResponse<T> {
-  data: T;
-}
+export type { ApiResponse };
 
 export interface AddProductoPayload {
   fk_producto: number;

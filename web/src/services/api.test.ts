@@ -1030,30 +1030,34 @@ describe('api.ts token interceptor', () => {
       configurable: true,
     });
 
-    localStorage.setItem('token', 'old-token');
-    sessionStorage.setItem('refresh_token', 'bad-refresh');
-    await loadApi();
+    try {
+      localStorage.setItem('token', 'old-token');
+      // Sin refresh token: si el guard de /login fallara, el refresh lanzaría
+      // un fallo fatal de autenticación y redirigiría; el test lo detectaría.
+      sessionStorage.clear();
+      await loadApi();
 
-    const interceptor = responseFns[0]!;
-    const error401 = {
-      config: {
-        url: '/publicaciones/',
-        headers: { Authorization: 'Bearer old-token' } as Record<
-          string,
-          string
-        >,
-        method: 'get',
-      },
-      response: { status: 401 },
-    };
+      const interceptor = responseFns[0]!;
+      const error401 = {
+        config: {
+          url: '/publicaciones/',
+          headers: { Authorization: 'Bearer old-token' } as Record<
+            string,
+            string
+          >,
+          method: 'get',
+        },
+        response: { status: 401 },
+      };
 
-    mockAxiosPost.mockRejectedValueOnce(new Error('refresh failed'));
-
-    // Should NOT trigger redirect when already on login
-    await expect(interceptor.onRejected(error401)).rejects.toThrow();
-
-    if (originalDescriptor) {
-      Object.defineProperty(window, 'location', originalDescriptor);
+      // En /login el 401 no dispara refresh ni redirección.
+      await expect(interceptor.onRejected(error401)).rejects.toThrow();
+      expect(mockAxiosPost).not.toHaveBeenCalled();
+      expect(mockRedirect).not.toHaveBeenCalled();
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(window, 'location', originalDescriptor);
+      }
     }
   });
 });
@@ -1210,6 +1214,25 @@ describe('api.ts axios-retry retryCondition', () => {
 
     // Sin entrada, un error posterior arranca una ventana nueva.
     nowSpy.mockReturnValue(1_000_000 + 20_000);
+    expect(retryCondition({ config })).toBe(true);
+  });
+
+  it('stops retrying the same request within a window and reopens on expiry', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(true);
+    const retryCondition = await getRetryCondition();
+    const config = { method: 'get', url: '/recolecciones/' };
+
+    nowSpy.mockReturnValue(1_000_000);
+    // Dentro de la ventana, el tope (RETRY_MAX_PER_WINDOW=6) admite el reintento.
+    for (let i = 0; i < 6; i += 1) {
+      expect(retryCondition({ config })).toBe(true);
+    }
+    // Sobre el tope, el mismo request deja de reintentarse hasta que venza.
+    expect(retryCondition({ config })).toBe(false);
+
+    // La ventana vencida se reabre: la retryability se evalúa de nuevo.
+    nowSpy.mockReturnValue(1_000_000 + 11_000);
     expect(retryCondition({ config })).toBe(true);
   });
 });

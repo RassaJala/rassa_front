@@ -1,4 +1,5 @@
 import { assertValidId } from '../constants/api';
+import type { ApiResponse } from '../types';
 import type {
   Recoleccion,
   RecoleccionEstado,
@@ -7,10 +8,6 @@ import type {
 } from '../types/recolecciones';
 import { fetchAllPages, type FetchAllPagesResult } from '../utils/pagination';
 import api from './api';
-
-interface ApiResponse<T> {
-  data: T;
-}
 
 export type RecoleccionFilters = {
   estado?: RecoleccionEstado;

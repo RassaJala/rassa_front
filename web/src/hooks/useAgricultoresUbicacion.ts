@@ -4,6 +4,7 @@ import api from '../services/api';
 import { isAbortError, mapWithConcurrency } from '../utils/concurrency';
 import { logError } from '../utils/logger';
 import { fetchAllPages } from '../utils/pagination';
+import { nombreCompletoAgricultor } from '../utils/recolecciones';
 
 export interface AgricultorListItem {
   readonly id_usuario: number;
@@ -20,12 +21,6 @@ export interface AgricultorUbicacion {
     readonly localidadNombre: string;
     readonly agricultores: readonly AgricultorListItem[];
   }[];
-}
-
-export function getFullNameAgricultor(a: AgricultorListItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
 }
 
 interface Localidad {
@@ -167,8 +162,8 @@ function groupByUbicacion(
       localidades: sortedLocalidades.map(([localidadNombre, list]) => ({
         localidadNombre,
         agricultores: [...list].sort((a, b) =>
-          getFullNameAgricultor(a).localeCompare(
-            getFullNameAgricultor(b),
+          nombreCompletoAgricultor(a).localeCompare(
+            nombreCompletoAgricultor(b),
             'es',
           ),
         ),
@@ -196,24 +191,40 @@ export function useAgricultoresUbicacion(options?: {
   }>({
     queryKey: ['agricultores-ubicacion'],
     queryFn: async ({ signal }) => {
-      // Un único presupuesto compartido: el deadline se fija al arrancar y
-      // cada fase recibe el tiempo restante (los 30s no se apilan en serie).
+      // Un único presupuesto compartido de pared para todas las fases: se fija
+      // al arrancar y cada fase recibe el tiempo restante (los 30s no se apilan
+      // en serie). Las fases corren en serie porque el presupuesto restante solo
+      // se conoce al terminar la anterior; en paralelo, la fase que termina
+      // después se habría llevado todo el tiempo y la última quedaría sin
+      // presupuesto. El deadline aborta también los municipios en vuelo (la
+      // señal del presupuesto se pasa a cada fetch), así el tope es de pared.
       const deadline = Date.now() + LOCALIDADES_DEADLINE_MS;
       const remaining = () => Math.max(0, deadline - Date.now());
+      const budget = new AbortController();
+      const budgetTimer = setTimeout(
+        () => budget.abort(),
+        LOCALIDADES_DEADLINE_MS,
+      );
+      const onCallerAbort = () => budget.abort();
+      if (signal?.aborted) budget.abort();
+      else signal?.addEventListener('abort', onCallerAbort, { once: true });
+
       try {
-        const [municipios, agricultoresResult] = await Promise.all([
-          fetchMunicipios(signal),
-          fetchAgricultores(signal, remaining()),
-        ]);
+        const municipios = await fetchMunicipios(budget.signal);
 
         // Los municipios desactivados no se consultan ni se agrupan.
         const municipiosActivos = municipios.filter((m) => m.estado);
+
+        const agricultoresResult = await fetchAgricultores(
+          budget.signal,
+          remaining(),
+        );
 
         const settled = await mapWithConcurrency(
           municipiosActivos,
           4,
           (m, budgetSignal) => fetchLocalidades(m.id_municipio, budgetSignal),
-          signal,
+          budget.signal,
           remaining(),
         );
         const localidades: Localidad[] = [];
@@ -240,6 +251,9 @@ export function useAgricultoresUbicacion(options?: {
           logError('useAgricultoresUbicacion', error);
         }
         throw error;
+      } finally {
+        clearTimeout(budgetTimer);
+        signal?.removeEventListener('abort', onCallerAbort);
       }
     },
     staleTime: 5 * 60 * 1000,

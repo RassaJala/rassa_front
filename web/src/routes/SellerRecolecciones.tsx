@@ -139,12 +139,20 @@ export function SellerRecolecciones() {
     // éxito por un error. Si la actualización falla, se degrada a un aviso
     // secundario.
     void refetch().then((refreshed) => {
-      if (refreshed.isError) {
-        setToast({
-          message: 'El cambio se guardó, pero no se pudo actualizar la lista.',
-          type: 'error',
-        });
-      }
+      if (!refreshed.isError) return;
+      // La degradación solo reemplaza el toast de éxito de esta operación: si
+      // mientras tanto se mostró un aviso más reciente (otra acción) o el
+      // `onDone` ya cerró el actual, un error tardío del refetch en segundo
+      // plano no debe pisarlo.
+      setToast((current) =>
+        current?.type === 'success' && current.message === message
+          ? {
+              message:
+                'El cambio se guardó, pero no se pudo actualizar la lista.',
+              type: 'error',
+            }
+          : current,
+      );
     });
   };
   const notifyError = (error: unknown) => {
