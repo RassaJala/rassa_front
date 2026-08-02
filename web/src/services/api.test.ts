@@ -1260,4 +1260,30 @@ describe('api.ts axios-retry retryCondition', () => {
     }
     expect(retryCondition({ config, response: { status: 503 } })).toBe(false);
   });
+
+  it('does not consume retry slots for non-retryable failures inside an open window', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    mockIsNetworkOrIdempotentRequestError.mockReturnValue(false);
+    const retryCondition = await getRetryCondition();
+    const config = { method: 'get', url: '/recolecciones/' };
+
+    // Un 503 abre la ventana (consume el primer slot).
+    nowSpy.mockReturnValue(1_000_000);
+    expect(retryCondition({ config, response: { status: 503 } })).toBe(true);
+
+    // 404s no retryables DENTRO de la ventana no deben gastar slots: si lo
+    // hicieran, los 503s posteriores cortarían antes de tiempo.
+    nowSpy.mockReturnValue(1_000_000 + 1_000);
+    for (let i = 0; i < 3; i += 1) {
+      expect(retryCondition({ config, response: { status: 404 } })).toBe(false);
+    }
+
+    // El presupuesto sigue intacto: los 503s agotan el tope igual que si los
+    // 404s no hubieran existido (5 trues tras el slot inicial, corte en el 6º).
+    nowSpy.mockReturnValue(1_000_000 + 2_000);
+    for (let i = 0; i < 5; i += 1) {
+      expect(retryCondition({ config, response: { status: 503 } })).toBe(true);
+    }
+    expect(retryCondition({ config, response: { status: 503 } })).toBe(false);
+  });
 });

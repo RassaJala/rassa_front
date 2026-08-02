@@ -120,7 +120,7 @@ axiosRetry(api, {
       if (retryableNow) openRetryWindow(key, now);
       return retryableNow;
     }
-    entry.failures += 1;
+    if (retryableNow) entry.failures += 1;
     if (entry.failures > RETRY_MAX_PER_WINDOW) return false;
     return retryableNow;
   },

@@ -52,6 +52,10 @@ const AGRICULTORES_URL = '/recolecciones/agricultores/';
 // fallos (deadlineError no es un abort) y la UI avisa con el banner.
 const LOCALIDADES_DEADLINE_MS = 30_000;
 
+// Límite de solicitudes de localidades en vuelo (una por municipio activo). Se
+// acota para no abrir cientos de fetchs simultáneos contra el API.
+const LOCALIDADES_CONCURRENCIA = 4;
+
 function unwrapData<T>(body: unknown): T {
   if (
     body &&
@@ -174,6 +178,9 @@ function groupByUbicacion(
 
 export function useAgricultoresUbicacion(options?: {
   readonly enabled?: boolean;
+  /** Presupuesto total de pared en ms (default: LOCALIDADES_DEADLINE_MS). Se
+   * expone para acotar la duración del presupuesto en pruebas. */
+  readonly deadlineMs?: number;
 }): {
   agricultores: AgricultorUbicacion[];
   isLoading: boolean;
@@ -183,6 +190,7 @@ export function useAgricultoresUbicacion(options?: {
   refetch: () => void;
 } {
   const enabled = options?.enabled ?? true;
+  const deadlineMs = options?.deadlineMs ?? LOCALIDADES_DEADLINE_MS;
 
   const { data, isLoading, isError, refetch } = useQuery<{
     grupos: AgricultorUbicacion[];
@@ -198,16 +206,18 @@ export function useAgricultoresUbicacion(options?: {
       // después se habría llevado todo el tiempo y la última quedaría sin
       // presupuesto. El deadline aborta también los municipios en vuelo (la
       // señal del presupuesto se pasa a cada fetch), así el tope es de pared.
-      const deadline = Date.now() + LOCALIDADES_DEADLINE_MS;
+      const deadline = Date.now() + deadlineMs;
       const remaining = () => Math.max(0, deadline - Date.now());
       const budget = new AbortController();
-      const budgetTimer = setTimeout(
-        () => budget.abort(),
-        LOCALIDADES_DEADLINE_MS,
-      );
+      const budgetTimer = setTimeout(() => budget.abort(), deadlineMs);
       const onCallerAbort = () => budget.abort();
       if (signal?.aborted) budget.abort();
       else signal?.addEventListener('abort', onCallerAbort, { once: true });
+
+      // El deadline de pared se reconoce por la señal del presupuesto + el
+      // reloj (ver uso en el conteo de fallos y en el catch).
+      const deadlineExpirado = () =>
+        budget.signal.aborted && Date.now() >= deadline;
 
       try {
         const municipios = await fetchMunicipios(budget.signal);
@@ -222,34 +232,28 @@ export function useAgricultoresUbicacion(options?: {
 
         const settled = await mapWithConcurrency(
           municipiosActivos,
-          4,
+          LOCALIDADES_CONCURRENCIA,
           (m, budgetSignal) => fetchLocalidades(m.id_municipio, budgetSignal),
           budget.signal,
           remaining(),
         );
         const localidades: Localidad[] = [];
         let fallos = 0;
-        // El deadline del mapa corre un instante después que el del hook
-        // (remaining() se evalúa antes de llamarlo), así que al vencer la pared
-        // el abort llega por la señal del presupuesto y mapWithConcurrency lo
-        // reporta como `abortError`, no como `deadlineError`. Esos items
-        // abortados por el deadline se cuentan como fallos para que la UI avise
-        // con el banner; un abort real del llamador (Date.now() < deadline)
-        // sigue sin contar, porque ahí se trata de una cancelación, no de un
+        // mapWithConcurrency rechaza los items en vuelo con `abortError` cuando
+        // aborta la señal del presupuesto (el deadline del mapa corre un
+        // instante después que el del hook, así que nunca es el primero en
+        // vencer). Esos items abortados por el deadline se cuentan como fallos
+        // para que la UI avise con el banner; un abort real del llamador
+        // (Date.now() < deadline) sigue sin contar: es una cancelación, no un
         // fallo de carga.
-        const deadlineExpirado =
-          budget.signal.aborted && Date.now() >= deadline;
         settled.forEach((result) => {
           if (result.status === 'fulfilled') {
             localidades.push(...result.value);
-          } else if (
-            !isAbortError(result.reason) ||
-            (deadlineExpirado && isAbortError(result.reason))
-          ) {
+          } else if (!isAbortError(result.reason) || deadlineExpirado()) {
             fallos += 1;
           }
         });
-        if (deadlineExpirado) {
+        if (deadlineExpirado()) {
           logError(
             'useAgricultoresUbicacion',
             new Error('Deadline de carga alcanzado'),
@@ -271,7 +275,10 @@ export function useAgricultoresUbicacion(options?: {
           errores: agricultoresResult.errores + fallos,
         };
       } catch (error) {
-        if (!isAbortError(error)) {
+        // Mismo criterio que el conteo de fallos: un abort que coincide con el
+        // deadline de pared se registra (es un timeout), el resto de
+        // cancelaciones del llamador no.
+        if (!isAbortError(error) || deadlineExpirado()) {
           logError('useAgricultoresUbicacion', error);
         }
         throw error;

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '../../mocks/server';
@@ -350,8 +350,56 @@ describe('useAgricultoresUbicacion', () => {
 
     // Las fases corren en serie: el presupuesto restante para agricultores solo
     // se conoce cuando municipios termina, y el deadline también cubre municipios.
-    expect(order.indexOf('municipios-done')).toBeLessThan(
-      order.indexOf('agricultores'),
+    expect(order).toEqual(['municipios', 'municipios-done', 'agricultores']);
+  });
+
+  it('counts deadline-expired localidad fetches as fallos and logs them', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: {
+            count: 1,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id_usuario: 10,
+                nombre: 'Juan',
+                apellido_paterno: 'Pérez',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 1,
+              },
+            ],
+          },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [{ id_municipio: 1, nombre: 'Jalisco', estado: true }],
+        }),
+      ),
+      // La localidad tarda más que el deadline inyectado: al vencer la pared
+      // el fetch se aborta y se descuenta como fallo (banner), no como
+      // cancelación del llamador.
+      http.get(`${BASE}/localidades/`, async () => {
+        await delay(500);
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    const { result } = renderHook(
+      () => useAgricultoresUbicacion({ deadlineMs: 50 }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(false);
+    expect(result.current.errores).toBe(1);
+    expect(logError).toHaveBeenCalledWith(
+      'useAgricultoresUbicacion',
+      expect.objectContaining({ message: 'Deadline de carga alcanzado' }),
+      expect.objectContaining({ fallos: 1 }),
     );
   });
 });
