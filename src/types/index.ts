@@ -299,6 +299,8 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  Payment: { readonly orderId: number };
+  Receipt: { readonly paymentId: number };
   Chat: {
     conversationId: number;
     title: string;

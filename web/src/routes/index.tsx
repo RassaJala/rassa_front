@@ -9,6 +9,8 @@ import { FarmerPublications } from './FarmerPublications';
 import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
 import { VendorPanelScreen } from './VendorPanelScreen';
+import { PaymentPage } from './PaymentPage';
+import { ReceiptPage } from './ReceiptPage';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminMermasDashboard } from './AdminMermasDashboard';
 import { AdminCategories } from './AdminCategories';
@@ -128,6 +130,8 @@ export function AppRouter() {
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
+                <Route path="cobrar/:orderId" element={<PaymentPage />} />
+                <Route path="recibo/:paymentId" element={<ReceiptPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />

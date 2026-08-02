@@ -37,6 +37,7 @@ axiosRetry(api, {
   retries: API_RETRY_LIMIT,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
+    if (error.config?.method?.toLowerCase() === 'post') return false;
     if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
     if (
       error.response?.status !== undefined &&
