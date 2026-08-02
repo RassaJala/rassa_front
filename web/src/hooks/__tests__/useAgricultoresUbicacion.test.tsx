@@ -397,7 +397,9 @@ describe('useAgricultoresUbicacion', () => {
       { wrapper: createWrapper() },
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false), { timeout: 5000 });
+    await waitFor(() => expect(result.current.isLoading).toBe(false), {
+      timeout: 5000,
+    });
     expect(result.current.isError).toBe(false);
     // El abort cortó la fase de localidades (no una fase anterior), así que la
     // paginación no se truncó y el fallo proviene del deadline.
@@ -473,7 +475,9 @@ describe('useAgricultoresUbicacion', () => {
       { wrapper: createWrapper() },
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false), { timeout: 5000 });
+    await waitFor(() => expect(result.current.isLoading).toBe(false), {
+      timeout: 5000,
+    });
     expect(result.current.isError).toBe(false);
     expect(result.current.truncated).toBe(false);
     expect(result.current.errores).toBe(1);

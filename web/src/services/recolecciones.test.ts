@@ -297,7 +297,6 @@ describe('createRecoleccion', () => {
       }),
     ).rejects.toThrow('Validation error');
   });
-
 });
 
 describe('cambiarEstadoRecoleccion', () => {
