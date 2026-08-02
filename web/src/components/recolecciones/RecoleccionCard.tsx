@@ -27,8 +27,11 @@ export function RecoleccionCard({
   onContact,
 }: RecoleccionCardProps) {
   const colors = useAppColors();
-  const badge = ESTADO_COLORS[item.estado];
-  const transiciones = TRANSICIONES[item.estado];
+  // Fallbacks defensivos: un `estado` fuera del enum (dato corrupto o un valor
+  // futuro del backend) no debe tumbar la página completa con un TypeError.
+  const badge = ESTADO_COLORS[item.estado] ?? ESTADO_COLORS.pendiente;
+  const estadoLabel = ESTADO_LABELS[item.estado] ?? item.estado;
+  const transiciones = TRANSICIONES[item.estado] ?? [];
 
   return (
     <div
@@ -68,7 +71,7 @@ export function RecoleccionCard({
           }}
         >
           <span style={{ fontSize: 12, fontWeight: 600, color: badge.fg }}>
-            {ESTADO_LABELS[item.estado]}
+            {estadoLabel}
           </span>
         </div>
       </div>
@@ -103,7 +106,7 @@ export function RecoleccionCard({
             label="Recolectado"
             onClick={() => onTransition('recolectado')}
             disabled={busy}
-            background="#15803D"
+            background={ESTADO_COLORS.recolectado.fg}
           />
         ) : null}
 

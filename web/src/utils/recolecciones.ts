@@ -85,24 +85,37 @@ export function recoleccionDuplicateKey(
   return `${fkAgricultor}|${fecha}`;
 }
 
+interface RecoleccionDuplicadoCandidate {
+  readonly estado: string;
+  readonly fk_agricultor: number | null;
+  readonly fecha_recoleccion: string;
+}
+
+/**
+ * Predicado único de la regla de duplicado: una recolección ocupa su fecha
+ * salvo que esté cancelada o no tenga agricultor. Lo comparten el mock, el
+ * modal y `esRecoleccionDuplicada` para que la validación nunca diverja.
+ */
+export function ocupaFechaParaDuplicado(
+  r: RecoleccionDuplicadoCandidate,
+): r is RecoleccionDuplicadoCandidate & { readonly fk_agricultor: number } {
+  return r.estado !== 'cancelado' && r.fk_agricultor != null;
+}
+
 /**
  * Regla única de duplicado: no puede haber dos recolecciones no canceladas del
  * mismo agricultor en la misma fecha. La comparten el mock y el modal para que
  * la validación de duplicados nunca diverja.
  */
 export function esRecoleccionDuplicada(
-  recolecciones: readonly {
-    estado: string;
-    fk_agricultor: number | null;
-    fecha_recoleccion: string;
-  }[],
+  recolecciones: readonly RecoleccionDuplicadoCandidate[],
   fkAgricultor: number | null,
   fecha: string,
 ): boolean {
   if (fkAgricultor == null) return false;
   return recolecciones.some(
     (r) =>
-      r.estado !== 'cancelado' &&
+      ocupaFechaParaDuplicado(r) &&
       r.fk_agricultor === fkAgricultor &&
       r.fecha_recoleccion === fecha,
   );
@@ -110,17 +123,53 @@ export function esRecoleccionDuplicada(
 
 /** Conjunto de claves de duplicado para marcar agricultores ya programados. */
 export function buildDuplicateKeys(
-  recolecciones: readonly {
-    estado: string;
-    fk_agricultor: number | null;
-    fecha_recoleccion: string;
-  }[],
+  recolecciones: readonly RecoleccionDuplicadoCandidate[],
 ): Set<string> {
   const keys = new Set<string>();
   for (const r of recolecciones) {
-    if (r.estado !== 'cancelado' && r.fk_agricultor != null) {
+    if (ocupaFechaParaDuplicado(r)) {
       keys.add(recoleccionDuplicateKey(r.fk_agricultor, r.fecha_recoleccion));
     }
   }
   return keys;
+}
+
+export interface ProgramarFormValues {
+  readonly agricultorSeleccionado: boolean;
+  readonly fecha: string;
+  readonly horaInicio: string;
+  readonly horaFin: string;
+}
+
+/**
+ * Validaciones del formulario de programación, en orden de aparición. Devuelve
+ * el primer mensaje de error o `null` si el formulario es válido.
+ */
+export function validateProgramarForm(
+  values: ProgramarFormValues,
+): string | null {
+  if (!values.agricultorSeleccionado) return 'Selecciona un agricultor.';
+  if (!isValidFechaFormato(values.fecha)) {
+    return 'La fecha debe tener el formato AAAA-MM-DD.';
+  }
+  if (!isValidFecha(values.fecha)) {
+    return 'La fecha ingresada no es válida.';
+  }
+  if (values.fecha < todayString()) {
+    return 'La fecha no puede ser anterior a hoy.';
+  }
+  if (values.horaInicio && !isValidHora(values.horaInicio)) {
+    return 'La hora de inicio debe tener el formato HH:MM.';
+  }
+  if (values.horaFin && !isValidHora(values.horaFin)) {
+    return 'La hora de fin debe tener el formato HH:MM.';
+  }
+  if (
+    values.horaInicio &&
+    values.horaFin &&
+    values.horaFin <= values.horaInicio
+  ) {
+    return 'La hora de fin debe ser posterior a la de inicio.';
+  }
+  return null;
 }

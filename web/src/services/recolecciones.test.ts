@@ -249,7 +249,13 @@ describe('createRecoleccion', () => {
       comentarios: 'Entregar en puerta',
     };
     const result = await createRecoleccion(payload);
-    expect(mockedApi.post).toHaveBeenCalledWith('/recolecciones/', payload);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/recolecciones/',
+      payload,
+      expect.objectContaining({
+        headers: { 'Idempotency-Key': expect.any(String) },
+      }),
+    );
     expect(result.data.id_recoleccion).toBe(1);
   });
 
@@ -263,7 +269,13 @@ describe('createRecoleccion', () => {
       comentarios: null,
     };
     await createRecoleccion(payload);
-    expect(mockedApi.post).toHaveBeenCalledWith('/recolecciones/', payload);
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/recolecciones/',
+      payload,
+      expect.objectContaining({
+        headers: { 'Idempotency-Key': expect.any(String) },
+      }),
+    );
   });
 
   it('rejects on 400 validation error', async () => {

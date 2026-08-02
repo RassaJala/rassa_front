@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   abortError,
@@ -6,6 +6,10 @@ import {
   isAbortError,
   mapWithConcurrency,
 } from './concurrency';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('mapWithConcurrency', () => {
   it('maps all items and preserves input order', async () => {
@@ -145,7 +149,48 @@ describe('mapWithConcurrency', () => {
     });
     expect(result[1]?.status).toBe('rejected');
     expect(isAbortError(deadlineError())).toBe(false);
-    nowSpy.mockRestore();
+  });
+
+  it('interrupts in-flight items when the deadline expires', async () => {
+    const mapper = vi.fn(
+      async (_n: number, signal: AbortSignal): Promise<number> => {
+        await new Promise<number>((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(
+              Object.assign(new Error('cancelado'), { name: 'AbortError' }),
+            );
+          });
+        });
+        return 1;
+      },
+    );
+
+    const result = await mapWithConcurrency([1], 1, mapper, undefined, 50);
+
+    // El item en vuelo se interrumpe vía su señal; al vencerse el presupuesto,
+    // se reporta como deadlineError (fallo de tiempo), no como cancelación.
+    expect(result[0]).toEqual({
+      status: 'rejected',
+      reason: expect.objectContaining({ name: 'DeadlineExceededError' }),
+    });
+  });
+
+  it('forwards caller aborts to the in-flight mapper signal', async () => {
+    const controller = new AbortController();
+    let mapperSignal: AbortSignal | undefined;
+    const mapper = vi.fn(async (n: number, signal: AbortSignal) => {
+      mapperSignal = signal;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return n;
+    });
+
+    const pending = mapWithConcurrency([1], 1, mapper, controller.signal);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    controller.abort();
+
+    const result = await pending;
+    expect(mapperSignal?.aborted).toBe(true);
+    expect(result[0]?.status).toBe('fulfilled');
   });
 
   it('completes items that fit before the deadline and rejects the rest', async () => {
@@ -172,6 +217,5 @@ describe('mapWithConcurrency', () => {
       reason: expect.objectContaining({ name: 'DeadlineExceededError' }),
     });
     expect(result[2]?.status).toBe('rejected');
-    nowSpy.mockRestore();
   });
 });

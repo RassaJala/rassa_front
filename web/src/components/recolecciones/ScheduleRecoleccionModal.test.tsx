@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { server } from '../../mocks/server';
 import { ThemeProvider } from '../../providers/ThemeProvider';
 import type { Recoleccion } from '../../types/recolecciones';
 import {
@@ -12,6 +14,8 @@ import {
   todayString,
 } from '../../utils/recolecciones';
 import { ScheduleRecoleccionModal } from './ScheduleRecoleccionModal';
+
+const BASE = '/api';
 
 const hoy = todayString();
 const ayer = toDateString(addDays(parseFecha(hoy) as Date, -1));
@@ -144,5 +148,111 @@ describe('ScheduleRecoleccionModal — validación', () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it('bloquea el guardado sin seleccionar agricultor', async () => {
+    renderModal();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Programar recolección/ }),
+    );
+
+    expect(
+      await screen.findByText('Selecciona un agricultor.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Guardando…')).not.toBeInTheDocument();
+  });
+
+  it('ignora el doble clic mientras el POST está pendiente', async () => {
+    let postCalls = 0;
+    let release!: () => void;
+    server.use(
+      http.post(`${BASE}/recolecciones/`, async () => {
+        postCalls += 1;
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        return HttpResponse.json(
+          { data: { id_recoleccion: 99 } },
+          { status: 201 },
+        );
+      }),
+    );
+
+    const { onSaved } = renderModal();
+    await seleccionarJuan();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Programar recolección/ }),
+    );
+    await screen.findByText('Guardando…');
+    expect(screen.getByRole('button', { name: /Guardando/ })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /Guardando/ }));
+    expect(postCalls).toBe(1);
+
+    release();
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+  });
+
+  it('envía el payload con horas normalizadas al servidor', async () => {
+    let capturedBody: unknown;
+    server.use(
+      http.post(`${BASE}/recolecciones/`, async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(
+          { data: { id_recoleccion: 42 } },
+          { status: 201 },
+        );
+      }),
+    );
+
+    const { onSaved } = renderModal();
+    await seleccionarJuan();
+
+    fireEvent.change(screen.getByLabelText('Hora inicio'), {
+      target: { value: '08:30' },
+    });
+    fireEvent.change(screen.getByLabelText('Hora fin'), {
+      target: { value: '10:00' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/Notas/), {
+      target: { value: '  Entrega en puerta  ' },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Programar recolección/ }),
+    );
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    expect(capturedBody).toEqual({
+      fk_agricultor: 10,
+      fecha_recoleccion: hoy,
+      hora_inicio: '08:30:00',
+      hora_fin: '10:00:00',
+      comentarios: 'Entrega en puerta',
+    });
+  });
+
+  it('muestra el mensaje de un 400 del servidor al guardar', async () => {
+    server.use(
+      http.post(`${BASE}/recolecciones/`, () =>
+        HttpResponse.json(
+          { detail: 'No autorizado para programar recolecciones.' },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    renderModal();
+    await seleccionarJuan();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Programar recolección/ }),
+    );
+
+    expect(
+      await screen.findByText('No autorizado para programar recolecciones.'),
+    ).toBeInTheDocument();
   });
 });

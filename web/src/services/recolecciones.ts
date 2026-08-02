@@ -20,6 +20,11 @@ export type RecoleccionFilters = {
   fecha_hasta?: string;
 };
 
+// El fetch completo de las recolecciones se usa para detectar duplicados; si
+// el backend tarda demasiado, el deadline corta con un fallo visible en lugar
+// de dejar el modal en spinner indefinidamente.
+const TODAS_DEADLINE_MS = 30_000;
+
 export async function getRecolecciones(
   params?: RecoleccionFilters,
 ): Promise<ApiResponse<RecoleccionList>> {
@@ -38,6 +43,7 @@ export async function getTodasLasRecolecciones(
     url: '/recolecciones/',
     params,
     signal,
+    maxDurationMs: TODAS_DEADLINE_MS,
     fetchPage: async (url, pageParams, pageSignal) =>
       (
         await api.get<ApiResponse<RecoleccionList>>(url, {
@@ -52,12 +58,24 @@ export async function getTodasLasRecolecciones(
   });
 }
 
+// Key de idempotencia: si un reintento (red/timeout) reenvía el POST, el
+// servidor puede detectar el duplicado y devolver la respuesta original en vez
+// de crear dos recolecciones. `crypto.randomUUID` solo está disponible en
+// contextos seguros; el fallback sigue siendo único por cliente+time.
+function idempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export async function createRecoleccion(
   payload: RecoleccionPayload,
 ): Promise<ApiResponse<Recoleccion>> {
   const { data } = await api.post<ApiResponse<Recoleccion>>(
     '/recolecciones/',
     payload,
+    { headers: { 'Idempotency-Key': idempotencyKey() } },
   );
   return data;
 }

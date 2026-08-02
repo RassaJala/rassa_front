@@ -36,18 +36,27 @@ const SENSITIVE_KEY_PARTS = [
 ];
 
 // El `extra` también puede arrastrar datos sensibles desde un call site; en
-// producción se tachan las claves que parecen credenciales.
-function redactSensitive(
-  extra: Record<string, unknown>,
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(extra)) {
-    const lower = key.toLowerCase();
-    result[key] = SENSITIVE_KEY_PARTS.some((part) => lower.includes(part))
-      ? '[redacted]'
-      : value;
+// producción se tachan las claves que parecen credenciales, incluidas las que
+// aparecen anidadas (p. ej. `{ params: { token } }`). Se limita la profundidad
+// para no serializar estructuras cíclicas o gigantes.
+const REDACT_DEPTH_LIMIT = 3;
+
+function redactSensitive(value: unknown, depth = 0): unknown {
+  if (value && typeof value === 'object') {
+    if (depth > REDACT_DEPTH_LIMIT) return '[objeto]';
+    if (Array.isArray(value)) {
+      return value.map((item) => redactSensitive(item, depth + 1));
+    }
+    const result: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value)) {
+      const lower = key.toLowerCase();
+      result[key] = SENSITIVE_KEY_PARTS.some((part) => lower.includes(part))
+        ? '[redacted]'
+        : redactSensitive(child, depth + 1);
+    }
+    return result;
   }
-  return result;
+  return value;
 }
 
 export function logError(

@@ -10,10 +10,12 @@ import {
   isValidFechaFormato,
   isValidHora,
   normalizeHora,
+  ocupaFechaParaDuplicado,
   parseFecha,
   recoleccionDuplicateKey,
   toDateString,
   todayString,
+  validateProgramarForm,
 } from './recolecciones';
 
 describe('toDateString', () => {
@@ -207,6 +209,102 @@ describe('esRecoleccionDuplicada', () => {
 
   it('returns false when fecha differs', () => {
     expect(esRecoleccionDuplicada(base, 10, '2026-08-02')).toBe(false);
+  });
+});
+
+describe('ocupaFechaParaDuplicado', () => {
+  it('es true para estados activos con agricultor', () => {
+    expect(
+      ocupaFechaParaDuplicado({
+        estado: 'pendiente',
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-01',
+      }),
+    ).toBe(true);
+  });
+
+  it('es false para cancelado o sin agricultor', () => {
+    expect(
+      ocupaFechaParaDuplicado({
+        estado: 'cancelado',
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-01',
+      }),
+    ).toBe(false);
+    expect(
+      ocupaFechaParaDuplicado({
+        estado: 'pendiente',
+        fk_agricultor: null,
+        fecha_recoleccion: '2026-08-01',
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('validateProgramarForm', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('valida en orden: agricultor, fecha y horas', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 1, 12, 0, 0));
+
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: false,
+        fecha: '2026-08-01',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBe('Selecciona un agricultor.');
+
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '2026-07-31',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBe('La fecha no puede ser anterior a hoy.');
+
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '2026-08-01',
+        horaInicio: '09:00',
+        horaFin: '08:00',
+      }),
+    ).toBe('La hora de fin debe ser posterior a la de inicio.');
+
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '2026-08-01',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBeNull();
+  });
+
+  it('valida malformato de fecha y hora', () => {
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '01/08/2026',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBe('La fecha debe tener el formato AAAA-MM-DD.');
+
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: todayString(),
+        horaInicio: '9:00',
+        horaFin: '',
+      }),
+    ).toBe('La hora de inicio debe tener el formato HH:MM.');
   });
 });
 

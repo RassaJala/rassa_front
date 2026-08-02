@@ -35,15 +35,25 @@ export function isAbortError(reason: unknown): boolean {
  * Aplica `mapper` a cada item limitando a `limit` peticiones en vuelo al mismo
  * tiempo, y devuelve resultados en el orden de los items (mismo shape que
  * `Promise.allSettled`). Evita abrir N requests simultáneas sobre un mismo
- * endpoint cuando N es grande. Si `signal` se aborta, los items pendientes se
- * resuelven como rechazados con `abortError()` sin despachar. Si `maxDurationMs`
- * se vence, los items pendientes se resuelven con `deadlineError()`. Un
- * `limit` <= 0 no despacha nada y rechaza todo con `abortError()`.
+ * endpoint cuando N es grande.
+ *
+ * El `mapper` recibe un `AbortSignal` de presupuesto en el segundo argumento,
+ * que se aborta si `signal` (del llamador) se aborta o si `maxDurationMs` se
+ * vence — así el deadline es un tope de pared, no solo un límite de despachos:
+ * los items en vuelo se interrumpen vía su señal y `await` termina a tiempo.
+ *
+ * Los items pendientes se resuelven sin despachar: con `abortError()` si fue
+ * una cancelación y con `deadlineError()` si venció el presupuesto. Un item en
+ * vuelo interrumpido por el vencimiento del presupuesto se reporta también con
+ * `deadlineError()` (el tope de tiempo cuenta como fallo, no como cancelación);
+ * si la interrupción vino de `signal`, se propaga el error de su operación.
+ *
+ * Un `limit` <= 0 no despacha nada y rechaza todo con `abortError()`.
  */
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
   limit: number,
-  mapper: (item: T) => Promise<R>,
+  mapper: (item: T, signal: AbortSignal) => Promise<R>,
   signal?: AbortSignal,
   maxDurationMs?: number,
 ): Promise<SettledResult<R>[]> {
@@ -52,10 +62,22 @@ export async function mapWithConcurrency<T, R>(
     return items.map(() => ({ status: 'rejected', reason: abortError() }));
   }
 
-  const results: SettledResult<R>[] = new Array(items.length);
-  let nextIndex = 0;
   const deadline =
     maxDurationMs !== undefined ? Date.now() + maxDurationMs : Infinity;
+  const budget = new AbortController();
+  const abortBudget = () => budget.abort();
+  const deadlineTimer =
+    maxDurationMs !== undefined
+      ? setTimeout(abortBudget, maxDurationMs)
+      : undefined;
+
+  if (signal) {
+    if (signal.aborted) budget.abort();
+    else signal.addEventListener('abort', abortBudget, { once: true });
+  }
+
+  const results: SettledResult<R>[] = new Array(items.length);
+  let nextIndex = 0;
 
   async function worker(): Promise<void> {
     while (true) {
@@ -67,20 +89,32 @@ export async function mapWithConcurrency<T, R>(
         continue;
       }
       nextIndex += 1;
-      if (signal?.aborted) {
+      if (budget.signal.aborted) {
         results[index] = { status: 'rejected', reason: abortError() };
         continue;
       }
       try {
-        const value = await mapper(items[index] as T);
+        const value = await mapper(items[index] as T, budget.signal);
         results[index] = { status: 'fulfilled', value };
       } catch (reason) {
-        results[index] = { status: 'rejected', reason };
+        const interruptedByDeadline =
+          deadline !== Infinity &&
+          budget.signal.aborted &&
+          Date.now() >= deadline;
+        results[index] = {
+          status: 'rejected',
+          reason: interruptedByDeadline ? deadlineError() : reason,
+        };
       }
     }
   }
 
-  const workers = Array.from({ length: workerCount }, () => worker());
-  await Promise.all(workers);
+  try {
+    const workers = Array.from({ length: workerCount }, () => worker());
+    await Promise.all(workers);
+  } finally {
+    if (deadlineTimer !== undefined) clearTimeout(deadlineTimer);
+    signal?.removeEventListener('abort', abortBudget);
+  }
   return results;
 }

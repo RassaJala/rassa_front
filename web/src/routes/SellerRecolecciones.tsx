@@ -77,7 +77,7 @@ export function SellerRecolecciones() {
 
   const recolecciones = useMemo(() => result?.data?.results ?? [], [result]);
 
-  const { data: todasLasRecolecciones } = useQuery({
+  const { data: todasLasRecolecciones, isLoading: isLoadingTodas } = useQuery({
     queryKey: ['recolecciones', 'todas', today],
     queryFn: ({ signal }) =>
       getTodasLasRecolecciones({ fecha_desde: today }, signal),
@@ -97,7 +97,9 @@ export function SellerRecolecciones() {
       ? recolecciones
       : (todasLasRecolecciones?.data ?? recolecciones);
   const duplicateCheckFailed =
-    totalErrores > 0 || (todasLasRecolecciones?.truncated ?? false);
+    isLoadingTodas ||
+    totalErrores > 0 ||
+    (todasLasRecolecciones?.truncated ?? false);
 
   const sections = useMemo(() => {
     const map = new Map<string, Recoleccion[]>();
@@ -126,9 +128,18 @@ export function SellerRecolecciones() {
       next.delete(id);
       return next;
     });
-  const notifySuccess = (message: string) => {
+  const notifySuccess = async (message: string) => {
     invalidate();
-    setToast({ message, type: 'success' });
+    // Se fuerza el refetch de la lista visible para detectar un fallo de
+    // actualización: el éxito del guardado no implica que la pantalla quedó al
+    // día, y callar el error dejaría al usuario con datos obsoletos.
+    const refreshed = await refetch();
+    setToast({
+      message: refreshed.isError
+        ? 'El cambio se guardó, pero no se pudo actualizar la lista.'
+        : message,
+      type: refreshed.isError ? 'error' : 'success',
+    });
   };
   const notifyError = (error: unknown) => {
     setToast({ message: extractApiError(error, ['estado']), type: 'error' });
@@ -190,7 +201,9 @@ export function SellerRecolecciones() {
         confirmLabel="Sí, cancelar"
         cancelLabel="No"
         onConfirm={() => {
-          if (cancelId != null) cancelarMutation.mutate(cancelId);
+          if (cancelId != null && !cancelarMutation.isPending) {
+            cancelarMutation.mutate(cancelId);
+          }
           setCancelId(null);
         }}
         onCancel={() => setCancelId(null)}

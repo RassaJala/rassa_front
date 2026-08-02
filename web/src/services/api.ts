@@ -37,7 +37,20 @@ const IDEMPOTENT_METHODS = new Set([
 // responder con éxito.
 const RETRY_WINDOW_MS = 10_000;
 
+// Cota del rastreo de ventanas: las entradas solo se limpian al responder con
+// éxito, así que un fallo terminal podría dejar la clave huérfana. Se evita un
+// crecimiento sin límite durante sesiones largas con backend inestable.
+const RETRY_TRACK_LIMIT = 1000;
+
 const requestStartByUrl = new Map<string, number>();
+
+function trackRetryStart(key: string): void {
+  if (requestStartByUrl.size >= RETRY_TRACK_LIMIT) {
+    const oldest = requestStartByUrl.keys().next().value as string | undefined;
+    if (oldest !== undefined) requestStartByUrl.delete(oldest);
+  }
+  requestStartByUrl.set(key, Date.now());
+}
 
 // `config.url` no incluye los query params (viven en `config.params`), así que
 // se serializan en la clave: dos requests paralelas a la misma URL con params
@@ -64,12 +77,12 @@ axiosRetry(api, {
     const now = Date.now();
     const started = requestStartByUrl.get(key);
     if (started === undefined) {
-      requestStartByUrl.set(key, now);
+      trackRetryStart(key);
     } else if (now - started > RETRY_WINDOW_MS) {
       // Entrada vencida: renuevo la ventana y sigo evaluando la retryability.
       // Devolver false sin renovar envenenaría todos los reintentos futuros de
       // esa URL; renovar mantiene el presupuesto real en `retries: 2`.
-      requestStartByUrl.set(key, now);
+      trackRetryStart(key);
     }
     if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
     return (
@@ -117,11 +130,37 @@ function clearAuthAndRedirect(): void {
   redirect('/login', { from: window.location.pathname });
 }
 
+// Fallos del refresh que sí justifican cerrar sesión: no hay refresh token
+// guardado o la respuesta fue malformada. Son estados no transitorios (la
+// sesión no se puede renovar), a diferencia de un error de red/timeout.
+function refreshAuthFailure(): Error {
+  return Object.assign(new Error('Sesión no renovable'), {
+    refreshAuthFailure: true,
+  });
+}
+
+// Un fallo de red/timeout del refresh no invalida la sesión: el access token
+// sigue siendo válido hasta expirar y un 401 posterior (cuando la red vuelva)
+// puede reintentar el refresh. Solo un 4xx del endpoint de refresh (token
+// revocado, expirado o inválido) o un fallo no transitorio (sin refresh token,
+// respuesta malformada) justifican borrar credenciales y redirigir.
+function esFalloDeAutenticacionRefresh(error: unknown): boolean {
+  if (error && typeof error === 'object') {
+    if ('refreshAuthFailure' in error) return true;
+    if ('response' in error) {
+      const status = (error as { response?: { status?: unknown } }).response
+        ?.status;
+      return typeof status === 'number' && status >= 400 && status < 500;
+    }
+  }
+  return false;
+}
+
 async function refreshAccessToken(
   originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
   const refreshToken = sessionStorage.getItem('refresh_token');
-  if (!refreshToken) throw new Error('No refresh token');
+  if (!refreshToken) throw refreshAuthFailure();
 
   const { data } = await axios.post<{ access?: string; refresh?: string }>(
     `${API_URL}/token/refresh/`,
@@ -130,7 +169,7 @@ async function refreshAccessToken(
   );
 
   if (typeof data.access !== 'string' || data.access.length === 0) {
-    throw new Error('Respuesta de refresh inválida');
+    throw refreshAuthFailure();
   }
 
   localStorage.setItem('token', data.access);
@@ -162,11 +201,15 @@ api.interceptors.response.use(
   (error) => {
     const requestUrl: string | undefined = error.config?.url;
 
-    // Ya reintentamos con un token fresco y el servidor sigue devolviendo 401:
+    // Ya reintentamos con un token fresco y el servidor vuelve a devolver 401:
     // la sesión es inválida, cerramos sesión y redirigimos en vez de re-refrescar.
+    // Un fallo distinto (5xx, red, timeout, cancelación) NO cierra sesión: la
+    // sesión sigue siendo válida y un 401 futuro podrá refrescar de nuevo.
     if (error.config && refreshRetried.has(retryKey(error.config))) {
       refreshRetried.delete(retryKey(error.config));
-      clearAuthAndRedirect();
+      if (error.response?.status === 401) {
+        clearAuthAndRedirect();
+      }
       return Promise.reject(error);
     }
 
@@ -181,8 +224,19 @@ api.interceptors.response.use(
     // Intenta refrescar el token antes de redirigir
     if (!isRefreshing) {
       isRefreshing = true;
-      return refreshAccessToken(error.config).catch(() => {
-        clearAuthAndRedirect();
+      return refreshAccessToken(error.config).catch((refreshError) => {
+        if (esFalloDeAutenticacionRefresh(refreshError)) {
+          clearAuthAndRedirect();
+        } else {
+          // Red caída o timeout del refresh: no destruimos la sesión (el token
+          // sigue siendo válido); rechazamos las peticiones en cola y dejamos
+          // que un 401 posterior, con red disponible, reintente el refresh.
+          pendingRequests.forEach(({ reject }) =>
+            reject(new Error('No se pudo renovar la sesión')),
+          );
+          pendingRequests = [];
+          isRefreshing = false;
+        }
         return Promise.reject(error);
       });
     }

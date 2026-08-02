@@ -157,7 +157,42 @@ describe('api.ts token interceptor', () => {
     expect(sessionStorage.getItem('refresh_token')).toBe('new-refresh');
   });
 
-  it('clears tokens and redirects to /login on refresh failure', async () => {
+  it('clears tokens and redirects to /login when refresh returns 4xx', async () => {
+    localStorage.setItem('token', 'old-token');
+    localStorage.setItem('user', 'some-user');
+    sessionStorage.setItem('refresh_token', 'bad-refresh');
+    await loadApi();
+
+    const interceptor = responseFns[0]!;
+
+    const error401 = {
+      config: {
+        url: '/publicaciones/',
+        headers: { Authorization: 'Bearer old-token' } as Record<
+          string,
+          string
+        >,
+        method: 'get',
+      },
+      response: { status: 401 },
+    };
+
+    const refreshError = Object.assign(new Error('refresh rejected'), {
+      response: { status: 401, data: { detail: 'Token invalid' } },
+    });
+    mockAxiosPost.mockRejectedValueOnce(refreshError);
+
+    await expect(interceptor.onRejected(error401)).rejects.toThrow();
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(sessionStorage.getItem('refresh_token')).toBeNull();
+    expect(mockRedirect).toHaveBeenCalledWith('/login', {
+      from: expect.any(String),
+    });
+  });
+
+  it('keeps tokens when refresh fails by network error (no logout)', async () => {
     localStorage.setItem('token', 'old-token');
     localStorage.setItem('user', 'some-user');
     sessionStorage.setItem('refresh_token', 'bad-refresh');
@@ -181,12 +216,10 @@ describe('api.ts token interceptor', () => {
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
 
-    expect(localStorage.getItem('token')).toBeNull();
-    expect(localStorage.getItem('user')).toBeNull();
-    expect(sessionStorage.getItem('refresh_token')).toBeNull();
-    expect(mockRedirect).toHaveBeenCalledWith('/login', {
-      from: expect.any(String),
-    });
+    expect(localStorage.getItem('token')).toBe('old-token');
+    expect(localStorage.getItem('user')).toBe('some-user');
+    expect(sessionStorage.getItem('refresh_token')).toBe('bad-refresh');
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
   it('passes through non-401 errors', async () => {
@@ -252,7 +285,7 @@ describe('api.ts token interceptor', () => {
     ).toBeUndefined();
   });
 
-  it('SECURITY: clears ALL auth data on refresh failure', async () => {
+  it('SECURITY: clears ALL auth data when refresh rejects with 4xx', async () => {
     localStorage.setItem('token', 'old-token');
     localStorage.setItem('user', JSON.stringify({ id: 1 }));
     sessionStorage.setItem('refresh_token', 'bad-refresh');
@@ -271,7 +304,10 @@ describe('api.ts token interceptor', () => {
       response: { status: 401 },
     };
 
-    mockAxiosPost.mockRejectedValueOnce(new Error('refresh failed'));
+    const refreshError = Object.assign(new Error('refresh rejected'), {
+      response: { status: 401 },
+    });
+    mockAxiosPost.mockRejectedValueOnce(refreshError);
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
 
@@ -336,7 +372,7 @@ describe('api.ts token interceptor', () => {
     expect(sessionStorage.getItem('refresh_token')).toBe('keep-this');
   });
 
-  it('SECURITY: does not redirect to non-login paths', async () => {
+  it('SECURITY: redirects to login when refresh fails with 4xx', async () => {
     localStorage.setItem('token', 'old-token');
     sessionStorage.setItem('refresh_token', 'bad-refresh');
     await loadApi();
@@ -354,7 +390,10 @@ describe('api.ts token interceptor', () => {
       response: { status: 401 },
     };
 
-    mockAxiosPost.mockRejectedValueOnce(new Error('refresh failed'));
+    const refreshError = Object.assign(new Error('refresh rejected'), {
+      response: { status: 401 },
+    });
+    mockAxiosPost.mockRejectedValueOnce(refreshError);
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
 
@@ -363,7 +402,7 @@ describe('api.ts token interceptor', () => {
     });
   });
 
-  it('SECURITY: rejects refresh with 10s timeout', async () => {
+  it('SECURITY: refresh timeout keeps the session (transient failure)', async () => {
     localStorage.setItem('token', 'old-token');
     sessionStorage.setItem('refresh_token', 'slow-refresh');
     await loadApi();
@@ -390,7 +429,9 @@ describe('api.ts token interceptor', () => {
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('token')).toBe('old-token');
+    expect(sessionStorage.getItem('refresh_token')).toBe('slow-refresh');
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
   it('SECURITY: handles missing refresh_token gracefully', async () => {
@@ -508,7 +549,7 @@ describe('api.ts token interceptor', () => {
     expect(localStorage.getItem('token')).toBe('new-token');
   });
 
-  it('network error during token refresh (no response) clears tokens and redirects', async () => {
+  it('network error during token refresh (no response) keeps the session', async () => {
     localStorage.setItem('token', 'old-token');
     sessionStorage.setItem('refresh_token', 'refresh-123');
     await loadApi();
@@ -526,11 +567,9 @@ describe('api.ts token interceptor', () => {
     mockAxiosPost.mockRejectedValueOnce(new Error('Network Error'));
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
-    expect(localStorage.getItem('token')).toBeNull();
-    expect(sessionStorage.getItem('refresh_token')).toBeNull();
-    expect(mockRedirect).toHaveBeenCalledWith('/login', {
-      from: expect.any(String),
-    });
+    expect(localStorage.getItem('token')).toBe('old-token');
+    expect(sessionStorage.getItem('refresh_token')).toBe('refresh-123');
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
   it('refresh endpoint returns 401 — redirects to login', async () => {
@@ -661,7 +700,11 @@ describe('api.ts token interceptor', () => {
     };
 
     mockAxiosPost.mockResolvedValueOnce({ data: { access: 'new-token' } });
-    mockInstanceGet.mockRejectedValueOnce(new Error('Retry failed'));
+    const retry401 = Object.assign(new Error('Retry 401'), {
+      response: { status: 401 },
+      config: { url: '/publicaciones/', method: 'get', headers: {} },
+    });
+    mockInstanceGet.mockRejectedValueOnce(retry401);
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
     expect(mockAxiosPost).toHaveBeenCalledTimes(1);

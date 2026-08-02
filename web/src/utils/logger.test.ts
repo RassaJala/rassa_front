@@ -142,4 +142,26 @@ describe('logError production path', () => {
     expect(serialized).not.toContain('JWT-SECRET');
     expect(serialized).not.toContain('refresh-rotado');
   });
+
+  it('redacts sensitive keys nested inside the extra context in production', async () => {
+    vi.stubEnv('DEV', false);
+    vi.resetModules();
+    const { logError: prodLogError } = await import('./logger');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    prodLogError('ctx', new Error('boom'), {
+      params: { token: 'NESTED-SECRET', page: 2 },
+      headers: [{ authorization: 'Bearer anidado' }],
+      response: { refresh_token: 'anidado-2' },
+    });
+
+    expect(warnSpy.mock.calls[0]?.[2]).toEqual({
+      params: { token: '[redacted]', page: 2 },
+      headers: [{ authorization: '[redacted]' }],
+      response: { refresh_token: '[redacted]' },
+    });
+    const serialized = JSON.stringify(warnSpy.mock.calls);
+    expect(serialized).not.toContain('NESTED-SECRET');
+    expect(serialized).not.toContain('anidado-2');
+  });
 });

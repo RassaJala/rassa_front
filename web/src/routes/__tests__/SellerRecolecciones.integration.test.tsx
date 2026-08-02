@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
+import { http, HttpResponse } from 'msw';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
+import { server } from '../../mocks/server';
 import { ThemeProvider } from '../../providers/ThemeProvider';
 
 vi.mock('~/hooks/useAuth', () => ({
@@ -19,13 +22,30 @@ vi.mock('~/hooks/useAuth', () => ({
 
 import { SellerRecolecciones } from '../SellerRecolecciones';
 
-function renderPage() {
+const BASE = '/api';
+
+function LocationProbe({
+  onChange,
+}: {
+  readonly onChange: (path: string) => void;
+}) {
+  const location = useLocation();
+  useEffect(() => {
+    onChange(location.pathname);
+  }, [location.pathname, onChange]);
+  return null;
+}
+
+function renderPage(onLocationChange?: (path: string) => void) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <MemoryRouter>
       <ThemeProvider>
         <QueryClientProvider client={qc}>
           <SellerRecolecciones />
+          {onLocationChange ? (
+            <LocationProbe onChange={onLocationChange} />
+          ) : null}
         </QueryClientProvider>
       </ThemeProvider>
     </MemoryRouter>,
@@ -123,5 +143,40 @@ describe('SellerRecolecciones — integration', () => {
     await userEvent.click(screen.getByRole('button', { name: /Nueva/ }));
 
     expect(await screen.findByText('Ya tiene recolección')).toBeInTheDocument();
+  });
+
+  it('opens a chat with the farmer and navigates to it', async () => {
+    server.use(
+      http.post(`${BASE}/chat/conversaciones/crear-privada/`, () =>
+        HttpResponse.json({ ok: true, data: { id_conversacion: 7 } }),
+      ),
+    );
+
+    let currentPath = '';
+    renderPage((path) => {
+      currentPath = path;
+    });
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Contactar' }));
+
+    await waitFor(() => expect(currentPath).toBe('/vendedor/chat/7'));
+  });
+
+  it('shows the degraded duplicate banner when the full fetch fails', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/`, () =>
+        HttpResponse.json({ detail: 'Not found' }, { status: 404 }),
+      ),
+    );
+
+    renderPage();
+    await screen.findByText('Error al cargar recolecciones');
+
+    await userEvent.click(screen.getByRole('button', { name: /Nueva/ }));
+
+    expect(
+      await screen.findByText(/No se pudieron cargar todas las recolecciones/),
+    ).toBeInTheDocument();
   });
 });

@@ -88,6 +88,7 @@ async function fetchAgricultores(
   const result = await fetchAllPages<AgricultorListItem>({
     url: AGRICULTORES_URL,
     signal,
+    maxDurationMs: LOCALIDADES_DEADLINE_MS,
     fetchPage: async (url, _params, pageSignal) =>
       (await api.get<unknown>(url, { signal: pageSignal })).data,
     unwrap: (body) =>
@@ -109,10 +110,16 @@ function groupByUbicacion(
   municipios: Municipio[],
   localidades: Localidad[],
 ): AgricultorUbicacion[] {
+  // Los registros desactivados (estado=false) no deben ofrecerse para
+  // programar: se filtran antes de agrupar para no mostrar nombres vacíos.
+  const municipiosActivos = municipios.filter((m) => m.estado);
+  const localidadesActivas = localidades.filter((l) => l.estado);
   const municipioNombreById = new Map(
-    municipios.map((m) => [m.id_municipio, m.nombre]),
+    municipiosActivos.map((m) => [m.id_municipio, m.nombre]),
   );
-  const localidadById = new Map(localidades.map((l) => [l.id_localidad, l]));
+  const localidadById = new Map(
+    localidadesActivas.map((l) => [l.id_localidad, l]),
+  );
 
   const groups = new Map<string, Map<string, AgricultorListItem[]>>();
 
@@ -162,7 +169,6 @@ export function useAgricultoresUbicacion(options?: {
   readonly enabled?: boolean;
 }): {
   agricultores: AgricultorUbicacion[];
-  totalAgricultores: number;
   isLoading: boolean;
   isError: boolean;
   truncated: boolean;
@@ -184,10 +190,13 @@ export function useAgricultoresUbicacion(options?: {
           fetchAgricultores(signal),
         ]);
 
+        // Los municipios desactivados no se consultan ni se agrupan.
+        const municipiosActivos = municipios.filter((m) => m.estado);
+
         const settled = await mapWithConcurrency(
-          municipios,
+          municipiosActivos,
           4,
-          (m) => fetchLocalidades(m.id_municipio, signal),
+          (m, budgetSignal) => fetchLocalidades(m.id_municipio, budgetSignal),
           signal,
           LOCALIDADES_DEADLINE_MS,
         );
@@ -226,15 +235,6 @@ export function useAgricultoresUbicacion(options?: {
 
   return {
     agricultores: grupos,
-    totalAgricultores: grupos.reduce(
-      (acc, grupo) =>
-        acc +
-        grupo.localidades.reduce(
-          (sub, localidad) => sub + localidad.agricultores.length,
-          0,
-        ),
-      0,
-    ),
     isLoading,
     isError,
     truncated: data?.truncated ?? false,

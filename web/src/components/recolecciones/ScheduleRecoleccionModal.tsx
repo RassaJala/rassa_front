@@ -16,11 +16,9 @@ import type {
 import { extractApiError } from '../../utils/apiErrors';
 import {
   buildDuplicateKeys,
-  isValidFecha,
-  isValidFechaFormato,
-  isValidHora,
   normalizeHora,
   todayString,
+  validateProgramarForm,
 } from '../../utils/recolecciones';
 import { AgricultorSelector } from './AgricultorSelector';
 
@@ -111,34 +109,17 @@ export function ScheduleRecoleccionModal({
 
   function handleSubmit() {
     if (mutation.isPending) return;
-    if (!agricultor) {
-      setError('Selecciona un agricultor.');
+    const validationError = validateProgramarForm({
+      agricultorSeleccionado: agricultor !== null,
+      fecha,
+      horaInicio,
+      horaFin,
+    });
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (!isValidFechaFormato(fecha)) {
-      setError('La fecha debe tener el formato AAAA-MM-DD.');
-      return;
-    }
-    if (!isValidFecha(fecha)) {
-      setError('La fecha ingresada no es válida.');
-      return;
-    }
-    if (fecha < todayString()) {
-      setError('La fecha no puede ser anterior a hoy.');
-      return;
-    }
-    if (horaInicio && !isValidHora(horaInicio)) {
-      setError('La hora de inicio debe tener el formato HH:MM.');
-      return;
-    }
-    if (horaFin && !isValidHora(horaFin)) {
-      setError('La hora de fin debe tener el formato HH:MM.');
-      return;
-    }
-    if (horaInicio && horaFin && horaFin <= horaInicio) {
-      setError('La hora de fin debe ser posterior a la de inicio.');
-      return;
-    }
+    if (!agricultor) return;
     setError(null);
     mutation.mutate({
       fk_agricultor: agricultor.id_usuario,

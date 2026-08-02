@@ -61,7 +61,6 @@ describe('useAgricultoresUbicacion', () => {
     expect(result.current.isError).toBe(false);
     expect(result.current.errores).toBe(0);
     expect(result.current.truncated).toBe(false);
-    expect(result.current.totalAgricultores).toBe(2);
     expect(result.current.agricultores).toHaveLength(1);
     expect(result.current.agricultores[0]?.municipioNombre).toBe('Jalisco');
 
@@ -89,7 +88,6 @@ describe('useAgricultoresUbicacion', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.isError).toBe(false);
-    expect(result.current.totalAgricultores).toBe(0);
     expect(result.current.agricultores).toHaveLength(0);
   });
 
@@ -147,7 +145,11 @@ describe('useAgricultoresUbicacion', () => {
     expect(result.current.isError).toBe(false);
     expect(result.current.errores).toBe(1);
     expect(result.current.truncated).toBe(true);
-    expect(result.current.totalAgricultores).toBe(1);
+    expect(
+      result.current.agricultores.flatMap((g) =>
+        g.localidades.flatMap((l) => l.agricultores),
+      ),
+    ).toHaveLength(1);
   });
 
   it('does not fetch while disabled', async () => {
