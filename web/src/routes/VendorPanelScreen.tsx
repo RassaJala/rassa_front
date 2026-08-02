@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { fetchPagoPorPedido, ORDER_STATUS_READY } from '@/common/payments';
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
@@ -55,7 +57,7 @@ const ACCIONES: Record<string, { label: string; estado: string } | null> = {
   pendiente: { label: 'Confirmar', estado: 'confirmado' },
   confirmado: { label: 'Preparar', estado: 'en_preparacion' },
   en_preparacion: { label: 'Marcar Listo', estado: 'listo_para_retirar' },
-  listo_para_retirar: { label: 'Entregar', estado: 'entregado' },
+  listo_para_retirar: { label: 'Cobrar', estado: 'entregado' },
   entregado: null,
   cancelado: null,
 };
@@ -148,6 +150,8 @@ export function VendorPanelScreen() {
     },
   });
 
+  const navigate = useNavigate();
+
   const cancelMutation = useMutation({
     mutationFn: async (pedidoId: number) => {
       await api.patch(`/pedidos/${pedidoId}/status/`, {
@@ -178,6 +182,29 @@ export function VendorPanelScreen() {
   });
 
   const isRowPending = (id: number) => pendingIds.has(id);
+
+  const verRecibo = async (pedidoId: number) => {
+    setPendingIds((prev) => new Set(prev).add(pedidoId));
+    try {
+      const pago = await fetchPagoPorPedido(api, pedidoId);
+      if (pago) {
+        navigate(`/vendedor/recibo/${pago.id_pago}`);
+      } else {
+        setToast({
+          message: 'No hay un recibo registrado para este pedido',
+          type: 'error',
+        });
+      }
+    } catch {
+      setToast({ message: 'Error al consultar el recibo', type: 'error' });
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(pedidoId);
+        return next;
+      });
+    }
+  };
 
   const columns: Column<PedidoRow>[] = [
     { key: 'id_pedido', label: 'N°', sortable: true },
@@ -217,10 +244,14 @@ export function VendorPanelScreen() {
                 variant="primary"
                 disabled={busy}
                 onClick={() => {
-                  statusMutation.mutate({
-                    pedidoId: o.id_pedido,
-                    nuevoEstado: accion.estado,
-                  });
+                  if (o.estado_actual === ORDER_STATUS_READY) {
+                    navigate(`/vendedor/cobrar/${o.id_pedido}`);
+                  } else {
+                    statusMutation.mutate({
+                      pedidoId: o.id_pedido,
+                      nuevoEstado: accion.estado,
+                    });
+                  }
                 }}
               >
                 {accion.label}
@@ -241,6 +272,17 @@ export function VendorPanelScreen() {
                 }}
               >
                 Cancelar
+              </Button>
+            ) : null}
+            {o.estado_actual === 'entregado' ? (
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  void verRecibo(o.id_pedido);
+                }}
+              >
+                Ver recibo
               </Button>
             ) : null}
           </div>

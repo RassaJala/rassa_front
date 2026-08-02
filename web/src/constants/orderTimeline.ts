@@ -67,3 +67,15 @@ export const STATUS_COLORS: Record<string, string> = {
 export function getStatusColor(status: string, fallback: string): string {
   return STATUS_COLORS[status] ?? fallback;
 }
+
+// ponytail: single normalizer shared by mobile hook and web route
+export function normalizeOrderHistoryResponse(
+  body: unknown,
+): OrderStatusHistory[] {
+  if (Array.isArray(body)) return body as OrderStatusHistory[];
+  if (body != null && typeof body === 'object' && 'data' in body) {
+    if (Array.isArray(body.data)) return body.data as OrderStatusHistory[];
+    return [];
+  }
+  return [];
+}
