@@ -42,9 +42,9 @@ describe('fetchAllPages', () => {
     expect(result.truncated).toBe(false);
     expect(result.errores).toBe(0);
     expect(getMock).toHaveBeenCalledTimes(3);
-    expect(getMock).toHaveBeenNthCalledWith(1, '/recolecciones/');
-    expect(getMock).toHaveBeenNthCalledWith(2, '/recolecciones/?page=2');
-    expect(getMock).toHaveBeenNthCalledWith(3, '/recolecciones/?page=3');
+    expect(getMock).toHaveBeenNthCalledWith(1, '/recolecciones/', {});
+    expect(getMock).toHaveBeenNthCalledWith(2, '/recolecciones/?page=2', {});
+    expect(getMock).toHaveBeenNthCalledWith(3, '/recolecciones/?page=3', {});
   });
 
   it('acepta un arreglo plano (endpoint sin paginación)', async () => {

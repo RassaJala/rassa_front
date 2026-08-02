@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import * as Sentry from '@sentry/react-native';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
@@ -187,8 +188,8 @@ api.interceptors.response.use(
 
     try {
       newAccessToken = await refreshTokens();
-    } catch {
-      // Refresh itself failed — clear tokens, notify AuthContext, and reject
+    } catch (refreshError) {
+      Sentry.captureException(refreshError);
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),

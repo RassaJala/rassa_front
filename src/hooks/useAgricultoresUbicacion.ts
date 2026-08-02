@@ -87,25 +87,58 @@ export function useAgricultoresUbicacion(options?: {
   totalAgricultores: number;
   isLoading: boolean;
   isError: boolean;
+  isRefetching: boolean;
   truncated: boolean;
   errores: number;
   refetch: () => void;
 } {
   const enabled = options?.enabled ?? true;
-  const { data, isLoading, isError, refetch } = useQuery<{
+  const { data, isLoading, isError, isRefetching, refetch } = useQuery<{
     grupos: AgricultorUbicacion[];
     truncated: boolean;
     errores: number;
   }>({
     queryKey: ['agricultores-ubicacion'],
-    queryFn: async () => {
-      const [municipios, agricultoresResult] = await Promise.all([
+    queryFn: async ({ signal }) => {
+      const [municipiosResult, agricultoresResult] = await Promise.allSettled([
         fetchMunicipios(),
         fetchAllPages<AdminUser>(AGRICULTORES_URL, {
           source: 'agricultores',
           keyOf: (a) => a.id_usuario,
+          signal,
         }),
       ]);
+
+      if (
+        municipiosResult.status === 'rejected' ||
+        agricultoresResult.status === 'rejected'
+      ) {
+        const muniErr =
+          municipiosResult.status === 'rejected'
+            ? municipiosResult.reason
+            : null;
+        const agriErr =
+          agricultoresResult.status === 'rejected'
+            ? agricultoresResult.reason
+            : null;
+        Sentry.captureMessage(
+          `[agricultores] fetch parcial: municipios=${
+            muniErr ? 'fallo' : 'ok'
+          } agricultores=${agriErr ? 'fallo' : 'ok'}`,
+        );
+        if (muniErr && agriErr) {
+          throw muniErr;
+        }
+      }
+
+      const municipios =
+        municipiosResult.status === 'fulfilled'
+          ? municipiosResult.value
+          : [];
+      const agriData =
+        agricultoresResult.status === 'fulfilled'
+          ? agricultoresResult.value
+          : { data: [] as AdminUser[], truncated: false, errores: 1 };
       const settled = await Promise.allSettled(
         municipios.map((m) => fetchLocalidades(m.id_municipio)),
       );
@@ -132,12 +165,12 @@ export function useAgricultoresUbicacion(options?: {
       }
       return {
         grupos: groupByUbicacion(
-          agricultoresResult.data,
+          agriData.data,
           municipios,
           localidades,
         ),
-        truncated: agricultoresResult.truncated,
-        errores: agricultoresResult.errores + fallos,
+        truncated: agriData.truncated,
+        errores: agriData.errores + fallos,
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -160,6 +193,7 @@ export function useAgricultoresUbicacion(options?: {
     ),
     isLoading,
     isError,
+    isRefetching,
     truncated: data?.truncated ?? false,
     errores: data?.errores ?? 0,
     refetch: () => void refetch(),

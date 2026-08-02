@@ -6,6 +6,7 @@ import {
   Provider as PaperProvider,
 } from 'react-native-paper';
 
+import * as Sentry from '@sentry/react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -20,6 +21,14 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
+
+import { sentryBeforeSend } from '@/services/sentry';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  tracesSampleRate: 1.0,
+  beforeSend: sentryBeforeSend,
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {

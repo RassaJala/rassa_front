@@ -1,8 +1,5 @@
-// Sanitizers for Sentry captures. There is no `Sentry.init` in this app yet
-// (no DSN configured), but screens already call `Sentry.captureException`, so
-// the raw error is scrubbed at the capture site. The helpers below are also
-// ready to wire into a future `Sentry.init({ beforeSend })`.
-
+// Sanitizers for Sentry captures.
+//
 // Headers that may carry credentials. Matched case-insensitively because
 // axios/AxiosHeaders normalize casing differently across environments
 // (Authorization vs authorization, cookie vs Cookie, set-cookie vs Set-Cookie).
@@ -102,16 +99,14 @@ export function sanitizeSentryError(error: unknown): unknown {
   return sanitized;
 }
 
-// Drop-in for a future `Sentry.init({ beforeSend: sentryBeforeSend })`. The
-// SDK populates `event.request.headers` with the outgoing request headers,
-// which include the Authorization header and cookies. The type is kept loose
-// on purpose so the SDK's own event type can be passed without friction.
-export function sentryBeforeSend(event: {
-  request?: { headers?: Record<string, unknown> };
-  extra?: Record<string, unknown>;
-  [key: string]: unknown;
-}): typeof event | null {
-  const request = event.request;
+// Drop-in for Sentry.init({ beforeSend }). El SDK puebla event.request.headers
+// con los headers salientes, que incluyen Authorization y cookies.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function sentryBeforeSend(event: any, _hint: any): any {
+  const evt = event as Record<string, unknown>;
+  const request = evt.request as
+    | { headers: Record<string, unknown> }
+    | undefined;
   if (request?.headers !== undefined) {
     request.headers = redactSensitiveHeaders(request.headers) as Record<
       string,

@@ -43,10 +43,17 @@ export interface FetchAllPagesOptions<T> {
   readonly maxPages?: number;
   readonly source?: string;
   readonly keyOf?: (item: T) => string | number;
+  readonly signal?: AbortSignal;
 }
 
-async function fetchPage<T>(url: string): Promise<PagePayload<T>> {
-  const { data } = await api.get<unknown>(url);
+async function fetchPage<T>(
+  url: string,
+  signal?: AbortSignal,
+): Promise<PagePayload<T>> {
+  const { data } = await api.get<unknown>(
+    url,
+    signal !== undefined ? { signal } : {},
+  );
   return toPage<T>(data);
 }
 
@@ -96,6 +103,7 @@ export async function fetchAllPages<T>(
   const maxPages = options?.maxPages ?? DEFAULT_MAX_PAGES;
   const source = options?.source ?? 'fetchAllPages';
   const keyOf = options?.keyOf;
+  const signal = options?.signal;
   const accumulated: T[] = [];
   const seen = new Set<string | number>();
   let errores = 0;
@@ -116,7 +124,7 @@ export async function fetchAllPages<T>(
       break;
     }
     try {
-      const page = await fetchPage<T>(nextUrl);
+      const page = await fetchPage<T>(nextUrl, signal);
       duplicados += dedupePage(accumulated, seen, page, keyOf);
       nextUrl = resolveNext(source, page.next);
     } catch (error) {
