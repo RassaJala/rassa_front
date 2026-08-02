@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -331,9 +331,6 @@ export function AdminMermasDashboard() {
   // Today for date inputs max attribute (local date, avoids UTC off-by-one)
   const today = useMemo(() => formatDateInput(new Date()), []);
 
-  // Retry limit
-  const retryCountRef = useRef(0);
-
   // Date range validation
   const isDateRangeInvalid = Boolean(
     fechaDesde && fechaHasta && fechaHasta < fechaDesde,
@@ -358,12 +355,11 @@ export function AdminMermasDashboard() {
     retry: false,
   });
 
-  // Reset retry count on successful fetch
-  useEffect(() => {
-    if (resumenQuery.data) retryCountRef.current = 0;
-  }, [resumenQuery.data]);
+  // Manual retry budget. TanStack Query's failureCount resets on success or
+  // when the queryKey changes, so retries never carry over between filters.
+  const retryBudgetExhausted = resumenQuery.failureCount >= WASTE_RETRY_LIMIT;
 
-  // Log failures for observability (Sentry is not installed on web yet).
+  // Log failures for observability; Sentry also captures them globally.
   useEffect(() => {
     if (resumenQuery.isError) {
       console.error('Failed to load merma summary', resumenQuery.error);
@@ -513,7 +509,7 @@ export function AdminMermasDashboard() {
   }
 
   if (isError && !resumen) {
-    const maxedOut = retryCountRef.current >= WASTE_RETRY_LIMIT;
+    const maxedOut = retryBudgetExhausted;
     return (
       <>
         <PageHeader title="Dashboard de Mermas" />
@@ -534,10 +530,7 @@ export function AdminMermasDashboard() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    retryCountRef.current += 1;
-                    resumenQuery.refetch();
-                  }}
+                  onClick={() => resumenQuery.refetch()}
                   className="mt-3 rounded-lg bg-brand-green-forest px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-forest/90"
                 >
                   Reintentar
@@ -593,7 +586,7 @@ export function AdminMermasDashboard() {
                 })}
               </span>
             </span>
-            {retryCountRef.current < WASTE_RETRY_LIMIT &&
+            {!retryBudgetExhausted &&
               (isFetching ? (
                 <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-300">
                   Reintentando…
@@ -601,10 +594,7 @@ export function AdminMermasDashboard() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    retryCountRef.current += 1;
-                    resumenQuery.refetch();
-                  }}
+                  onClick={() => resumenQuery.refetch()}
                   className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
                 >
                   Reintentar

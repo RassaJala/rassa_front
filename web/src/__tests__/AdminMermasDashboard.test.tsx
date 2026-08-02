@@ -204,6 +204,51 @@ describe('AdminMermasDashboard', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it('does not exhaust the retry budget across independent filter searches', async () => {
+    // The supervisor scenario: a loaded search then fails on retries, and
+    // the user switches to a different filter (new queryKey). The retry
+    // budget must reset per queryKey so the new independent search never
+    // shows "Contactá al administrador" prematurely.
+    mockFetch
+      .mockResolvedValueOnce(mockResumen)
+      .mockRejectedValue(new Error('Network error'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AdminMermasDashboard />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Unidades mermadas')).toBeInTheDocument();
+
+    // Refetch fails → stale-data banner with a Reintentar button.
+    await act(async () => {
+      queryClient.invalidateQueries();
+    });
+    expect(
+      await screen.findByText(
+        /No se pudieron cargar los datos para los filtros seleccionados/,
+      ),
+    ).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(3));
+
+    // Change a filter — this triggers a new query with a fresh queryKey.
+    await user.click(screen.getByRole('button', { name: 'Semana' }));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(4));
+
+    // The new independent search still offers a retry button instead of
+    // telling the user to contact the administrator.
+    expect(screen.getByText('Reintentar')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Contactá al administrador/),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows the truncation notice when the detail reaches the limit', async () => {
     mockFetch.mockResolvedValue({
       agrupacion: 'mes' as const,

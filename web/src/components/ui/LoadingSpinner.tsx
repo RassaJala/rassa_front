@@ -2,6 +2,7 @@ export function LoadingSpinner({ className = '' }: { className?: string }) {
   return (
     <div
       role="status"
+      aria-live="polite"
       aria-label="Cargando"
       className={`flex items-center justify-center ${className}`}
     >

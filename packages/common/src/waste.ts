@@ -38,7 +38,7 @@ export interface ProductOption {
 
 // --- Constants ---------------------------------------------------------------
 
-export const DAY_MS_IN_MS = 86_400_000;
+export const DAY_MS = 86_400_000;
 export const WASTE_PAGE_SIZE = 10;
 export const WASTE_DETAIL_LIMIT = 100;
 export const WASTE_RETRY_LIMIT = API_RETRY_LIMIT;
@@ -85,9 +85,7 @@ export function getWeekNumber(date: Date): number {
   const dayNum = target.getUTCDay() || 7; // Monday = 1 ... Sunday = 7
   target.setUTCDate(target.getUTCDate() + 4 - dayNum); // move to Thursday
   const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-  return Math.ceil(
-    ((target.getTime() - yearStart.getTime()) / DAY_MS_IN_MS + 1) / 7,
-  );
+  return Math.ceil(((target.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
 }
 
 export function getMonthLabel(iso: string): string {
