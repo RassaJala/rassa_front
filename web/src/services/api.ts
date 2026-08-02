@@ -217,19 +217,21 @@ async function refreshAccessToken(
     throw crearFalloDeAutenticacionRefresh();
   }
 
-  localStorage.setItem('token', data.access);
+  const access = data.access;
+
+  localStorage.setItem('token', access);
   if (data.refresh) {
     sessionStorage.setItem('refresh_token', data.refresh);
   }
 
   // Retry all queued requests with the new token
-  pendingRequests.forEach(({ resolve }) => resolve(data.access));
+  pendingRequests.forEach(({ resolve }) => resolve(access));
   pendingRequests = [];
 
   // Reset BEFORE retrying to avoid deadlock if retry also gets 401
   isRefreshing = false;
 
-  originalRequest.headers.Authorization = `Bearer ${data.access}`;
+  originalRequest.headers.Authorization = `Bearer ${access}`;
   refreshRetried.add(retryKey(originalRequest));
   return api(originalRequest);
 }
