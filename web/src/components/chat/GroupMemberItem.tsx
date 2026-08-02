@@ -3,10 +3,15 @@ import type { GroupMember } from '@rassa/chat';
 
 interface GroupMemberItemProps {
   member: GroupMember;
+  onRemove?: (usuarioId: number) => void;
 }
 
-export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
+export function GroupMemberItem({
+  member,
+  onRemove,
+}: Readonly<GroupMemberItemProps>) {
   const c = useAppColors();
+  const rolLabel = member.rol === 'admin' ? 'Jefe' : 'Miembro';
 
   return (
     <div
@@ -27,9 +32,21 @@ export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
           {member.nombre || 'Sin nombre'}
         </div>
         <div className="text-xs capitalize" style={{ color: c.muted }}>
-          {member.rol || 'Miembro'}
+          {rolLabel}
         </div>
       </div>
+
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={() => onRemove(member.id_usuario)}
+          className="cursor-pointer rounded-lg border-none bg-transparent text-xs font-medium"
+          style={{ color: c.coral }}
+          aria-label={`Remover a ${member.nombre}`}
+        >
+          Remover
+        </button>
+      ) : null}
     </div>
   );
 }
