@@ -8,6 +8,7 @@ import axiosRetry from 'axios-retry';
 import { API_RETRY_LIMIT } from '@/common/networking';
 
 import * as Storage from './storage';
+import { sanitizeSentryError } from './sentry';
 
 declare const process: {
   env: {
@@ -189,7 +190,7 @@ api.interceptors.response.use(
     try {
       newAccessToken = await refreshTokens();
     } catch (refreshError) {
-      Sentry.captureException(refreshError);
+      Sentry.captureException(sanitizeSentryError(refreshError));
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
