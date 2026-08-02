@@ -140,10 +140,39 @@ const NO_REDIRECT_ON_401 = ['/auth/change-password/', '/token/refresh/'];
 // --- Refresh token ---
 
 // ponytail: sanitize — never send the raw AxiosError (its toJSON leaks the Authorization header)
+// Preserves status, url, and method context for per-endpoint error-rate monitoring
+// while ensuring no credentials leak into Sentry events.
 function reportError(error: unknown): void {
-  if (error instanceof Error) {
-    Sentry.captureException(new Error(error.message));
+  if (!(error && typeof error === 'object' && 'isAxiosError' in error)) {
+    if (error instanceof Error) {
+      Sentry.captureException(error);
+    }
+    return;
   }
+
+  const axiosError = error as {
+    message?: unknown;
+    name?: unknown;
+    code?: unknown;
+    response?: {
+      status?: unknown;
+      config?: { url?: unknown; method?: unknown };
+    };
+    config?: { url?: unknown; method?: unknown };
+  };
+
+  Sentry.captureException(
+    Object.assign(new Error(String(axiosError.message ?? 'AxiosError')), {
+      name: axiosError.name ?? 'AxiosError',
+      code: axiosError.code ?? null,
+      status: axiosError.response?.status ?? null,
+      url: axiosError.response?.config?.url ?? axiosError.config?.url ?? null,
+      method:
+        axiosError.response?.config?.method ??
+        axiosError.config?.method ??
+        null,
+    }),
+  );
 }
 
 let isRefreshing = false;
@@ -167,6 +196,7 @@ function clearAuthAndRedirect(): void {
   pendingRequests.forEach(({ reject }) => reject(new Error('Sesión expirada')));
   pendingRequests = [];
   isRefreshing = false;
+  refreshRetried.clear();
   redirect('/login', { from: window.location.pathname });
 }
 

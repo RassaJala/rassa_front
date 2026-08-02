@@ -62,10 +62,7 @@ export async function getTodasLasRecolecciones(
 // fallo. `crypto.randomUUID` solo está disponible en contextos seguros; el
 // fallback sigue siendo único por cliente+time.
 function idempotencyKey(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return crypto.randomUUID();
 }
 
 export async function createRecoleccion(

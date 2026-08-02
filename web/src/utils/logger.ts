@@ -69,11 +69,23 @@ export function logError(
     return;
   }
 
-  // Producción: sin servicio de tracking (pendiente de decisión), dejamos
-  // evidencia en consola para poder diagnosticar sin silenciar el error.
-  console.warn(
-    `[${context}]`,
-    describeError(error),
-    redactSensitive(extra ?? {}),
-  );
+  const described = describeError(error);
+  const safeExtra = redactSensitive(extra ?? {});
+
+  console.warn(`[${context}]`, described, safeExtra);
+
+  try {
+    const { captureException } = await import('@sentry/react');
+    captureException(
+      Object.assign(
+        new Error(
+          `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
+        ),
+        { context, described, extra: safeExtra },
+      ),
+    );
+  } catch {
+    // Sentry not available (e.g. not initialized or chunk failed) — console.warn above
+    // already left evidence.
+  }
 }

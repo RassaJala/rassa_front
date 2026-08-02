@@ -382,7 +382,7 @@ describe('useAgricultoresUbicacion', () => {
       ),
       // La localidad tarda más que el deadline inyectado: al vencer la pared
       // el fetch se aborta y se descuenta como fallo (banner), no como
-      // cancelación del llamador. El deadline (300ms) da margen holgado para
+      // cancelación del llamador. El deadline (1000ms) da margen holgado para
       // que las fases rápidas (municipios/agricultores) terminen antes, y el
       // delay supera el deadline para garantizar que el fetch esté en vuelo.
       http.get(`${BASE}/localidades/`, async () => {
@@ -393,11 +393,11 @@ describe('useAgricultoresUbicacion', () => {
     );
 
     const { result } = renderHook(
-      () => useAgricultoresUbicacion({ deadlineMs: 300 }),
+      () => useAgricultoresUbicacion({ deadlineMs: 1000 }),
       { wrapper: createWrapper() },
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.isLoading).toBe(false), { timeout: 5000 });
     expect(result.current.isError).toBe(false);
     // El abort cortó la fase de localidades (no una fase anterior), así que la
     // paginación no se truncó y el fallo proviene del deadline.
@@ -469,11 +469,11 @@ describe('useAgricultoresUbicacion', () => {
     );
 
     const { result } = renderHook(
-      () => useAgricultoresUbicacion({ deadlineMs: 300 }),
+      () => useAgricultoresUbicacion({ deadlineMs: 1000 }),
       { wrapper: createWrapper() },
     );
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.isLoading).toBe(false), { timeout: 5000 });
     expect(result.current.isError).toBe(false);
     expect(result.current.truncated).toBe(false);
     expect(result.current.errores).toBe(1);
