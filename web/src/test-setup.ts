@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { afterEach, vi } from 'vitest';
 import { resetRecoleccionesMock } from './mocks/handlers';
 import { server } from './mocks/server';
 
@@ -33,5 +34,6 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterEach(() => {
   server.resetHandlers();
   resetRecoleccionesMock();
+  vi.clearAllMocks();
 });
 afterAll(() => server.close());
