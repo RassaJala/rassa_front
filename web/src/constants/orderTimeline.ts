@@ -1,5 +1,3 @@
-export { normalizeOrderHistoryResponse } from '@root/constants/orderTimeline';
-
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
