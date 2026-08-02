@@ -28,6 +28,7 @@ export function useSendMessageWithMedia(
         pageParams: number[];
       }>(messagesKey(conversationId));
 
+      const optimisticBlobUrl = URL.createObjectURL(payload.documento as File);
       const optimisticMessage: Message = {
         id: Date.now(),
         conversacion: payload.conversacion,
@@ -40,7 +41,7 @@ export function useSendMessageWithMedia(
           {
             id: Date.now(),
             mensaje: 0,
-            archivo: URL.createObjectURL(payload.documento as File),
+            archivo: optimisticBlobUrl,
             tipo: payload.tipo_documento,
             nombre: (payload.documento as File).name,
             tamaño: (payload.documento as File).size,
@@ -65,7 +66,11 @@ export function useSendMessageWithMedia(
         };
       });
 
-      return { previousMessages, optimisticId: optimisticMessage.id };
+      return {
+        previousMessages,
+        optimisticId: optimisticMessage.id,
+        optimisticBlobUrl,
+      };
     },
     onSuccess: (data, _variables, context) => {
       if (context?.optimisticId == null) return;
@@ -93,7 +98,10 @@ export function useSendMessageWithMedia(
         );
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, context) => {
+      if (context?.optimisticBlobUrl) {
+        URL.revokeObjectURL(context.optimisticBlobUrl);
+      }
       void queryClient.invalidateQueries({
         queryKey: messagesKey(conversationId),
       });

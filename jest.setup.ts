@@ -49,9 +49,11 @@ jest.mock('react-native-paper', () => {
 
 // Mock react-native-keyboard-controller (native module unavailable in Jest)
 jest.mock('react-native-keyboard-controller', () => {
-  const { View } = jest.requireActual('react-native');
+  const { createElement } = require('react') as typeof import('react');
+  const View = ({ children, ...props }: any) =>
+    createElement('View', props, children);
   return {
-    KeyboardProvider: ({ children }: { children: React.ReactNode }) => children,
+    KeyboardProvider: ({ children }: any) => children,
     KeyboardAvoidingView: View,
     KeyboardStickyView: View,
   };
@@ -125,9 +127,9 @@ jest.mock('expo-audio/build/utils/options', () => ({
 
 jest.mock('react-native-video', () => {
   const React = require('react') as typeof import('react');
-  const { View } = jest.requireActual('react-native') as {
-    View: React.ComponentType<{ children?: React.ReactNode }>;
-  };
+  const { createElement } = React;
+  const View = ({ children, ...props }: any) =>
+    createElement('View', props, children);
   const player = {
     id: 'video-player',
     seek: jest.fn(),
@@ -137,7 +139,7 @@ jest.mock('react-native-video', () => {
   const Video = React.forwardRef(
     (props: { children?: React.ReactNode }, ref) => {
       React.useImperativeHandle(ref, () => player);
-      return React.createElement(View, props);
+      return createElement(View, props);
     },
   );
   return {

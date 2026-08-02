@@ -116,7 +116,7 @@ export function ChatBubble({
             isOwn ? 'rounded-br-md' : 'rounded-bl-md'
           }`}
           style={{
-            background: bubbleBackground,
+            backgroundImage: bubbleBackground,
             color: isOwn ? ownContentColor : c.fg,
             boxShadow: lightMode ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
             border: `2px solid ${
