@@ -190,6 +190,63 @@ describe('parseApiError', () => {
     };
     expect(parseApiError(tracebackError, 'Server error')).toBe('Server error');
   });
+
+  it('returns a safe top-level array error body (DRF non-field errors)', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: ['Stock insuficiente para Tomate.'],
+      },
+    };
+    expect(parseApiError(axiosError)).toBe('Stock insuficiente para Tomate.');
+  });
+
+  it('sanitises an unsafe top-level array error body to the fallback', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: ['django.db.utils.OperationalError: could not connect to server'],
+      },
+    };
+    expect(parseApiError(axiosError, 'Server error')).toBe('Server error');
+  });
+
+  it('returns a safe string error body', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: 'El correo ya existe',
+      },
+    };
+    expect(parseApiError(axiosError)).toBe('El correo ya existe');
+  });
+
+  it('sanitises an unsafe string error body to the fallback', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 500,
+        data: 'django.db.utils.OperationalError: connect failed',
+      },
+    };
+    expect(parseApiError(axiosError, 'Server error')).toBe('Server error');
+  });
+
+  it('sanitises an unsafe message key to the fallback', () => {
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 500,
+        data: {
+          message: 'Traceback (most recent call last):\n  File "views.py"',
+        },
+      },
+    };
+    expect(parseApiError(axiosError, 'Server error')).toBe('Server error');
+  });
 });
 
 describe('extractApiError', () => {
@@ -287,7 +344,7 @@ describe('extractApiError', () => {
     expect(result).toBe('Error personalizado.');
   });
 
-  it('W-1: sanitiza un message string con HTML/traceback y devuelve el default', () => {
+  it('W-1: sanitizes a message string containing HTML/traceback and returns the default', () => {
     const axiosError = {
       isAxiosError: true,
       response: {
@@ -301,7 +358,7 @@ describe('extractApiError', () => {
     expect(result).toBe('Error del servidor. Intenta de nuevo.');
   });
 
-  it('W-1: maneja message como array de strings y devuelve el item seguro', () => {
+  it('W-1: handles message as an array of strings and returns the safe item', () => {
     const axiosError = {
       isAxiosError: true,
       response: {
@@ -314,7 +371,7 @@ describe('extractApiError', () => {
     expect(result).toBe("Stock insuficiente para 'Tomate'. Disponible: 2.");
   });
 
-  it('W-1: sanitiza un item array inseguro (traceback) y devuelve el default', () => {
+  it('W-1: sanitizes an unsafe array item (traceback) and returns the default', () => {
     const axiosError = {
       isAxiosError: true,
       response: {
