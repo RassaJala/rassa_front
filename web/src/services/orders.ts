@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from '~/services/api';
 import type { ApiResponse } from '~/types';
-import { extractApiError, isSafeDetail } from '~/utils/apiErrors';
+import { extractApiError, isSafeDetail, unwrapCause } from '~/utils/apiErrors';
 import { logError } from '~/utils/logger';
 import type { Pedido } from './orderTypes';
 
@@ -134,14 +134,6 @@ export async function createOrder(
     throw new MalformedOrderResponseError();
   }
   return order;
-}
-
-// Reads error.cause without requiring lib es2022 (web tsconfig.app.json lib
-// is ES2020; `Error.cause` is only typed from ES2022 onward).
-function unwrapCause(error: unknown): unknown {
-  if (!(error instanceof Error)) return error;
-  const cause = (error as { cause?: unknown }).cause;
-  return cause !== undefined ? cause : error;
 }
 
 // JD-001: DRF non-field errors llegan como array de strings:

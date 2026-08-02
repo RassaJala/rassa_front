@@ -64,7 +64,7 @@ function isAxiosError(error: unknown): error is {
 
 // Reads error.cause without requiring lib es2022 (web tsconfig lib is ES2020;
 // `Error.cause` is only typed from ES2022 onward). Shared by every extractor.
-function unwrapCause(error: unknown): unknown {
+export function unwrapCause(error: unknown): unknown {
   if (!(error instanceof Error)) return error;
   const cause = (error as { cause?: unknown }).cause;
   return cause !== undefined ? cause : error;
@@ -105,9 +105,16 @@ function extractFieldErrorsFromList(
   for (const [key, val] of Object.entries(data)) {
     if (key === 'non_field_errors') {
       const arr = Array.isArray(val) ? val : [val];
-      fieldErrors.push(...arr.map(String));
+      // R3-W: traceback items must never reach the UI — only safe items are
+      // kept; an all-unsafe list contributes nothing.
+      fieldErrors.push(...arr.map(String).filter((item) => isSafeDetail(item)));
     } else if (Array.isArray(val)) {
-      fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+      // R3-W: the field line is built only from safe items — a traceback item
+      // must not leak through the list path either.
+      const safeItems = val.map(String).filter((item) => isSafeDetail(item));
+      if (safeItems.length > 0) {
+        fieldErrors.push(`${key}: ${safeItems.join(', ')}`);
+      }
     }
   }
 
@@ -185,25 +192,45 @@ function extractFieldErrorsFromData(
     };
   }
   if (typeof data.message === 'string') {
-    return { fields, general: data.message };
+    // R3-W: `message` passes through the same sanitizer as `detail` — a
+    // traceback body in `message` must never render raw in the UI.
+    return {
+      fields,
+      general: isSafeDetail(data.message)
+        ? data.message
+        : 'Error interno del servidor.',
+    };
   }
 
   let foundField = false;
   for (const key of fieldKeys) {
     const value = data[key];
     if (Array.isArray(value) && value.length > 0) {
-      fields[key] = String(value[0]);
-      foundField = true;
+      const item = String(value[0]);
+      // R3-W: unsafe items are skipped — a traceback field error must never
+      // surface; a safe sibling field still lands.
+      if (isSafeDetail(item)) {
+        fields[key] = item;
+        foundField = true;
+      }
     } else if (typeof value === 'string') {
-      fields[key] = value;
-      foundField = true;
+      // R3-W: string field values pass through the sanitizer too.
+      if (isSafeDetail(value)) {
+        fields[key] = value;
+        foundField = true;
+      }
     }
   }
 
   if (!foundField) {
     for (const [k, v] of Object.entries(data)) {
       if (Array.isArray(v) && v.length > 0) {
-        return { fields, general: `${k}: ${String(v[0])}` };
+        // R3-W: the fallback entry is sanitized — an unsafe array item must
+        // not surface as the general message.
+        const item = String(v[0]);
+        if (isSafeDetail(item)) {
+          return { fields, general: `${k}: ${item}` };
+        }
       }
     }
     return { fields, general: 'Error del servidor. Intenta de nuevo.' };
