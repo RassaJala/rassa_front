@@ -41,14 +41,19 @@ export function isAbortError(reason: unknown): boolean {
  * que se aborta si `signal` (del llamador) se aborta o si `maxDurationMs` se
  * vence — así el deadline es un tope de pared, no solo un límite de despachos:
  * los items en vuelo se interrumpen vía su señal y `await` termina a tiempo.
+ * Si el `mapper` ignora la señal y nunca resuelve, un watchdog asienta el item
+ * al abortarse el presupuesto (el tope de pared no puede quedar colgado).
  *
  * Los items pendientes se resuelven sin despachar: con `abortError()` si fue
  * una cancelación y con `deadlineError()` si venció el presupuesto. Un item en
  * vuelo interrumpido por el vencimiento del presupuesto se reporta también con
  * `deadlineError()` (el tope de tiempo cuenta como fallo, no como cancelación);
- * si la interrupción vino de `signal`, se propaga el error de su operación.
+ * si la interrupción vino de `signal`, se propaga el error de su operación. Si
+ * el abort del llamador coincide con el vencimiento del presupuesto, gana
+ * `deadlineError()`: el tope de tiempo se reporta como fallo.
  *
- * Un `limit` <= 0 no despacha nada y rechaza todo con `abortError()`.
+ * Un `limit` <= 0 o no finito (NaN) no despacha nada y rechaza todo con
+ * `abortError()`.
  */
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
@@ -57,8 +62,8 @@ export async function mapWithConcurrency<T, R>(
   signal?: AbortSignal,
   maxDurationMs?: number,
 ): Promise<SettledResult<R>[]> {
-  const workerCount = Math.max(0, Math.min(Math.floor(limit), items.length));
-  if (workerCount === 0) {
+  const workerCount = Math.min(Math.floor(limit), items.length);
+  if (!(workerCount > 0)) {
     return items.map(() => ({ status: 'rejected', reason: abortError() }));
   }
 
@@ -94,7 +99,10 @@ export async function mapWithConcurrency<T, R>(
         continue;
       }
       try {
-        const value = await mapper(items[index] as T, budget.signal);
+        const value = await withBudgetSignal(
+          () => mapper(items[index] as T, budget.signal),
+          budget.signal,
+        );
         results[index] = { status: 'fulfilled', value };
       } catch (reason) {
         const interruptedByDeadline =
@@ -117,4 +125,39 @@ export async function mapWithConcurrency<T, R>(
     signal?.removeEventListener('abort', abortBudget);
   }
   return results;
+}
+
+/**
+ * Ejecuta `fn` y la fuerza a asentarse si `signal` se aborta antes de que
+ * resuelva: si el `mapper` ignora la señal y nunca termina, el deadline o el
+ * abort del llamador no pueden dejar un worker colgado para siempre.
+ */
+function withBudgetSignal<R>(
+  fn: () => Promise<R>,
+  signal: AbortSignal,
+): Promise<R> {
+  return new Promise<R>((resolve, reject) => {
+    let settled = false;
+    const onAbort = () => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      reject(abortError());
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    fn().then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (reason) => {
+        if (settled) return;
+        settled = true;
+        signal.removeEventListener('abort', onAbort);
+        reject(reason);
+      },
+    );
+  });
 }

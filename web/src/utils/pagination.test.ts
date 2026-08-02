@@ -101,6 +101,29 @@ describe('fetchAllPages', () => {
     expect(fetchPage).toHaveBeenCalledTimes(1);
   });
 
+  it('aborts the in-flight page when the deadline expires (hard wall)', async () => {
+    let gotSignal: AbortSignal | undefined;
+    const result = await fetchAllPages({
+      url: '/a/',
+      maxDurationMs: 40,
+      fetchPage: (_url, _params, signal) => {
+        gotSignal = signal;
+        return new Promise((_resolve, reject) => {
+          signal?.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true },
+          );
+        });
+      },
+      unwrap: unwrapDummy,
+    });
+
+    expect(gotSignal?.aborted).toBe(true);
+    expect(result.truncated).toBe(true);
+    expect(result.errores).toBe(0);
+  });
+
   it('returns nothing when the signal is already aborted', async () => {
     const controller = new AbortController();
     controller.abort();

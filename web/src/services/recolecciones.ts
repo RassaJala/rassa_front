@@ -8,7 +8,7 @@ import type {
 import { fetchAllPages, type FetchAllPagesResult } from '../utils/pagination';
 import api from './api';
 
-export interface ApiResponse<T> {
+interface ApiResponse<T> {
   data: T;
 }
 
@@ -58,10 +58,12 @@ export async function getTodasLasRecolecciones(
   });
 }
 
-// Key de idempotencia: si un reintento (red/timeout) reenvía el POST, el
-// servidor puede detectar el duplicado y devolver la respuesta original en vez
-// de crear dos recolecciones. `crypto.randomUUID` solo está disponible en
-// contextos seguros; el fallback sigue siendo único por cliente+time.
+// Key de idempotencia: los reintentos de red/timeout no reenvían POST (solo se
+// reintentan GET/HEAD/PUT/DELETE), pero el re-despacho tras un 401 con refresh
+// reusa el MISMO config — y por tanto la misma clave. Así el servidor puede
+// detectar el duplicado si el POST original llegó a persistirse antes del
+// fallo. `crypto.randomUUID` solo está disponible en contextos seguros; el
+// fallback sigue siendo único por cliente+time.
 function idempotencyKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();

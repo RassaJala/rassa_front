@@ -104,8 +104,9 @@ export function ocupaFechaParaDuplicado(
 
 /**
  * Regla única de duplicado: no puede haber dos recolecciones no canceladas del
- * mismo agricultor en la misma fecha. La comparten el mock y el modal para que
- * la validación de duplicados nunca diverja.
+ * mismo agricultor en la misma fecha. La usa el mock (handlers.ts); el modal
+ * comparte el predicado `ocupaFechaParaDuplicado` vía `buildDuplicateKeys`
+ * para que la validación de duplicados nunca diverja.
  */
 export function esRecoleccionDuplicada(
   recolecciones: readonly RecoleccionDuplicadoCandidate[],

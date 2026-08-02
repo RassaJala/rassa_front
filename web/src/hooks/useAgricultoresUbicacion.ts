@@ -49,10 +49,12 @@ interface AgricultoresResult {
 
 const AGRICULTORES_URL = '/recolecciones/agricultores/';
 
-// Cota total para la fase de localidades: municipios × (timeout 15s + retry)
-// puede multiplicarse cuando hay muchos municipios; el deadline impide que el
-// modal se quede en spinner minutos. Los items que no alcanzan se descuentan
-// como fallos (deadlineError no es un abort) y la UI avisa con el banner.
+// Cota total para las fases de carga (agricultores paginados + localidades por
+// municipio): municipios × (timeout 15s + retry) puede multiplicarse cuando hay
+// muchos municipios; el deadline impide que el modal se quede en spinner
+// minutos. El presupuesto es único y compartido entre ambas fases (no se
+// apilan 30s + 30s en serie). Los items que no alcanzan se descuentan como
+// fallos (deadlineError no es un abort) y la UI avisa con el banner.
 const LOCALIDADES_DEADLINE_MS = 30_000;
 
 function unwrapData<T>(body: unknown): T {
@@ -84,11 +86,12 @@ async function fetchLocalidades(
 
 async function fetchAgricultores(
   signal?: AbortSignal,
+  maxDurationMs?: number,
 ): Promise<AgricultoresResult> {
   const result = await fetchAllPages<AgricultorListItem>({
     url: AGRICULTORES_URL,
     signal,
-    maxDurationMs: LOCALIDADES_DEADLINE_MS,
+    maxDurationMs,
     fetchPage: async (url, _params, pageSignal) =>
       (await api.get<unknown>(url, { signal: pageSignal })).data,
     unwrap: (body) =>
@@ -111,7 +114,10 @@ function groupByUbicacion(
   localidades: Localidad[],
 ): AgricultorUbicacion[] {
   // Los registros desactivados (estado=false) no deben ofrecerse para
-  // programar: se filtran antes de agrupar para no mostrar nombres vacíos.
+  // programar: se filtran los municipios/localidades antes de agrupar. Los
+  // agricultores cuya localidad quedó fuera (inactiva, o de un municipio
+  // inactivo que ni siquiera se consulta) también se excluyen; de lo contrario
+  // reaparecerían bajo 'Sin localidad' y serían seleccionables.
   const municipiosActivos = municipios.filter((m) => m.estado);
   const localidadesActivas = localidades.filter((l) => l.estado);
   const municipioNombreById = new Map(
@@ -124,6 +130,12 @@ function groupByUbicacion(
   const groups = new Map<string, Map<string, AgricultorListItem[]>>();
 
   for (const agricultor of agricultores) {
+    if (
+      agricultor.localidad != null &&
+      !localidadById.has(agricultor.localidad)
+    ) {
+      continue;
+    }
     const localidad = agricultor.localidad
       ? localidadById.get(agricultor.localidad)
       : undefined;
@@ -184,10 +196,14 @@ export function useAgricultoresUbicacion(options?: {
   }>({
     queryKey: ['agricultores-ubicacion'],
     queryFn: async ({ signal }) => {
+      // Un único presupuesto compartido: el deadline se fija al arrancar y
+      // cada fase recibe el tiempo restante (los 30s no se apilan en serie).
+      const deadline = Date.now() + LOCALIDADES_DEADLINE_MS;
+      const remaining = () => Math.max(0, deadline - Date.now());
       try {
         const [municipios, agricultoresResult] = await Promise.all([
           fetchMunicipios(signal),
-          fetchAgricultores(signal),
+          fetchAgricultores(signal, remaining()),
         ]);
 
         // Los municipios desactivados no se consultan ni se agrupan.
@@ -198,7 +214,7 @@ export function useAgricultoresUbicacion(options?: {
           4,
           (m, budgetSignal) => fetchLocalidades(m.id_municipio, budgetSignal),
           signal,
-          LOCALIDADES_DEADLINE_MS,
+          remaining(),
         );
         const localidades: Localidad[] = [];
         let fallos = 0;

@@ -77,7 +77,7 @@ export function SellerRecolecciones() {
 
   const recolecciones = useMemo(() => result?.data?.results ?? [], [result]);
 
-  const { data: todasLasRecolecciones, isLoading: isLoadingTodas } = useQuery({
+  const { data: todasLasRecolecciones } = useQuery({
     queryKey: ['recolecciones', 'todas', today],
     queryFn: ({ signal }) =>
       getTodasLasRecolecciones({ fecha_desde: today }, signal),
@@ -96,10 +96,12 @@ export function SellerRecolecciones() {
     totalErrores > 0
       ? recolecciones
       : (todasLasRecolecciones?.data ?? recolecciones);
+  // El banner solo informa de una falla real (errores o recorrido truncado),
+  // no de la carga en curso: `todas` se re-fetcha en cada apertura del modal,
+  // así que gatear por `isLoadingTodas` mostraría el aviso en cada apertura
+  // incluso en el camino feliz.
   const duplicateCheckFailed =
-    isLoadingTodas ||
-    totalErrores > 0 ||
-    (todasLasRecolecciones?.truncated ?? false);
+    totalErrores > 0 || (todasLasRecolecciones?.truncated ?? false);
 
   const sections = useMemo(() => {
     const map = new Map<string, Recoleccion[]>();
@@ -128,17 +130,21 @@ export function SellerRecolecciones() {
       next.delete(id);
       return next;
     });
-  const notifySuccess = async (message: string) => {
+  const notifySuccess = (message: string) => {
     invalidate();
-    // Se fuerza el refetch de la lista visible para detectar un fallo de
-    // actualización: el éxito del guardado no implica que la pantalla quedó al
-    // día, y callar el error dejaría al usuario con datos obsoletos.
-    const refreshed = await refetch();
-    setToast({
-      message: refreshed.isError
-        ? 'El cambio se guardó, pero no se pudo actualizar la lista.'
-        : message,
-      type: refreshed.isError ? 'error' : 'success',
+    setToast({ message, type: 'success' });
+    // El refetch corre en segundo plano y no retrasa el toast de éxito: el
+    // guardado no implica que la pantalla quedó al día, pero en red degradada
+    // esperar el refetch podía retrasar el aviso ~15s o incluso reemplazar el
+    // éxito por un error. Si la actualización falla, se degrada a un aviso
+    // secundario.
+    void refetch().then((refreshed) => {
+      if (refreshed.isError) {
+        setToast({
+          message: 'El cambio se guardó, pero no se pudo actualizar la lista.',
+          type: 'error',
+        });
+      }
     });
   };
   const notifyError = (error: unknown) => {

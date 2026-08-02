@@ -104,12 +104,15 @@ describe('getTodasLasRecolecciones', () => {
     expect(result.errores).toBe(0);
     expect(mockedApi.get).toHaveBeenNthCalledWith(1, '/recolecciones/', {
       params: { fecha_desde: '2026-08-01' },
+      signal: expect.any(AbortSignal),
     });
     expect(mockedApi.get).toHaveBeenNthCalledWith(2, '/recolecciones/?page=2', {
       params: undefined,
+      signal: expect.any(AbortSignal),
     });
     expect(mockedApi.get).toHaveBeenNthCalledWith(3, '/recolecciones/?page=3', {
       params: undefined,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -146,9 +149,11 @@ describe('getTodasLasRecolecciones', () => {
 
     expect(mockedApi.get).toHaveBeenNthCalledWith(1, '/recolecciones/', {
       params: { estado: 'pendiente' },
+      signal: expect.any(AbortSignal),
     });
     expect(mockedApi.get).toHaveBeenNthCalledWith(2, '/recolecciones/?page=2', {
       params: undefined,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -291,6 +296,38 @@ describe('createRecoleccion', () => {
         fecha_recoleccion: '2026-08-02',
       }),
     ).rejects.toThrow('Validation error');
+  });
+
+  it('falls back to a unique client+time key when crypto.randomUUID is unavailable', async () => {
+    vi.stubGlobal('crypto', {});
+    try {
+      mockedApi.post.mockResolvedValue({
+        data: { data: { id_recoleccion: 1 } },
+      });
+      const payload = {
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-02',
+        hora_inicio: null,
+        hora_fin: null,
+        comentarios: null,
+      };
+
+      await createRecoleccion(payload);
+      await createRecoleccion(payload);
+
+      const first = mockedApi.post.mock.calls[0]?.[2] as {
+        headers: { 'Idempotency-Key': string };
+      };
+      const second = mockedApi.post.mock.calls[1]?.[2] as {
+        headers: { 'Idempotency-Key': string };
+      };
+      expect(first.headers['Idempotency-Key']).toMatch(/^[0-9a-z]+-[0-9a-z]+$/);
+      expect(second.headers['Idempotency-Key']).not.toBe(
+        first.headers['Idempotency-Key'],
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

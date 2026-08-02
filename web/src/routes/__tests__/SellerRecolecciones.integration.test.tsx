@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, delay } from 'msw';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '../../mocks/server';
 import { ThemeProvider } from '../../providers/ThemeProvider';
+import { todayString } from '../../utils/recolecciones';
 
 vi.mock('~/hooks/useAuth', () => ({
   useAuth: () => ({
@@ -177,6 +178,105 @@ describe('SellerRecolecciones — integration', () => {
 
     expect(
       await screen.findByText(/No se pudieron cargar todas las recolecciones/),
+    ).toBeInTheDocument();
+  });
+
+  it('does not show the degraded banner while the full fetch is loading', async () => {
+    const recoleccion = {
+      id_recoleccion: 1,
+      fk_agricultor: 10,
+      agricultor_nombre: 'Juan Pérez',
+      fecha_recoleccion: todayString(),
+      hora_inicio: '08:00:00',
+      hora_fin: '10:00:00',
+      estado: 'pendiente',
+      comentarios: null,
+      creado_en: `${todayString()}T00:00:00Z`,
+    };
+    let requests = 0;
+    server.use(
+      http.get(`${BASE}/recolecciones/`, async () => {
+        requests += 1;
+        if (requests > 1) {
+          // La consulta paginada (`todas`) se deja en vuelo mientras el modal
+          // está abierto para probar que el banner no se gatea por su carga.
+          await delay(300);
+        }
+        return HttpResponse.json({
+          data: {
+            count: 1,
+            next: null,
+            previous: null,
+            results: [recoleccion],
+          },
+        });
+      }),
+    );
+
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: /Nueva/ }));
+
+    await screen.findByRole('button', { name: /Programar recolección/ });
+    // El modal ya está abierto y `todas` aún carga: no debe verse el banner.
+    expect(
+      screen.queryByText(/No se pudieron cargar todas las recolecciones/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the success toast immediately and warns when the refetch fails', async () => {
+    const recoleccion = {
+      id_recoleccion: 1,
+      fk_agricultor: 10,
+      agricultor_nombre: 'Juan Pérez',
+      fecha_recoleccion: todayString(),
+      hora_inicio: '08:00:00',
+      hora_fin: '10:00:00',
+      estado: 'pendiente',
+      comentarios: null,
+      creado_en: `${todayString()}T00:00:00Z`,
+    };
+    let requests = 0;
+    server.use(
+      http.get(`${BASE}/recolecciones/`, async () => {
+        requests += 1;
+        if (requests > 1) {
+          // El refetch tras el guardado falla (con retraso para que el toast de
+          // éxito sea observable antes de degradarse al aviso secundario).
+          await delay(300);
+          return HttpResponse.json({ detail: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({
+          data: {
+            count: 1,
+            next: null,
+            previous: null,
+            results: [recoleccion],
+          },
+        });
+      }),
+    );
+
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar ruta' }));
+
+    // El éxito se muestra de inmediato, sin esperar al refetch en segundo plano.
+    expect(
+      await screen.findByText('Estado actualizado correctamente.'),
+    ).toBeInTheDocument();
+
+    // Al fallar el refetch se degrada a un aviso secundario. El 500 se reintenta
+    // (axios-retry con backoff), así que el aviso tarda más del timeout por
+    // defecto de findByText.
+    expect(
+      await screen.findByText(
+        'El cambio se guardó, pero no se pudo actualizar la lista.',
+        {},
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
   });
 });

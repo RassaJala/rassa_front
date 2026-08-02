@@ -82,7 +82,7 @@ describe('mapWithConcurrency', () => {
     expect((result[0] as { reason: Error }).reason.name).toBe('AbortError');
   });
 
-  it('rejects remaining pending items when the signal aborts mid-flight', async () => {
+  it('force-settles in-flight items when the signal aborts mid-flight', async () => {
     const controller = new AbortController();
     const mapper = vi.fn(async (n: number) => {
       if (n === 1) {
@@ -101,12 +101,16 @@ describe('mapWithConcurrency', () => {
       controller.signal,
     );
 
-    expect(result[0]).toEqual({ status: 'fulfilled', value: 1 });
-    expect(result[1]).toEqual({ status: 'fulfilled', value: 2 });
-    expect(result[2]).toEqual({
-      status: 'rejected',
-      reason: expect.objectContaining({ name: 'AbortError' }),
-    });
+    // En vuelo y pendientes se asientan como abortados: el watchdog fuerza la
+    // resolución en cuanto se aborta el presupuesto, aunque el mapper que
+    // provocó el abort estuviera a punto de devolver su valor.
+    expect(result.every((r) => r.status === 'rejected')).toBe(true);
+    expect(
+      result.every(
+        (r) =>
+          r.status === 'rejected' && (r.reason as Error).name === 'AbortError',
+      ),
+    ).toBe(true);
     expect(mapper).toHaveBeenCalledTimes(2);
   });
 
@@ -190,7 +194,31 @@ describe('mapWithConcurrency', () => {
 
     const result = await pending;
     expect(mapperSignal?.aborted).toBe(true);
-    expect(result[0]?.status).toBe('fulfilled');
+    expect(result[0]?.status).toBe('rejected');
+    expect((result[0] as { reason: Error }).reason.name).toBe('AbortError');
+  });
+
+  it('force-settles in-flight items when the deadline expires even if the mapper never resolves', async () => {
+    const mapper = vi.fn(
+      async (_n: number, _signal: AbortSignal): Promise<number> =>
+        new Promise<number>(() => {}),
+    );
+
+    const result = await mapWithConcurrency([1], 1, mapper, undefined, 40);
+
+    expect(result[0]).toEqual({
+      status: 'rejected',
+      reason: expect.objectContaining({ name: 'DeadlineExceededError' }),
+    });
+  });
+
+  it('treats a NaN limit like zero without dispatching anything', async () => {
+    const mapper = vi.fn(async (n: number) => n);
+
+    const result = await mapWithConcurrency([1, 2], Number.NaN, mapper);
+
+    expect(mapper).not.toHaveBeenCalled();
+    expect(result.every((r) => r.status === 'rejected')).toBe(true);
   });
 
   it('completes items that fit before the deadline and rejects the rest', async () => {

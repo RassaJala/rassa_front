@@ -172,4 +172,158 @@ describe('useAgricultoresUbicacion', () => {
     expect(called).toBe(false);
     expect(result.current.agricultores).toHaveLength(0);
   });
+
+  it('excludes agricultores whose localidad is inactive (estado=false)', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: {
+            count: 3,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id_usuario: 10,
+                nombre: 'Juan',
+                apellido_paterno: 'Pérez',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 1,
+              },
+              {
+                id_usuario: 12,
+                nombre: 'Zeta',
+                apellido_paterno: 'Inactiva',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 2,
+              },
+              {
+                id_usuario: 13,
+                nombre: 'Sin',
+                apellido_paterno: 'Asignar',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: null,
+              },
+            ],
+          },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [{ id_municipio: 1, nombre: 'Jalisco', estado: true }],
+        }),
+      ),
+      http.get(`${BASE}/localidades/`, () =>
+        HttpResponse.json({
+          data: [
+            {
+              id_localidad: 1,
+              nombre: 'Guadalajara',
+              municipio_id: 1,
+              estado: true,
+            },
+            {
+              id_localidad: 2,
+              nombre: 'Zapopan',
+              municipio_id: 1,
+              estado: false,
+            },
+          ],
+        }),
+      ),
+    );
+
+    const { result } = renderHook(() => useAgricultoresUbicacion(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(false);
+
+    const todos = result.current.agricultores.flatMap((g) =>
+      g.localidades.flatMap((l) => l.agricultores),
+    );
+    // El agricultor de la localidad inactiva no aparece; el de localidad null sí.
+    expect(todos.map((a) => a.id_usuario)).toEqual([10, 13]);
+    expect(todos.some((a) => a.nombre === 'Zeta')).toBe(false);
+  });
+
+  it('excludes agricultores of inactive municipios (never fetched nor grouped)', async () => {
+    server.use(
+      http.get(`${BASE}/recolecciones/agricultores/`, () =>
+        HttpResponse.json({
+          data: {
+            count: 2,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id_usuario: 10,
+                nombre: 'Juan',
+                apellido_paterno: 'Pérez',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 1,
+              },
+              {
+                id_usuario: 14,
+                nombre: 'Muni',
+                apellido_paterno: 'Inactivo',
+                apellido_materno: null,
+                role: 'farmer',
+                localidad: 3,
+              },
+            ],
+          },
+        }),
+      ),
+      http.get(`${BASE}/municipios/`, () =>
+        HttpResponse.json({
+          data: [
+            { id_municipio: 1, nombre: 'Jalisco', estado: true },
+            { id_municipio: 2, nombre: 'Colima', estado: false },
+          ],
+        }),
+      ),
+      http.get(`${BASE}/localidades/`, ({ request }) => {
+        const url = new URL(request.url);
+        const municipioId = Number(url.searchParams.get('municipio_id'));
+        return HttpResponse.json({
+          data: [
+            {
+              id_localidad: 1,
+              nombre: 'Guadalajara',
+              municipio_id: 1,
+              estado: true,
+            },
+            ...(municipioId === 2
+              ? [
+                  {
+                    id_localidad: 3,
+                    nombre: 'Manzanillo',
+                    municipio_id: 2,
+                    estado: true,
+                  },
+                ]
+              : []),
+          ],
+        });
+      }),
+    );
+
+    const { result } = renderHook(() => useAgricultoresUbicacion(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(false);
+
+    const todos = result.current.agricultores.flatMap((g) =>
+      g.localidades.flatMap((l) => l.agricultores),
+    );
+    expect(todos.map((a) => a.id_usuario)).toEqual([10]);
+    expect(todos.some((a) => a.nombre === 'Muni')).toBe(false);
+  });
 });

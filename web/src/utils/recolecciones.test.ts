@@ -306,6 +306,28 @@ describe('validateProgramarForm', () => {
       }),
     ).toBe('La hora de inicio debe tener el formato HH:MM.');
   });
+
+  it('rechaza una fecha con formato válido pero día imposible del calendario', () => {
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '2026-02-31',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBe('La fecha ingresada no es válida.');
+  });
+
+  it('valida el formato de la hora de fin', () => {
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: todayString(),
+        horaInicio: '09:00',
+        horaFin: '9:00',
+      }),
+    ).toBe('La hora de fin debe tener el formato HH:MM.');
+  });
 });
 
 describe('buildDuplicateKeys', () => {
