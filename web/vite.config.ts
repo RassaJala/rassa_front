@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -6,8 +7,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@/common': path.resolve(__dirname, '../packages/common/src'),
       '@': path.resolve(__dirname, './src'),
       '~': path.resolve(__dirname, './src'),
+      '@root': path.resolve(__dirname, '../src'),
+      '@rassa/chat': path.resolve(__dirname, '../packages/chat/src'),
     },
   },
   server: {
@@ -18,5 +22,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test-setup.ts'],
+    forbidOnly: true,
   },
 });

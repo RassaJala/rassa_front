@@ -1,3 +1,5 @@
+export { normalizeOrderHistoryResponse } from '@root/constants/orderTimeline';
+
 export const DOT_SIZE = 12;
 export const STALE_TIME = 30_000;
 
@@ -22,6 +24,7 @@ export const STATUS_LABELS: Record<string, string> = {
   listo_para_retirar: 'Listo para retirar',
   entregado: 'Entregado',
   cancelado: 'Cancelado',
+  activo: 'Activo',
 };
 
 export function formatTimestamp(iso: string): string {
@@ -52,7 +55,7 @@ export function buildDescription(entry: {
   return `${fromLabel} → ${toLabel}`;
 }
 
-const STATUS_COLORS: Record<string, string> = {
+export const STATUS_COLORS: Record<string, string> = {
   pendiente: '#f59e0b',
   confirmado: '#22c55e',
   en_preparacion: '#3b82f6',

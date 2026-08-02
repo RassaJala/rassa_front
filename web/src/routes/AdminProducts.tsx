@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { ProductThumbnail } from '../components/ui/ProductThumbnail';
 
 import { useAppColors } from '../hooks/useAppColors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
@@ -12,6 +13,7 @@ interface Product {
   unidad: string;
   descripcion: string;
   estado: boolean;
+  imagen_url?: string | null;
 }
 
 const initialData: Product[] = [
@@ -380,17 +382,23 @@ export function AdminProducts() {
                             color: fg,
                           }}
                         >
-                          <span
+                          <div
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 8,
+                              gap: 10,
                             }}
                           >
-                            <span>
-                              {catEmoji[item.categoria] ?? '📦'} {item.nombre}
-                            </span>
-                          </span>
+                            <ProductThumbnail
+                              src={item.imagen_url}
+                              alt={item.nombre}
+                              fallbackEmoji={
+                                catEmoji[item.categoria] ?? '\u{1F4E6}'
+                              }
+                              size={40}
+                            />
+                            <span>{item.nombre}</span>
+                          </div>
                         </td>
                         <td
                           style={{

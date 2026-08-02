@@ -188,6 +188,20 @@ function createReactNativeRules() {
     plugins: {
       'react-native': reactNativePlugin as any,
     },
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        __DEV__: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        process: 'readonly',
+      },
+    },
     rules: {
       // Estilos — sin unused, inline ni colores hardcodeados.
       'react-native/no-unused-styles': 'error',

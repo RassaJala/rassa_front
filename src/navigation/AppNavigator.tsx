@@ -1,5 +1,3 @@
-/* globals clearTimeout, setTimeout -- Required for React Native timers */
-
 import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -16,6 +14,7 @@ import StartChatScreen from '@/features/chat/screens/StartChatScreen';
 import { RoleErrorScreen } from '@/navigation/RoleErrorScreen';
 import AdminPanelScreen from '@/screens/admin/AdminPanelScreen';
 import AdminProductsScreen from '@/screens/admin/AdminProductsScreen';
+import AdminProfileScreen from '@/screens/admin/AdminProfileScreen';
 import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
@@ -25,26 +24,34 @@ import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
+import UserFormScreen from '@/screens/admin/UserFormScreen';
 import UserManagementScreen from '@/screens/admin/UserManagementScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
+import CatalogScreen from '@/screens/buyer/CatalogScreen';
 import HomeScreen from '@/screens/buyer/HomeScreen';
 import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
+import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
+import OrderSuccessScreen from '@/screens/common/OrderSuccessScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
 import FamilyFormScreen from '@/screens/families/FamilyFormScreen';
 import FamilyListScreen from '@/screens/families/FamilyListScreen';
+import FarmerDashboardScreen from '@/screens/farmer/FarmerDashboardScreen';
 import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
+import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import WasteRegisterScreen from '@/screens/waste/WasteRegisterScreen';
 import * as Storage from '@/services/storage';
@@ -269,6 +276,20 @@ function BuyerTabs() {
         }}
       />
       <BuyerTab.Screen
+        name="Catalog"
+        component={CatalogScreen}
+        options={{
+          tabBarLabel: 'Catálogo',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="storefront-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <BuyerTab.Screen
         name="Carrito"
         component={CarritoScreen}
         options={{
@@ -312,6 +333,8 @@ function BuyerNavigator() {
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
+      <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
@@ -337,6 +360,15 @@ function FarmerScreens() {
         name="ProductForm"
         component={ProductFormScreen}
         options={{ presentation: 'transparentModal' }}
+      />
+      <FarmerStack.Screen
+        name="FarmerDashboard"
+        component={FarmerDashboardScreen}
+      />
+      <FarmerStack.Screen
+        name="PublicationWizard"
+        component={PublicationWizardScreen}
+        options={{ presentation: 'fullScreenModal' }}
       />
       <FarmerStack.Screen name="Profile" component={ProfileScreen} />
       <FarmerStack.Screen
@@ -447,6 +479,8 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="Payment" component={PaymentScreen} />
+      <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
         name="WasteRegister"
         component={WasteRegisterScreen}
@@ -469,6 +503,8 @@ function AdminScreens() {
   return (
     <AdminStack.Navigator screenOptions={{ headerShown: false }}>
       <AdminStack.Screen name="AdminPanel" component={AdminTabs} />
+      <AdminStack.Screen name="AdminProfile" component={AdminProfileScreen} />
+      <AdminStack.Screen name="UserForm" component={UserFormScreen} />
       <AdminStack.Screen name="FamilyDetail" component={FamilyDetailScreen} />
       <AdminStack.Screen name="FamilyForm" component={FamilyFormScreen} />
       <AdminStack.Screen

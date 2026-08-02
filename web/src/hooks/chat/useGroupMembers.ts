@@ -1,0 +1,16 @@
+import { groupMembersKey } from '@rassa/chat';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+
+import { chatApi } from '~/services/chat';
+import type { GroupMember } from '@rassa/chat';
+
+export function useGroupMembers(
+  conversationId: number,
+): UseQueryResult<GroupMember[]> {
+  return useQuery({
+    queryKey: groupMembersKey(conversationId),
+    queryFn: () => chatApi.getGroupMembers(conversationId),
+    staleTime: 30_000,
+  });
+}

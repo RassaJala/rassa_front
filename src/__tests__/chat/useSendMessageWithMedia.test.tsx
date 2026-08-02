@@ -2,6 +2,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import { messagesKey } from '@rassa/chat';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
@@ -63,7 +64,7 @@ describe('useSendMessageWithMedia', () => {
         mutations: { retry: false },
       },
     });
-    queryClient.setQueryData(['messages', 1], existingMessages);
+    queryClient.setQueryData(messagesKey(1), existingMessages);
   });
 
   const TestComponent = () => {
@@ -83,6 +84,8 @@ describe('useSendMessageWithMedia', () => {
                 name: 'test.jpg',
                 type: 'image/jpeg',
               },
+              remitente: 1,
+              remitente_nombre: 'Test User',
             })
           }
         >
@@ -110,7 +113,7 @@ describe('useSendMessageWithMedia', () => {
 
     const cached = queryClient.getQueryData<{
       pages: { results: { id: number; contenido: string }[] }[];
-    }>(['messages', 1]);
+    }>(messagesKey(1));
 
     const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
     expect(allMessages.some((m) => m.contenido === 'Check this')).toBe(true);
@@ -149,7 +152,7 @@ describe('useSendMessageWithMedia', () => {
     await waitFor(() => {
       const cached = queryClient.getQueryData<{
         pages: { results: { id: number; contenido: string }[] }[];
-      }>(['messages', 1]);
+      }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
       const msg = allMessages.find((m) => m.contenido === 'Check this');
       expect(msg).toBeDefined();
@@ -169,7 +172,7 @@ describe('useSendMessageWithMedia', () => {
     await waitFor(() => {
       const cached = queryClient.getQueryData<{
         pages: { results: { id: number; contenido: string }[] }[];
-      }>(['messages', 1]);
+      }>(messagesKey(1));
       const allMessages = cached?.pages.flatMap((p) => p.results) ?? [];
       expect(allMessages.some((m) => m.contenido === 'Check this')).toBe(false);
     });

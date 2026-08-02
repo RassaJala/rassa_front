@@ -1,5 +1,3 @@
-/* globals console, setTimeout -- Required for React Native logging and timers */
-
 import type { ReactNode } from 'react';
 import React, {
   createContext,
@@ -38,6 +36,8 @@ interface BackendUser {
   direccion: string | null;
   localidad: number | null;
   localidad_nombre: string | null;
+  municipio_id?: number | null;
+  municipio_nombre?: string | null;
 }
 
 interface LoginResponse {
@@ -129,6 +129,8 @@ function mapBackendUser(user: Readonly<BackendUser>): User {
     direccion: user.direccion ?? '',
     localidad: user.localidad ?? 0,
     localidad_nombre: user.localidad_nombre,
+    municipio_id: user.municipio_id ?? null,
+    municipio_nombre: user.municipio_nombre ?? null,
   };
 }
 
@@ -159,7 +161,7 @@ function extractErrorMessage(data: unknown): string | null {
   return null;
 }
 
-function parseAuthError(
+export function parseAuthError(
   axiosError: Readonly<AxiosError<Record<string, unknown>>>,
   context: 'login' | 'register' | 'updateProfile' | 'changePassword',
 ): string {

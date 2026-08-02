@@ -28,14 +28,11 @@ import {
 
 import Toast from '@/components/Toast';
 import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type {
-  ApiResponse,
-  Category,
-  FarmerStackParamList,
-  Producto,
-} from '@/types';
+import type { ApiResponse, Category, FarmerStackParamList } from '@/types';
+import { parseApiList } from '@/utils/apiResponse';
 
 type NavigationProp = NativeStackNavigationProp<
   FarmerStackParamList,
@@ -182,14 +179,16 @@ export default function ProductListScreen({
     [deleteMutation],
   );
 
-  const { data: categories } = useQuery<Category[]>({
+  const { data: rawCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
-      return data.data;
+      const response = await api.get('/categorias/');
+      return parseApiList<Category>(response.data);
     },
     staleTime: 60_000,
   });
+
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
 
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams();

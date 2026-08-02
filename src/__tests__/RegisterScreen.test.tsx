@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any -- Test files are less strict */
 import React from 'react';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import api from '@/services/api';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 
 const mockRegister = jest.fn();
@@ -32,6 +34,16 @@ jest.mock('@react-native-community/netinfo', () => ({
 jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
 }));
+
+jest.mock('@/services/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+  },
+}));
+
+const mockedApi = api as jest.Mocked<typeof api>;
 
 const mockSetLocalidadId = jest.fn();
 const mockSetLocalidadNombre = jest.fn();
@@ -91,8 +103,24 @@ describe('RegisterScreen', () => {
     mockUseCatalogs.errorLocalidades = null;
   });
 
+  const renderScreen = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+      },
+    });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <RegisterScreen />
+      </QueryClientProvider>,
+    );
+  };
+
   it('renderiza correctamente todos los campos obligatorios', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     expect(getByPlaceholderText('ejemplo@correo.com')).toBeTruthy();
     expect(getByPlaceholderText('Nombre(s)')).toBeTruthy();
@@ -105,7 +133,7 @@ describe('RegisterScreen', () => {
 
   it('valida campos vacíos obligatorios', () => {
     mockUseCatalogs.localidadId = null; // Forzar error de campo obligatorio
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     fireEvent.press(getByText('Registrarse'));
 
@@ -115,13 +143,16 @@ describe('RegisterScreen', () => {
   });
 
   it('valida correo electrónico incorrecto', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
       'correo-invalido',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 8 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -137,13 +168,13 @@ describe('RegisterScreen', () => {
   });
 
   it('valida longitud de contraseña corta', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
       'juan@test.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), '123'); // Corta
+    fireEvent.changeText(getByPlaceholderText('Mínimo 8 caracteres'), '123'); // Corta
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -156,18 +187,21 @@ describe('RegisterScreen', () => {
     fireEvent.press(getByText('Registrarse'));
 
     expect(
-      getByText('La contraseña debe tener al menos 6 caracteres.'),
+      getByText('La contraseña debe tener al menos 8 caracteres.'),
     ).toBeTruthy();
   });
 
   it('valida formato de fecha de nacimiento incorrecto', () => {
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
       'juan@test.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 8 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'Juan');
     fireEvent.changeText(getByPlaceholderText('Apellido Paterno'), 'Pérez');
     fireEvent.changeText(getByPlaceholderText('10 dígitos'), '1234567890');
@@ -186,7 +220,7 @@ describe('RegisterScreen', () => {
 
   it('muestra error cuando no hay conexión de red', () => {
     mockNetInfoState.isConnected = false;
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     fireEvent.press(getByText('Registrarse'));
 
@@ -196,13 +230,16 @@ describe('RegisterScreen', () => {
   it('ejecuta registro exitosamente si los datos son correctos y localidad está seleccionada', async () => {
     mockRegister.mockResolvedValueOnce(undefined);
 
-    const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
+    const { getByPlaceholderText, getByText } = renderScreen();
 
     fireEvent.changeText(
       getByPlaceholderText('ejemplo@correo.com'),
       'test@reg.com',
     );
-    fireEvent.changeText(getByPlaceholderText('••••••••'), 'password123');
+    fireEvent.changeText(
+      getByPlaceholderText('Mínimo 8 caracteres'),
+      'password123',
+    );
     fireEvent.changeText(getByPlaceholderText('Nombre(s)'), 'NombreTest');
     fireEvent.changeText(
       getByPlaceholderText('Apellido Paterno'),
@@ -231,13 +268,16 @@ describe('RegisterScreen', () => {
         domicilio: 'Calle 123',
         fk_localidad: 10,
       });
+      // Guard against double-POST regression: only AuthContext.register must
+      // make the network call, never api.post directly from RegisterScreen.
+      expect(mockedApi.post).not.toHaveBeenCalled();
     });
   });
 
   it('muestra error de reintento si falla la carga de municipios', () => {
     mockUseCatalogs.errorMunicipios = 'API Error';
     mockUseCatalogs.selectedMunicipioNombre = ''; // force showing error view instead of selected
-    const { getByText } = render(<RegisterScreen />);
+    const { getByText } = renderScreen();
 
     expect(getByText('Error al cargar municipios')).toBeTruthy();
     expect(getByText('Reintentar')).toBeTruthy();

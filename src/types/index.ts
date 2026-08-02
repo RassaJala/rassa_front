@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -21,6 +23,8 @@ export interface User {
   direccion: string;
   localidad: number;
   localidad_nombre?: string | null;
+  municipio_id?: number | null;
+  municipio_nombre?: string | null;
 }
 
 export type RegisterRole = 'buyer' | 'farmer' | 'seller';
@@ -47,7 +51,7 @@ export interface UpdateProfilePayload {
   fecha_nacimiento: string;
   sexo: 'M' | 'F' | 'O';
   domicilio: string;
-  fk_localidad: number;
+  fk_localidad: number | null;
 }
 
 export interface ChangePasswordPayload {
@@ -66,22 +70,6 @@ export interface Localidad {
   nombre: string;
   municipio_id: number;
   estado: boolean;
-}
-
-export interface Producto {
-  id_producto: number;
-  nombre_producto: string;
-  descripcion: string;
-  precio: string;
-  stock: number;
-  es_perecedero: boolean;
-  imagen: string | null;
-  estado: boolean;
-  categoria: Category;
-  unidad: Unidad | null;
-  imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
-  imagen_principal: string | null;
-  creado_en: string;
 }
 
 export interface Order {
@@ -111,6 +99,7 @@ export interface OrderItem {
   importe: string;
 }
 
+/** @deprecated Usar OrderStatusHistory en su lugar */
 export interface OrderHistoryEntry {
   id_historial: number;
   estado_anterior: string | null;
@@ -194,8 +183,10 @@ export interface CreditLimit {
 // ── Navigation param lists ────────────────────────────────
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
+  UserForm: undefined;
   Chat: {
     conversationId: number;
     title: string;
@@ -238,12 +229,18 @@ export type AuthStackParamList = {
 export type BuyerTabsParamList = {
   Home: undefined;
   Pedidos: undefined;
+  Catalog: undefined;
+  Carrito: undefined;
+  Notificaciones: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
-  BuyerTabs: undefined;
+  BuyerTabs: NavigatorScreenParams<BuyerTabsParamList>;
+  Catalog: undefined;
   OrderDetail: { orderId: number };
+  Checkout: undefined;
+  OrderSuccess: { orderId: number; total: string; estado: string };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {
@@ -274,6 +271,8 @@ export type FarmerStackParamList = {
   Profile: undefined;
   ProductList: undefined;
   ProductForm: { productoId?: number };
+  FarmerDashboard: undefined;
+  PublicationWizard: { publicacionId?: number };
   ChatList: undefined;
   Chat: {
     conversationId: number;
@@ -306,6 +305,8 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  Payment: { readonly orderId: number };
+  Receipt: { readonly paymentId: number };
   WasteRegister: undefined;
   Chat: {
     conversationId: number;

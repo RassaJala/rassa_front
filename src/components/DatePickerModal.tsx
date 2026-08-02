@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-color-literals, sonarjs/cognitive-complexity */
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -5,64 +6,80 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
+  useColorScheme,
   View,
 } from 'react-native';
 
-const MONTH_NAMES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+import { colors } from '@/constants/colors';
+import { MONTH_NAMES, YEARS_BACK } from '@/constants/dates';
 
-// Years back from 18 years ago (allows ages 18 to ~121)
-const YEARS_BACK = 103;
+// ── Helpers ──────────────────────────────────────────
+
+function parseInitialDate(
+  dateStr?: string,
+): { year: number; month: number; day: number } | null {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  const parts = dateStr.split('-').map(Number);
+  const year = parts[0] ?? 2000;
+  const month = parts[1] !== undefined ? parts[1] - 1 : 0;
+  const day = parts[2] ?? 1;
+  return { year, month, day };
+}
+
+function toDateString(year: number, month: number, day: number): string {
+  const m = String(month + 1).padStart(2, '0');
+  const d = String(day).padStart(2, '0');
+  return `${year}-${m}-${d}`;
+}
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getMaxYear(): number {
+  return new Date().getFullYear() - 18;
+}
+
+// ── Props ────────────────────────────────────────────
 
 interface DatePickerModalProps {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelectDate: (dateString: string) => void;
-  readonly initialDate?: string; // Expects "YYYY-MM-DD"
+  readonly initialDate?: string;
+  readonly isDark?: boolean;
 }
+
+// ── Component ────────────────────────────────────────
+
+type Step = 'year' | 'month' | 'day';
 
 export default function DatePickerModal({
   visible,
   onClose,
   onSelectDate,
   initialDate,
-}: DatePickerModalProps): React.JSX.Element {
-  const currentYear = new Date().getFullYear();
-  // Only allow birth years that correspond to age >= 18
-  const maxAdultYear = currentYear - 18;
-  const years = Array.from({ length: YEARS_BACK }, (_, i) => maxAdultYear - i);
-
-  const [step, setStep] = useState<'year' | 'month' | 'day'>('year');
+  isDark: isDarkProp,
+}: DatePickerModalProps): React.JSX.Element | null {
+  const osScheme = useColorScheme();
+  const isDark = isDarkProp ?? osScheme === 'dark';
+  const [step, setStep] = useState<Step>('year');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-indexed: 0 = Enero, 11 = Diciembre
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
-  // Initialize from initialDate if provided
+  const maxYear = getMaxYear();
+  const years = Array.from({ length: YEARS_BACK }, (_, i) => maxYear - i);
+
+  // Sync state when modal opens
   useEffect(() => {
     if (visible) {
-      if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-        const parts = initialDate.split('-').map(Number);
-        if (parts.length === 3) {
-          const y = parts[0] ?? currentYear;
-          const m = parts[1] ?? 1;
-          const d = parts[2] ?? 1;
-          setSelectedYear(y);
-          setSelectedMonth(m - 1);
-          setSelectedDay(d);
-          setStep('day'); // Jump to day selection if we have full date
-        }
+      const parsed = parseInitialDate(initialDate);
+      if (parsed) {
+        setSelectedYear(parsed.year);
+        setSelectedMonth(parsed.month);
+        setSelectedDay(parsed.day);
+        setStep('day');
       } else {
         setSelectedYear(null);
         setSelectedMonth(null);
@@ -70,132 +87,166 @@ export default function DatePickerModal({
         setStep('year');
       }
     }
-  }, [visible, initialDate, currentYear]);
+  }, [visible, initialDate]);
 
-  const handleSelectYear = (year: number) => {
+  if (!visible) return null;
+
+  function handleSelectYear(year: number) {
     setSelectedYear(year);
+    setSelectedMonth(null);
+    setSelectedDay(null);
     setStep('month');
-  };
+  }
 
-  const handleSelectMonth = (monthIndex: number) => {
-    setSelectedMonth(monthIndex);
+  function handleSelectMonth(month: number) {
+    setSelectedMonth(month);
+    setSelectedDay(null);
     setStep('day');
-  };
+  }
 
-  const handleSelectDay = (day: number) => {
+  function handleSelectDay(day: number) {
     setSelectedDay(day);
     if (selectedYear !== null && selectedMonth !== null) {
-      const monthStr = String(selectedMonth + 1).padStart(2, '0');
-      const dayStr = String(day).padStart(2, '0');
-      onSelectDate(`${selectedYear}-${monthStr}-${dayStr}`);
+      onSelectDate(toDateString(selectedYear, selectedMonth, day));
       onClose();
     }
-  };
+  }
 
-  // Get number of days in selected month & year
-  const getDaysInMonth = (): number => {
-    if (selectedYear === null || selectedMonth === null) return 31;
-    // selectedMonth + 1 gives the next month, day 0 gives the last day of the current month
-    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  };
-
-  const daysCount = getDaysInMonth();
+  const daysCount =
+    selectedYear !== null && selectedMonth !== null
+      ? getDaysInMonth(selectedYear, selectedMonth)
+      : 31;
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
+
+  const surface = isDark ? colors.admSurfaceD : colors.surface;
+  const fg = isDark ? colors.admFgD : colors.text;
+  const muted = isDark ? colors.mutedDark : colors.textSecondary;
+  const border = isDark ? colors.admBorderD : colors.border;
+  const tabBg = isDark ? colors.admSegBgD : colors.inactiveGrayBg;
+  const selectedBg = `${colors.brandRedCoral}1A`;
+  const tabActiveBg = isDark ? colors.admSurfaceD : colors.surface;
 
   return (
     <Modal
       transparent
-      animationType="fade"
+      animationType="slide"
       visible={visible}
       onRequestClose={onClose}
     >
       <Pressable
         testID="modal-overlay"
+        className="flex-1 justify-end bg-black/50"
         onPress={onClose}
-        className="flex-1 items-center justify-center bg-black/50"
       >
         <Pressable
-          className="w-[88%] max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900"
-          onPress={(e) => e.stopPropagation()} // Prevent closing when tapping card
+          style={{
+            backgroundColor: surface,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            padding: 20,
+          }}
+          onPress={(e) => e.stopPropagation()}
         >
-          {/* Modal Header */}
-          <Text className="text-brand-ink mb-4 text-center text-xl font-bold dark:text-gray-100">
-            Fecha de Nacimiento
-          </Text>
-
-          {/* Current Selection Indicators */}
-          <View className="mb-4 flex-row justify-between rounded-xl bg-gray-100 p-2 dark:bg-gray-800">
+          {/* Header */}
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+              Fecha de Nacimiento
+            </Text>
             <TouchableOpacity
-              testID="tab-year-selector"
-              onPress={() => setStep('year')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'year' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
+              onPress={onClose}
+              style={{ paddingHorizontal: 12, paddingVertical: 4 }}
             >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Año
-              </Text>
-              <Text className="text-brand-red-coral text-sm font-semibold">
-                {selectedYear ?? '----'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-month-selector"
-              disabled={selectedYear === null}
-              onPress={() => setStep('month')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'month' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
-            >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Mes
-              </Text>
-              <Text className="text-brand-red-coral text-sm font-semibold">
-                {selectedMonth !== null ? MONTH_NAMES[selectedMonth] : '---'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-day-selector"
-              disabled={selectedMonth === null}
-              onPress={() => setStep('day')}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                step === 'day' ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-              }`}
-            >
-              <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Día
-              </Text>
-              <Text className="text-brand-red-coral text-sm font-semibold">
-                {selectedDay ?? '--'}
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: colors.brandRedCoral,
+                }}
+              >
+                Cancelar
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Selector Content based on Step */}
-          <View className="h-60 justify-center">
+          {/* Tab bar */}
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: 'row',
+              borderRadius: 12,
+              backgroundColor: tabBg,
+              padding: 4,
+            }}
+          >
+            <TabButton
+              label="Año"
+              value={selectedYear != null ? String(selectedYear) : '----'}
+              active={step === 'year'}
+              onPress={() => setStep('year')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
+            />
+            <TabButton
+              label="Mes"
+              value={
+                selectedMonth != null
+                  ? (MONTH_NAMES[selectedMonth] ?? '---')
+                  : '---'
+              }
+              active={step === 'month'}
+              disabled={selectedYear == null}
+              onPress={() => setStep('month')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
+            />
+            <TabButton
+              label="Día"
+              value={selectedDay != null ? String(selectedDay) : '--'}
+              active={step === 'day'}
+              disabled={selectedMonth == null}
+              onPress={() => setStep('day')}
+              isDark={isDark}
+              fg={fg}
+              tabActiveBg={tabActiveBg}
+            />
+          </View>
+
+          {/* Content */}
+          <View style={{ height: 256 }}>
             {step === 'year' && (
-              <ScrollView testID="years-list">
-                {years.map((item) => (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {years.map((y) => (
                   <TouchableOpacity
-                    key={item}
-                    testID={`year-option-${item}`}
-                    onPress={() => handleSelectYear(item)}
-                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedYear === item
-                        ? 'dark:bg-brand-red-coral/20 bg-red-50'
-                        : ''
-                    }`}
+                    key={y}
+                    activeOpacity={0.6}
+                    onPress={() => handleSelectYear(y)}
+                    style={{
+                      borderRadius: 8,
+                      borderBottomWidth: 1,
+                      borderBottomColor: border,
+                      paddingVertical: 12,
+                      backgroundColor:
+                        selectedYear === y ? selectedBg : 'transparent',
+                    }}
                   >
                     <Text
-                      className={`text-base font-semibold ${
-                        selectedYear === item
-                          ? 'text-brand-red-coral'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
+                      style={{
+                        textAlign: 'center',
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: selectedYear === y ? colors.brandRedCoral : fg,
+                      }}
                     >
-                      {item}
+                      {y}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -203,26 +254,31 @@ export default function DatePickerModal({
             )}
 
             {step === 'month' && (
-              <ScrollView testID="months-list">
-                {MONTH_NAMES.map((item, index) => (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {MONTH_NAMES.map((name, idx) => (
                   <TouchableOpacity
-                    key={item}
-                    testID={`month-option-${index}`}
-                    onPress={() => handleSelectMonth(index)}
-                    className={`items-center border-b border-gray-100 py-3 dark:border-gray-800 ${
-                      selectedMonth === index
-                        ? 'dark:bg-brand-red-coral/20 bg-red-50'
-                        : ''
-                    }`}
+                    key={name}
+                    activeOpacity={0.6}
+                    onPress={() => handleSelectMonth(idx)}
+                    style={{
+                      borderRadius: 8,
+                      borderBottomWidth: 1,
+                      borderBottomColor: border,
+                      paddingVertical: 12,
+                      backgroundColor:
+                        selectedMonth === idx ? selectedBg : 'transparent',
+                    }}
                   >
                     <Text
-                      className={`text-base font-semibold ${
-                        selectedMonth === index
-                          ? 'text-brand-red-coral'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
+                      style={{
+                        textAlign: 'center',
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color:
+                          selectedMonth === idx ? colors.brandRedCoral : fg,
+                      }}
                     >
-                      {item}
+                      {name}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -230,50 +286,159 @@ export default function DatePickerModal({
             )}
 
             {step === 'day' && (
-              <ScrollView
-                testID="days-grid"
-                contentContainerClassName="flex-row flex-wrap justify-start"
-              >
-                {daysArray.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    testID={`day-option-${item}`}
-                    onPress={() => handleSelectDay(item)}
-                    className={`m-[1%] aspect-square w-[18%] items-center justify-center rounded-xl border border-gray-100 dark:border-gray-800 ${
-                      selectedDay === item
-                        ? 'border-brand-red-coral bg-brand-red-coral'
-                        : 'bg-white dark:bg-gray-800'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${
-                        selectedDay === item
-                          ? 'text-white'
-                          : 'text-brand-ink dark:text-gray-200'
-                      }`}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {daysArray.map((d) => {
+                    const isSelected = selectedDay === d;
+                    return (
+                      <TouchableOpacity
+                        key={d}
+                        activeOpacity={0.6}
+                        onPress={() => handleSelectDay(d)}
+                        style={{
+                          margin: '1%',
+                          width: '17%',
+                          height: 36,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 12,
+                          backgroundColor: isSelected
+                            ? colors.brandRedCoral
+                            : isDark
+                              ? colors.admSurfaceD
+                              : colors.surface,
+                          borderWidth: isSelected ? 0 : 1,
+                          borderColor: isDark
+                            ? colors.admBorderD
+                            : colors.border,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '600',
+                            color: isSelected ? colors.iconWhite : fg,
+                          }}
+                        >
+                          {d}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </ScrollView>
             )}
           </View>
 
-          {/* Action Buttons */}
-          <View className="mt-4 flex-row justify-end space-x-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+          {/* Confirm button */}
+          <View
+            style={{
+              marginTop: 16,
+              alignItems: 'flex-end',
+              borderTopWidth: 1,
+              borderTopColor: border,
+              paddingTop: 12,
+            }}
+          >
             <TouchableOpacity
-              testID="btn-cancel"
-              onPress={onClose}
-              className="px-4 py-2"
+              testID="btn-done"
+              onPress={() => {
+                if (
+                  selectedYear !== null &&
+                  selectedMonth !== null &&
+                  selectedDay !== null
+                ) {
+                  onSelectDate(
+                    toDateString(selectedYear, selectedMonth, selectedDay),
+                  );
+                  onClose();
+                }
+              }}
+              disabled={selectedDay == null}
+              style={{
+                borderRadius: 8,
+                paddingHorizontal: 20,
+                paddingVertical: 8,
+                backgroundColor:
+                  selectedDay != null ? colors.brandRedCoral : muted,
+              }}
             >
-              <Text className="text-base font-medium text-gray-500 dark:text-gray-400">
-                Cancelar
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color:
+                    selectedDay != null
+                      ? colors.iconWhite
+                      : isDark
+                        ? colors.mutedDark
+                        : colors.textSecondary,
+                }}
+              >
+                Hecho
               </Text>
             </TouchableOpacity>
           </View>
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+// ── Tab Button ───────────────────────────────────────
+
+interface TabButtonProps {
+  readonly label: string;
+  readonly value: string;
+  readonly active: boolean;
+  readonly disabled?: boolean;
+  readonly onPress: () => void;
+  readonly isDark: boolean;
+  readonly fg: string;
+  readonly tabActiveBg: string;
+}
+
+function TabButton({
+  label,
+  value,
+  active,
+  disabled,
+  onPress,
+  isDark,
+  fg,
+  tabActiveBg,
+}: TabButtonProps) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.6}
+      onPress={onPress}
+      disabled={disabled}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        borderRadius: 8,
+        paddingVertical: 8,
+        backgroundColor: active ? tabActiveBg : 'transparent',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 11,
+          color: isDark ? colors.mutedDark : colors.textSecondary,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: 12,
+          fontWeight: '600',
+          color: active ? colors.brandRedCoral : fg,
+        }}
+      >
+        {value}
+      </Text>
+    </TouchableOpacity>
   );
 }

@@ -45,7 +45,7 @@ export default function ProfilePasswordTab({
       <TextInput
         testID="new-password-input"
         mode="outlined"
-        label="Nueva Contraseña (mínimo 6 caracteres) *"
+        label="Nueva Contraseña (mínimo 8 caracteres) *"
         className="mb-4 bg-white dark:bg-gray-900"
         placeholder="••••••••"
         secureTextEntry

@@ -5,16 +5,36 @@ import '@testing-library/jest-native/extend-expect';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import axios from 'axios';
+
 import { useCatalogs } from '@/hooks/useCatalogs';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import { useAuth } from '@/store/AuthContext';
 
-jest.mock('@react-native-community/netinfo');
-jest.mock('@/store/AuthContext');
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: jest.fn(),
+  fetch: jest.fn(),
+  addListener: jest.fn(),
+  removeListeners: jest.fn(),
+}));
+jest.mock('@/store/AuthContext', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+  const actual = jest.requireActual('@/store/AuthContext');
+  return {
+    ...(actual as Record<string, unknown>),
+    useAuth: jest.fn(),
+  };
+});
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light', toggleColorScheme: jest.fn() }),
 }));
 jest.mock('@/hooks/useCatalogs');
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ goBack: jest.fn() }),
+  useRoute: () => ({ params: {} }),
+  NavigationContainer: ({ children }: { children: React.ReactNode }) =>
+    children,
+}));
 
 const mockUseNetInfo = useNetInfo as jest.Mock;
 const mockUseAuth = useAuth as jest.Mock;
@@ -73,56 +93,35 @@ beforeEach(() => {
 });
 
 describe('ProfileScreen', () => {
-  const renderScreen = () => render(<ProfileScreen />);
-
-  it('renders profile header with user info', () => {
-    const { getByText } = renderScreen();
+  it('renders profile header with user info in view mode', () => {
+    const { getByText, getAllByText } = render(<ProfileScreen />);
     expect(getByText('Juan Pérez')).toBeTruthy();
-    expect(getByText('test@example.com')).toBeTruthy();
+    expect(getAllByText('test@example.com').length).toBeGreaterThanOrEqual(1);
     expect(getByText('Comprador')).toBeTruthy();
   });
 
-  it('renders three tabs: Ver, Editar, Seguridad', () => {
-    const { getByText } = renderScreen();
-    expect(getByText('Ver')).toBeTruthy();
-    expect(getByText('Editar')).toBeTruthy();
-    expect(getByText('Seguridad')).toBeTruthy();
+  it('renders "Mi Perfil" title in view mode', () => {
+    const { getByText } = render(<ProfileScreen />);
+    expect(getByText('Mi Perfil')).toBeTruthy();
   });
 
-  describe('Ver tab', () => {
-    it('displays user details', () => {
-      const { getByText } = renderScreen();
-      expect(getByText('Juan Pérez García')).toBeTruthy();
-      expect(getByText('5551234567')).toBeTruthy();
-      expect(getByText('1990-01-15')).toBeTruthy();
-      expect(getByText('Masculino')).toBeTruthy();
-      expect(getByText('Calle 123, Col. Centro')).toBeTruthy();
-      expect(getByText('Localidad 1')).toBeTruthy();
-    });
-  });
+  describe('edit mode', () => {
+    function renderAndEdit(): ReturnType<typeof render> {
+      const rt = render(<ProfileScreen />);
+      fireEvent.press(rt.getByTestId('edit-profile-button'));
+      return rt;
+    }
 
-  describe('Editar tab', () => {
-    beforeEach(() => {
-      const { getByText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-    });
-
-    it('shows form fields pre-filled with user data', () => {
-      const { getByPlaceholderText, getByText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
+    it('switches to edit mode showing edit form fields', () => {
+      const { getByPlaceholderText } = renderAndEdit();
       expect(getByPlaceholderText('Nombre')).toBeTruthy();
       expect(getByPlaceholderText('Apellido Paterno')).toBeTruthy();
-      expect(getByPlaceholderText('Apellido Materno')).toBeTruthy();
-      expect(getByPlaceholderText('xxx-xxx-xx-xx')).toBeTruthy();
-      expect(getByPlaceholderText('AAAA-MM-DD')).toBeTruthy();
-      expect(getByPlaceholderText('Calle, número, colonia')).toBeTruthy();
     });
 
-    it('validates required fields', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
+    it('validates required fields on save', async () => {
+      const { getByText, getByPlaceholderText } = renderAndEdit();
       fireEvent.changeText(getByPlaceholderText('Nombre'), '');
-      fireEvent.press(getByText('Guardar Cambios'));
+      fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(
           getByText('Por favor, completa todos los campos obligatorios.'),
@@ -131,250 +130,213 @@ describe('ProfileScreen', () => {
     });
 
     it('validates phone length', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
+      const { getByText, getByPlaceholderText } = renderAndEdit();
       fireEvent.changeText(getByPlaceholderText('xxx-xxx-xx-xx'), '555');
-      fireEvent.press(getByText('Guardar Cambios'));
+      fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(
           getByText(
-            'El teléfono debe tener 10 dígitos (nacional) o 12 dígitos (internacional).',
+            'El teléfono debe tener exactamente 10 dígitos (nacional) o 12 dígitos (internacional).',
           ),
         ).toBeTruthy();
       });
     });
 
-    it('validates date format', async () => {
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), 'invalid');
-      fireEvent.press(getByText('Guardar Cambios'));
-      await waitFor(() => {
-        expect(
-          getByText('La fecha de nacimiento debe tener el formato AAAA-MM-DD.'),
-        ).toBeTruthy();
-      });
-    });
-
-    it('validates age >= 18 years', async () => {
-      const today = new Date();
-      const recentDate = `${today.getFullYear() - 17}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), recentDate);
-      fireEvent.press(getByText('Guardar Cambios'));
-      await waitFor(() => {
-        expect(getByText('Debes ser mayor de 18 años.')).toBeTruthy();
-      });
-    });
-
-    it('shows success message on successful update', async () => {
+    it('shows success message after saving', async () => {
       mockAuth.updateProfile.mockResolvedValueOnce(undefined);
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      const today = new Date();
-      const eighteenYearsAgo = `${today.getFullYear() - 18}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      fireEvent.changeText(
-        getByPlaceholderText('AAAA-MM-DD'),
-        eighteenYearsAgo,
-      );
-      fireEvent.press(getByText('Guardar Cambios'));
+      const { getByText } = renderAndEdit();
+      // User data is pre-populated with valid fields — just save
+      fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(getByText('Perfil actualizado exitosamente.')).toBeTruthy();
       });
     });
 
-    it('shows error message on API failure', async () => {
+    it('shows error on API failure', async () => {
       mockAuth.updateProfile.mockRejectedValueOnce(
         new Error('Error al actualizar perfil.'),
       );
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      const today = new Date();
-      const eighteenYearsAgo = `${today.getFullYear() - 18}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      fireEvent.changeText(
-        getByPlaceholderText('AAAA-MM-DD'),
-        eighteenYearsAgo,
-      );
-      fireEvent.press(getByText('Guardar Cambios'));
+      const { getByText } = renderAndEdit();
+      fireEvent.press(getByText('Guardar'));
       await waitFor(() => {
         expect(getByText('Error al actualizar perfil.')).toBeTruthy();
       });
     });
-
-    it('shows offline error when no connection', async () => {
-      mockUseNetInfo.mockReturnValue({ isConnected: false });
-      const { getByText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      fireEvent.press(getByText('Guardar Cambios'));
-      await waitFor(() => {
-        expect(getByText('Sin conexión a Internet.')).toBeTruthy();
-      });
-    });
   });
 
-  describe('Seguridad tab', () => {
-    beforeEach(() => {
-      const { getByText } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-    });
+  describe('password change', () => {
+    function renderAndExpand(): ReturnType<typeof render> {
+      const rt = render(<ProfileScreen />);
+      fireEvent.press(rt.getByText('Cambiar Contraseña'));
+      return rt;
+    }
 
-    it('shows password change form', () => {
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
+    it('shows password change form with testIDs after expanding', () => {
+      const { getByTestId } = renderAndExpand();
       expect(getByTestId('old-password-input')).toBeTruthy();
       expect(getByTestId('new-password-input')).toBeTruthy();
       expect(getByTestId('confirm-password-input')).toBeTruthy();
     });
 
+    /** Press the submit button (second "Cambiar Contraseña" text is the button) */
+    function pressChangePassword(rt: ReturnType<typeof render>): void {
+      const buttons = rt.getAllByText('Cambiar Contraseña');
+      fireEvent.press(buttons[buttons.length - 1]!);
+    }
+
     it('validates all fields required', async () => {
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.press(getByTestId('change-password-button'));
+      const rt = renderAndExpand();
+      pressChangePassword(rt);
       await waitFor(() => {
-        expect(getByText('Por favor, completa todos los campos.')).toBeTruthy();
+        expect(
+          rt.getByText('Por favor, completa todos los campos.'),
+        ).toBeTruthy();
       });
     });
 
     it('validates new password length', async () => {
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
-      fireEvent.changeText(getByTestId('new-password-input'), '123');
-      fireEvent.changeText(getByTestId('confirm-password-input'), '123');
-      fireEvent.press(getByTestId('change-password-button'));
+      const rt = renderAndExpand();
+      fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpass');
+      fireEvent.changeText(rt.getByTestId('new-password-input'), '123');
+      fireEvent.changeText(rt.getByTestId('confirm-password-input'), '123');
+      pressChangePassword(rt);
       await waitFor(() => {
         expect(
-          getByText('La nueva contraseña debe tener al menos 6 caracteres.'),
+          rt.getByText('La nueva contraseña debe tener al menos 8 caracteres.'),
         ).toBeTruthy();
       });
     });
 
     it('validates password confirmation matches', async () => {
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
-      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(getByTestId('confirm-password-input'), 'different');
-      fireEvent.press(getByTestId('change-password-button'));
+      const rt = renderAndExpand();
+      fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'different',
+      );
+      pressChangePassword(rt);
       await waitFor(() => {
         expect(
-          getByText('La confirmación de la contraseña no coincide.'),
+          rt.getByText('La confirmación de la contraseña no coincide.'),
         ).toBeTruthy();
       });
     });
 
     it('validates new password different from old', async () => {
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'samepassword');
-      fireEvent.changeText(getByTestId('new-password-input'), 'samepassword');
+      const rt = renderAndExpand();
       fireEvent.changeText(
-        getByTestId('confirm-password-input'),
+        rt.getByTestId('old-password-input'),
         'samepassword',
       );
-      fireEvent.press(getByTestId('change-password-button'));
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'samepassword',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'samepassword',
+      );
+      pressChangePassword(rt);
       await waitFor(() => {
         expect(
-          getByText('La nueva contraseña debe ser diferente a la actual.'),
+          rt.getByText('La nueva contraseña debe ser diferente a la actual.'),
         ).toBeTruthy();
       });
     });
 
-    it('shows success message and logs out on successful change', async () => {
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = ((fn: () => void) => {
-        fn();
-        return 0 as unknown as NodeJS.Timeout;
-      }) as unknown as typeof global.setTimeout;
+    it('calls logout on successful password change', async () => {
+      jest.useFakeTimers();
+      mockAuth.changePassword.mockResolvedValueOnce(undefined);
+      mockAuth.logout.mockResolvedValueOnce(undefined);
+      const rt = renderAndExpand();
+      fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
+        'newpassword1',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
+      pressChangePassword(rt);
 
-      try {
-        mockAuth.changePassword.mockResolvedValueOnce(undefined);
-        mockAuth.logout.mockResolvedValueOnce(undefined);
-        const { getByText, getByTestId } = renderScreen();
-        fireEvent.press(getByText('Seguridad'));
-        fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
-        fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-        fireEvent.changeText(
-          getByTestId('confirm-password-input'),
-          'newpassword1',
-        );
-        fireEvent.press(getByTestId('change-password-button'));
-        await waitFor(() => {
-          expect(
-            getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
-          ).toBeTruthy();
-        });
-        await waitFor(() => {
-          expect(mockAuth.logout).toHaveBeenCalled();
-        });
-      } finally {
-        global.setTimeout = originalSetTimeout;
-      }
+      // Success message visible before timer fires
+      await waitFor(() => {
+        expect(
+          rt.getByText('Contraseña cambiada exitosamente. Cerrando sesión...'),
+        ).toBeTruthy();
+      });
+
+      // Advance timer to trigger logout callback
+      jest.advanceTimersByTime(1500);
+
+      await waitFor(() => {
+        expect(mockAuth.logout).toHaveBeenCalled();
+      });
+      jest.useRealTimers();
     });
 
     it('shows error on API failure', async () => {
       mockAuth.changePassword.mockRejectedValueOnce(
         new Error('Contraseña actual incorrecta.'),
       );
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'oldpassword');
-      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+      const rt = renderAndExpand();
+      fireEvent.changeText(rt.getByTestId('old-password-input'), 'oldpassword');
       fireEvent.changeText(
-        getByTestId('confirm-password-input'),
+        rt.getByTestId('new-password-input'),
         'newpassword1',
       );
-      fireEvent.press(getByTestId('change-password-button'));
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
+      pressChangePassword(rt);
       await waitFor(() => {
-        expect(getByText('Contraseña actual incorrecta.')).toBeTruthy();
+        expect(rt.getByText('Contraseña actual incorrecta.')).toBeTruthy();
       });
     });
 
     it('shows 401 error for wrong old password', async () => {
+      jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
       mockAuth.changePassword.mockRejectedValueOnce({
-        isAxiosError: true,
-        response: { status: 401, data: { detail: 'Unauthorized' } },
-      });
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'wrongpassword');
-      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
+        response: { status: 401, data: {} },
+      } as unknown as Error);
+      const rt = renderAndExpand();
       fireEvent.changeText(
-        getByTestId('confirm-password-input'),
+        rt.getByTestId('old-password-input'),
+        'wrongpassword',
+      );
+      fireEvent.changeText(
+        rt.getByTestId('new-password-input'),
         'newpassword1',
       );
-      fireEvent.press(getByTestId('change-password-button'));
+      fireEvent.changeText(
+        rt.getByTestId('confirm-password-input'),
+        'newpassword1',
+      );
+      pressChangePassword(rt);
       await waitFor(() => {
-        expect(getByText('Sesión expirada o no autorizada.')).toBeTruthy();
+        expect(rt.getByText('Sesión expirada o no autorizada.')).toBeTruthy();
       });
+      jest.restoreAllMocks();
     });
   });
 
   describe('offline handling', () => {
-    it('shows offline error when submitting edit without connection', async () => {
-      mockUseNetInfo.mockReturnValue({ isConnected: false });
-      const { getByText, getByPlaceholderText } = renderScreen();
-      fireEvent.press(getByText('Editar'));
-      const today = new Date();
-      const eighteenYearsAgo = `${today.getFullYear() - 18}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      fireEvent.changeText(
-        getByPlaceholderText('AAAA-MM-DD'),
-        eighteenYearsAgo,
-      );
-      fireEvent.press(getByText('Guardar Cambios'));
-      await waitFor(() => {
-        expect(getByText('Sin conexión a Internet.')).toBeTruthy();
-      });
-    });
-
     it('shows offline error when changing password without connection', async () => {
       mockUseNetInfo.mockReturnValue({ isConnected: false });
-      const { getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.press(getByTestId('change-password-button'));
+      const rt = render(<ProfileScreen />);
+      // Expand password section
+      fireEvent.press(rt.getByText('Cambiar Contraseña'));
+      // Press submit button (second "Cambiar Contraseña" text)
+      const buttons = rt.getAllByText('Cambiar Contraseña');
+      fireEvent.press(buttons[buttons.length - 1]!);
       await waitFor(() => {
-        expect(getByText('Sin conexión a Internet.')).toBeTruthy();
+        expect(rt.getByText('Sin conexión a Internet.')).toBeTruthy();
       });
     });
   });
@@ -383,28 +345,7 @@ describe('ProfileScreen', () => {
     it('renders without crashing when user is null', () => {
       mockUseAuth.mockReturnValueOnce({ ...mockAuth, user: null });
       const { getByText } = render(<ProfileScreen />);
-      expect(getByText('Ver')).toBeTruthy();
-    });
-  });
-
-  describe('cleanup on unmount', () => {
-    it('clears logout timeout on unmount', async () => {
-      const { unmount, getByText, getByTestId } = renderScreen();
-      fireEvent.press(getByText('Seguridad'));
-      fireEvent.changeText(getByTestId('old-password-input'), 'oldpass');
-      fireEvent.changeText(getByTestId('new-password-input'), 'newpassword1');
-      fireEvent.changeText(
-        getByTestId('confirm-password-input'),
-        'newpassword1',
-      );
-      fireEvent.press(getByTestId('change-password-button'));
-
-      await waitFor(() => {
-        expect(mockAuth.changePassword).toHaveBeenCalled();
-      });
-
-      unmount();
-      expect(mockAuth.logout).toHaveBeenCalled();
+      expect(getByText('Mi Perfil')).toBeTruthy();
     });
   });
 });

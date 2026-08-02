@@ -8,7 +8,7 @@ import { useJefeSearch } from '../hooks/useJefeSearch';
 import { useTheme } from '../providers/ThemeProvider';
 import api from '../services/api';
 import type { FamilyMember, SearchUserResult } from '../types';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 
 export function AdminFamilyDetail() {
   const { resolved } = useTheme();

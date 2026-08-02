@@ -12,7 +12,7 @@ import { TextArea } from '../components/ui/TextArea';
 import { Toast, type ToastState } from '../components/ui/Toast';
 import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
-import { extractApiError } from '../utils/apiError';
+import { extractApiError } from '../utils/apiErrors';
 
 // --- Types ---
 
@@ -271,7 +271,7 @@ export function WasteRegister() {
             placeholder="0"
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
-            error={errors.cantidad}
+            {...(errors.cantidad ? { error: errors.cantidad } : {})}
             colors={colors}
           />
 
@@ -281,7 +281,7 @@ export function WasteRegister() {
             maxLength={300}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
-            error={errors.motivo}
+            {...(errors.motivo ? { error: errors.motivo } : {})}
             colors={colors}
           />
 

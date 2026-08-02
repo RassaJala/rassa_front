@@ -1,30 +1,31 @@
+import { messagesKey } from '@rassa/chat';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { deleteMessage } from '@/services/chat';
+import { chatApi } from '@/services/chat';
 import type { Message, PaginatedResponse } from '@/types/chat';
 
 export function useDeleteMessage(
   conversationId: number,
-): UseMutationResult<Message, Error, number> {
+): UseMutationResult<void, Error, number> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteMessage,
+    mutationFn: (messageId) => chatApi.deleteMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
 
       const previousMessages = queryClient.getQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId]);
+      }>(messagesKey(conversationId));
 
       queryClient.setQueryData<{
         pages: PaginatedResponse<Message>[];
         pageParams: number[];
-      }>(['messages', conversationId], (old) => {
+      }>(messagesKey(conversationId), (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -42,14 +43,14 @@ export function useDeleteMessage(
     onError: (_error, _variables, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(
-          ['messages', conversationId],
+          messagesKey(conversationId),
           context.previousMessages,
         );
       }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['messages', conversationId],
+        queryKey: messagesKey(conversationId),
       });
     },
   });

@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+
 import axiosRetry from 'axios-retry';
 import { redirect } from './navigate';
 
@@ -7,7 +8,9 @@ const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 
 function isPublic(url: string): boolean {
-  return PUBLIC_ENDPOINTS.some((prefix) => url.startsWith(prefix));
+  return PUBLIC_ENDPOINTS.some((prefix) =>
+    url.toLowerCase().startsWith(prefix),
+  );
 }
 
 const api = axios.create({
@@ -16,14 +19,31 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const SERVER_ERROR_THRESHOLD = 500;
+
+const IDEMPOTENT_METHODS = new Set([
+  'get',
+  'head',
+  'put',
+  'delete',
+  'options',
+  'trace',
+]);
+
 axiosRetry(api, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
-    return (
-      error.config?.method === 'get' &&
-      axiosRetry.isNetworkOrIdempotentRequestError(error)
-    );
+    if (error.config?.method?.toLowerCase() === 'post') return false;
+    if (axiosRetry.isNetworkOrIdempotentRequestError(error)) return true;
+    if (
+      error.response?.status !== undefined &&
+      error.response.status >= SERVER_ERROR_THRESHOLD
+    ) {
+      const method = error.config?.method?.toLowerCase() ?? '';
+      return IDEMPOTENT_METHODS.has(method);
+    }
+    return false;
   },
 });
 
@@ -48,21 +68,28 @@ let pendingRequests: Array<{
 }> = [];
 
 async function refreshAccessToken(
-  originalRequest: ReturnType<typeof api>['config'],
+  originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
   const refreshToken = sessionStorage.getItem('refresh_token');
   if (!refreshToken) throw new Error('No refresh token');
 
-  const { data } = await axios.post<{ access: string }>(
+  const { data } = await axios.post<{ access: string; refresh?: string }>(
     `${API_URL}/token/refresh/`,
     { refresh: refreshToken },
+    { timeout: 10_000 },
   );
 
   localStorage.setItem('token', data.access);
+  if (data.refresh) {
+    sessionStorage.setItem('refresh_token', data.refresh);
+  }
 
   // Retry all queued requests with the new token
   pendingRequests.forEach(({ resolve }) => resolve(data.access));
   pendingRequests = [];
+
+  // Reset BEFORE retrying to avoid deadlock if retry also gets 401
+  isRefreshing = false;
 
   originalRequest.headers.Authorization = `Bearer ${data.access}`;
   return api(originalRequest);
@@ -83,22 +110,18 @@ api.interceptors.response.use(
     // Intenta refrescar el token antes de redirigir
     if (!isRefreshing) {
       isRefreshing = true;
-      return refreshAccessToken(error.config)
-        .catch(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('refresh_token');
-          // Rechaza todas las peticiones encoladas para que no queden huérfanas
-          pendingRequests.forEach(({ reject }) =>
-            reject(new Error('Sesión expirada')),
-          );
-          pendingRequests = [];
-          redirect('/login', { from: window.location.pathname });
-          return Promise.reject(error);
-        })
-        .finally(() => {
-          isRefreshing = false;
-        });
+      return refreshAccessToken(error.config).catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('refresh_token');
+        pendingRequests.forEach(({ reject }) =>
+          reject(new Error('Sesión expirada')),
+        );
+        pendingRequests = [];
+        isRefreshing = false;
+        redirect('/login', { from: window.location.pathname });
+        return Promise.reject(error);
+      });
     }
 
     // Otra solicitud ya está refrescando — encolamos esta

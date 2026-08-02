@@ -31,7 +31,7 @@ import type {
   WasteRecordPayload,
 } from '@/types/waste';
 import { WASTE_DECISION_OPTIONS } from '@/types/waste';
-import { extractApiError } from '@/utils/apiError';
+import { extractApiError } from '@/utils/apiErrors';
 
 function productModalHint(loading: boolean, productCount: number): string {
   if (loading) return 'Cargando productos…';

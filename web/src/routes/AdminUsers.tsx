@@ -1,68 +1,26 @@
-/* globals console */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { btnStyle as sharedBtnStyle } from '@/constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
+import { getColors } from '../constants/colors';
 import api from '../services/api';
+import { parseApiError } from '~/utils/apiErrors';
 import { Toast } from '../components/ui/Toast';
 import type { ToastState } from '../components/ui/Toast';
 
-// ── Types ────────────────────────────────────────────────
+import {
+  User,
+  UserRole,
+  roleLabels,
+  getFullName,
+} from '../components/admin-users/types';
+import NuevoUsuarioForm from '../components/admin-users/NuevoUsuarioForm';
+import UserFilters from '../components/admin-users/UserFilters';
+import UserTable from '../components/admin-users/UserTable';
+import RoleChangeModal from '../components/admin-users/RoleChangeModal';
+import DeactivationModal from '../components/admin-users/DeactivationModal';
 
-type UserRole = 'admin' | 'farmer' | 'seller' | 'buyer';
+const MAX_PAGES = 20;
 
-interface User {
-  id: number;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno: string | null;
-  email: string;
-  role: UserRole;
-  estado: boolean;
-  creado_en: string;
-}
-
-const roleLabels: Record<UserRole, string> = {
-  admin: 'Admin',
-  farmer: 'Agricultor',
-  seller: 'Vendedor',
-  buyer: 'Cliente',
-};
-
-const roleColors: Record<UserRole, string> = {
-  admin: '#DE393A',
-  farmer: '#16a34a',
-  seller: '#f59e0b',
-  buyer: '#3b82f6',
-};
-
-const ROLE_FILTERS = [
-  { label: 'Todos', value: '' },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Agricultor', value: 'Agricultor' },
-  { label: 'Vendedor', value: 'Vendedor' },
-  { label: 'Cliente', value: 'Cliente' },
-] as const;
-
-const STATUS_FILTERS = [
-  { label: 'Todos', value: '' },
-  { label: 'Activos', value: 'true' },
-  { label: 'Inactivos', value: 'false' },
-] as const;
-
-const ROLE_OPTIONS: { label: string; value: UserRole; color: string }[] = [
-  { label: 'Agricultor', value: 'farmer', color: '#16a34a' },
-  { label: 'Vendedor', value: 'seller', color: '#f59e0b' },
-  { label: 'Cliente', value: 'buyer', color: '#3b82f6' },
-];
-
-function getFullName(u: User): string {
-  return [u.nombre, u.apellido_paterno, u.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
-
-// ponytail: single fetch wrapper, no service layer for now
 function mapUser(raw: Record<string, unknown>): User {
   return {
     id: raw.id_usuario as number,
@@ -76,8 +34,6 @@ function mapUser(raw: Record<string, unknown>): User {
   };
 }
 
-const MAX_PAGES = 20;
-
 async function fetchAllPages(
   url: string,
   accumulated: User[],
@@ -89,33 +45,41 @@ async function fetchAllPages(
     );
     return accumulated;
   }
-  const response = await api.get<unknown>(url);
-  const body = response.data;
-  const payload =
-    body &&
-    typeof body === 'object' &&
-    'data' in (body as Record<string, unknown>)
-      ? (body as Record<string, unknown>).data
-      : body;
+  try {
+    const response = await api.get<unknown>(url);
+    const body = response.data;
+    const payload =
+      body &&
+      typeof body === 'object' &&
+      'data' in (body as Record<string, unknown>)
+        ? (body as Record<string, unknown>).data
+        : body;
 
-  const results: Record<string, unknown>[] =
-    payload &&
-    typeof payload === 'object' &&
-    'results' in (payload as Record<string, unknown>)
-      ? (payload as { results: Record<string, unknown>[] }).results
-      : Array.isArray(payload)
-        ? (payload as Record<string, unknown>[])
-        : [];
+    const results: Record<string, unknown>[] =
+      payload &&
+      typeof payload === 'object' &&
+      'results' in (payload as Record<string, unknown>)
+        ? (payload as { results: Record<string, unknown>[] }).results
+        : Array.isArray(payload)
+          ? (payload as Record<string, unknown>[])
+          : [];
 
-  const page = results.map(mapUser);
-  const all = [...accumulated, ...page];
-  const next =
-    payload && typeof payload === 'object'
-      ? ((payload as Record<string, unknown>).next as string | null)
-      : null;
+    const page = results.map(mapUser);
+    const all = [...accumulated, ...page];
+    const next =
+      payload && typeof payload === 'object'
+        ? ((payload as Record<string, unknown>).next as string | null)
+        : null;
 
-  if (next) return fetchAllPages(next, all, depth + 1);
-  return all;
+    if (next) return fetchAllPages(next, all, depth + 1);
+    return all;
+  } catch (error) {
+    console.warn(`[AdminUsers] error fetching page at depth ${depth}:`, error);
+    if (accumulated.length > 0) {
+      return accumulated;
+    }
+    throw error;
+  }
 }
 
 async function fetchUsers(): Promise<User[]> {
@@ -139,58 +103,6 @@ async function fetchCurrentUser(): Promise<User> {
   };
 }
 
-// ── Role Pill ────────────────────────────────────────────
-
-function RolePill({ role }: { role: UserRole }) {
-  return (
-    <span
-      style={{
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '3px 10px',
-        borderRadius: 999,
-        background: `${roleColors[role]}1A`,
-        color: roleColors[role],
-      }}
-    >
-      {roleLabels[role]}
-    </span>
-  );
-}
-
-// ── Status badge ─────────────────────────────────────────
-
-function StatusBadge({
-  active,
-  brand,
-  isDark,
-}: {
-  active: boolean;
-  brand: string;
-  isDark: boolean;
-}) {
-  return (
-    <span
-      style={{
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '3px 10px',
-        borderRadius: 6,
-        background: active
-          ? isDark
-            ? 'rgba(74,138,99,0.15)'
-            : 'rgba(36,86,60,0.07)'
-          : isDark
-            ? 'rgba(212,160,32,0.12)'
-            : 'rgba(242,169,0,0.1)',
-        color: active ? brand : '#F2A900',
-      }}
-    >
-      {active ? 'Activo' : 'Inactivo'}
-    </span>
-  );
-}
-
 // ── Page ─────────────────────────────────────────────────
 
 export function AdminUsers() {
@@ -202,7 +114,7 @@ export function AdminUsers() {
   const surface = isDark ? '#263028' : '#FFFFFF';
   const bg = isDark ? '#1A211B' : '#F5F7F0';
   const brand = isDark ? '#4A8A63' : '#24563C';
-  const coral = '#DE393A';
+  const coral = getColors(isDark).coral;
   const queryClient = useQueryClient();
 
   // ── Queries ──
@@ -246,11 +158,7 @@ export function AdminUsers() {
       setErrorMessage('');
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ??
-        (err as Error)?.message ??
-        'Error al cambiar estado';
+      const detail = parseApiError(err, 'Error al cambiar estado.');
       showToast(detail, 'error');
       setErrorMessage(detail);
     },
@@ -269,11 +177,7 @@ export function AdminUsers() {
       setErrorMessage('');
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ??
-        (err as Error)?.message ??
-        'Error al cambiar rol';
+      const detail = parseApiError(err, 'Error al cambiar rol.');
       showToast(detail, 'error');
       setErrorMessage(detail);
     },
@@ -282,6 +186,7 @@ export function AdminUsers() {
   const PAGE_SIZE = 10;
 
   // ── State ──
+  const [tab, setTab] = useState<'lista' | 'nuevo'>('lista');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -295,16 +200,9 @@ export function AdminUsers() {
   const [deactTarget, setDeactTarget] = useState<User | null>(null);
 
   // ── Reset page when filters change ──
-  const prevFilterKey = useMemo(
-    () => ({ search, roleFilter, statusFilter }),
-    [search, roleFilter, statusFilter],
-  );
-  const filterKey = JSON.stringify(prevFilterKey);
-  const prevKeyRef = useRef(filterKey);
-  if (prevKeyRef.current !== filterKey) {
-    prevKeyRef.current = filterKey;
+  useEffect(() => {
     setPage(1);
-  }
+  }, [search, roleFilter, statusFilter]);
 
   // ── Filtered + paginated list ──
   const filtered = useMemo(() => {
@@ -418,22 +316,6 @@ export function AdminUsers() {
     );
   }
 
-  const btnStyle = sharedBtnStyle;
-
-  const inputStyle = (focused: boolean) => ({
-    width: '100%',
-    height: 44,
-    border: `1.5px solid ${focused ? brand : border}`,
-    borderRadius: 10,
-    padding: '0 14px',
-    fontSize: 15,
-    fontFamily: 'inherit' as const,
-    background: bg,
-    color: fg,
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  });
-
   return (
     <div>
       <Toast toast={toast} onDone={() => setToast(null)} />
@@ -461,636 +343,120 @@ export function AdminUsers() {
         </h2>
       </div>
 
-      {/* ═══ Search + Filters ═══ */}
+      {/* ═══ Tab bar ═══ */}
       <div
         style={{
-          background: surface,
-          borderRadius: 16,
-          border: `1px solid ${border}`,
-          padding: 16,
+          display: 'flex',
+          gap: 2,
+          background: border,
+          borderRadius: 12,
+          padding: 3,
           marginBottom: 20,
+          width: 'fit-content',
         }}
       >
-        {/* Search */}
-        <input
-          type="search"
-          placeholder="Buscar por nombre o correo…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            ...inputStyle(false),
-            marginBottom: 14,
-          }}
-        />
-
-        {/* Role filters */}
-        <div style={{ marginBottom: 8 }}>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: muted,
-              display: 'block',
-              marginBottom: 6,
-            }}
-          >
-            Rol
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {ROLE_FILTERS.map((opt) => (
-              <button
-                key={String(opt.value)}
-                onClick={() => setRoleFilter(opt.value)}
-                style={{
-                  ...btnStyle,
-                  height: 32,
-                  padding: '0 14px',
-                  borderRadius: 999,
-                  background:
-                    roleFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
-                  color: roleFilter === opt.value ? '#fff' : muted,
-                  border: 'none',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ height: 1, background: border, margin: '12px 0' }} />
-
-        {/* Status filters */}
-        <div>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: muted,
-              display: 'block',
-              marginBottom: 6,
-            }}
-          >
-            Estado
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {STATUS_FILTERS.map((opt) => (
-              <button
-                key={String(opt.value)}
-                onClick={() => setStatusFilter(opt.value)}
-                style={{
-                  ...btnStyle,
-                  height: 32,
-                  padding: '0 14px',
-                  borderRadius: 999,
-                  background:
-                    statusFilter === opt.value ? brand : 'rgba(0,0,0,0.06)',
-                  color: statusFilter === opt.value ? '#fff' : muted,
-                  border: 'none',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ Error message ═══ */}
-      {errorMessage && (
-        <div
-          style={{
-            padding: '12px 16px',
-            borderRadius: 10,
-            background: isDark ? 'rgba(222,57,58,0.12)' : '#FEF2F2',
-            border: `1px solid ${isDark ? 'rgba(222,57,58,0.3)' : '#FECACA'}`,
-            color: coral,
-            fontSize: 13,
-            fontWeight: 500,
-            marginBottom: 16,
-          }}
-        >
-          {errorMessage}
-        </div>
-      )}
-
-      {/* ═══ User table ═══ */}
-      <div
-        style={{
-          background: surface,
-          borderRadius: 16,
-          border: `1px solid ${border}`,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '16px 20px',
-            borderBottom: `1px solid ${border}`,
-            flexWrap: 'wrap',
-            gap: 8,
-          }}
-        >
-          <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-            {filtered.length} usuarios
-          </span>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                {['Usuario', 'Email', 'Rol', 'Estado', 'Acciones'].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      textAlign: 'left',
-                      fontSize: 11,
-                      color: muted,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      fontWeight: 600,
-                      padding: '12px 20px',
-                      background: bg,
-                      borderBottom: `1px solid ${border}`,
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      textAlign: 'center',
-                      padding: '48px 24px',
-                      color: muted,
-                      fontSize: 14,
-                    }}
-                  >
-                    No hay usuarios
-                  </td>
-                </tr>
-              ) : (
-                paginated.map((user) => {
-                  const isSelf = user.id === currentUserId;
-                  return (
-                    <tr key={user.id} style={{ background: surface }}>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 10,
-                              background: isDark ? '#1C2D22' : '#E2F0E6',
-                              display: 'grid',
-                              placeItems: 'center',
-                              fontWeight: 600,
-                              fontSize: 13,
-                              color: brand,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {user.nombre[0]}
-                            {user.apellido_paterno[0]}
-                          </div>
-                          <div>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 600,
-                                color: fg,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6,
-                              }}
-                            >
-                              {getFullName(user)}
-                              {isSelf ? (
-                                <span
-                                  style={{
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    padding: '1px 6px',
-                                    borderRadius: 4,
-                                    background: isDark
-                                      ? 'rgba(212,160,32,0.2)'
-                                      : '#FEF3C7',
-                                    color: isDark ? '#F2A900' : '#D97706',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                  }}
-                                >
-                                  tú
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          fontSize: 13,
-                          color: muted,
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        {user.email}
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <RolePill role={user.role} />
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <StatusBadge
-                          active={user.estado}
-                          brand={brand}
-                          isDark={isDark}
-                        />
-                      </td>
-                      <td
-                        style={{
-                          padding: '14px 20px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            onClick={() => toggleStatus(user)}
-                            disabled={isSelf || toggleMutation.isPending}
-                            aria-label={user.estado ? 'Desactivar' : 'Activar'}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor:
-                                isSelf || toggleMutation.isPending
-                                  ? 'not-allowed'
-                                  : 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color:
-                                isSelf || toggleMutation.isPending ? muted : fg,
-                              opacity:
-                                isSelf || toggleMutation.isPending ? 0.5 : 1,
-                            }}
-                          >
-                            {user.estado ? '⏸' : '▶️'}
-                          </button>
-                          <button
-                            onClick={() => openRoleModal(user)}
-                            disabled={isSelf || roleMutation.isPending}
-                            aria-label="Cambiar rol"
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 8,
-                              border: `1px solid ${border}`,
-                              background: surface,
-                              cursor:
-                                isSelf || roleMutation.isPending
-                                  ? 'not-allowed'
-                                  : 'pointer',
-                              fontSize: 14,
-                              display: 'grid',
-                              placeItems: 'center',
-                              color:
-                                isSelf || roleMutation.isPending
-                                  ? muted
-                                  : brand,
-                              opacity:
-                                isSelf || roleMutation.isPending ? 0.5 : 1,
-                            }}
-                          >
-                            👤
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ═══ Pagination ═══ */}
-      {totalPages > 1 && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-          }}
-        >
+        {(['lista', 'nuevo'] as const).map((t) => (
           <button
-            disabled={safePage <= 1}
-            onClick={() => setPage((p) => p - 1)}
+            key={t}
+            onClick={() => setTab(t)}
             style={{
-              ...btnStyle,
-              height: 36,
-              padding: '0 14px',
-              borderRadius: 8,
-              background: safePage <= 1 ? 'transparent' : surface,
-              border: `1.5px solid ${border}`,
-              color: safePage <= 1 ? muted : fg,
-              cursor: safePage <= 1 ? 'not-allowed' : 'pointer',
-              opacity: safePage <= 1 ? 0.5 : 1,
-              fontSize: 13,
+              padding: '8px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: tab === t ? surface : 'transparent',
+              color: tab === t ? fg : muted,
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            ← Anterior
+            {t === 'lista' ? '📋 Lista de usuarios' : '➕ Nuevo usuario'}
           </button>
+        ))}
+      </div>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
+      {/* ═══ Lista tab ═══ */}
+      {tab === 'lista' && (
+        <>
+          <UserFilters
+            search={search}
+            onSearchChange={setSearch}
+            roleFilter={roleFilter}
+            onRoleFilterChange={setRoleFilter}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            theme={{ fg, muted, border, surface, bg, brand }}
+            isDark={isDark}
+          />
+
+          {/* ═══ Error message ═══ */}
+          {errorMessage && (
+            <div
               style={{
-                ...btnStyle,
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: p === safePage ? brand : 'transparent',
-                color: p === safePage ? '#fff' : fg,
-                fontWeight: p === safePage ? 700 : 500,
-                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: 10,
+                background: isDark ? 'rgba(222,57,58,0.12)' : '#FEF2F2',
+                border: `1px solid ${isDark ? 'rgba(222,57,58,0.3)' : '#FECACA'}`,
+                color: coral,
                 fontSize: 13,
-                justifyContent: 'center',
+                fontWeight: 500,
+                marginBottom: 16,
               }}
             >
-              {p}
-            </button>
-          ))}
+              {errorMessage}
+            </div>
+          )}
 
-          <button
-            disabled={safePage >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            style={{
-              ...btnStyle,
-              height: 36,
-              padding: '0 14px',
-              borderRadius: 8,
-              background: safePage >= totalPages ? 'transparent' : surface,
-              border: `1.5px solid ${border}`,
-              color: safePage >= totalPages ? muted : fg,
-              cursor: safePage >= totalPages ? 'not-allowed' : 'pointer',
-              opacity: safePage >= totalPages ? 0.5 : 1,
-              fontSize: 13,
-            }}
-          >
-            Siguiente →
-          </button>
-        </div>
+          <UserTable
+            users={users}
+            filteredCount={filtered.length}
+            paginatedUsers={paginated}
+            currentUserId={currentUserId}
+            isTogglePending={toggleMutation.isPending}
+            isRolePending={roleMutation.isPending}
+            onToggleStatus={toggleStatus}
+            onOpenRoleModal={openRoleModal}
+            theme={{ fg, muted, border, surface, bg, brand }}
+            isDark={isDark}
+            totalPages={totalPages}
+            currentPage={safePage}
+            onPageChange={setPage}
+          />
+        </>
+      )}
+
+      {/* ═══ Nuevo tab ═══ */}
+      {tab === 'nuevo' && (
+        <NuevoUsuarioForm
+          colors={{ fg, muted, border, bg, brand, coral, surface }}
+          isDark={isDark}
+          onCreated={() => setTab('lista')}
+          showToast={showToast}
+        />
       )}
 
       {/* ═══ Role Change Modal ═══ */}
       {roleTarget && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={closeRoleModal}
-        >
-          <div
-            style={{
-              background: surface,
-              borderRadius: 20,
-              padding: 28,
-              maxWidth: 400,
-              width: '90%',
-              border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: fg,
-                marginBottom: 4,
-              }}
-            >
-              Cambiar Rol
-            </h3>
-            <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
-              Usuario:{' '}
-              <strong style={{ color: fg }}>{getFullName(roleTarget)}</strong>
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {ROLE_OPTIONS.map((opt) => (
-                <label
-                  key={opt.value}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    background:
-                      selectedRole === opt.value
-                        ? `${opt.color}12`
-                        : 'transparent',
-                    border: `1.5px solid ${selectedRole === opt.value ? opt.color : 'transparent'}`,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="role"
-                    value={opt.value}
-                    checked={selectedRole === opt.value}
-                    onChange={() => setSelectedRole(opt.value)}
-                    style={{ accentColor: opt.color }}
-                  />
-                  <span
-                    style={{ fontSize: 15, fontWeight: 500, color: opt.color }}
-                  >
-                    {opt.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                justifyContent: 'flex-end',
-                marginTop: 24,
-              }}
-            >
-              <button
-                onClick={closeRoleModal}
-                style={{
-                  height: 36,
-                  padding: '0 16px',
-                  borderRadius: 8,
-                  border: `1.5px solid ${border}`,
-                  background: 'transparent',
-                  color: fg,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={saveRole}
-                style={{
-                  height: 36,
-                  padding: '0 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: brand,
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
+        <RoleChangeModal
+          user={roleTarget}
+          selectedRole={selectedRole}
+          onRoleChange={setSelectedRole}
+          onSave={saveRole}
+          onClose={closeRoleModal}
+          theme={{ fg, muted, border, surface, brand }}
+        />
       )}
 
       {/* ═══ Deactivation confirmation ═══ */}
       {deactTarget && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setDeactTarget(null)}
-        >
-          <div
-            style={{
-              background: surface,
-              borderRadius: 20,
-              padding: 28,
-              maxWidth: 440,
-              width: '90%',
-              border: `1px solid ${border}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: fg,
-                marginBottom: 8,
-              }}
-            >
-              Confirmar desactivación
-            </h3>
-            <p style={{ fontSize: 14, color: muted, marginBottom: 8 }}>
-              ¿Estás seguro de desactivar a{' '}
-              <strong style={{ color: fg }}>{getFullName(deactTarget)}</strong>?
-            </p>
-            <p style={{ fontSize: 13, color: muted, marginBottom: 20 }}>
-              El usuario perderá acceso al sistema hasta que sea reactivado.
-            </p>
-            <div
-              style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
-            >
-              <button
-                onClick={() => setDeactTarget(null)}
-                style={{
-                  height: 36,
-                  padding: '0 16px',
-                  borderRadius: 8,
-                  border: `1.5px solid ${border}`,
-                  background: 'transparent',
-                  color: fg,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDeactivation}
-                style={{
-                  height: 36,
-                  padding: '0 16px',
-                  borderRadius: 8,
-                  border: '1.5px solid #DE393A',
-                  background: 'transparent',
-                  color: '#DE393A',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Desactivar
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeactivationModal
+          user={deactTarget}
+          onConfirm={confirmDeactivation}
+          onClose={() => setDeactTarget(null)}
+          theme={{ fg, muted, border, surface, coral }}
+        />
       )}
     </div>
   );

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { IconButton, Menu } from 'react-native-paper';
 
+import { formatMessageTime } from '@rassa/chat';
+
 import { useCanModifyMessage } from '@/features/chat/hooks/useCanModifyMessage';
 import { useAuth } from '@/store/AuthContext';
 import type { Attachment, Message } from '@/types/chat';
@@ -12,13 +14,6 @@ interface ChatBubbleProps {
   isOwn: boolean;
   onEdit?: (message: Message) => void;
   onDelete?: (messageId: number) => void;
-}
-
-function formatTime(dateString: string): string {
-  return new Date(dateString).toLocaleTimeString('es-MX', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function renderAttachment(
@@ -155,7 +150,7 @@ export default function ChatBubble({
                 isOwn ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              {formatTime(message.creado_en)}
+              {formatMessageTime(message.creado_en)}
               {message.editado ? ' · editado' : ''}
             </Text>
           </Pressable>

@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const raw = data.data ?? data;
         const user: User = {
-          id: raw.id as number,
+          id: (raw.id_usuario ?? raw.id) as number,
           email: raw.email as string,
           nombre: raw.nombre as string,
           rol: normalizeRole((raw.rol ?? raw.role) as string | undefined),
