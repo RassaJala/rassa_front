@@ -4,6 +4,7 @@ import {
   createPago,
   fetchPago,
   fetchPagoPorPedido,
+  fetchPagos,
   fetchTiposPago,
   type CreatePagoPayload,
   type PaymentDetail,
@@ -124,5 +125,66 @@ describe('payments service', () => {
     (api.get as jest.Mock).mockResolvedValueOnce({ data: { results: [] } });
 
     await expect(fetchPagoPorPedido(api, 4)).resolves.toBeNull();
+  });
+
+  it('fetchPagos requests /pagos/ and returns a flat array untouched', async () => {
+    const pagos: PaymentDetail[] = [
+      {
+        id_pago: 9,
+        folio: 'PAG-0009',
+        pedido: 4,
+        tipo_pago: 1,
+        tipo_pago_nombre: 'Efectivo',
+        cliente_nombre: 'Ana Ramírez',
+        cliente_id: 4,
+        monto: '119.48',
+        referencia: '',
+        total_pedido: '119.48',
+        productos: [],
+        fecha_pago: '2026-07-30T12:00:00Z',
+      },
+    ];
+    (api.get as jest.Mock).mockResolvedValueOnce({ data: pagos });
+
+    await expect(fetchPagos(api)).resolves.toEqual(pagos);
+    expect(api.get).toHaveBeenCalledWith('/pagos/');
+  });
+
+  it('fetchPagos unwraps the results of a paginated (DRF) response', async () => {
+    const pagos: PaymentDetail[] = [
+      {
+        id_pago: 9,
+        folio: 'PAG-0009',
+        pedido: 4,
+        tipo_pago: 1,
+        tipo_pago_nombre: 'Efectivo',
+        cliente_nombre: 'Ana Ramírez',
+        cliente_id: 4,
+        monto: '119.48',
+        referencia: '',
+        total_pedido: '119.48',
+        productos: [],
+        fecha_pago: '2026-07-30T12:00:00Z',
+      },
+    ];
+    (api.get as jest.Mock).mockResolvedValueOnce({
+      data: { count: 1, next: null, previous: null, results: pagos },
+    });
+
+    await expect(fetchPagos(api)).resolves.toEqual(pagos);
+  });
+
+  it('fetchPagos returns an empty list for a paginated response with no results', async () => {
+    (api.get as jest.Mock).mockResolvedValueOnce({
+      data: { count: 0, next: null, previous: null, results: [] },
+    });
+
+    await expect(fetchPagos(api)).resolves.toEqual([]);
+  });
+
+  it('fetchPagos returns an empty list for an invalid payload', async () => {
+    (api.get as jest.Mock).mockResolvedValueOnce({ data: null });
+
+    await expect(fetchPagos(api)).resolves.toEqual([]);
   });
 });

@@ -24,6 +24,10 @@ vi.mock('../../hooks/useAppColors', () => ({
   }),
 }));
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: vi.fn(),
+}));
+
 vi.mock('@/common/payments', async () => ({
   ...(await vi.importActual('@/common/payments')),
   fetchTiposPago: vi.fn(),
@@ -33,9 +37,11 @@ vi.mock('@/common/payments', async () => ({
 }));
 
 import { fetchPago } from '@/common/payments';
+import { useAuth } from '../../hooks/useAuth';
 import { BuyerReceiptDetail } from '../BuyerReceiptDetail';
 
 const mockedFetchPago = vi.mocked(fetchPago);
+const mockedUseAuth = vi.mocked(useAuth);
 
 const mockPago = {
   id_pago: 9,
@@ -69,6 +75,7 @@ describe('BuyerReceiptDetail', () => {
     mockNavigate.mockReset();
     mockParams.current = { paymentId: '9' };
     mockedFetchPago.mockResolvedValue(mockPago);
+    mockedUseAuth.mockReturnValue({ user: { id: 4 } } as never);
   });
 
   it('renders the receipt fields after fetch', async () => {
@@ -116,5 +123,13 @@ describe('BuyerReceiptDetail', () => {
     renderPage();
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('does not render a receipt owned by another user (IDOR defense)', async () => {
+    mockedUseAuth.mockReturnValue({ user: { id: 99 } } as never);
+
+    renderPage();
+    expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(useAuth).toHaveBeenCalled();
   });
 });

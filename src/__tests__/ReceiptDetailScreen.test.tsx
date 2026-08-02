@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ReceiptDetailScreen from '@/screens/buyer/ReceiptDetailScreen';
 import { fetchPago } from '@/common/payments';
+import { useAuth } from '@/store/AuthContext';
 
 const mockGoBack = jest.fn();
 const mockParams = { current: { paymentId: 9 } };
@@ -26,6 +27,10 @@ jest.mock('@/store/ThemeContext', () => ({
     colorScheme: 'light',
     toggleColorScheme: jest.fn(),
   }),
+}));
+
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: jest.fn(),
 }));
 
 jest.mock('@expo/vector-icons', () => ({
@@ -81,6 +86,7 @@ describe('ReceiptDetailScreen', () => {
     mockGoBack.mockReset();
     mockParams.current = { paymentId: 9 };
     mockedFetchPago.mockResolvedValue(mockPago);
+    (useAuth as jest.Mock).mockReturnValue({ user: { id: 4 } });
   });
 
   it('renders the receipt fields after fetch', async () => {
@@ -124,5 +130,14 @@ describe('ReceiptDetailScreen', () => {
     const { findByText } = renderScreen();
     expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('does not render a receipt owned by another user (IDOR defense)', async () => {
+    (useAuth as jest.Mock).mockReturnValue({ user: { id: 99 } });
+
+    const { findByText } = renderScreen();
+    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    // el pago está cargado pero no debe renderizarse al ser de otro usuario
+    expect(useAuth).toHaveBeenCalled();
   });
 });

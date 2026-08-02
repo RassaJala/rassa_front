@@ -88,10 +88,11 @@ export async function fetchPago(
 }
 
 export async function fetchPagos(api: AxiosInstance): Promise<PaymentDetail[]> {
-  const res = await api.get<PaymentDetail[] | { results?: PaymentDetail[] }>(
-    '/pagos/',
-  );
+  const res = await api.get<
+    PaymentDetail[] | { results?: PaymentDetail[] } | null
+  >('/pagos/');
   const body = res.data;
+  if (body == null) return [];
   return Array.isArray(body) ? body : (body.results ?? []);
 }
 
@@ -99,10 +100,11 @@ export async function fetchPagoPorPedido(
   api: AxiosInstance,
   pedidoId: number,
 ): Promise<PaymentDetail | null> {
-  const res = await api.get<PaymentDetail[] | { results?: PaymentDetail[] }>(
-    `/pagos/?pedido=${pedidoId}`,
-  );
+  const res = await api.get<
+    PaymentDetail[] | { results?: PaymentDetail[] } | null
+  >(`/pagos/?pedido=${pedidoId}`);
   const body = res.data;
+  if (body == null) return null;
   const pagos = Array.isArray(body) ? body : (body.results ?? []);
   return pagos[0] ?? null;
 }
