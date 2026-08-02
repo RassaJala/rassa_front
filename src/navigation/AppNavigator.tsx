@@ -33,6 +33,8 @@ import HomeScreen from '@/screens/buyer/HomeScreen';
 import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
+import ReceiptDetailScreen from '@/screens/buyer/ReceiptDetailScreen';
+import ReceiptListScreen from '@/screens/buyer/ReceiptListScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
@@ -331,6 +333,8 @@ function BuyerNavigator() {
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <BuyerStack.Screen name="ReceiptList" component={ReceiptListScreen} />
+      <BuyerStack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
         name="Chat"

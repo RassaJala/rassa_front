@@ -89,6 +89,12 @@ const roleNavMap: Record<string, NavItem[]> = {
     },
     { key: 'cart', label: 'Carrito', icon: '🛒', path: '/cliente/carrito' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/cliente/pedidos' },
+    {
+      key: 'receipts',
+      label: 'Mis Recibos',
+      icon: '🧾',
+      path: '/cliente/recibos',
+    },
     { key: 'chat', label: 'Chat', icon: '💬', path: '/cliente/chat' },
     { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/cliente/perfil' },
   ],

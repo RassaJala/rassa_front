@@ -87,6 +87,14 @@ export async function fetchPago(
   return res.data;
 }
 
+export async function fetchPagos(api: AxiosInstance): Promise<PaymentDetail[]> {
+  const res = await api.get<PaymentDetail[] | { results?: PaymentDetail[] }>(
+    '/pagos/',
+  );
+  const body = res.data;
+  return Array.isArray(body) ? body : (body.results ?? []);
+}
+
 export async function fetchPagoPorPedido(
   api: AxiosInstance,
   pedidoId: number,
