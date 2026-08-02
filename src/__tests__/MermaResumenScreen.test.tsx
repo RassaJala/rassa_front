@@ -296,4 +296,62 @@ describe('MermaResumenScreen', () => {
     );
     expect(queryByText('Reintentar')).toBeNull();
   });
+
+  it('no hereda el presupuesto de reintentos entre búsquedas con filtros distintos', async () => {
+    // Supervisor scenario: first search fails, manual retry fails too, then
+    // the user changes the date range (independent search) which fails again.
+    // The retry budget must reset per filter set so the third failure never
+    // shows "Contactá al administrador" prematurely.
+    mockFetch.mockRejectedValue(new Error('Network error'));
+
+    const queries = render(<MermaResumenScreen navigation={navigation} />);
+    const { findByText, getByText, queryByText } = queries;
+
+    // Initial search fails; manual retry fails again.
+    await findByText('Reintentar');
+    fireEvent.press(getByText('Reintentar'));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
+
+    // Change the date range — a new independent search with different filters.
+    const { year, month, day15, day20 } = pastMonthParts();
+    await pickDate(queries, 'Fecha desde', year, month, day15);
+    await pickDate(queries, 'Fecha hasta', year, month, day20);
+    fireEvent.press(getByText('Buscar'));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(3));
+
+    // The new search still offers a retry button instead of telling the user
+    // to contact the administrator.
+    expect(getByText('Reintentar')).toBeTruthy();
+    expect(
+      queryByText('No pudimos cargar los datos. Contactá al administrador.'),
+    ).toBeNull();
+  });
+
+  it('muestra banner de datos desactualizados cuando un refetch falla con datos previos', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockResumen)
+      .mockRejectedValueOnce(new Error('Network error'));
+
+    const queries = render(<MermaResumenScreen navigation={navigation} />);
+    const { findByText, getByText } = queries;
+
+    expect(await findByText('Unidades mermadas')).toBeTruthy();
+
+    // Apply a new filter → refetch fails but previous data stays visible.
+    const { year, month, day15, day20 } = pastMonthParts();
+    await pickDate(queries, 'Fecha desde', year, month, day15);
+    await pickDate(queries, 'Fecha hasta', year, month, day20);
+    fireEvent.press(getByText('Buscar'));
+
+    await waitFor(() =>
+      expect(
+        getByText(
+          /No se pudieron cargar los datos para los filtros seleccionados/,
+        ),
+      ).toBeTruthy(),
+    );
+    expect(getByText(/Actualizado:/)).toBeTruthy();
+    // Previous data remains on screen.
+    expect(getByText('Unidades mermadas')).toBeTruthy();
+  });
 });

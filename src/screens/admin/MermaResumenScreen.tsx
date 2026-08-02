@@ -115,6 +115,7 @@ export default function MermaResumenScreen({
   const [error, setError] = useState<string | null>(null);
   const fetchRef = useRef(0);
   const retryCountRef = useRef(0);
+  const dataLoadedAtRef = useRef(0);
 
   // Date validation
   const desdeDate = draftDesde ? parseDate(draftDesde) : null;
@@ -135,6 +136,7 @@ export default function MermaResumenScreen({
       const result = await fetchMermaResumen(params);
       if (id !== fetchRef.current) return; // stale, discard
       retryCountRef.current = 0;
+      dataLoadedAtRef.current = Date.now();
       setData(result);
       setPagina(1);
     } catch (e) {
@@ -152,6 +154,13 @@ export default function MermaResumenScreen({
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  // Reset the retry budget when the applied filters change: each combination
+  // is an independent search, so manual retries must not carry over between
+  // different filter sets (same defect fixed on web in dbb3c04).
+  useEffect(() => {
+    retryCountRef.current = 0;
+  }, [appliedDesde, appliedHasta, agruparPor, productoId]);
 
   // Handlers
   const handleApply = () => {
@@ -332,6 +341,35 @@ export default function MermaResumenScreen({
               />
             )}
 
+            {/* ═══ Stale-data banner (refetch failed but previous data remains) ═══ */}
+            {error !== null && data !== null ? (
+              <View
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+                style={[
+                  styles.staleBox,
+                  { backgroundColor: coral, borderColor: border },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="alert-outline"
+                  size={18}
+                  color={fg}
+                />
+                <Text style={[styles.staleText, { color: fg }]}>
+                  No se pudieron cargar los datos para los filtros
+                  seleccionados. Mostrando datos de la última consulta exitosa.
+                  <Text style={{ fontSize: 11, opacity: 0.8 }}>
+                    {'\n'}Actualizado:{' '}
+                    {new Date(dataLoadedAtRef.current).toLocaleString('es-MX', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })}
+                  </Text>
+                </Text>
+              </View>
+            ) : null}
+
             {/* ═══ Retry feedback (refetch after a previous failure) ═══ */}
             {isRetrying ? (
               <View style={styles.retryingBox}>
@@ -496,6 +534,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryingText: { fontSize: 13, fontWeight: '600' },
+  staleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 16,
+    opacity: 0.9,
+  },
+  staleText: { flex: 1, fontSize: 12, fontWeight: '500' },
   backBtn: {
     width: 40,
     height: 40,
