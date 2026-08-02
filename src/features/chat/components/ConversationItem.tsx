@@ -28,6 +28,7 @@ export default function ConversationItem({
               : conversation.participante_nombre,
           tipo: conversation.tipo,
           isFamily: conversation.es_familia,
+          nombreOverride: conversation.nombre_override,
         })
       }
       className="flex-row items-center gap-3 bg-white p-4 dark:bg-gray-900"
@@ -54,6 +55,7 @@ export default function ConversationItem({
             className="text-sm font-medium text-gray-900 dark:text-gray-100"
             numberOfLines={1}
           >
+            {conversation.es_familia ? '🏠 ' : ''}
             {conversation.tipo === 'grupal'
               ? conversation.nombre
               : conversation.participante_nombre}

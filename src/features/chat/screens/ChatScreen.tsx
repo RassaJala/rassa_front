@@ -39,7 +39,7 @@ type ChatNavigation = NativeStackNavigationProp<ChatStackParamList, 'Chat'>;
 export default function ChatScreen(): React.JSX.Element {
   const route = useRoute<RouteProp<ChatStackParamList, 'Chat'>>();
   const navigation = useNavigation<ChatNavigation>();
-  const { conversationId, tipo, isFamily } = route.params;
+  const { conversationId, tipo, isFamily, nombreOverride } = route.params;
   const { user } = useAuth();
   const { colorScheme } = useTheme();
   const groupIconColor =
@@ -77,6 +77,7 @@ export default function ChatScreen(): React.JSX.Element {
                     conversationId,
                     title: route.params.title,
                     isFamily,
+                    nombreOverride,
                   });
                 }}
                 style={{ marginRight: 16 }}
@@ -91,6 +92,7 @@ export default function ChatScreen(): React.JSX.Element {
     conversationId,
     route.params.title,
     isFamily,
+    nombreOverride,
     groupIconColor,
   ]);
 
