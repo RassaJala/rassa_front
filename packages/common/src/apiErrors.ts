@@ -22,6 +22,12 @@ function parseHtmlOrStringError(data: string, status?: number): string {
     }
     return 'Error interno del servidor. Revisa los logs del backend.';
   }
+
+  // String bodies enforce the same safety policy as the JSON paths: text that
+  // looks like a traceback or DB error must never reach the user.
+  if (trimmed === '' || !isSafeDetail(trimmed)) {
+    return 'Error interno del servidor. Revisa los logs del backend.';
+  }
   return trimmed;
 }
 
@@ -66,11 +72,29 @@ function parseAxiosError(error: unknown): string | null {
   const status = candidate.response?.status;
   const data = candidate.response?.data as unknown;
 
-  if (data && typeof data === 'object') {
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (trimmed !== '' && !trimmed.startsWith('<') && isSafeDetail(trimmed)) {
+      return trimmed;
+    }
+  } else if (Array.isArray(data)) {
+    // DRF non-field errors arrive as a top-level array (["Stock insuficiente..."]).
+    // NOTE: arrays are `typeof 'object'`, so this branch must come before the
+    // generic object branch below.
+    const first = data[0];
+    if (first !== undefined) {
+      const text = String(first).trim();
+      if (text !== '' && isSafeDetail(text)) return text;
+    }
+  } else if (data !== null && typeof data === 'object') {
     const record = data as Record<string, unknown>;
-    if (typeof record.detail === 'string') {
-      if (isSafeDetail(record.detail)) {
-        return record.detail;
+    if (typeof record.detail === 'string' && isSafeDetail(record.detail)) {
+      return record.detail;
+    }
+    for (const key of ['message', 'error'] as const) {
+      const value = record[key];
+      if (typeof value === 'string' && value !== '' && isSafeDetail(value)) {
+        return value;
       }
     }
     const fieldsErr = extractFieldErrorsFromList(record);
@@ -93,9 +117,20 @@ function extractFieldErrorsFromList(
   for (const [key, val] of Object.entries(data)) {
     if (key === 'non_field_errors') {
       const arr = Array.isArray(val) ? val : [val];
-      fieldErrors.push(...arr.map(String));
+      for (const item of arr) {
+        const text = String(item).trim();
+        // The array path enforces the same sanitization policy as detail/message.
+        if (text !== '' && isSafeDetail(text)) {
+          fieldErrors.push(text);
+        }
+      }
     } else if (Array.isArray(val)) {
-      fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+      const safeItems = val
+        .map((item) => String(item).trim())
+        .filter((text) => text !== '' && isSafeDetail(text));
+      if (safeItems.length > 0) {
+        fieldErrors.push(`${key}: ${safeItems.join(', ')}`);
+      }
     }
   }
 
@@ -136,7 +171,9 @@ export function extractApiError(
       return record.detail;
     }
   }
-  if (typeof record.message === 'string') return record.message;
+  if (typeof record.message === 'string' && isSafeDetail(record.message)) {
+    return record.message;
+  }
 
   for (const key of fieldKeys) {
     const value = record[key];
@@ -161,7 +198,7 @@ function extractFieldErrorsFromData(
         : 'Error interno del servidor.',
     };
   }
-  if (typeof data.message === 'string') {
+  if (typeof data.message === 'string' && isSafeDetail(data.message)) {
     return { fields, general: data.message };
   }
 

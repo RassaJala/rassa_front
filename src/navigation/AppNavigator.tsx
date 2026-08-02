@@ -34,8 +34,10 @@ import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
+import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
+import OrderSuccessScreen from '@/screens/common/OrderSuccessScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
@@ -47,7 +49,9 @@ import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
@@ -332,6 +336,8 @@ function BuyerNavigator() {
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
+      <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
@@ -488,6 +494,8 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="Payment" component={PaymentScreen} />
+      <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}
