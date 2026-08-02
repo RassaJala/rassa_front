@@ -19,10 +19,13 @@ import {
   IDEMPOTENCY_KEY_KEY,
   IN_FLIGHT_CHECKOUT_KEY,
   PLACED_ORDER_KEY,
+  clearInFlightCheckout,
   readAmbiguousMarker,
+  readInFlightCheckout,
   readPlacedOrder,
   writeAmbiguousMarker,
   writeInFlightCheckout,
+  writePlacedOrder,
 } from '../../services/checkoutGuard';
 import {
   AMBIGUOUS_LOG_MARKER,
@@ -856,6 +859,10 @@ describe('BuyerCheckout — integration', () => {
     // — no POST left this tab, so no false ambiguous state may survive for the
     // next checkout mount.
     expect(readAmbiguousMarker()).toBeNull();
+    // LOW-1: the phantom in-flight record is cleared on the abort — onSettled
+    // never runs (no POST left this tab), so without this the record would
+    // block every tab's checkout for the full ~60s TTL.
+    expect(readInFlightCheckout()).toBeNull();
   });
 
   it('W-7: a storage write failure aborts the confirm with a toast, no POST, and a re-enabled button', async () => {
@@ -1107,5 +1114,70 @@ describe('BuyerCheckout — integration', () => {
     expect(warnCalls.length).toBeGreaterThan(0);
     const payload = warnCalls[0]?.[2] as Record<string, unknown> | undefined;
     expect(payload?.marker).toEqual(readAmbiguousMarker());
+  });
+
+  it('LOW-4: a placed-order record is not surfaced or consumed while a fresh in-flight checkout exists', async () => {
+    // Simulate a return-while-pending: the order POST has not settled yet (a
+    // fresh in-flight record exists) AND the placed-order record was written
+    // by the hidden success path.
+    writeInFlightCheckout({
+      tabSessionId: 'tab-A',
+      idempotencyKey: 'checkout-k1',
+      timestamp: Date.now(),
+      fingerprint: 'f',
+    });
+    writePlacedOrder({ id_pedido: 45, timestamp: Date.now() });
+
+    const first = renderCheckout();
+
+    // While the order may still be in flight, the S-3 banner must not claim it
+    // was confirmed — and the record must NOT be consumed (cleared).
+    expect(
+      screen.queryByText(/Tu pedido N°45 se confirmó/),
+    ).not.toBeInTheDocument();
+    expect(readPlacedOrder()).not.toBeNull();
+
+    // The POST settles (in-flight record gone). The next mount surfaces the
+    // confirmation and consumes the record.
+    first.unmount();
+    clearInFlightCheckout();
+    renderCheckout();
+    expect(
+      await screen.findByText(/Tu pedido N°45 se confirmó/),
+    ).toBeInTheDocument();
+    expect(readPlacedOrder()).toBeNull();
+  });
+
+  it('LOW-2: the checkout mounts without crashing when storage reads throw a SecurityError', async () => {
+    // The guard's storage keys are blocked (SecurityError) while unrelated
+    // reads (e.g. the theme provider's own read) still work — the checkout
+    // state initializers must degrade to "absent" instead of crashing.
+    const blockedKeys = new Set([
+      AMBIGUOUS_MARKER_KEY,
+      PLACED_ORDER_KEY,
+      IN_FLIGHT_CHECKOUT_KEY,
+      IDEMPOTENCY_KEY_KEY,
+      'rassa-checkout-tab-session',
+    ]);
+    const originalGetItem = Storage.prototype.getItem;
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (blockedKeys.has(key)) {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      }
+      return originalGetItem.call(this, key);
+    });
+
+    renderCheckout();
+
+    // The initializers (ambiguous marker / placed-order record) degrade to
+    // "absent" — the checkout still renders with the cart items.
+    expect(await screen.findByText('Tomate')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pedido' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('$30.25')).toBeInTheDocument();
   });
 });

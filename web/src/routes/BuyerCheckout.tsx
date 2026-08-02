@@ -73,8 +73,15 @@ export function BuyerCheckout() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrderRecord | null>(
     () => {
       const record = readPlacedOrder();
-      if (record !== null) clearPlacedOrder();
-      return record;
+      // LOW-4: consume (clear + surface) the S-3 confirmation ONLY when no
+      // in-flight checkout exists — a return-while-pending mount must not
+      // claim the order was confirmed before the POST has settled. The record
+      // stays until the next mount after the in-flight record is gone.
+      if (record !== null && readInFlightCheckout() === null) {
+        clearPlacedOrder();
+        return record;
+      }
+      return null;
     },
   );
   // S-10: synchronous in-flight flag — two handleConfirm calls in the same
@@ -284,10 +291,15 @@ export function BuyerCheckout() {
     const afterWrite = readInFlightCheckout();
     if (afterWrite !== null && afterWrite.tabSessionId !== ownTabSessionId) {
       inFlightRef.current = false;
-      // JD-A-001/JD-B-002: the foreign tab's record is untouched (it is a real
-      // in-flight checkout), but OUR optimistic marker write is rolled back —
-      // no POST left this tab.
+      // JD-A-001/JD-B-002: OUR optimistic marker write is rolled back — no
+      // POST left this tab, so no false ambiguous state may survive for the
+      // next checkout mount.
       clearAmbiguousMarker();
+      // LOW-1: the in-flight record written at our own write (or raced in
+      // after it) is a phantom here — no POST backed it, and onSettled never
+      // runs (we return before mutation.mutate). Leaving it would block every
+      // tab's checkout for the full ~60s TTL, so clear it.
+      clearInFlightCheckout();
       setToast({ message: CONCURRENT_CHECKOUT_MSG, type: 'error' });
       return;
     }
