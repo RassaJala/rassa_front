@@ -4,6 +4,8 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
+import { API_RETRY_LIMIT } from '@/common/networking';
+
 import * as Storage from './storage';
 
 declare const process: {
@@ -15,7 +17,6 @@ declare const process: {
 
 // ── Constants ─────────────────────────────────────────────
 const API_TIMEOUT_MS = 15_000;
-const MAX_RETRIES = 3;
 const SERVER_ERROR_THRESHOLD = 500;
 const REFRESH_TIMEOUT_MS = 8_000;
 
@@ -56,7 +57,7 @@ const api = axios.create({
 });
 
 axiosRetry(api, {
-  retries: MAX_RETRIES,
+  retries: API_RETRY_LIMIT,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (

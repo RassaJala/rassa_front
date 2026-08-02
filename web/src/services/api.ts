@@ -1,5 +1,8 @@
+import * as Sentry from '@sentry/react';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
+
+import { API_RETRY_LIMIT } from '@/common/networking';
 import { redirect } from './navigate';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -83,8 +86,8 @@ function retryKey(config: {
 }
 
 axiosRetry(api, {
-  retries: 2,
-  retryDelay: (retryNumber) => Math.min(200 * 2 ** retryNumber, 1_600),
+  retries: API_RETRY_LIMIT,
+  retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     const config = error.config;
     if (!config) return false;
@@ -135,6 +138,13 @@ api.interceptors.request.use((config) => {
 const NO_REDIRECT_ON_401 = ['/auth/change-password/', '/token/refresh/'];
 
 // --- Refresh token ---
+
+// ponytail: sanitize — never send the raw AxiosError (its toJSON leaks the Authorization header)
+function reportError(error: unknown): void {
+  if (error instanceof Error) {
+    Sentry.captureException(new Error(error.message));
+  }
+}
 
 let isRefreshing = false;
 let pendingRequests: Array<{
@@ -254,7 +264,10 @@ api.interceptors.response.use(
       requestUrl &&
       !NO_REDIRECT_ON_401.some((prefix) => requestUrl.startsWith(prefix));
 
-    if (!is401) return Promise.reject(error);
+    if (!is401) {
+      reportError(error);
+      return Promise.reject(error);
+    }
 
     // Intenta refrescar el token antes de redirigir
     if (!isRefreshing) {
