@@ -19,30 +19,36 @@ export function computePayloadFingerprint(
   return JSON.stringify(items);
 }
 
-// W-8: the marker is written to BOTH sessionStorage and localStorage. A
+// W-8/LOW-3: the marker is written to BOTH sessionStorage and localStorage. A
 // sessionStorage-only marker dies on tab close — exactly the moment a blind
 // re-confirm (and a duplicate order) becomes likely after the ambiguous
 // failure. localStorage survives tab close, so the next mount still surfaces
-// the warning. Reads prefer sessionStorage (freshest) and fall back to
-// localStorage (durable).
+// the warning. Reads merge BOTH records and keep the freshest by `timestamp`
+// (max wins; sessionStorage breaks timestamp ties — it is the freshest tab
+// context).
 export function readAmbiguousMarker(): AmbiguousMarker | null {
   if (typeof window === 'undefined') return null;
-  return (
-    readStoredRecord(
-      AMBIGUOUS_MARKER_KEY,
-      isAmbiguousMarker,
-      window.sessionStorage,
-    ) ??
-    readStoredRecord(
-      AMBIGUOUS_MARKER_KEY,
-      isAmbiguousMarker,
-      window.localStorage,
-    )
+  const session = readStoredRecord(
+    AMBIGUOUS_MARKER_KEY,
+    isAmbiguousMarker,
+    window.sessionStorage,
   );
+  const local = readStoredRecord(
+    AMBIGUOUS_MARKER_KEY,
+    isAmbiguousMarker,
+    window.localStorage,
+  );
+  if (session === null) return local;
+  if (local === null) return session;
+  if (local.timestamp > session.timestamp) return local;
+  return session;
 }
 
 // S-9d: shared JSON-record reader — parse + shape-validate a persisted record.
 // Corrupt or wrong-shape records are treated as absent (never block checkout).
+// LOW-2: a storage read that throws (SecurityError in blocked/incognito
+// contexts) degrades to "absent" like a corrupt record — checkout must never
+// crash on a read.
 function readStoredRecord<T>(
   key: string,
   validate: (value: unknown) => value is T,
@@ -50,7 +56,12 @@ function readStoredRecord<T>(
 ): T | null {
   if (typeof window === 'undefined') return null;
   const store = storage ?? window.localStorage;
-  const raw = store.getItem(key);
+  let raw: string | null;
+  try {
+    raw = store.getItem(key);
+  } catch {
+    return null;
+  }
   if (raw === null) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -79,8 +90,18 @@ export function writeAmbiguousMarker(marker: AmbiguousMarker): void {
 
 export function clearAmbiguousMarker(): void {
   if (typeof window === 'undefined') return;
-  window.sessionStorage.removeItem(AMBIGUOUS_MARKER_KEY);
-  window.localStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+  // LOW-2: storage clears are best-effort — a SecurityError (blocked storage)
+  // must never abort the confirm/success/error flows.
+  try {
+    window.sessionStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+  } catch {
+    // Swallow — the marker lingers until a working storage is available.
+  }
+  try {
+    window.localStorage.removeItem(AMBIGUOUS_MARKER_KEY);
+  } catch {
+    // Swallow — the marker lingers until a working storage is available.
+  }
 }
 
 // ── Idempotency key (W-4) ────────────────────────────────
@@ -154,7 +175,11 @@ export function resolveIdempotencyKey(fingerprint: string): string {
 
 export function clearIdempotencyKey(): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(IDEMPOTENCY_KEY_KEY);
+  try {
+    window.localStorage.removeItem(IDEMPOTENCY_KEY_KEY);
+  } catch {
+    // LOW-2: swallow — best-effort clear, never abort the flow.
+  }
 }
 
 // ── Placed-order notification (S-3) ──────────────────────
@@ -195,7 +220,11 @@ export function writePlacedOrder(record: PlacedOrderRecord): void {
 
 export function clearPlacedOrder(): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(PLACED_ORDER_KEY);
+  try {
+    window.localStorage.removeItem(PLACED_ORDER_KEY);
+  } catch {
+    // LOW-2: swallow — best-effort clear, never abort the flow.
+  }
 }
 
 // ── Cross-tab in-flight checkout (S-9) ───────────────────
@@ -221,7 +250,13 @@ const TAB_SESSION_ID_KEY = 'rassa-checkout-tab-session';
 
 export function getTabSessionId(): string {
   if (typeof window === 'undefined') return '';
-  const existing = window.sessionStorage.getItem(TAB_SESSION_ID_KEY);
+  let existing: string | null = null;
+  try {
+    existing = window.sessionStorage.getItem(TAB_SESSION_ID_KEY);
+  } catch {
+    // LOW-2: a blocked read degrades to a fresh id for this page load.
+    existing = null;
+  }
   if (existing !== null && existing !== '') return existing;
   const id = randomSuffixId('tab');
   // W-7: persistence is best-effort — quota/incognito must not throw out of
@@ -268,7 +303,11 @@ export function writeInFlightCheckout(record: InFlightCheckoutRecord): void {
 
 export function clearInFlightCheckout(): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(IN_FLIGHT_CHECKOUT_KEY);
+  try {
+    window.localStorage.removeItem(IN_FLIGHT_CHECKOUT_KEY);
+  } catch {
+    // LOW-2: swallow — best-effort clear, never abort the flow.
+  }
 }
 
 // True only when ANOTHER tab has a checkout POST in flight — the caller's own

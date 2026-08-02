@@ -123,6 +123,68 @@ describe('checkoutGuard — ambiguous order marker (C-1)', () => {
     const marker = readAmbiguousMarker();
     expect(marker?.fingerprint).toBe('fresh-session');
   });
+
+  it('LOW-3: the fresher marker wins across storages (local beats stale session)', () => {
+    window.sessionStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 100, fingerprint: 'stale-session' }),
+    );
+    window.localStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 200, fingerprint: 'fresh-local' }),
+    );
+
+    const marker = readAmbiguousMarker();
+    expect(marker?.timestamp).toBe(200);
+    expect(marker?.fingerprint).toBe('fresh-local');
+  });
+
+  it('LOW-3: equal timestamps resolve deterministically to sessionStorage', () => {
+    window.localStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 500, fingerprint: 'local' }),
+    );
+    window.sessionStorage.setItem(
+      AMBIGUOUS_MARKER_KEY,
+      JSON.stringify({ timestamp: 500, fingerprint: 'session' }),
+    );
+
+    const marker = readAmbiguousMarker();
+    expect(marker?.fingerprint).toBe('session');
+  });
+
+  it('LOW-2: reads return null when getItem throws a SecurityError', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+
+    expect(readAmbiguousMarker()).toBeNull();
+    expect(readPlacedOrder()).toBeNull();
+    expect(readInFlightCheckout()).toBeNull();
+    expect(hasConcurrentCheckout('tab-B')).toBe(false);
+  });
+
+  it('LOW-2: getTabSessionId still returns a usable id when getItem throws', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+
+    const id = getTabSessionId();
+    expect(id.length).toBeGreaterThan(0);
+  });
+
+  it('LOW-2: clear functions never throw when removeItem fails', () => {
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
+
+    expect(() => {
+      clearAmbiguousMarker();
+      clearIdempotencyKey();
+      clearPlacedOrder();
+      clearInFlightCheckout();
+    }).not.toThrow();
+  });
 });
 
 describe('checkoutGuard — idempotency key (W-4)', () => {
