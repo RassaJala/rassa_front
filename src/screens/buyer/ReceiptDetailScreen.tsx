@@ -18,6 +18,7 @@ import { fetchPago } from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
 
@@ -29,6 +30,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const { user } = useAuth();
   const { paymentId } = route.params;
   const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
 
@@ -61,11 +63,22 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
         }}
       >
         <ActivityIndicator size="large" color={brand} />
+        <LinkLikeButton
+          label="Volver"
+          icon="arrow-left"
+          color={muted}
+          onPress={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
-  if (isError || !pago) {
+  // Defensa en profundidad: aunque el backend ya scoping los pagos al
+  // propietario (IDOR mitigate), nunca renderizamos un recibo ajeno.
+  const esPropietario =
+    pago != null && pago.cliente_id != null && pago.cliente_id === user?.id;
+
+  if (isError || !pago || !esPropietario) {
     return (
       <View
         style={{
@@ -91,30 +104,25 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
         >
           Error al cargar el recibo
         </Text>
-        <Pressable
+        <LinkLikeButton
+          label="Reintentar"
+          icon="refresh"
+          color={brand}
           onPress={() => void refetch()}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-          }}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
-            Reintentar
-          </Text>
-        </Pressable>
+        />
+        <LinkLikeButton
+          label="Volver"
+          icon="arrow-left"
+          color={muted}
+          onPress={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
-  const subtotal = pago.productos.reduce(
+  const productos = pago.productos ?? [];
+
+  const subtotal = productos.reduce(
     (acc, prod) => acc + prod.cantidad * Number(prod.precio),
     0,
   );
@@ -222,7 +230,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
             marginBottom: 16,
           }}
         >
-          {pago.productos.map((prod, idx) => (
+          {productos.map((prod, idx) => (
             <View
               key={`${prod.nombre}-${idx}`}
               style={{
@@ -230,7 +238,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 paddingVertical: 8,
-                ...(idx < pago.productos.length - 1
+                ...(idx < productos.length - 1
                   ? { borderBottomWidth: 1, borderBottomColor: border }
                   : {}),
               }}
@@ -295,6 +303,38 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
 }
 
 // ── Detail row helper ─────────────────────────────────────
+
+function LinkLikeButton({
+  label,
+  icon,
+  color,
+  onPress,
+}: {
+  readonly label: string;
+  readonly icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  readonly color: string;
+  readonly onPress: () => void;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: color,
+      }}
+    >
+      <MaterialCommunityIcons name={icon} size={18} color={color} />
+      <Text style={{ fontSize: 14, fontWeight: '600', color }}>{label}</Text>
+    </Pressable>
+  );
+}
 
 function DetailRow({
   label,

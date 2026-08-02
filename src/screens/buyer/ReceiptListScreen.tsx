@@ -154,6 +154,25 @@ export default function ReceiptListScreen(): React.JSX.Element {
             Reintentar
           </Text>
         </Pressable>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 12,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: muted,
+          }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={18} color={muted} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+            Volver
+          </Text>
+        </Pressable>
       </View>
     );
   }

@@ -7,6 +7,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
+import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 
 // ── Helpers ────────────────────────────────────────────────
@@ -45,6 +46,7 @@ export function BuyerReceiptDetail() {
   const navigate = useNavigate();
   const colors = useAppColors();
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
+  const { user } = useAuth();
 
   const {
     data: pago,
@@ -61,7 +63,12 @@ export function BuyerReceiptDetail() {
     return <LoadingSpinner className="mt-20" />;
   }
 
-  if (isError || !pago) {
+  // Defensa en profundidad: el backend ya scoping los pagos al propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const esPropietario =
+    pago != null && pago.cliente_id != null && pago.cliente_id === user?.id;
+
+  if (isError || !pago || !esPropietario) {
     return (
       <div className="py-20 text-center">
         <p className="mb-4 text-lg" style={{ color: muted }}>
@@ -82,7 +89,9 @@ export function BuyerReceiptDetail() {
     );
   }
 
-  const subtotal = pago.productos.reduce(
+  const productos = pago.productos ?? [];
+
+  const subtotal = productos.reduce(
     (acc, prod) => acc + prod.cantidad * Number(prod.precio),
     0,
   );
@@ -121,12 +130,12 @@ export function BuyerReceiptDetail() {
               <span className="w-24 text-right">Precio</span>
               <span className="w-28 text-right">Importe</span>
             </div>
-            {pago.productos.map((prod, idx) => (
+            {productos.map((prod, idx) => (
               <div
                 key={`${prod.nombre}-${idx}`}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-4"
                 style={
-                  idx < pago.productos.length - 1
+                  idx < productos.length - 1
                     ? { borderBottom: `1px solid ${border}` }
                     : undefined
                 }
