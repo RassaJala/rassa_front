@@ -15,6 +15,7 @@ import { PEDIDO_45 } from '../../mocks/fixtures';
 import { server } from '../../mocks/server';
 import { ThemeProvider } from '../../providers/ThemeProvider';
 import {
+  AMBIGUOUS_DISMISS_KEY,
   AMBIGUOUS_MARKER_KEY,
   CONCURRENT_CHECKOUT_MSG,
   IDEMPOTENCY_KEY_KEY,
@@ -24,6 +25,7 @@ import {
   readAmbiguousMarker,
   readInFlightCheckout,
   readPlacedOrder,
+  writeAmbiguousDismiss,
   writeAmbiguousMarker,
   writeInFlightCheckout,
   writePlacedOrder,
@@ -469,6 +471,159 @@ describe('BuyerCheckout — integration', () => {
 
     expect(screen.queryByText(AMBIGUOUS_MSG)).not.toBeInTheDocument();
     expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('R4-W3(a): a dismiss in ANOTHER tab clears this tab banner when the attempt ids match', async () => {
+    writeAmbiguousMarker({
+      timestamp: Date.now(),
+      fingerprint: 'f1',
+      attemptId: 'att-1',
+    });
+
+    renderCheckout();
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(readAmbiguousMarker()?.fingerprint).toBe('f1');
+
+    // Simulate tab B dismissing the SAME checkout attempt: it writes its
+    // dismiss record (localStorage is the shared cross-tab channel) and the
+    // browser notifies this tab with a 'storage' event for that key. The
+    // record carries the attempt id of the acknowledged checkout attempt.
+    act(() => {
+      writeAmbiguousDismiss('f1', 'att-1');
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: AMBIGUOUS_DISMISS_KEY,
+          newValue: JSON.stringify({
+            timestamp: Date.now(),
+            fingerprint: 'f1',
+            attemptId: 'att-1',
+          }),
+        }),
+      );
+    });
+
+    // The matching attempt id lets the other tab's dismissal clear this tab's
+    // marker too — no extra click needed in the tab that genuinely had the
+    // failure.
+    expect(screen.queryByText(AMBIGUOUS_MSG)).not.toBeInTheDocument();
+    expect(readAmbiguousMarker()).toBeNull();
+  });
+
+  it('R4-W3(b): a dismiss for a DIFFERENT fingerprint never clears this tab banner', async () => {
+    writeAmbiguousMarker({
+      timestamp: Date.now(),
+      fingerprint: 'f1',
+      attemptId: 'att-1',
+    });
+
+    renderCheckout();
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+
+    // Another tab acknowledges a DIFFERENT checkout attempt (other fingerprint
+    // AND other attempt id) — this tab's failure is a separate one and must
+    // stay visible.
+    act(() => {
+      writeAmbiguousDismiss('f2', 'att-2');
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: AMBIGUOUS_DISMISS_KEY,
+          newValue: JSON.stringify({
+            timestamp: Date.now(),
+            fingerprint: 'f2',
+            attemptId: 'att-2',
+          }),
+        }),
+      );
+    });
+
+    expect(screen.getByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(readAmbiguousMarker()).not.toBeNull();
+    expect(readAmbiguousMarker()?.fingerprint).toBe('f1');
+  });
+
+  it('JD-A-001: a dismiss for a DIFFERENT attempt with the SAME cart never clears this tab banner', async () => {
+    // Tab A holds a FRESH ambiguous marker for cart fingerprint 'f1' from
+    // checkout attempt 'att-A'. Tab B holds a STALE never-acknowledged marker
+    // for an OLD attempt of the SAME cart (same fingerprint 'f1', different
+    // attempt id). The fingerprint alone cannot tell the attempts apart — only
+    // the attempt id can.
+    writeAmbiguousMarker({
+      timestamp: Date.now(),
+      fingerprint: 'f1',
+      attemptId: 'att-A',
+    });
+
+    renderCheckout();
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(readAmbiguousMarker()?.attemptId).toBe('att-A');
+
+    // Tab B dismisses its STALE banner: same cart fingerprint 'f1' but a
+    // DIFFERENT attempt id 'att-B'. This tab's fresh marker belongs to a
+    // different checkout attempt — clearing it would silently unblock a
+    // re-confirm and open a duplicate-order window (the persisted marker is
+    // the real duplicate safety net).
+    act(() => {
+      writeAmbiguousDismiss('f1', 'att-B');
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: AMBIGUOUS_DISMISS_KEY,
+          newValue: JSON.stringify({
+            timestamp: Date.now(),
+            fingerprint: 'f1',
+            attemptId: 'att-B',
+          }),
+        }),
+      );
+    });
+
+    // The banner must stay and the marker must survive: the dismissal only
+    // ever clears the exact checkout attempt it acknowledged.
+    expect(screen.getByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(readAmbiguousMarker()).not.toBeNull();
+    expect(readAmbiguousMarker()?.attemptId).toBe('att-A');
+  });
+
+  it('JD-B-001: a cross-tab dismiss never clears the optimistic pre-POST marker while a checkout is in flight', async () => {
+    // Tab A is mid-POST: the optimistic pre-POST ambiguous marker (the
+    // reload / tab-close protection written before mutation.mutate) is
+    // persisted together with the in-flight checkout record. The marker and
+    // the dismiss record describe the SAME attempt and the SAME cart.
+    writeInFlightCheckout({
+      tabSessionId: 'tab-A',
+      idempotencyKey: 'checkout-k1',
+      timestamp: Date.now(),
+      fingerprint: 'f1',
+    });
+    writeAmbiguousMarker({
+      timestamp: Date.now(),
+      fingerprint: 'f1',
+      attemptId: 'att-1',
+    });
+
+    renderCheckout();
+    expect(await screen.findByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+
+    // Tab B dismisses a same-payload banner (matching fingerprint AND matching
+    // attempt id). While tab A's POST is in flight, the listener must NOT
+    // clear the persisted protection: if tab A reloads or closes before the
+    // POST settles, the next mount would show no warning and the re-confirm
+    // block would be gone — a duplicate-order window.
+    act(() => {
+      writeAmbiguousDismiss('f1', 'att-1');
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: AMBIGUOUS_DISMISS_KEY,
+          newValue: JSON.stringify({
+            timestamp: Date.now(),
+            fingerprint: 'f1',
+            attemptId: 'att-1',
+          }),
+        }),
+      );
+    });
+
+    expect(screen.getByText(AMBIGUOUS_MSG)).toBeInTheDocument();
+    expect(readAmbiguousMarker()).not.toBeNull();
   });
 
   it('C-1(b): an ambiguous failure that resolves after unmount surfaces as a warning banner on remount', async () => {

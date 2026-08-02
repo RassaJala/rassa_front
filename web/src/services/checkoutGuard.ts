@@ -34,6 +34,12 @@ function getLocalStorage(): Storage | null {
 export interface AmbiguousMarker {
   timestamp: number;
   fingerprint: string;
+  // JD-A-001/JD-B-001: per-attempt identity — a cross-tab dismissal only
+  // clears a marker of the SAME checkout attempt. OPTIONAL and deliberately
+  // excluded from isAmbiguousMarker validation: legacy markers (written
+  // before this field) must still validate and simply degrade to per-tab
+  // dismiss — they are never cross-tab cleared (safe degrade).
+  attemptId?: string;
 }
 
 export function computePayloadFingerprint(
@@ -133,6 +139,56 @@ export function clearAmbiguousMarker(): void {
   }
 }
 
+// R4-W3 + JD-A-001/JD-B-001: cross-tab dismiss — localStorage is shared
+// across tabs, so a dismiss in one tab can reach the others via the 'storage'
+// event. The record carries the fingerprint AND the attempt id of the checkout
+// attempt that was acknowledged: a tab only clears its marker when the
+// dismissed attempt id matches its own marker's attempt id, so a dismissal
+// never silences a DIFFERENT ambiguous failure — even one with the same cart
+// (same fingerprint, different attempt). Only localStorage is used
+// (sessionStorage is per-tab — the shared channel is localStorage).
+
+export const AMBIGUOUS_DISMISS_KEY = 'rassa-checkout-ambiguous-dismiss';
+
+export interface AmbiguousDismissRecord {
+  timestamp: number;
+  fingerprint: string;
+  attemptId: string;
+}
+
+export function writeAmbiguousDismiss(
+  fingerprint: string,
+  attemptId: string,
+): void {
+  if (typeof window === 'undefined') return;
+  const record: AmbiguousDismissRecord = {
+    timestamp: Date.now(),
+    fingerprint,
+    attemptId,
+  };
+  try {
+    getLocalStorage()?.setItem(AMBIGUOUS_DISMISS_KEY, JSON.stringify(record));
+  } catch {
+    // Swallow — degraded to per-tab dismiss when storage is unavailable.
+  }
+}
+
+export function readAmbiguousDismiss(): AmbiguousDismissRecord | null {
+  return readStoredRecord(AMBIGUOUS_DISMISS_KEY, isAmbiguousDismissRecord);
+}
+
+function isAmbiguousDismissRecord(
+  value: unknown,
+): value is AmbiguousDismissRecord {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as AmbiguousDismissRecord).timestamp === 'number' &&
+    typeof (value as AmbiguousDismissRecord).fingerprint === 'string' &&
+    typeof (value as AmbiguousDismissRecord).attemptId === 'string'
+  );
+}
+
 // ── Idempotency key (W-4) ────────────────────────────────
 // One client-generated key identifies a checkout ATTEMPT end-to-end. It is
 // sent as an Idempotency-Key header (best-effort — a backend that ignores
@@ -166,6 +222,15 @@ function randomSuffixId(prefix: string): string {
 
 export function createIdempotencyKey(): string {
   return randomSuffixId('checkout');
+}
+
+// JD-A-001/JD-B-001: a fresh id per CHECKOUT ATTEMPT — deliberately NOT the
+// idempotency key, which is per-fingerprint and shared across tabs/attempts
+// (a retry of the same payload reuses it). The cross-tab dismiss channel keys
+// on the attempt id so a dismissal only ever clears the marker of the exact
+// attempt the user acknowledged.
+export function createCheckoutAttemptId(): string {
+  return randomSuffixId('attempt');
 }
 
 function readIdempotencyRecord(): IdempotencyRecord | null {

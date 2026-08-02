@@ -9,18 +9,22 @@ import { IVA_RATE } from '~/constants/order';
 import { cartCardStyle } from '~/constants/styles';
 import { useAppColors } from '~/hooks/useAppColors';
 import {
+  AMBIGUOUS_DISMISS_KEY,
   clearAmbiguousMarker,
   clearIdempotencyKey,
   clearInFlightCheckout,
   clearPlacedOrder,
   computePayloadFingerprint,
   CONCURRENT_CHECKOUT_MSG,
+  createCheckoutAttemptId,
   getTabSessionId,
   hasConcurrentCheckout,
+  readAmbiguousDismiss,
   readAmbiguousMarker,
   readInFlightCheckout,
   readPlacedOrder,
   resolveIdempotencyKey,
+  writeAmbiguousDismiss,
   writeAmbiguousMarker,
   writeInFlightCheckout,
   writePlacedOrder,
@@ -55,10 +59,13 @@ const WRITE_FAILED_MSG =
 
 // W-4: the idempotency key identifies one checkout attempt end-to-end; it is
 // sent as an Idempotency-Key header (best-effort) and persisted so retries of
-// the SAME attempt reuse it.
+// the SAME attempt reuse it. JD-A-001/JD-B-001: the attemptId is a SEPARATE,
+// per-confirm-attempt identity — the idempotency key is per-fingerprint and
+// shared across tabs/attempts, so it cannot discriminate checkout attempts.
 interface OrderAttempt {
   payload: CreateOrderPayload;
   idempotencyKey: string;
+  attemptId: string;
 }
 
 export function BuyerCheckout() {
@@ -134,6 +141,12 @@ export function BuyerCheckout() {
           fingerprint: computePayloadFingerprint(
             variables?.payload.items ?? [],
           ),
+          // JD-A-001/JD-B-001: the persisted marker carries the SAME attempt
+          // id as the optimistic pre-POST marker, so a cross-tab dismissal of
+          // this exact attempt clears it — and never a different one.
+          ...(variables?.attemptId !== undefined
+            ? { attemptId: variables.attemptId }
+            : {}),
         };
         // JD-A-002/JD-B-001: persisting the marker is best-effort — a throw
         // must not prevent the in-memory banner and the observability report.
@@ -210,11 +223,57 @@ export function BuyerCheckout() {
     }
   }, [isOrderInFlight]);
 
+  // R4-W3 + JD-A-001/JD-B-001: a dismiss in ANOTHER tab clears this tab's
+  // banner too — but only for the SAME checkout attempt (attempt id match).
+  // localStorage is shared across tabs; the 'storage' event fires only in
+  // other windows, never in the tab that wrote the record. A dismissal for a
+  // different attempt — even with the same cart fingerprint — never silences a
+  // genuine local failure (JD-A-001), and it never clears the optimistic
+  // pre-POST marker while a checkout is in flight (JD-B-001: that marker is
+  // the reload/tab-close protection for the live attempt). Legacy markers and
+  // legacy dismiss records without an attempt id simply never match.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== AMBIGUOUS_DISMISS_KEY || event.newValue === null) {
+        return;
+      }
+      // JD-B-001: never clear while a POST is in flight — the optimistic
+      // pre-POST marker is the reload/tab-close protection for the live
+      // attempt; clearing it would re-open the duplicate-order window.
+      if (readInFlightCheckout() !== null) return;
+      const dismissed = readAmbiguousDismiss();
+      const localMarker = readAmbiguousMarker();
+      if (
+        dismissed !== null &&
+        dismissed.attemptId !== undefined &&
+        localMarker !== null &&
+        localMarker.attemptId !== undefined &&
+        dismissed.attemptId === localMarker.attemptId
+      ) {
+        clearAmbiguousMarker();
+        setAmbiguousMarker(null);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
   const iva = subtotal * IVA_RATE;
   const total = subtotal + iva;
 
   function handleDismissAmbiguous() {
+    // R4-W3 + JD-A-001: the dismissal is broadcast to OTHER tabs through the
+    // shared localStorage channel — capture the fingerprint AND the attempt id
+    // BEFORE clearing so the record identifies exactly which checkout attempt
+    // was acknowledged. Legacy markers without an attempt id degrade to a
+    // per-tab dismiss only (never broadcast — a dismissal must never clear a
+    // DIFFERENT attempt's marker).
+    const fingerprint = ambiguousMarker?.fingerprint;
+    const attemptId = ambiguousMarker?.attemptId;
+    if (fingerprint !== undefined && attemptId !== undefined) {
+      writeAmbiguousDismiss(fingerprint, attemptId);
+    }
     clearAmbiguousMarker();
     setAmbiguousMarker(null);
   }
@@ -256,6 +315,11 @@ export function BuyerCheckout() {
     // of the SAME attempt reuses it; a different payload gets a fresh key.
     const fingerprint = computePayloadFingerprint(payloadItems);
     const idempotencyKey = resolveIdempotencyKey(fingerprint);
+    // JD-A-001/JD-B-001: a FRESH attempt id per confirm attempt — NOT the
+    // idempotency key, which is per-fingerprint and shared across
+    // tabs/attempts. The cross-tab dismiss channel keys on it so a dismissal
+    // only ever clears the marker of the exact attempt the user acknowledged.
+    const attemptId = createCheckoutAttemptId();
     const ownTabSessionId = getTabSessionId();
 
     // S-9: never confirm while ANOTHER tab has a checkout POST in flight —
@@ -275,7 +339,11 @@ export function BuyerCheckout() {
       // the next mount still sees the warning. It is cleared on confirmed
       // success, definitive failure, or dismissal; the local banner state is
       // not set here so the live instance only warns once the outcome settles.
-      writeAmbiguousMarker({ timestamp: Date.now(), fingerprint });
+      writeAmbiguousMarker({
+        timestamp: Date.now(),
+        fingerprint,
+        attemptId,
+      });
       writeInFlightCheckout({
         tabSessionId: ownTabSessionId,
         idempotencyKey,
@@ -316,7 +384,11 @@ export function BuyerCheckout() {
       return;
     }
 
-    mutation.mutate({ payload: { items: payloadItems }, idempotencyKey });
+    mutation.mutate({
+      payload: { items: payloadItems },
+      idempotencyKey,
+      attemptId,
+    });
   }
 
   const ambiguityBanner =

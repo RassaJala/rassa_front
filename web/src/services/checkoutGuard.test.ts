@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AMBIGUOUS_DISMISS_KEY,
   AMBIGUOUS_MARKER_KEY,
   clearAmbiguousMarker,
   clearIdempotencyKey,
@@ -11,10 +12,12 @@ import {
   hasConcurrentCheckout,
   IDEMPOTENCY_KEY_KEY,
   PLACED_ORDER_KEY,
+  readAmbiguousDismiss,
   readAmbiguousMarker,
   readInFlightCheckout,
   readPlacedOrder,
   resolveIdempotencyKey,
+  writeAmbiguousDismiss,
   writeAmbiguousMarker,
   writeInFlightCheckout,
   writePlacedOrder,
@@ -184,6 +187,56 @@ describe('checkoutGuard — ambiguous order marker (C-1)', () => {
       clearPlacedOrder();
       clearInFlightCheckout();
     }).not.toThrow();
+  });
+});
+
+describe('checkoutGuard — ambiguous dismiss record (R4-W3)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('roundtrips the dismissed fingerprint and attempt id through localStorage', () => {
+    writeAmbiguousDismiss('f1', 'att-1');
+
+    const record = readAmbiguousDismiss();
+    expect(record).not.toBeNull();
+    expect(record?.fingerprint).toBe('f1');
+    expect(record?.attemptId).toBe('att-1');
+    expect(typeof record?.timestamp).toBe('number');
+  });
+
+  it('treats a dismiss record WITHOUT an attempt id as absent (legacy record)', () => {
+    // Records persisted before the attemptId model existed must not read as
+    // valid — a record without an attempt id can never be safely matched
+    // against a marker, so it degrades to "absent" and cross-tab clearing
+    // simply never fires for it (per-tab dismiss only).
+    window.localStorage.setItem(
+      AMBIGUOUS_DISMISS_KEY,
+      JSON.stringify({ timestamp: Date.now(), fingerprint: 'f1' }),
+    );
+
+    expect(readAmbiguousDismiss()).toBeNull();
+  });
+
+  it('returns null when no dismiss record was written', () => {
+    expect(readAmbiguousDismiss()).toBeNull();
+  });
+
+  it('returns null when localStorage getItem throws a SecurityError', () => {
+    // Blocked-storage degrade — same resilience as the other reads: a read
+    // that throws must read as "absent", never crash the guard.
+    const originalGetItem = Storage.prototype.getItem;
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === AMBIGUOUS_DISMISS_KEY) {
+        throw new DOMException('The operation is insecure.', 'SecurityError');
+      }
+      return originalGetItem.call(this, key);
+    });
+
+    expect(readAmbiguousDismiss()).toBeNull();
   });
 });
 
