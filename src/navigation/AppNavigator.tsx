@@ -46,6 +46,7 @@ import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
+import WasteRegisterScreen from '@/screens/waste/WasteRegisterScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
@@ -446,6 +447,10 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen
+        name="WasteRegister"
+        component={WasteRegisterScreen}
+      />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}

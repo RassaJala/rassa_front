@@ -11,13 +11,21 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
-import type { Order, PedidoEstado } from '@/types';
+import type {
+  Order,
+  PedidoEstado,
+  SellerStackParamList,
+  SellerTabsParamList,
+} from '@/types';
 import { extractApiError } from '@/utils/apiError';
 
 interface FilterOption {
@@ -82,7 +90,16 @@ function formatearFecha(iso: string): string {
   });
 }
 
-export default function SalesScreen(): React.JSX.Element {
+type Nav = CompositeNavigationProp<
+  BottomTabNavigationProp<SellerTabsParamList, 'Sales'>,
+  NativeStackNavigationProp<SellerStackParamList>
+>;
+
+interface Props {
+  readonly navigation: Nav;
+}
+
+export default function SalesScreen({ navigation }: Props): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -473,6 +490,28 @@ export default function SalesScreen(): React.JSX.Element {
         >
           Pedidos
         </Text>
+        <Pressable
+          onPress={() => navigation.navigate('WasteRegister')}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 16,
+            backgroundColor: redCoral,
+            borderRadius: 12,
+            paddingVertical: 12,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="package-variant-remove"
+            size={18}
+            color={white}
+          />
+          <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
+            Registrar Merma
+          </Text>
+        </Pressable>
       </View>
 
       <FlatList

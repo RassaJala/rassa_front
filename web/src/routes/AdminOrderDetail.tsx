@@ -10,10 +10,10 @@ import {
   isWrappedData,
   STALE_TIME,
   STATUS_LABELS,
-} from '../../src/constants/orderTimeline';
+} from '../constants/orderTimeline';
 import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
-import type { OrderStatusHistory } from '../../src/types';
+import type { OrderStatusHistory } from '../types';
 
 // ponytail: module-scoped styles to avoid recreation on every render
 const SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg) } }`;

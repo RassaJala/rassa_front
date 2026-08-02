@@ -306,6 +306,7 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  WasteRegister: undefined;
   Chat: {
     conversationId: number;
     title: string;

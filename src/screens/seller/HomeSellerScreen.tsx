@@ -32,6 +32,10 @@ export default function HomeSellerScreen({
     navigation.navigate('Perfil');
   };
 
+  const handleWastePress = () => {
+    navigation.getParent()?.navigate('WasteRegister');
+  };
+
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -148,6 +152,65 @@ export default function HomeSellerScreen({
                   iconColor={pumpkin}
                 />
               </View>
+
+              {/* QUICK ACTIONS */}
+              <Pressable
+                onPress={handleWastePress}
+                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: surface,
+                    borderWidth: 1,
+                    borderColor: border,
+                    borderRadius: 16,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: coralBg,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="package-variant-remove"
+                      size={22}
+                      color={coral}
+                    />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: fg,
+                        marginBottom: 2,
+                      }}
+                      numberOfLines={1}
+                    >
+                      Registrar Merma
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: muted,
+                      }}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      Descuenta stock por pérdida o desperdicio
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
             </View>
           </ScrollView>
         </View>
