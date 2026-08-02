@@ -575,6 +575,7 @@ describe('useAgricultoresUbicacion', () => {
     expect(logError).not.toHaveBeenCalledWith(
       'useAgricultoresUbicacion',
       expect.objectContaining({ message: 'Deadline de carga alcanzado' }),
+      expect.anything(),
     );
   });
 });

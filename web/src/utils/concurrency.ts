@@ -71,9 +71,18 @@ export async function mapWithConcurrency<T, R>(
     maxDurationMs !== undefined ? Date.now() + maxDurationMs : Infinity;
   const budget = new AbortController();
   const abortBudget = () => budget.abort();
+  // El vencimiento del presupuesto se marca como estado y no se re-deriva del
+  // reloj al clasificar un abort: un paso atrás del reloj de sistema durante
+  // el disparo del timer no puede convertir un deadline en una cancelación
+  // silenciosa. El reloj de pared solo se consulta como suplemento (un abort
+  // del llamador que coincide con el vencimiento real del tope).
+  let deadlineAlcanzado = false;
   const deadlineTimer =
     maxDurationMs !== undefined
-      ? setTimeout(abortBudget, maxDurationMs)
+      ? setTimeout(() => {
+          deadlineAlcanzado = true;
+          budget.abort();
+        }, maxDurationMs)
       : undefined;
 
   if (signal) {
@@ -95,7 +104,10 @@ export async function mapWithConcurrency<T, R>(
       }
       nextIndex += 1;
       if (budget.signal.aborted) {
-        results[index] = { status: 'rejected', reason: abortError() };
+        results[index] = {
+          status: 'rejected',
+          reason: deadlineAlcanzado ? deadlineError() : abortError(),
+        };
         continue;
       }
       try {
@@ -108,7 +120,7 @@ export async function mapWithConcurrency<T, R>(
         const interruptedByDeadline =
           deadline !== Infinity &&
           budget.signal.aborted &&
-          Date.now() >= deadline;
+          (deadlineAlcanzado || Date.now() >= deadline);
         results[index] = {
           status: 'rejected',
           reason: interruptedByDeadline ? deadlineError() : reason,

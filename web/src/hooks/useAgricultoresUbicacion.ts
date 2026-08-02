@@ -308,7 +308,7 @@ export function useAgricultoresUbicacion(options?: {
         // Mismo criterio que el conteo de fallos: un abort disparado por el
         // deadline de pared se registra (es un timeout), el resto de
         // cancelaciones del llamador no.
-        if (!isAbortError(error) || deadlineAlcanzado) {
+        if (contarFallo(error)) {
           logError('useAgricultoresUbicacion', error);
         }
         throw error;

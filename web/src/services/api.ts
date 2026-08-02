@@ -36,7 +36,7 @@ const IDEMPOTENT_METHODS = new Set([
 // fallos del mismo request dentro de la ventana: superado el tope, retryCondition
 // devuelve false hasta que la ventana venza. No es un bloqueo permanente: al
 // vencer se reabre y la retryability se evalúa de inmediato (nunca se envenena
-// la URL). El tope es generoso (≈2 despachos completos de `retries: 2`) y solo
+// la URL). El tope es generoso (≈3 despachos completos de `retries: 2`) y solo
 // corta los bucles patológicos del mismo endpoint; cada despacho sigue acotado
 // por `retries: 2` y los recorridos paginados por `maxDurationMs` del llamador.
 // La identidad del config no sobrevive al `mergeConfig` de axios en cada
