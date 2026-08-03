@@ -23,12 +23,20 @@ import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
 
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
-  tracesSampleRate: 1.0,
-  beforeSend: sentryBeforeSend,
-});
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    beforeSend: sentryBeforeSend,
+  });
+} else if (!__DEV__) {
+  console.error(
+    '[Sentry] EXPO_PUBLIC_SENTRY_DSN no está configurado — los errores de producción no serán reportados.',
+  );
+}
 /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 const queryClient = new QueryClient({

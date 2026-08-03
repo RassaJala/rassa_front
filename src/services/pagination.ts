@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 
 import api, { isApiUrl } from './api';
+import { sanitizeSentryError } from './sentry';
 
 export interface PaginatedFetchResult<T> {
   readonly data: T[];
@@ -130,7 +131,7 @@ export async function fetchAllPages<T>(
     } catch (error) {
       errores += 1;
       console.warn(`[${source}] error fetching page at depth ${depth}:`, error);
-      Sentry.captureException(error);
+      Sentry.captureException(sanitizeSentryError(error));
       if (accumulated.length === 0) throw error;
       nextUrl = null;
     }

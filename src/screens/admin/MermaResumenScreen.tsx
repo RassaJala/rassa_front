@@ -17,6 +17,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
+import { sanitizeSentryError } from '@/services/sentry';
 import axios from 'axios';
 
 import {
@@ -143,7 +144,7 @@ export default function MermaResumenScreen({
       if (id !== fetchRef.current) return;
       retryCountRef.current += 1;
       console.error(e instanceof Error ? e.message : e);
-      Sentry.captureException(e);
+      Sentry.captureException(sanitizeSentryError(e));
       setError(fetchErrorMessage(e));
     } finally {
       if (id === fetchRef.current) setLoading(false);
