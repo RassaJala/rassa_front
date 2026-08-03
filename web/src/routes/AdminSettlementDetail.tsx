@@ -25,6 +25,10 @@ import { parseApiError } from '@/utils/apiErrors';
 export function AdminSettlementDetail() {
   const { id } = useParams<{ id: string }>();
   const settlementId = Number(id);
+  // JD-002: ids that are not positive integers disable the query (enabled:
+  // false keeps status 'pending' forever). Gate the spinner on the same
+  // predicate so an invalid id degrades to the not-found EmptyState below.
+  const isValidId = Number.isInteger(settlementId) && settlementId > 0;
   const queryClient = useQueryClient();
   const [pagarVisible, setPagarVisible] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -32,7 +36,7 @@ export function AdminSettlementDetail() {
   const detailQuery = useQuery({
     queryKey: ['settlement', settlementId],
     queryFn: () => fetchSettlement(settlementId),
-    enabled: Number.isInteger(settlementId) && settlementId > 0,
+    enabled: isValidId,
     retry: false,
     // Keep the last loaded detail when a refetch fails so the stale-data
     // banner can render beside it instead of an empty error state.
@@ -56,13 +60,22 @@ export function AdminSettlementDetail() {
         type: 'error',
       });
       queryClient.invalidateQueries({ queryKey: ['settlements'] });
+      // JD-005: also refresh the detail — after a 409 (already paid) the
+      // refetched detail flips to the paid state instead of staying on the
+      // stale "Pendiente" view that invited the repeat 409. cancelRefetch:
+      // false reuses the observer fetch triggered by invalidate() instead of
+      // cancelling it (default true would discard the refetched payload).
+      queryClient.invalidateQueries(
+        { queryKey: ['settlement', settlementId] },
+        { cancelRefetch: false },
+      );
     },
   });
 
   const detail = detailQuery.data;
   const isStale = detailQuery.isError;
 
-  if (detailQuery.isPending) {
+  if (detailQuery.isPending && isValidId) {
     return (
       <>
         <PageHeader title="Liquidación" />

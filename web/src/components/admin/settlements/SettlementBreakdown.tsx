@@ -31,13 +31,13 @@ export function SettlementBreakdown({
   comision,
   montoLiquidar,
 }: SettlementBreakdownProps) {
-  // Defensive math: the "Monto a liquidar" is derived from the wire amounts via
-  // parseMoney so a malformed payload can never render $NaN (R3).
-  const aLiquidar = parseMoney(montoVentas) - parseMoney(comision);
+  // The server monto_liquidar is authoritative (it reflects backend rounding);
+  // the recomputed monto_ventas − comision only guards malformed payloads
+  // where monto_liquidar is absent or invalid, so the UI never renders $NaN
+  // (JD-004, R3).
+  const aLiquidar = parseMoney(montoLiquidar);
   const fallback =
-    Number.isFinite(aLiquidar) && aLiquidar > 0
-      ? aLiquidar
-      : parseMoney(montoLiquidar);
+    aLiquidar > 0 ? aLiquidar : parseMoney(montoVentas) - parseMoney(comision);
 
   return (
     <Card>

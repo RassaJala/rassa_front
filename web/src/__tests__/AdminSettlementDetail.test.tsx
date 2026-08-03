@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { server } from '../mocks/server';
 import {
+  LIQUIDACION_DETAIL_PAGADA,
   LIQUIDACION_DETAIL_PENDIENTE,
   MARCAR_PAGADA_SUCCESS_RESPONSE,
   YA_PAGADA_RESPONSE,
@@ -33,9 +34,9 @@ function SettlementsProbe() {
   return <span>probe:{probeFetches}</span>;
 }
 
-function renderDetail(id: number, withProbe = false) {
+function renderDetail(id: number | string, withProbe = false) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  render(
     <MemoryRouter initialEntries={[`/admin/liquidaciones/${id}`]}>
       <ThemeProvider>
         <QueryClientProvider client={qc}>
@@ -50,6 +51,7 @@ function renderDetail(id: number, withProbe = false) {
       </ThemeProvider>
     </MemoryRouter>,
   );
+  return qc;
 }
 
 async function openPagarModal() {
@@ -60,6 +62,65 @@ async function openPagarModal() {
 }
 
 describe('AdminSettlementDetail — integration', () => {
+  // JD-002: an invalid id (non-numeric, 0, negative) must degrade to the
+  // not-found EmptyState instead of an endless LoadingSpinner — the query is
+  // disabled for those ids so isPending would otherwise be true forever.
+  it.each(['abc', '0', '-1'])(
+    'shows the not-found EmptyState (no spinner) for invalid id "%s" (JD-002)',
+    async (invalidId) => {
+      renderDetail(invalidId);
+
+      expect(
+        await screen.findByText('Liquidación no encontrada'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('status', { name: 'Cargando' }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it('prefers the server monto_liquidar over the recomputed difference (JD-004)', async () => {
+    // The wire monto_ventas − comision recomputes to 900.00, but the server
+    // monto_liquidar (authoritative after backend rounding) says 850.00. The
+    // breakdown must show the server value, not the local subtraction.
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: {
+            ...LIQUIDACION_DETAIL_PENDIENTE,
+            monto_ventas: '1000.00',
+            comision: '100.00',
+            monto_liquidar: '850.00',
+          },
+        }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(await screen.findByText('Desglose')).toBeInTheDocument();
+    expect(screen.getByText('$850.00')).toBeInTheDocument();
+    // The recomputed $900.00 must not be shown as "A liquidar".
+    expect(screen.queryByText('$900.00')).not.toBeInTheDocument();
+  });
+
+  it('falls back to the recomputed difference when monto_liquidar is absent (JD-004)', async () => {
+    // A malformed payload with an empty monto_liquidar must still render a
+    // valid amount, derived from monto_ventas − comision (1000.00 − 100.00).
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: { ...LIQUIDACION_DETAIL_PENDIENTE, monto_liquidar: '' },
+        }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(await screen.findByText('Desglose')).toBeInTheDocument();
+    expect(screen.getByText('$900.00')).toBeInTheDocument();
+  });
+
   it('renders the breakdown with formatted money and the ventas list (pendiente)', async () => {
     renderDetail(1);
 
@@ -89,7 +150,9 @@ describe('AdminSettlementDetail — integration', () => {
     expect(await screen.findByText('Pago registrado')).toBeInTheDocument();
     expect(screen.getByText('LQ-2026-0011')).toBeInTheDocument();
     expect(screen.getByText('Transferencia')).toBeInTheDocument();
-    expect(screen.getByText('$450.00')).toBeInTheDocument();
+    // The breakdown and the pago card both show the server's authoritative
+    // monto_liquidar / monto (JD-004) — two matching amounts.
+    expect(screen.getAllByText('$450.00')).toHaveLength(2);
     expect(screen.getByText('REF-2026-011')).toBeInTheDocument();
     expect(screen.getByText('Pagada')).toBeInTheDocument();
 
@@ -171,7 +234,13 @@ describe('AdminSettlementDetail — integration', () => {
     });
   });
 
-  it('shows the error toast and invalidates the list on a 409 business error', async () => {
+  it('shows the error toast and invalidates the list AND detail on a 409 business error (JD-005)', async () => {
+    // The first detail GET loads the stale pendiente view (action available);
+    // the POST answers 409 already-paid. After the mutation error, the detail
+    // query MUST invalidate — the refetch then reports the settlement as paid
+    // and the screen flips from "Marcar como pagada" to the pago card instead
+    // of staying stuck on the stale state that invited the 409.
+    let detailGetCount = 0;
     server.use(
       http.post('/api/liquidaciones/1/marcar-pagada/', () =>
         HttpResponse.json(
@@ -179,10 +248,24 @@ describe('AdminSettlementDetail — integration', () => {
           { status: 409 },
         ),
       ),
+      http.get('/api/liquidaciones/1/', () => {
+        detailGetCount += 1;
+        return HttpResponse.json({
+          ok: true,
+          data:
+            detailGetCount === 1
+              ? LIQUIDACION_DETAIL_PENDIENTE
+              : LIQUIDACION_DETAIL_PAGADA,
+        });
+      }),
     );
     probeFetches = 0;
     renderDetail(1, true);
     expect(await screen.findByText('probe:1')).toBeInTheDocument();
+    // Initial stale detail view: the action is available.
+    expect(
+      screen.getByRole('button', { name: 'Marcar como pagada' }),
+    ).toBeInTheDocument();
 
     const user = await openPagarModal();
     expect(await screen.findByText('Efectivo')).toBeInTheDocument();
@@ -192,10 +275,16 @@ describe('AdminSettlementDetail — integration', () => {
     expect(
       (await screen.findAllByText('La liquidación ya fue pagada')).length,
     ).toBeGreaterThanOrEqual(1);
-    // onError also invalidated ['settlements'] → the probe refetched.
+    // onError invalidated ['settlements'] → the list probe refetched.
     await waitFor(() => {
       expect(screen.getByText('probe:2')).toBeInTheDocument();
     });
+    // onError invalidated ['settlement', id] → the refetched detail reports
+    // paid, so the action disappears and the pago card renders.
+    expect(await screen.findByText('Pago registrado')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Marcar como pagada' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the stale-data banner when a refetch fails after data was loaded', async () => {

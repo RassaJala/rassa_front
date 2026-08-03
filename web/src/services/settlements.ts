@@ -20,6 +20,13 @@ interface RawUserPage {
   next: string | null;
 }
 
+// Result of a fetch-all walk: the items plus whether the walk stopped at the
+// SETTLEMENTS_MAX_PAGES cap while the server still exposed more pages (JD-003).
+export interface SettlementsResult<T = unknown> {
+  items: T[];
+  truncated: boolean;
+}
+
 // The backend user payload uses id_usuario; the web User type uses id.
 function mapFarmer(raw: Record<string, unknown>): User {
   return {
@@ -36,14 +43,15 @@ function mapFarmer(raw: Record<string, unknown>): User {
 
 // Follow the DRF pagination `next` links up to a hard cap. All pages share the
 // {ok, data} envelope; each page is unwrapped individually so a malformed page
-// throws instead of silently truncating the list.
+// throws instead of silently truncating the list. `truncated` is true when the
+// cap bound while a `next` link was still pending (JD-003).
 async function fetchAllPages<T>(
   firstUrl: string,
   unwrapPage: (envelope: SettlementEnvelope<unknown>) => {
     results: T[];
     next: string | null;
   },
-): Promise<T[]> {
+): Promise<SettlementsResult<T>> {
   const all: T[] = [];
   let url: string | null = firstUrl;
   let depth = 0;
@@ -56,7 +64,7 @@ async function fetchAllPages<T>(
     depth += 1;
   }
 
-  return all;
+  return { items: all, truncated: url !== null };
 }
 
 function unwrapSettlementPage(envelope: SettlementEnvelope<unknown>): {
@@ -79,7 +87,7 @@ function unwrapUserPage(envelope: SettlementEnvelope<unknown>): {
 // agricultor / estado / periodo_inicio / periodo_fin params (R2).
 export async function fetchSettlements(
   params: SettlementListParams = {},
-): Promise<Settlement[]> {
+): Promise<SettlementsResult<Settlement>> {
   return fetchAllPages(buildLiquidacionesUrl(params), unwrapSettlementPage);
 }
 
@@ -110,8 +118,9 @@ export async function marcarSettlementPagada(
 
 // Active agricultores for the filter dropdown (R2).
 export async function fetchFarmers(): Promise<User[]> {
-  return fetchAllPages(
+  const { items } = await fetchAllPages(
     '/admin/usuarios/?rol=Agricultor&estado=true',
     unwrapUserPage,
   );
+  return items;
 }

@@ -200,6 +200,31 @@ describe('AdminSettlements — integration', () => {
     expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();
   });
 
+  it('shows a truncation notice when the fetch hits the page cap (JD-003)', async () => {
+    // The server keeps answering with a `next` link, so the fetch-all walk
+    // stops at SETTLEMENTS_MAX_PAGES (20) with more pages pending. The UI
+    // must say the list is partial instead of showing it as complete.
+    server.use(
+      http.get('/api/liquidaciones/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: {
+            count: 1000,
+            next: 'liquidaciones/?page=2',
+            previous: null,
+            results: [LIQUIDACIONES[0]],
+          },
+        }),
+      ),
+    );
+    renderPage();
+
+    expect(
+      await screen.findByText('Se muestran las primeras 20 liquidaciones.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('20 liquidaciones')).toBeInTheDocument();
+  });
+
   it('slices the list client-side and pages through with Anterior/Siguiente', async () => {
     renderPage();
     expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();

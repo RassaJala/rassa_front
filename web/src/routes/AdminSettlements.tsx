@@ -16,6 +16,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Toast } from '@/components/ui/Toast';
 import type { ToastState } from '@/components/ui/Toast';
 import { fetchFarmers, fetchSettlements } from '@/services/settlements';
+import type { SettlementsResult } from '@/services/settlements';
 import { parseApiError } from '@/utils/apiErrors';
 
 // Client-side page size for the list slice (server is fetch-all, R2).
@@ -116,7 +117,7 @@ export function AdminSettlements() {
     retry: false,
     // Keep the last loaded list when a refetch fails so the stale toast can
     // surface the error while the previous results stay visible.
-    placeholderData: (prev: Settlement[] | undefined) => prev,
+    placeholderData: (prev: SettlementsResult<Settlement> | undefined) => prev,
   });
 
   const farmersQuery = useQuery({
@@ -125,7 +126,11 @@ export function AdminSettlements() {
     retry: false,
   });
 
-  const data: Settlement[] = settlementsQuery.data ?? [];
+  const data: Settlement[] = settlementsQuery.data?.items ?? [];
+  // JD-003: the fetch-all walk stops at the SETTLEMENTS_MAX_PAGES cap while
+  // the server still exposes more pages — surface it instead of rendering the
+  // list as if it were complete.
+  const isTruncated = settlementsQuery.data?.truncated === true;
 
   const errorMessage = parseApiError(
     settlementsQuery.error,
@@ -259,6 +264,11 @@ export function AdminSettlements() {
             <p className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
               {data.length} liquidaciones
             </p>
+            {isTruncated && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                Se muestran las primeras {data.length} liquidaciones.
+              </div>
+            )}
             <SettlementTable
               rows={paginated}
               total={data.length}

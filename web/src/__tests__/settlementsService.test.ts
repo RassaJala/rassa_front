@@ -79,7 +79,8 @@ describe('settlements service', () => {
     const result = await fetchSettlements();
 
     expect(mockGet).toHaveBeenCalledWith('/liquidaciones/');
-    expect(result).toEqual([liquidacion]);
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.truncated).toBe(false);
   });
 
   it('builds the query string from the filter params', async () => {
@@ -130,13 +131,15 @@ describe('settlements service', () => {
     const result = await fetchSettlements();
 
     expect(mockGet).toHaveBeenCalledTimes(2);
-    expect(result).toEqual([
+    expect(result.items).toEqual([
       liquidacion,
       { ...liquidacion, id_liquidacion: 11 },
     ]);
+    // The walk completed on the last page (next null) → not truncated.
+    expect(result.truncated).toBe(false);
   });
 
-  it('stops following next links at the page cap', async () => {
+  it('stops following next links at the page cap and flags truncation', async () => {
     mockGet.mockResolvedValue({
       data: {
         ok: true,
@@ -152,7 +155,10 @@ describe('settlements service', () => {
     const result = await fetchSettlements();
 
     expect(mockGet).toHaveBeenCalledTimes(SETTLEMENTS_MAX_PAGES);
-    expect(result).toHaveLength(SETTLEMENTS_MAX_PAGES);
+    expect(result.items).toHaveLength(SETTLEMENTS_MAX_PAGES);
+    // The cap bound while the server still exposed a `next` link → the list
+    // is silently truncated and the UI must surface it (JD-003).
+    expect(result.truncated).toBe(true);
   });
 
   it('rejects when a page has ok:false', async () => {
