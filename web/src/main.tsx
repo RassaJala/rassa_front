@@ -25,9 +25,7 @@ if (SENTRY_DSN) {
         const redacted = { ...request.headers };
         for (const key of Object.keys(redacted)) {
           if (
-            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(
-              key,
-            )
+            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(key)
           ) {
             delete redacted[key];
           }
@@ -40,7 +38,10 @@ if (SENTRY_DSN) {
       if (breadcrumb.category === 'xhr' && breadcrumb.data) {
         const data = breadcrumb.data as Record<string, unknown>;
         if (typeof data.url === 'string') {
-          data.url = data.url.replace(/[?&](token|auth|refresh)=[^&]*/gi, '?$1=[redacted]');
+          data.url = data.url.replace(
+            /[?&](token|auth|refresh)=[^&]*/gi,
+            '?$1=[redacted]',
+          );
         }
       }
       return breadcrumb;
