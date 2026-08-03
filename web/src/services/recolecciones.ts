@@ -62,7 +62,12 @@ export async function getTodasLasRecolecciones(
 // fallo. `crypto.randomUUID` solo está disponible en contextos seguros; el
 // fallback sigue siendo único por cliente+time.
 function idempotencyKey(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  throw new Error(
+    'crypto.randomUUID no está disponible — la aplicación requiere un contexto seguro (HTTPS).',
+  );
 }
 
 export async function createRecoleccion(
