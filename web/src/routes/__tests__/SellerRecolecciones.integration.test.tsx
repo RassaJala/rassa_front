@@ -280,3 +280,28 @@ describe('SellerRecolecciones — integration', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('SellerRecolecciones — chat', () => {
+  it('permite reintentar contacto tras error de chat', async () => {
+    server.use(
+      http.post(`${BASE}/chat/conversations/`, () =>
+        HttpResponse.json({ detail: 'Error interno' }, { status: 500 }),
+      ),
+    );
+
+    renderPage();
+    await screen.findByText('Juan Pérez');
+
+    const contactar = screen.getAllByRole('button', { name: 'Contactar' })[0]!;
+    await userEvent.click(contactar);
+
+    expect(
+      await screen.findByText(
+        'No se pudo abrir el chat con el agricultor.',
+      ),
+    ).toBeInTheDocument();
+
+    // El botón debe seguir habilitado para reintentar
+    expect(contactar).not.toBeDisabled();
+  });
+});

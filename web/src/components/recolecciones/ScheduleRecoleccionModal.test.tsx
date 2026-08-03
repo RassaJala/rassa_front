@@ -234,6 +234,14 @@ describe('ScheduleRecoleccionModal — validación', () => {
     });
   });
 
+  it('cierra el modal al hacer clic en Cerrar sin guardar', async () => {
+    const { onClose, onSaved } = renderModal();
+    const closeBtn = await screen.findByLabelText('Cerrar');
+    await userEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it('muestra el mensaje de un 400 del servidor al guardar', async () => {
     server.use(
       http.post(`${BASE}/recolecciones/`, () =>

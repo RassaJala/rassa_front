@@ -113,6 +113,18 @@ describe('RecoleccionCard', () => {
     ).toBeInTheDocument();
   });
 
+  it('dispara onCancel al hacer clic en Cancelar', async () => {
+    const { onCancel } = renderCard(recoleccion());
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispara onContact al hacer clic en Contactar', async () => {
+    const { onContact } = renderCard(recoleccion(), { canContact: true });
+    await userEvent.click(screen.getByRole('button', { name: 'Contactar' }));
+    expect(onContact).toHaveBeenCalledTimes(1);
+  });
+
   it('deshabilita las acciones mientras está ocupada', async () => {
     renderCard(recoleccion(), { busy: true, canContact: true });
     expect(screen.getByRole('button', { name: 'Iniciar ruta' })).toBeDisabled();

@@ -210,6 +210,28 @@ describe('esRecoleccionDuplicada', () => {
   it('returns false when fecha differs', () => {
     expect(esRecoleccionDuplicada(base, 10, '2026-08-02')).toBe(false);
   });
+
+  it('detects duplicates across all active states', () => {
+    const enRutaList = [
+      {
+        estado: 'en_ruta',
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-01',
+      },
+    ];
+    expect(esRecoleccionDuplicada(enRutaList, 10, '2026-08-01')).toBe(true);
+
+    const recolectadoList = [
+      {
+        estado: 'recolectado',
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-01',
+      },
+    ];
+    expect(esRecoleccionDuplicada(recolectadoList, 10, '2026-08-01')).toBe(
+      true,
+    );
+  });
 });
 
 describe('ocupaFechaParaDuplicado', () => {
@@ -312,6 +334,17 @@ describe('validateProgramarForm', () => {
       validateProgramarForm({
         agricultorSeleccionado: true,
         fecha: '2026-02-31',
+        horaInicio: '',
+        horaFin: '',
+      }),
+    ).toBe('La fecha ingresada no es válida.');
+  });
+
+  it('valida correctamente fechas en año bisiesto', () => {
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: '2026-02-29',
         horaInicio: '',
         horaFin: '',
       }),
