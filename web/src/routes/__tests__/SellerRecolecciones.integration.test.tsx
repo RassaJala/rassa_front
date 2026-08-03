@@ -296,9 +296,7 @@ describe('SellerRecolecciones — chat', () => {
     await userEvent.click(contactar);
 
     expect(
-      await screen.findByText(
-        'No se pudo abrir el chat con el agricultor.',
-      ),
+      await screen.findByText('No se pudo abrir el chat con el agricultor.'),
     ).toBeInTheDocument();
 
     // El botón debe seguir habilitado para reintentar
