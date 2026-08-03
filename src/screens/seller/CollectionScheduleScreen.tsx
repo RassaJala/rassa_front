@@ -112,6 +112,21 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     void queryClient.invalidateQueries({ queryKey: ['recolecciones'] });
   }, [queryClient]);
 
+  const onMutationSuccess = useCallback(
+    (message: string) => {
+      invalidate();
+      showToast(message, 'success');
+      void refetch().then((res) => {
+        if (!res.isError) return;
+        showToast(
+          'El cambio se guardó, pero no se pudo actualizar la lista.',
+          'error',
+        );
+      });
+    },
+    [invalidate, showToast, refetch],
+  );
+
   const transicionMutation = useMutation({
     mutationFn: (payload: {
       readonly id: number;
@@ -128,8 +143,7 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
       });
     },
     onSuccess: () => {
-      invalidate();
-      showToast('Estado actualizado correctamente.', 'success');
+      onMutationSuccess('Estado actualizado correctamente.');
     },
     onError: (error: unknown) => {
       const detail = extractApiError(error, ['estado']);
@@ -151,8 +165,7 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
       });
     },
     onSuccess: () => {
-      invalidate();
-      showToast('Recolección cancelada.', 'success');
+      onMutationSuccess('Recolección cancelada.');
     },
     onError: (error: unknown) => {
       const detail = extractApiError(error, ['estado']);
@@ -187,10 +200,9 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
 
   const handleSaved = useCallback(
     (message: string) => {
-      invalidate();
-      showToast(message, 'success');
+      onMutationSuccess(message);
     },
-    [invalidate, showToast],
+    [onMutationSuccess],
   );
 
   const confirmCancel = useCallback(
