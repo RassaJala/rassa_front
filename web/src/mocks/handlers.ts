@@ -107,7 +107,6 @@ export const handlers = [
     }),
   ),
 
-
   http.get(`${BASE}/recolecciones/`, ({ request }) => {
     const url = new URL(request.url);
     const estado = url.searchParams.get('estado');
