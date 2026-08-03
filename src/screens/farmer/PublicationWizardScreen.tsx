@@ -80,9 +80,12 @@ export default function PublicationWizardScreen({
 
   const [showProductPicker, setShowProductPicker] = useState(false);
 
-  const { data: pubData, isLoading: isPubLoading } = usePublicacion(
-    publicacionId ?? 0,
-  );
+  const {
+    data: pubData,
+    isLoading: isPubLoading,
+    isError: isPubError,
+    refetch: refetchPub,
+  } = usePublicacion(publicacionId ?? 0);
   const { data: semanalData, isLoading: isSemanalLoading } =
     useProductosSemanales(publicacionId ?? 0);
   const { data: allProducts, isLoading: isProductsLoading } = useProductos();
@@ -93,7 +96,11 @@ export default function PublicationWizardScreen({
   const allProductos = allProducts?.data ?? [];
   const unidades = unidadesData?.data ?? [];
 
-  const wizard = usePublicationWizard({ publicacion, productos });
+  const wizard = usePublicationWizard({
+    publicacion,
+    productos,
+    productosCatalogo: allProductos,
+  });
 
   const theme = themeColors(isDark);
   const bg = theme.bg;
@@ -207,6 +214,64 @@ export default function PublicationWizardScreen({
         <Text style={{ color: muted, marginTop: 12, fontSize: 14 }}>
           Cargando publicación...
         </Text>
+      </View>
+    );
+  }
+
+  // Connectivity failure must never be masked as a business rule ("solo los
+  // lunes"). Check the query error BEFORE the canEdit gate so retry is offered.
+  if (isPubError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 28,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="cloud-alert-outline"
+          size={48}
+          color={colors.brandRedCoral}
+        />
+        <Text
+          style={{
+            color: fg,
+            fontSize: 16,
+            fontWeight: '600',
+            textAlign: 'center',
+            marginTop: 16,
+          }}
+        >
+          No se pudo cargar la publicación
+        </Text>
+        <Text
+          style={{
+            color: muted,
+            fontSize: 14,
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
+          Revisá tu conexión a internet e intentá de nuevo.
+        </Text>
+        <Pressable
+          onPress={() => void refetchPub()}
+          style={({ pressed }) => ({
+            marginTop: 24,
+            paddingVertical: 12,
+            paddingHorizontal: 32,
+            borderRadius: 12,
+            backgroundColor: brand,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ color: white, fontWeight: '600', fontSize: 15 }}>
+            Reintentar
+          </Text>
+        </Pressable>
       </View>
     );
   }

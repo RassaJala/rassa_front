@@ -76,6 +76,13 @@ function makeValidItem(overrides?: Partial<WizardItemDraft>): WizardItemDraft {
   };
 }
 
+function makeCatalogo(productos: Array<{ id: number }>): Producto[] {
+  return productos.map((p) => ({
+    id_producto: p.id,
+    nombre_producto: 'Tomate',
+  })) as Producto[];
+}
+
 describe('validateItem', () => {
   it('returns empty object for a valid item', () => {
     const errors = validateItem(makeValidItem());
@@ -120,6 +127,27 @@ describe('validateItem', () => {
   it('returns error when foto is empty string', () => {
     const errors = validateItem(makeValidItem({ foto: '  ' }));
     expect(errors.foto).toBeDefined();
+  });
+
+  it('blocks an item whose product was deleted from the catalog', () => {
+    const errors = validateItem(
+      makeValidItem({ fk_producto: 999 }),
+      makeCatalogo([{ id: 10 }]),
+    );
+    expect(errors.producto).toBeDefined();
+  });
+
+  it('does not flag a product that still exists in the catalog', () => {
+    const errors = validateItem(
+      makeValidItem({ fk_producto: 10 }),
+      makeCatalogo([{ id: 10 }]),
+    );
+    expect(errors.producto).toBeUndefined();
+  });
+
+  it('skips catalog check while the catalog is still loading (empty)', () => {
+    const errors = validateItem(makeValidItem({ fk_producto: 999 }), []);
+    expect(errors.producto).toBeUndefined();
   });
 
   it('returns all errors for a completely invalid item', () => {

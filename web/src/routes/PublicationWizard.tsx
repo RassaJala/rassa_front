@@ -123,29 +123,6 @@ export function PublicationWizard() {
       const pub = pubQuery.data.data;
       pubRef.current = pub;
 
-      if (lockReason) {
-        return (
-          <div className="py-12 text-center" style={{ color: colors.muted }}>
-            <div className="mb-3 text-4xl">🔒</div>
-            <h2
-              className="mb-1 text-lg font-semibold"
-              style={{ color: colors.fg }}
-            >
-              Publicación bloqueada
-            </h2>
-            <p className="mx-auto mb-4 max-w-sm text-[14px]">{lockReason}</p>
-            <div className="flex justify-center gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => void navigate('/agricultor/publicaciones')}
-              >
-                Volver
-              </Button>
-            </div>
-          </div>
-        );
-      }
-
       const catalog = catalogQuery.data?.data?.results ?? [];
       const catalogMap = new Map(
         catalog.map((p) => [p.id_producto, p.nombre_producto]),
@@ -537,6 +514,31 @@ export function PublicationWizard() {
           </Button>
           <Button
             variant="ghost"
+            onClick={() => void navigate('/agricultor/publicaciones')}
+          >
+            Volver
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Backend rule gate: publications can only be created/edited on Mondays and
+  // an existing publication only while in 'borrador' state. Rendered here at
+  // the component level (NOT inside a useEffect — that would never reach the
+  // DOM), after loading and error states so connectivity failures show their
+  // own screen instead of being masked as a business rule.
+  if (lockReason) {
+    return (
+      <div className="py-12 text-center" style={{ color: colors.muted }}>
+        <div className="mb-3 text-4xl">🔒</div>
+        <h2 className="mb-1 text-lg font-semibold" style={{ color: colors.fg }}>
+          Publicación bloqueada
+        </h2>
+        <p className="mx-auto mb-4 max-w-sm text-[14px]">{lockReason}</p>
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="secondary"
             onClick={() => void navigate('/agricultor/publicaciones')}
           >
             Volver

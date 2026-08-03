@@ -3,6 +3,10 @@ import { Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import {
+  DELETED_PRODUCT_LABEL,
+  DELETED_PRODUCT_SUMMARY_WARNING,
+} from '@/common/publicationLabels';
 import { colors } from '@/constants/colors';
 import type {
   WizardItemDraft,
@@ -64,9 +68,7 @@ export default function StepResumen({
           const producto = allProductos.find(
             (p) => p.id_producto === item.fk_producto,
           );
-          const nombre =
-            producto?.nombre_producto ??
-            'Producto no disponible (eliminado del catálogo)';
+          const nombre = producto?.nombre_producto ?? DELETED_PRODUCT_LABEL;
           const unidad = unidades.find((u) => u.id_unidad === item.fk_unidad);
           const hasErrors = itemValidations.has(item.tempId);
 
@@ -117,8 +119,7 @@ export default function StepResumen({
 
               {!producto ? (
                 <Text style={{ fontSize: 13, color: coral, marginBottom: 6 }}>
-                  Este producto fue eliminado del catálogo. Quitalo para poder
-                  publicar.
+                  {DELETED_PRODUCT_SUMMARY_WARNING}
                 </Text>
               ) : null}
 

@@ -13,6 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import { isOrderExpired } from '@/common/orders';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -48,12 +49,6 @@ function formatearFecha(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function isOrderExpired(order: OrderDetail): boolean {
-  if (order.expirado === true) return true;
-  if (!order.fecha_expiracion) return false;
-  return new Date(order.fecha_expiracion) < new Date();
 }
 
 function TimelineEntry({

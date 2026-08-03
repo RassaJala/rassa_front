@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '~/components/ui/Badge';
 import { Button } from '~/components/ui/Button';
 import { LoadingSpinner } from '~/components/ui/LoadingSpinner';
+import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
 import api from '~/services/api';
@@ -39,12 +40,6 @@ function formatearFecha(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function isOrderExpired(order: OrderDetail): boolean {
-  if (order.expirado === true) return true;
-  if (!order.fecha_expiracion) return false;
-  return new Date(order.fecha_expiracion) < new Date();
 }
 
 export function BuyerOrderDetail() {

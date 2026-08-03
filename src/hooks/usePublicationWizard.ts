@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { DELETED_PRODUCT_VALIDATION } from '@/common/publicationLabels';
 import type { Producto } from '@/services/productos';
 import { uploadProductoSemanalImagen } from '@/services/publications';
 import type { ProductoSemanal, Publicacion } from '@/services/publications';
@@ -41,6 +42,7 @@ export interface WizardItemDraft {
 }
 
 export interface WizardItemValidation {
+  producto?: string;
   stock?: string;
   precio?: string;
   fk_unidad?: string;
@@ -50,6 +52,7 @@ export interface WizardItemValidation {
 interface UsePublicationWizardParams {
   publicacion: Publicacion | undefined;
   productos: ProductoSemanal[];
+  productosCatalogo?: Producto[];
 }
 
 interface UsePublicationWizardResult {
@@ -79,8 +82,22 @@ export function generateLocalTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function validateItem(item: WizardItemDraft): WizardItemValidation {
+export function validateItem(
+  item: WizardItemDraft,
+  productosCatalogo: Producto[] = [],
+): WizardItemValidation {
   const errors: WizardItemValidation = {};
+
+  // A deleted catalog product keeps its id but disappears from the catalog.
+  // Matching the web validateItem behavior (W5): if the catalog was loaded
+  // and the item's product is no longer in it, block publishing. The length
+  // guard avoids false positives while the catalog query is still loading.
+  if (
+    productosCatalogo.length > 0 &&
+    !productosCatalogo.some((p) => p.id_producto === item.fk_producto)
+  ) {
+    errors.producto = DELETED_PRODUCT_VALIDATION;
+  }
 
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
@@ -202,6 +219,7 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 export function usePublicationWizard({
   publicacion,
   productos,
+  productosCatalogo = [],
 }: UsePublicationWizardParams): UsePublicationWizardResult {
   const [stepIndex, setStepIndex] = useState(0);
   const publicationRef = useRef(publicacion);
@@ -307,7 +325,7 @@ export function usePublicationWizard({
     let hasError = false;
 
     for (const item of localItems) {
-      const errors = validateItem(item);
+      const errors = validateItem(item, productosCatalogo);
       if (Object.keys(errors).length > 0) {
         validations.set(item.tempId, errors);
         hasError = true;
@@ -316,7 +334,7 @@ export function usePublicationWizard({
 
     setItemValidations(validations);
     return !hasError;
-  }, [localItems]);
+  }, [localItems, productosCatalogo]);
 
   const compensateCreatedItems = useCallback(
     async (pubId: number, createdIds: number[]) => {

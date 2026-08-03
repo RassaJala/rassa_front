@@ -1,6 +1,7 @@
 import type { AppColors } from '../../hooks/useAppColors';
 import type { WizardItemDraft } from '../../utils/publicationWizard';
 import { formatDate } from '../../utils/publicationWizard';
+import { DELETED_PRODUCT_LABEL } from '@/common/publicationLabels';
 import { mediaUrl } from '../../utils/mediaUrl';
 import { hideBrokenImage } from '../../utils/imageHelpers';
 import { productCountLabel } from '../PublicationActions';
@@ -85,8 +86,7 @@ export function ResumenStep({
                     className="text-[14px] font-semibold"
                     style={{ color: colors.fg }}
                   >
-                    {item.nombre_producto ||
-                      'Producto no disponible (eliminado del catálogo)'}
+                    {item.nombre_producto || DELETED_PRODUCT_LABEL}
                   </p>
                   {item.nombre_producto ? (
                     <p className="text-[13px]" style={{ color: colors.muted }}>

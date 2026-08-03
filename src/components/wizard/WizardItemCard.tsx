@@ -1,6 +1,10 @@
 import React from 'react';
 import { Image, Pressable, Text, TextInput, View } from 'react-native';
 
+import {
+  DELETED_PRODUCT_LABEL,
+  DELETED_PRODUCT_WARNING,
+} from '@/common/publicationLabels';
 import { colors } from '@/constants/colors';
 import type {
   WizardItemDraft,
@@ -23,7 +27,13 @@ export default function WizardItemCard({
   allProductos: Producto[];
   unidades: { id_unidad: number; tipo: string }[];
   validation:
-    | { stock?: string; precio?: string; fk_unidad?: string; foto?: string }
+    | {
+        producto?: string;
+        stock?: string;
+        precio?: string;
+        fk_unidad?: string;
+        foto?: string;
+      }
     | undefined;
   onUpdate: (
     tempId: string,
@@ -34,9 +44,7 @@ export default function WizardItemCard({
   onPickImage: (tempId: string) => void;
 }): React.JSX.Element {
   const producto = allProductos.find((p) => p.id_producto === item.fk_producto);
-  const nombre =
-    producto?.nombre_producto ??
-    'Producto no disponible (eliminado del catálogo)';
+  const nombre = producto?.nombre_producto ?? DELETED_PRODUCT_LABEL;
 
   return (
     <View className="mb-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -55,8 +63,7 @@ export default function WizardItemCard({
 
       {!producto ? (
         <Text className="mb-2 text-xs text-red-500">
-          Este producto fue eliminado del catálogo y ya no se puede publicar.
-          Quitalo de la publicación para continuar.
+          {DELETED_PRODUCT_WARNING}
         </Text>
       ) : null}
 

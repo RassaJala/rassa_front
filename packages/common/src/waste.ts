@@ -77,6 +77,27 @@ export function parseDate(raw: string): Date | null {
   return toLocalDate(raw);
 }
 
+// Backend sends bare dates ("2026-08-10") that must not be parsed with
+// `new Date()` (UTC midnight shifts the day back in negative-offset zones).
+// Shared by both apps so the timezone fix lives in exactly one place (W1).
+// Falls back to "now" for malformed input, with a dev warning (W3).
+export function parseLocalDate(iso: string): Date {
+  const d = toLocalDate(iso);
+  if (d === null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[parseLocalDate] invalid date input:', iso);
+    }
+    return new Date();
+  }
+  return d;
+}
+
+// Backend rule: publications can only be created/edited on Monday
+// (rassa_back views use `timezone.localdate().weekday() != 0`).
+export function isMondayToday(date: Date = new Date()): boolean {
+  return date.getDay() === 1;
+}
+
 // ISO 8601 week number — matches Django's TruncWeek (Monday-based).
 export function getWeekNumber(date: Date): number {
   const target = new Date(

@@ -3,6 +3,10 @@ import type {
   ItemValidation,
   WizardItemDraft,
 } from '../../utils/publicationWizard';
+import {
+  DELETED_PRODUCT_LABEL,
+  DELETED_PRODUCT_WARNING,
+} from '@/common/publicationLabels';
 import { mediaUrl } from '../../utils/mediaUrl';
 import { hideBrokenImage } from '../../utils/imageHelpers';
 import { Button } from '../ui/Button';
@@ -86,8 +90,7 @@ export function ProductosStep({
                     className="text-[15px] font-semibold"
                     style={{ color: colors.fg }}
                   >
-                    {item.nombre_producto ||
-                      'Producto no disponible (eliminado del catálogo)'}
+                    {item.nombre_producto || DELETED_PRODUCT_LABEL}
                   </p>
                   <button
                     onClick={() => onRemoveItem(item.tempId)}
@@ -108,8 +111,7 @@ export function ProductosStep({
                       color: colors.coral,
                     }}
                   >
-                    Este producto fue eliminado del catálogo y ya no se puede
-                    publicar. Quitalo de la publicación para continuar.
+                    {DELETED_PRODUCT_WARNING}
                   </div>
                 )}
 

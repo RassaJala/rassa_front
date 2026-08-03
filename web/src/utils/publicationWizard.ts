@@ -1,25 +1,13 @@
 // ── Pure helpers — extracted for testability ────────────────
 
-import { toLocalDate } from '@/common/waste';
+// Date helpers are shared with mobile through packages/common (W1):
+// parseLocalDate / isMondayToday / getWeekNumber live in @/common/waste.
+export { getWeekNumber, isMondayToday, parseLocalDate } from '@/common/waste';
 
-/**
- * Backend sends fecha_publicacion as a bare date ("2026-08-10"). `new Date()`
- * parses that as UTC midnight, which shifts the day back in negative-offset
- * timezones (e.g. -03:00 shows the previous Sunday). Parse as a local date.
- */
-export function parseLocalDate(iso: string): Date {
-  return toLocalDate(iso) ?? new Date();
-}
+import { DELETED_PRODUCT_VALIDATION } from '@/common/publicationLabels';
 
 export function generateTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const MS_PER_DAY = 86_400_000;
-
-/** Backend rule: publications can only be created/edited on Monday. */
-export function isMondayToday(date: Date = new Date()): boolean {
-  return date.getDay() === 1;
 }
 
 /** Returns the next Monday from today (or today if it's already Monday). */
@@ -31,22 +19,6 @@ export function getNextMonday(): Date {
   monday.setDate(now.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
   return monday;
-}
-
-export function getWeekNumber(date: Date): number {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  return (
-    1 +
-    Math.round(
-      ((d.getTime() - week1.getTime()) / MS_PER_DAY -
-        3 +
-        ((week1.getDay() + 6) % 7)) /
-        7,
-    )
-  );
 }
 
 export function formatDate(iso: Date, opts?: { short?: boolean }): string {
@@ -88,8 +60,7 @@ export interface ItemValidation {
 export function validateItem(item: WizardItemDraft): ItemValidation {
   const errors: ItemValidation = {};
   if (!item.nombre_producto) {
-    errors.producto =
-      'Este producto fue eliminado del catálogo. Quitalo para continuar.';
+    errors.producto = DELETED_PRODUCT_VALIDATION;
   }
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
