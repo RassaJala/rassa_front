@@ -1,4 +1,5 @@
-import { DIAS, MESES } from '../constants/recolecciones';
+import { DIAS } from '../constants/recolecciones';
+import { MONTH_NAMES } from '@/common/dates';
 
 /**
  * Nombre completo de un agricultor a partir de sus partes. Es la única
@@ -73,9 +74,9 @@ export function formatFechaHeader(fecha: string, today: string): string {
   if (fecha === manana) return 'Mañana';
   const date = parseFecha(fecha);
   if (!date) return fecha;
-  return `${DIAS[date.getDay()] ?? ''}, ${date.getDate()} de ${
-    MESES[date.getMonth()] ?? ''
-  }`;
+  return `${DIAS[date.getDay()] ?? ''}, ${date.getDate()} de ${(
+    MONTH_NAMES[date.getMonth()] ?? ''
+  ).toLowerCase()}`;
 }
 
 export function formatHora(hora: string | null): string {

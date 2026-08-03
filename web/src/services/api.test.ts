@@ -496,7 +496,7 @@ describe('api.ts token interceptor', () => {
     };
 
     mockAxiosPost.mockResolvedValueOnce({ data: { refresh: 'new-refresh' } });
-    mockInstanceGet.mockResolvedValue({ data: { id: 1 } });
+    mockInstanceGet.mockResolvedValueOnce({ data: { id: 1 } });
 
     await expect(interceptor.onRejected(error401)).rejects.toThrow();
     expect(localStorage.getItem('token')).toBeNull();

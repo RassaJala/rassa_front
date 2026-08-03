@@ -30,7 +30,7 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
 afterEach(() => {
   server.resetHandlers();
   resetRecoleccionesMock();

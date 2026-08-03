@@ -10,21 +10,6 @@ export const DIAS = [
   'Sábado',
 ];
 
-export const MESES = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-];
-
 export const FILTROS: ReadonlyArray<{
   readonly label: string;
   readonly value: RecoleccionEstado | '';

@@ -105,7 +105,7 @@ describe('fetchAllPages', () => {
     let gotSignal: AbortSignal | undefined;
     const result = await fetchAllPages({
       url: '/a/',
-      maxDurationMs: 40,
+      maxDurationMs: 200,
       fetchPage: (_url, _params, signal) => {
         gotSignal = signal;
         return new Promise((_resolve, reject) => {
