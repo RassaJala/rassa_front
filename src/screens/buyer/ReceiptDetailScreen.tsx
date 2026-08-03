@@ -7,8 +7,6 @@ import {
   View,
 } from 'react-native';
 
-import * as Print from 'expo-print';
-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -24,7 +22,6 @@ import {
   PAGOS_CLIENTE_QUERY_KEY,
 } from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
-import { buildReceiptHtml } from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useAuth } from '@/store/AuthContext';
@@ -132,12 +129,6 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
 
   const subtotal = calcularSubtotal(productos);
 
-  const handleImprimir = () => {
-    void Print.printAsync({ html: buildReceiptHtml(pago) }).catch(() => {
-      // print dialog dismissed or failed — nothing to recover, keep screen state
-    });
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       <View
@@ -168,27 +159,6 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
         <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
           Recibo {pago.folio}
         </Text>
-        <Pressable
-          onPress={handleImprimir}
-          accessibilityLabel="Imprimir recibo en PDF"
-          style={{
-            marginLeft: 'auto',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: surface,
-            borderWidth: 1,
-            borderColor: border,
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
-        >
-          <MaterialCommunityIcons name="printer" size={18} color={brand} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
-            PDF
-          </Text>
-        </Pressable>
       </View>
 
       <ScrollView

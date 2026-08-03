@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
+import { buildReceiptHtml } from '@/common/receipt';
 import { fetchPago } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
@@ -87,17 +88,31 @@ export function ReceiptPage() {
     0,
   );
 
+  const handleImprimir = () => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(buildReceiptHtml(pago));
+    win.document.close();
+    win.focus();
+    win.print();
+  };
+
   return (
     <div>
       <PageHeader
         title="Recibo de Pago"
         action={
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/vendedor/pedidos')}
-          >
-            ← Volver a pedidos
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleImprimir}>
+              <span aria-hidden>🖨</span> Imprimir / PDF
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/vendedor/pedidos')}
+            >
+              ← Volver a pedidos
+            </Button>
+          </div>
         }
       />
 

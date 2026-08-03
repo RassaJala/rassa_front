@@ -112,4 +112,36 @@ describe('ReceiptPage', () => {
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
   });
+
+  it('opens a printable window with the receipt HTML when Imprimir is clicked', async () => {
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(mockWin.document.write).toHaveBeenCalled();
+    expect(mockWin.print).toHaveBeenCalled();
+
+    const html = (
+      mockWin.document.write as unknown as { mock: { calls: string[][] } }
+    ).mock.calls[0][0] as string;
+    expect(html).toContain('PAG-0009');
+    expect(html).toContain('Manzana');
+    expect(html).toContain('RASSA');
+    openSpy.mockRestore();
+  });
 });

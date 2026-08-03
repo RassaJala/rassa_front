@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test files are less strict */
 import React from 'react';
 
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ReceiptScreen from '@/screens/seller/ReceiptScreen';
@@ -34,11 +34,19 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
+jest.mock('expo-print', () => ({
+  printAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('@/common/payments', () => ({
   ...jest.requireActual('@/common/payments'),
   fetchTiposPago: jest.fn(),
   createPago: jest.fn(),
   fetchPago: jest.fn(),
+}));
+
+jest.mock('@/common/receipt', () => ({
+  buildReceiptHtml: jest.fn(() => '<html>RECIBO-PDF</html>'),
 }));
 
 const mockedFetchPago = fetchPago as jest.MockedFunction<typeof fetchPago>;
@@ -101,5 +109,22 @@ describe('ReceiptScreen', () => {
     const { findByText } = renderScreen();
     expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('opens the print dialog with the receipt PDF HTML when PDF is pressed', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    const buildReceiptHtmlMock =
+      jest.requireMock('@/common/receipt').buildReceiptHtml;
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    expect(buildReceiptHtmlMock).toHaveBeenCalledWith(mockPago);
+    expect(printAsync).toHaveBeenCalledWith({
+      html: '<html>RECIBO-PDF</html>',
+    });
   });
 });
