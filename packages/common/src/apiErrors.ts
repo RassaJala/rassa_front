@@ -6,44 +6,32 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: 'Límite de peticiones excedido. Intenta más tarde.',
 };
 
-const GENERIC_INTERNAL =
+// Shared across clients: the sanitized message shown when the backend returns
+// HTML / a traceback body instead of JSON (never render the raw body — R10).
+export const INTERNAL_SERVER_HTML_MESSAGE =
   'Error interno del servidor. Revisa los logs del backend.';
-const GENERIC_SERVER = 'Error del servidor. Intenta de nuevo.';
 
-function isDevEnvironment(): boolean {
-  return (
-    typeof globalThis !== 'undefined' &&
-    (globalThis as { __DEV__?: boolean }).__DEV__ === true
-  );
-}
-
-function isHtmlOrTraceback(data: string): boolean {
-  const lower = data.trim().toLowerCase();
-  return (
-    lower.startsWith('<!doctype') ||
-    lower.startsWith('<html') ||
-    lower.includes('traceback (most recent call last)')
-  );
-}
-
-/**
- * Sanea un cuerpo de respuesta en texto plano: si es HTML, un traceback o un
- * texto que filtra detalles técnicos (vía `isSafeDetail`), devuelve el mensaje
- * genérico; en caso contrario devuelve el texto tal cual.
- */
-function sanitizeBody(data: string, status?: number): string {
+function parseHtmlOrStringError(data: string, status?: number): string {
   const trimmed = data.trim();
-  if (isHtmlOrTraceback(trimmed)) {
-    if (isDevEnvironment()) {
+
+  if (
+    trimmed.startsWith('<!DOCTYPE') ||
+    trimmed.startsWith('<html') ||
+    trimmed.includes('Traceback (most recent call last)')
+  ) {
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
       console.warn(
         '[API Error] Backend returned HTML instead of JSON — check backend logs. Status:',
         status,
       );
     }
-    return GENERIC_INTERNAL;
+    return INTERNAL_SERVER_HTML_MESSAGE;
   }
+
+  // String bodies enforce the same safety policy as the JSON paths: text that
+  // looks like a traceback or DB error must never reach the user.
   if (trimmed === '' || !isSafeDetail(trimmed)) {
-    return GENERIC_INTERNAL;
+    return 'Error interno del servidor. Revisa los logs del backend.';
   }
   return trimmed;
 }
@@ -80,93 +68,21 @@ function isAxiosError(error: unknown): error is {
   );
 }
 
-function unwrapCandidate(error: unknown): unknown {
+// Reads error.cause without requiring lib es2022 (web tsconfig lib is ES2020;
+// `Error.cause` is only typed from ES2022 onward). Shared by every extractor.
+export function unwrapCause(error: unknown): unknown {
   if (!(error instanceof Error)) return error;
-  const cause = (error as Error & { cause?: unknown }).cause;
+  const cause = (error as { cause?: unknown }).cause;
   return cause !== undefined ? cause : error;
 }
 
-/** Convierte un item de un array en texto solo si es un primitivo (no objeto). */
-function stringifySafeItem(item: unknown): string | null {
-  if (item == null || typeof item === 'object') return null;
-  const text = String(item);
-  return text.length > 0 ? text : null;
-}
+function parseAxiosError(error: unknown): string | null {
+  const candidate = unwrapCause(error);
 
-/** Devuelve un valor "string o lista" solo si supera `isSafeDetail`. */
-function pickSafeString(value: unknown): string | null {
-  if (typeof value === 'string' && value.length > 0 && isSafeDetail(value)) {
-    return value;
-  }
-  if (Array.isArray(value) && value.length > 0) {
-    const first = stringifySafeItem(value[0]);
-    if (first !== null && isSafeDetail(first)) return first;
-  }
-  return null;
-}
-
-/** Primer valor (sanitizado) de las claves dadas, respetando su orden. */
-function firstFieldValue(
-  record: Record<string, unknown>,
-  fieldKeys: readonly string[],
-): string | null {
-  for (const key of fieldKeys) {
-    const first = pickSafeString(record[key]);
-    if (first !== null) return first;
-  }
-  return null;
-}
-
-/**
- * Recorre todos los campos del objeto (sanitizado): `non_field_errors` se
- * agrega sin prefijo; los demás arrays como "clave: v1, v2". Une todo con "\n".
- * Solo aplica a arrays (los valores string sueltos se ignoran) para no exponer
- * claves técnicas arbitrarias al usuario.
- */
-function extractFieldList(record: Record<string, unknown>): string | null {
-  const parts: string[] = [];
-  for (const [key, value] of Object.entries(record)) {
-    if (key === 'non_field_errors') {
-      const arr = Array.isArray(value) ? value : [value];
-      for (const item of arr) {
-        const text = stringifySafeItem(item);
-        if (text !== null && isSafeDetail(text)) parts.push(text);
-      }
-    } else if (Array.isArray(value) && value.length > 0) {
-      const strings: string[] = [];
-      for (const item of value) {
-        const text = stringifySafeItem(item);
-        if (text !== null) strings.push(text);
-      }
-      if (strings.length > 0) {
-        const joined = strings.join(', ');
-        if (isSafeDetail(joined)) parts.push(`${key}: ${joined}`);
-      }
-    }
-  }
-  return parts.length > 0 ? parts.join('\n') : null;
-}
-
-/** Cualquier campo del objeto (solo arrays), en formato "clave: valor". */
-function catchAllField(record: Record<string, unknown>): string | null {
-  for (const [key, value] of Object.entries(record)) {
-    if (Array.isArray(value) && value.length > 0) {
-      const first = stringifySafeItem(value[0]);
-      if (first !== null && isSafeDetail(first)) return `${key}: ${first}`;
-    }
-  }
-  return null;
-}
-
-export function parseApiError(
-  error: unknown,
-  defaultMessage = 'Ocurrió un error inesperado.',
-): string {
-  const candidate = unwrapCandidate(error);
-  if (!isAxiosError(candidate)) return defaultMessage;
+  if (!isAxiosError(candidate)) return null;
 
   const status = candidate.response?.status;
-  const data = candidate.response?.data;
+  const data = candidate.response?.data as unknown;
 
   if (typeof data === 'string') {
     const trimmed = data.trim();
@@ -193,8 +109,8 @@ export function parseApiError(
         return value;
       }
     }
-    const joined = extractFieldList(record);
-    if (joined !== null) return joined;
+    const fieldsErr = extractFieldErrorsFromList(record);
+    if (fieldsErr !== null) return fieldsErr;
   }
 
   if (status !== undefined) {
@@ -202,54 +118,157 @@ export function parseApiError(
     if (mapped !== undefined) return mapped;
   }
 
-  return defaultMessage;
+  return null;
 }
 
-/**
- * Precedencia única para mensajes planos (mutations/toasts):
- * detail → message → non_field_errors → fieldKeys → STATUS_MESSAGES →
- * defaultMessage. Todos los valores pasan por `isSafeDetail`.
- */
+function extractFieldErrorsFromList(
+  data: Record<string, unknown>,
+): string | null {
+  const fieldErrors: string[] = [];
+
+  for (const [key, val] of Object.entries(data)) {
+    if (key === 'non_field_errors') {
+      const arr = Array.isArray(val) ? val : [val];
+      // R3-W: traceback items must never reach the UI — only safe items are
+      // kept; an all-unsafe list contributes nothing.
+      fieldErrors.push(...arr.map(String).filter((item) => isSafeDetail(item)));
+    } else if (Array.isArray(val)) {
+      // R3-W: the field line is built only from safe items — a traceback item
+      // must not leak through the list path either.
+      const safeItems = val.map(String).filter((item) => isSafeDetail(item));
+      if (safeItems.length > 0) {
+        fieldErrors.push(`${key}: ${safeItems.join(', ')}`);
+      }
+    }
+  }
+
+  return fieldErrors.length > 0 ? fieldErrors.join('\n') : null;
+}
+
+export function parseApiError(
+  error: unknown,
+  defaultMessage = 'Ocurrió un error inesperado.',
+): string {
+  const parsed = parseAxiosError(error);
+  return parsed ?? defaultMessage;
+}
+
 export function extractApiError(
   error: unknown,
-  fieldKeys: readonly string[],
-  defaultMessage = GENERIC_SERVER,
+  fieldKeys: string[],
+  defaultMessage = 'Error del servidor. Intenta de nuevo.',
 ): string {
-  const candidate = unwrapCandidate(error);
+  const candidate = unwrapCause(error);
+
   if (!isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
   const data = candidate.response?.data;
-  const status = candidate.response?.status;
 
-  if (data == null) return STATUS_MESSAGES[status ?? -1] ?? defaultMessage;
+  if (!data) return defaultMessage;
 
   if (typeof data === 'string') {
-    return sanitizeBody(data, status);
+    return parseHtmlOrStringError(data, candidate.response?.status);
   }
 
   const record = data as Record<string, unknown>;
-  const general =
-    pickSafeString(record.detail) ??
-    pickSafeString(record.message) ??
-    pickSafeString(record.non_field_errors) ??
-    firstFieldValue(record, fieldKeys);
+  if (typeof record.detail === 'string') {
+    if (isSafeDetail(record.detail)) {
+      return record.detail;
+    }
+  }
+  if (typeof record.message === 'string') {
+    // W-1: `message` must pass the same sanitizer as `detail` — a 5xx HTML /
+    // traceback body in `message` must never render raw in the UI.
+    if (isSafeDetail(record.message)) {
+      return record.message;
+    }
+  }
 
-  return general ?? STATUS_MESSAGES[status ?? -1] ?? defaultMessage;
+  for (const key of fieldKeys) {
+    const value = record[key];
+
+    if (Array.isArray(value) && value[0]) {
+      const item = String(value[0]);
+      // W-1: array items (DRF field errors) pass through the sanitizer too.
+      if (isSafeDetail(item)) {
+        return item;
+      }
+    }
+  }
+
+  return defaultMessage;
 }
 
-/**
- * Precedencia para errores de formulario (pares campo/mensaje):
- * detail → message → non_field_errors (como `general`); luego fieldKeys (en
- * `fields`); catch-all de arrays si no hubo coincidencia; STATUS_MESSAGES;
- * default si nada.
- */
+function extractFieldErrorsFromData(
+  data: Record<string, unknown>,
+  fieldKeys: string[],
+): { fields: Record<string, string>; general: string | null } {
+  const fields: Record<string, string> = {};
+
+  if (typeof data.detail === 'string') {
+    return {
+      fields,
+      general: isSafeDetail(data.detail)
+        ? data.detail
+        : 'Error interno del servidor.',
+    };
+  }
+  if (typeof data.message === 'string') {
+    // R3-W: `message` passes through the same sanitizer as `detail` — a
+    // traceback body in `message` must never render raw in the UI.
+    return {
+      fields,
+      general: isSafeDetail(data.message)
+        ? data.message
+        : 'Error interno del servidor.',
+    };
+  }
+
+  let foundField = false;
+  for (const key of fieldKeys) {
+    const value = data[key];
+    if (Array.isArray(value) && value.length > 0) {
+      const item = String(value[0]);
+      // R3-W: unsafe items are skipped — a traceback field error must never
+      // surface; a safe sibling field still lands.
+      if (isSafeDetail(item)) {
+        fields[key] = item;
+        foundField = true;
+      }
+    } else if (typeof value === 'string') {
+      // R3-W: string field values pass through the sanitizer too.
+      if (isSafeDetail(value)) {
+        fields[key] = value;
+        foundField = true;
+      }
+    }
+  }
+
+  if (!foundField) {
+    for (const [k, v] of Object.entries(data)) {
+      if (Array.isArray(v) && v.length > 0) {
+        // R3-W: the fallback entry is sanitized — an unsafe array item must
+        // not surface as the general message.
+        const item = String(v[0]);
+        if (isSafeDetail(item)) {
+          return { fields, general: `${k}: ${item}` };
+        }
+      }
+    }
+    return { fields, general: 'Error del servidor. Intenta de nuevo.' };
+  }
+
+  return { fields, general: null };
+}
+
 export function extractFieldErrors(
   error: unknown,
-  fieldKeys: readonly string[],
+  fieldKeys: string[],
 ): { fields: Record<string, string>; general: string | null } {
-  const candidate = unwrapCandidate(error);
+  const candidate = unwrapCause(error);
+
   if (!isAxiosError(candidate)) {
     return {
       fields: {},
@@ -258,46 +277,17 @@ export function extractFieldErrors(
   }
 
   const data = candidate.response?.data;
-  const status = candidate.response?.status;
-  const statusMessage = STATUS_MESSAGES[status ?? -1];
 
-  if (data == null) {
-    return { fields: {}, general: statusMessage ?? GENERIC_SERVER };
+  if (!data) {
+    return { fields: {}, general: 'Error del servidor. Intenta de nuevo.' };
   }
 
   if (typeof data === 'string') {
     return {
       fields: {},
-      general: sanitizeBody(data, status),
+      general: parseHtmlOrStringError(data, candidate.response?.status),
     };
   }
 
-  const record = data as Record<string, unknown>;
-
-  const detail = pickSafeString(record.detail);
-  if (detail !== null) return { fields: {}, general: detail };
-
-  const message = pickSafeString(record.message);
-  if (message !== null) return { fields: {}, general: message };
-
-  const nonField = pickSafeString(record.non_field_errors);
-  if (nonField !== null) return { fields: {}, general: nonField };
-
-  const fields: Record<string, string> = {};
-  let foundField = false;
-  for (const key of fieldKeys) {
-    const first = pickSafeString(record[key]);
-    if (first !== null) {
-      fields[key] = first;
-      foundField = true;
-    }
-  }
-
-  if (!foundField) {
-    const catchAll = catchAllField(record);
-    if (catchAll !== null) return { fields, general: catchAll };
-    return { fields, general: statusMessage ?? GENERIC_SERVER };
-  }
-
-  return { fields, general: null };
+  return extractFieldErrorsFromData(data as Record<string, unknown>, fieldKeys);
 }

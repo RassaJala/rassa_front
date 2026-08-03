@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 export const btnStyle = {
   height: 40,
   padding: '0 18px',
@@ -12,3 +14,17 @@ export const btnStyle = {
   alignItems: 'center',
   gap: 6,
 } as const;
+
+// S-5: shared cart/checkout line-row card (used by BuyerCart and BuyerCheckout —
+// previously a byte-identical copy in both files).
+export function cartCardStyle(border: string, surface: string): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
+    borderRadius: 12,
+    border: `1px solid ${border}`,
+    backgroundColor: surface,
+    padding: 16,
+  };
+}

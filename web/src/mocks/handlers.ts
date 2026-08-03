@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { PEDIDO_45 } from './fixtures';
 
 import { TRANSICIONES } from '../constants/recolecciones';
 import type { Recoleccion, RecoleccionEstado } from '../types/recolecciones';
@@ -106,6 +107,7 @@ export const handlers = [
     }),
   ),
 
+<<<<<<< HEAD
   http.get(`${BASE}/recolecciones/`, ({ request }) => {
     const url = new URL(request.url);
     const estado = url.searchParams.get('estado');
@@ -306,4 +308,9 @@ export const handlers = [
       ],
     }),
   ),
+
+  // POST /pedidos/ responde envuelto en { data: Pedido } — el default resuelve
+  // el pedido #45 (fixture compartido, ver fixtures.ts); los casos de error se
+  // sobreescriben por test con server.use.
+  http.post(`${BASE}/pedidos/`, () => HttpResponse.json({ data: PEDIDO_45 })),
 ];
