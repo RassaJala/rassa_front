@@ -38,7 +38,7 @@ export default function StepIndicator({
               flex: 1,
               height: 4,
               borderRadius: 2,
-              backgroundColor: isActive ? brand : (isDone ? brand : shadowBg),
+              backgroundColor: isActive ? brand : isDone ? brand : shadowBg,
               opacity: isDone && !isActive ? 0.5 : 1,
             }}
           />

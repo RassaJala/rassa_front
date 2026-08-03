@@ -101,7 +101,7 @@ function FamilyCard({
           >
             Familia inactiva (en papelera)
           </Text>
-        ) : (family.jefe_nombre ? (
+        ) : family.jefe_nombre ? (
           <View
             style={{
               flexDirection: 'row',
@@ -129,7 +129,7 @@ function FamilyCard({
           <Text style={{ fontSize: 13, color: t.muted, marginTop: 3 }}>
             Sin jefe asignado
           </Text>
-        ))}
+        )}
         {family.detalle_familia ? (
           <Text
             style={{ fontSize: 12, color: t.muted, marginTop: 2 }}
@@ -553,12 +553,12 @@ export default function FamilyListScreen(): React.JSX.Element {
           >
             {currentList.length}{' '}
             {showTrash
-              ? (currentList.length === 1
+              ? currentList.length === 1
                 ? 'familia inactiva'
-                : 'familias inactivas')
-              : (currentList.length === 1
+                : 'familias inactivas'
+              : currentList.length === 1
                 ? 'familia registrada'
-                : 'familias registradas')}
+                : 'familias registradas'}
           </Text>
         </View>
 
@@ -867,7 +867,7 @@ function RestoreFamilyModal({
               color={t.brand}
               style={{ marginTop: 12 }}
             />
-          ) : (jefeResults.length > 0 && !selectedJefe ? (
+          ) : jefeResults.length > 0 && !selectedJefe ? (
             <View
               style={{
                 maxHeight: 150,
@@ -902,7 +902,7 @@ function RestoreFamilyModal({
                 )}
               />
             </View>
-          ) : null)}
+          ) : null}
 
           {/* Botones de Acción */}
           <View

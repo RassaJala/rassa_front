@@ -24,9 +24,7 @@ export function isAbortError(reason: unknown): boolean {
   return false;
 }
 
-function setupDeadline(
-  maxDurationMs?: number,
-): {
+function setupDeadline(maxDurationMs?: number): {
   deadline: number;
   budget: AbortController;
   isDeadline: () => boolean;
@@ -96,18 +94,17 @@ export async function mapWithConcurrency<T, R>(
     }
   }
 
-  async function dispatchItem(
-    index: number,
-  ): Promise<PromiseSettledResult<R>> {
+  async function dispatchItem(index: number): Promise<PromiseSettledResult<R>> {
     try {
       const value = await mapper(items[index] as T, budget.signal);
       return { status: 'fulfilled', value };
     } catch (reason) {
       return {
         status: 'rejected',
-        reason: deadline !== Infinity && budget.signal.aborted
-          ? deadlineError()
-          : reason,
+        reason:
+          deadline !== Infinity && budget.signal.aborted
+            ? deadlineError()
+            : reason,
       };
     }
   }

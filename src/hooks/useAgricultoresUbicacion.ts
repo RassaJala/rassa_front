@@ -158,7 +158,11 @@ export function useAgricultoresUbicacion(options?: {
       const agriData =
         agricultoresResult.status === 'fulfilled'
           ? agricultoresResult.value
-          : { data: [] as AgricultorAgricultorItem[], truncated: false, errores: 1 };
+          : {
+              data: [] as AgricultorAgricultorItem[],
+              truncated: false,
+              errores: 1,
+            };
       const settled = await mapWithConcurrency(
         municipios,
         4,

@@ -8,7 +8,10 @@ import { fireEvent, render } from '@testing-library/react-native';
 
 import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import type { Recoleccion } from '@/types/recolecciones';
-import type { AgricultorUbicacion, AgricultorAgricultorItem } from '@/hooks/useAgricultoresUbicacion';
+import type {
+  AgricultorUbicacion,
+  AgricultorAgricultorItem,
+} from '@/hooks/useAgricultoresUbicacion';
 import type { RecoleccionesResult } from '@/services/recolecciones';
 
 import api from '@/services/api';
