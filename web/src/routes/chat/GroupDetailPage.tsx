@@ -38,7 +38,7 @@ export function GroupDetailPage() {
   const isChatAdmin = currentUserMember?.rol === 'admin';
   const canRename = isChatAdmin && (!isFamily || nombreOverride);
   const canAddMember = isChatAdmin && !isFamily;
-  const canRemove = isChatAdmin;
+  const canRemove = isChatAdmin && !isFamily;
   const canOverride = isChatAdmin && isFamily;
 
   const [showRename, setShowRename] = useState(false);

@@ -47,7 +47,7 @@ export default function GroupDetailScreen(): React.JSX.Element {
   const [addMemberVisible, setAddMemberVisible] = useState(false);
 
   const canEdit = isChatAdmin && (!isFamily || nombreOverride === true);
-  const canRemove = isChatAdmin;
+  const canRemove = isChatAdmin && !isFamily;
   const canOverride = isChatAdmin && isFamily === true;
 
   const handleRemove = (usuarioId: number) => {
