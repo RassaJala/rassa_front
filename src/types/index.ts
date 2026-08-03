@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -181,6 +183,7 @@ export interface CreditLimit {
 // ── Navigation param lists ────────────────────────────────
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  MermaResumen: undefined;
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
@@ -227,13 +230,18 @@ export type AuthStackParamList = {
 export type BuyerTabsParamList = {
   Home: undefined;
   Pedidos: undefined;
+  Catalog: undefined;
+  Carrito: undefined;
+  Notificaciones: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
-  BuyerTabs: undefined;
+  BuyerTabs: NavigatorScreenParams<BuyerTabsParamList>;
   Catalog: undefined;
   OrderDetail: { orderId: number };
+  Checkout: undefined;
+  OrderSuccess: { orderId: number; total: string; estado: string };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   Chat: {
@@ -299,6 +307,8 @@ export type SellerTabsParamList = {
 export type SellerStackParamList = {
   SellerTabs: undefined;
   CashClosing: undefined;
+  Payment: { readonly orderId: number };
+  Receipt: { readonly paymentId: number };
   Chat: {
     conversationId: number;
     title: string;

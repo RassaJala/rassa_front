@@ -19,6 +19,7 @@ import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
 import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
+import MermaResumenScreen from '@/screens/admin/MermaResumenScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
@@ -34,8 +35,10 @@ import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
+import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
+import OrderSuccessScreen from '@/screens/common/OrderSuccessScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
@@ -48,7 +51,9 @@ import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import CashClosingScreen from '@/screens/seller/CashClosingScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
+import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
+import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
@@ -329,6 +334,8 @@ function BuyerNavigator() {
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
+      <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
@@ -474,6 +481,8 @@ function SellerNavigator() {
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
       <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
+      <SellerStack.Screen name="Payment" component={PaymentScreen} />
+      <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}
@@ -533,6 +542,7 @@ function AdminScreens() {
         options={{ title: 'Detalle del Pedido' }}
       />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />
+      <AdminStack.Screen name="MermaResumen" component={MermaResumenScreen} />
     </AdminStack.Navigator>
   );
 }
