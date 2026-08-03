@@ -76,8 +76,7 @@ export function logError(
 
   console.warn(`[${context}]`, described, safeExtra);
 
-  const originalStack =
-    error instanceof Error ? error.stack : undefined;
+  const originalStack = error instanceof Error ? error.stack : undefined;
   const sentryEvent = Object.assign(
     new Error(
       `[${context}] ${typeof described === 'object' && described !== null && 'message' in described ? String((described as { message: unknown }).message) : String(described)}`,

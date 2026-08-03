@@ -43,7 +43,7 @@ export default function ProductCard({
       {/* Image */}
       <View
         className="h-40 w-full items-center justify-center"
-         
+
         style={{ backgroundColor: isDark ? colors.admBgD : colors.admBgL }}
       >
         {imageUri ? (

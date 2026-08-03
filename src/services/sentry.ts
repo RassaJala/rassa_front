@@ -105,8 +105,7 @@ export function sanitizeSentryError(error: unknown): unknown {
 export function sentryBeforeSend(event: any, _hint: any): any {
   const evt = event as Record<string, unknown>;
   const request = evt.request as
-    | { headers: Record<string, unknown> }
-    | undefined;
+    { headers: Record<string, unknown> } | undefined;
   if (request?.headers !== undefined) {
     request.headers = redactSensitiveHeaders(request.headers) as Record<
       string,

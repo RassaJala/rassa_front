@@ -132,9 +132,7 @@ export function useAgricultoresUbicacion(options?: {
       }
 
       const municipios =
-        municipiosResult.status === 'fulfilled'
-          ? municipiosResult.value
-          : [];
+        municipiosResult.status === 'fulfilled' ? municipiosResult.value : [];
       const agriData =
         agricultoresResult.status === 'fulfilled'
           ? agricultoresResult.value
@@ -164,11 +162,7 @@ export function useAgricultoresUbicacion(options?: {
         );
       }
       return {
-        grupos: groupByUbicacion(
-          agriData.data,
-          municipios,
-          localidades,
-        ),
+        grupos: groupByUbicacion(agriData.data, municipios, localidades),
         truncated: agriData.truncated,
         errores: agriData.errores + fallos,
       };
