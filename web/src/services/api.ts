@@ -7,6 +7,26 @@ import { redirect } from './navigate';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+// Safe storage accessors: Firefox blocked-storage mode throws on the property
+// accessor itself. Every direct localStorage/sessionStorage access in this
+// module must go through these so a throwing getter degrades to null.
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+function getSessionStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 const PUBLIC_ENDPOINTS = ['/token/', '/auth/register/'];
 
 function isPublic(url: string): boolean {
@@ -128,7 +148,7 @@ axiosRetry(api, {
 api.interceptors.request.use((config) => {
   const url = config.url ?? '';
   if (isPublic(url)) return config;
-  const token = localStorage.getItem('token');
+  const token = getLocalStorage()?.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -190,9 +210,9 @@ let pendingRequests: Array<{
 const refreshRetried = new Set<string>();
 
 function clearAuthAndRedirect(): void {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  sessionStorage.removeItem('refresh_token');
+  getLocalStorage()?.removeItem('token');
+  getLocalStorage()?.removeItem('user');
+  getSessionStorage()?.removeItem('refresh_token');
   pendingRequests.forEach(({ reject }) => reject(new Error('Sesión expirada')));
   pendingRequests = [];
   isRefreshing = false;
@@ -234,7 +254,7 @@ function esFalloDeAutenticacionRefresh(error: unknown): boolean {
 async function refreshAccessToken(
   originalRequest: InternalAxiosRequestConfig,
 ): Promise<unknown> {
-  const refreshToken = sessionStorage.getItem('refresh_token');
+  const refreshToken = getSessionStorage()?.getItem('refresh_token');
   if (!refreshToken) throw crearFalloDeAutenticacionRefresh();
 
   const { data } = await axios.post<{ access?: string; refresh?: string }>(
@@ -249,9 +269,9 @@ async function refreshAccessToken(
 
   const access = data.access;
 
-  localStorage.setItem('token', access);
+  getLocalStorage()?.setItem('token', access);
   if (data.refresh) {
-    sessionStorage.setItem('refresh_token', data.refresh);
+    getSessionStorage()?.setItem('refresh_token', data.refresh);
   }
 
   // Retry all queued requests with the new token
