@@ -71,7 +71,7 @@ export function logError(
     return;
   }
 
-  const described = redactSensitive(describeError(error));
+  const described = describeError(error);
   const safeExtra = redactSensitive(extra ?? {});
 
   console.warn(`[${context}]`, described, safeExtra);
@@ -80,9 +80,9 @@ export function logError(
     error instanceof Error ? error.stack : undefined;
   const sentryEvent = Object.assign(
     new Error(
-      `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
+      `[${context}] ${typeof described === 'object' && described !== null && 'message' in described ? String((described as { message: unknown }).message) : String(described)}`,
     ),
-    { context, described, extra: safeExtra },
+    { context, extra: safeExtra },
   );
   if (originalStack) {
     sentryEvent.stack = originalStack;
