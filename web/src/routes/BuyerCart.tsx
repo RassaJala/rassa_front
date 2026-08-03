@@ -1,5 +1,8 @@
+import { useNavigate } from 'react-router-dom';
+import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getColors } from '../constants/colors';
+import { cartCardStyle } from '../constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCartStore } from '../store/cartStore';
 
@@ -19,18 +22,11 @@ export function BuyerCart() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const clearCart = useCartStore((s) => s.clearCart);
   const total = useCartStore((s) => s.total);
+  const navigate = useNavigate();
   const { resolved } = useTheme();
   const c = getColors(resolved === 'dark');
 
-  const cardStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-    borderRadius: 12,
-    border: `1px solid ${c.border}`,
-    backgroundColor: c.surface,
-    padding: 16,
-  };
+  const cardStyle = cartCardStyle(c.border, c.surface);
 
   const qtyBtnStyle: React.CSSProperties = {
     display: 'flex',
@@ -50,15 +46,11 @@ export function BuyerCart() {
     return (
       <>
         <PageHeader title="Mi Carrito" />
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="mb-4 text-5xl">🛒</span>
-          <h3 className="text-lg font-semibold" style={{ color: c.fg }}>
-            Tu carrito está vacío
-          </h3>
-          <p className="mt-1 text-sm" style={{ color: c.muted }}>
-            Agregá productos desde el catálogo para comenzar tu compra.
-          </p>
-        </div>
+        <EmptyState
+          icon="🛒"
+          title="Tu carrito está vacío"
+          message="Agregá productos desde el catálogo para comenzar tu compra."
+        />
       </>
     );
   }
@@ -179,7 +171,7 @@ export function BuyerCart() {
       <button
         className="mt-4 w-full rounded-xl py-3 text-sm font-bold text-white hover:opacity-90"
         style={{ backgroundColor: c.brand }}
-        onClick={() => alert('El flujo de pago estará disponible pronto.')}
+        onClick={() => navigate('/cliente/checkout')}
       >
         Continuar compra
       </button>

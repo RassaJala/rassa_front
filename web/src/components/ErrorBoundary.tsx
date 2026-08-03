@@ -1,6 +1,8 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 
+import * as Sentry from '@sentry/react';
+
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
@@ -51,6 +53,7 @@ export class ErrorBoundary extends Component<
   override componentDidCatch(error: Error, _errorInfo: ErrorInfo) {
     // ponytail: sanitize — only log message, not stack/user data
     console.error('[ErrorBoundary]', error.message);
+    Sentry.captureException(error);
   }
 
   override render() {
