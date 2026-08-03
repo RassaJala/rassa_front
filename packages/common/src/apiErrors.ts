@@ -195,9 +195,16 @@ export function extractApiError(
       return record.non_field_errors;
     }
   }
-  if (Array.isArray(record.non_field_errors) && record.non_field_errors.length > 0) {
+  if (
+    Array.isArray(record.non_field_errors) &&
+    record.non_field_errors.length > 0
+  ) {
     const first = record.non_field_errors[0];
-    if (typeof first === 'string' || typeof first === 'number' || typeof first === 'boolean') {
+    if (
+      typeof first === 'string' ||
+      typeof first === 'number' ||
+      typeof first === 'boolean'
+    ) {
       const text = String(first);
       if (isSafeDetail(text)) {
         return text;
@@ -215,7 +222,11 @@ export function extractApiError(
     }
     if (Array.isArray(value) && value[0] !== undefined) {
       const item = value[0];
-      if (typeof item !== 'string' && typeof item !== 'number' && typeof item !== 'boolean') {
+      if (
+        typeof item !== 'string' &&
+        typeof item !== 'number' &&
+        typeof item !== 'boolean'
+      ) {
         continue;
       }
       const text = String(item);
@@ -264,7 +275,11 @@ function extractFieldErrorsFromData(
     const value = data[key];
     if (Array.isArray(value) && value.length > 0) {
       const first = value[0];
-      if (typeof first !== 'string' && typeof first !== 'number' && typeof first !== 'boolean') {
+      if (
+        typeof first !== 'string' &&
+        typeof first !== 'number' &&
+        typeof first !== 'boolean'
+      ) {
         continue;
       }
       const item = String(first);
@@ -284,7 +299,11 @@ function extractFieldErrorsFromData(
     for (const [k, v] of Object.entries(data)) {
       if (Array.isArray(v) && v.length > 0) {
         const first = v[0];
-        if (typeof first !== 'string' && typeof first !== 'number' && typeof first !== 'boolean') {
+        if (
+          typeof first !== 'string' &&
+          typeof first !== 'number' &&
+          typeof first !== 'boolean'
+        ) {
           continue;
         }
         const item = String(first);
@@ -340,5 +359,9 @@ export function extractFieldErrors(
     };
   }
 
-  return extractFieldErrorsFromData(data as Record<string, unknown>, fieldKeys, candidate.response?.status);
+  return extractFieldErrorsFromData(
+    data as Record<string, unknown>,
+    fieldKeys,
+    candidate.response?.status,
+  );
 }
