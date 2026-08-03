@@ -8,8 +8,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 
 import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import type { Recoleccion } from '@/types/recolecciones';
-import type { AdminUser } from '@/types/userManagement';
-import type { AgricultorUbicacion } from '@/hooks/useAgricultoresUbicacion';
+import type { AgricultorUbicacion, AgricultorAgricultorItem } from '@/hooks/useAgricultoresUbicacion';
 import type { RecoleccionesResult } from '@/services/recolecciones';
 
 import api from '@/services/api';
@@ -156,17 +155,13 @@ function addDays(d: Date, n: number): Date {
 const HOY = toDateString(new Date());
 const MAÑANA = toDateString(addDays(new Date(), 1));
 
-const juan: AdminUser = {
+const juan: AgricultorAgricultorItem = {
   id_usuario: 11,
-  email: 'juan@rassa.test',
   role: 'farmer',
   nombre: 'Juan',
   apellido_paterno: 'Pérez',
   apellido_materno: null,
   localidad: 5,
-  localidad_nombre: 'La Esperanza',
-  estado: true,
-  creado_en: '2026-01-01T00:00:00Z',
 };
 
 const recoleccionHoy: Recoleccion = {

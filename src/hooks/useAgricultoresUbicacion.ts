@@ -4,33 +4,54 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
 import { fetchAllPages, unwrapOk } from '@/services/pagination';
 import type { Localidad, Municipio } from '@/types';
-import type { AdminUser } from '@/types/userManagement';
-import { getFullName } from '@/utils/userManagement';
+import { mapWithConcurrency } from '@/utils/concurrency';
 
 export interface AgricultorUbicacion {
   readonly municipioNombre: string;
   readonly localidades: readonly {
     readonly localidadNombre: string;
-    readonly agricultores: readonly AdminUser[];
+    readonly agricultores: readonly AgricultorAgricultorItem[];
   }[];
 }
 
-const AGRICULTORES_URL = '/admin/usuarios/?rol=Agricultor&estado=true';
+export interface AgricultorAgricultorItem {
+  readonly id_usuario: number;
+  readonly nombre: string;
+  readonly apellido_paterno: string;
+  readonly apellido_materno: string | null;
+  readonly role: string;
+  readonly localidad: number;
+}
 
-async function fetchMunicipios(): Promise<Municipio[]> {
-  const { data } = await api.get<unknown>('/municipios/');
+function getFullName(a: AgricultorAgricultorItem): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
+}
+
+const AGRICULTORES_URL = '/recolecciones/agricultores/';
+
+async function fetchMunicipios(signal?: AbortSignal): Promise<Municipio[]> {
+  const { data } = await api.get<unknown>(
+    '/municipios/',
+    signal ? { signal } : {},
+  );
   return unwrapOk<Municipio[]>(data);
 }
 
-async function fetchLocalidades(municipioId: number): Promise<Localidad[]> {
+async function fetchLocalidades(
+  municipioId: number,
+  signal?: AbortSignal,
+): Promise<Localidad[]> {
   const { data } = await api.get<unknown>(
     `/localidades/?municipio_id=${municipioId}`,
+    signal ? { signal } : {},
   );
   return unwrapOk<Localidad[]>(data);
 }
 
 function groupByUbicacion(
-  agricultores: AdminUser[],
+  agricultores: AgricultorAgricultorItem[],
   municipios: Municipio[],
   localidades: Localidad[],
 ): AgricultorUbicacion[] {
@@ -39,7 +60,7 @@ function groupByUbicacion(
   );
   const localidadById = new Map(localidades.map((l) => [l.id_localidad, l]));
 
-  const groups = new Map<string, Map<string, AdminUser[]>>();
+  const groups = new Map<string, Map<string, AgricultorAgricultorItem[]>>();
 
   for (const agricultor of agricultores) {
     const localidad = agricultor.localidad
@@ -101,11 +122,12 @@ export function useAgricultoresUbicacion(options?: {
     queryKey: ['agricultores-ubicacion'],
     queryFn: async ({ signal }) => {
       const [municipiosResult, agricultoresResult] = await Promise.allSettled([
-        fetchMunicipios(),
-        fetchAllPages<AdminUser>(AGRICULTORES_URL, {
+        fetchMunicipios(signal),
+        fetchAllPages<AgricultorAgricultorItem>(AGRICULTORES_URL, {
           source: 'agricultores',
           keyOf: (a) => a.id_usuario,
           signal,
+          maxDurationMs: 30_000,
         }),
       ]);
 
@@ -136,9 +158,13 @@ export function useAgricultoresUbicacion(options?: {
       const agriData =
         agricultoresResult.status === 'fulfilled'
           ? agricultoresResult.value
-          : { data: [] as AdminUser[], truncated: false, errores: 1 };
-      const settled = await Promise.allSettled(
-        municipios.map((m) => fetchLocalidades(m.id_municipio)),
+          : { data: [] as AgricultorAgricultorItem[], truncated: false, errores: 1 };
+      const settled = await mapWithConcurrency(
+        municipios,
+        4,
+        (m) => fetchLocalidades(m.id_municipio, signal),
+        signal,
+        30_000,
       );
       const localidades: Localidad[] = [];
       let fallos = 0;

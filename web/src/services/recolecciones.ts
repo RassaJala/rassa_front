@@ -24,10 +24,11 @@ const TODAS_DEADLINE_MS = 30_000;
 
 export async function getRecolecciones(
   params?: RecoleccionFilters,
+  signal?: AbortSignal,
 ): Promise<ApiResponse<RecoleccionList>> {
   const { data } = await api.get<ApiResponse<RecoleccionList>>(
     '/recolecciones/',
-    { params },
+    { params, signal },
   );
   return data;
 }

@@ -20,6 +20,9 @@ export function isAbortError(reason: unknown): boolean {
   if (reason instanceof DOMException && reason.name === 'AbortError') {
     return true;
   }
+  if (reason instanceof Error && reason.name === 'AbortError') {
+    return true;
+  }
   if (
     reason &&
     typeof reason === 'object' &&

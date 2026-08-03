@@ -2,12 +2,19 @@ import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/constants/colors';
-import type { AgricultorUbicacion } from '@/hooks/useAgricultoresUbicacion';
+import type {
+  AgricultorUbicacion,
+  AgricultorAgricultorItem,
+} from '@/hooks/useAgricultoresUbicacion';
 import { useTheme } from '@/store/ThemeContext';
-import type { AdminUser } from '@/types/userManagement';
-import { getFullName } from '@/utils/userManagement';
 
 import { recoleccionDuplicateKey } from './utils';
+
+function getFullName(a: AgricultorAgricultorItem): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
+}
 
 interface AgricultorSelectorProps {
   readonly grupos: readonly AgricultorUbicacion[];
@@ -19,7 +26,7 @@ interface AgricultorSelectorProps {
   readonly duplicateKeys: ReadonlySet<string>;
   readonly fecha: string;
   readonly onRetry: () => void;
-  readonly onSelect: (agricultor: AdminUser) => void;
+  readonly onSelect: (agricultor: AgricultorAgricultorItem) => void;
 }
 
 interface CuerpoAgricultoresProps {
@@ -30,15 +37,15 @@ interface CuerpoAgricultoresProps {
   readonly duplicateKeys: ReadonlySet<string>;
   readonly fecha: string;
   readonly onRetry: () => void;
-  readonly onSelect: (agricultor: AdminUser) => void;
+  readonly onSelect: (agricultor: AgricultorAgricultorItem) => void;
 }
 
 interface FilaAgricultorProps {
-  readonly agricultor: AdminUser;
+  readonly agricultor: AgricultorAgricultorItem;
   readonly selectedId: number | null;
   readonly duplicateKeys: ReadonlySet<string>;
   readonly fecha: string;
-  readonly onSelect: (agricultor: AdminUser) => void;
+  readonly onSelect: (agricultor: AgricultorAgricultorItem) => void;
 }
 
 function NoticeAgricultores({

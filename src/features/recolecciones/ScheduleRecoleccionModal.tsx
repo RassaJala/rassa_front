@@ -15,13 +15,20 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
-import { useAgricultoresUbicacion } from '@/hooks/useAgricultoresUbicacion';
+import {
+  useAgricultoresUbicacion,
+  type AgricultorAgricultorItem,
+} from '@/hooks/useAgricultoresUbicacion';
 import { createRecoleccion } from '@/services/recolecciones';
 import { useTheme } from '@/store/ThemeContext';
 import type { Recoleccion, RecoleccionPayload } from '@/types/recolecciones';
-import type { AdminUser } from '@/types/userManagement';
 import { extractApiError } from '@/utils/apiErrors';
-import { getFullName } from '@/utils/userManagement';
+
+function getFullName(a: AgricultorAgricultorItem): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
+}
 
 import AgricultorSelector from './AgricultorSelector';
 import {
@@ -67,7 +74,7 @@ export default function ScheduleRecoleccionModal({
     refetch: refetchAgricultores,
   } = useAgricultoresUbicacion({ enabled: visible });
 
-  const [agricultor, setAgricultor] = useState<AdminUser | null>(null);
+  const [agricultor, setAgricultor] = useState<AgricultorAgricultorItem | null>(null);
   const [fecha, setFecha] = useState('');
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
