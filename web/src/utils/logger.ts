@@ -71,17 +71,21 @@ export function logError(
     return;
   }
 
-  const described = describeError(error);
+  const described = redactSensitive(describeError(error));
   const safeExtra = redactSensitive(extra ?? {});
 
   console.warn(`[${context}]`, described, safeExtra);
 
-  Sentry.captureException(
-    Object.assign(
-      new Error(
-        `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
-      ),
-      { context, described, extra: safeExtra },
+  const originalStack =
+    error instanceof Error ? error.stack : undefined;
+  const sentryEvent = Object.assign(
+    new Error(
+      `[${context}] ${described && typeof described === 'object' && 'message' in described ? String(described.message) : String(described)}`,
     ),
+    { context, described, extra: safeExtra },
   );
+  if (originalStack) {
+    sentryEvent.stack = originalStack;
+  }
+  Sentry.captureException(sentryEvent);
 }
