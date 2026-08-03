@@ -1,3 +1,9 @@
+import { buildResumenUrl, unwrapWasteEnvelope } from '@/common/waste';
+import type {
+  MermaResumenResponse,
+  ResumenParams,
+  WasteEnvelope,
+} from '@/common/waste';
 import type { ApiResponse } from '@/types';
 import type {
   PublishedPublication,
@@ -10,6 +16,15 @@ import api from './api';
 
 const DECISIONES_URL = '/decisiones-merma/';
 const MERMAS_URL = '/mermas/';
+
+export async function fetchMermaResumen(
+  params: ResumenParams = {},
+): Promise<MermaResumenResponse> {
+  const { data } = await api.get<WasteEnvelope<MermaResumenResponse>>(
+    buildResumenUrl(params),
+  );
+  return unwrapWasteEnvelope(data);
+}
 
 export async function fetchWasteDecisions(): Promise<WasteDecision[]> {
   const { data } =

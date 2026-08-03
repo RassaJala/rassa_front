@@ -3,3 +3,4 @@ export * from './apiErrors';
 export * from './validation';
 export * from './roles';
 export * from './payments';
+export * from './waste';

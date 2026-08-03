@@ -19,6 +19,7 @@ import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
 import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
+import MermaResumenScreen from '@/screens/admin/MermaResumenScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
@@ -544,6 +545,7 @@ function AdminScreens() {
         options={{ title: 'Detalle del Pedido' }}
       />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />
+      <AdminStack.Screen name="MermaResumen" component={MermaResumenScreen} />
     </AdminStack.Navigator>
   );
 }
