@@ -165,8 +165,15 @@ export function extractApiError(
   }
 
   const data = candidate.response?.data;
+  const status = candidate.response?.status;
 
-  if (!data) return defaultMessage;
+  if (!data) {
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return mapped;
+    }
+    return defaultMessage;
+  }
 
   if (typeof data === 'string') {
     return parseHtmlOrStringError(data, candidate.response?.status);
@@ -179,23 +186,48 @@ export function extractApiError(
     }
   }
   if (typeof record.message === 'string') {
-    // W-1: `message` must pass the same sanitizer as `detail` — a 5xx HTML /
-    // traceback body in `message` must never render raw in the UI.
     if (isSafeDetail(record.message)) {
       return record.message;
+    }
+  }
+  if (typeof record.non_field_errors === 'string') {
+    if (isSafeDetail(record.non_field_errors)) {
+      return record.non_field_errors;
+    }
+  }
+  if (Array.isArray(record.non_field_errors) && record.non_field_errors.length > 0) {
+    const first = record.non_field_errors[0];
+    if (typeof first === 'string' || typeof first === 'number' || typeof first === 'boolean') {
+      const text = String(first);
+      if (isSafeDetail(text)) {
+        return text;
+      }
     }
   }
 
   for (const key of fieldKeys) {
     const value = record[key];
 
-    if (Array.isArray(value) && value[0]) {
-      const item = String(value[0]);
-      // W-1: array items (DRF field errors) pass through the sanitizer too.
-      if (isSafeDetail(item)) {
-        return item;
+    if (typeof value === 'string') {
+      if (isSafeDetail(value)) {
+        return value;
       }
     }
+    if (Array.isArray(value) && value[0] !== undefined) {
+      const item = value[0];
+      if (typeof item !== 'string' && typeof item !== 'number' && typeof item !== 'boolean') {
+        continue;
+      }
+      const text = String(item);
+      if (isSafeDetail(text)) {
+        return text;
+      }
+    }
+  }
+
+  if (status !== undefined) {
+    const mapped = STATUS_MESSAGES[status];
+    if (mapped) return mapped;
   }
 
   return defaultMessage;
@@ -204,6 +236,7 @@ export function extractApiError(
 function extractFieldErrorsFromData(
   data: Record<string, unknown>,
   fieldKeys: string[],
+  status?: number,
 ): { fields: Record<string, string>; general: string | null } {
   const fields: Record<string, string> = {};
 
@@ -230,15 +263,16 @@ function extractFieldErrorsFromData(
   for (const key of fieldKeys) {
     const value = data[key];
     if (Array.isArray(value) && value.length > 0) {
-      const item = String(value[0]);
-      // R3-W: unsafe items are skipped — a traceback field error must never
-      // surface; a safe sibling field still lands.
+      const first = value[0];
+      if (typeof first !== 'string' && typeof first !== 'number' && typeof first !== 'boolean') {
+        continue;
+      }
+      const item = String(first);
       if (isSafeDetail(item)) {
         fields[key] = item;
         foundField = true;
       }
     } else if (typeof value === 'string') {
-      // R3-W: string field values pass through the sanitizer too.
       if (isSafeDetail(value)) {
         fields[key] = value;
         foundField = true;
@@ -249,15 +283,27 @@ function extractFieldErrorsFromData(
   if (!foundField) {
     for (const [k, v] of Object.entries(data)) {
       if (Array.isArray(v) && v.length > 0) {
-        // R3-W: the fallback entry is sanitized — an unsafe array item must
-        // not surface as the general message.
-        const item = String(v[0]);
+        const first = v[0];
+        if (typeof first !== 'string' && typeof first !== 'number' && typeof first !== 'boolean') {
+          continue;
+        }
+        const item = String(first);
         if (isSafeDetail(item)) {
-          return { fields, general: `${k}: ${item}` };
+          const key = k === 'non_field_errors' ? '' : `${k}: `;
+          return { fields, general: `${key}${item}` };
         }
       }
     }
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return { fields, general: mapped };
+    }
     return { fields, general: 'Error del servidor. Intenta de nuevo.' };
+  }
+
+  if (status !== undefined) {
+    const mapped = STATUS_MESSAGES[status];
+    if (mapped) return { fields, general: mapped };
   }
 
   return { fields, general: null };
@@ -279,6 +325,11 @@ export function extractFieldErrors(
   const data = candidate.response?.data;
 
   if (!data) {
+    const status = candidate.response?.status;
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return { fields: {}, general: mapped };
+    }
     return { fields: {}, general: 'Error del servidor. Intenta de nuevo.' };
   }
 
@@ -289,5 +340,5 @@ export function extractFieldErrors(
     };
   }
 
-  return extractFieldErrorsFromData(data as Record<string, unknown>, fieldKeys);
+  return extractFieldErrorsFromData(data as Record<string, unknown>, fieldKeys, candidate.response?.status);
 }
