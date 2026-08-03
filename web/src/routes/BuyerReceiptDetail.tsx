@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
+import { buildReceiptHtml } from '@/common/receipt';
 import {
   calcularSubtotal,
   esPropietarioPago,
@@ -10,6 +11,7 @@ import {
   PAGOS_CLIENTE_QUERY_KEY,
 } from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
+>>>>>>> 0ad4eec (feat(client-receipts): boton para imprimir recibo del cliente en PDF)
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -99,6 +101,15 @@ export function BuyerReceiptDetail() {
 
   const subtotal = calcularSubtotal(productos);
 
+  const handleImprimir = () => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(buildReceiptHtml(pago));
+    win.document.close();
+    win.focus();
+    win.print();
+  };
+
   return (
     <div>
       <button
@@ -109,7 +120,14 @@ export function BuyerReceiptDetail() {
         ← Volver a mis recibos
       </button>
 
-      <PageHeader title={`Recibo ${pago.folio}`} />
+      <PageHeader
+        title={`Recibo ${pago.folio}`}
+        action={
+          <Button onClick={handleImprimir}>
+            <span aria-hidden>🖨</span> Imprimir / PDF
+          </Button>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Products */}
