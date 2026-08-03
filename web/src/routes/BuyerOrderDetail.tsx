@@ -7,34 +7,7 @@ import { LoadingSpinner } from '~/components/ui/LoadingSpinner';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
 import api from '~/services/api';
-
-interface OrderItem {
-  id_detalle: number;
-  nombre_producto: string;
-  precio_unitario: string;
-  cantidad: number;
-  importe: string;
-}
-
-interface OrderHistoryEntry {
-  id_historial: number;
-  estado_anterior: string | null;
-  estado_nuevo: string;
-  cambiado_por_nombre: string | null;
-  creado_en: string;
-}
-
-interface OrderDetail {
-  id_pedido: number;
-  total: string;
-  subtotal: string;
-  iva: string;
-  estado_actual: string;
-  creado_en: string;
-  fecha_expiracion: string | null;
-  detalles: OrderItem[];
-  historial: OrderHistoryEntry[];
-}
+import type { OrderDetail } from '~/services/orderTypes';
 
 const STATUS_VARIANT: Record<
   string,
