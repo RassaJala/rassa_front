@@ -6,10 +6,10 @@ import {
   Provider as PaperProvider,
 } from 'react-native-paper';
 
-import * as Sentry from '@sentry/react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import {
   QueryCache,
   QueryClient,
@@ -18,17 +18,18 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { sentryBeforeSend } from '@/services/sentry';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
 
-import { sentryBeforeSend } from '@/services/sentry';
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   tracesSampleRate: 1.0,
   beforeSend: sentryBeforeSend,
 });
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 const queryClient = new QueryClient({
   defaultOptions: {

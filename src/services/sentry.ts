@@ -101,7 +101,7 @@ export function sanitizeSentryError(error: unknown): unknown {
 
 // Drop-in for Sentry.init({ beforeSend }). El SDK puebla event.request.headers
 // con los headers salientes, que incluyen Authorization y cookies.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 export function sentryBeforeSend(event: any, _hint: any): any {
   const evt = event as Record<string, unknown>;
   const request = evt.request as

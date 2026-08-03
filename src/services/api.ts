@@ -7,8 +7,8 @@ import axiosRetry from 'axios-retry';
 
 import { API_RETRY_LIMIT } from '@/common/networking';
 
-import * as Storage from './storage';
 import { sanitizeSentryError } from './sentry';
+import * as Storage from './storage';
 
 declare const process: {
   env: {
