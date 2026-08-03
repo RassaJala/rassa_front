@@ -81,10 +81,18 @@ export function parseDate(raw: string): Date | null {
 // `new Date()` (UTC midnight shifts the day back in negative-offset zones).
 // Shared by both apps so the timezone fix lives in exactly one place (W1).
 // Falls back to "now" for malformed input, with a dev warning (W3).
+// Uses a globalThis guard (not `process`) so the package typechecks in both
+// the RN app and the web tsconfig, which does not include Node types.
+function isNonProduction(): boolean {
+  const env = (globalThis as { process?: { env?: { NODE_ENV?: string } } })
+    .process?.env?.NODE_ENV;
+  return env !== 'production';
+}
+
 export function parseLocalDate(iso: string): Date {
   const d = toLocalDate(iso);
   if (d === null) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isNonProduction()) {
       console.warn('[parseLocalDate] invalid date input:', iso);
     }
     return new Date();
