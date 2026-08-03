@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '~/components/ui/Badge';
 import { Button } from '~/components/ui/Button';
 import { LoadingSpinner } from '~/components/ui/LoadingSpinner';
+import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
@@ -30,17 +31,6 @@ const TIMELINE_COLORS: Record<string, string> = {
   entregado: colors.success,
   cancelado: colors.error,
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function BuyerOrderDetail() {
   const { id } = useParams<{ id: string }>();

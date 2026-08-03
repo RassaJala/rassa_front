@@ -13,6 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -39,17 +40,6 @@ const TIMELINE_MAP: Readonly<Record<string, TimelineConfig>> = {
   entregado: { icon: 'handshake', color: colors.success },
   cancelado: { icon: 'close-circle', color: colors.error },
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function TimelineEntry({
   entry,

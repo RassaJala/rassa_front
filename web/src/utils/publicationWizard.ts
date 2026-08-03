@@ -2,23 +2,17 @@
 
 // Date helpers are shared with mobile through packages/common (W1):
 // parseLocalDate / isMondayToday / getWeekNumber live in @/common/waste.
-export { getWeekNumber, isMondayToday, parseLocalDate } from '@/common/waste';
+export {
+  getNextMonday,
+  getWeekNumber,
+  isMondayToday,
+  parseLocalDate,
+} from '@/common/waste';
 
 import { DELETED_PRODUCT_VALIDATION } from '@/common/publicationLabels';
 
 export function generateTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/** Returns the next Monday from today (or today if it's already Monday). */
-export function getNextMonday(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? 1 : day <= 1 ? 0 : 8 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
 }
 
 export function formatDate(iso: Date, opts?: { short?: boolean }): string {

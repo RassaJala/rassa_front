@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
+import { formatearFecha } from '@/common/dates';
 import { DataTable } from '~/components/layout/DataTable';
 import { PageHeader } from '~/components/layout/PageHeader';
 import { Badge } from '~/components/ui/Badge';
@@ -30,17 +31,6 @@ const STATUS_VARIANT: Record<
   entregado: 'success',
   cancelado: 'error',
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function BuyerOrders() {
   const {

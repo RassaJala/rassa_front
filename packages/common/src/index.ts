@@ -6,3 +6,4 @@ export * from './payments';
 export * from './orders';
 export * from './publicationLabels';
 export * from './waste';
+export * from './withTimeout';

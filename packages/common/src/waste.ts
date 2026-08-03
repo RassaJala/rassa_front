@@ -106,6 +106,17 @@ export function isMondayToday(date: Date = new Date()): boolean {
   return date.getDay() === 1;
 }
 
+// Next Monday from `from` (or today if it's already Monday), time zeroed.
+// Shared (W1): was duplicated mobile `useFormattedDate` / web `publicationWizard`.
+export function getNextMonday(from: Date = new Date()): Date {
+  const d = new Date(from);
+  const dayOfWeek = d.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
+  d.setDate(d.getDate() + daysUntilMonday);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 // ISO 8601 week number — matches Django's TruncWeek (Monday-based).
 export function getWeekNumber(date: Date): number {
   const target = new Date(

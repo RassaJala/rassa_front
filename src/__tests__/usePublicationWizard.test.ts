@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string, @typescript-eslint/no-unsafe-argument -- Test files are less strict */
 import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
+import { withTimeout } from '@/common/withTimeout';
 import {
   generateLocalTempId,
   isLocalFileUri,
   validateItem,
-  withTimeout,
 } from '@/hooks/usePublicationWizard';
 
 jest.mock('expo-secure-store', () => ({
@@ -102,6 +102,21 @@ describe('validateItem', () => {
   it('returns error when stock is NaN', () => {
     const errors = validateItem(makeValidItem({ stock: 'abc' }));
     expect(errors.stock).toBeDefined();
+  });
+
+  it('returns error when stock is not an integer (aligned with web)', () => {
+    const errors = validateItem(makeValidItem({ stock: '1.5' }));
+    expect(errors.stock).toBeDefined();
+  });
+
+  it('accepts a whole-number stock passed as "10"', () => {
+    const errors = validateItem(makeValidItem({ stock: '10' }));
+    expect(errors.stock).toBeUndefined();
+  });
+
+  it('accepts stock "10.0" (Number.isInteger true for 10.0)', () => {
+    const errors = validateItem(makeValidItem({ stock: '10.0' }));
+    expect(errors.stock).toBeUndefined();
   });
 
   it('returns error when precio is empty', () => {

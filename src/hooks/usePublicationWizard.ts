@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { DELETED_PRODUCT_VALIDATION } from '@/common/publicationLabels';
+import { withTimeout } from '@/common/withTimeout';
 import type { Producto } from '@/services/productos';
 import { uploadProductoSemanalImagen } from '@/services/publications';
 import type { ProductoSemanal, Publicacion } from '@/services/publications';
@@ -102,6 +103,9 @@ export function validateItem(
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
     errors.stock = 'El stock debe ser un número mayor a 0.';
+  } else if (!Number.isInteger(stockNum)) {
+    // Align with web validateItem (NF3): the backend rejects fractional stock.
+    errors.stock = 'El stock debe ser un número entero.';
   }
 
   const precioNum = Number(item.precio);
@@ -199,22 +203,6 @@ async function persistItem(
 }
 
 const PUBLISH_TIMEOUT_MS = 60_000;
-
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_resolve, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(
-        new Error(
-          `La operación tardó más de ${String(ms / 1000)}s. Verificá tu conexión e intentá de nuevo.`,
-        ),
-      );
-    }, ms);
-  });
-  return Promise.race([promise, timeout]).finally(() => {
-    clearTimeout(timeoutId);
-  });
-}
 
 export function usePublicationWizard({
   publicacion,
