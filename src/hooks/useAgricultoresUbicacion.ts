@@ -113,11 +113,11 @@ export function useAgricultoresUbicacion(options?: {
         municipiosResult.status === 'rejected' ||
         agricultoresResult.status === 'rejected'
       ) {
-        const muniErr =
+        const muniErr: unknown =
           municipiosResult.status === 'rejected'
             ? municipiosResult.reason
             : null;
-        const agriErr =
+        const agriErr: unknown =
           agricultoresResult.status === 'rejected'
             ? agricultoresResult.reason
             : null;
