@@ -19,8 +19,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
 import axios from 'axios';
 
-import { sanitizeSentryError } from '@/services/sentry';
-
 import {
   extractProducts,
   groupBy,
@@ -44,6 +42,7 @@ import { MermaRankingChart } from '@/components/admin/merma/MermaRankingChart';
 import { MermaSummaryCards } from '@/components/admin/merma/MermaSummaryCards';
 import { MermaTrendChart } from '@/components/admin/merma/MermaTrendChart';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { sanitizeSentryError } from '@/services/sentry';
 import { colors } from '@/constants/colors';
 import { useAdminColors } from '@/hooks/useAdminColors';
 import { fetchMermaResumen } from '@/services/waste';
