@@ -23,6 +23,7 @@ import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */

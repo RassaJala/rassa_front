@@ -17,8 +17,9 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Sentry from '@sentry/react-native';
-import { sanitizeSentryError } from '@/services/sentry';
 import axios from 'axios';
+
+import { sanitizeSentryError } from '@/services/sentry';
 
 import {
   extractProducts,
