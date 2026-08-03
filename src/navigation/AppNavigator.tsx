@@ -46,6 +46,7 @@ import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
+import CashClosingScreen from '@/screens/seller/CashClosingScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
@@ -472,6 +473,7 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}
