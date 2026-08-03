@@ -20,15 +20,12 @@ if (SENTRY_DSN) {
     beforeSend(event) {
       const evt = event as Record<string, unknown>;
       const request = evt.request as
-        | { headers: Record<string, unknown> }
-        | undefined;
+        { headers: Record<string, unknown> } | undefined;
       if (request?.headers) {
         const redacted = { ...request.headers };
         for (const key of Object.keys(redacted)) {
           if (
-            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(
-              key,
-            )
+            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(key)
           ) {
             delete redacted[key];
           }
