@@ -16,19 +16,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { colors } from '@/constants/colors';
 import {
-  useAgricultoresUbicacion,
-  type AgricultorAgricultorItem,
+  
+  useAgricultoresUbicacion
 } from '@/hooks/useAgricultoresUbicacion';
+import type {AgricultorAgricultorItem} from '@/hooks/useAgricultoresUbicacion';
 import { createRecoleccion } from '@/services/recolecciones';
 import { useTheme } from '@/store/ThemeContext';
 import type { Recoleccion, RecoleccionPayload } from '@/types/recolecciones';
 import { extractApiError } from '@/utils/apiErrors';
-
-function getFullName(a: AgricultorAgricultorItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
 
 import AgricultorSelector from './AgricultorSelector';
 import {
@@ -38,6 +33,12 @@ import {
   recoleccionDuplicateKey,
   todayString,
 } from './utils';
+
+function getFullName(a: AgricultorAgricultorItem): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
+}
 
 interface ScheduleRecoleccionModalProps {
   readonly visible: boolean;

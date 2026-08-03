@@ -304,9 +304,9 @@ export default function DatePickerModal({
                           borderRadius: 12,
                           backgroundColor: isSelected
                             ? colors.brandRedCoral
-                            : isDark
+                            : (isDark
                               ? colors.admSurfaceD
-                              : colors.surface,
+                              : colors.surface),
                           borderWidth: isSelected ? 0 : 1,
                           borderColor: isDark
                             ? colors.admBorderD
@@ -370,9 +370,9 @@ export default function DatePickerModal({
                   color:
                     selectedDay != null
                       ? colors.iconWhite
-                      : isDark
+                      : (isDark
                         ? colors.mutedDark
-                        : colors.textSecondary,
+                        : colors.textSecondary),
                 }}
               >
                 Hecho

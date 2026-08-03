@@ -24,6 +24,39 @@ export function isAbortError(reason: unknown): boolean {
   return false;
 }
 
+function setupDeadline(
+  maxDurationMs?: number,
+): {
+  deadline: number;
+  budget: AbortController;
+  isDeadline: () => boolean;
+} {
+  const budget = new AbortController();
+  let deadlineAlcanzado = false;
+  if (maxDurationMs !== undefined) {
+    setTimeout(() => {
+      deadlineAlcanzado = true;
+      budget.abort();
+    }, maxDurationMs);
+  }
+  return {
+    deadline:
+      maxDurationMs !== undefined ? Date.now() + maxDurationMs : Infinity,
+    budget,
+    isDeadline: () => deadlineAlcanzado,
+  };
+}
+
+function wireSignal(signal: AbortSignal | undefined, budget: AbortController) {
+  if (signal) {
+    const abortBudget = () => budget.abort();
+    if (signal.aborted) budget.abort();
+    else signal.addEventListener('abort', abortBudget, { once: true });
+    return abortBudget;
+  }
+  return () => {};
+}
+
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
   limit: number,
@@ -32,29 +65,14 @@ export async function mapWithConcurrency<T, R>(
   maxDurationMs?: number,
 ): Promise<PromiseSettledResult<R>[]> {
   const workerCount = Math.min(Math.floor(limit), items.length);
-  if (!(workerCount > 0)) {
+  if (workerCount <= 0) {
     return items.map(() => ({ status: 'rejected', reason: abortError() }));
   }
 
-  const deadline =
-    maxDurationMs !== undefined ? Date.now() + maxDurationMs : Infinity;
-  const budget = new AbortController();
-  const abortBudget = () => budget.abort();
-  let deadlineAlcanzado = false;
-  const deadlineTimer =
-    maxDurationMs !== undefined
-      ? setTimeout(() => {
-          deadlineAlcanzado = true;
-          budget.abort();
-        }, maxDurationMs)
-      : undefined;
+  const { deadline, budget, isDeadline } = setupDeadline(maxDurationMs);
+  const removeListener = wireSignal(signal, budget);
 
-  if (signal) {
-    if (signal.aborted) budget.abort();
-    else signal.addEventListener('abort', abortBudget, { once: true });
-  }
-
-  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  const results = new Array<PromiseSettledResult<R>>(items.length);
   let nextIndex = 0;
 
   async function worker(): Promise<void> {
@@ -70,32 +88,34 @@ export async function mapWithConcurrency<T, R>(
       if (budget.signal.aborted) {
         results[index] = {
           status: 'rejected',
-          reason: deadlineAlcanzado ? deadlineError() : abortError(),
+          reason: isDeadline() ? deadlineError() : abortError(),
         };
         continue;
       }
-      try {
-        const value = await mapper(items[index] as T, budget.signal);
-        results[index] = { status: 'fulfilled', value };
-      } catch (reason) {
-        const interruptedByDeadline =
-          deadline !== Infinity &&
-          budget.signal.aborted &&
-          (deadlineAlcanzado || Date.now() >= deadline);
-        results[index] = {
-          status: 'rejected',
-          reason: interruptedByDeadline ? deadlineError() : reason,
-        };
-      }
+      results[index] = await dispatchItem(index);
+    }
+  }
+
+  async function dispatchItem(
+    index: number,
+  ): Promise<PromiseSettledResult<R>> {
+    try {
+      const value = await mapper(items[index] as T, budget.signal);
+      return { status: 'fulfilled', value };
+    } catch (reason) {
+      return {
+        status: 'rejected',
+        reason: deadline !== Infinity && budget.signal.aborted
+          ? deadlineError()
+          : reason,
+      };
     }
   }
 
   try {
-    const workers = Array.from({ length: workerCount }, () => worker());
-    await Promise.all(workers);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
   } finally {
-    if (deadlineTimer !== undefined) clearTimeout(deadlineTimer);
-    signal?.removeEventListener('abort', abortBudget);
+    removeListener();
   }
   return results;
 }

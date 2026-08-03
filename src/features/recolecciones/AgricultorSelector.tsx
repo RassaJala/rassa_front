@@ -3,8 +3,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { colors } from '@/constants/colors';
 import type {
-  AgricultorUbicacion,
   AgricultorAgricultorItem,
+  AgricultorUbicacion,
 } from '@/hooks/useAgricultoresUbicacion';
 import { useTheme } from '@/store/ThemeContext';
 
