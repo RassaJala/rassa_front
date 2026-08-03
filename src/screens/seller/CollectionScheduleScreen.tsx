@@ -116,13 +116,19 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     (message: string) => {
       invalidate();
       showToast(message, 'success');
-      void refetch().then((res) => {
-        if (!res.isError) return;
-        showToast(
-          'El cambio se guardó, pero no se pudo actualizar la lista.',
-          'error',
-        );
-      });
+      refetch()
+        .then((res) => {
+          if (res.isError) {
+            showToast(
+              'El cambio se guardó, pero no se pudo actualizar la lista.',
+              'error',
+            );
+          }
+          return res;
+        })
+        .catch(() => {
+          /* noop — refetch failure already handled by degraded banner */
+        });
     },
     [invalidate, showToast, refetch],
   );
