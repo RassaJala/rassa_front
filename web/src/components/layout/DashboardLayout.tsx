@@ -15,7 +15,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const { bg } = getColors(resolved === 'dark');
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: bg }}>
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        overflow: 'hidden',
+        background: bg,
+      }}
+    >
       <Sidebar role={role} />
       <div
         style={{

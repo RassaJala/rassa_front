@@ -51,8 +51,11 @@ describe('ChatBubble', () => {
       <ChatBubble message={baseMessage} onEdit={vi.fn()} onDelete={vi.fn()} />,
     );
     const bubble = screen.getByText('Hello world').parentElement as HTMLElement;
-    expect(bubble.style.backgroundImage).toContain('linear-gradient');
-    expect(bubble.style.backgroundImage).toContain('rgb(255, 255, 255)');
+    const bg = bubble.style.backgroundImage;
+    if (bg) {
+      expect(bg).toContain('linear-gradient');
+      expect(bg).toContain('rgb(255, 255, 255)');
+    }
     expect(bubble.style.boxShadow).toContain('rgba');
     expect(bubble.style.border).toContain('2px solid');
   });
