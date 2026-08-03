@@ -20,6 +20,8 @@ import { AdminFamilies } from './AdminFamilies';
 import { AdminFamilyDetail } from './AdminFamilyDetail';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
+import { AdminSettlementDetail } from './AdminSettlementDetail';
+import { AdminSettlements } from './AdminSettlements';
 import { AdminMunicipios } from './AdminMunicipios';
 import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
@@ -176,6 +178,11 @@ export function AppRouter() {
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="mermas" element={<AdminMermasDashboard />} />
+                <Route path="liquidaciones" element={<AdminSettlements />} />
+                <Route
+                  path="liquidaciones/:id"
+                  element={<AdminSettlementDetail />}
+                />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />

@@ -40,6 +40,12 @@ const adminNav: NavItem[] = [
     icon: '📉',
     path: '/admin/mermas',
   },
+  {
+    key: 'settlements',
+    label: 'Liquidaciones',
+    icon: '💰',
+    path: '/admin/liquidaciones',
+  },
   { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
   { key: 'chat', label: 'Chat', icon: '💬', path: '/admin/chat' },
   { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },

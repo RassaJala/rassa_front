@@ -1,5 +1,6 @@
 import {
   buildLiquidacionesUrl,
+  COMISION_RASSA,
   ESTADO_PAGADA,
   ESTADO_PENDIENTE,
   unwrapLiquidacionesEnvelope,
@@ -70,6 +71,10 @@ describe('settlements common module', () => {
   });
 
   describe('constants', () => {
+    it('defines the RASSA commission as 10%', () => {
+      expect(COMISION_RASSA).toBe(0.1);
+    });
+
     it('defines both settlement estados', () => {
       expect(ESTADO_PENDIENTE).toBe('pendiente');
       expect(ESTADO_PAGADA).toBe('pagada');

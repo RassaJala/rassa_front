@@ -1,6 +1,7 @@
 // Shared settlements domain: types, constants, envelope unwrap and URL builder.
 // Used by the mobile app (src/services/settlements.ts, SettlementListScreen /
-// SettlementDetailScreen). Mirrors @/common/waste conventions.
+// SettlementDetailScreen) and the web admin (web/src/routes/AdminSettlements*).
+// Mirrors @/common/waste conventions.
 
 import { buildListUrl, unwrapEnvelope } from './http';
 
@@ -63,6 +64,8 @@ export interface SettlementListResponse {
 }
 
 // --- Constants ---------------------------------------------------------------
+
+export const COMISION_RASSA = 0.1;
 
 export const ESTADO_PENDIENTE: SettlementEstado = 'pendiente';
 export const ESTADO_PAGADA: SettlementEstado = 'pagada';

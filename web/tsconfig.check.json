@@ -5,11 +5,22 @@
   },
   "include": [
     "src/routes/AdminMermasDashboard.tsx",
+    "src/routes/AdminSettlements.tsx",
+    "src/routes/AdminSettlementDetail.tsx",
     "src/components/admin/merma/**/*",
+    "src/components/admin/settlements/**/*",
     "src/services/waste.ts",
+    "src/services/settlements.ts",
+    "src/utils/money.ts",
     "src/test-setup.ts",
+    "src/vite-env.d.ts",
     "src/__tests__/AdminMermasDashboard.test.tsx",
+    "src/__tests__/AdminSettlements.test.tsx",
+    "src/__tests__/AdminSettlementDetail.test.tsx",
+    "src/__tests__/settlementsEntry.test.tsx",
+    "src/__tests__/settlementsService.test.ts",
     "../packages/common/src/waste.ts",
-    "../packages/common/src/dates.ts"
+    "../packages/common/src/dates.ts",
+    "../packages/common/src/settlements.ts"
   ]
 }
