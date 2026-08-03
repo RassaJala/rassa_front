@@ -338,7 +338,10 @@ export default function CashClosingScreen(): React.JSX.Element {
               <TextInput
                 value={monto}
                 onChangeText={(texto) => {
-                  setMonto(texto);
+                  const cleaned = texto
+                    .replace(/[^\d.]/g, '')
+                    .replace(/(\..*)\./g, '$1');
+                  setMonto(cleaned);
                   setUltimoCorte(null);
                 }}
                 keyboardType="decimal-pad"

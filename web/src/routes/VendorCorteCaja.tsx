@@ -130,7 +130,7 @@ export function VendorCorteCaja() {
       <PageHeader title="Corte de caja" />
 
       <div style={{ display: 'grid', gap: 24 }}>
-        <Card>
+        <Card className="dark:!bg-[#263028] dark:!border-[#353D35]">
           <div
             style={{
               display: 'flex',
@@ -156,7 +156,13 @@ export function VendorCorteCaja() {
             <Input
               label="Monto contado"
               value={monto}
-              onChange={(e) => setMonto(e.target.value)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                const cleaned = raw
+                  .replace(/[^\d.]/g, '')
+                  .replace(/(\..*)\./g, '$1');
+                setMonto(cleaned);
+              }}
               inputMode="decimal"
               placeholder="0.00"
               colors={c}
