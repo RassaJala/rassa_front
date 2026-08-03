@@ -69,9 +69,7 @@ function idempotencyKey(): string {
   ) {
     return crypto.randomUUID();
   }
-  throw new Error(
-    'crypto.randomUUID no está disponible — la aplicación requiere un contexto seguro (HTTPS).',
-  );
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 export async function createRecoleccion(

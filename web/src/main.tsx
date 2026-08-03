@@ -17,6 +17,26 @@ if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     tracesSampleRate: 0.1,
+    beforeSend(event) {
+      const evt = event as Record<string, unknown>;
+      const request = evt.request as
+        | { headers: Record<string, unknown> }
+        | undefined;
+      if (request?.headers) {
+        const redacted = { ...request.headers };
+        for (const key of Object.keys(redacted)) {
+          if (
+            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(
+              key,
+            )
+          ) {
+            delete redacted[key];
+          }
+        }
+        request.headers = redacted;
+      }
+      return event;
+    },
   });
 }
 
