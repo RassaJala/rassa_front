@@ -34,6 +34,13 @@ vi.mock('../../utils/publishAfterPersist', () => ({
   publishAfterPersist: vi.fn(),
 }));
 
+// Editing/creating is only allowed on Mondays; tests simulate the allowed day.
+vi.mock('../../utils/publicationWizard', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../utils/publicationWizard')>();
+  return { ...actual, isMondayToday: () => true };
+});
+
 vi.mock('../../hooks/usePublications', () => ({
   usePublicacion: vi.fn(),
   useProductosSemanales: vi.fn(),
@@ -407,7 +414,7 @@ describe('PublicationWizard', () => {
         refetch: vi.fn(),
       } as never);
       mockedUseProductosSemanales.mockReturnValue({
-        data: { data: [] },
+        data: { data: { results: [] } },
         isLoading: false,
         isError: false,
         refetch: vi.fn(),

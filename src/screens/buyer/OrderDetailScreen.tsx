@@ -50,6 +50,12 @@ function formatearFecha(iso: string): string {
   });
 }
 
+function isOrderExpired(order: OrderDetail): boolean {
+  if (order.expirado === true) return true;
+  if (!order.fecha_expiracion) return false;
+  return new Date(order.fecha_expiracion) < new Date();
+}
+
 function TimelineEntry({
   entry,
   isFirst,
@@ -325,6 +331,38 @@ export default function OrderDetailScreen(): React.JSX.Element {
               </Text>
             </View>
           </View>
+
+          {isOrderExpired(order) ? (
+            <View
+              style={{
+                backgroundColor: colors.error,
+                borderRadius: 12,
+                padding: 14,
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="timer-off-outline"
+                size={22}
+                color={white}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: white }}>
+                  Pedido expirado
+                </Text>
+                <Text style={{ fontSize: 13, color: white, marginTop: 1 }}>
+                  Este pedido expiró el{' '}
+                  {order.fecha_expiracion
+                    ? formatearFecha(order.fecha_expiracion)
+                    : 'en una fecha no disponible'}
+                  . Ya no se puede modificar ni confirmar.
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           <View style={{ flexDirection: 'row', gap: 24, marginTop: 12 }}>
             <View>

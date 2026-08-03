@@ -86,11 +86,17 @@ export function ResumenStep({
                     style={{ color: colors.fg }}
                   >
                     {item.nombre_producto ||
-                      `Producto #${String(item.fk_producto)}`}
+                      'Producto no disponible (eliminado del catálogo)'}
                   </p>
-                  <p className="text-[13px]" style={{ color: colors.muted }}>
-                    {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
-                  </p>
+                  {item.nombre_producto ? (
+                    <p className="text-[13px]" style={{ color: colors.muted }}>
+                      {item.stock} {unidad?.tipo ?? ''} · ${item.precio}
+                    </p>
+                  ) : (
+                    <p className="text-[13px]" style={{ color: colors.coral }}>
+                      Eliminado del catálogo. Quitalo para poder publicar.
+                    </p>
+                  )}
                 </div>
                 <Badge
                   variant={item.foto || item.imageFile ? 'success' : 'warning'}

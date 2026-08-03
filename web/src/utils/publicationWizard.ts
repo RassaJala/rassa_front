@@ -1,10 +1,26 @@
 // ── Pure helpers — extracted for testability ────────────────
 
+import { toLocalDate } from '@/common/waste';
+
+/**
+ * Backend sends fecha_publicacion as a bare date ("2026-08-10"). `new Date()`
+ * parses that as UTC midnight, which shifts the day back in negative-offset
+ * timezones (e.g. -03:00 shows the previous Sunday). Parse as a local date.
+ */
+export function parseLocalDate(iso: string): Date {
+  return toLocalDate(iso) ?? new Date();
+}
+
 export function generateTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 const MS_PER_DAY = 86_400_000;
+
+/** Backend rule: publications can only be created/edited on Monday. */
+export function isMondayToday(date: Date = new Date()): boolean {
+  return date.getDay() === 1;
+}
 
 /** Returns the next Monday from today (or today if it's already Monday). */
 export function getNextMonday(): Date {
@@ -66,10 +82,15 @@ export interface ItemValidation {
   stock?: string;
   precio?: string;
   fk_unidad?: string;
+  producto?: string;
 }
 
 export function validateItem(item: WizardItemDraft): ItemValidation {
   const errors: ItemValidation = {};
+  if (!item.nombre_producto) {
+    errors.producto =
+      'Este producto fue eliminado del catálogo. Quitalo para continuar.';
+  }
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
     errors.stock = 'Stock debe ser mayor a 0.';

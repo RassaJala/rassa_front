@@ -87,7 +87,7 @@ export function ProductosStep({
                     style={{ color: colors.fg }}
                   >
                     {item.nombre_producto ||
-                      `Producto #${String(item.fk_producto)}`}
+                      'Producto no disponible (eliminado del catálogo)'}
                   </p>
                   <button
                     onClick={() => onRemoveItem(item.tempId)}
@@ -98,6 +98,20 @@ export function ProductosStep({
                     ✕
                   </button>
                 </div>
+
+                {!item.nombre_producto && (
+                  <div
+                    className="mb-3 rounded-lg px-3 py-2 text-[13px]"
+                    style={{
+                      border: `1px solid ${colors.coral}`,
+                      background: colors.accentBg,
+                      color: colors.coral,
+                    }}
+                  >
+                    Este producto fue eliminado del catálogo y ya no se puede
+                    publicar. Quitalo de la publicación para continuar.
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <div className="shrink-0">

@@ -100,9 +100,9 @@ export async function closePublicacion(
 
 export async function getProductosSemanales(
   pubId: number,
-): Promise<ApiResponse<ProductoSemanal[]>> {
+): Promise<ApiResponse<{ results: ProductoSemanal[] }>> {
   assertValidId(pubId, 'publicacionId');
-  const { data } = await api.get<ApiResponse<ProductoSemanal[]>>(
+  const { data } = await api.get<ApiResponse<{ results: ProductoSemanal[] }>>(
     `/publicaciones/${String(pubId)}/productos/`,
   );
   return data;

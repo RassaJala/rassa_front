@@ -220,11 +220,18 @@ describe('ProductosStep', () => {
     expect(removeImgBtns.length).toBe(2);
   });
 
-  it('uses numeric fallback when nombre_producto is missing', () => {
+  it('shows deleted-product label and warning when nombre_producto is missing', () => {
     renderStep({
       items: [makeItem({ nombre_producto: '' })],
     });
-    expect(screen.getByText('Producto #1')).toBeDefined();
+    expect(
+      screen.getByText('Producto no disponible (eliminado del catálogo)'),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        'Este producto fue eliminado del catálogo y ya no se puede publicar. Quitalo de la publicación para continuar.',
+      ),
+    ).toBeDefined();
   });
 
   it('empty state includes action button', () => {

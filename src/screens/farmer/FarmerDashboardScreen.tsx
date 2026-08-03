@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   RefreshControl,
@@ -18,6 +19,7 @@ import { usePublicaciones } from '@/hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '@/services/publications';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
+import { parseLocalDate } from '@/utils/date';
 
 type Nav = NativeStackNavigationProp<FarmerStackParamList, 'FarmerDashboard'>;
 
@@ -34,7 +36,7 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
 ];
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = parseLocalDate(iso);
   return d.toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'short',
@@ -422,11 +424,19 @@ export default function FarmerDashboardScreen({
               key={pub.id_publicacion}
               pub={pub}
               isDark={isDark}
-              onPress={() =>
+              onPress={() => {
+                if (pub.estado !== 'borrador') {
+                  Alert.alert(
+                    'No se puede editar',
+                    'Solo se pueden editar publicaciones en estado borrador. Las ya publicadas o cerradas no se pueden modificar.',
+                    [{ text: 'OK' }],
+                  );
+                  return;
+                }
                 navigation.navigate('PublicationWizard', {
                   publicacionId: pub.id_publicacion,
-                })
-              }
+                });
+              }}
             />
           ))
         )}

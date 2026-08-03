@@ -29,6 +29,7 @@ function renderCatalogDialog<T>(
   keyExtractor: (item: T) => string,
   onSelect: (item: T) => void,
   c: ProfileColors,
+  emptyMessage?: string,
 ): React.JSX.Element {
   return (
     <Portal>
@@ -59,6 +60,15 @@ function renderCatalogDialog<T>(
                 </Text>
               </TouchableOpacity>
             )}
+            ListEmptyComponent={
+              emptyMessage ? (
+                <Text
+                  style={{ fontSize: 14, color: c.muted, paddingVertical: 16 }}
+                >
+                  {emptyMessage}
+                </Text>
+              ) : null
+            }
           />
         </Dialog.Content>
         <Dialog.Actions>
@@ -101,6 +111,7 @@ export default function CatalogDialogs({
         (item) => String(item.id_localidad),
         (item) => onSelectLocalidad(item.id_localidad, item.nombre),
         c,
+        'Este municipio no tiene localidades cargadas. Elegí otro municipio o contactá soporte.',
       )}
     </>
   );

@@ -16,6 +16,7 @@ interface OrderRow {
   creado_en: string;
   productos?: string[];
   has_more_productos?: boolean;
+  expirado?: boolean;
 }
 
 const STATUS_VARIANT: Record<
@@ -92,9 +93,12 @@ export function BuyerOrders() {
       key: 'estado_actual',
       label: 'Estado',
       render: (o) => (
-        <Badge variant={STATUS_VARIANT[o.estado_actual] ?? 'default'}>
-          {o.estado_actual.replace(/_/g, ' ')}
-        </Badge>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Badge variant={STATUS_VARIANT[o.estado_actual] ?? 'default'}>
+            {o.estado_actual.replace(/_/g, ' ')}
+          </Badge>
+          {o.expirado === true ? <Badge variant="error">Expirado</Badge> : null}
+        </div>
       ),
     },
     {

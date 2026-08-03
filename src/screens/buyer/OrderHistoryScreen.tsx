@@ -129,6 +129,26 @@ export default function OrderHistoryScreen(): React.JSX.Element {
               {item.estado_actual.replace(/_/g, ' ')}
             </Text>
           </View>
+          {item.expirado === true ? (
+            <View
+              style={{
+                backgroundColor: colors.error,
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: colors.iconWhite,
+                }}
+              >
+                Expirado
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <Pressable

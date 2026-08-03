@@ -35,7 +35,8 @@ export default function WizardItemCard({
 }): React.JSX.Element {
   const producto = allProductos.find((p) => p.id_producto === item.fk_producto);
   const nombre =
-    producto?.nombre_producto ?? `Producto #${String(item.fk_producto)}`;
+    producto?.nombre_producto ??
+    'Producto no disponible (eliminado del catálogo)';
 
   return (
     <View className="mb-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -51,6 +52,13 @@ export default function WizardItemCard({
           <Text className="text-xs text-red-500">Eliminar</Text>
         </Pressable>
       </View>
+
+      {!producto ? (
+        <Text className="mb-2 text-xs text-red-500">
+          Este producto fue eliminado del catálogo y ya no se puede publicar.
+          Quitalo de la publicación para continuar.
+        </Text>
+      ) : null}
 
       {/* Photo */}
       <Pressable

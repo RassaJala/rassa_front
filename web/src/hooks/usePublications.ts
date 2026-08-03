@@ -77,7 +77,7 @@ export function usePublicacion(id: number) {
 }
 
 export function useProductosSemanales(pubId: number) {
-  return useQuery<ApiResponse<ProductoSemanal[]>>({
+  return useQuery<ApiResponse<{ results: ProductoSemanal[] }>>({
     queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,

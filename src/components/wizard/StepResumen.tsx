@@ -66,7 +66,7 @@ export default function StepResumen({
           );
           const nombre =
             producto?.nombre_producto ??
-            `Producto #${String(item.fk_producto)}`;
+            'Producto no disponible (eliminado del catálogo)';
           const unidad = unidades.find((u) => u.id_unidad === item.fk_unidad);
           const hasErrors = itemValidations.has(item.tempId);
 
@@ -114,6 +114,13 @@ export default function StepResumen({
                   />
                 )}
               </View>
+
+              {!producto ? (
+                <Text style={{ fontSize: 13, color: coral, marginBottom: 6 }}>
+                  Este producto fue eliminado del catálogo. Quitalo para poder
+                  publicar.
+                </Text>
+              ) : null}
 
               <View style={{ flexDirection: 'row', gap: 16 }}>
                 <Text style={{ fontSize: 13, color: muted }}>

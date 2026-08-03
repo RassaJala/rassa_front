@@ -1,9 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as ImagePicker from 'expo-image-picker';
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePreventRemove } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -23,6 +31,8 @@ import { usePublicationWizard } from '@/hooks/usePublicationWizard';
 import type { WizardStep } from '@/hooks/usePublicationWizard';
 import { useTheme } from '@/store/ThemeContext';
 import type { FarmerStackParamList } from '@/types';
+import { parseApiError } from '@/utils/apiErrors';
+import { isMondayToday, parseLocalDate } from '@/utils/date';
 
 type Nav = NativeStackNavigationProp<FarmerStackParamList, 'PublicationWizard'>;
 
@@ -79,7 +89,7 @@ export default function PublicationWizardScreen({
   const { data: unidadesData, isLoading: isUnidadesLoading } = useUnidades();
 
   const publicacion = pubData?.data;
-  const productos = semanalData?.data ?? [];
+  const productos = semanalData?.data?.results ?? [];
   const allProductos = allProducts?.data ?? [];
   const unidades = unidadesData?.data ?? [];
 
@@ -101,6 +111,13 @@ export default function PublicationWizardScreen({
   const isMutating = wizard.isPublishing || wizard.isCreating;
   const isLoadingData =
     isPubLoading || isSemanalLoading || isProductsLoading || isUnidadesLoading;
+
+  // Backend rule: publications can only be created/edited on Mondays, and an
+  // existing publication can only be edited while in 'borrador' state.
+  const isEditableWeekday = isMondayToday();
+  const isNewPublication = publicacionId == null;
+  const isBorrador = isNewPublication || publicacion?.estado === 'borrador';
+  const canEdit = isEditableWeekday && isBorrador;
 
   usePreventRemove(isMutating, () => {
     Alert.alert(
@@ -145,7 +162,7 @@ export default function PublicationWizardScreen({
       ]);
     } catch (error) {
       console.error('[PublicationWizard] publish failed:', error);
-      Alert.alert('Error', 'No se pudo publicar. Intentá de nuevo.');
+      Alert.alert('No se pudo publicar', parseApiError(error));
     }
   }, [wizard, navigation]);
 
@@ -157,7 +174,7 @@ export default function PublicationWizardScreen({
       ]);
     } catch (error) {
       console.error('[PublicationWizard] saveDraft failed:', error);
-      Alert.alert('Error', 'No se pudo guardar. Intentá de nuevo.');
+      Alert.alert('No se pudo guardar', parseApiError(error));
     }
   }, [wizard, navigation]);
 
@@ -169,6 +186,12 @@ export default function PublicationWizardScreen({
   }, [wizard]);
 
   const { nextMondayDate } = useFormattedDate();
+
+  // When editing, the step must show the stored publication date, not the
+  // date computed from today.
+  const displayedFecha = publicacion
+    ? parseLocalDate(publicacion.fecha_publicacion)
+    : nextMondayDate;
 
   if (isLoadingData) {
     return (
@@ -184,6 +207,67 @@ export default function PublicationWizardScreen({
         <Text style={{ color: muted, marginTop: 12, fontSize: 14 }}>
           Cargando publicación...
         </Text>
+      </View>
+    );
+  }
+
+  if (!canEdit) {
+    const reason = isEditableWeekday
+      ? 'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.'
+      : isNewPublication
+        ? 'Solo se pueden crear publicaciones los lunes.'
+        : 'Solo puedes editar publicaciones los lunes.';
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 28,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="calendar-lock-outline"
+          size={48}
+          color={muted}
+        />
+        <Text
+          style={{
+            color: fg,
+            fontSize: 16,
+            fontWeight: '600',
+            textAlign: 'center',
+            marginTop: 16,
+          }}
+        >
+          Publicación bloqueada
+        </Text>
+        <Text
+          style={{
+            color: muted,
+            fontSize: 14,
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
+          {reason}
+        </Text>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={({ pressed }) => ({
+            marginTop: 24,
+            paddingVertical: 12,
+            paddingHorizontal: 32,
+            borderRadius: 12,
+            backgroundColor: brand,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ color: white, fontWeight: '600', fontSize: 15 }}>
+            Volver
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -219,7 +303,7 @@ export default function PublicationWizardScreen({
 
         {wizard.currentStep === 'fecha' && (
           <StepFecha
-            nextMondayDate={nextMondayDate}
+            nextMondayDate={displayedFecha}
             accentBg={accentBg}
             brand={brand}
             fg={fg}

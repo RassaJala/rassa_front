@@ -41,6 +41,12 @@ function formatearFecha(iso: string): string {
   });
 }
 
+function isOrderExpired(order: OrderDetail): boolean {
+  if (order.expirado === true) return true;
+  if (!order.fecha_expiracion) return false;
+  return new Date(order.fecha_expiracion) < new Date();
+}
+
 export function BuyerOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -237,6 +243,47 @@ export function BuyerOrderDetail() {
               }}
             >
               Pasa al punto de entrega por tu pedido
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Expired order banner */}
+      {isOrderExpired(order) ? (
+        <div
+          style={{
+            background: colors.error,
+            borderRadius: 16,
+            padding: 20,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          <span style={{ fontSize: 28 }}>⏰</span>
+          <div>
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: colors.iconWhite,
+                margin: 0,
+              }}
+            >
+              Pedido expirado
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: colors.iconWhite,
+                margin: '4px 0 0 0',
+                opacity: 0.9,
+              }}
+            >
+              {order.fecha_expiracion
+                ? `Este pedido expiró el ${formatearFecha(order.fecha_expiracion)}. Ya no se puede modificar ni confirmar.`
+                : 'Este pedido expiró. Ya no se puede modificar ni confirmar.'}
             </p>
           </div>
         </div>
