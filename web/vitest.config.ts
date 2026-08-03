@@ -7,6 +7,15 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     forbidOnly: true,
+    coverage: {
+      provider: 'v8',
+      thresholds: {
+        lines: 80,
+        branches: 80,
+        functions: 80,
+        statements: 80,
+      },
+    },
     alias: {
       '@/common': path.resolve(__dirname, '../packages/common/src'),
       '@': path.resolve(__dirname, './src'),
