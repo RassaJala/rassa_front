@@ -45,6 +45,7 @@ export interface FetchAllPagesOptions<T> {
   readonly source?: string;
   readonly keyOf?: (item: T) => string | number;
   readonly signal?: AbortSignal;
+  readonly maxDurationMs?: number;
 }
 
 async function fetchPage<T>(
@@ -105,6 +106,10 @@ export async function fetchAllPages<T>(
   const source = options?.source ?? 'fetchAllPages';
   const keyOf = options?.keyOf;
   const signal = options?.signal;
+  const deadline =
+    options?.maxDurationMs !== undefined
+      ? Date.now() + options.maxDurationMs
+      : Infinity;
   const accumulated: T[] = [];
   const seen = new Set<string | number>();
   let errores = 0;
@@ -121,6 +126,14 @@ export async function fetchAllPages<T>(
       );
       Sentry.captureMessage(
         `[${source}] se alcanzó el límite de ${maxPages} páginas al obtener ${url}`,
+      );
+      break;
+    }
+    if (Date.now() >= deadline) {
+      truncated = true;
+      console.warn(`[${source}] deadline reached, stopping fetch`);
+      Sentry.captureMessage(
+        `[${source}] se alcanzó el deadline al obtener ${url}`,
       );
       break;
     }

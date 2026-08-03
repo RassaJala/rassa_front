@@ -44,7 +44,15 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
   const white = colors.iconWhite;
 
-  const today = todayString();
+  const [today, setToday] = useState(todayString);
+
+  // Midnight rollover: recalculate 'today' when the date changes.
+  useEffect(() => {
+    const msUntilMidnight =
+      new Date().setHours(24, 0, 0, 0) - Date.now() + 1000;
+    const timer = setTimeout(() => setToday(todayString()), msUntilMidnight);
+    return () => clearTimeout(timer);
+  }, [today]);
 
   const [filter, setFilter] = useState<RecoleccionEstado | ''>('');
   const [toast, setToast] = useState<{

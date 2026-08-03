@@ -3,6 +3,7 @@ import type {
   RecoleccionEstado,
   RecoleccionPayload,
 } from '@/types/recolecciones';
+import { assertValidId } from '@/utils/ids';
 
 import api from './api';
 import { fetchAllPages, unwrapOk } from './pagination';
@@ -45,7 +46,9 @@ export async function fetchRecolecciones(
 export async function createRecoleccion(
   payload: RecoleccionPayload,
 ): Promise<Recoleccion> {
-  const { data } = await api.post<unknown>(RECOLECCIONES_URL, payload);
+  const { data } = await api.post<unknown>(RECOLECCIONES_URL, payload, {
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+  });
   return unwrapOk<Recoleccion>(data);
 }
 
@@ -53,6 +56,7 @@ export async function cambiarEstadoRecoleccion(
   id: number,
   estado: RecoleccionEstado,
 ): Promise<Recoleccion> {
+  assertValidId(id, 'recoleccion');
   const { data } = await api.post<unknown>(
     `${RECOLECCIONES_URL}${id}/estado/`,
     { estado },
@@ -61,6 +65,7 @@ export async function cambiarEstadoRecoleccion(
 }
 
 export async function cancelarRecoleccion(id: number): Promise<Recoleccion> {
+  assertValidId(id, 'recoleccion');
   const { data } = await api.post<unknown>(
     `${RECOLECCIONES_URL}${id}/cancelar/`,
   );

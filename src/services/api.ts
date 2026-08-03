@@ -223,6 +223,7 @@ export function mediaUrl(path: string | null | undefined): string | null {
  * cliente: solo rutas relativas o absolutas del mismo origen que la API.
  */
 export function isApiUrl(url: string): boolean {
+  if (url.startsWith('//')) return false;
   if (url.startsWith('/')) return true;
   try {
     return new URL(url).origin === new URL(baseURL).origin;
