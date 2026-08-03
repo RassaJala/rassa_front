@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPago } from '@/common/payments';
+import { esPropietarioPago, fetchPago } from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -73,10 +73,9 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
     );
   }
 
-  // Defensa en profundidad: aunque el backend ya scoping los pagos al
-  // propietario (IDOR mitigate), nunca renderizamos un recibo ajeno.
-  const esPropietario =
-    pago != null && pago.cliente_id != null && pago.cliente_id === user?.id;
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
     return (

@@ -17,6 +17,10 @@ vi.mock('../../hooks/useAppColors', () => ({
   }),
 }));
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: { id: 4 } })),
+}));
+
 vi.mock('@/common/payments', async () => ({
   ...(await vi.importActual('@/common/payments')),
   fetchTiposPago: vi.fn(),

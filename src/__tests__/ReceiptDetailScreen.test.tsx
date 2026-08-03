@@ -135,9 +135,12 @@ describe('ReceiptDetailScreen', () => {
   it('does not render a receipt owned by another user (IDOR defense)', async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 99 } });
 
-    const { findByText } = renderScreen();
+    const { findByText, queryByText } = renderScreen();
     expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
-    // el pago está cargado pero no debe renderizarse al ser de otro usuario
-    expect(useAuth).toHaveBeenCalled();
+    // El recibo ajeno fue cargado por la API (mock activo) pero NUNCA se
+    // renderiza su contenido: ni folio, ni productos, ni monto.
+    expect(queryByText('PAG-0009')).toBeNull();
+    expect(queryByText('Manzana')).toBeNull();
+    expect(queryByText('Cliente Test')).toBeNull();
   });
 });

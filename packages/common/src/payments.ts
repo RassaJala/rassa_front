@@ -4,6 +4,19 @@ import type { AxiosInstance } from 'axios';
 
 export const ORDER_STATUS_READY = 'listo_para_retirar';
 
+/** Query key raíz para la lista de recibos del cliente. */
+export const PAGOS_CLIENTE_QUERY_KEY = 'pagos-cliente';
+
+// ── Ownership guard ────────────────────────────────────────
+// Defensa en profundidad contra IDOR: aunque el backend ya filtra los pagos
+// por propietario, nunca renderizamos un recibo ajeno del lado del cliente.
+export function esPropietarioPago(
+  pago: { readonly cliente_id: number | null } | null | undefined,
+  userId: number | null | undefined,
+): boolean {
+  return pago != null && pago.cliente_id != null && pago.cliente_id === userId;
+}
+
 // ── Payment types ─────────────────────────────────────────
 
 export interface TipoPago {

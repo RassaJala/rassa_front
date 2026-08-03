@@ -24,6 +24,10 @@ jest.mock('@/store/ThemeContext', () => ({
   }),
 }));
 
+jest.mock('@/store/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 4 } }),
+}));
+
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));

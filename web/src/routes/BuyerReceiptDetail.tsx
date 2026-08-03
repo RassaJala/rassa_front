@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPago, type PaymentDetail } from '@/common/payments';
+import { esPropietarioPago, fetchPago } from '@/common/payments';
+import type { PaymentDetail } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -63,10 +64,9 @@ export function BuyerReceiptDetail() {
     return <LoadingSpinner className="mt-20" />;
   }
 
-  // Defensa en profundidad: el backend ya scoping los pagos al propietario
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
   // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
-  const esPropietario =
-    pago != null && pago.cliente_id != null && pago.cliente_id === user?.id;
+  const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
     return (

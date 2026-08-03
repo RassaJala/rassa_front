@@ -2,17 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPagos, type PaymentDetail } from '@/common/payments';
+import {
+  PAGOS_CLIENTE_QUERY_KEY,
+  fetchPagos,
+  type PaymentDetail,
+} from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAppColors } from '../hooks/useAppColors';
+import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 
 export function BuyerReceipts() {
   const navigate = useNavigate();
   const colors = useAppColors();
   const { brand, fg, muted, border, surface } = colors;
+  const { user } = useAuth();
 
   const {
     data: pagos = [],
@@ -20,7 +26,7 @@ export function BuyerReceipts() {
     isError,
     refetch,
   } = useQuery<PaymentDetail[]>({
-    queryKey: ['pagos-cliente'],
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
     queryFn: () => fetchPagos(api),
   });
 

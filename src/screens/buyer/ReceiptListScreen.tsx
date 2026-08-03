@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   Text,
   View,
 } from 'react-native';
@@ -13,10 +14,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPagos } from '@/common/payments';
+import { fetchPagos, PAGOS_CLIENTE_QUERY_KEY } from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { BuyerStackParamList } from '@/types';
 
@@ -26,6 +28,7 @@ export default function ReceiptListScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
+  const { user } = useAuth();
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -39,8 +42,9 @@ export default function ReceiptListScreen(): React.JSX.Element {
     isLoading,
     isError,
     refetch,
+    isRefetching,
   } = useQuery<PaymentDetail[]>({
-    queryKey: ['pagos-cliente'],
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
     queryFn: () => fetchPagos(api),
   });
 
@@ -213,6 +217,12 @@ export default function ReceiptListScreen(): React.JSX.Element {
         data={pagos}
         renderItem={renderReceipt}
         keyExtractor={keyExtractor}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+          />
+        }
         ListEmptyComponent={
           <View
             style={{

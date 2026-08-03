@@ -130,6 +130,10 @@ describe('BuyerReceiptDetail', () => {
 
     renderPage();
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
-    expect(useAuth).toHaveBeenCalled();
+    // El recibo ajeno fue cargado por la API (mock activo) pero NUNCA se
+    // renderiza su contenido: ni folio, ni productos, ni cliente.
+    expect(screen.queryByText('PAG-0009')).toBeNull();
+    expect(screen.queryByText('Manzana')).toBeNull();
+    expect(screen.queryByText('Cliente Test')).toBeNull();
   });
 });

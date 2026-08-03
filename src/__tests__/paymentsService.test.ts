@@ -127,6 +127,12 @@ describe('payments service', () => {
     await expect(fetchPagoPorPedido(api, 4)).resolves.toBeNull();
   });
 
+  it('fetchPagoPorPedido returns null when the backend responds null', async () => {
+    (api.get as jest.Mock).mockResolvedValueOnce({ data: null });
+
+    await expect(fetchPagoPorPedido(api, 4)).resolves.toBeNull();
+  });
+
   it('fetchPagos requests /pagos/ and returns a flat array untouched', async () => {
     const pagos: PaymentDetail[] = [
       {
