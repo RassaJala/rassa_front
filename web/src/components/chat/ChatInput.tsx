@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAudioRecorder } from '~/hooks/chat/useAudioRecorder';
 import type { AttachmentType } from '@rassa/chat';
-import { ATTACHMENT_TYPES } from '@rassa/chat';
+import { ATTACHMENT_TYPES, validateSize } from '@rassa/chat';
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -78,7 +78,13 @@ export function ChatInput({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setSelectedFile(file);
+    if (file) {
+      if (!validateSize(file.size)) {
+        alert('El archivo supera el tamaño máximo permitido de 20MB.');
+        return;
+      }
+      setSelectedFile(file);
+    }
   };
 
   const removeFile = () => {
@@ -197,7 +203,7 @@ export function ChatInput({
               autoResize();
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Escribí un mensaje..."
+            placeholder="Escribe un mensaje..."
             disabled={disabled}
             className="max-h-32 flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none"
             style={{
