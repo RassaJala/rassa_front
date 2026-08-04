@@ -192,9 +192,7 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
   useEffect(() => {
     if (createChat.isError) {
       showToast('No se pudo abrir el chat con el agricultor.', 'error');
-      createChat.reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createChat.isError, showToast]);
 
   const handleContact = useCallback(
