@@ -134,6 +134,11 @@ describe('ReceiptPage', () => {
 
     expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.document.write).toHaveBeenCalled();
+    expect(mockWin.document.close).toHaveBeenCalled();
+
+    // La impresión se dispara recién cuando el popup termina de cargar.
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
     expect(mockWin.print).toHaveBeenCalled();
 
     const html = (
@@ -142,6 +147,9 @@ describe('ReceiptPage', () => {
     expect(html).toContain('PAG-0009');
     expect(html).toContain('Manzana');
     expect(html).toContain('RASSA');
+    // Montos reales del mock: 2 × $59.74 = $119.48 (importe, subtotal y total).
+    expect(html).toContain('$59.74');
+    expect(html).toContain('$119.48');
     openSpy.mockRestore();
   });
 });

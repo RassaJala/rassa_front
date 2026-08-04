@@ -1,4 +1,5 @@
 import { formatearFecha } from './dates';
+import { calcularSubtotal, formatearMonto } from './payments';
 import type { PaymentDetail } from './payments';
 
 const BRAND = '#24563C';
@@ -10,14 +11,12 @@ const BORDER = '#E2E6DF';
 
 function fmt(amount: string | number): string {
   const n = Number(amount);
-  return Number.isFinite(n) ? n.toFixed(2) : '0.00';
+  // Dato corrupto (p. ej. "12,50"): no debe parecer un monto real.
+  return Number.isFinite(n) ? formatearMonto(n) : '—';
 }
 
 export function buildReceiptHtml(pago: PaymentDetail): string {
-  const subtotal = (pago.productos ?? []).reduce(
-    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
-    0,
-  );
+  const subtotal = calcularSubtotal(pago.productos ?? []);
 
   const filas = (pago.productos ?? [])
     .map(
@@ -25,8 +24,8 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
         <tr>
           <td>${escapeHtml(prod.nombre)}</td>
           <td class="num">${prod.cantidad}</td>
-          <td class="num">$${fmt(prod.precio)}</td>
-          <td class="num">$${fmt(prod.cantidad * Number(prod.precio))}</td>
+          <td class="num">${fmt(prod.precio)}</td>
+          <td class="num">${fmt(prod.cantidad * Number(prod.precio))}</td>
         </tr>`,
     )
     .join('');
@@ -123,13 +122,13 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     </thead>
     <tbody>${filas}</tbody>
     <tfoot>
-      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">$${fmt(subtotal)}</td></tr>
+      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${fmt(subtotal)}</td></tr>
     </tfoot>
   </table>
 
   <div class="total">
     <span>Total pagado</span>
-    <strong>$${fmt(pago.monto)}</strong>
+    <strong>${fmt(pago.monto)}</strong>
   </div>
 
   <p class="footer">Documento generado el ${formatearFecha(pago.fecha_pago)} — RASSA</p>
@@ -137,7 +136,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 </html>`;
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

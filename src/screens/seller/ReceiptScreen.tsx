@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -121,10 +122,18 @@ export default function ReceiptScreen(): React.JSX.Element {
     );
   }
 
+  const productos = pago.productos ?? [];
+
   const handleImprimir = () => {
-    void Print.printAsync({ html: buildReceiptHtml(pago) }).catch(() => {
-      // print dialog dismissed or failed — nothing to recover, keep screen state
-    });
+    void Print.printAsync({ html: buildReceiptHtml(pago) }).catch(
+      (error: unknown) => {
+        console.warn('No se pudo imprimir el recibo', error);
+        Alert.alert(
+          'No se pudo imprimir',
+          'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+        );
+      },
+    );
   };
 
   return (
@@ -283,7 +292,7 @@ export default function ReceiptScreen(): React.JSX.Element {
             marginBottom: 16,
           }}
         >
-          {pago.productos.map((prod, idx) => (
+          {productos.map((prod, idx) => (
             <View
               key={`${prod.nombre}-${idx}`}
               style={{
@@ -291,7 +300,7 @@ export default function ReceiptScreen(): React.JSX.Element {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 paddingVertical: 8,
-                ...(idx < pago.productos.length - 1
+                ...(idx < productos.length - 1
                   ? { borderBottomWidth: 1, borderBottomColor: border }
                   : {}),
               }}

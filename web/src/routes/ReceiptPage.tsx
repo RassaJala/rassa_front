@@ -83,18 +83,36 @@ export function ReceiptPage() {
     );
   }
 
-  const totalProductos = pago.productos.reduce(
+  const productos = pago.productos ?? [];
+  const subtotal = productos.reduce(
     (acc, prod) => acc + prod.cantidad * Number(prod.precio),
     0,
   );
 
   const handleImprimir = () => {
-    const win = window.open('', '_blank');
-    if (!win) return;
+    let win: Window | null = null;
+    try {
+      win = window.open('', '_blank');
+    } catch {
+      // algunos navegadores lanzan excepción al bloquear popups
+    }
+    if (!win) {
+      alert('Permite popups para este sitio para poder imprimir el recibo.');
+      return;
+    }
     win.document.write(buildReceiptHtml(pago));
     win.document.close();
     win.focus();
-    win.print();
+    // Imprimir recién cuando el navegador terminó de procesar el documento,
+    // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
+    let printed = false;
+    const doPrint = () => {
+      if (printed) return;
+      printed = true;
+      win?.print();
+    };
+    win.onload = doPrint;
+    setTimeout(doPrint, 400);
   };
 
   return (
@@ -162,12 +180,12 @@ export function ReceiptPage() {
               <span className="w-24 text-right">Precio</span>
               <span className="w-28 text-right">Importe</span>
             </div>
-            {pago.productos.map((prod, idx) => (
+            {productos.map((prod, idx) => (
               <div
                 key={`${prod.nombre}-${idx}`}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-4"
                 style={
-                  idx < pago.productos.length - 1
+                  idx < productos.length - 1
                     ? { borderBottom: `1px solid ${border}` }
                     : undefined
                 }
@@ -210,7 +228,7 @@ export function ReceiptPage() {
                 className="w-28 text-right text-sm font-bold"
                 style={{ color: fg }}
               >
-                ${totalProductos.toFixed(2)}
+                ${subtotal.toFixed(2)}
               </span>
             </div>
           </div>

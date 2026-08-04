@@ -45,10 +45,6 @@ jest.mock('@/common/payments', () => ({
   fetchPago: jest.fn(),
 }));
 
-jest.mock('@/common/receipt', () => ({
-  buildReceiptHtml: jest.fn(() => '<html>RECIBO-PDF</html>'),
-}));
-
 const mockedFetchPago = fetchPago as jest.MockedFunction<typeof fetchPago>;
 
 const mockPago = {
@@ -111,10 +107,8 @@ describe('ReceiptScreen', () => {
     expect(mockedFetchPago).not.toHaveBeenCalled();
   });
 
-  it('opens the print dialog with the receipt PDF HTML when PDF is pressed', async () => {
+  it('opens the print dialog with the real receipt HTML when PDF is pressed', async () => {
     const printAsync = jest.requireMock('expo-print').printAsync;
-    const buildReceiptHtmlMock =
-      jest.requireMock('@/common/receipt').buildReceiptHtml;
 
     const { findByText, getByLabelText } = renderScreen();
     expect(await findByText('Recibo de Pago')).toBeTruthy();
@@ -122,9 +116,10 @@ describe('ReceiptScreen', () => {
     const pdfBtn = getByLabelText('Imprimir recibo en PDF');
     fireEvent.press(pdfBtn);
 
-    expect(buildReceiptHtmlMock).toHaveBeenCalledWith(mockPago);
-    expect(printAsync).toHaveBeenCalledWith({
-      html: '<html>RECIBO-PDF</html>',
-    });
+    // buildReceiptHtml no está mockeado: el HTML que se imprime es el real.
+    const printCall = printAsync.mock.calls[0][0] as { html: string };
+    expect(printCall.html).toContain('PAG-0009');
+    expect(printCall.html).toContain('Manzana');
+    expect(printCall.html).toContain('$59.74');
   });
 });
