@@ -8,6 +8,7 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import CorteCard from '@/components/seller/CorteCard';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
@@ -153,50 +154,15 @@ export default function HomeSellerScreen({
                 />
               </View>
 
-              <Pressable
+              <CorteCard
                 onPress={handleCortePress}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 14,
-                  backgroundColor: surface,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: border,
-                  padding: 16,
-                  opacity: pressed ? 0.6 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 22,
-                    backgroundColor: accentBg,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="cash-register"
-                    size={22}
-                    color={brand}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                    Corte de caja
-                  </Text>
-                  <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-                    Registrar arqueo y ver historial
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={22}
-                  color={muted}
-                />
-              </Pressable>
+                surface={surface}
+                border={border}
+                fg={fg}
+                muted={muted}
+                brand={brand}
+                accentBg={accentBg}
+              />
             </View>
           </ScrollView>
         </View>

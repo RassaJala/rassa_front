@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { formatearFecha, formatoDinero, hoyISO } from '@/common/cortes';
 import { colors } from '../constants/colors';
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -11,32 +12,18 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Toast } from '../components/ui/Toast';
 import type { ToastState } from '../components/ui/Toast';
 import { useAppColors } from '../hooks/useAppColors';
+import { useOnline } from '../hooks/useOnline';
 import { crearCorte, getCortes, getTeorico } from '../services/cortes';
 import type { Corte, TeoricoResponse } from '../services/cortes';
 import type { Column } from '../types';
 import { extractApiError } from '../utils/apiErrors';
 
-function hoyISO(): string {
-  const d = new Date();
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
-  const dia = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mes}-${dia}`;
-}
-
-function formatearFecha(fecha: string): string {
-  const [y, m, d] = fecha.split('-');
-  if (!y || !m || !d) return fecha;
-  return `${d}/${m}/${y}`;
-}
-
-function formatoDinero(monto: string): string {
-  return `$${parseFloat(monto).toFixed(2)}`;
-}
-
 export function VendorCorteCaja() {
   const c = useAppColors();
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [monto, setMonto] = useState('');
+  const [ultimoCorte, setUltimoCorte] = useState<Corte | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const today = hoyISO();
@@ -49,30 +36,50 @@ export function VendorCorteCaja() {
   } = useQuery<Corte[]>({
     queryKey: ['cortes'],
     queryFn: getCortes,
+    staleTime: 30_000,
   });
 
   const { data: teorico } = useQuery<TeoricoResponse>({
     queryKey: ['cortes-teorico', today],
     queryFn: () => getTeorico(today),
+    staleTime: 30_000,
   });
 
   const confirmarMutation = useMutation({
     mutationFn: async (montoReal: string) => crearCorte(montoReal, hoyISO()),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['cortes'] });
+      const prev = queryClient.getQueryData<Corte[]>(['cortes']);
+      return { prev };
+    },
+    onSuccess: (corte) => {
+      setUltimoCorte(corte);
       setMonto('');
-      void queryClient.invalidateQueries({ queryKey: ['cortes'] });
-      void queryClient.invalidateQueries({ queryKey: ['cortes-teorico'] });
       setToast({ message: 'Corte registrado correctamente', type: 'success' });
     },
-    onError: (error: unknown) => {
+    onError: (
+      error: unknown,
+      _montoReal: string,
+      context: { prev: Corte[] | undefined } | undefined,
+    ) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['cortes'], context.prev);
+      }
       const detail = extractApiError(error, ['fecha', 'monto_real']);
       setToast({ message: detail, type: 'error' });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['cortes'] });
+      void queryClient.invalidateQueries({ queryKey: ['cortes-teorico'] });
     },
   });
 
   const confirmar = () => {
     const valor = monto.trim();
-    if (!valor || confirmarMutation.isPending) return;
+    const num = parseFloat(valor);
+    if (!valor || confirmarMutation.isPending || Number.isNaN(num) || num < 0) {
+      return;
+    }
     confirmarMutation.mutate(valor);
   };
 
@@ -130,6 +137,21 @@ export function VendorCorteCaja() {
       <PageHeader title="Corte de caja" />
 
       <div style={{ display: 'grid', gap: 24 }}>
+        {!online && (
+          <div
+            className="flex items-center gap-2 rounded-lg border px-3 py-2"
+            style={{
+              backgroundColor: c.isDark
+                ? colors.admCoralBgD
+                : colors.admCoralBgL,
+              borderColor: c.coral,
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 700, color: c.coral }}>
+              Sin conexión a Internet — los datos pueden estar desactualizados
+            </span>
+          </div>
+        )}
         <Card className="dark:!bg-[#263028] dark:!border-[#353D35]">
           <div
             style={{
@@ -162,8 +184,10 @@ export function VendorCorteCaja() {
                   .replace(/[^\d.]/g, '')
                   .replace(/(\..*)\./g, '$1');
                 setMonto(cleaned);
+                setUltimoCorte(null);
               }}
               inputMode="decimal"
+              maxLength={15}
               placeholder="0.00"
               colors={c}
             />
@@ -174,6 +198,40 @@ export function VendorCorteCaja() {
             >
               Confirmar corte
             </Button>
+            {ultimoCorte != null &&
+              (() => {
+                const diff = parseFloat(ultimoCorte.diferencia);
+                const esCero = diff === 0;
+                const bannerColor = esCero ? colors.success : c.coral;
+                const texto = esCero
+                  ? 'Caja cuadrada — diferencia $0.00'
+                  : diff > 0
+                    ? `Sobró ${formatoDinero(ultimoCorte.diferencia)}`
+                    : `Faltó ${formatoDinero(String(Math.abs(diff)))}`;
+                return (
+                  <div
+                    className="flex items-center gap-2 rounded-lg border px-3 py-2"
+                    style={{
+                      backgroundColor: esCero
+                        ? colors.activeGreenBg
+                        : c.isDark
+                          ? colors.admCoralBgD
+                          : colors.admCoralBgL,
+                      borderColor: bannerColor,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: bannerColor,
+                      }}
+                    >
+                      {texto}
+                    </span>
+                  </div>
+                );
+              })()}
           </div>
         </Card>
 

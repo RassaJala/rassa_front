@@ -10,31 +10,16 @@ import {
 } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { formatearFecha, formatoDinero, hoyISO } from '@/common/cortes';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import { crearCorte, getCortes, getTeorico } from '@/services/cortes';
 import type { Corte, TeoricoResponse } from '@/services/cortes';
 import { useTheme } from '@/store/ThemeContext';
 import { extractApiError } from '@/utils/apiErrors';
-
-function hoyISO(): string {
-  const d = new Date();
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
-  const dia = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mes}-${dia}`;
-}
-
-function formatearFecha(fecha: string): string {
-  const [y, m, d] = fecha.split('-');
-  if (!y || !m || !d) return fecha;
-  return `${d}/${m}/${y}`;
-}
-
-function formatoDinero(monto: string): string {
-  return `$${parseFloat(monto).toFixed(2)}`;
-}
 
 export default function CashClosingScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
@@ -62,6 +47,7 @@ export default function CashClosingScreen(): React.JSX.Element {
   }>({ visible: false, message: '', type: 'info' });
 
   const queryClient = useQueryClient();
+  const netInfo = useNetInfo();
 
   const today = hoyISO();
 
@@ -74,11 +60,13 @@ export default function CashClosingScreen(): React.JSX.Element {
   } = useQuery<Corte[]>({
     queryKey: ['cortes'],
     queryFn: getCortes,
+    staleTime: 30_000,
   });
 
   const { data: teorico } = useQuery<TeoricoResponse>({
     queryKey: ['cortes-teorico', today],
     queryFn: () => getTeorico(today),
+    staleTime: 30_000,
   });
 
   const showToast = useCallback(
@@ -94,22 +82,39 @@ export default function CashClosingScreen(): React.JSX.Element {
 
   const confirmarMutation = useMutation({
     mutationFn: async (montoReal: string) => crearCorte(montoReal, hoyISO()),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['cortes'] });
+      const prev = queryClient.getQueryData<Corte[]>(['cortes']);
+      return { prev };
+    },
     onSuccess: (corte) => {
       setUltimoCorte(corte);
       setMonto('');
-      void queryClient.invalidateQueries({ queryKey: ['cortes'] });
-      void queryClient.invalidateQueries({ queryKey: ['cortes-teorico'] });
       showToast('Corte registrado correctamente', 'success');
     },
-    onError: (error: unknown) => {
+    onError: (
+      error: unknown,
+      _montoReal: string,
+      context: { prev: Corte[] | undefined } | undefined,
+    ) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['cortes'], context.prev);
+      }
       const detail = extractApiError(error, ['fecha', 'monto_real']);
       showToast(detail, 'error');
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['cortes'] });
+      void queryClient.invalidateQueries({ queryKey: ['cortes-teorico'] });
     },
   });
 
   const confirmar = useCallback(() => {
     const valor = monto.trim();
-    if (!valor) return;
+    const num = parseFloat(valor);
+    if (!valor || confirmarMutation.isPending || Number.isNaN(num) || num < 0) {
+      return;
+    }
     confirmarMutation.mutate(valor);
   }, [monto, confirmarMutation]);
 
@@ -295,6 +300,39 @@ export default function CashClosingScreen(): React.JSX.Element {
         keyExtractor={keyExtractor}
         ListHeaderComponent={
           <View style={{ paddingBottom: 12 }}>
+            {netInfo.isConnected === false && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: coralBg,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: redCoral,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  marginBottom: 12,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="wifi-off"
+                  size={18}
+                  color={redCoral}
+                />
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: redCoral,
+                    flex: 1,
+                  }}
+                >
+                  Sin conexión a Internet — los datos pueden estar
+                  desactualizados
+                </Text>
+              </View>
+            )}
             <Text
               style={{
                 fontSize: 13,
@@ -345,6 +383,7 @@ export default function CashClosingScreen(): React.JSX.Element {
                   setUltimoCorte(null);
                 }}
                 keyboardType="decimal-pad"
+                maxLength={15}
                 placeholder="0.00"
                 placeholderTextColor={colors.placeholder}
                 style={{

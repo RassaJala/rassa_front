@@ -1,3 +1,5 @@
+import { parseApiList } from '@/common/apiResponse';
+
 import api from './api';
 
 export interface Corte {
@@ -17,7 +19,7 @@ export interface TeoricoResponse {
 
 export async function getCortes(): Promise<Corte[]> {
   const { data } = await api.get<{ results?: Corte[] }>('/cortes/');
-  return data.results ?? [];
+  return parseApiList<Corte>(data);
 }
 
 export async function getTeorico(fecha: string): Promise<TeoricoResponse> {
