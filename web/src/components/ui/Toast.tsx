@@ -51,6 +51,7 @@ export function Toast({
       }, TOAST_EXIT_MS);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [visible, toast]);
 
   if (!toast) return null;

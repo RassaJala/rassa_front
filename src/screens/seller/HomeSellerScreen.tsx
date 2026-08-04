@@ -8,6 +8,7 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import CorteCard from '@/components/seller/CorteCard';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
@@ -34,6 +35,10 @@ export default function HomeSellerScreen({
 
   const handleWastePress = () => {
     navigation.getParent()?.navigate('WasteRegister');
+  };
+
+  const handleCortePress = () => {
+    navigation.getParent()?.navigate('CashClosing');
   };
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
@@ -153,7 +158,7 @@ export default function HomeSellerScreen({
                 />
               </View>
 
-              {/* QUICK ACTIONS */}
+{/* QUICK ACTIONS */}
               <Pressable
                 onPress={handleWastePress}
                 style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
@@ -211,6 +216,15 @@ export default function HomeSellerScreen({
                   </View>
                 </View>
               </Pressable>
+              <CorteCard
+                onPress={handleCortePress}
+                surface={surface}
+                border={border}
+                fg={fg}
+                muted={muted}
+                brand={brand}
+                accentBg={accentBg}
+              />
             </View>
           </ScrollView>
         </View>

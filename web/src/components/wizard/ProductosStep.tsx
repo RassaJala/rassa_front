@@ -3,6 +3,10 @@ import type {
   ItemValidation,
   WizardItemDraft,
 } from '../../utils/publicationWizard';
+import {
+  DELETED_PRODUCT_LABEL,
+  DELETED_PRODUCT_WARNING,
+} from '@/common/publicationLabels';
 import { mediaUrl } from '../../utils/mediaUrl';
 import { hideBrokenImage } from '../../utils/imageHelpers';
 import { Button } from '../ui/Button';
@@ -86,8 +90,7 @@ export function ProductosStep({
                     className="text-[15px] font-semibold"
                     style={{ color: colors.fg }}
                   >
-                    {item.nombre_producto ||
-                      `Producto #${String(item.fk_producto)}`}
+                    {item.nombre_producto || DELETED_PRODUCT_LABEL}
                   </p>
                   <button
                     onClick={() => onRemoveItem(item.tempId)}
@@ -98,6 +101,19 @@ export function ProductosStep({
                     ✕
                   </button>
                 </div>
+
+                {!item.nombre_producto && (
+                  <div
+                    className="mb-3 rounded-lg px-3 py-2 text-[13px]"
+                    style={{
+                      border: `1px solid ${colors.coral}`,
+                      background: colors.accentBg,
+                      color: colors.coral,
+                    }}
+                  >
+                    {DELETED_PRODUCT_WARNING}
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <div className="shrink-0">

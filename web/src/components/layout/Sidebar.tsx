@@ -77,6 +77,18 @@ const roleNavMap: Record<string, NavItem[]> = {
   vendedor: [
     { key: 'sales', label: 'Ventas', icon: '📊', path: '/vendedor/ventas' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/vendedor/pedidos' },
+    {
+      key: 'recolecciones',
+      label: 'Recolecciones',
+      icon: '🗓️',
+      path: '/vendedor/recolecciones',
+    },
+    {
+      key: 'corte',
+      label: 'Corte de caja',
+      icon: '💰',
+      path: '/vendedor/corte-caja',
+    },
     { key: 'chat', label: 'Chat', icon: '💬', path: '/vendedor/chat' },
     {
       key: 'profile',

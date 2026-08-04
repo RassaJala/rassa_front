@@ -1,8 +1,12 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import {
+  DELETED_PRODUCT_LABEL,
+  DELETED_PRODUCT_SUMMARY_WARNING,
+} from '@/common/publicationLabels';
 import { colors } from '@/constants/colors';
 import type {
   WizardItemDraft,
@@ -64,9 +68,7 @@ export default function StepResumen({
           const producto = allProductos.find(
             (p) => p.id_producto === item.fk_producto,
           );
-          const nombre =
-            producto?.nombre_producto ??
-            `Producto #${String(item.fk_producto)}`;
+          const nombre = producto?.nombre_producto ?? DELETED_PRODUCT_LABEL;
           const unidad = unidades.find((u) => u.id_unidad === item.fk_unidad);
           const hasErrors = itemValidations.has(item.tempId);
 
@@ -85,79 +87,123 @@ export default function StepResumen({
               <View
                 style={{
                   flexDirection: 'row',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: 8,
+                  gap: 12,
                 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: 15,
-                    fontWeight: '600',
-                    color: fg,
-                    flex: 1,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 8,
+                    backgroundColor: surface,
+                    borderWidth: 1,
+                    borderColor: border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
                   }}
                 >
-                  {nombre}
-                </Text>
-                {hasErrors ? (
-                  <MaterialCommunityIcons
-                    name="alert-circle"
-                    size={18}
-                    color={coral}
-                  />
-                ) : (
-                  <MaterialCommunityIcons
-                    name="check-circle"
-                    size={18}
-                    color={brand}
-                  />
-                )}
-              </View>
+                  {item.foto ? (
+                    <Image
+                      source={{ uri: item.foto }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="image-off"
+                      size={18}
+                      color={muted}
+                    />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 2,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: fg,
+                        flex: 1,
+                      }}
+                    >
+                      {nombre}
+                    </Text>
+                    {hasErrors ? (
+                      <MaterialCommunityIcons
+                        name="alert-circle"
+                        size={18}
+                        color={coral}
+                      />
+                    ) : (
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={18}
+                        color={brand}
+                      />
+                    )}
+                  </View>
+                  {!producto ? (
+                    <Text
+                      style={{ fontSize: 13, color: coral, marginBottom: 4 }}
+                    >
+                      {DELETED_PRODUCT_SUMMARY_WARNING}
+                    </Text>
+                  ) : null}
 
-              <View style={{ flexDirection: 'row', gap: 16 }}>
-                <Text style={{ fontSize: 13, color: muted }}>
-                  Stock:{' '}
-                  <Text style={{ color: fg, fontWeight: '500' }}>
-                    {item.stock || '\u2014'}
-                  </Text>
-                </Text>
-                <Text style={{ fontSize: 13, color: muted }}>
-                  Precio:{' '}
-                  <Text style={{ color: fg, fontWeight: '500' }}>
-                    ${item.precio || '0'}
-                  </Text>
-                </Text>
-                <Text style={{ fontSize: 13, color: muted }}>
-                  Unidad:{' '}
-                  <Text style={{ color: fg, fontWeight: '500' }}>
-                    {unidad?.tipo ?? '\u2014'}
-                  </Text>
-                </Text>
-              </View>
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <Text style={{ fontSize: 13, color: muted }}>
+                      Stock:{' '}
+                      <Text style={{ color: fg, fontWeight: '500' }}>
+                        {item.stock || '\u2014'}
+                      </Text>
+                    </Text>
+                    <Text style={{ fontSize: 13, color: muted }}>
+                      Precio:{' '}
+                      <Text style={{ color: fg, fontWeight: '500' }}>
+                        ${item.precio || '0'}
+                      </Text>
+                    </Text>
+                    <Text style={{ fontSize: 13, color: muted }}>
+                      Unidad:{' '}
+                      <Text style={{ color: fg, fontWeight: '500' }}>
+                        {unidad?.tipo ?? '\u2014'}
+                      </Text>
+                    </Text>
+                  </View>
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginTop: 8,
-                }}
-              >
-                <MaterialCommunityIcons
-                  name={item.foto ? 'image' : 'image-off'}
-                  size={14}
-                  color={item.foto ? brand : coral}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: item.foto ? brand : coral,
-                    fontWeight: '500',
-                  }}
-                >
-                  {item.foto ? 'Foto adjunta' : 'Sin foto'}
-                </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      marginTop: 8,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={item.foto ? 'image' : 'image-off'}
+                      size={14}
+                      color={item.foto ? brand : coral}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: item.foto ? brand : coral,
+                        fontWeight: '500',
+                      }}
+                    >
+                      {item.foto ? 'Foto adjunta' : 'Sin foto'}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           );

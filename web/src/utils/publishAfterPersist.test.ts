@@ -56,6 +56,6 @@ describe('publishAfterPersist', () => {
     await expect(
       publishAfterPersist(1, publishFn, navigateFn, mountedRef),
     ).rejects.toThrow();
-    expect(vi.mocked(logError).mock.calls[0][1]).toBe(original);
+    expect(vi.mocked(logError).mock.calls[0]?.[1]).toBe(original);
   });
 });
