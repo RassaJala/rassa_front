@@ -143,15 +143,25 @@ export async function fetchPagos(api: AxiosInstance): Promise<PaymentDetail[]> {
     PaymentDetail[] | { results?: PaymentDetail[] } | null
   >('/pagos/');
   const body = res.data;
-  if (body == null) return [];
+  // Fallo EXPLÍCITO en vez de degradación silenciosa: una respuesta inválida
+  // no se debe interpretar como "no hay pagos" (enmascararía errores del API).
+  if (body == null) {
+    throw new Error('Respuesta inesperada del servidor al listar pagos');
+  }
   const pagos = Array.isArray(body) ? body : body.results;
-  return Array.isArray(pagos) ? pagos : [];
+  if (!Array.isArray(pagos)) {
+    throw new Error('Respuesta inesperada del servidor al listar pagos');
+  }
+  return pagos;
 }
 
 export async function fetchPagoPorPedido(
   api: AxiosInstance,
   pedidoId: number,
 ): Promise<PaymentDetail | null> {
+  // ponytail: este lookup individual mantiene null para respuestas inválidas a
+  // propósito (null es legítimo: "este pedido aún no tiene pago"). Solo
+  // fetchPagos (listado) lanza ante respuestas inválidas.
   const res = await api.get<
     PaymentDetail[] | { results?: PaymentDetail[] } | null
   >(`/pagos/?pedido=${pedidoId}`);

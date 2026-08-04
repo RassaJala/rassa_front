@@ -1,7 +1,10 @@
 import type { AxiosInstance } from 'axios';
 
 import {
+  calcularImporte,
+  calcularSubtotal,
   createPago,
+  esPagoIdValido,
   esPropietarioPago,
   fetchPago,
   fetchPagoPorPedido,
@@ -198,18 +201,22 @@ describe('payments service', () => {
     await expect(fetchPagos(api)).resolves.toEqual([]);
   });
 
-  it('fetchPagos returns an empty list for an invalid payload', async () => {
+  it('fetchPagos throws when the backend responds null', async () => {
     (api.get as jest.Mock).mockResolvedValueOnce({ data: null });
 
-    await expect(fetchPagos(api)).resolves.toEqual([]);
+    await expect(fetchPagos(api)).rejects.toThrow(
+      'Respuesta inesperada del servidor al listar pagos',
+    );
   });
 
-  it('fetchPagos returns an empty list when results is an object, not an array', async () => {
+  it('fetchPagos throws when results is an object, not an array', async () => {
     (api.get as jest.Mock).mockResolvedValueOnce({
       data: { results: { count: 1 } },
     });
 
-    await expect(fetchPagos(api)).resolves.toEqual([]);
+    await expect(fetchPagos(api)).rejects.toThrow(
+      'Respuesta inesperada del servidor al listar pagos',
+    );
   });
 
   describe('formatearMonto', () => {
@@ -249,6 +256,61 @@ describe('payments service', () => {
 
     it('returns false when cliente_id differs from userId', () => {
       expect(esPropietarioPago({ cliente_id: 4 }, 99)).toBe(false);
+    });
+  });
+
+  describe('esPagoIdValido', () => {
+    it.each([1, 42])('returns true for positive integer %d', (valor) => {
+      expect(esPagoIdValido(valor)).toBe(true);
+    });
+
+    it.each([0, -5, 1.5, NaN])('returns false for %s', (valor) => {
+      expect(esPagoIdValido(valor)).toBe(false);
+    });
+
+    it.each([[undefined], [null]])('returns false for %s', (valor) => {
+      expect(esPagoIdValido(valor)).toBe(false);
+    });
+  });
+
+  describe('calcularImporte', () => {
+    it('multiplies cantidad by a numeric precio', () => {
+      expect(calcularImporte({ cantidad: 3, precio: 2.5 })).toBe(7.5);
+    });
+
+    it('returns 0 when cantidad is null', () => {
+      expect(calcularImporte({ cantidad: null, precio: 2.5 })).toBe(0);
+    });
+
+    it('parses a string precio', () => {
+      expect(calcularImporte({ cantidad: 2, precio: '10.5' })).toBe(21);
+    });
+
+    it('returns 0 when cantidad and precio are null', () => {
+      expect(calcularImporte({ cantidad: null, precio: null })).toBe(0);
+    });
+  });
+
+  describe('calcularSubtotal', () => {
+    it('sums multiple line items', () => {
+      const partidas = [
+        { cantidad: 2, precio: 2.5 },
+        { cantidad: 1, precio: '10.5' },
+      ];
+      expect(calcularSubtotal(partidas)).toBe(15.5);
+    });
+
+    it('returns 0 for an empty list', () => {
+      expect(calcularSubtotal([])).toBe(0);
+    });
+
+    it('does not crash when line items have nulls', () => {
+      const partidas = [
+        { cantidad: null, precio: null },
+        { cantidad: 2, precio: '10.5' },
+        { cantidad: 3, precio: null },
+      ];
+      expect(calcularSubtotal(partidas)).toBe(21);
     });
   });
 });
