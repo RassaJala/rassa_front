@@ -45,6 +45,7 @@ export interface PaginatedResponse<T> {
 
 export interface GroupMember {
   id: number;
+  idUsuario: number;
   nombre: string;
   rol: string;
   avatar: string | null;

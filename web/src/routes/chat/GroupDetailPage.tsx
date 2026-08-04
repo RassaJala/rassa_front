@@ -6,6 +6,7 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { useGroupMembers } from '~/hooks/chat/useGroupMembers';
 import { useRenameGroup } from '~/hooks/chat/useRenameGroup';
 import { useAddGroupMember } from '~/hooks/chat/useAddGroupMember';
+import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { GroupMemberItem } from '~/components/chat/GroupMemberItem';
 import { RenameGroupModal } from '~/components/chat/RenameGroupModal';
 import { AddMemberModal } from '~/components/chat/AddMemberModal';
@@ -27,6 +28,7 @@ export function GroupDetailPage() {
   const { data: members, isLoading } = useGroupMembers(conversationId);
   const renameGroup = useRenameGroup(conversationId);
   const addGroupMember = useAddGroupMember(conversationId);
+  const createChat = useCreatePrivateConversation();
 
   const [showRename, setShowRename] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -79,24 +81,28 @@ export function GroupDetailPage() {
         <h1 className="flex-1 text-base font-bold" style={{ color: c.fg }}>
           Detalle del grupo
         </h1>
-        <button
-          type="button"
-          onClick={() => setShowRename(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-medium"
-          style={{ color: c.brand }}
-          aria-label="Renombrar grupo"
-        >
-          Renombrar
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowAddMember(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-medium"
-          style={{ color: c.brand }}
-          aria-label="Agregar miembro"
-        >
-          + Miembro
-        </button>
+        {user?.rol !== 'cliente' && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowRename(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Renombrar grupo"
+            >
+              Renombrar
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddMember(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Agregar miembro"
+            >
+              + Miembro
+            </button>
+          </>
+        )}
       </div>
 
       {/* Members */}
@@ -120,7 +126,16 @@ export function GroupDetailPage() {
         )}
 
         {members?.map((member) => (
-          <GroupMemberItem key={member.id} member={member} />
+          <GroupMemberItem
+            key={member.id}
+            member={member}
+            chatDisabled={createChat.isPending}
+            {...(member.idUsuario === user?.id
+              ? {}
+              : {
+                  onChat: (m) => createChat.mutate({ fk_usuario: m.idUsuario }),
+                })}
+          />
         ))}
       </div>
 

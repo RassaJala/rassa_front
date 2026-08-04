@@ -56,7 +56,6 @@ export default function MessageEditModal({
           </Button>
           <Button
             mode="contained"
-            buttonColor="#DE393A"
             onPress={handleSave}
             disabled={saving || !text.trim() || text.trim() === currentContent}
             loading={saving}

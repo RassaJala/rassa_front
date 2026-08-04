@@ -20,7 +20,7 @@ import { useTheme } from '@/store/ThemeContext';
 
 type AdminTabParamList = {
   AdminProducts: undefined;
-  AdminPanel: undefined;
+  AdminInicio: undefined;
 };
 
 interface Product {

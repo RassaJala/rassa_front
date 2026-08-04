@@ -18,6 +18,7 @@ export type {
   Message,
   PaginatedResponse,
   RenameGroupPayload,
+  SearchUser,
   SendMessagePayload,
   SendMessageWithMediaPayload,
 } from '@rassa/chat';

@@ -103,7 +103,7 @@ function AdminTabs() {
       }}
     >
       <AdminTab.Screen
-        name="AdminPanel"
+        name="AdminInicio"
         component={AdminPanelScreen}
         options={{
           tabBarLabel: 'Inicio',
@@ -201,6 +201,8 @@ function AdminTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -316,6 +318,8 @@ function BuyerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -387,6 +391,16 @@ function FarmerScreens() {
         name="GroupDetail"
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <FarmerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <FarmerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
       />
     </FarmerStack.Navigator>
   );
@@ -477,6 +491,8 @@ function SellerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -507,6 +523,16 @@ function SellerNavigator() {
         name="GroupDetail"
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <SellerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <SellerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
       />
     </SellerStack.Navigator>
   );

@@ -87,6 +87,56 @@ describe('chat service', () => {
     });
   });
 
+  it('getMessages maps tipo/url_documento to adjuntos', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        data: {
+          count: 2,
+          next: null,
+          previous: null,
+          results: [
+            {
+              id_mensaje: 100,
+              emisor: { id_usuario: 11, nombre_completo: 'Nombre Apellido' },
+              contenido: 'Foto de prueba',
+              leido: false,
+              editado: false,
+              creado_en: '2026-07-30T14:00:00Z',
+              tipo: 'imagen',
+              url_documento: 'documentos/abc123_foto.jpg',
+            },
+            {
+              id_mensaje: 99,
+              emisor: { id_usuario: 11, nombre_completo: 'Nombre Apellido' },
+              contenido: 'Solo texto',
+              leido: true,
+              editado: false,
+              creado_en: '2026-07-30T13:00:00Z',
+              tipo: 'texto',
+              url_documento: null,
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await chatApi.getMessages(1, 1);
+
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0]?.adjuntos).toEqual([
+      {
+        id: 100,
+        mensaje: 100,
+        archivo: 'documentos/abc123_foto.jpg',
+        tipo: 'imagen',
+        nombre: 'abc123_foto.jpg',
+        tamaño: 0,
+      },
+    ]);
+    expect(result.results[1]?.adjuntos).toBeUndefined();
+  });
+
   it('sendMessage unwraps _ok and maps emisor fields', async () => {
     const payload = { conversacion: 1, contenido: 'Hola' };
     mockApi.post.mockResolvedValueOnce({
@@ -228,6 +278,7 @@ describe('chat service', () => {
     expect(result).toEqual([
       {
         id: 1,
+        idUsuario: 5,
         nombre: 'Ana López',
         rol: '',
         avatar: null,
@@ -367,7 +418,7 @@ describe('chat service', () => {
     expect(mockApi.post).toHaveBeenCalledWith(
       '/chat/mensajes/enviar-con-documento/',
       expect.any(FormData),
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      { headers: { 'Content-Type': null } },
     );
     expect(result.id).toBe(100);
     expect(result.remitente).toBe(1);

@@ -131,13 +131,13 @@ describe('useSendMessageWithMedia', () => {
     expect(mockApiPost).toHaveBeenCalledWith(
       '/chat/mensajes/enviar-con-documento/',
       expect.any(FormData),
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      { headers: { 'Content-Type': null } },
     );
 
     const formData = mockApiPost.mock.calls[0]?.[1] as FormData;
     const entries = Array.from(formData.entries());
-    expect(entries.some(([key]) => key === 'fk_conversacion')).toBe(true);
-    expect(entries.some(([key]) => key === 'conversacion')).toBe(false);
+    expect(entries.some(([key]) => key === 'conversacion')).toBe(true);
+    expect(entries.some(([key]) => key === 'fk_conversacion')).toBe(false);
   });
 
   it('replaces optimistic id with server id on success', async () => {

@@ -8,12 +8,14 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Text,
   View,
 } from 'react-native';
+import type { KeyboardEvent } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
@@ -32,7 +34,12 @@ import { useSendMessage } from '@/features/chat/hooks/useSendMessage';
 import { useSendMessageWithMedia } from '@/features/chat/hooks/useSendMessageWithMedia';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { AttachmentType, ChatStackParamList, Message } from '@/types/chat';
+import type {
+  AttachmentType,
+  ChatStackParamList,
+  Message,
+  SendMessageWithMediaPayload,
+} from '@/types/chat';
 
 type ChatNavigation = NativeStackNavigationProp<ChatStackParamList, 'Chat'>;
 
@@ -59,8 +66,34 @@ export default function ChatScreen(): React.JSX.Element {
   const editMessageMutation = useEditMessage(conversationId);
   const deleteMessageMutation = useDeleteMessage(conversationId);
   const markAsRead = useMarkAsRead();
-  const markedRef = useRef<Set<number>>(new Set());
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animateTo = (value: number) => {
+      Animated.timing(keyboardHeight, {
+        toValue: value,
+        duration: Platform.OS === 'ios' ? 250 : 180,
+        useNativeDriver: false,
+      }).start();
+    };
+    const showEvent = (event: KeyboardEvent) => {
+      animateTo(event.endCoordinates.height);
+    };
+    const hideEvent = () => {
+      animateTo(0);
+    };
+    const willShowSub = Keyboard.addListener('keyboardWillShow', showEvent);
+    const didShowSub = Keyboard.addListener('keyboardDidShow', showEvent);
+    const willHideSub = Keyboard.addListener('keyboardWillHide', hideEvent);
+    const didHideSub = Keyboard.addListener('keyboardDidHide', hideEvent);
+    return () => {
+      willShowSub.remove();
+      didShowSub.remove();
+      willHideSub.remove();
+      didHideSub.remove();
+    };
+  }, [keyboardHeight]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -108,20 +141,13 @@ export default function ChatScreen(): React.JSX.Element {
     [messages],
   );
 
-  // Auto-mark unread messages from other participant as read
   useEffect(() => {
-    if (!user?.id) return;
-    for (const msg of messages) {
-      if (
-        msg.remitente !== user.id &&
-        !msg.leido &&
-        !markedRef.current.has(msg.id)
-      ) {
-        markedRef.current.add(msg.id);
-        markAsRead.mutate(msg.id);
-      }
-    }
-  }, [messages, user?.id, markAsRead]);
+    if (!conversationId) return;
+    const timer = setTimeout(() => {
+      markAsRead.mutate(conversationId);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [conversationId, markAsRead]);
 
   const handleSend = useCallback(
     (text: string) => {
@@ -137,14 +163,19 @@ export default function ChatScreen(): React.JSX.Element {
     (
       file: { uri: string; name: string; type: string },
       kind: AttachmentType,
+      contenido?: string,
     ) => {
-      sendMediaMutation.mutate({
+      const payload: SendMessageWithMediaPayload = {
         conversacion: conversationId,
         tipo_documento: kind,
         documento: { uri: file.uri, name: file.name, type: file.type },
         remitente: user?.id ?? 0,
         remitente_nombre: user?.nombre ?? '',
-      });
+      };
+      if (contenido) {
+        payload.contenido = contenido;
+      }
+      sendMediaMutation.mutate(payload);
     },
     [conversationId, sendMediaMutation, user],
   );
@@ -179,7 +210,7 @@ export default function ChatScreen(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <View className="flex-1 items-center justify-center bg-rassa-bg dark:bg-rassa-bg-dark">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -187,8 +218,8 @@ export default function ChatScreen(): React.JSX.Element {
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-        <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+      <View className="flex-1 items-center justify-center bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
+        <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
           Error al cargar mensajes. Toca Reintentar.
         </Text>
       </View>
@@ -196,14 +227,13 @@ export default function ChatScreen(): React.JSX.Element {
   }
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-gray-50 dark:bg-gray-950"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
+    <Animated.View
+      className="flex-1 bg-rassa-bg dark:bg-rassa-bg-dark"
+      style={{ paddingBottom: keyboardHeight }}
     >
       {sortedMessages.length === 0 ? (
         <View className="flex-1 items-center justify-center p-4">
-          <Text className="text-center text-base text-gray-500 dark:text-gray-400">
+          <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
             No hay mensajes aún. ¡Escribe el primero!
           </Text>
         </View>
@@ -243,6 +273,6 @@ export default function ChatScreen(): React.JSX.Element {
         onSave={handleSaveEdit}
         saving={editMessageMutation.isPending}
       />
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }

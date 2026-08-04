@@ -3,9 +3,15 @@ import type { GroupMember } from '@rassa/chat';
 
 interface GroupMemberItemProps {
   member: GroupMember;
+  onChat?: (member: GroupMember) => void;
+  chatDisabled?: boolean;
 }
 
-export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
+export function GroupMemberItem({
+  member,
+  onChat,
+  chatDisabled,
+}: Readonly<GroupMemberItemProps>) {
   const c = useAppColors();
 
   return (
@@ -30,6 +36,23 @@ export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
           {member.rol || 'Miembro'}
         </div>
       </div>
+
+      {/* Chat button */}
+      {onChat && (
+        <button
+          type="button"
+          disabled={chatDisabled}
+          onClick={() => onChat(member)}
+          className="shrink-0 cursor-pointer rounded-md border-none px-3 py-1.5 text-sm font-medium"
+          style={{
+            background: chatDisabled ? c.border : c.brand,
+            color: chatDisabled ? c.muted : '#FFFFFF',
+          }}
+          aria-label={`Chatear con ${member.nombre || 'miembro'}`}
+        >
+          Chatear
+        </button>
+      )}
     </div>
   );
 }
