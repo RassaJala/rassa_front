@@ -2,7 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
-import { esPropietarioPago, fetchPago } from '@/common/payments';
+import {
+  calcularSubtotal,
+  esPropietarioPago,
+  fetchPago,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
+} from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
@@ -55,7 +61,7 @@ export function BuyerReceiptDetail() {
     isError,
     refetch,
   } = useQuery<PaymentDetail>({
-    queryKey: ['pago', paymentId],
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id, paymentId],
     queryFn: () => fetchPago(api, paymentId),
     enabled: paymentIdValid,
   });
@@ -91,10 +97,7 @@ export function BuyerReceiptDetail() {
 
   const productos = pago.productos ?? [];
 
-  const subtotal = productos.reduce(
-    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
-    0,
-  );
+  const subtotal = calcularSubtotal(productos);
 
   return (
     <div>
@@ -156,13 +159,13 @@ export function BuyerReceiptDetail() {
                   className="w-24 text-right text-sm"
                   style={{ color: muted }}
                 >
-                  ${Number(prod.precio).toFixed(2)}
+                  {formatearMonto(prod.precio)}
                 </span>
                 <span
                   className="w-28 text-right text-sm font-semibold"
                   style={{ color: fg }}
                 >
-                  ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                  {formatearMonto(prod.cantidad * Number(prod.precio))}
                 </span>
               </div>
             ))}
@@ -177,7 +180,7 @@ export function BuyerReceiptDetail() {
                 className="w-28 text-right text-sm font-bold"
                 style={{ color: fg }}
               >
-                ${subtotal.toFixed(2)}
+                {formatearMonto(subtotal)}
               </span>
             </div>
           </div>
@@ -235,7 +238,7 @@ export function BuyerReceiptDetail() {
                 Total pagado
               </span>
               <span className="text-2xl font-bold" style={{ color: brand }}>
-                ${Number(pago.monto).toFixed(2)}
+                {formatearMonto(pago.monto)}
               </span>
             </div>
           </div>

@@ -14,7 +14,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPagos, PAGOS_CLIENTE_QUERY_KEY } from '@/common/payments';
+import {
+  esPropietarioPago,
+  fetchPagos,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
+} from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -47,6 +52,12 @@ export default function ReceiptListScreen(): React.JSX.Element {
     queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
     queryFn: () => fetchPagos(api),
   });
+
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const pagosPropios = pagos.filter((pago) =>
+    esPropietarioPago(pago, user?.id),
+  );
 
   const keyExtractor = useCallback(
     (item: PaymentDetail) => String(item.id_pago),
@@ -84,7 +95,7 @@ export default function ReceiptListScreen(): React.JSX.Element {
             </Text>
           </View>
           <Text style={{ fontSize: 17, fontWeight: '700', color: fg }}>
-            ${Number(item.monto).toFixed(2)}
+            {formatearMonto(item.monto)}
           </Text>
         </View>
 
@@ -214,7 +225,7 @@ export default function ReceiptListScreen(): React.JSX.Element {
       </View>
 
       <FlatList
-        data={pagos}
+        data={pagosPropios}
         renderItem={renderReceipt}
         keyExtractor={keyExtractor}
         refreshControl={

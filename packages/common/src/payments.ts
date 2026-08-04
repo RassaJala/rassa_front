@@ -17,6 +17,30 @@ export function esPropietarioPago(
   return pago != null && pago.cliente_id != null && pago.cliente_id === userId;
 }
 
+// ── Format helpers ────────────────────────────────────────
+
+/** Subtotal de una lista de partidas de producto (cantidad × precio). */
+export function calcularSubtotal(
+  partidas: readonly {
+    readonly cantidad?: number | null;
+    readonly precio?: number | string | null;
+  }[],
+): number {
+  return partidas.reduce(
+    (acc, partida) =>
+      acc + (partida.cantidad ?? 0) * Number(partida.precio ?? 0),
+    0,
+  );
+}
+
+/** Formatea un monto como precio con `$` y dos decimales. */
+export function formatearMonto(
+  valor: number | string | null | undefined,
+): string {
+  const n = typeof valor === 'string' ? Number(valor) : (valor ?? 0);
+  return `$${n.toFixed(2)}`;
+}
+
 // ── Payment types ─────────────────────────────────────────
 
 export interface TipoPago {

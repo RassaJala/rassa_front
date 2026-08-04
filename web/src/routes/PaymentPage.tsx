@@ -9,7 +9,6 @@ import {
   fetchPagoPorPedido,
   fetchTiposPago,
   ORDER_STATUS_READY,
-  PAGOS_CLIENTE_QUERY_KEY,
 } from '@/common/payments';
 import { QUERY_STALE_TIME } from '../constants/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -118,7 +117,6 @@ export function PaymentPage() {
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-        queryClient.invalidateQueries({ queryKey: [PAGOS_CLIENTE_QUERY_KEY] }),
       ]).catch(() => {});
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
       paymentInFlight.current = false;
@@ -133,9 +131,6 @@ export function PaymentPage() {
           void Promise.all([
             queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
             queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-            queryClient.invalidateQueries({
-              queryKey: [PAGOS_CLIENTE_QUERY_KEY],
-            }),
           ]).catch(() => {});
           navigate(`/vendedor/recibo/${pago.id_pago}`, { replace: true });
           paymentInFlight.current = false;

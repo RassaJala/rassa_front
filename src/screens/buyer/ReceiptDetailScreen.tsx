@@ -14,7 +14,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { esPropietarioPago, fetchPago } from '@/common/payments';
+import {
+  calcularSubtotal,
+  esPropietarioPago,
+  fetchPago,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
+} from '@/common/payments';
 import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -47,7 +53,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
     isError,
     refetch,
   } = useQuery<PaymentDetail>({
-    queryKey: ['pago', paymentId],
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id, paymentId],
     queryFn: () => fetchPago(api, paymentId),
     enabled: paymentIdValid,
   });
@@ -121,10 +127,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
 
   const productos = pago.productos ?? [];
 
-  const subtotal = productos.reduce(
-    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
-    0,
-  );
+  const subtotal = calcularSubtotal(productos);
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -247,11 +250,11 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
                   {prod.nombre}
                 </Text>
                 <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
-                  {prod.cantidad}x ${Number(prod.precio).toFixed(2)}
+                  {prod.cantidad}x {formatearMonto(prod.precio)}
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                {formatearMonto(prod.cantidad * Number(prod.precio))}
               </Text>
             </View>
           ))}
@@ -271,7 +274,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
               Subtotal
             </Text>
             <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-              ${subtotal.toFixed(2)}
+              {formatearMonto(subtotal)}
             </Text>
           </View>
         </View>
@@ -293,7 +296,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
             Total pagado
           </Text>
           <Text style={{ fontSize: 22, fontWeight: '700', color: brand }}>
-            ${Number(pago.monto).toFixed(2)}
+            {formatearMonto(pago.monto)}
           </Text>
         </View>
       </ScrollView>

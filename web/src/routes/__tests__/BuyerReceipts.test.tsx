@@ -55,8 +55,8 @@ const mockPagos = [
     pedido: null,
     tipo_pago: 1,
     tipo_pago_nombre: 'Efectivo',
-    cliente_nombre: 'Cliente Test',
-    cliente_id: 4,
+    cliente_nombre: 'Cliente Ajeno',
+    cliente_id: 99,
     monto: '50.00',
     referencia: '',
     total_pedido: null,
@@ -84,18 +84,20 @@ describe('BuyerReceipts', () => {
     mockedFetchPagos.mockResolvedValue(mockPagos);
   });
 
-  it('renders the list of receipts from the API', async () => {
+  it('renders only the receipts owned by the current user (mixed payload)', async () => {
     renderPage();
 
     expect(await screen.findByText('Mis Recibos')).toBeTruthy();
     await waitFor(() =>
       expect(mockedFetchPagos).toHaveBeenCalledWith(expect.anything()),
     );
+    // Propio (cliente_id 4): se renderiza folio y monto.
     expect(screen.getByText('PAG-0009')).toBeTruthy();
-    expect(screen.getByText('PAG-0010')).toBeTruthy();
     expect(screen.getByText('$119.48')).toBeTruthy();
-    expect(screen.getByText('$50.00')).toBeTruthy();
     expect(screen.getByText(/Pedido #5/)).toBeTruthy();
+    // Ajeno (cliente_id 99): nunca se renderiza su folio ni su monto.
+    expect(screen.queryByText('PAG-0010')).toBeNull();
+    expect(screen.queryByText('$50.00')).toBeNull();
   });
 
   it('links each receipt to its detail page', async () => {

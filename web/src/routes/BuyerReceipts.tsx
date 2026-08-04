@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
 import {
-  PAGOS_CLIENTE_QUERY_KEY,
+  esPropietarioPago,
   fetchPagos,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
   type PaymentDetail,
 } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -29,6 +31,12 @@ export function BuyerReceipts() {
     queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
     queryFn: () => fetchPagos(api),
   });
+
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const pagosPropios = pagos.filter((pago) =>
+    esPropietarioPago(pago, user?.id),
+  );
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
@@ -56,13 +64,13 @@ export function BuyerReceipts() {
   return (
     <div>
       <PageHeader title="Mis Recibos" />
-      {pagos.length === 0 ? (
+      {pagosPropios.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-20 text-gray-500 dark:text-gray-400">
           <p>No tienes recibos aún</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {pagos.map((pago) => (
+          {pagosPropios.map((pago) => (
             <Link
               key={pago.id_pago}
               to={`/cliente/recibos/${pago.id_pago}`}
@@ -90,7 +98,7 @@ export function BuyerReceipts() {
                 </p>
               </div>
               <span style={{ fontSize: 17, fontWeight: 700, color: brand }}>
-                ${Number(pago.monto).toFixed(2)}
+                {formatearMonto(pago.monto)}
               </span>
             </Link>
           ))}
