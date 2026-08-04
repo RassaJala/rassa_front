@@ -24,6 +24,7 @@ import sonarjsPlugin from 'eslint-plugin-sonarjs';
 import unicornPlugin from 'eslint-plugin-unicorn';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import { defineConfig } from 'eslint/config';
+import prettierConfig from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
 
 import path from 'node:path';
@@ -415,4 +416,8 @@ export default defineConfig(
   ...createReactNativeRules(),
   ...createImportsAndBoundariesRules(),
   ...createQualityAndSecurityRules(),
+  // eslint-config-prettier DEBE ir al final absoluto: apaga cualquier regla
+  // de ESLint que choque con Prettier (p. ej. unicorn/no-nested-ternary, cuyos
+  // paréntesis Prettier elimina, causando el ping-pong eslint --fix ↔ prettier).
+  prettierConfig,
 );
