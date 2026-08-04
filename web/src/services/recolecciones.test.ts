@@ -297,6 +297,30 @@ describe('createRecoleccion', () => {
       }),
     ).rejects.toThrow('Validation error');
   });
+
+  it('uses fallback key when crypto.randomUUID is unavailable', async () => {
+    vi.stubGlobal('crypto', { randomUUID: undefined });
+    try {
+      mockedApi.post.mockResolvedValue({
+        data: { data: { id_recoleccion: 1 } },
+      });
+      await createRecoleccion({
+        fk_agricultor: 10,
+        fecha_recoleccion: '2026-08-02',
+      });
+      expect(mockedApi.post).toHaveBeenCalledWith(
+        '/recolecciones/',
+        expect.any(Object),
+        expect.objectContaining({
+          headers: {
+            'Idempotency-Key': expect.stringMatching(/^[0-9a-z]+-[0-9a-z]+$/),
+          },
+        }),
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('cambiarEstadoRecoleccion', () => {

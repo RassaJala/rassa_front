@@ -24,7 +24,13 @@ jest.mock('react-native/Libraries/Components/Keyboard/Keyboard', () => ({
   isVisible: jest.fn().mockReturnValue(false),
 }));
 
-const mockMutate = jest.fn(() => {
+const mockTransicionMutate = jest.fn(() => {
+  mockMutationPending = true;
+});
+const mockCancelarMutate = jest.fn(() => {
+  mockMutationPending = true;
+});
+const mockCreateMutate = jest.fn(() => {
   mockMutationPending = true;
 });
 const mockChatMutate = jest.fn();
@@ -95,9 +101,15 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
   useMutation: (options: MockMutationOptions) => {
-    mockMutations[mockMutationLabel(options)] = options;
+    const label = mockMutationLabel(options);
+    mockMutations[label] = options;
+    const mutateMap: Record<string, jest.Mock> = {
+      transicion: mockTransicionMutate,
+      cancelar: mockCancelarMutate,
+      create: mockCreateMutate,
+    };
     return {
-      mutate: mockMutate,
+      mutate: mutateMap[label] ?? mockTransicionMutate,
       isPending: mockMutationPending,
       isError: false,
     };
@@ -302,7 +314,7 @@ describe('CollectionScheduleScreen', () => {
     const { getAllByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getAllByText('Iniciar ruta')[0]);
-    expect(mockMutate).toHaveBeenCalledWith({
+    expect(mockTransicionMutate).toHaveBeenCalledWith({
       id: 1,
       estado: 'en_ruta',
     });
@@ -383,7 +395,7 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
-    expect(mockMutate).toHaveBeenCalledWith({
+    expect(mockCreateMutate).toHaveBeenCalledWith({
       fk_agricultor: 11,
       fecha_recoleccion: futuro,
       hora_inicio: null,
@@ -420,7 +432,7 @@ describe('CollectionScheduleScreen', () => {
     const confirmar = buttons?.find((b) => b.text === 'Sí, cancelar');
     confirmar?.onPress?.();
 
-    expect(mockMutate).toHaveBeenCalledWith(1);
+    expect(mockCancelarMutate).toHaveBeenCalledWith(1);
     alertSpy.mockRestore();
   });
 
@@ -458,7 +470,7 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), futuro);
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
-    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockCreateMutate).toHaveBeenCalledTimes(1);
 
     act(() => {
       mockMutations.create?.onError?.(
@@ -503,12 +515,12 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
-    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockCreateMutate).toHaveBeenCalledTimes(1);
 
     rerender(<CollectionScheduleScreen />);
     fireEvent.press(getByText('Guardando…'));
 
-    expect(mockMutate).toHaveBeenCalledTimes(1);
+    expect(mockCreateMutate).toHaveBeenCalledTimes(1);
   });
 
   it('rechaza fechas imposibles como 2026-02-31', () => {
