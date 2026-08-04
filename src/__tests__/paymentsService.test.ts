@@ -205,7 +205,7 @@ describe('payments service', () => {
     (api.get as jest.Mock).mockResolvedValueOnce({ data: null });
 
     await expect(fetchPagos(api)).rejects.toThrow(
-      'Respuesta inesperada del servidor al listar pagos',
+      'La respuesta del servidor es null al listar pagos',
     );
   });
 
@@ -215,7 +215,7 @@ describe('payments service', () => {
     });
 
     await expect(fetchPagos(api)).rejects.toThrow(
-      'Respuesta inesperada del servidor al listar pagos',
+      "El campo 'results' no es una lista al listar pagos",
     );
   });
 

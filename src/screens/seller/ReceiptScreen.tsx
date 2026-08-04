@@ -118,6 +118,8 @@ export default function ReceiptScreen(): React.JSX.Element {
     );
   }
 
+  const productos = pago.productos ?? [];
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
@@ -253,7 +255,7 @@ export default function ReceiptScreen(): React.JSX.Element {
             marginBottom: 16,
           }}
         >
-          {pago.productos.map((prod, idx) => (
+          {productos.map((prod, idx) => (
             <View
               key={`${prod.nombre}-${idx}`}
               style={{
@@ -261,7 +263,7 @@ export default function ReceiptScreen(): React.JSX.Element {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 paddingVertical: 8,
-                ...(idx < pago.productos.length - 1
+                ...(idx < productos.length - 1
                   ? { borderBottomWidth: 1, borderBottomColor: border }
                   : {}),
               }}

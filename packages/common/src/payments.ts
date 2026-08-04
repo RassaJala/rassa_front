@@ -83,7 +83,7 @@ export interface PaymentDetail {
   readonly monto: string;
   readonly referencia: string;
   readonly total_pedido: string | null;
-  readonly productos: PaymentProduct[];
+  readonly productos?: PaymentProduct[] | null;
   readonly fecha_pago: string;
 }
 
@@ -146,11 +146,11 @@ export async function fetchPagos(api: AxiosInstance): Promise<PaymentDetail[]> {
   // Fallo EXPLÍCITO en vez de degradación silenciosa: una respuesta inválida
   // no se debe interpretar como "no hay pagos" (enmascararía errores del API).
   if (body == null) {
-    throw new Error('Respuesta inesperada del servidor al listar pagos');
+    throw new Error('La respuesta del servidor es null al listar pagos');
   }
   const pagos = Array.isArray(body) ? body : body.results;
   if (!Array.isArray(pagos)) {
-    throw new Error('Respuesta inesperada del servidor al listar pagos');
+    throw new Error("El campo 'results' no es una lista al listar pagos");
   }
   return pagos;
 }
