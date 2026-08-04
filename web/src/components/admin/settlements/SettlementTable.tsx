@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import { resolveSettlementAmounts } from '@/common/settlements';
 import type { Settlement } from '@/common/settlements';
 import { formatDisplayDate } from '@/common/waste';
 import { Card } from '@/components/ui/Card';
@@ -47,34 +48,46 @@ export function SettlementTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((s) => (
-              <tr
-                key={s.id_liquidacion}
-                className="border-t border-gray-100 dark:border-gray-800"
-              >
-                <td className="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
-                  <Link
-                    to={`/admin/liquidaciones/${s.id_liquidacion}`}
-                    className="transition-colors hover:text-brand-green-forest hover:underline"
-                  >
-                    {s.agricultor_nombre}
-                  </Link>
-                </td>
-                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
-                  {formatDisplayDate(s.periodo_inicio)} —{' '}
-                  {formatDisplayDate(s.periodo_fin)}
-                </td>
-                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
-                  {formatMoney(s.monto_ventas)}
-                </td>
-                <td className="py-3 pr-4 font-semibold text-brand-green-forest">
-                  {formatMoney(s.monto_liquidar)}
-                </td>
-                <td className="py-3">
-                  <SettlementEstadoBadge estado={s.estado} />
-                </td>
-              </tr>
-            ))}
+            {rows.map((s) => {
+              // Same resolver as the detail screen so the list and detail never
+              // disagree on the "A liquidar" amount (CONV-1).
+              const amounts = resolveSettlementAmounts(s);
+              return (
+                <tr
+                  key={s.id_liquidacion}
+                  className="border-t border-gray-100 dark:border-gray-800"
+                >
+                  <td className="py-3 pr-4 font-medium text-gray-900 dark:text-gray-100">
+                    <Link
+                      to={`/admin/liquidaciones/${s.id_liquidacion}`}
+                      className="transition-colors hover:text-brand-green-forest hover:underline"
+                    >
+                      {s.agricultor_nombre}
+                    </Link>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
+                    {formatDisplayDate(s.periodo_inicio)} —{' '}
+                    {formatDisplayDate(s.periodo_fin)}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
+                    {formatMoney(amounts.montoVentas)}
+                  </td>
+                  <td className="py-3 pr-4 font-semibold text-brand-green-forest">
+                    {formatMoney(amounts.montoLiquidar)}
+                    {/* R3-001: a derived amount must never masquerade as
+                    authoritative server data — flag it like the detail does. */}
+                    {amounts.isEstimated && (
+                      <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400">
+                        (estimado)
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3">
+                    <SettlementEstadoBadge estado={s.estado} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -61,6 +61,12 @@ const farmerRaw = {
 describe('settlements service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // Deterministic origin for the isSafeNextUrl same-origin checks (CONV-2):
+    // the real backend emits `next` as an ABSOLUTE URL, so the guard compares
+    // its origin against the api instance's baseURL.
+    (api as unknown as { defaults: { baseURL: string } }).defaults = {
+      baseURL: 'http://localhost:3000/api',
+    };
   });
 
   it('unwraps the envelope and returns the settlement results', async () => {
@@ -80,6 +86,7 @@ describe('settlements service', () => {
 
     expect(mockGet).toHaveBeenCalledWith('/liquidaciones/');
     expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(1);
     expect(result.truncated).toBe(false);
   });
 
@@ -156,9 +163,124 @@ describe('settlements service', () => {
 
     expect(mockGet).toHaveBeenCalledTimes(SETTLEMENTS_MAX_PAGES);
     expect(result.items).toHaveLength(SETTLEMENTS_MAX_PAGES);
+    expect(result.count).toBe(100);
     // The cap bound while the server still exposed a `next` link → the list
     // is silently truncated and the UI must surface it (JD-003).
     expect(result.truncated).toBe(true);
+  });
+
+  it('returns partial items with truncated=true when a later page fails (CONV-2)', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: '/liquidaciones/?page=2',
+            previous: null,
+            results: [liquidacion],
+          },
+        },
+      })
+      .mockRejectedValueOnce(new Error('Request failed with status code 500'));
+
+    const result = await fetchSettlements();
+
+    // Page 1 is kept; the mid-chain failure stops the walk instead of wiping
+    // the partial results — the truncated flag carries the signal.
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(2);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('CONV-2: follows an absolute next URL on the SAME origin (DRF emits absolute next links)', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: 'http://localhost:3000/api/liquidaciones/?page=2',
+            previous: null,
+            results: [liquidacion],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: null,
+            previous: 'http://localhost:3000/api/liquidaciones/',
+            results: [{ ...liquidacion, id_liquidacion: 11 }],
+          },
+        },
+      });
+
+    const result = await fetchSettlements();
+
+    // Page 1's absolute URL matches the api baseURL origin → the walk
+    // continues to page 2 and completes normally.
+    expect(result.items).toEqual([
+      liquidacion,
+      { ...liquidacion, id_liquidacion: 11 },
+    ]);
+    expect(result.count).toBe(2);
+    expect(result.truncated).toBe(false);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockGet).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:3000/api/liquidaciones/?page=2',
+    );
+  });
+
+  it('CONV-2: never follows a cross-origin absolute next URL (JWT guard)', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 100,
+          next: 'https://evil.example/steal?page=2',
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    // The api instance attaches the JWT to every request: following the
+    // external URL would leak the token. The walk stops after page 1, the
+    // collected page is kept, truncated is flagged and the URL never requested.
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(100);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet).not.toHaveBeenCalledWith(
+      'https://evil.example/steal?page=2',
+    );
+  });
+
+  it('CONV-2: never follows a protocol-relative next URL (JWT guard)', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 1,
+          next: '//evil.example/steal',
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
   it('rejects when a page has ok:false', async () => {

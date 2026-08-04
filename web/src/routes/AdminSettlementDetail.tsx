@@ -22,6 +22,65 @@ import {
 } from '@/services/settlements';
 import { parseApiError } from '@/utils/apiErrors';
 
+// --- Error classification (CONV-3) ---
+
+export type DetailErrorKind =
+  'notFound' | 'forbidden' | 'network' | 'server' | 'generic';
+
+// Per-case empty state for a failed detail load. The single "no encontrada"
+// state lied for 403/network/5xx failures: each failure class gets its own
+// title and message so the admin knows WHAT went wrong, not just that the
+// screen is empty (CONV-3).
+const DETAIL_ERROR_UI: Record<
+  DetailErrorKind,
+  { icon: string; title: string; message: string }
+> = {
+  notFound: {
+    icon: '🔍',
+    title: 'Liquidación no encontrada',
+    message: 'No se pudo obtener la liquidación solicitada.',
+  },
+  forbidden: {
+    icon: '🔒',
+    title: 'Sin permisos para ver esta liquidación',
+    message: 'Tu cuenta no tiene acceso a esta liquidación.',
+  },
+  network: {
+    icon: '📡',
+    title: 'Error de conexión',
+    message:
+      'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.',
+  },
+  server: {
+    icon: '⚠️',
+    title: 'Error del servidor',
+    message: 'El servidor no pudo procesar la solicitud. Intenta de nuevo.',
+  },
+  generic: {
+    icon: '⚠️',
+    title: 'Error al cargar la liquidación',
+    message: 'No se pudo obtener la liquidación solicitada.',
+  },
+};
+
+// Classify the detail fetch failure into the per-case UI. The api instance
+// already retried transient failures, so the status seen here is terminal.
+// Network/timeout errors produce NO response at all — that is what
+// distinguishes "Error de conexión" from an HTTP error.
+export function classifyDetailError(error: unknown): DetailErrorKind {
+  if (!(error && typeof error === 'object' && 'isAxiosError' in error)) {
+    return 'generic';
+  }
+  const status = (error as { response?: { status?: number } }).response?.status;
+  if (status !== undefined) {
+    if (status === 404) return 'notFound';
+    if (status === 403) return 'forbidden';
+    if (status >= 500) return 'server';
+    return 'generic';
+  }
+  return 'network';
+}
+
 export function AdminSettlementDetail() {
   const { id } = useParams<{ id: string }>();
   const settlementId = Number(id);
@@ -73,7 +132,9 @@ export function AdminSettlementDetail() {
   });
 
   const detail = detailQuery.data;
-  const isStale = detailQuery.isError;
+  // WARN-2: "refetch failed but a previous payload exists" — named
+  // isRefetchError so it does not collide with react-query's stale semantics.
+  const isRefetchError = detailQuery.isError;
 
   if (detailQuery.isPending && isValidId) {
     return (
@@ -85,13 +146,26 @@ export function AdminSettlementDetail() {
   }
 
   if (!detail) {
+    // Invalid ids (JD-002) and 404s both degrade to the not-found state; every
+    // other failure gets its own per-case message (CONV-3).
+    const kind = !isValidId
+      ? 'notFound'
+      : classifyDetailError(detailQuery.error);
+    const ui = DETAIL_ERROR_UI[kind];
     return (
       <>
         <PageHeader title="Liquidación" />
         <EmptyState
-          icon="🔍"
-          title="Liquidación no encontrada"
-          message="No se pudo obtener la liquidación solicitada."
+          icon={ui.icon}
+          title={ui.title}
+          message={
+            kind === 'generic'
+              ? parseApiError(
+                  detailQuery.error,
+                  'No se pudo obtener la liquidación solicitada.',
+                )
+              : ui.message
+          }
           action={
             <button
               type="button"
@@ -110,7 +184,7 @@ export function AdminSettlementDetail() {
     <div>
       <PageHeader title={`Liquidación #${detail.id_liquidacion}`} />
 
-      {isStale && (
+      {isRefetchError && (
         <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
           <span>
             No se pudieron cargar los datos. Mostrando la última consulta

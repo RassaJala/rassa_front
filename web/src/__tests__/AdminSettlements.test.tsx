@@ -12,7 +12,7 @@ import { AdminSettlements } from '../routes/AdminSettlements';
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  render(
     <MemoryRouter>
       <ThemeProvider>
         <QueryClientProvider client={qc}>
@@ -21,6 +21,7 @@ function renderPage() {
       </ThemeProvider>
     </MemoryRouter>,
   );
+  return qc;
 }
 
 const emptyLiquidaciones = () =>
@@ -57,6 +58,32 @@ describe('AdminSettlements — integration', () => {
     expect(
       screen.getByText('Página 1 de 2 — 12 liquidaciones en total'),
     ).toBeInTheDocument();
+  });
+
+  it('shows the recomputed a-liquedar in the table when monto_liquidar is invalid (CONV-1 parity)', async () => {
+    // The list must resolve amounts through the SAME resolver as the detail
+    // screen: a malformed monto_liquidar renders the monto_ventas − comision
+    // fallback (1000.00 − 100.00) instead of $0.00, keeping both surfaces
+    // identical. R3-001: the derived amount is ALSO flagged "(estimado)" so the
+    // list never presents it as authoritative server data.
+    server.use(
+      http.get('/api/liquidaciones/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: {
+            count: 1,
+            next: null,
+            previous: null,
+            results: [{ ...LIQUIDACIONES[0]!, monto_liquidar: '' }],
+          },
+        }),
+      ),
+    );
+    renderPage();
+
+    expect(await screen.findByText('$900.00')).toBeInTheDocument();
+    expect(screen.getByText(/\(estimado\)/i)).toBeInTheDocument();
+    expect(screen.queryByText('$0.00')).not.toBeInTheDocument();
   });
 
   it('refetches with the new query params when an estado chip is clicked', async () => {
@@ -136,6 +163,133 @@ describe('AdminSettlements — integration', () => {
 
     expect(
       screen.getByText('La fecha «Hasta» debe ser mayor o igual a «Desde».'),
+    ).toBeInTheDocument();
+    // CRIT-2: an invalid range must NOT wipe the visible list — the previously
+    // loaded rows stay rendered and the empty state does NOT replace them.
+    expect(screen.getByText('2 liquidaciones')).toBeInTheDocument();
+    expect(screen.getAllByText('Pagada')).toHaveLength(2);
+    expect(
+      screen.queryByText(
+        'No se encontraron liquidaciones con los filtros seleccionados.',
+      ),
+    ).not.toBeInTheDocument();
+    // The explicit rango inválido hint is rendered next to the kept list.
+    expect(
+      screen.getByText(/rango de fechas es inválido/i),
+    ).toBeInTheDocument();
+  });
+
+  it('does not report "no results" while the range is invalid (CRIT-2)', async () => {
+    renderPage();
+    expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();
+
+    // A valid range that matches nothing legitimately shows the empty state.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Fecha hasta'), {
+        target: { value: '2026-01-01' },
+      });
+    });
+    expect(
+      await screen.findByText(
+        'No se encontraron liquidaciones con los filtros seleccionados.',
+      ),
+    ).toBeInTheDocument();
+
+    // Turning the range invalid must NOT show that empty state: the problem is
+    // the dates, not the results.
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Fecha desde'), {
+        target: { value: '2026-07-10' },
+      });
+    });
+    expect(
+      screen.queryByText(
+        'No se encontraron liquidaciones con los filtros seleccionados.',
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/rango de fechas es inválido/i),
+    ).toBeInTheDocument();
+  });
+
+  it('shows an updating indicator while placeholder rows are being replaced (CONV-4)', async () => {
+    // Gate the pagada response so the placeholder stays on screen long enough
+    // to assert the indicator; the old rows remain visible but are clearly
+    // marked as not-current while the refetch is in flight.
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/liquidaciones/', ({ request }) => {
+        const url = new URL(request.url, 'http://localhost');
+        if (url.searchParams.get('estado') === 'pagada') {
+          return gate.then(() =>
+            HttpResponse.json({
+              ok: true,
+              data: {
+                count: 2,
+                next: null,
+                previous: null,
+                results: LIQUIDACIONES.filter((s) => s.estado === 'pagada'),
+              },
+            }),
+          );
+        }
+        return HttpResponse.json({
+          ok: true,
+          data: {
+            count: LIQUIDACIONES.length,
+            next: null,
+            previous: null,
+            results: LIQUIDACIONES,
+          },
+        });
+      }),
+    );
+    renderPage();
+    expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Pagadas' }));
+
+    // Placeholder keeps the stale rows visible, the indicator says the list is
+    // not the current dataset.
+    expect(await screen.findByText(/actualizando/i)).toBeInTheDocument();
+    expect(screen.getByText('12 liquidaciones')).toBeInTheDocument();
+
+    release?.();
+    await screen.findByText('2 liquidaciones');
+    expect(screen.queryByText(/actualizando/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a persistent banner (not a toast) when a refetch fails after data was loaded (WARN-3)', async () => {
+    let fail = false;
+    server.use(
+      http.get('/api/liquidaciones/', () =>
+        fail
+          ? HttpResponse.json(
+              { ok: true, message: 'Error interno' },
+              { status: 400 },
+            )
+          : fullLiquidaciones(),
+      ),
+    );
+    const qc = renderPage();
+    expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();
+
+    fail = true;
+    await act(async () => {
+      qc.invalidateQueries({ queryKey: ['settlements'] });
+    });
+
+    // The stale list stays visible under a persistent banner with a retry.
+    expect(
+      await screen.findByText(/Mostrando la última consulta exitosa/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('12 liquidaciones')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reintentar' }),
     ).toBeInTheDocument();
   });
 
@@ -219,8 +373,15 @@ describe('AdminSettlements — integration', () => {
     );
     renderPage();
 
+    // WARN-1: the notice is actionable — it reports the fetched count against
+    // the server total and points at the filters to narrow the results.
     expect(
-      await screen.findByText('Se muestran las primeras 20 liquidaciones.'),
+      await screen.findByText(
+        'Mostrando las primeras 20 de 1000 liquidaciones.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Aplica un filtro para acotar los resultados.'),
     ).toBeInTheDocument();
     expect(screen.getByText('20 liquidaciones')).toBeInTheDocument();
   });

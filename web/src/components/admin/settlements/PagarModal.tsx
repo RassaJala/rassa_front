@@ -105,6 +105,21 @@ export function PagarModal({ visible, onClose, onConfirm }: PagarModalProps) {
           >
             {parseApiError(error, 'No se pudieron cargar los tipos de pago')}
           </button>
+        ) : tiposPago.length === 0 ? (
+          // CONV-5: an empty list must not silently dead-end the submit — the
+          // modal explains the situation and offers a retry, and stays open.
+          <div className="rounded-lg border border-dashed border-gray-300 px-4 py-3 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              No hay tipos de pago configurados
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="mt-2 text-sm font-semibold text-brand-green-forest transition-colors hover:underline"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : (
           <FormSelect
             colors={colors}

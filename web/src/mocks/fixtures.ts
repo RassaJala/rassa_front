@@ -251,11 +251,47 @@ export const TIPOS_PAGO: TipoPago[] = [
   { id_tipo_pago: 3, nombre: 'Depósito' },
 ];
 
-export const MARCAR_PAGADA_SUCCESS_RESPONSE = {
-  ok: true,
-  data: LIQUIDACION_DETAIL_PAGADA,
-  message: 'Liquidación marcada como pagada',
-};
+// Build the marcar-pagada success response for the REQUESTED id (CRIT-1): the
+// paid detail must echo the SAME liquidación the user paid. The old fixture
+// hardcoded id 11, so a payment on id 1 flipped the screen to "Liquidación #11"
+// after setQueryData. The msw handler reads the id from the request path and
+// calls this helper.
+export function marcarPagadaResponse(id: number): {
+  ok: true;
+  data: SettlementDetail;
+  message: string;
+} {
+  // R3-002: echo the requested liquidación's OWN amounts from the list
+  // fixture — paying id 2 must return a pago of $990.00, not the hardcoded
+  // $900.00 of id 1. Fall back to the pendiente detail base when the id is not
+  // in the list.
+  const source = LIQUIDACIONES.find((l) => l.id_liquidacion === id);
+  return {
+    ok: true,
+    data: {
+      ...LIQUIDACION_DETAIL_PENDIENTE,
+      id_liquidacion: id,
+      monto_ventas:
+        source?.monto_ventas ?? LIQUIDACION_DETAIL_PENDIENTE.monto_ventas,
+      comision: source?.comision ?? LIQUIDACION_DETAIL_PENDIENTE.comision,
+      monto_liquidar:
+        source?.monto_liquidar ?? LIQUIDACION_DETAIL_PENDIENTE.monto_liquidar,
+      estado: 'pagada',
+      pago_liquidacion: {
+        id_pago: 1,
+        folio: `LQ-2026-${String(id).padStart(4, '0')}`,
+        tipo_pago_nombre: 'Efectivo',
+        monto:
+          source?.monto_liquidar ?? LIQUIDACION_DETAIL_PENDIENTE.monto_liquidar,
+        referencia: 'REF-2026-001',
+        fecha_pago: '2026-08-02T10:00:00-03:00',
+      },
+    },
+    message: 'Liquidación marcada como pagada',
+  };
+}
+
+export const MARCAR_PAGADA_SUCCESS_RESPONSE = marcarPagadaResponse(1);
 
 // R4: idempotent already-paid response (HTTP 200) — named fixture so the
 // scenario is explicit in handlers and tests.

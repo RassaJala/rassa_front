@@ -4,7 +4,7 @@ import {
   LIQUIDACIONES,
   LIQUIDACION_DETAIL_PAGADA,
   LIQUIDACION_DETAIL_PENDIENTE,
-  MARCAR_PAGADA_SUCCESS_RESPONSE,
+  marcarPagadaResponse,
   PEDIDO_45,
   TIPOS_PAGO,
   YA_PAGADA_RESPONSE,
@@ -388,14 +388,16 @@ export const handlers = [
     );
   }),
 
-  // Default: success; an already-paid id answers the R4 idempotent 200.
-  // Business errors (400/409 ok:true) are overridden per test with server.use.
+  // Default: success; an already-paid id answers the R4 idempotent 200. The
+  // success payload echoes the REQUESTED id (CRIT-1) so the paid detail never
+  // renders a different liquidación after setQueryData. Business errors
+  // (400/409 ok:true) are overridden per test with server.use.
   http.post(`${BASE}/liquidaciones/:id/marcar-pagada/`, ({ params }) => {
     const id = Number(params.id);
     return HttpResponse.json(
       id === LIQUIDACION_DETAIL_PAGADA.id_liquidacion
         ? YA_PAGADA_RESPONSE
-        : MARCAR_PAGADA_SUCCESS_RESPONSE,
+        : marcarPagadaResponse(id),
     );
   }),
 

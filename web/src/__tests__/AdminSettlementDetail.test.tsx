@@ -15,8 +15,10 @@ import {
   LIQUIDACION_DETAIL_PAGADA,
   LIQUIDACION_DETAIL_PENDIENTE,
   MARCAR_PAGADA_SUCCESS_RESPONSE,
+  TIPOS_PAGO,
   YA_PAGADA_RESPONSE,
 } from '../mocks/fixtures';
+import api from '../services/api';
 import { AdminSettlementDetail } from '../routes/AdminSettlementDetail';
 import { fetchSettlements } from '../services/settlements';
 
@@ -121,6 +123,48 @@ describe('AdminSettlementDetail — integration', () => {
     expect(screen.getByText('$900.00')).toBeInTheDocument();
   });
 
+  it('marks the breakdown as estimated when monto_liquidar is missing (CONV-1)', async () => {
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: { ...LIQUIDACION_DETAIL_PENDIENTE, monto_liquidar: '' },
+        }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(await screen.findByText('Desglose')).toBeInTheDocument();
+    // The recomputed fallback renders AND the estimate flag is surfaced so the
+    // derived amount is never presented as authoritative server data.
+    expect(screen.getByText('$900.00')).toBeInTheDocument();
+    expect(screen.getByText(/Valores estimados/i)).toBeInTheDocument();
+  });
+
+  it('derives the commission label from the server comision/ventas ratio (WARN-5)', async () => {
+    // The backend does not send tasa_comision: the label must derive the rate
+    // from the actual comision/monto_ventas ratio (150/1000 = 15%) instead of
+    // hardcoding "(10%)".
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: {
+            ...LIQUIDACION_DETAIL_PENDIENTE,
+            monto_ventas: '1000.00',
+            comision: '150.00',
+            monto_liquidar: '850.00',
+          },
+        }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(await screen.findByText('Desglose')).toBeInTheDocument();
+    expect(screen.getByText('Comisión Rassa (15%)')).toBeInTheDocument();
+    expect(screen.queryByText('Comisión Rassa (10%)')).not.toBeInTheDocument();
+  });
+
   it('renders the breakdown with formatted money and the ventas list (pendiente)', async () => {
     renderDetail(1);
 
@@ -173,6 +217,41 @@ describe('AdminSettlementDetail — integration', () => {
     ).toBeDisabled();
   });
 
+  it('explains an empty payment-types list and retries the fetch (CONV-5)', async () => {
+    let empty = true;
+    server.use(
+      http.get('/api/tipos-pago/', () =>
+        HttpResponse.json(empty ? [] : TIPOS_PAGO),
+      ),
+    );
+    renderDetail(1);
+    await screen.findByText('Desglose');
+
+    const user = await openPagarModal();
+
+    // An empty list must not silently dead-end the submit: the modal explains
+    // the situation and offers a retry instead of a disabled button with no
+    // reason.
+    expect(
+      screen.getByText('No hay tipos de pago configurados'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Confirmar pago' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Reintentar' }),
+    ).toBeInTheDocument();
+
+    empty = false;
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+
+    // After the retry the payment types arrive and the selector is usable.
+    expect(await screen.findByText('Efectivo')).toBeInTheDocument();
+    expect(
+      screen.queryByText('No hay tipos de pago configurados'),
+    ).not.toBeInTheDocument();
+  });
+
   it('posts the marcar-pagada body, shows the success toast and invalidates the list', async () => {
     let capturedBody: unknown;
     server.use(
@@ -201,10 +280,52 @@ describe('AdminSettlementDetail — integration', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+    // CRIT-1: the paid detail echoed by the server must be the SAME liquidación
+    // that was paid (id 1) — the header keeps showing "Liquidación #1" and the
+    // screen flips to the paid state instead of rendering a different id.
+    expect(screen.getByText('Liquidación #1')).toBeInTheDocument();
+    expect(screen.queryByText('Liquidación #11')).not.toBeInTheDocument();
+    expect(screen.getByText('Pago registrado')).toBeInTheDocument();
+    expect(screen.getByText('Pagada')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Marcar como pagada' }),
+    ).not.toBeInTheDocument();
     // onSuccess invalidated ['settlements'] → the probe refetched.
     await waitFor(() => {
       expect(screen.getByText('probe:2')).toBeInTheDocument();
     });
+  });
+
+  it('echoes the paid liquidación own monto in the pago card (R3-002)', async () => {
+    // The marcar-pagada fixture must echo the REQUESTED id's amounts: paying
+    // id 2 (monto_liquidar 990.00) returns a pago of $990.00, never the $900.00
+    // that id 1 used to leak into every payment.
+    server.use(
+      http.get('/api/liquidaciones/2/', () =>
+        HttpResponse.json({
+          ok: true,
+          data: {
+            ...LIQUIDACION_DETAIL_PENDIENTE,
+            id_liquidacion: 2,
+            monto_ventas: '1100.00',
+            comision: '110.00',
+            monto_liquidar: '990.00',
+          },
+        }),
+      ),
+    );
+    renderDetail(2);
+    expect(await screen.findByText('Desglose')).toBeInTheDocument();
+
+    const user = await openPagarModal();
+    expect(await screen.findByText('Efectivo')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirmar pago' }));
+
+    // Breakdown "A liquidar" and the pago card both match the server amount.
+    expect(await screen.findByText('Pago registrado')).toBeInTheDocument();
+    expect(screen.getAllByText('$990.00')).toHaveLength(2);
+    // The stale $900.00 from id 1 never leaks into the paid detail.
+    expect(screen.queryByText('$900.00')).not.toBeInTheDocument();
   });
 
   it('treats the idempotent 200 ya-pagada as success: server message toasts and the list invalidates', async () => {
@@ -337,5 +458,71 @@ describe('AdminSettlementDetail — integration', () => {
     ).toBeInTheDocument();
     // Data is kept while the refetch failed.
     expect(screen.getByText('Desglose')).toBeInTheDocument();
+  });
+});
+
+describe('AdminSettlementDetail — error cases (CONV-3)', () => {
+  beforeEach(() => {
+    // Disable the axios-level 5xx/network retries (exponential backoff would
+    // outlast the assertions); the per-case UI must react to the terminal
+    // error the query observes.
+    (api.defaults as Record<string, unknown>)['axios-retry'] = { retries: 0 };
+  });
+
+  it('shows the 404 "Liquidación no encontrada" state with a retry', async () => {
+    renderDetail(999);
+
+    expect(
+      await screen.findByText('Liquidación no encontrada'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reintentar' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: 'Cargando' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the 403 "Sin permisos" state instead of not-found', async () => {
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({ ok: false, message: 'Forbidden' }, { status: 403 }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(
+      await screen.findByText('Sin permisos para ver esta liquidación'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Liquidación no encontrada'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the network "Error de conexión" state when the server never answers', async () => {
+    server.use(http.get('/api/liquidaciones/1/', () => HttpResponse.error()));
+    renderDetail(1);
+
+    expect(await screen.findByText('Error de conexión')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Liquidación no encontrada'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the 5xx "Error del servidor" state with a retry', async () => {
+    server.use(
+      http.get('/api/liquidaciones/1/', () =>
+        HttpResponse.json({ ok: false, message: 'boom' }, { status: 500 }),
+      ),
+    );
+    renderDetail(1);
+
+    expect(await screen.findByText('Error del servidor')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Liquidación no encontrada'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Reintentar' }),
+    ).toBeInTheDocument();
   });
 });

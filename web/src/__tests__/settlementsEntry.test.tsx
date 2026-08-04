@@ -80,6 +80,23 @@ describe('settlements entry (R1)', () => {
     expect(await screen.findByText('12 liquidaciones')).toBeInTheDocument();
   });
 
+  it('hides the Liquidaciones sidebar item for an agricultor (WARN-4)', () => {
+    render(
+      <MemoryRouter>
+        <ThemeProvider>
+          <Sidebar role="agricultor" />
+        </ThemeProvider>
+      </MemoryRouter>,
+    );
+
+    // The settlements entry is admin-only: an agricultor must never see the
+    // Liquidaciones nav item, while their own nav still renders.
+    expect(
+      screen.queryByRole('link', { name: /Liquidaciones/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Productos/ })).toBeInTheDocument();
+  });
+
   it('redirects a non-admin away from the admin settlements route', async () => {
     mockRole = 'agricultor';
     renderGuardedPage('/admin/liquidaciones');
