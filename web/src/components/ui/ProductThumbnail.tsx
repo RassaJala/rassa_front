@@ -2,7 +2,7 @@ import { colors } from '../../../src/constants/colors';
 import { useAppColors } from '../../hooks/useAppColors';
 
 interface ProductThumbnailProps {
-  src?: string | null;
+  src?: string | null | undefined;
   alt: string;
   fallbackEmoji?: string;
   size?: number;

@@ -49,6 +49,8 @@ import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
+import CashClosingScreen from '@/screens/seller/CashClosingScreen';
+import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
@@ -458,6 +460,20 @@ function SellerTabs() {
         }}
       />
       <SellerTab.Screen
+        name="Recolecciones"
+        component={CollectionScheduleScreen}
+        options={{
+          tabBarLabel: 'Recolecciones',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-month"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <SellerTab.Screen
         name="Notificaciones"
         component={NotificationsScreen}
         options={{
@@ -495,6 +511,7 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen

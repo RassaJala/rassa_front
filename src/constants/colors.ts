@@ -148,6 +148,6 @@ export function themeColors(isDark: boolean): ThemeColors {
     brand: isDark ? '#4A8A63' : '#24563C',
     segBg: isDark ? '#263028' : '#E8ECE4',
     shadowBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-    subtleBg: isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)',
+    subtleBg: isDark ? 'rgba(74,138,99,0.14)' : 'rgba(36,86,60,0.08)',
   };
 }

@@ -1,11 +1,13 @@
 import { Platform } from 'react-native';
 
+import * as Sentry from '@sentry/react-native';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
 import { API_RETRY_LIMIT } from '@/common/networking';
 
+import { sanitizeSentryError } from './sentry';
 import * as Storage from './storage';
 
 declare const process: {
@@ -85,7 +87,8 @@ axiosRetry(api, {
     return (
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
+          error.response.status >= SERVER_ERROR_THRESHOLD) ||
+        error.response?.status === 429) &&
       error.config?.method !== 'post'
     );
   },
@@ -208,8 +211,8 @@ api.interceptors.response.use(
 
     try {
       newAccessToken = await refreshTokens();
-    } catch {
-      // Refresh itself failed — clear tokens, notify AuthContext, and reject
+    } catch (refreshError) {
+      Sentry.captureException(sanitizeSentryError(refreshError));
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
         Storage.deleteItemAsync(Storage.REFRESH_TOKEN_KEY),
@@ -239,5 +242,19 @@ export function mediaUrl(path: string | null | undefined): string | null {
     return `${base}${encodeURI(prefixed)}`;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Indica si una URL puede seguirse de forma segura con las credenciales del
+ * cliente: solo rutas relativas o absolutas del mismo origen que la API.
+ */
+export function isApiUrl(url: string): boolean {
+  if (url.startsWith('//')) return false;
+  if (url.startsWith('/')) return true;
+  try {
+    return new URL(url).origin === new URL(baseURL).origin;
+  } catch {
+    return false;
   }
 }

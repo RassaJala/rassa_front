@@ -111,7 +111,7 @@ describe('upsertItems', () => {
 
     expect(deps.uploadImage).toHaveBeenCalledTimes(1);
     const call = (deps.uploadImage as ReturnType<typeof vi.fn>).mock
-      .calls[0][0];
+      .calls[0]![0];
     expect(call.pubId).toBe(1);
     expect(call.itemId).toBe(100);
     expect(call.formData).toBeInstanceOf(FormData);

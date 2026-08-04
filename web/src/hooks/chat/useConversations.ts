@@ -15,7 +15,7 @@ export function useConversations(): UseQueryResult<
     queryKey: conversationsKey(),
     queryFn: () => chatApi.getConversations(),
     refetchInterval: (query) => {
-      const failureCount = query.state.failureCount;
+      const failureCount = query.state.fetchFailureCount;
       return Math.min(BASE_POLL_MS * 2 ** failureCount, MAX_POLL_MS);
     },
     refetchIntervalInBackground: false,

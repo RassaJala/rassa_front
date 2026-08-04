@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom/vitest';
+import { afterEach, vi } from 'vitest';
+import { resetRecoleccionesMock } from './mocks/handlers';
 import { server } from './mocks/server';
 
 // jsdom does not implement URL.createObjectURL/revokeObjectURL; components use them for image previews.
@@ -29,5 +31,9 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  resetRecoleccionesMock();
+  vi.clearAllMocks();
+});
 afterAll(() => server.close());

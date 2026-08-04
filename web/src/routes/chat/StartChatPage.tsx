@@ -40,7 +40,9 @@ export function StartChatPage() {
   }, []);
 
   const isSelfChat =
-    selected && user?.id !== undefined && selected.idUsuario === user.id;
+    selected != null &&
+    user?.id !== undefined &&
+    selected.idUsuario === user.id;
   const showDropdown = query.trim().length >= 3 && !selected;
 
   const handleSubmit = () => {
