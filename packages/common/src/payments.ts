@@ -17,7 +17,24 @@ export function esPropietarioPago(
   return pago != null && pago.cliente_id != null && pago.cliente_id === userId;
 }
 
+/** Valida que un id de pago sea un entero positivo. */
+export function esPagoIdValido(paymentId: number | undefined | null): boolean {
+  return (
+    typeof paymentId === 'number' &&
+    Number.isInteger(paymentId) &&
+    paymentId > 0
+  );
+}
+
 // ── Format helpers ────────────────────────────────────────
+
+/** Importe de una partida de producto (cantidad × precio), con defaults seguros. */
+export function calcularImporte(partida: {
+  readonly cantidad?: number | null;
+  readonly precio?: number | string | null;
+}): number {
+  return (partida.cantidad ?? 0) * Number(partida.precio ?? 0);
+}
 
 /** Subtotal de una lista de partidas de producto (cantidad × precio). */
 export function calcularSubtotal(
@@ -26,19 +43,16 @@ export function calcularSubtotal(
     readonly precio?: number | string | null;
   }[],
 ): number {
-  return partidas.reduce(
-    (acc, partida) =>
-      acc + (partida.cantidad ?? 0) * Number(partida.precio ?? 0),
-    0,
-  );
+  return partidas.reduce((acc, partida) => acc + calcularImporte(partida), 0);
 }
 
 /** Formatea un monto como precio con `$` y dos decimales. */
 export function formatearMonto(
   valor: number | string | null | undefined,
 ): string {
-  const n = typeof valor === 'string' ? Number(valor) : (valor ?? 0);
-  return `$${n.toFixed(2)}`;
+  if (valor == null) return '—';
+  const n = typeof valor === 'string' ? Number(valor) : valor;
+  return Number.isFinite(n) ? `$${n.toFixed(2)}` : '—';
 }
 
 // ── Payment types ─────────────────────────────────────────
@@ -130,7 +144,8 @@ export async function fetchPagos(api: AxiosInstance): Promise<PaymentDetail[]> {
   >('/pagos/');
   const body = res.data;
   if (body == null) return [];
-  return Array.isArray(body) ? body : (body.results ?? []);
+  const pagos = Array.isArray(body) ? body : body.results;
+  return Array.isArray(pagos) ? pagos : [];
 }
 
 export async function fetchPagoPorPedido(
@@ -142,6 +157,7 @@ export async function fetchPagoPorPedido(
   >(`/pagos/?pedido=${pedidoId}`);
   const body = res.data;
   if (body == null) return null;
-  const pagos = Array.isArray(body) ? body : (body.results ?? []);
+  const pagos = Array.isArray(body) ? body : body.results;
+  if (!Array.isArray(pagos)) return null;
   return pagos[0] ?? null;
 }

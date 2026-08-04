@@ -15,7 +15,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
 import {
+  calcularImporte,
   calcularSubtotal,
+  esPagoIdValido,
   esPropietarioPago,
   fetchPago,
   formatearMonto,
@@ -38,7 +40,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const route = useRoute<Route>();
   const { user } = useAuth();
   const { paymentId } = route.params;
-  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -84,6 +86,10 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
+    const mensaje =
+      pago != null && !esPropietario
+        ? 'No tienes acceso a este recibo'
+        : 'Error al cargar el recibo';
     return (
       <View
         style={{
@@ -107,7 +113,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
             textAlign: 'center',
           }}
         >
-          Error al cargar el recibo
+          {mensaje}
         </Text>
         <LinkLikeButton
           label="Reintentar"
@@ -254,7 +260,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                {formatearMonto(prod.cantidad * Number(prod.precio))}
+                {formatearMonto(calcularImporte(prod))}
               </Text>
             </View>
           ))}

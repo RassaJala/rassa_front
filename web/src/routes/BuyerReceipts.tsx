@@ -30,6 +30,7 @@ export function BuyerReceipts() {
   } = useQuery<PaymentDetail[]>({
     queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
     queryFn: () => fetchPagos(api),
+    enabled: !!user?.id,
   });
 
   // Defensa en profundidad: el backend ya filtra los pagos por propietario

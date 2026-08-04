@@ -46,6 +46,7 @@ import {
   createPago,
   fetchPagoPorPedido,
   fetchTiposPago,
+  PAGOS_CLIENTE_QUERY_KEY,
 } from '@/common/payments';
 import { PaymentPage } from '../PaymentPage';
 
@@ -85,11 +86,13 @@ function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <PaymentPage />
     </QueryClientProvider>,
   );
+  return { ...utils, invalidateSpy };
 }
 
 describe('PaymentPage', () => {
@@ -161,6 +164,23 @@ describe('PaymentPage', () => {
         replace: true,
       }),
     );
+  });
+
+  it('invalidates the client receipts query after a successful payment', async () => {
+    const user = userEvent.setup();
+    const { invalidateSpy } = renderPage();
+
+    expect(await screen.findByText(/Efectivo/i)).toBeTruthy();
+    await user.click(screen.getByTestId('submit-payment-button'));
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/vendedor/recibo/9', {
+        replace: true,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: [PAGOS_CLIENTE_QUERY_KEY],
+    });
   });
 
   it('shows an error message when createPago fails and allows retry', async () => {

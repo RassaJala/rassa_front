@@ -129,7 +129,9 @@ describe('BuyerReceiptDetail', () => {
     mockedUseAuth.mockReturnValue({ user: { id: 99 } } as never);
 
     renderPage();
-    expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(
+      await screen.findByText(/No tienes acceso a este recibo/i),
+    ).toBeTruthy();
     // El recibo ajeno fue cargado por la API (mock activo) pero NUNCA se
     // renderiza su contenido: ni folio, ni productos, ni cliente.
     expect(screen.queryByText('PAG-0009')).toBeNull();
