@@ -24,7 +24,7 @@ export async function persistItems(
   pubId: number,
   deps: PersistItemsDeps,
   signal?: AbortSignal,
-): Promise<{ orphanFailures: number }> {
+): Promise<{ orphanFailures: number; failedUploads: number }> {
   let newServerIds: number[] = [];
   let updatedServerIds: number[] = [];
   let orphanFailures = 0;
@@ -35,11 +35,11 @@ export async function persistItems(
       tempIdToServerId,
       newServerIds: ids,
       updatedServerIds: updatedIds,
-      failedUploads: fails,
+      failedUploads: failedUploadsCount,
     } = await deps.upsertItems(pubId, signal);
     newServerIds = ids;
     updatedServerIds = updatedIds;
-    failedUploads = fails;
+    failedUploads = failedUploadsCount;
     itemsSaved = true;
 
     await deps.refreshSnapshot(pubId);

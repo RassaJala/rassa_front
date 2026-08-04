@@ -9,9 +9,10 @@ import { FarmerPublications } from './FarmerPublications';
 import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
 import { VendorCorteCaja } from './VendorCorteCaja';
-import { VendorPanelScreen } from './VendorPanelScreen';
 import { PaymentPage } from './PaymentPage';
 import { ReceiptPage } from './ReceiptPage';
+import { SellerRecolecciones } from './SellerRecolecciones';
+import { VendorPanelScreen } from './VendorPanelScreen';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminMermasDashboard } from './AdminMermasDashboard';
 import { AdminCategories } from './AdminCategories';
@@ -132,6 +133,7 @@ export function AppRouter() {
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
+                <Route path="recolecciones" element={<SellerRecolecciones />} />
                 <Route path="corte-caja" element={<VendorCorteCaja />} />
                 <Route path="cobrar/:orderId" element={<PaymentPage />} />
                 <Route path="recibo/:paymentId" element={<ReceiptPage />} />

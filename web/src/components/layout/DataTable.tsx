@@ -142,7 +142,7 @@ function SortIcon({
   direction,
 }: {
   active: boolean;
-  direction?: SortDirection;
+  direction?: SortDirection | undefined;
 }) {
   if (!active) return <ChevronDown size={14} className="text-gray-300" />;
   return direction === 'asc' ? (

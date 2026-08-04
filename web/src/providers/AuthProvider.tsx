@@ -6,12 +6,28 @@ import type { AuthState, User } from '../types';
 import { normalizeRole } from '../types';
 import api from '../services/api';
 
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+function getSessionStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 function loadInitialState(): { token: string | null } {
   try {
-    const token = localStorage.getItem('token');
+    const token = getLocalStorage()?.getItem('token') ?? null;
     return { token };
   } catch {
-    // localStorage no disponible (private browsing, etc.)
     return { token: null };
   }
 }
@@ -66,9 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Solo limpiamos la sesión si el token es inválido (401).
         // Errores de red transitorios (timeout, DNS, 5xx) NO destruyen la sesión.
         if (axios.isAxiosError(err) && err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('refresh_token');
+          getLocalStorage()?.removeItem('token');
+          getLocalStorage()?.removeItem('user');
+          getSessionStorage()?.removeItem('refresh_token');
           setState({
             user: null,
             token: null,
@@ -93,9 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.token]);
 
   const login = useCallback((token: string, user: User) => {
-    localStorage.setItem('token', token);
-    // Solo guardamos datos mínimos no sensibles en localStorage
-    localStorage.setItem(
+    getLocalStorage()?.setItem('token', token);
+    getLocalStorage()?.setItem(
       'user',
       JSON.stringify({ id: user.id, email: user.email, rol: user.rol }),
     );
@@ -103,9 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('refresh_token');
+    getLocalStorage()?.removeItem('token');
+    getLocalStorage()?.removeItem('user');
+    getSessionStorage()?.removeItem('refresh_token');
     setState({
       user: null,
       token: null,

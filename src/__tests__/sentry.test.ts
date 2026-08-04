@@ -214,7 +214,7 @@ describe('sentryBeforeSend', () => {
       },
     };
 
-    const result = sentryBeforeSend(event);
+    const result = sentryBeforeSend(event, {});
 
     expect(result).toBe(event);
     expect(event.request.headers.Authorization).toBeUndefined();
@@ -225,6 +225,6 @@ describe('sentryBeforeSend', () => {
   it('devuelve el evento sin cambios cuando no trae request.headers', () => {
     const event = { extra: { a: 1 } };
 
-    expect(sentryBeforeSend(event)).toBe(event);
+    expect(sentryBeforeSend(event, {})).toBe(event);
   });
 });

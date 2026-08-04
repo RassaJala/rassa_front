@@ -50,6 +50,7 @@ import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
 import CashClosingScreen from '@/screens/seller/CashClosingScreen';
+import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
@@ -438,6 +439,20 @@ function SellerTabs() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="cash-register"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <SellerTab.Screen
+        name="Recolecciones"
+        component={CollectionScheduleScreen}
+        options={{
+          tabBarLabel: 'Recolecciones',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-month"
               size={size}
               color={color}
             />

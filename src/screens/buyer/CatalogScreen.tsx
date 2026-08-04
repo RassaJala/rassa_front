@@ -74,10 +74,9 @@ export default function CatalogScreen(): React.JSX.Element {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return products.filter((p) => {
-      const matchesSearch = !q || p.producto.toLowerCase().includes(q);
       // ponytail: category filtering needs backend to include id_categoria on products
       // for now, selectedCategory is stored but not applied until backend provides it
-      return matchesSearch;
+      return !q || p.producto.toLowerCase().includes(q);
     });
   }, [products, search]);
 

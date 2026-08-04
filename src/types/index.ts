@@ -301,6 +301,7 @@ export interface SearchUserResult {
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
+  Recolecciones: undefined;
   Notificaciones: undefined;
   Perfil: undefined;
   ChatList: undefined;
