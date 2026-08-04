@@ -125,6 +125,7 @@ jest.mock('@/features/chat/hooks/useCreatePrivateConversation', () => ({
     isError: mockChatError,
     variables: mockChatVariables,
     mutate: mockChatMutate,
+    reset: jest.fn(),
   }),
 }));
 
