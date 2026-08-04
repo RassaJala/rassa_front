@@ -33,12 +33,21 @@ interface OrderDetail {
 
 // One stable idempotency key per order, persisted so a retry (even after a
 // reload) reuses the same key and the backend can dedupe the POST.
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 function getIdempotencyKey(orderId: number): string {
   const storageKey = `idem_pago_${orderId}`;
-  const existing = window.localStorage.getItem(storageKey);
+  const existing = getLocalStorage()?.getItem(storageKey);
   if (existing) return existing;
   const fresh = createIdempotencyKey();
-  window.localStorage.setItem(storageKey, fresh);
+  getLocalStorage()?.setItem(storageKey, fresh);
   return fresh;
 }
 

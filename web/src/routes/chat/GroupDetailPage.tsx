@@ -6,8 +6,9 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { useGroupMembers } from '~/hooks/chat/useGroupMembers';
 import { useRenameGroup } from '~/hooks/chat/useRenameGroup';
 import { useAddGroupMember } from '~/hooks/chat/useAddGroupMember';
-import { useRemoveGroupMember } from '~/hooks/chat/useRemoveGroupMember';
+import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { useOverrideGroupName } from '~/hooks/chat/useOverrideGroupName';
+import { useRemoveGroupMember } from '~/hooks/chat/useRemoveGroupMember';
 import { GroupMemberItem } from '~/components/chat/GroupMemberItem';
 import { RenameGroupModal } from '~/components/chat/RenameGroupModal';
 import { AddMemberModal } from '~/components/chat/AddMemberModal';
@@ -33,11 +34,10 @@ export function GroupDetailPage() {
   const addGroupMember = useAddGroupMember(conversationId);
   const removeGroupMember = useRemoveGroupMember(conversationId);
   const overrideGroupName = useOverrideGroupName(conversationId);
+  const createChat = useCreatePrivateConversation();
 
-  const currentUserMember = members?.find((m) => m.id_usuario === user?.id);
+  const currentUserMember = members?.find((m) => m.idUsuario === user?.id);
   const isChatAdmin = currentUserMember?.rol === 'admin';
-  const canRename = isChatAdmin && (!isFamily || nombreOverride);
-  const canAddMember = isChatAdmin && !isFamily;
   const canRemove = isChatAdmin && !isFamily;
   const canOverride = isChatAdmin && isFamily;
 
@@ -107,28 +107,28 @@ export function GroupDetailPage() {
         <h1 className="flex-1 text-base font-bold" style={{ color: c.fg }}>
           Detalle del grupo
         </h1>
-        {canRename ? (
-          <button
-            type="button"
-            onClick={() => setShowRename(true)}
-            className="cursor-pointer border-none bg-transparent text-sm font-medium"
-            style={{ color: c.brand }}
-            aria-label="Renombrar grupo"
-          >
-            Renombrar
-          </button>
-        ) : null}
-        {canAddMember ? (
-          <button
-            type="button"
-            onClick={() => setShowAddMember(true)}
-            className="cursor-pointer border-none bg-transparent text-sm font-medium"
-            style={{ color: c.brand }}
-            aria-label="Agregar miembro"
-          >
-            + Miembro
-          </button>
-        ) : null}
+        {user?.rol !== 'cliente' && !isFamily && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowRename(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Renombrar grupo"
+            >
+              Renombrar
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddMember(true)}
+              className="cursor-pointer border-none bg-transparent text-sm font-medium"
+              style={{ color: c.brand }}
+              aria-label="Agregar miembro"
+            >
+              + Miembro
+            </button>
+          </>
+        )}
       </div>
 
       {canOverride ? (
@@ -171,7 +171,13 @@ export function GroupDetailPage() {
           <GroupMemberItem
             key={member.id}
             member={member}
-            onRemove={canRemove ? handleRemove : undefined}
+            chatDisabled={createChat.isPending}
+            {...(canRemove ? { onRemove: handleRemove } : {})}
+            {...(member.idUsuario === user?.id
+              ? {}
+              : {
+                  onChat: (m) => createChat.mutate({ fk_usuario: m.idUsuario }),
+                })}
           />
         ))}
       </div>

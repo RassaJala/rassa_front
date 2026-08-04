@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
 import type { SearchUser } from '@rassa/chat';
-import { Toast, type ToastState } from '~/components/ui/Toast';
 
 interface AddMemberModalProps {
   onSave: (userId: number) => void;

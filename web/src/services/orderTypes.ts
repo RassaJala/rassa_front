@@ -34,6 +34,8 @@ export interface OrderDetail {
   estado_actual: string;
   creado_en: string;
   fecha_expiracion: string | null;
+  /** Backend flag: order is pending and its expiry date has passed. */
+  expirado?: boolean;
   detalles: PedidoDetalle[];
   historial: OrderHistoryEntry[];
 }

@@ -51,15 +51,17 @@ export function ChatListPage() {
         <h1 className="text-lg font-bold" style={{ color: c.fg }}>
           Conversaciones
         </h1>
-        <button
-          type="button"
-          onClick={() => user?.rol && navigate(`/${user.rol}/chat/nuevo`)}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          style={{ background: c.brand }}
-          aria-label="Iniciar nuevo chat"
-        >
-          Nuevo chat
-        </button>
+        {user?.rol !== 'cliente' && (
+          <button
+            type="button"
+            onClick={() => user?.rol && navigate(`/${user.rol}/chat/nuevo`)}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style={{ background: c.brand }}
+            aria-label="Iniciar nuevo chat"
+          >
+            Nuevo chat
+          </button>
+        )}
       </div>
 
       {/* Filter toggles */}

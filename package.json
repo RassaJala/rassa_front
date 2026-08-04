@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start --port 8081",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --port 8082",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "dev:web": "cd web && bun run dev",
     "lint": "eslint -c config/eslint.config.ts .",
@@ -28,18 +28,26 @@
     "axios": "^1.15.1",
     "axios-retry": "^4.5.0",
     "expo": "~54.0.36",
+    "expo-audio": "~1.1.1",
     "expo-document-picker": "~14.0.8",
+    "expo-file-system": "~19.0.23",
     "expo-image-picker": "~17.0.11",
+    "expo-linear-gradient": "~15.0.8",
     "expo-secure-store": "~15.0.8",
+    "expo-sharing": "~14.0.8",
     "expo-status-bar": "~3.0.9",
+    "expo-video": "~3.0.16",
+    "expo-video-thumbnails": "~10.0.8",
     "nativewind": "^4.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-keyboard-controller": "1.18.5",
     "react-native-paper": "^5.12.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-video": "^6.19.2",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "~0.5.1",
     "semver": "^7.7.2",
@@ -58,6 +66,7 @@
     "@types/node": "26.0.1",
     "@types/react": "~19.2.17",
     "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "6.0.2",
     "eslint-plugin-import-x": "4.17.1",
@@ -84,6 +93,11 @@
     "typescript-eslint": "8.62.0"
   },
   "private": true,
+  "reanimated": {
+    "staticFeatureFlags": {
+      "USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS": true
+    }
+  },
   "workspaces": [
     "web/"
   ],

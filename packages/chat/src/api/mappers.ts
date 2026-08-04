@@ -11,6 +11,20 @@ export function mapMessage(
   raw: BackendMessage,
   conversationId?: number,
 ): Message {
+  const adjuntos =
+    raw.url_documento && raw.tipo && raw.tipo !== 'texto'
+      ? [
+          {
+            id: raw.id_mensaje,
+            mensaje: raw.id_mensaje,
+            archivo: raw.url_documento,
+            tipo: raw.tipo,
+            nombre: raw.url_documento.split('/').at(-1) ?? '',
+            tamaño: 0,
+          },
+        ]
+      : undefined;
+
   return {
     id: raw.id_mensaje,
     conversacion: conversationId ?? 0,
@@ -20,6 +34,7 @@ export function mapMessage(
     creado_en: raw.creado_en,
     leido: raw.leido,
     editado: raw.editado,
+    ...(adjuntos ? { adjuntos } : {}),
   };
 }
 
@@ -41,7 +56,7 @@ export function mapConversation(raw: BackendConversation): Conversation {
 export function mapGroupMember(raw: BackendGroupMember): GroupMember {
   return {
     id: raw.id_miembro,
-    id_usuario: raw.id_usuario,
+    idUsuario: raw.id_usuario,
     nombre: raw.nombre_completo,
     rol: raw.rol ?? '',
     avatar: null,

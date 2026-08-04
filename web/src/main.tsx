@@ -16,7 +16,36 @@ const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    tracesSampleRate: 0,
+    tracesSampleRate: 0.1,
+    beforeSend(event) {
+      const evt = event as Record<string, unknown>;
+      const request = evt.request as
+        { headers: Record<string, unknown> } | undefined;
+      if (request?.headers) {
+        const redacted = { ...request.headers };
+        for (const key of Object.keys(redacted)) {
+          if (
+            /^(authorization|proxy-authorization|cookie|set-cookie)$/i.test(key)
+          ) {
+            delete redacted[key];
+          }
+        }
+        request.headers = redacted;
+      }
+      return event;
+    },
+    beforeBreadcrumb(breadcrumb) {
+      if (breadcrumb.category === 'xhr' && breadcrumb.data) {
+        const data = breadcrumb.data as Record<string, unknown>;
+        if (typeof data.url === 'string') {
+          data.url = data.url.replace(
+            /[?&](token|auth|refresh)=[^&]*/gi,
+            '?$1=[redacted]',
+          );
+        }
+      }
+      return breadcrumb;
+    },
   });
 }
 
