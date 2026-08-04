@@ -84,6 +84,7 @@
       "name": "rassa-web",
       "version": "0.1.0",
       "dependencies": {
+        "@sentry/react": "^10.12.0",
         "@tanstack/react-query": "^5.0.0",
         "axios": "^1.15.1",
         "axios-retry": "^4.5.0",

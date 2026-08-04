@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { PEDIDO_45 } from './fixtures';
 
 const BASE = '/api';
 
@@ -53,4 +54,9 @@ export const handlers = [
       },
     }),
   ),
+
+  // POST /pedidos/ responde envuelto en { data: Pedido } — el default resuelve
+  // el pedido #45 (fixture compartido, ver fixtures.ts); los casos de error se
+  // sobreescriben por test con server.use.
+  http.post(`${BASE}/pedidos/`, () => HttpResponse.json({ data: PEDIDO_45 })),
 ];
