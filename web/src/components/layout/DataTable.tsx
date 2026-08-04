@@ -38,7 +38,7 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl bg-white shadow-sm dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+      <div className="rounded-xl bg-white shadow-sm dark:border dark:border-[#353D35] dark:bg-[#263028] dark:shadow-none">
         <EmptyState title={emptyTitle} message={emptyMessage} />
       </div>
     );
@@ -47,10 +47,10 @@ export function DataTable<T>({
   return (
     <>
       {/* Desktop: table */}
-      <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block dark:border dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+      <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block dark:border dark:border-[#353D35] dark:bg-[#263028] dark:shadow-none">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+            <tr className="border-b border-gray-200 bg-gray-50 dark:border-[#353D35] dark:bg-[#353D35]">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -87,7 +87,7 @@ export function DataTable<T>({
             {sorted.map((item) => (
               <tr
                 key={keyExtractor(item)}
-                className="border-b border-gray-100 dark:border-gray-800"
+                className="border-b border-gray-100 dark:border-[#353D35]"
               >
                 {columns.map((col) => {
                   const value = (item as Record<string, unknown>)[col.key];

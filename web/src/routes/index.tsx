@@ -8,6 +8,7 @@ import { FarmerProducts, FarmerOrders } from './farmer';
 import { FarmerPublications } from './FarmerPublications';
 import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
+import { VendorCorteCaja } from './VendorCorteCaja';
 import { PaymentPage } from './PaymentPage';
 import { ReceiptPage } from './ReceiptPage';
 import { SellerRecolecciones } from './SellerRecolecciones';
@@ -133,6 +134,7 @@ export function AppRouter() {
                 <Route path="ventas" element={<SellerSales />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="recolecciones" element={<SellerRecolecciones />} />
+                <Route path="corte-caja" element={<VendorCorteCaja />} />
                 <Route path="cobrar/:orderId" element={<PaymentPage />} />
                 <Route path="recibo/:paymentId" element={<ReceiptPage />} />
                 <Route path="perfil" element={<ProfilePage />} />

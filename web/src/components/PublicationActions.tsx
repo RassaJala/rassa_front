@@ -21,7 +21,7 @@ const statusBadge: Record<
 > = {
   borrador: { variant: 'warning', label: 'Borrador' },
   publicado: { variant: 'success', label: 'Publicada' },
-  cerrado: { variant: 'default', label: 'Cerrada' },
+  cerrado: { variant: 'success', label: 'Cerrada' },
   cancelado: { variant: 'error', label: 'Cancelada' },
 };
 
