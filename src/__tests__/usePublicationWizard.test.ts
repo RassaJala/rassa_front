@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, sonarjs/no-duplicate-string, @typescript-eslint/no-unsafe-argument -- Test files are less strict */
 import type { WizardItemDraft } from '@/hooks/usePublicationWizard';
+import { withTimeout } from '@/common/withTimeout';
 import {
   generateLocalTempId,
   isLocalFileUri,
   validateItem,
-  withTimeout,
 } from '@/hooks/usePublicationWizard';
 
 jest.mock('expo-secure-store', () => ({
@@ -76,6 +76,13 @@ function makeValidItem(overrides?: Partial<WizardItemDraft>): WizardItemDraft {
   };
 }
 
+function makeCatalogo(productos: Array<{ id: number }>): Producto[] {
+  return productos.map((p) => ({
+    id_producto: p.id,
+    nombre_producto: 'Tomate',
+  })) as Producto[];
+}
+
 describe('validateItem', () => {
   it('returns empty object for a valid item', () => {
     const errors = validateItem(makeValidItem());
@@ -95,6 +102,21 @@ describe('validateItem', () => {
   it('returns error when stock is NaN', () => {
     const errors = validateItem(makeValidItem({ stock: 'abc' }));
     expect(errors.stock).toBeDefined();
+  });
+
+  it('returns error when stock is not an integer (aligned with web)', () => {
+    const errors = validateItem(makeValidItem({ stock: '1.5' }));
+    expect(errors.stock).toBeDefined();
+  });
+
+  it('accepts a whole-number stock passed as "10"', () => {
+    const errors = validateItem(makeValidItem({ stock: '10' }));
+    expect(errors.stock).toBeUndefined();
+  });
+
+  it('accepts stock "10.0" (Number.isInteger true for 10.0)', () => {
+    const errors = validateItem(makeValidItem({ stock: '10.0' }));
+    expect(errors.stock).toBeUndefined();
   });
 
   it('returns error when precio is empty', () => {
@@ -120,6 +142,27 @@ describe('validateItem', () => {
   it('returns error when foto is empty string', () => {
     const errors = validateItem(makeValidItem({ foto: '  ' }));
     expect(errors.foto).toBeDefined();
+  });
+
+  it('blocks an item whose product was deleted from the catalog', () => {
+    const errors = validateItem(
+      makeValidItem({ fk_producto: 999 }),
+      makeCatalogo([{ id: 10 }]),
+    );
+    expect(errors.producto).toBeDefined();
+  });
+
+  it('does not flag a product that still exists in the catalog', () => {
+    const errors = validateItem(
+      makeValidItem({ fk_producto: 10 }),
+      makeCatalogo([{ id: 10 }]),
+    );
+    expect(errors.producto).toBeUndefined();
+  });
+
+  it('skips catalog check while the catalog is still loading (empty)', () => {
+    const errors = validateItem(makeValidItem({ fk_producto: 999 }), []);
+    expect(errors.producto).toBeUndefined();
   });
 
   it('returns all errors for a completely invalid item', () => {

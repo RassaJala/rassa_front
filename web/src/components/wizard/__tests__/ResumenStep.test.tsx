@@ -178,7 +178,7 @@ describe('ResumenStep', () => {
     expect(screen.getByText('10 kg · $500')).toBeDefined();
   });
 
-  it('uses fallback name when nombre_producto is empty', () => {
+  it('shows unavailable label when nombre_producto is empty (deleted product)', () => {
     render(
       <ResumenStep
         weekNumber={32}
@@ -188,7 +188,9 @@ describe('ResumenStep', () => {
         colors={baseColors}
       />,
     );
-    expect(screen.getByText('Producto #1')).toBeDefined();
+    expect(
+      screen.getByText('Producto no disponible (eliminado del catálogo)'),
+    ).toBeDefined();
   });
 
   it('shows different product count variants', () => {

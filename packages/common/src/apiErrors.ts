@@ -150,7 +150,17 @@ export function parseApiError(
   defaultMessage = 'Ocurrió un error inesperado.',
 ): string {
   const parsed = parseAxiosError(error);
-  return parsed ?? defaultMessage;
+  if (parsed !== null) return parsed;
+
+  // No response was produced (timeout, DNS, ECONNREFUSED, etc.): the default
+  // server-side message would mislead the user into thinking the backend
+  // failed. Surface a connectivity-specific message instead (C4).
+  const candidate = unwrapCause(error);
+  if (isAxiosError(candidate) && candidate.response === undefined) {
+    return 'Error de conexión. Revisá tu conexión a internet e intentá de nuevo.';
+  }
+
+  return defaultMessage;
 }
 
 export function extractApiError(

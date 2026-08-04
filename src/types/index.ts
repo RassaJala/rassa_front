@@ -81,6 +81,8 @@ export interface Order {
   creado_en: string;
   productos?: string[];
   has_more_productos?: boolean;
+  /** Backend flag (list/detail): order is pending and its expiry date passed. */
+  expirado?: boolean;
 }
 
 export interface OrderDetail extends Order {

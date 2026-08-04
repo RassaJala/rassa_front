@@ -9,7 +9,11 @@ import {
 } from '../hooks/usePublications';
 import type { Publicacion, PublicacionEstado } from '../services/publications';
 import { extractApiError } from '../utils/apiErrors';
-import { formatDate } from '../utils/publicationWizard';
+import {
+  formatDate,
+  isMondayToday,
+  parseLocalDate,
+} from '../utils/publicationWizard';
 import { mediaUrl } from '../utils/mediaUrl';
 import { hideBrokenImage } from '../utils/imageHelpers';
 import {
@@ -89,7 +93,7 @@ export function FarmerPublications() {
   const yearOptions = useMemo(() => {
     const years = [0];
     for (const p of publications) {
-      const y = new Date(p.fecha_publicacion).getFullYear();
+      const y = parseLocalDate(p.fecha_publicacion).getFullYear();
       if (!years.includes(y)) years.push(y);
     }
     return years.sort((a, b) => b - a);
@@ -98,11 +102,11 @@ export function FarmerPublications() {
   const filtered = useMemo(() => {
     return publications.filter((pub) => {
       if (filterMonth) {
-        const d = new Date(pub.fecha_publicacion);
+        const d = parseLocalDate(pub.fecha_publicacion);
         if (d.getMonth() + 1 !== filterMonth) return false;
       }
       if (filterYear) {
-        const d = new Date(pub.fecha_publicacion);
+        const d = parseLocalDate(pub.fecha_publicacion);
         if (d.getFullYear() !== filterYear) return false;
       }
       if (
@@ -134,7 +138,19 @@ export function FarmerPublications() {
     closeMutation.isPending;
 
   function handleEdit(id: number) {
+    if (!isMondayToday()) {
+      showToast('Solo puedes editar publicaciones los lunes.', true);
+      return;
+    }
     void navigate(`/agricultor/publicaciones/${String(id)}/editar`);
+  }
+
+  function handleNew() {
+    if (!isMondayToday()) {
+      showToast('Solo se pueden crear publicaciones los lunes.', true);
+      return;
+    }
+    void navigate('/agricultor/publicaciones/nueva');
   }
 
   async function handleDelete(id: number) {
@@ -213,10 +229,7 @@ export function FarmerPublications() {
       <PageHeader
         title="Publicaciones Semanales"
         action={
-          <Button
-            variant="primary"
-            onClick={() => void navigate('/agricultor/publicaciones/nueva')}
-          >
+          <Button variant="primary" onClick={() => void handleNew()}>
             + Nueva publicación
           </Button>
         }
@@ -378,10 +391,7 @@ export function FarmerPublications() {
           title="No hay publicaciones"
           message="Creá una publicación semanal para vender tus productos."
           action={
-            <Button
-              variant="primary"
-              onClick={() => void navigate('/agricultor/publicaciones/nueva')}
-            >
+            <Button variant="primary" onClick={() => void handleNew()}>
               + Nueva publicación
             </Button>
           }
@@ -452,7 +462,7 @@ export function FarmerPublications() {
                         className="px-[18px] py-4 text-[14px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(new Date(pub.fecha_publicacion), {
+                        {formatDate(parseLocalDate(pub.fecha_publicacion), {
                           short: true,
                         })}
                       </td>
@@ -534,7 +544,7 @@ export function FarmerPublications() {
                         className="text-[13px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(new Date(pub.fecha_publicacion), {
+                        {formatDate(parseLocalDate(pub.fecha_publicacion), {
                           short: true,
                         })}
                       </p>

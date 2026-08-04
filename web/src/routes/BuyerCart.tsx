@@ -5,16 +5,7 @@ import { getColors } from '../constants/colors';
 import { cartCardStyle } from '../constants/styles';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCartStore } from '../store/cartStore';
-
-function mediaUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(
-    /\/api\/?$/,
-    '',
-  );
-  return `${base}${path}`;
-}
+import { mediaUrl } from '../utils/mediaUrl';
 
 export function BuyerCart() {
   const items = useCartStore((s) => s.items);
