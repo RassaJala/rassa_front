@@ -194,7 +194,7 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
       showToast('No se pudo abrir el chat con el agricultor.', 'error');
       createChat.reset();
     }
-  }, [createChat.isError, createChat.reset, showToast]);
+  }, [createChat.isError, createChat.reset, showToast, createChat]);
 
   const handleContact = useCallback(
     (fkAgricultor: number) => {
