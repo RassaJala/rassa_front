@@ -102,9 +102,9 @@ export default function CatalogDialogs({
   // request is still loading or when it failed — those are different states.
   const localidadEmptyMessage = isLoadingLocalidades
     ? 'Cargando localidades...'
-    : errorLocalidades
+    : (errorLocalidades
       ? `No se pudieron cargar las localidades. ${onRetryLocalidades ? 'Tocá Reintentar.' : 'Intentá de nuevo más tarde.'}`
-      : 'Este municipio no tiene localidades cargadas. Elegí otro municipio o contactá soporte.';
+      : 'Este municipio no tiene localidades cargadas. Elegí otro municipio o contactá soporte.');
 
   return (
     <>

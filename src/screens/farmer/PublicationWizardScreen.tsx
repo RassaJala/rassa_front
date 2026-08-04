@@ -279,9 +279,9 @@ export default function PublicationWizardScreen({
   if (!canEdit) {
     const reason = isEditableWeekday
       ? 'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.'
-      : isNewPublication
+      : (isNewPublication
         ? 'Solo se pueden crear publicaciones los lunes.'
-        : 'Solo puedes editar publicaciones los lunes.';
+        : 'Solo puedes editar publicaciones los lunes.');
     return (
       <View
         style={{
