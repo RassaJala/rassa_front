@@ -113,16 +113,16 @@ describe('ChatBubble', () => {
     expect(screen.getByText('(editado)')).toBeDefined();
   });
 
-  it('renders nothing when activo is false', () => {
+  it('shows a deleted message placeholder when activo is false', () => {
     const inactiveMessage: Message = { ...baseMessage, activo: false };
-    const { container } = render(
+    render(
       <ChatBubble
         message={inactiveMessage}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
-    expect(container.innerHTML).toBe('');
+    expect(screen.getByText('Mensaje eliminado')).toBeDefined();
   });
 
   it('shows context menu button only for own editable messages', () => {

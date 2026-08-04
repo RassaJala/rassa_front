@@ -106,7 +106,27 @@ export function ChatBubble({
       ? `linear-gradient(135deg, ${c.surface}, ${mixHex(c.surface, c.brand, 0.06)})`
       : `linear-gradient(135deg, ${c.surface}, ${mixHex(c.surface, '#000000', 0.08)})`;
 
-  if (!isActive) return null;
+  if (!isActive) {
+    // Deleted message: keep a visible placeholder (consistent with mobile, PR #66 review)
+    return (
+      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}>
+        <div
+          className={`relative max-w-[75%] rounded-2xl px-4 py-2 italic text-sm ${
+            isOwn ? 'rounded-br-md' : 'rounded-bl-md'
+          }`}
+          style={{
+            background: lightMode
+              ? 'rgba(0,0,0,0.05)'
+              : 'rgba(255,255,255,0.05)',
+            color: c.muted,
+            border: `1px dashed ${c.border}`,
+          }}
+        >
+          Mensaje eliminado
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
