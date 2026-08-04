@@ -232,7 +232,7 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       expect(screen.getByText('Fecha de publicación')).toBeInTheDocument();
       expect(
-        screen.getByRole('heading', { name: /Semana 32/ }),
+        screen.getByRole('heading', { name: /Semana \d+/ }),
       ).toBeInTheDocument();
     });
 

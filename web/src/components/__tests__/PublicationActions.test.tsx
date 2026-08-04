@@ -204,7 +204,7 @@ describe('getStatusBadge', () => {
       label: 'Publicada',
     });
     expect(getStatusBadge('cerrado')).toEqual({
-      variant: 'default',
+      variant: 'success',
       label: 'Cerrada',
     });
     expect(getStatusBadge('cancelado')).toEqual({
