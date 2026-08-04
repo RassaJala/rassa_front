@@ -117,12 +117,21 @@ describe('BuyerReceiptDetail', () => {
     expect(screen.getByText('Reintentar')).toBeTruthy();
   });
 
-  it('shows error state and does not fetch when paymentId is invalid', async () => {
+  it('shows the not-found state and does not fetch when paymentId is invalid', async () => {
     mockParams.current = { paymentId: 'abc' };
 
     renderPage();
-    expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(await screen.findByText('No se encontró el recibo')).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('shows a not-found message when the receipt does not exist', async () => {
+    mockedFetchPago.mockResolvedValue(null as never);
+
+    renderPage();
+    expect(await screen.findByText('No se encontró el recibo')).toBeTruthy();
+    expect(screen.getByText('Reintentar')).toBeTruthy();
+    expect(screen.queryByText('Error al cargar el recibo')).toBeNull();
   });
 
   it('does not render a receipt owned by another user (IDOR defense)', async () => {

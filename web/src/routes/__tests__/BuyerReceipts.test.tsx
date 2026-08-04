@@ -134,6 +134,24 @@ describe('BuyerReceipts', () => {
     expect(await screen.findByText('PAG-0009')).toBeTruthy();
   });
 
+  it('shows error state when fetchPagos receives a null response', async () => {
+    mockedFetchPagos.mockRejectedValueOnce(
+      new Error('La respuesta del servidor es null al listar pagos'),
+    );
+
+    renderPage();
+    expect(await screen.findByText('Error al cargar recibos')).toBeTruthy();
+  });
+
+  it('shows error state when fetchPagos receives a non-list results field', async () => {
+    mockedFetchPagos.mockRejectedValueOnce(
+      new Error("El campo 'results' no es una lista al listar pagos"),
+    );
+
+    renderPage();
+    expect(await screen.findByText('Error al cargar recibos')).toBeTruthy();
+  });
+
   it('fetches per user id in the query key (cache isolation)', async () => {
     const first = renderPage();
     await waitFor(() => expect(mockedFetchPagos).toHaveBeenCalledTimes(1));

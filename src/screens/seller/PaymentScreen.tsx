@@ -23,7 +23,6 @@ import {
   fetchPagoPorPedido,
   fetchTiposPago,
   ORDER_STATUS_READY,
-  PAGOS_CLIENTE_QUERY_KEY,
 } from '@/common/payments';
 import type { PaymentDetail, TipoPago } from '@/common/payments';
 import { colors } from '@/constants/colors';
@@ -504,10 +503,9 @@ export default function PaymentScreen(): React.JSX.Element {
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-        queryClient.invalidateQueries({
-          queryKey: [PAGOS_CLIENTE_QUERY_KEY],
-        }),
-      ]).catch(() => {});
+      ]).catch((err) => {
+        console.error('Invalidación de caché falló:', err);
+      });
       navigation.replace('Receipt', { paymentId: data.id_pago });
       paymentInFlight.current = false;
     },
@@ -521,10 +519,9 @@ export default function PaymentScreen(): React.JSX.Element {
           void Promise.all([
             queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
             queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-            queryClient.invalidateQueries({
-              queryKey: [PAGOS_CLIENTE_QUERY_KEY],
-            }),
-          ]).catch(() => {});
+          ]).catch((err) => {
+            console.error('Invalidación de caché falló:', err);
+          });
           navigation.replace('Receipt', { paymentId: pago.id_pago });
           paymentInFlight.current = false;
           return;

@@ -56,6 +56,8 @@ export function BuyerReceiptDetail() {
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
   const { user } = useAuth();
 
+  // Defensa en profundidad: el backend ya filtra por cliente autenticado
+  // (PR #72 backend); este check es redundancia defensiva.
   const {
     data: pago,
     isLoading,
@@ -76,10 +78,14 @@ export function BuyerReceiptDetail() {
   const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
-    const mensaje =
-      pago != null && !esPropietario
-        ? 'No tienes acceso a este recibo'
-        : 'Error al cargar el recibo';
+    // isError (fallo técnico) y !pago (recibo inexistente) son casos
+    // distinguibles: solo el primero es un error de carga.
+    let mensaje = 'No tienes acceso a este recibo';
+    if (isError) {
+      mensaje = 'Error al cargar el recibo';
+    } else if (pago == null) {
+      mensaje = 'No se encontró el recibo';
+    }
     return (
       <div className="py-20 text-center">
         <p className="mb-4 text-lg" style={{ color: muted }}>

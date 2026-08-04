@@ -49,6 +49,8 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
 
+  // Defensa en profundidad: el backend ya filtra por cliente autenticado
+  // (PR #72 backend); este check es redundancia defensiva.
   const {
     data: pago,
     isLoading,
@@ -86,10 +88,14 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
-    const mensaje =
-      pago != null && !esPropietario
-        ? 'No tienes acceso a este recibo'
-        : 'Error al cargar el recibo';
+    // isError (fallo técnico) y !pago (recibo inexistente) son casos
+    // distinguibles: solo el primero es un error de carga.
+    let mensaje = 'No tienes acceso a este recibo';
+    if (isError) {
+      mensaje = 'Error al cargar el recibo';
+    } else if (pago == null) {
+      mensaje = 'No se encontró el recibo';
+    }
     return (
       <View
         style={{
