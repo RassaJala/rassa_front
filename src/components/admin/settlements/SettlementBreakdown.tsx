@@ -3,13 +3,13 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { formatMoney } from '@/utils/money';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 
 interface Props {
   readonly montoVentas: string;
   readonly comision: string;
   readonly montoLiquidar: string;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 interface RowProps {
@@ -49,6 +49,12 @@ export default function SettlementBreakdown({
   palette,
 }: Props): React.JSX.Element {
   const { surface, fg, muted, border, brand } = palette;
+  // Derive the commission rate from the amounts the backend actually sent
+  // (the serializer does not expose a tasa_comision field). Guard division by
+  // zero so ventas "0.00" renders "Comisión Rassa (0%)".
+  const ventas = Number(montoVentas);
+  const tasa = ventas > 0 ? Number(comision) / ventas : 0;
+  const pct = Math.round(tasa * 100);
   return (
     <View
       style={[styles.box, { backgroundColor: surface, borderColor: border }]}
@@ -61,7 +67,7 @@ export default function SettlementBreakdown({
         valueColor={fg}
       />
       <Row
-        label="Comisión Rassa (10%)"
+        label={`Comisión Rassa (${pct}%)`}
         value={formatMoney(comision)}
         muted={muted}
         valueColor={fg}

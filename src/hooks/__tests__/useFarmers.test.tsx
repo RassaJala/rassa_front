@@ -16,15 +16,7 @@ const mockFetchFarmers = fetchFarmers as jest.Mock;
 const farmers = [
   {
     id_usuario: 4,
-    email: 'ana@rassa.com',
-    role: 'farmer' as const,
-    nombre: 'Ana',
-    apellido_paterno: 'Ramírez',
-    apellido_materno: null,
-    localidad: 1,
-    localidad_nombre: 'Localidad',
-    estado: true,
-    creado_en: '2026-01-01T00:00:00-03:00',
+    nombre: 'Ana Ramírez',
   },
 ];
 
@@ -54,6 +46,8 @@ describe('useFarmers', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.farmers).toHaveLength(1);
     expect(result.current.farmers[0]?.id_usuario).toBe(4);
+    expect(result.current.farmers[0]?.nombre).toBe('Ana Ramírez');
+    expect(typeof result.current.refetch).toBe('function');
   });
 
   it('reports error and keeps an empty list when the fetch fails', async () => {

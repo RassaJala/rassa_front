@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { periodLabel, WASTE_DETAIL_LIMIT } from '@/common/waste';
 import type { MermaResumenItem } from '@/common/waste';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 import { getDecisionColor } from './colors';
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
   readonly paginaSegura: number;
   readonly onPrev: () => void;
   readonly onNext: () => void;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function MermaDetailList({

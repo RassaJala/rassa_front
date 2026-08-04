@@ -305,4 +305,26 @@ describe('SettlementDetailScreen', () => {
     await findByText('Ana Ramírez');
     expect(mockFetchSettlement).toHaveBeenCalledTimes(2);
   });
+
+  it('R4-1: shows "Liquidación no encontrada" for a 404 and retries', async () => {
+    mockFetchSettlement
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: {
+          status: 404,
+          data: { detail: 'No Liquidación matches the given query.' },
+        },
+      })
+      .mockResolvedValueOnce(detallePendiente);
+
+    const { findByText, getByText } = renderScreen();
+
+    // The 404 detail is ambiguous (endpoint missing vs id not found): the
+    // admin gets the honest message instead of the raw DRF detail.
+    expect(await findByText('Liquidación no encontrada')).toBeTruthy();
+    fireEvent.press(getByText('Reintentar'));
+
+    await findByText('Ana Ramírez');
+    expect(mockFetchSettlement).toHaveBeenCalledTimes(2);
+  });
 });

@@ -7,13 +7,13 @@ import type { Settlement } from '@/common/settlements';
 import { formatDisplayDate } from '@/common/waste';
 import { formatMoney } from '@/utils/money';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 import SettlementEstadoBadge from './SettlementEstadoBadge';
 
 interface Props {
   readonly settlement: Settlement;
   readonly onPress: () => void;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function SettlementCard({

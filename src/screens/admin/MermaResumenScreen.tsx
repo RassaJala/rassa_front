@@ -28,7 +28,7 @@ import {
   WASTE_PAGE_SIZE,
 } from '@/common/waste';
 import type { MermaResumenResponse, ResumenParams } from '@/common/waste';
-import type { MermaPalette } from '@/components/admin/merma/colors';
+import type { AdminPalette } from '@/components/admin/merma/colors';
 import { MermaDateModal } from '@/components/admin/merma/MermaDateModal';
 import { MermaDetailList } from '@/components/admin/merma/MermaDetailList';
 import { MermaErrorBox } from '@/components/admin/merma/MermaErrorBox';
@@ -77,7 +77,7 @@ export default function MermaResumenScreen({
   const coral = colors.brandRedCoral;
   const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
 
-  const palette: MermaPalette = {
+  const palette: AdminPalette = {
     surface,
     fg,
     muted,

@@ -6,18 +6,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { SettlementEstado } from '@/common/settlements';
 import { formatDisplayDate } from '@/common/waste';
 import { colors } from '@/constants/colors';
-import type { AdminUser } from '@/types/userManagement';
+import type { FarmerOption } from '@/services/settlements';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 import type { PickerTarget } from '../merma/MermaFilterBar';
-import { getFarmerFullName } from './FarmerPickerModal';
 
 interface Props {
   readonly draftDesde: string;
   readonly draftHasta: string;
   readonly isDateRangeInvalid: boolean;
   readonly farmerId: number | undefined;
-  readonly farmers: AdminUser[];
+  readonly farmers: FarmerOption[];
   readonly selectedEstado: SettlementEstado | '';
   readonly showReset: boolean;
   readonly onOpenDate: (target: PickerTarget) => void;
@@ -25,7 +24,7 @@ interface Props {
   readonly onEstadoChange: (estado: SettlementEstado | '') => void;
   readonly onApply: () => void;
   readonly onReset: () => void;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 const ESTADO_FILTERS: readonly {
@@ -59,7 +58,7 @@ export function SettlementFilterBar({
     farmerId === undefined
       ? 'Todos los agricultores'
       : selectedFarmer
-        ? getFarmerFullName(selectedFarmer)
+        ? selectedFarmer.nombre
         : 'Seleccionar';
 
   return (

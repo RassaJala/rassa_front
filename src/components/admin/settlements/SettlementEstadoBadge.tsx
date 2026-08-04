@@ -19,8 +19,8 @@ export default function SettlementEstadoBadge({
         styles.badge,
         {
           backgroundColor: pagada
-            ? colors.statusPublicadoBg
-            : colors.statusBorradorBg,
+            ? colors.settlementPagadaBg
+            : colors.settlementPendienteBg,
         },
       ]}
     >
@@ -28,7 +28,9 @@ export default function SettlementEstadoBadge({
         style={[
           styles.text,
           {
-            color: pagada ? colors.statusPublicadoFg : colors.statusBorradorFg,
+            color: pagada
+              ? colors.settlementPagadaFg
+              : colors.settlementPendienteFg,
           },
         ]}
       >

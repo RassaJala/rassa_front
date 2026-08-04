@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -18,13 +18,13 @@ import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { parseApiError } from '@/utils/apiErrors';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onConfirm: (params: MarcarPagadaParams) => Promise<unknown>;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export default function PagarModal({
@@ -54,6 +54,10 @@ export default function PagarModal({
   const [referencia, setReferencia] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  // Synchronous submit lock (R4-3): React state updates are async, so two taps
+  // in the same frame can both observe isSubmitting === false. The ref closes
+  // that window — it is read/written synchronously inside handleConfirm.
+  const submitLockRef = useRef(false);
 
   // Reset draft state every time the modal reopens.
   useEffect(() => {
@@ -62,6 +66,7 @@ export default function PagarModal({
       setReferencia('');
       setSubmitError('');
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   }, [visible]);
 
@@ -73,7 +78,9 @@ export default function PagarModal({
   }, [tiposPago, selectedTipo]);
 
   const handleConfirm = useCallback(async () => {
-    if (selectedTipo === null || isSubmitting) return;
+    if (submitLockRef.current || isSubmitting) return;
+    if (selectedTipo === null) return;
+    submitLockRef.current = true;
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -86,6 +93,7 @@ export default function PagarModal({
     } catch (e) {
       setSubmitError(parseApiError(e, 'No se pudo registrar el pago'));
     } finally {
+      submitLockRef.current = false;
       setIsSubmitting(false);
     }
   }, [selectedTipo, isSubmitting, referencia, onConfirm]);
@@ -96,7 +104,7 @@ export default function PagarModal({
     <Modal transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
-          onPress={(e) => e.stopPropagation()}
+          onPress={(e) => e?.stopPropagation()}
           style={[styles.sheet, { backgroundColor: surface }]}
         >
           <Text style={[styles.title, { color: fg }]}>Registrar pago</Text>
@@ -181,6 +189,7 @@ export default function PagarModal({
             </Pressable>
             <Pressable
               onPress={() => void handleConfirm()}
+              testID="pagar-confirm"
               disabled={isSubmitting || selectedTipo === null}
               style={[styles.btn, { backgroundColor: brand }]}
             >

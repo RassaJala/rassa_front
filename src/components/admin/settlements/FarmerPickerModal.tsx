@@ -11,25 +11,19 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
-import type { AdminUser } from '@/types/userManagement';
+import type { FarmerOption } from '@/services/settlements';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelect: (id: number | undefined) => void;
   readonly selectedId: number | undefined;
-  readonly farmers: AdminUser[];
-  readonly palette: MermaPalette;
-}
-
-export function getFarmerFullName(
-  farmer: Pick<AdminUser, 'nombre' | 'apellido_paterno' | 'apellido_materno'>,
-): string {
-  return [farmer.nombre, farmer.apellido_paterno, farmer.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
+  readonly farmers: FarmerOption[];
+  readonly isError?: boolean;
+  readonly onRetry?: () => void;
+  readonly palette: AdminPalette;
 }
 
 export function FarmerPickerModal({
@@ -38,6 +32,8 @@ export function FarmerPickerModal({
   onSelect,
   selectedId,
   farmers,
+  isError = false,
+  onRetry,
   palette,
 }: Props): React.JSX.Element {
   const { surface, fg, muted, brand, bg } = palette;
@@ -50,21 +46,16 @@ export function FarmerPickerModal({
   const filtered = useMemo(() => {
     if (!search.trim()) return farmers;
     const q = search.toLowerCase().trim();
-    return farmers.filter((f) =>
-      getFarmerFullName(f).toLowerCase().includes(q),
-    );
+    return farmers.filter((f) => f.nombre.toLowerCase().includes(q));
   }, [farmers, search]);
 
-  const options = useMemo(
-    () => [
-      { id_usuario: -1, nombre: 'Todos los agricultores' },
-      ...filtered.map((f) => ({
-        id_usuario: f.id_usuario,
-        nombre: getFarmerFullName(f),
-      })),
-    ],
-    [filtered],
-  );
+  // When the fetch failed and there is nothing to show, drop even the
+  // "Todos los agricultores" option so the ListEmptyComponent renders the
+  // error block with a retry action instead of a misleading list.
+  const options = useMemo(() => {
+    if (isError && farmers.length === 0) return [];
+    return [{ id_usuario: -1, nombre: 'Todos los agricultores' }, ...filtered];
+  }, [filtered, isError, farmers.length]);
 
   return (
     <Modal
@@ -173,11 +164,37 @@ export function FarmerPickerModal({
               );
             }}
             ListEmptyComponent={
-              <View style={{ padding: 32, alignItems: 'center' }}>
-                <Text style={{ color: muted, fontSize: 14 }}>
-                  Sin resultados
-                </Text>
-              </View>
+              isError && farmers.length === 0 ? (
+                <View style={{ padding: 32, alignItems: 'center' }}>
+                  <Text style={{ color: muted, fontSize: 14 }}>
+                    No se pudieron cargar los agricultores
+                  </Text>
+                  <Pressable
+                    onPress={onRetry}
+                    testID="farmer-picker-retry"
+                    style={{
+                      marginTop: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: brand,
+                    }}
+                  >
+                    <Text
+                      style={{ color: brand, fontSize: 14, fontWeight: '600' }}
+                    >
+                      Reintentar
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={{ padding: 32, alignItems: 'center' }}>
+                  <Text style={{ color: muted, fontSize: 14 }}>
+                    Sin resultados
+                  </Text>
+                </View>
+              )
             }
           />
         </Pressable>

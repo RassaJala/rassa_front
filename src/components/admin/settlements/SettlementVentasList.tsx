@@ -6,11 +6,11 @@ import { formatDisplayDate } from '@/common/waste';
 import { colors } from '@/constants/colors';
 import { formatMoney } from '@/utils/money';
 
-import type { MermaPalette } from '../merma/colors';
+import type { AdminPalette } from '../merma/colors';
 
 interface Props {
   readonly ventas: SettlementVenta[];
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export default function SettlementVentasList({
@@ -105,12 +105,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    backgroundColor: colors.statusPublicadoBg,
+    backgroundColor: colors.settlementPagadaBg,
   },
   folioText: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.statusPublicadoFg,
+    color: colors.settlementPagadaFg,
   },
   emptyBox: {
     borderRadius: 16,

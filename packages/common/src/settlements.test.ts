@@ -1,6 +1,5 @@
 import {
   buildLiquidacionesUrl,
-  COMISION_RASSA,
   ESTADO_PAGADA,
   ESTADO_PENDIENTE,
   unwrapLiquidacionesEnvelope,
@@ -62,13 +61,15 @@ describe('settlements common module', () => {
         'Error en la respuesta del servidor',
       );
     });
+
+    it('R4-4: throws when data is null instead of passing it through', () => {
+      expect(() =>
+        unwrapLiquidacionesEnvelope({ ok: true, data: null }),
+      ).toThrow('Error en la respuesta del servidor');
+    });
   });
 
   describe('constants', () => {
-    it('defines the RASSA commission as 10%', () => {
-      expect(COMISION_RASSA).toBe(0.1);
-    });
-
     it('defines both settlement estados', () => {
       expect(ESTADO_PENDIENTE).toBe('pendiente');
       expect(ESTADO_PAGADA).toBe('pagada');

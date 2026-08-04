@@ -2,6 +2,8 @@
 // Used by the mobile app (src/services/settlements.ts, SettlementListScreen /
 // SettlementDetailScreen). Mirrors @/common/waste conventions.
 
+import { buildListUrl, unwrapEnvelope } from './http';
+
 // --- Types -------------------------------------------------------------------
 
 export type SettlementEstado = 'pendiente' | 'pagada';
@@ -62,8 +64,6 @@ export interface SettlementListResponse {
 
 // --- Constants ---------------------------------------------------------------
 
-export const COMISION_RASSA = 0.1;
-
 export const ESTADO_PENDIENTE: SettlementEstado = 'pendiente';
 export const ESTADO_PAGADA: SettlementEstado = 'pagada';
 
@@ -79,18 +79,16 @@ export interface SettlementEnvelope<T> {
 }
 
 // Unwrap the {ok, data} envelope returned by the liquidaciones endpoints.
-// Throws when ok === false or data is missing. NOTE: business errors arrive as
-// ok:true with a non-2xx HTTP status — axios rejection (not this unwrap) is
-// what surfaces those; callers must branch on HTTP status, never on envelope.ok.
+// Throws when ok === false or data is missing (including null — R4-4). NOTE:
+// business errors arrive as ok:true with a non-2xx HTTP status — axios
+// rejection (not this unwrap) is what surfaces those; callers must branch on
+// HTTP status, never on envelope.ok.
 export function unwrapLiquidacionesEnvelope<T>(envelope: {
   ok: boolean;
   data?: unknown;
   message?: string;
 }): T {
-  if (envelope.ok === false || envelope.data === undefined) {
-    throw new Error(envelope.message ?? 'Error en la respuesta del servidor');
-  }
-  return envelope.data as T;
+  return unwrapEnvelope<T>(envelope);
 }
 
 // --- URL builder -------------------------------------------------------------
@@ -100,19 +98,10 @@ export function unwrapLiquidacionesEnvelope<T>(envelope: {
 export function buildLiquidacionesUrl(
   params: SettlementListParams = {},
 ): string {
-  const query = new URLSearchParams();
-  if (params.agricultor !== undefined) {
-    query.set('agricultor', String(params.agricultor));
-  }
-  if (params.estado !== undefined) {
-    query.set('estado', params.estado);
-  }
-  if (params.periodo_inicio) {
-    query.set('periodo_inicio', params.periodo_inicio);
-  }
-  if (params.periodo_fin) {
-    query.set('periodo_fin', params.periodo_fin);
-  }
-  const qs = query.toString();
-  return qs ? `/liquidaciones/?${qs}` : '/liquidaciones/';
+  return buildListUrl('/liquidaciones/', {
+    agricultor: params.agricultor,
+    estado: params.estado,
+    periodo_inicio: params.periodo_inicio,
+    periodo_fin: params.periodo_fin,
+  });
 }

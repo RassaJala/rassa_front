@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -13,15 +13,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
-import type {
-  Settlement,
-  SettlementEstado,
-  SettlementListParams,
-} from '@/common/settlements';
-import { parseDate } from '@/common/waste';
-import type { MermaPalette } from '@/components/admin/merma/colors';
+import type { Settlement } from '@/common/settlements';
+import type { AdminPalette } from '@/components/admin/merma/colors';
 import { MermaDateModal } from '@/components/admin/merma/MermaDateModal';
-import type { PickerTarget } from '@/components/admin/merma/MermaFilterBar';
 import { FarmerPickerModal } from '@/components/admin/settlements/FarmerPickerModal';
 import { SettlementCard } from '@/components/admin/settlements/SettlementCard';
 import { SettlementFilterBar } from '@/components/admin/settlements/SettlementFilterBar';
@@ -30,25 +24,27 @@ import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import { useAdminColors } from '@/hooks/useAdminColors';
 import { useFarmers } from '@/hooks/useFarmers';
+import { useSettlementFilters } from '@/hooks/useSettlementFilters';
+import { useToast } from '@/hooks/useToast';
 import { fetchSettlements } from '@/services/settlements';
+import type { PaginatedFetchResult } from '@/services/settlements';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
 import { parseApiError } from '@/utils/apiErrors';
 
 const PAGE_SIZE = 10;
-const EMPTY_FILTERS: SettlementListParams = {};
+
+const EMPTY_SETTLEMENTS: PaginatedFetchResult<Settlement> = {
+  items: [],
+  count: 0,
+  truncated: false,
+};
 
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'SettlementList'>;
 
 interface Props {
   readonly navigation: Nav;
 }
-
-type ToastState = {
-  visible: boolean;
-  message: string;
-  type: 'success' | 'error' | 'info';
-};
 
 function Paginator({
   totalPages,
@@ -59,7 +55,7 @@ function Paginator({
   totalPages: number;
   safePage: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-  palette: MermaPalette;
+  palette: AdminPalette;
 }): React.JSX.Element | null {
   const { border, fg, muted, brand } = palette;
 
@@ -75,6 +71,7 @@ function Paginator({
       <Pressable
         onPress={() => setPage((p) => Math.max(1, p - 1))}
         disabled={safePage <= 1}
+        testID="paginator-prev"
         style={[styles.paginatorBtn, { borderColor: border }]}
       >
         <Text
@@ -93,6 +90,7 @@ function Paginator({
           <Pressable
             key={p}
             onPress={() => setPage(p)}
+            testID={`paginator-page-${p}`}
             style={[
               styles.pageDot,
               { backgroundColor: p === safePage ? brand : palette.bg },
@@ -114,6 +112,7 @@ function Paginator({
       <Pressable
         onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
         disabled={safePage >= totalPages}
+        testID="paginator-next"
         style={[styles.paginatorBtn, { borderColor: border }]}
       >
         <Text
@@ -137,7 +136,7 @@ function EmptyState({
 }: {
   hasFilters: boolean;
   onReset: () => void;
-  palette: MermaPalette;
+  palette: AdminPalette;
 }): React.JSX.Element {
   const { muted, brand, border } = palette;
   return (
@@ -174,118 +173,69 @@ export default function SettlementListScreen({
   const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
   const coral = colors.brandRedCoral;
-  const palette = useMemo<MermaPalette>(
+  const palette = useMemo<AdminPalette>(
     () => ({ surface, fg, muted, border, brand, bg, segBg, coral }),
     [surface, fg, muted, border, brand, bg, segBg, coral],
   );
 
-  const { farmers } = useFarmers();
-
-  // Draft date fields (modal) vs applied filters (post-Buscar). Estado and
-  // agricultor apply immediately; dates only after Buscar (S2).
-  const [draftDesde, setDraftDesde] = useState('');
-  const [draftHasta, setDraftHasta] = useState('');
-  const [applied, setApplied] = useState<SettlementListParams>(EMPTY_FILTERS);
-
-  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
-  const [showFarmerPicker, setShowFarmerPicker] = useState(false);
-
-  const [page, setPage] = useState(1);
-
-  const [toast, setToast] = useState<ToastState>({
-    visible: false,
-    message: '',
-    type: 'info',
-  });
-
-  const showToast = useCallback((message: string, type: ToastState['type']) => {
-    setToast({ visible: true, message, type });
-  }, []);
-
-  const hideToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, visible: false }));
-  }, []);
+  const {
+    farmers,
+    isError: farmersError,
+    refetch: farmersRefetch,
+  } = useFarmers();
 
   const {
-    data = [],
+    draftDesde,
+    setDraftDesde,
+    draftHasta,
+    setDraftHasta,
+    applied,
+    page,
+    setPage,
+    pickerTarget,
+    setPickerTarget,
+    showFarmerPicker,
+    setShowFarmerPicker,
+    isDateRangeInvalid,
+    showReset,
+    handleApply,
+    handleReset,
+    handleEstadoChange,
+    handleFarmerSelect,
+  } = useSettlementFilters();
+
+  const { toast, showToast, hideToast } = useToast();
+
+  const {
+    data = EMPTY_SETTLEMENTS,
     isLoading,
     isError,
     error,
     refetch,
     isRefetching,
-  } = useQuery<Settlement[]>({
+  } = useQuery<PaginatedFetchResult<Settlement>>({
     queryKey: ['settlements', applied],
-    queryFn: () => fetchSettlements(applied),
+    queryFn: ({ signal }) => fetchSettlements(applied, signal),
+    // The settlements list refetches explicitly (pull-to-refresh, filter
+    // apply, invalidation after marking paid); focus-refresh caused surprise
+    // spinner flashes. Scoped here so other screens keep the default (true).
+    refetchOnWindowFocus: false,
   });
 
   const errorMessage = parseApiError(error, 'Error al cargar liquidaciones');
 
   // Refetch failure with stale data: keep the list and surface the message.
   useEffect(() => {
-    if (isError && data.length > 0) {
+    if (isError && data.items.length > 0) {
       showToast(errorMessage, 'error');
     }
-  }, [isError, data.length, errorMessage, showToast]);
+  }, [isError, data.items.length, errorMessage, showToast]);
 
-  const desdeDate = draftDesde ? parseDate(draftDesde) : null;
-  const hastaDate = draftHasta ? parseDate(draftHasta) : null;
-  const isDateRangeInvalid =
-    desdeDate !== null && hastaDate !== null && desdeDate > hastaDate;
-
-  const showReset =
-    draftDesde !== '' ||
-    draftHasta !== '' ||
-    applied.agricultor !== undefined ||
-    applied.estado !== undefined ||
-    applied.periodo_inicio !== undefined ||
-    applied.periodo_fin !== undefined;
-
-  const handleApply = useCallback(() => {
-    if (isDateRangeInvalid) return;
-    setPage(1);
-    setApplied((prev) => {
-      const next: SettlementListParams = { ...prev };
-      if (draftDesde) next.periodo_inicio = draftDesde;
-      else delete next.periodo_inicio;
-      if (draftHasta) next.periodo_fin = draftHasta;
-      else delete next.periodo_fin;
-      return next;
-    });
-  }, [isDateRangeInvalid, draftDesde, draftHasta]);
-
-  const handleReset = useCallback(() => {
-    setDraftDesde('');
-    setDraftHasta('');
-    setPage(1);
-    setApplied({});
-  }, []);
-
-  const handleEstadoChange = useCallback((estado: SettlementEstado | '') => {
-    setPage(1);
-    setApplied((prev) => {
-      const next: SettlementListParams = { ...prev };
-      if (estado) next.estado = estado;
-      else delete next.estado;
-      return next;
-    });
-  }, []);
-
-  const handleFarmerSelect = useCallback((farmerId: number | undefined) => {
-    setShowFarmerPicker(false);
-    setPage(1);
-    setApplied((prev) => {
-      const next: SettlementListParams = { ...prev };
-      if (farmerId !== undefined) next.agricultor = farmerId;
-      else delete next.agricultor;
-      return next;
-    });
-  }, []);
-
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(data.items.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const paginated = useMemo(
-    () => data.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [data, safePage],
+    () => data.items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [data.items, safePage],
   );
 
   const keyExtractor = useCallback(
@@ -309,7 +259,7 @@ export default function SettlementListScreen({
   );
 
   // ── Full error state (no data to fall back on) ──
-  if (isError && data.length === 0) {
+  if (isError && data.items.length === 0) {
     return (
       <ErrorBoundary>
         <View style={[styles.container, { backgroundColor: bg }]}>
@@ -363,6 +313,7 @@ export default function SettlementListScreen({
             data={paginated}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            testID="settlement-list"
             ListHeaderComponent={
               <View style={{ gap: 12 }}>
                 <SettlementFilterBar
@@ -388,8 +339,13 @@ export default function SettlementListScreen({
                     paddingBottom: 4,
                   }}
                 >
-                  {data.length} liquidaciones
+                  {data.count} liquidaciones
                 </Text>
+                {data.truncated ? (
+                  <Text style={{ fontSize: 12, color: muted }}>
+                    Se muestran las primeras {data.items.length} liquidaciones
+                  </Text>
+                ) : null}
               </View>
             }
             ListEmptyComponent={
@@ -438,6 +394,8 @@ export default function SettlementListScreen({
           onSelect={handleFarmerSelect}
           selectedId={applied.agricultor}
           farmers={farmers}
+          isError={farmersError}
+          onRetry={() => void farmersRefetch()}
           palette={palette}
         />
 

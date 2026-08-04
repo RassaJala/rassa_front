@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,7 +17,7 @@ import type {
   SettlementDetail,
 } from '@/common/settlements';
 import { formatDisplayDate } from '@/common/waste';
-import type { MermaPalette } from '@/components/admin/merma/colors';
+import type { AdminPalette } from '@/components/admin/merma/colors';
 import PagarModal from '@/components/admin/settlements/PagarModal';
 import SettlementBreakdown from '@/components/admin/settlements/SettlementBreakdown';
 import SettlementEstadoBadge from '@/components/admin/settlements/SettlementEstadoBadge';
@@ -27,22 +27,31 @@ import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
 import { formatearFecha } from '@/constants/dates';
 import { useAdminColors } from '@/hooks/useAdminColors';
+import { useToast } from '@/hooks/useToast';
 import {
   fetchSettlement,
   marcarSettlementPagada,
 } from '@/services/settlements';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
-import { parseApiError } from '@/utils/apiErrors';
+import { parseApiError, unwrapCause } from '@/utils/apiErrors';
 import { formatMoney } from '@/utils/money';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'SettlementDetail'>;
 
-type ToastState = {
-  visible: boolean;
-  message: string;
-  type: 'success' | 'error' | 'info';
-};
+// A 404 on the detail endpoint is ambiguous: the endpoint may not be deployed
+// yet, or the id simply does not exist. Either way "Liquidación no encontrada"
+// is the honest, actionable message for an admin instead of the generic error
+// (R4-1). All other failures fall back to parseApiError as before.
+function getDetailErrorMessage(error: unknown): string {
+  const candidate = unwrapCause(error);
+  const status =
+    typeof candidate === 'object' && candidate !== null
+      ? (candidate as { response?: { status?: number } }).response?.status
+      : undefined;
+  if (status === 404) return 'Liquidación no encontrada';
+  return parseApiError(error, 'Error al cargar la liquidación');
+}
 
 export default function SettlementDetailScreen({
   route,
@@ -54,7 +63,7 @@ export default function SettlementDetailScreen({
   const { bg, surface, fg, muted, border, brand } = useAdminColors();
   const segBg = isDark ? colors.admSegBgD : colors.admSegBgL;
   const coral = colors.brandRedCoral;
-  const palette: MermaPalette = {
+  const palette: AdminPalette = {
     surface,
     fg,
     muted,
@@ -75,23 +84,11 @@ export default function SettlementDetailScreen({
     refetch,
   } = useQuery<SettlementDetail>({
     queryKey: ['settlement', settlementId],
-    queryFn: () => fetchSettlement(settlementId),
+    queryFn: ({ signal }) => fetchSettlement(settlementId, signal),
   });
 
   const [pagarVisible, setPagarVisible] = useState(false);
-  const [toast, setToast] = useState<ToastState>({
-    visible: false,
-    message: '',
-    type: 'info',
-  });
-
-  const showToast = useCallback((message: string, type: ToastState['type']) => {
-    setToast({ visible: true, message, type });
-  }, []);
-
-  const hideToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, visible: false }));
-  }, []);
+  const { toast, showToast, hideToast } = useToast();
 
   const pagarMutation = useMutation({
     mutationFn: (params: MarcarPagadaParams) =>
@@ -104,14 +101,15 @@ export default function SettlementDetailScreen({
       // without a manual pull-to-refresh.
       void queryClient.invalidateQueries({ queryKey: ['settlements'] });
     },
-    onError: (error: unknown) => {
-      // S3: surface the business error and sync the list with reality.
-      showToast(parseApiError(error, 'No se pudo registrar el pago'), 'error');
+    onError: () => {
+      // The PagarModal surfaces the business error inline (its onConfirm
+      // catches the mutateAsync rejection); a second toast here would
+      // duplicate the message. Still sync the list with reality (S3).
       void queryClient.invalidateQueries({ queryKey: ['settlements'] });
     },
   });
 
-  const errorMessage = parseApiError(error, 'Error al cargar la liquidación');
+  const errorMessage = getDetailErrorMessage(error);
 
   if (isError && !detail) {
     return (
@@ -353,12 +351,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    backgroundColor: colors.statusPublicadoBg,
+    backgroundColor: colors.settlementPagadaBg,
   },
   pagoFolioText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.statusPublicadoFg,
+    color: colors.settlementPagadaFg,
   },
   pagoRow: {
     flexDirection: 'row',
