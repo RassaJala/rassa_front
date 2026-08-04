@@ -186,9 +186,9 @@ jest.mock('expo-file-system', () => {
   };
 });
 
-// Mock useEvent from expo (relies on native SharedObject/EventEmitter internals)
+// Mock useEvent from expo. Pure mock — jest.requireActual('expo') forces native
+// module init that breaks <Text>/<View> in jest-expo (see PR #66 review).
 jest.mock('expo', () => ({
-  ...jest.requireActual('expo'),
   useEvent: jest.fn(
     (_emitter: unknown, _eventName: string, initialValue: unknown): unknown =>
       initialValue,
