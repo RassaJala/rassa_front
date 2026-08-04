@@ -24,9 +24,9 @@ export const ROLE_OPTIONS = SHARED_ROLE_OPTIONS.map((opt) => ({
   color:
     opt.value === 'farmer'
       ? colors.primary
-      : (opt.value === 'seller'
+      : opt.value === 'seller'
         ? colors.accent
-        : colors.info),
+        : colors.info,
 })) as readonly {
   readonly label: string;
   readonly value: 'farmer' | 'seller' | 'buyer';

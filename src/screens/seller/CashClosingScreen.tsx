@@ -437,9 +437,9 @@ export default function CashClosingScreen(): React.JSX.Element {
                   const bannerColor = esCero ? success : redCoral;
                   const texto = esCero
                     ? 'Caja cuadrada — diferencia $0.00'
-                    : (diff > 0
+                    : diff > 0
                       ? `Sobró ${formatoDinero(ultimoCorte.diferencia)}`
-                      : `Faltó ${formatoDinero(String(Math.abs(diff)))}`);
+                      : `Faltó ${formatoDinero(String(Math.abs(diff)))}`;
                   return (
                     <View
                       style={{
