@@ -171,20 +171,37 @@ function PublicationCard({
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 4,
+            gap: 6,
             marginTop: 8,
           }}
         >
-          <MaterialCommunityIcons
-            name="pencil-outline"
-            size={14}
-            color={colors.warning}
-          />
-          <Text
-            style={{ fontSize: 12, color: colors.warning, fontWeight: '500' }}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              borderWidth: 1,
+              borderColor: theme.brand,
+              borderRadius: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+            }}
           >
-            Toca para editar
-          </Text>
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={14}
+              color={theme.brand}
+            />
+            <Text
+              style={{
+                fontSize: 12,
+                color: theme.brand,
+                fontWeight: '600',
+              }}
+            >
+              Editar
+            </Text>
+          </View>
         </View>
       ) : null}
     </Pressable>

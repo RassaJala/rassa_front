@@ -93,7 +93,7 @@ export default function PublicationWizardScreen({
 
   const publicacion = pubData?.data;
   const productos = semanalData?.data?.results ?? [];
-  const allProductos = allProducts?.data ?? [];
+  const allProductos = allProducts?.data?.results ?? [];
   const unidades = unidadesData?.data ?? [];
 
   const wizard = usePublicationWizard({
@@ -435,7 +435,6 @@ export default function PublicationWizardScreen({
         surface={surface}
         border={border}
         fg={fg}
-        brand={brand}
         white={white}
         onPrev={wizard.prevStep}
         onNext={handleNext}
