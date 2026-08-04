@@ -158,7 +158,7 @@ export default function HomeSellerScreen({
                 />
               </View>
 
-{/* QUICK ACTIONS */}
+              {/* QUICK ACTIONS */}
               <Pressable
                 onPress={handleWastePress}
                 style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
