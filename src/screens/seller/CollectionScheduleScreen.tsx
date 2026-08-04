@@ -72,7 +72,7 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     refetch,
     isRefetching,
   } = useQuery<RecoleccionesResult>({
-    queryKey: ['recolecciones', filter],
+    queryKey: ['recolecciones', filter, today],
     queryFn: () =>
       fetchRecolecciones({
         ...(filter ? { estado: filter } : {}),
@@ -192,8 +192,9 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
   useEffect(() => {
     if (createChat.isError) {
       showToast('No se pudo abrir el chat con el agricultor.', 'error');
+      createChat.reset();
     }
-  }, [createChat.isError, showToast]);
+  }, [createChat.isError, createChat.reset, showToast]);
 
   const handleContact = useCallback(
     (fkAgricultor: number) => {
