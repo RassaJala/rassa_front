@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
 import { buildReceiptHtml } from '@/common/receipt';
-import { fetchPago } from '@/common/payments';
+import { calcularSubtotal, fetchPago, formatearMonto } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -84,10 +84,7 @@ export function ReceiptPage() {
   }
 
   const productos = pago.productos ?? [];
-  const subtotal = productos.reduce(
-    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
-    0,
-  );
+  const subtotal = calcularSubtotal(productos);
 
   const handleImprimir = () => {
     let win: Window | null = null;
@@ -100,19 +97,31 @@ export function ReceiptPage() {
       alert('Permite popups para este sitio para poder imprimir el recibo.');
       return;
     }
-    win.document.write(buildReceiptHtml(pago));
-    win.document.close();
-    win.focus();
-    // Imprimir recién cuando el navegador terminó de procesar el documento,
-    // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
-    let printed = false;
-    const doPrint = () => {
-      if (printed) return;
-      printed = true;
-      win?.print();
+    const notificarError = (error: unknown) => {
+      console.error('Error al imprimir el recibo:', error);
+      alert('No se pudo imprimir el recibo. Inténtalo de nuevo.');
     };
-    win.onload = doPrint;
-    setTimeout(doPrint, 400);
+    try {
+      win.document.write(buildReceiptHtml(pago));
+      win.document.close();
+      win.focus();
+      // Imprimir recién cuando el navegador terminó de procesar el documento,
+      // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
+      let printed = false;
+      const doPrint = () => {
+        if (printed) return;
+        printed = true;
+        try {
+          win?.print();
+        } catch (error: unknown) {
+          notificarError(error);
+        }
+      };
+      win.onload = doPrint;
+      setTimeout(doPrint, 400);
+    } catch (error: unknown) {
+      notificarError(error);
+    }
   };
 
   return (
@@ -228,7 +237,7 @@ export function ReceiptPage() {
                 className="w-28 text-right text-sm font-bold"
                 style={{ color: fg }}
               >
-                ${subtotal.toFixed(2)}
+                {formatearMonto(subtotal)}
               </span>
             </div>
           </div>

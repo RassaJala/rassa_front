@@ -1,4 +1,4 @@
-import { buildReceiptHtml, escapeHtml } from '@/common/receipt';
+import { buildReceiptHtml, escapeHtml, fmt } from '@/common/receipt';
 import type { PaymentDetail } from '@/common/payments';
 
 const mockPago: PaymentDetail = {
@@ -75,5 +75,31 @@ describe('escapeHtml', () => {
     expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
       '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;',
     );
+  });
+});
+
+describe('fmt', () => {
+  it('formatea un valor numérico normal con $ y 2 decimales', () => {
+    expect(fmt(59.74)).toBe('$59.74');
+  });
+
+  it('redondea a 2 decimales los valores con más decimales', () => {
+    expect(fmt(19.999)).toBe('$20.00');
+    expect(fmt(10.126)).toBe('$10.13');
+  });
+
+  it('formatea un string numérico', () => {
+    expect(fmt('59.74')).toBe('$59.74');
+    expect(fmt('0')).toBe('$0.00');
+  });
+
+  it('devuelve "—" ante NaN y textos no numéricos', () => {
+    expect(fmt(NaN)).toBe('—');
+    expect(fmt('12,50')).toBe('—');
+  });
+
+  it('devuelve "—" ante null y undefined (datos corruptos)', () => {
+    expect(fmt(null)).toBe('—');
+    expect(fmt(undefined)).toBe('—');
   });
 });

@@ -9,9 +9,13 @@ const INK = '#2D3328';
 const MUTED = '#5E6B5E';
 const BORDER = '#E2E6DF';
 
-function fmt(amount: string | number): string {
+/**
+ * Formatea un monto para el recibo. Ante datos corruptos (null, undefined,
+ * NaN o texto no numérico) devuelve '—' en lugar de un monto falso.
+ */
+export function fmt(amount: string | number | null | undefined): string {
+  if (amount == null) return '—';
   const n = Number(amount);
-  // Dato corrupto (p. ej. "12,50"): no debe parecer un monto real.
   return Number.isFinite(n) ? formatearMonto(n) : '—';
 }
 
