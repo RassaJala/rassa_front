@@ -36,7 +36,7 @@ import { extractApiError } from '@/utils/apiErrors';
 function productModalHint(loading: boolean, productCount: number): string {
   if (loading) return 'Cargando productos…';
   if (productCount === 0) return 'No hay productos publicados con stock.';
-  return 'Seleccioná el producto a dar de baja.';
+  return 'Selecciona el producto a dar de baja.';
 }
 
 interface ProductEmptyNoticeProps {
@@ -76,7 +76,7 @@ function ProductEmptyNotice({
         color={colors.accent}
       />
       <Text style={{ fontSize: 13, color: muted, flex: 1 }}>
-        No hay publicaciones activas esta semana. Publicá un producto para poder
+        No hay publicaciones activas esta semana. Publica un producto para poder
         registrar mermas.
       </Text>
     </View>
@@ -170,7 +170,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     const cantidadNum = Number(cantidad);
 
     if (!selectedProduct) {
-      errors.producto = 'Seleccioná un producto publicado.';
+      errors.producto = 'Selecciona un producto publicado.';
     }
     if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
       errors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
@@ -183,7 +183,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
       errors.motivo = 'El motivo no puede superar los 300 caracteres.';
     }
     if (!decisionId) {
-      errors.decision = 'Elegí una decisión.';
+      errors.decision = 'Elige una decisión.';
     }
 
     setFieldErrors(errors);
@@ -288,7 +288,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
             </View>
           ) : (
             <Text style={{ fontSize: 15, color: t.muted }}>
-              Elegí un producto publicado…
+              Elige un producto publicado…
             </Text>
           )}
           <MaterialCommunityIcons

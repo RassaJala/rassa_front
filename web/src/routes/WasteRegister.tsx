@@ -163,7 +163,7 @@ export function WasteRegister() {
     const cantidadNum = Number(cantidad);
 
     if (!productoId) {
-      nextErrors.productoId = 'Seleccioná un producto publicado.';
+      nextErrors.productoId = 'Selecciona un producto publicado.';
     }
     if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
       nextErrors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
@@ -176,7 +176,7 @@ export function WasteRegister() {
       nextErrors.motivo = 'El motivo no puede superar los 300 caracteres.';
     }
     if (!decisionId) {
-      nextErrors.decisionId = 'Elegí una decisión.';
+      nextErrors.decisionId = 'Elige una decisión.';
     }
 
     setErrors(nextErrors);
@@ -251,7 +251,7 @@ export function WasteRegister() {
             ) : null}
             {!loadingProducts && products.length === 0 ? (
               <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                No hay publicaciones activas esta semana. Publicá un producto
+                No hay publicaciones activas esta semana. Publica un producto
                 para poder registrar mermas.
               </div>
             ) : null}
@@ -303,7 +303,7 @@ export function WasteRegister() {
               value={decisionId}
               onChange={(e) => setDecisionId(e.target.value)}
             >
-              <option value="">Elegí una decisión…</option>
+              <option value="">Elige una decisión…</option>
               {decisionOptions.map((option) => (
                 <option key={option.id_decision} value={option.id_decision}>
                   {option.decision}
