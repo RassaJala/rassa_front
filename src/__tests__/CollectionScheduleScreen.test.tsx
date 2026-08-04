@@ -561,7 +561,11 @@ describe('CollectionScheduleScreen', () => {
       .useQuery as jest.Mock;
     const lastCall =
       useQueryMock.mock.calls[useQueryMock.mock.calls.length - 1];
-    expect(lastCall?.[0]?.queryKey).toEqual(['recolecciones', 'pendiente', HOY]);
+    expect(lastCall?.[0]?.queryKey).toEqual([
+      'recolecciones',
+      'pendiente',
+      HOY,
+    ]);
   });
 
   it('no ofrece Contactar en la propia recolección', () => {
