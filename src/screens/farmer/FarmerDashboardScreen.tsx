@@ -107,6 +107,9 @@ function PublicationCard({
   const muted = theme.muted;
   const surface = theme.surface;
   const border = theme.border;
+  const accentBg = theme.accentBg;
+  const subtleBg = theme.subtleBg;
+  const brand = theme.brand;
   const productCount = pub.productos?.length ?? 0;
 
   return (
@@ -115,95 +118,101 @@ function PublicationCard({
       style={({ pressed }) => ({
         backgroundColor: surface,
         borderRadius: 16,
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: border,
         padding: 16,
-        marginBottom: 10,
+        marginBottom: 16,
         opacity: pressed ? 0.7 : 1,
       })}
     >
       <View
         style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 8,
+          backgroundColor: subtleBg,
+          borderRadius: 12,
+          padding: 16,
         }}
       >
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '600',
-              color: fg,
-              marginBottom: 2,
-            }}
-          >
-            Semana {pub.semana}
-          </Text>
-          <Text style={{ fontSize: 13, color: muted }}>
-            {formatDate(pub.fecha_publicacion)}
-          </Text>
-        </View>
-        <StatusBadge estado={pub.estado} isDark={isDark} />
-      </View>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          marginTop: 4,
-        }}
-      >
-        <MaterialCommunityIcons
-          name="package-variant"
-          size={16}
-          color={muted}
-        />
-        <Text style={{ fontSize: 13, color: muted }}>
-          {productCount} {productCount === 1 ? 'producto' : 'productos'}
-        </Text>
-      </View>
-
-      {pub.estado === 'borrador' ? (
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 6,
-            marginTop: 8,
+            gap: 12,
+            marginBottom: 12,
           }}
         >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              backgroundColor: accentBg,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <MaterialCommunityIcons name="calendar" size={24} color={brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: fg }}>
+              Semana {pub.semana}
+            </Text>
+            <Text style={{ fontSize: 13, color: muted }}>
+              {formatDate(pub.fecha_publicacion)}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '500',
+                color: fg,
+                marginBottom: 2,
+              }}
+            >
+              {productCount} {productCount === 1 ? 'producto' : 'productos'}
+            </Text>
+            <Text style={{ fontSize: 13, color: muted }}>
+              {STATUS_LABELS[pub.estado]}
+            </Text>
+          </View>
+          <StatusBadge estado={pub.estado} isDark={isDark} />
+        </View>
+
+        {pub.estado === 'borrador' ? (
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
               borderWidth: 1,
-              borderColor: theme.brand,
+              borderColor: brand,
               borderRadius: 8,
               paddingHorizontal: 12,
               paddingVertical: 6,
+              alignSelf: 'flex-start',
             }}
           >
             <MaterialCommunityIcons
               name="pencil-outline"
               size={14}
-              color={theme.brand}
+              color={brand}
             />
-            <Text
-              style={{
-                fontSize: 12,
-                color: theme.brand,
-                fontWeight: '600',
-              }}
-            >
+            <Text style={{ fontSize: 12, color: brand, fontWeight: '600' }}>
               Editar
             </Text>
           </View>
-        </View>
-      ) : null}
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -262,7 +271,7 @@ export default function FarmerDashboardScreen({
   const publications = data?.data?.results ?? [];
 
   const theme = themeColors(isDark);
-  const bg = theme.bg;
+  const bg = isDark ? theme.bg : theme.segBg;
   const fg = theme.fg;
   const muted = theme.muted;
   const surface = theme.surface;
