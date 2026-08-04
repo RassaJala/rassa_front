@@ -44,6 +44,7 @@ import { MermaTrendChart } from '@/components/admin/merma/MermaTrendChart';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { colors } from '@/constants/colors';
 import { useAdminColors } from '@/hooks/useAdminColors';
+import { sanitizeSentryError } from '@/services/sentry';
 import { fetchMermaResumen } from '@/services/waste';
 import { useTheme } from '@/store/ThemeContext';
 import type { AdminStackParamList } from '@/types';
@@ -143,7 +144,7 @@ export default function MermaResumenScreen({
       if (id !== fetchRef.current) return;
       retryCountRef.current += 1;
       console.error(e instanceof Error ? e.message : e);
-      Sentry.captureException(e);
+      Sentry.captureException(sanitizeSentryError(e));
       setError(fetchErrorMessage(e));
     } finally {
       if (id === fetchRef.current) setLoading(false);

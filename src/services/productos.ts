@@ -69,10 +69,13 @@ export async function getProductos(params?: {
   unidad?: number | undefined;
   ordering?: string | undefined;
   page?: number | undefined;
-}): Promise<ApiResponse<Producto[]>> {
-  const { data } = await api.get<ApiResponse<Producto[]>>('/productos/', {
-    params,
-  });
+}): Promise<ApiResponse<{ results: Producto[] }>> {
+  const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
+    '/productos/',
+    {
+      params,
+    },
+  );
   return data;
 }
 

@@ -81,6 +81,8 @@ export interface Order {
   creado_en: string;
   productos?: string[];
   has_more_productos?: boolean;
+  /** Backend flag (list/detail): order is pending and its expiry date passed. */
+  expirado?: boolean;
 }
 
 export interface OrderDetail extends Order {
@@ -301,6 +303,7 @@ export interface SearchUserResult {
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
+  Recolecciones: undefined;
   Notificaciones: undefined;
   Perfil: undefined;
   ChatList: undefined;
@@ -308,6 +311,7 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  CashClosing: undefined;
   Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
   Chat: {

@@ -78,6 +78,46 @@ export function parseDate(raw: string): Date | null {
   return toLocalDate(raw);
 }
 
+// Backend sends bare dates ("2026-08-10") that must not be parsed with
+// `new Date()` (UTC midnight shifts the day back in negative-offset zones).
+// Shared by both apps so the timezone fix lives in exactly one place (W1).
+// Falls back to "now" for malformed input, with a dev warning (W3).
+// Uses a globalThis guard (not `process`) so the package typechecks in both
+// the RN app and the web tsconfig, which does not include Node types.
+function isNonProduction(): boolean {
+  const env = (globalThis as { process?: { env?: { NODE_ENV?: string } } })
+    .process?.env?.NODE_ENV;
+  return env !== 'production';
+}
+
+export function parseLocalDate(iso: string): Date {
+  const d = toLocalDate(iso);
+  if (d === null) {
+    if (isNonProduction()) {
+      console.warn('[parseLocalDate] invalid date input:', iso);
+    }
+    return new Date();
+  }
+  return d;
+}
+
+// Backend rule: publications can only be created/edited on Monday
+// (rassa_back views use `timezone.localdate().weekday() != 0`).
+export function isMondayToday(date: Date = new Date()): boolean {
+  return date.getDay() === 1;
+}
+
+// Next Monday from `from` (or today if it's already Monday), time zeroed.
+// Shared (W1): was duplicated mobile `useFormattedDate` / web `publicationWizard`.
+export function getNextMonday(from: Date = new Date()): Date {
+  const d = new Date(from);
+  const dayOfWeek = d.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
+  d.setDate(d.getDate() + daysUntilMonday);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 // ISO 8601 week number — matches Django's TruncWeek (Monday-based).
 export function getWeekNumber(date: Date): number {
   const target = new Date(

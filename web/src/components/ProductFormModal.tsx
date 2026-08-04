@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_MB } from '../constants/api';
+import type { ApiResponse } from '../types';
 import { Button } from './ui/Button';
 import { FormField } from './ui/FormField';
 import { FormSelect } from './ui/FormSelect';
@@ -36,10 +37,6 @@ export interface Producto {
   imagen_principal: string | null;
   imagen: string | null;
   imagenes?: { id_imagen: number; url: string; es_principal: boolean }[];
-}
-
-interface ApiResponse<T> {
-  data: T;
 }
 
 // ── Form State ─────────────────────────────────────────────
@@ -174,7 +171,7 @@ export function ProductFormModal({
   onSaved,
 }: ProductFormModalProps) {
   const qc = useQueryClient();
-  const { brand, coral, muted, border, surface, fg, accentBg } = colors;
+  const { brand, coral, border, surface, fg, accentBg } = colors;
   const fileRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(producto);
 

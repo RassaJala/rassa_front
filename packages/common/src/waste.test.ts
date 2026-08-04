@@ -4,6 +4,8 @@ import {
   formatDateInput,
   getDecisionColor,
   getWeekNumber,
+  isMondayToday,
+  parseLocalDate,
   periodLabel,
   toLocalDate,
   unwrapWasteEnvelope,
@@ -75,6 +77,26 @@ describe('waste date helpers', () => {
   it('formatDateInput returns yyyy-mm-dd for a local Date', () => {
     expect(formatDateInput(new Date(2026, 6, 5))).toBe('2026-07-05');
     expect(formatDateInput(new Date(2026, 0, 1))).toBe('2026-01-01');
+  });
+
+  it('parseLocalDate parses bare dates as LOCAL dates (no UTC off-by-one)', () => {
+    const d = parseLocalDate('2026-08-10');
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(7);
+    expect(d.getDate()).toBe(10);
+    expect(d.getHours()).toBe(0);
+  });
+
+  it('parseLocalDate falls back to a valid Date for malformed input', () => {
+    const d = parseLocalDate('not-a-date');
+    expect(Number.isNaN(d.getTime())).toBe(false);
+  });
+
+  it('isMondayToday respects the device day of week', () => {
+    // 2026-08-03 is a Monday; 2026-08-04 is a Tuesday.
+    expect(isMondayToday(new Date(2026, 7, 3))).toBe(true);
+    expect(isMondayToday(new Date(2026, 7, 4))).toBe(false);
+    expect(isMondayToday(new Date(2026, 7, 9))).toBe(false);
   });
 });
 

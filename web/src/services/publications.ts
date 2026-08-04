@@ -3,6 +3,7 @@ import {
   UPLOAD_TIMEOUT_MS,
   assertValidId,
 } from '../constants/api';
+import type { ApiResponse } from '../types';
 import api from './api';
 
 // ── Types ──────────────────────────────────────────────────
@@ -43,10 +44,6 @@ export interface PublicacionList {
   next: string | null;
   previous: string | null;
   results: Publicacion[];
-}
-
-export interface ApiResponse<T> {
-  data: T;
 }
 
 export interface AddProductoPayload {
@@ -128,9 +125,9 @@ export async function closePublicacion(
 
 export async function getProductosSemanales(
   pubId: number,
-): Promise<ApiResponse<ProductoSemanal[]>> {
+): Promise<ApiResponse<{ results: ProductoSemanal[] }>> {
   assertValidId(pubId, 'publicacion');
-  const { data } = await api.get<ApiResponse<ProductoSemanal[]>>(
+  const { data } = await api.get<ApiResponse<{ results: ProductoSemanal[] }>>(
     `/publicaciones/${String(pubId)}/productos/`,
   );
   return data;

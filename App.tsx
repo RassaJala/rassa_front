@@ -9,6 +9,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 
 import { NavigationContainer } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import {
   QueryCache,
   QueryClient,
@@ -17,9 +18,27 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { sentryBeforeSend } from '@/services/sentry';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
+
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    beforeSend: sentryBeforeSend,
+  });
+} else if (!__DEV__) {
+  console.error(
+    '[Sentry] EXPO_PUBLIC_SENTRY_DSN no está configurado — los errores de producción no serán reportados.',
+  );
+}
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 const queryClient = new QueryClient({
   defaultOptions: {
