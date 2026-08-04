@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { formatearFecha } from '@/common/dates';
 import { fetchPagoPorPedido, ORDER_STATUS_READY } from '@/common/payments';
 import Toast from '@/components/Toast';
 import { colors } from '@/constants/colors';
@@ -73,17 +74,6 @@ const ACCIONES: Readonly<Record<string, Accion | null>> = {
   entregado: null,
   cancelado: null,
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export default function SalesScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();

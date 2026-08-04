@@ -107,18 +107,20 @@ const FAKE_PUBLICACION = {
 };
 
 const FAKE_PRODUCTOS_SEMANALES = {
-  data: [
-    {
-      id_producto_semanal: 100,
-      fk_producto: 5,
-      fk_unidad: 2,
-      stock: 10,
-      precio: '500.00',
-      foto: null,
-      estado: 'activo',
-      creado_en: '2026-07-27T00:00:00Z',
-    },
-  ],
+  data: {
+    results: [
+      {
+        id_producto_semanal: 100,
+        fk_producto: 5,
+        fk_unidad: 2,
+        stock: 10,
+        precio: '500.00',
+        foto: null,
+        estado: 'activo',
+        creado_en: '2026-07-27T00:00:00Z',
+      },
+    ],
+  },
 };
 
 const FAKE_CATALOG = {

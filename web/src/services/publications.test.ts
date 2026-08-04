@@ -273,11 +273,13 @@ describe('getProductosSemanales', () => {
       { id_producto_semanal: 1, fk_producto: 10, stock: 5 },
       { id_producto_semanal: 2, fk_producto: 20, stock: 3 },
     ];
-    mockedApi.get.mockResolvedValue({ data: { data: items } });
+    mockedApi.get.mockResolvedValue({
+      data: { data: { results: items } },
+    });
     const result = await getProductosSemanales(42);
     expect(mockedApi.get).toHaveBeenCalledWith('/publicaciones/42/productos/');
-    expect(result.data).toHaveLength(2);
-    expect(result.data[0].fk_producto).toBe(10);
+    expect(result.data.results).toHaveLength(2);
+    expect(result.data.results[0]?.fk_producto).toBe(10);
   });
 });
 
