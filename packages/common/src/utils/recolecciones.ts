@@ -50,8 +50,11 @@ export function isValidFecha(fecha: string): boolean {
 
 export function parseFecha(fecha: string): Date | null {
   if (!isValidFecha(fecha)) return null;
-  const [anio, mes, dia] = fecha.split('-').map(Number);
-  return new Date(anio ?? 0, (mes ?? 1) - 1, dia ?? 1);
+  const parts = fecha.split('-').map(Number);
+  const anio = parts[0] ?? 0;
+  const mes = parts[1] ?? 1;
+  const dia = parts[2] ?? 1;
+  return new Date(anio, mes - 1, dia);
 }
 
 export function addDays(d: Date, n: number): Date {
@@ -91,8 +94,8 @@ export function isValidHora(raw: string): boolean {
   return (h ?? 0) <= 23 && (m ?? 0) <= 59;
 }
 
-export function normalizeHora(raw: string): string {
-  return `${raw}:00`;
+export function normalizeHora(raw: string): string | null {
+  return isValidHora(raw) ? `${raw}:00` : null;
 }
 
 // ── Duplicate detection ─────────────────────────────────────
