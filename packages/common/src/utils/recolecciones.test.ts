@@ -137,7 +137,11 @@ describe('normalizeHora', () => {
 describe('buildDuplicateKeys', () => {
   it('returns keys for non-cancelled recolecciones with agricultor', () => {
     const items = [
-      { estado: 'pendiente', fk_agricultor: 1, fecha_recoleccion: '2026-08-10' },
+      {
+        estado: 'pendiente',
+        fk_agricultor: 1,
+        fecha_recoleccion: '2026-08-10',
+      },
       { estado: 'en_ruta', fk_agricultor: 2, fecha_recoleccion: '2026-08-10' },
     ];
     const keys = buildDuplicateKeys(items);
@@ -147,8 +151,16 @@ describe('buildDuplicateKeys', () => {
 
   it('excludes cancelados', () => {
     const items = [
-      { estado: 'cancelado', fk_agricultor: 1, fecha_recoleccion: '2026-08-10' },
-      { estado: 'pendiente', fk_agricultor: 2, fecha_recoleccion: '2026-08-10' },
+      {
+        estado: 'cancelado',
+        fk_agricultor: 1,
+        fecha_recoleccion: '2026-08-10',
+      },
+      {
+        estado: 'pendiente',
+        fk_agricultor: 2,
+        fecha_recoleccion: '2026-08-10',
+      },
     ];
     const keys = buildDuplicateKeys(items);
     expect(keys.has('1|2026-08-10')).toBe(false);
@@ -157,7 +169,11 @@ describe('buildDuplicateKeys', () => {
 
   it('excludes items without agricultor', () => {
     const items = [
-      { estado: 'pendiente', fk_agricultor: null, fecha_recoleccion: '2026-08-10' },
+      {
+        estado: 'pendiente',
+        fk_agricultor: null,
+        fecha_recoleccion: '2026-08-10',
+      },
     ];
     const keys = buildDuplicateKeys(items);
     expect(keys.size).toBe(0);
