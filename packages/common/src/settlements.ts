@@ -18,6 +18,9 @@ export interface Settlement {
   monto_ventas: string;
   comision: string;
   monto_liquidar: string;
+  // Backend DecimalField(decimal_places=4), e.g. '0.1250' — used to derive the
+  // commission when the server omits comision, and for the rate label.
+  tasa_comision?: string | null;
   estado: SettlementEstado;
   creado_en: string;
 }
@@ -101,20 +104,26 @@ function parseAmount(value: string | number | null | undefined): number | null {
 
 // Single source of truth for the settlement money amounts. The server payload
 // wins whenever its values are valid; a missing/invalid comision is derived as
-// COMISION_RASSA × monto_ventas (the backend does not send tasa_comision), and
-// a missing/invalid monto_liquidar is derived as monto_ventas − comision. Any
-// derivation flips isEstimated so callers can surface "estimated" in the UI.
+// monto_ventas × tasa_comision when the backend provides a valid rate (the
+// liquidaciones payload exposes tasa_comision as a DecimalField(4)), otherwise
+// it falls back to COMISION_RASSA × monto_ventas. A missing/invalid
+// monto_liquidar is derived as monto_ventas − comision. Any derivation flips
+// isEstimated so callers can surface "estimated" in the UI.
 export function resolveSettlementAmounts(payload: {
   monto_ventas: string | number | null | undefined;
   comision: string | number | null | undefined;
   monto_liquidar: string | number | null | undefined;
+  tasa_comision?: string | number | null | undefined;
 }): SettlementAmounts {
   const ventas = parseAmount(payload.monto_ventas);
   const serverComision = parseAmount(payload.comision);
   const serverLiquidar = parseAmount(payload.monto_liquidar);
+  const tasa = parseAmount(payload.tasa_comision);
 
   const montoVentas = ventas ?? 0;
-  const comision = serverComision ?? montoVentas * COMISION_RASSA;
+  const comision =
+    serverComision ??
+    (tasa !== null ? montoVentas * tasa : montoVentas * COMISION_RASSA);
   const montoLiquidar =
     serverLiquidar !== null ? serverLiquidar : montoVentas - comision;
   const isEstimated =

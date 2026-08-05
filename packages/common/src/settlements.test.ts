@@ -187,5 +187,69 @@ describe('settlements common module', () => {
         isEstimated: false,
       });
     });
+
+    it('derives the commission from a non-round tasa_comision when comision is missing (WARN-5)', () => {
+      expect(
+        resolveSettlementAmounts({
+          monto_ventas: '1000.00',
+          comision: null,
+          tasa_comision: '0.125',
+          monto_liquidar: '900.00',
+        }),
+      ).toEqual({
+        montoVentas: 1000,
+        comision: 125,
+        montoLiquidar: 900,
+        isEstimated: true,
+      });
+    });
+
+    it('derives the commission from a numeric tasa_comision when comision is unparseable', () => {
+      expect(
+        resolveSettlementAmounts({
+          monto_ventas: '2000.00',
+          comision: '',
+          tasa_comision: 0.125,
+          monto_liquidar: '1750.00',
+        }),
+      ).toEqual({
+        montoVentas: 2000,
+        comision: 250,
+        montoLiquidar: 1750,
+        isEstimated: true,
+      });
+    });
+
+    it('falls back to COMISION_RASSA when both comision and tasa_comision are invalid', () => {
+      expect(
+        resolveSettlementAmounts({
+          monto_ventas: '1000.00',
+          comision: '',
+          tasa_comision: 'abc',
+          monto_liquidar: '900.00',
+        }),
+      ).toEqual({
+        montoVentas: 1000,
+        comision: 100,
+        montoLiquidar: 900,
+        isEstimated: true,
+      });
+    });
+
+    it('prefers the server comision over tasa_comision when both are present (no estimate)', () => {
+      expect(
+        resolveSettlementAmounts({
+          monto_ventas: '1000.00',
+          comision: '90.00',
+          tasa_comision: '0.125',
+          monto_liquidar: '910.00',
+        }),
+      ).toEqual({
+        montoVentas: 1000,
+        comision: 90,
+        montoLiquidar: 910,
+        isEstimated: false,
+      });
+    });
   });
 });

@@ -212,6 +212,7 @@ export function AdminSettlementDetail() {
           montoVentas={detail.monto_ventas}
           comision={detail.comision}
           montoLiquidar={detail.monto_liquidar}
+          tasaComision={detail.tasa_comision}
         />
 
         {detail.pago_liquidacion ? (

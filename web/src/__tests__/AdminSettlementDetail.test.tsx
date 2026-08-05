@@ -141,10 +141,10 @@ describe('AdminSettlementDetail — integration', () => {
     expect(screen.getByText(/Valores estimados/i)).toBeInTheDocument();
   });
 
-  it('derives the commission label from the server comision/ventas ratio (WARN-5)', async () => {
-    // The backend does not send tasa_comision: the label must derive the rate
-    // from the actual comision/monto_ventas ratio (150/1000 = 15%) instead of
-    // hardcoding "(10%)".
+  it('shows the commission label with precision from tasa_comision (WARN-5)', async () => {
+    // The backend exposes tasa_comision (DecimalField(4)): a non-round rate
+    // must render as its real value (12.5%) instead of Math.round lying with
+    // "13%" — and it must never hardcode the COMISION_RASSA "(10%)" either.
     server.use(
       http.get('/api/liquidaciones/1/', () =>
         HttpResponse.json({
@@ -152,8 +152,9 @@ describe('AdminSettlementDetail — integration', () => {
           data: {
             ...LIQUIDACION_DETAIL_PENDIENTE,
             monto_ventas: '1000.00',
-            comision: '150.00',
-            monto_liquidar: '850.00',
+            comision: '125.00',
+            tasa_comision: '0.125',
+            monto_liquidar: '875.00',
           },
         }),
       ),
@@ -161,7 +162,8 @@ describe('AdminSettlementDetail — integration', () => {
     renderDetail(1);
 
     expect(await screen.findByText('Desglose')).toBeInTheDocument();
-    expect(screen.getByText('Comisión Rassa (15%)')).toBeInTheDocument();
+    expect(screen.getByText('Comisión Rassa (12.5%)')).toBeInTheDocument();
+    expect(screen.queryByText('Comisión Rassa (13%)')).not.toBeInTheDocument();
     expect(screen.queryByText('Comisión Rassa (10%)')).not.toBeInTheDocument();
   });
 

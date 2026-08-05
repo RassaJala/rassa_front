@@ -66,6 +66,7 @@ function makeSettlement(
     monto_ventas: montoVentas,
     comision: comision.toFixed(2),
     monto_liquidar: (ventas - comision).toFixed(2),
+    tasa_comision: '0.10',
     estado,
     creado_en: '2026-08-01T10:00:00-03:00',
   };
@@ -192,6 +193,7 @@ const detailBase = {
   periodo_inicio: '2026-07-01',
   periodo_fin: '2026-07-31',
   comision: '100.00',
+  tasa_comision: '0.10',
   creado_en: '2026-08-01T10:00:00-03:00',
 };
 
@@ -224,6 +226,11 @@ export const LIQUIDACION_DETAIL_PAGADA: SettlementDetail = {
   ...detailBase,
   id_liquidacion: 11,
   monto_ventas: '500.00',
+  // Overrides detailBase comision so the fixture is internally consistent:
+  // 500.00 × tasa 0.10 = 50.00, and 500.00 − 50.00 = monto_liquidar 450.00.
+  // A contradictory comision here would make the breakdown label (rate from
+  // tasa_comision) disagree with the shown amount (server comision).
+  comision: '50.00',
   monto_liquidar: '450.00',
   estado: 'pagada',
   ventas: [
