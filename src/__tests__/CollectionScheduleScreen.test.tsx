@@ -372,20 +372,19 @@ describe('CollectionScheduleScreen', () => {
   it('crea una recolección al llenar el formulario', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText, getByPlaceholderText } = render(
+    const { getByText, getAllByText } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
 
-    const futuro = toDateString(addDays(new Date(), 5));
-    fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), futuro);
+    const fechaHoy = toDateString(new Date());
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
     expect(mockMutate).toHaveBeenCalledWith({
       fk_agricultor: 11,
-      fecha_recoleccion: futuro,
+      fecha_recoleccion: fechaHoy,
       hora_inicio: null,
       hora_fin: null,
       comentarios: null,
@@ -448,14 +447,13 @@ describe('CollectionScheduleScreen', () => {
   it('muestra el error del servidor al crear y mantiene el modal abierto', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText, getByPlaceholderText } = render(
+    const { getByText, getAllByText } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
 
-    const futuro = toDateString(addDays(new Date(), 5));
-    fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), futuro);
+    const fechaHoy = toDateString(new Date());
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
     expect(mockMutate).toHaveBeenCalledTimes(1);
@@ -463,7 +461,7 @@ describe('CollectionScheduleScreen', () => {
     act(() => {
       mockMutations.create?.onError?.(
         new Error('Ya existe una recolección para este agricultor.'),
-        { fk_agricultor: 11, fecha_recoleccion: futuro },
+        { fk_agricultor: 11, fecha_recoleccion: fechaHoy },
         undefined,
       );
     });
@@ -492,14 +490,12 @@ describe('CollectionScheduleScreen', () => {
   it('no envía duplicados mientras el guardado está en curso', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText, getByPlaceholderText, rerender } = render(
+    const { getByText, getAllByText, rerender } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
 
-    const futuro = toDateString(addDays(new Date(), 5));
-    fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), futuro);
     fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
@@ -511,38 +507,37 @@ describe('CollectionScheduleScreen', () => {
     expect(mockMutate).toHaveBeenCalledTimes(1);
   });
 
-  it('rechaza fechas imposibles como 2026-02-31', () => {
+  it('rechaza el envío sin agricultor seleccionado', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText, getByPlaceholderText } = render(
+    const { getByText, getAllByText } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
-    fireEvent.changeText(getByPlaceholderText('AAAA-MM-DD'), '2026-02-31');
-    fireEvent.press(getAllByText('Juan Pérez')[1]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
-    expect(getByText('La fecha ingresada no es válida.')).toBeTruthy();
+    expect(getByText('Selecciona un agricultor.')).toBeTruthy();
   });
 
   it('valida que la hora de fin sea posterior a la de inicio', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText, getAllByPlaceholderText } = render(
+    const { getByText, getAllByText } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
-    fireEvent.changeText(
-      getAllByPlaceholderText('HH:MM (opcional)')[0],
-      '10:00',
-    );
-    fireEvent.changeText(
-      getAllByPlaceholderText('HH:MM (opcional)')[1],
-      '09:00',
-    );
     fireEvent.press(getAllByText('Juan Pérez')[1]);
+
+    const opcionales = getAllByText('Opcional');
+    fireEvent.press(opcionales[0]!);
+    fireEvent.press(getByText('Seleccionar'));
+
+    const opcionales2 = getAllByText('Opcional');
+    fireEvent.press(opcionales2[0]!);
+    fireEvent.press(getByText('Seleccionar'));
+
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
     expect(
