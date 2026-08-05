@@ -48,7 +48,9 @@ function toDateString(year: number, month: number, day: number): string {
   return `${year}-${m}-${d}`;
 }
 
-function parseDate(dateStr: string): { year: number; month: number; day: number } | null {
+function parseDate(
+  dateStr: string,
+): { year: number; month: number; day: number } | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
   const parts = dateStr.split('-').map(Number);
   const y = parts[0] ?? 2000;
@@ -60,8 +62,18 @@ function parseDate(dateStr: string): { year: number; month: number; day: number 
 const OVERLAY = 'rgba(0,0,0,0.5)';
 
 const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 interface ScheduleRecoleccionModalProps {
@@ -102,7 +114,9 @@ export default function ScheduleRecoleccionModal({
     refetch: refetchAgricultores,
   } = useAgricultoresUbicacion({ enabled: visible });
 
-  const [agricultor, setAgricultor] = useState<AgricultorAgricultorItem | null>(null);
+  const [agricultor, setAgricultor] = useState<AgricultorAgricultorItem | null>(
+    null,
+  );
   const [fecha, setFecha] = useState('');
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFin, setHoraFin] = useState('');
@@ -111,7 +125,9 @@ export default function ScheduleRecoleccionModal({
   const [error, setError] = useState<string | null>(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState<'inicio' | 'fin' | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState<'inicio' | 'fin' | null>(
+    null,
+  );
 
   const queryClient = useQueryClient();
 
@@ -187,7 +203,12 @@ export default function ScheduleRecoleccionModal({
     // eslint-disable-next-line react-native/no-inline-styles
   } as const;
 
-  const fieldLabel = { fontSize: 13, fontWeight: '700' as const, color: fg, marginBottom: 6 };
+  const fieldLabel = {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: fg,
+    marginBottom: 6,
+  };
 
   function formatDateDisplay(dateStr: string): string {
     const parsed = parseDate(dateStr);
@@ -199,13 +220,34 @@ export default function ScheduleRecoleccionModal({
   // eslint-disable-next-line sonarjs/cognitive-complexity
   function handleSubmit() {
     if (mutation.isPending) return;
-    if (!agricultor) { setError('Selecciona un agricultor.'); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { setError('La fecha debe tener el formato AAAA-MM-DD.'); return; }
-    if (!isValidFecha(fecha)) { setError('La fecha ingresada no es válida.'); return; }
-    if (fecha < todayString()) { setError('La fecha no puede ser anterior a hoy.'); return; }
-    if (horaInicio && !isValidHora(horaInicio)) { setError('La hora de inicio debe tener el formato HH:MM.'); return; }
-    if (horaFin && !isValidHora(horaFin)) { setError('La hora de fin debe tener el formato HH:MM.'); return; }
-    if (horaInicio && horaFin && horaFin <= horaInicio) { setError('La hora de fin debe ser posterior a la de inicio.'); return; }
+    if (!agricultor) {
+      setError('Selecciona un agricultor.');
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      setError('La fecha debe tener el formato AAAA-MM-DD.');
+      return;
+    }
+    if (!isValidFecha(fecha)) {
+      setError('La fecha ingresada no es válida.');
+      return;
+    }
+    if (fecha < todayString()) {
+      setError('La fecha no puede ser anterior a hoy.');
+      return;
+    }
+    if (horaInicio && !isValidHora(horaInicio)) {
+      setError('La hora de inicio debe tener el formato HH:MM.');
+      return;
+    }
+    if (horaFin && !isValidHora(horaFin)) {
+      setError('La hora de fin debe tener el formato HH:MM.');
+      return;
+    }
+    if (horaInicio && horaFin && horaFin <= horaInicio) {
+      setError('La hora de fin debe ser posterior a la de inicio.');
+      return;
+    }
     setError(null);
     mutation.mutate({
       fk_agricultor: agricultor.id_usuario,
@@ -306,7 +348,11 @@ export default function ScheduleRecoleccionModal({
             {mutation.isPending ? (
               <ActivityIndicator size="small" color={white} />
             ) : (
-              <MaterialCommunityIcons name="calendar-check" size={20} color={white} />
+              <MaterialCommunityIcons
+                name="calendar-check"
+                size={20}
+                color={white}
+              />
             )}
             <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
               {mutation.isPending ? 'Guardando…' : 'Programar recolección'}
@@ -326,7 +372,10 @@ export default function ScheduleRecoleccionModal({
           brandAlpha={brandAlpha}
           redCoral={redCoral}
           onClose={() => setShowDatePicker(false)}
-          onSelect={(dateStr) => { setFecha(dateStr); setShowDatePicker(false); }}
+          onSelect={(dateStr) => {
+            setFecha(dateStr);
+            setShowDatePicker(false);
+          }}
         />
       ) : null}
 
@@ -369,7 +418,11 @@ interface RecoleccionFormFieldsProps {
   readonly brand: string;
   readonly activeBg: string;
   readonly redCoral: string;
-  readonly gruposFiltrados: ReturnType<typeof useAgricultoresUbicacion>['agricultores'] extends (infer T)[] ? T[] : never;
+  readonly gruposFiltrados: ReturnType<
+    typeof useAgricultoresUbicacion
+  >['agricultores'] extends (infer T)[]
+    ? T[]
+    : never;
   readonly isLoadingAgricultores: boolean;
   readonly isErrorAgricultores: boolean;
   readonly agricultoresTruncados: boolean;
@@ -421,11 +474,20 @@ function RecoleccionFormFields({
       <TouchableOpacity
         onPress={onFechaPress}
         activeOpacity={0.7}
-        style={[fieldBg, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+        style={[
+          fieldBg,
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          },
+        ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <MaterialCommunityIcons name="calendar" size={20} color={brand} />
-          <Text style={{ fontSize: 15, color: fg }}>{formatDateDisplay(fecha)}</Text>
+          <Text style={{ fontSize: 15, color: fg }}>
+            {formatDateDisplay(fecha)}
+          </Text>
         </View>
         <MaterialCommunityIcons name="chevron-down" size={20} color={muted} />
       </TouchableOpacity>
@@ -436,15 +498,32 @@ function RecoleccionFormFields({
           <TouchableOpacity
             onPress={onHoraInicioPress}
             activeOpacity={0.7}
-            style={[fieldBg, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+            style={[
+              fieldBg,
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
+            ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <MaterialCommunityIcons name="clock-outline" size={20} color={brand} />
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            >
+              <MaterialCommunityIcons
+                name="clock-outline"
+                size={20}
+                color={brand}
+              />
               <Text style={{ fontSize: 15, color: horaInicio ? fg : muted }}>
                 {horaInicio ? normalizeHora(horaInicio) : 'Opcional'}
               </Text>
             </View>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={muted} />
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={20}
+              color={muted}
+            />
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1 }}>
@@ -452,15 +531,32 @@ function RecoleccionFormFields({
           <TouchableOpacity
             onPress={onHoraFinPress}
             activeOpacity={0.7}
-            style={[fieldBg, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+            style={[
+              fieldBg,
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
+            ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <MaterialCommunityIcons name="clock-outline" size={20} color={brand} />
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            >
+              <MaterialCommunityIcons
+                name="clock-outline"
+                size={20}
+                color={brand}
+              />
               <Text style={{ fontSize: 15, color: horaFin ? fg : muted }}>
                 {horaFin ? normalizeHora(horaFin) : 'Opcional'}
               </Text>
             </View>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={muted} />
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={20}
+              color={muted}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -473,7 +569,10 @@ function RecoleccionFormFields({
         placeholderTextColor={muted}
         multiline
         numberOfLines={3}
-        style={[fieldBg, { fontSize: 15, color: fg, minHeight: 76, textAlignVertical: 'top' }]}
+        style={[
+          fieldBg,
+          { fontSize: 15, color: fg, minHeight: 76, textAlignVertical: 'top' },
+        ]}
       />
 
       <Text style={[fieldLabel, { marginTop: 18 }]}>Agricultor</Text>
@@ -515,7 +614,15 @@ function RecoleccionFormFields({
       />
 
       {error ? (
-        <Text style={{ marginTop: 14, fontSize: 13, fontWeight: '600', color: redCoral, textAlign: 'center' }}>
+        <Text
+          style={{
+            marginTop: 14,
+            fontSize: 13,
+            fontWeight: '600',
+            color: redCoral,
+            textAlign: 'center',
+          }}
+        >
           {error}
         </Text>
       ) : null}
@@ -556,7 +663,7 @@ function DatePickerSheet({
 
   const parsed = parseDate(fecha);
   const [selectedYear, setSelectedYear] = useState(
-    parsed?.year ?? (todayParts[0] ?? currentYear),
+    parsed?.year ?? todayParts[0] ?? currentYear,
   );
   const [selectedMonth, setSelectedMonth] = useState(
     parsed?.month ?? (todayParts[1] ?? 1) - 1,
@@ -565,68 +672,204 @@ function DatePickerSheet({
 
   const daysCount = getDaysInMonth(selectedYear, selectedMonth);
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
-  const minDay = selectedYear === todayParts[0] && selectedMonth === (todayParts[1] ?? 0) - 1 ? todayParts[2] ?? 1 : 1;
+  const minDay =
+    selectedYear === todayParts[0] && selectedMonth === (todayParts[1] ?? 0) - 1
+      ? (todayParts[2] ?? 1)
+      : 1;
   const tabBg = isDark ? colors.admSegBgD : colors.inactiveGrayBg;
 
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: OVERLAY }} onPress={onClose}>
+      <Pressable
+        style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: OVERLAY,
+        }}
+        onPress={onClose}
+      >
         <Pressable
-          style={{ backgroundColor: surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20, maxHeight: '75%' }}
+          style={{
+            backgroundColor: surface,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            padding: 20,
+            maxHeight: '75%',
+          }}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>Seleccionar fecha</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+              Seleccionar fecha
+            </Text>
             <TouchableOpacity onPress={onClose}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: redCoral }}>Cancelar</Text>
+              <Text
+                style={{ fontSize: 15, fontWeight: '600', color: redCoral }}
+              >
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', borderRadius: 12, backgroundColor: tabBg, padding: 4, marginBottom: 16 }}>
-            <TabBtn label="Año" value={String(selectedYear)} active={step === 'year'} onPress={() => setStep('year')} isDark={isDark} fg={fg} />
-            <TabBtn label="Mes" value={MONTHS[selectedMonth] ?? '---'} active={step === 'month'} onPress={() => setStep('month')} isDark={isDark} fg={fg} />
-            <TabBtn label="Día" value="---" active={step === 'day'} onPress={() => setStep('day')} isDark={isDark} fg={fg} />
+          <View
+            style={{
+              flexDirection: 'row',
+              borderRadius: 12,
+              backgroundColor: tabBg,
+              padding: 4,
+              marginBottom: 16,
+            }}
+          >
+            <TabBtn
+              label="Año"
+              value={String(selectedYear)}
+              active={step === 'year'}
+              onPress={() => setStep('year')}
+              isDark={isDark}
+              fg={fg}
+            />
+            <TabBtn
+              label="Mes"
+              value={MONTHS[selectedMonth] ?? '---'}
+              active={step === 'month'}
+              onPress={() => setStep('month')}
+              isDark={isDark}
+              fg={fg}
+            />
+            <TabBtn
+              label="Día"
+              value="---"
+              active={step === 'day'}
+              onPress={() => setStep('day')}
+              isDark={isDark}
+              fg={fg}
+            />
           </View>
 
           <View style={{ height: 220 }}>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {step === 'year' && futureYears.map((y) => (
-                <TouchableOpacity
-                  key={y}
-                  onPress={() => { setSelectedYear(y); setStep('month'); }}
-                  style={{ borderRadius: 8, borderBottomWidth: 1, borderBottomColor: border, paddingVertical: 12, backgroundColor: selectedYear === y ? brandAlpha : colors.transparent }}
-                >
-                  <Text style={{ textAlign: 'center', fontSize: 15, fontWeight: '600', color: selectedYear === y ? brand : fg }}>{y}</Text>
-                </TouchableOpacity>
-              ))}
-              {step === 'month' && months.map((m) => {
-                const isDisabled = selectedYear === futureYears[0] && m < (todayParts[1] ?? 1) - 1;
-                return (
+              {step === 'year' &&
+                futureYears.map((y) => (
                   <TouchableOpacity
-                    key={m}
-                    onPress={() => { if (!isDisabled) { setSelectedMonth(m); setStep('day'); } }}
-                    style={{ borderRadius: 8, borderBottomWidth: 1, borderBottomColor: border, paddingVertical: 12, backgroundColor: selectedMonth === m ? brandAlpha : colors.transparent, opacity: isDisabled ? 0.4 : 1 }}
+                    key={y}
+                    onPress={() => {
+                      setSelectedYear(y);
+                      setStep('month');
+                    }}
+                    style={{
+                      borderRadius: 8,
+                      borderBottomWidth: 1,
+                      borderBottomColor: border,
+                      paddingVertical: 12,
+                      backgroundColor:
+                        selectedYear === y ? brandAlpha : colors.transparent,
+                    }}
                   >
-                    <Text style={{ textAlign: 'center', fontSize: 15, fontWeight: '600', color: selectedMonth === m ? brand : fg }}>{MONTHS[m]}</Text>
+                    <Text
+                      style={{
+                        textAlign: 'center',
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: selectedYear === y ? brand : fg,
+                      }}
+                    >
+                      {y}
+                    </Text>
                   </TouchableOpacity>
-                );
-              })}
+                ))}
+              {step === 'month' &&
+                months.map((m) => {
+                  const isDisabled =
+                    selectedYear === futureYears[0] &&
+                    m < (todayParts[1] ?? 1) - 1;
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      onPress={() => {
+                        if (!isDisabled) {
+                          setSelectedMonth(m);
+                          setStep('day');
+                        }
+                      }}
+                      style={{
+                        borderRadius: 8,
+                        borderBottomWidth: 1,
+                        borderBottomColor: border,
+                        paddingVertical: 12,
+                        backgroundColor:
+                          selectedMonth === m ? brandAlpha : colors.transparent,
+                        opacity: isDisabled ? 0.4 : 1,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          fontSize: 15,
+                          fontWeight: '600',
+                          color: selectedMonth === m ? brand : fg,
+                        }}
+                      >
+                        {MONTHS[m]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               {step === 'day' && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-evenly' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-evenly',
+                  }}
+                >
                   {daysArray.map((d) => {
                     const isDisabled = d < minDay;
-                    const isToday = d === todayParts[2] && selectedMonth === (todayParts[1] ?? 0) - 1 && selectedYear === todayParts[0];
+                    const isToday =
+                      d === todayParts[2] &&
+                      selectedMonth === (todayParts[1] ?? 0) - 1 &&
+                      selectedYear === todayParts[0];
                     return (
                       <TouchableOpacity
                         key={d}
-                        onPress={() => { if (!isDisabled) onSelect(toDateString(selectedYear, selectedMonth, d)); }}
+                        onPress={() => {
+                          if (!isDisabled)
+                            onSelect(
+                              toDateString(selectedYear, selectedMonth, d),
+                            );
+                        }}
                         style={{
-                          margin: 4, width: '13%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12,
-                          backgroundColor: isToday ? brandAlpha : isDark ? colors.admSurfaceD : surface,
-                          borderWidth: 1, borderColor: isToday ? brand : border, opacity: isDisabled ? 0.3 : 1,
+                          margin: 4,
+                          width: '13%',
+                          aspectRatio: 1,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 12,
+                          backgroundColor: isToday
+                            ? brandAlpha
+                            : isDark
+                              ? colors.admSurfaceD
+                              : surface,
+                          borderWidth: 1,
+                          borderColor: isToday ? brand : border,
+                          opacity: isDisabled ? 0.3 : 1,
                         }}
                       >
-                        <Text style={{ fontSize: 13, fontWeight: isToday ? '700' : '500', color: isToday ? brand : fg }}>{d}</Text>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: isToday ? '700' : '500',
+                            color: isToday ? brand : fg,
+                          }}
+                        >
+                          {d}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -676,34 +919,83 @@ function TimePickerSheet({
     currentValue ? parseInt(currentValue.split(':')[0] ?? '0', 10) : 8,
   );
   const [selectedMinute, setSelectedMinute] = useState(
-    currentValue ? currentValue.split(':')[1] ?? '00' : '00',
+    currentValue ? (currentValue.split(':')[1] ?? '00') : '00',
   );
 
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: OVERLAY }} onPress={onClose}>
+      <Pressable
+        style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: OVERLAY,
+        }}
+        onPress={onClose}
+      >
         <Pressable
-          style={{ backgroundColor: _surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20, maxHeight: '60%' }}
+          style={{
+            backgroundColor: _surface,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            padding: 20,
+            maxHeight: '60%',
+          }}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>{title}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: fg }}>
+              {title}
+            </Text>
             <TouchableOpacity onPress={onClose}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: redCoral }}>Cancelar</Text>
+              <Text
+                style={{ fontSize: 15, fontWeight: '600', color: redCoral }}
+              >
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={{ flexDirection: 'row', height: 200 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '600', color: muted, marginBottom: 8 }}>Hora</Text>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: muted,
+                  marginBottom: 8,
+                }}
+              >
+                Hora
+              </Text>
               <ScrollView showsVerticalScrollIndicator={false}>
                 {hours.map((h) => (
                   <TouchableOpacity
                     key={h}
                     onPress={() => setSelectedHour(h)}
-                    style={{ paddingVertical: 10, alignItems: 'center', borderRadius: 8, marginVertical: 2, backgroundColor: selectedHour === h ? brandAlpha : colors.transparent }}
+                    style={{
+                      paddingVertical: 10,
+                      alignItems: 'center',
+                      borderRadius: 8,
+                      marginVertical: 2,
+                      backgroundColor:
+                        selectedHour === h ? brandAlpha : colors.transparent,
+                    }}
                   >
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: selectedHour === h ? brand : fg }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: selectedHour === h ? brand : fg,
+                      }}
+                    >
                       {String(h).padStart(2, '0')}
                     </Text>
                   </TouchableOpacity>
@@ -711,15 +1003,38 @@ function TimePickerSheet({
               </ScrollView>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '600', color: muted, marginBottom: 8 }}>Minutos</Text>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: muted,
+                  marginBottom: 8,
+                }}
+              >
+                Minutos
+              </Text>
               <ScrollView showsVerticalScrollIndicator={false}>
                 {minutesList.map((m) => (
                   <TouchableOpacity
                     key={m}
                     onPress={() => setSelectedMinute(m)}
-                    style={{ paddingVertical: 10, alignItems: 'center', borderRadius: 8, marginVertical: 2, backgroundColor: selectedMinute === m ? brandAlpha : colors.transparent }}
+                    style={{
+                      paddingVertical: 10,
+                      alignItems: 'center',
+                      borderRadius: 8,
+                      marginVertical: 2,
+                      backgroundColor:
+                        selectedMinute === m ? brandAlpha : colors.transparent,
+                    }}
                   >
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: selectedMinute === m ? brand : fg }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: selectedMinute === m ? brand : fg,
+                      }}
+                    >
                       {m}
                     </Text>
                   </TouchableOpacity>
@@ -728,15 +1043,30 @@ function TimePickerSheet({
             </View>
           </View>
 
-          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: border, paddingTop: 12, alignItems: 'flex-end' }}>
+          <View
+            style={{
+              marginTop: 16,
+              borderTopWidth: 1,
+              borderTopColor: border,
+              paddingTop: 12,
+              alignItems: 'flex-end',
+            }}
+          >
             <TouchableOpacity
               onPress={() => {
                 const h = String(selectedHour).padStart(2, '0');
                 onSelect(`${h}:${selectedMinute}`);
               }}
-              style={{ borderRadius: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: brand }}
+              style={{
+                borderRadius: 8,
+                paddingHorizontal: 24,
+                paddingVertical: 10,
+                backgroundColor: brand,
+              }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '700', color: white }}>Seleccionar</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: white }}>
+                Seleccionar
+              </Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -754,15 +1084,43 @@ interface TabBtnProps {
   readonly fg: string;
 }
 
-function TabBtn({ label, value, active, onPress, isDark, fg }: TabBtnProps): React.JSX.Element {
+function TabBtn({
+  label,
+  value,
+  active,
+  onPress,
+  isDark,
+  fg,
+}: TabBtnProps): React.JSX.Element {
   const tabActiveBg = isDark ? colors.admSurfaceD : colors.surface;
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={{ flex: 1, alignItems: 'center', borderRadius: 8, paddingVertical: 8, backgroundColor: active ? tabActiveBg : colors.transparent }}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        borderRadius: 8,
+        paddingVertical: 8,
+        backgroundColor: active ? tabActiveBg : colors.transparent,
+      }}
     >
-      <Text style={{ fontSize: 11, color: isDark ? colors.mutedDark : colors.textSecondary }}>{label}</Text>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: active ? colors.brandRedCoral : fg }}>{value}</Text>
+      <Text
+        style={{
+          fontSize: 11,
+          color: isDark ? colors.mutedDark : colors.textSecondary,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: 12,
+          fontWeight: '600',
+          color: active ? colors.brandRedCoral : fg,
+        }}
+      >
+        {value}
+      </Text>
     </TouchableOpacity>
   );
 }

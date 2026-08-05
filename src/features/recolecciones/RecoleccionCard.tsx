@@ -150,7 +150,14 @@ function RecoleccionActions({
   const redCoral = colors.brandRedCoral;
 
   return (
-    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 12,
+        justifyContent: 'center',
+      }}
+    >
       {canContact ? (
         <Pressable
           onPress={onContact}

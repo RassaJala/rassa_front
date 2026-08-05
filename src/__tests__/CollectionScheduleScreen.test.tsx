@@ -372,9 +372,7 @@ describe('CollectionScheduleScreen', () => {
   it('crea una recolección al llenar el formulario', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(
-      <CollectionScheduleScreen />,
-    );
+    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
 
@@ -447,9 +445,7 @@ describe('CollectionScheduleScreen', () => {
   it('muestra el error del servidor al crear y mantiene el modal abierto', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(
-      <CollectionScheduleScreen />,
-    );
+    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
 
@@ -510,9 +506,7 @@ describe('CollectionScheduleScreen', () => {
   it('rechaza el envío sin agricultor seleccionado', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(
-      <CollectionScheduleScreen />,
-    );
+    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
     fireEvent.press(getAllByText('Programar recolección')[1]);
@@ -523,9 +517,7 @@ describe('CollectionScheduleScreen', () => {
   it('valida que la hora de fin sea posterior a la de inicio', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(
-      <CollectionScheduleScreen />,
-    );
+    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
     fireEvent.press(getAllByText('Juan Pérez')[1]);

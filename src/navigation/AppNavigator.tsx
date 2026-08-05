@@ -334,7 +334,10 @@ function BuyerNavigator() {
   return (
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
-      <BuyerStack.Screen name="Notificaciones" component={NotificationsScreen} />
+      <BuyerStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+      />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
       <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
