@@ -18,13 +18,16 @@ export interface ProgramarFormValues {
 // ── Date helpers ────────────────────────────────────────────
 
 export function toDateString(d: Date): string {
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${month}-${day}`;
 }
 
 export function todayString(): string {
-  return toDateString(new Date());
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 const FECHA_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -54,12 +57,12 @@ export function parseFecha(fecha: string): Date | null {
   const anio = parts[0] ?? 0;
   const mes = parts[1] ?? 1;
   const dia = parts[2] ?? 1;
-  return new Date(anio, mes - 1, dia);
+  return new Date(Date.UTC(anio, mes - 1, dia));
 }
 
 export function addDays(d: Date, n: number): Date {
   const next = new Date(d);
-  next.setDate(next.getDate() + n);
+  next.setUTCDate(next.getUTCDate() + n);
   return next;
 }
 
@@ -76,8 +79,8 @@ export function formatFechaHeader(
   if (fecha === manana) return 'Mañana';
   const date = parseFecha(fecha);
   if (!date) return fecha;
-  return `${diasSemana[date.getDay()] ?? ''}, ${date.getDate()} de ${(
-    MONTH_NAMES[date.getMonth()] ?? ''
+  return `${diasSemana[date.getUTCDay()] ?? ''}, ${date.getUTCDate()} de ${(
+    MONTH_NAMES[date.getUTCMonth()] ?? ''
   ).toLowerCase()}`;
 }
 
