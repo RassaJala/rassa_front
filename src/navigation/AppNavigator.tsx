@@ -34,6 +34,8 @@ import HomeScreen from '@/screens/buyer/HomeScreen';
 import OrderDetailScreen from '@/screens/buyer/OrderDetailScreen';
 import OrderHistoryScreen from '@/screens/buyer/OrderHistoryScreen';
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
+import ReceiptDetailScreen from '@/screens/buyer/ReceiptDetailScreen';
+import ReceiptListScreen from '@/screens/buyer/ReceiptListScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
 import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
@@ -342,6 +344,8 @@ function BuyerNavigator() {
       <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
       <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <BuyerStack.Screen name="ReceiptList" component={ReceiptListScreen} />
+      <BuyerStack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} />
       <BuyerStack.Screen name="Profile" component={ProfileScreen} />
       <BuyerStack.Screen
         name="Chat"

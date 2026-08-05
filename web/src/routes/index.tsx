@@ -30,6 +30,8 @@ import { BuyerCart } from './BuyerCart';
 import { BuyerCheckout } from './BuyerCheckout';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
+import { BuyerReceiptDetail } from './BuyerReceiptDetail';
+import { BuyerReceipts } from './BuyerReceipts';
 import { ProfilePage } from './ProfilePage';
 import { ChatListPage } from './chat/ChatListPage';
 import { ChatDetailPage } from './chat/ChatDetailPage';
@@ -198,6 +200,11 @@ export function AppRouter() {
                 <Route path="checkout" element={<BuyerCheckout />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
+                <Route path="recibos" element={<BuyerReceipts />} />
+                <Route
+                  path="recibos/:paymentId"
+                  element={<BuyerReceiptDetail />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />

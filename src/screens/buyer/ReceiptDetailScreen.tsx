@@ -14,26 +14,33 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPago } from '@/common/payments';
+import {
+  calcularImporte,
+  calcularSubtotal,
+  esPagoIdValido,
+  esPropietarioPago,
+  fetchPago,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
+} from '@/common/payments';
+import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { SellerStackParamList } from '@/types';
+import type { BuyerStackParamList } from '@/types';
 
-// ── Types ──────────────────────────────────────────────────
+type Nav = NativeStackNavigationProp<BuyerStackParamList, 'ReceiptDetail'>;
+type Route = RouteProp<BuyerStackParamList, 'ReceiptDetail'>;
 
-type Nav = NativeStackNavigationProp<SellerStackParamList, 'Receipt'>;
-type Route = RouteProp<SellerStackParamList, 'Receipt'>;
-
-// ── Component ──────────────────────────────────────────────
-
-export default function ReceiptScreen(): React.JSX.Element {
+export default function ReceiptDetailScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const { user } = useAuth();
   const { paymentId } = route.params;
-  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -41,15 +48,16 @@ export default function ReceiptScreen(): React.JSX.Element {
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const success = colors.success;
 
+  // Defensa en profundidad: el backend ya filtra por cliente autenticado
+  // (PR #72 backend); este check es redundancia defensiva.
   const {
     data: pago,
     isLoading,
     isError,
     refetch,
-  } = useQuery({
-    queryKey: ['pago', paymentId],
+  } = useQuery<PaymentDetail>({
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id, paymentId],
     queryFn: () => fetchPago(api, paymentId),
     enabled: paymentIdValid,
   });
@@ -65,11 +73,29 @@ export default function ReceiptScreen(): React.JSX.Element {
         }}
       >
         <ActivityIndicator size="large" color={brand} />
+        <LinkLikeButton
+          label="Volver"
+          icon="arrow-left"
+          color={muted}
+          onPress={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
-  if (isError || !pago) {
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const esPropietario = esPropietarioPago(pago, user?.id);
+
+  if (isError || !pago || !esPropietario) {
+    // isError (fallo técnico) y !pago (recibo inexistente) son casos
+    // distinguibles: solo el primero es un error de carga.
+    let mensaje = 'No tienes acceso a este recibo';
+    if (isError) {
+      mensaje = 'Error al cargar el recibo';
+    } else if (pago == null) {
+      mensaje = 'No se encontró el recibo';
+    }
     return (
       <View
         style={{
@@ -93,36 +119,30 @@ export default function ReceiptScreen(): React.JSX.Element {
             textAlign: 'center',
           }}
         >
-          Error al cargar el recibo
+          {mensaje}
         </Text>
-        <Pressable
+        <LinkLikeButton
+          label="Reintentar"
+          icon="refresh"
+          color={brand}
           onPress={() => void refetch()}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-          }}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
-            Reintentar
-          </Text>
-        </Pressable>
+        />
+        <LinkLikeButton
+          label="Volver"
+          icon="arrow-left"
+          color={muted}
+          onPress={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
   const productos = pago.productos ?? [];
 
+  const subtotal = calcularSubtotal(productos);
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      {/* Header */}
       <View
         style={{
           paddingTop: 60,
@@ -134,7 +154,7 @@ export default function ReceiptScreen(): React.JSX.Element {
         }}
       >
         <Pressable
-          onPress={() => navigation.popToTop()}
+          onPress={() => navigation.goBack()}
           style={{
             width: 40,
             height: 40,
@@ -149,7 +169,7 @@ export default function ReceiptScreen(): React.JSX.Element {
           <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
         </Pressable>
         <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
-          Recibo de Pago
+          Recibo {pago.folio}
         </Text>
       </View>
 
@@ -157,44 +177,6 @@ export default function ReceiptScreen(): React.JSX.Element {
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Success badge */}
-        <View
-          style={{
-            backgroundColor: success,
-            borderRadius: 14,
-            padding: 20,
-            alignItems: 'center',
-            marginBottom: 20,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="check-circle"
-            size={48}
-            color={colors.iconWhite}
-          />
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: '700',
-              color: colors.iconWhite,
-              marginTop: 8,
-            }}
-          >
-            Pago Registrado
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: colors.iconWhite,
-              marginTop: 4,
-              opacity: 0.9,
-            }}
-          >
-            {pago.folio}
-          </Text>
-        </View>
-
-        {/* Receipt details */}
         <View
           style={{
             backgroundColor: surface,
@@ -206,6 +188,14 @@ export default function ReceiptScreen(): React.JSX.Element {
           }}
         >
           <DetailRow label="Folio" value={pago.folio} fg={fg} muted={muted} />
+          {pago.pedido ? (
+            <DetailRow
+              label="Pedido"
+              value={`#${pago.pedido}`}
+              fg={fg}
+              muted={muted}
+            />
+          ) : null}
           <DetailRow
             label="Fecha"
             value={formatearFecha(pago.fecha_pago)}
@@ -234,7 +224,6 @@ export default function ReceiptScreen(): React.JSX.Element {
           ) : null}
         </View>
 
-        {/* Products */}
         <Text
           style={{
             fontSize: 18,
@@ -273,17 +262,35 @@ export default function ReceiptScreen(): React.JSX.Element {
                   {prod.nombre}
                 </Text>
                 <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
-                  {prod.cantidad}x ${Number(prod.precio).toFixed(2)}
+                  {prod.cantidad}x {formatearMonto(prod.precio)}
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                {formatearMonto(calcularImporte(prod))}
               </Text>
             </View>
           ))}
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingTop: 12,
+              marginTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: border,
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+              Subtotal
+            </Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
+              {formatearMonto(subtotal)}
+            </Text>
+          </View>
         </View>
 
-        {/* Total */}
         <View
           style={{
             backgroundColor: surface,
@@ -301,33 +308,47 @@ export default function ReceiptScreen(): React.JSX.Element {
             Total pagado
           </Text>
           <Text style={{ fontSize: 22, fontWeight: '700', color: brand }}>
-            ${Number(pago.monto).toFixed(2)}
+            {formatearMonto(pago.monto)}
           </Text>
         </View>
-
-        {/* Back button */}
-        <Pressable
-          onPress={() => navigation.popToTop()}
-          style={{
-            backgroundColor: brand,
-            borderRadius: 14,
-            paddingVertical: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text
-            style={{ fontSize: 17, fontWeight: '700', color: colors.iconWhite }}
-          >
-            Volver a pedidos
-          </Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
 }
 
 // ── Detail row helper ─────────────────────────────────────
+
+function LinkLikeButton({
+  label,
+  icon,
+  color,
+  onPress,
+}: {
+  readonly label: string;
+  readonly icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  readonly color: string;
+  readonly onPress: () => void;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: color,
+      }}
+    >
+      <MaterialCommunityIcons name={icon} size={18} color={color} />
+      <Text style={{ fontSize: 14, fontWeight: '600', color }}>{label}</Text>
+    </Pressable>
+  );
+}
 
 function DetailRow({
   label,

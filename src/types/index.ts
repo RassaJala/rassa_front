@@ -248,6 +248,8 @@ export type BuyerStackParamList = {
   OrderSuccess: { orderId: number; total: string; estado: string };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
+  ReceiptList: undefined;
+  ReceiptDetail: { readonly paymentId: number };
   Chat: {
     conversationId: number;
     title: string;

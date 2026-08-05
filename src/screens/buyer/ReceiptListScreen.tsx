@@ -14,17 +14,26 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
+import {
+  esPropietarioPago,
+  fetchPagos,
+  formatearMonto,
+  PAGOS_CLIENTE_QUERY_KEY,
+} from '@/common/payments';
+import type { PaymentDetail } from '@/common/payments';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
+import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
-import type { BuyerStackParamList, Order } from '@/types';
+import type { BuyerStackParamList } from '@/types';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
-export default function OrderHistoryScreen(): React.JSX.Element {
+export default function ReceiptListScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
+  const { user } = useAuth();
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -32,27 +41,36 @@ export default function OrderHistoryScreen(): React.JSX.Element {
   const border = isDark ? colors.admBorderD : colors.admBorderL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
-  const activeBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
 
   const {
-    data: orders = [],
+    data: pagos = [],
     isLoading,
     isError,
     refetch,
     isRefetching,
-  } = useQuery<Order[]>({
-    queryKey: ['pedidos-cliente'],
-    queryFn: async () => {
-      const response = await api.get<{ results?: Order[] }>('/pedidos/');
-      return response.data.results ?? [];
-    },
+  } = useQuery<PaymentDetail[]>({
+    queryKey: [PAGOS_CLIENTE_QUERY_KEY, user?.id],
+    queryFn: () => fetchPagos(api),
+    enabled: !!user?.id,
   });
 
-  const keyExtractor = useCallback((item: Order) => String(item.id_pedido), []);
+  // Defensa en profundidad: el backend ya filtra los pagos por propietario
+  // (IDOR mitigado), pero nunca renderizamos un recibo ajeno.
+  const pagosPropios = pagos.filter((pago) =>
+    esPropietarioPago(pago, user?.id),
+  );
 
-  const renderOrder = useCallback(
-    ({ item }: { readonly item: Order }) => (
-      <View
+  const keyExtractor = useCallback(
+    (item: PaymentDetail) => String(item.id_pago),
+    [],
+  );
+
+  const renderReceipt = useCallback(
+    ({ item }: { readonly item: PaymentDetail }) => (
+      <Pressable
+        onPress={() =>
+          navigation.navigate('ReceiptDetail', { paymentId: item.id_pago })
+        }
         style={{
           backgroundColor: surface,
           borderRadius: 14,
@@ -71,109 +89,25 @@ export default function OrderHistoryScreen(): React.JSX.Element {
         >
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: fg }}>
-              #{item.id_pedido}
+              {item.folio}
             </Text>
             <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-              {formatearFecha(item.creado_en)}
+              {formatearFecha(item.fecha_pago)}
             </Text>
           </View>
           <Text style={{ fontSize: 17, fontWeight: '700', color: fg }}>
-            ${parseFloat(item.total).toFixed(2)}
+            {formatearMonto(item.monto)}
           </Text>
         </View>
 
-        {item.productos && item.productos.length > 0 ? (
-          <Text
-            style={{ fontSize: 13, color: muted, marginTop: 8 }}
-            numberOfLines={2}
-          >
-            {item.productos.join(', ')}
-            {item.has_more_productos ? '...' : ''}
+        {item.pedido ? (
+          <Text style={{ fontSize: 13, color: muted, marginTop: 8 }}>
+            Pedido #{item.pedido}
           </Text>
         ) : null}
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 10,
-            gap: 6,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: activeBg,
-              borderRadius: 8,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                color: brand,
-                textTransform: 'capitalize',
-              }}
-            >
-              {item.estado_actual.replace(/_/g, ' ')}
-            </Text>
-          </View>
-          {item.expirado === true ? (
-            <View
-              style={{
-                backgroundColor: colors.error,
-                borderRadius: 8,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '600',
-                  color: colors.iconWhite,
-                }}
-              >
-                Expirado
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        <Pressable
-          onPress={() =>
-            navigation.navigate('OrderDetail', { orderId: item.id_pedido })
-          }
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            marginTop: 12,
-            backgroundColor: brand,
-            borderRadius: 10,
-            paddingVertical: 10,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="eye-outline"
-            size={18}
-            color={colors.iconWhite}
-          />
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: '700',
-              color: colors.iconWhite,
-            }}
-          >
-            Ver estatus
-          </Text>
-        </Pressable>
-      </View>
+      </Pressable>
     ),
-    [surface, border, fg, muted, activeBg, brand, navigation],
+    [surface, border, fg, muted, navigation],
   );
 
   if (isLoading) {
@@ -215,7 +149,7 @@ export default function OrderHistoryScreen(): React.JSX.Element {
             textAlign: 'center',
           }}
         >
-          Error al cargar pedidos
+          Error al cargar recibos
         </Text>
         <Pressable
           onPress={() => void refetch()}
@@ -236,6 +170,25 @@ export default function OrderHistoryScreen(): React.JSX.Element {
             Reintentar
           </Text>
         </Pressable>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 12,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: muted,
+          }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={18} color={muted} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: muted }}>
+            Volver
+          </Text>
+        </Pressable>
       </View>
     );
   }
@@ -246,51 +199,42 @@ export default function OrderHistoryScreen(): React.JSX.Element {
         style={{
           paddingTop: 60,
           paddingHorizontal: 20,
-          paddingBottom: 8,
+          paddingBottom: 12,
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          gap: 12,
         }}
       >
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            letterSpacing: -0.02,
-            color: fg,
-          }}
-        >
-          Mis Pedidos
-        </Text>
         <Pressable
-          onPress={() => navigation.navigate('ReceiptList')}
+          onPress={() => navigation.goBack()}
           style={{
-            flexDirection: 'row',
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
             alignItems: 'center',
-            gap: 6,
-            backgroundColor: brand,
-            borderRadius: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
+            justifyContent: 'center',
           }}
         >
-          <MaterialCommunityIcons
-            name="receipt"
-            size={16}
-            color={colors.iconWhite}
-          />
-          <Text
-            style={{ fontSize: 13, fontWeight: '700', color: colors.iconWhite }}
-          >
-            Mis Recibos
-          </Text>
+          <MaterialCommunityIcons name="arrow-left" size={22} color={fg} />
         </Pressable>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
+          Mis Recibos
+        </Text>
       </View>
 
       <FlatList
-        data={orders}
-        renderItem={renderOrder}
+        data={pagosPropios}
+        renderItem={renderReceipt}
         keyExtractor={keyExtractor}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+          />
+        }
         ListEmptyComponent={
           <View
             style={{
@@ -300,11 +244,7 @@ export default function OrderHistoryScreen(): React.JSX.Element {
               paddingTop: 60,
             }}
           >
-            <MaterialCommunityIcons
-              name="package-variant"
-              size={48}
-              color={muted}
-            />
+            <MaterialCommunityIcons name="receipt" size={48} color={muted} />
             <Text
               style={{
                 marginTop: 12,
@@ -313,19 +253,11 @@ export default function OrderHistoryScreen(): React.JSX.Element {
                 textAlign: 'center',
               }}
             >
-              No tienes pedidos aún
+              No tienes recibos aún
             </Text>
           </View>
         }
         contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => void refetch()}
-            tintColor={brand}
-            colors={[brand]}
-          />
-        }
         showsVerticalScrollIndicator={false}
       />
     </View>
