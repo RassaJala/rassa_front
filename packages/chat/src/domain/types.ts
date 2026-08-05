@@ -7,6 +7,7 @@ export interface Conversation {
   nombre: string;
   tipo: 'privada' | 'grupal';
   es_familia?: boolean;
+  nombre_override?: boolean;
   ultimo_mensaje: string | null;
   ultimo_mensaje_fecha: string | null;
   no_leidos: number;
@@ -47,7 +48,7 @@ export interface GroupMember {
   id: number;
   idUsuario: number;
   nombre: string;
-  rol: string;
+  rol?: string;
   avatar: string | null;
 }
 

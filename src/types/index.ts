@@ -200,6 +200,8 @@ export interface CreditLimit {
 export type AdminStackParamList = {
   AdminPanel: undefined;
   MermaResumen: undefined;
+  SettlementList: undefined;
+  SettlementDetail: { readonly settlementId: number };
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
@@ -209,11 +211,13 @@ export type AdminStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;
@@ -260,16 +264,20 @@ export type BuyerStackParamList = {
   OrderSuccess: { orderId: number; total: string; estado: string };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
+  ReceiptList: undefined;
+  ReceiptDetail: { readonly paymentId: number };
   Chat: {
     conversationId: number;
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
 };
 
@@ -296,11 +304,13 @@ export type FarmerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;
@@ -333,11 +343,13 @@ export type SellerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;

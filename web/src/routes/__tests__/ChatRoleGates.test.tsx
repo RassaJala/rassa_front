@@ -57,6 +57,14 @@ vi.mock('~/hooks/chat/useAddGroupMember', () => ({
   useAddGroupMember: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock('~/hooks/chat/useRemoveGroupMember', () => ({
+  useRemoveGroupMember: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+vi.mock('~/hooks/chat/useOverrideGroupName', () => ({
+  useOverrideGroupName: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 const mockCreatePrivateConversation = vi.fn();
 vi.mock('~/hooks/chat/useCreatePrivateConversation', () => ({
   useCreatePrivateConversation: () => ({

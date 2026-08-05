@@ -52,7 +52,11 @@ export function ConversationItem({
       type="button"
       onClick={() =>
         navigate(`/${user.rol}/chat/${conversation.id}`, {
-          state: { tipo: conversation.tipo },
+          state: {
+            tipo: conversation.tipo,
+            es_familia: conversation.es_familia,
+            nombre_override: conversation.nombre_override,
+          },
         })
       }
       className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:opacity-80"
@@ -76,6 +80,7 @@ export function ConversationItem({
             className="truncate text-sm font-semibold"
             style={{ color: c.fg }}
           >
+            {conversation.es_familia ? '🏠 ' : ''}
             {displayName}
           </span>
           <span className="shrink-0 text-xs" style={{ color: c.muted }}>

@@ -12,7 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 
 interface Props {
   readonly visible: boolean;
@@ -20,7 +20,7 @@ interface Props {
   readonly onSelect: (id: number | undefined) => void;
   readonly selectedId: number | undefined;
   readonly products: { id: number; nombre: string }[];
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function MermaProductPickerModal({

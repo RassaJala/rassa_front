@@ -44,6 +44,7 @@ export function mapConversation(raw: BackendConversation): Conversation {
     nombre: raw.nombre,
     tipo: raw.tipo as 'privada' | 'grupal',
     es_familia: raw.es_familia ?? false,
+    nombre_override: raw.nombre_override ?? false,
     ultimo_mensaje: raw.ultimo_mensaje,
     ultimo_mensaje_fecha: raw.ultimo_mensaje_creado_en,
     no_leidos: raw.no_leidos ?? 0,
@@ -57,7 +58,7 @@ export function mapGroupMember(raw: BackendGroupMember): GroupMember {
     id: raw.id_miembro,
     idUsuario: raw.id_usuario,
     nombre: raw.nombre_completo,
-    rol: '',
+    rol: raw.rol ?? '',
     avatar: null,
   };
 }

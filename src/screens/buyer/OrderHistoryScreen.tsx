@@ -371,7 +371,16 @@ export default function OrderHistoryScreen(): React.JSX.Element {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8 }}>
+      <View
+        style={{
+          paddingTop: 60,
+          paddingHorizontal: 20,
+          paddingBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Text
           style={{
             fontSize: 28,
@@ -382,15 +391,42 @@ export default function OrderHistoryScreen(): React.JSX.Element {
         >
           Mis Pedidos
         </Text>
-        <MermasFilterToggle
-          active={onlyWithMermas}
-          onToggle={() => setOnlyWithMermas((prev) => !prev)}
-          brand={brand}
-          muted={muted}
-          border={border}
-          activeBg={activeBg}
-          surface={surface}
-        />
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        >
+          <MermasFilterToggle
+            active={onlyWithMermas}
+            onToggle={() => setOnlyWithMermas((prev) => !prev)}
+            brand={brand}
+            muted={muted}
+            border={border}
+            activeBg={activeBg}
+            surface={surface}
+          />
+          <Pressable
+            onPress={() => navigation.navigate('ReceiptList')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: brand,
+              borderRadius: 10,
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="receipt"
+              size={16}
+              color={colors.iconWhite}
+            />
+            <Text
+              style={{ fontSize: 13, fontWeight: '700', color: colors.iconWhite }}
+            >
+              Mis Recibos
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList

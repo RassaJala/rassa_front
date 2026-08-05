@@ -17,6 +17,13 @@ jest.mock('@/store/AuthContext', () => ({
 jest.mock('@/store/ThemeContext', () => ({
   useTheme: () => ({ colorScheme: 'light' }),
 }));
+jest.mock('@/features/chat/hooks/useConversations', () => ({
+  useConversations: () => ({
+    data: {
+      results: [{ id: 1, es_familia: false, nombre_override: false }],
+    },
+  }),
+}));
 jest.mock('@/features/chat/hooks/useCreatePrivateConversation', () => ({
   useCreatePrivateConversation: () => ({
     mutate: mockCreateChat,
@@ -93,8 +100,21 @@ describe('GroupDetailScreen', () => {
     });
   });
 
-  it('shows edit buttons for admin on non-family groups', async () => {
-    mockApiGet.mockResolvedValue({ data: { data: [] } });
+  it('shows edit buttons for chat admin on non-family groups', async () => {
+    mockApiGet.mockResolvedValue({
+      data: {
+        data: [
+          {
+            id_miembro: 1,
+            id_usuario: 10,
+            nombre_completo: 'Admin User',
+            correo: 'admin@test.com',
+            creado_en: '2026-01-01T00:00:00Z',
+            rol: 'admin',
+          },
+        ],
+      },
+    });
 
     const { getByText } = renderScreen();
 

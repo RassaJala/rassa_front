@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatDisplayDate } from '@/common/waste';
 import { colors } from '@/constants/colors';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 
 export type PickerTarget = 'desde' | 'hasta';
 export type AgruparPor = 'mes' | 'semana';
@@ -24,7 +24,7 @@ interface Props {
   readonly onAgrupar: (value: AgruparPor) => void;
   readonly onApply: () => void;
   readonly onReset: () => void;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function MermaFilterBar({

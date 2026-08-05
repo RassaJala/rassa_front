@@ -29,6 +29,8 @@ import type { AttachmentType, Message } from '@rassa/chat';
 
 interface ChatLocationState {
   tipo?: 'privada' | 'grupal';
+  es_familia?: boolean;
+  nombre_override?: boolean;
 }
 
 export function ChatDetailPage() {
@@ -40,8 +42,12 @@ export function ChatDetailPage() {
   const conversationId = Number(id);
   const { data: convData } = useConversations();
   const currentConv = convData?.results?.find((c) => c.id === conversationId);
-  const tipo =
-    currentConv?.tipo ?? (location.state as ChatLocationState | null)?.tipo;
+  const locationState = location.state as ChatLocationState | null;
+  const tipo = currentConv?.tipo ?? locationState?.tipo;
+  const isFamily =
+    currentConv?.es_familia ?? locationState?.es_familia ?? false;
+  const nombreOverride =
+    currentConv?.nombre_override ?? locationState?.nombre_override ?? false;
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useChatMessages(conversationId);
@@ -230,7 +236,13 @@ export function ChatDetailPage() {
           <button
             type="button"
             onClick={() =>
-              user?.rol && navigate(`/${user.rol}/chat/${id}/grupo`)
+              user?.rol &&
+              navigate(`/${user.rol}/chat/${id}/grupo`, {
+                state: {
+                  es_familia: isFamily,
+                  nombre_override: nombreOverride,
+                },
+              })
             }
             className="cursor-pointer border-none bg-transparent text-lg"
             style={{ color: c.muted }}

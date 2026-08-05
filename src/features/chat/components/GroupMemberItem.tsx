@@ -1,19 +1,22 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { GroupMember } from '@/types/chat';
 
 interface GroupMemberItemProps {
   member: GroupMember;
+  onRemove?: (usuarioId: number) => void;
   onChat?: (member: GroupMember) => void;
   chatDisabled?: boolean;
 }
 
 export default function GroupMemberItem({
   member,
+  onRemove,
   onChat,
   chatDisabled,
 }: Readonly<GroupMemberItemProps>): React.JSX.Element {
+  const rolLabel = member.rol === 'admin' ? 'Jefe' : 'Miembro';
   return (
     <View className="flex-row items-center gap-3 p-4">
       <View className="h-10 w-10 items-center justify-center rounded-full bg-rassa-border dark:bg-rassa-border-dark">
@@ -27,9 +30,22 @@ export default function GroupMemberItem({
           {member.nombre}
         </Text>
         <Text className="text-xs text-rassa-muted dark:text-rassa-muted-dark">
-          {member.rol}
+          {rolLabel}
         </Text>
       </View>
+
+      {onRemove ? (
+        <Pressable
+          onPress={() => onRemove(member.idUsuario)}
+          className="rounded-lg bg-red-100 px-3 py-1.5 dark:bg-red-900"
+          accessibilityRole="button"
+          accessibilityLabel={`Remover a ${member.nombre}`}
+        >
+          <Text className="text-xs font-medium text-red-700 dark:text-red-200">
+            Remover
+          </Text>
+        </Pressable>
+      ) : null}
 
       {onChat ? (
         <Text
