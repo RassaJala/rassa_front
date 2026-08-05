@@ -23,6 +23,8 @@ function estadoColors(estado: RecoleccionEstado): {
       return { bg: colors.statusPublicadoBg, fg: colors.statusPublicadoFg };
     case 'cancelado':
       return { bg: colors.statusCanceladoBg, fg: colors.statusCanceladoFg };
+    default:
+      return { bg: colors.statusCanceladoBg, fg: colors.statusCanceladoFg };
   }
 }
 

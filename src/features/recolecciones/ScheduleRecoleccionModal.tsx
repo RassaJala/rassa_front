@@ -25,11 +25,10 @@ import { extractApiError } from '@/utils/apiErrors';
 
 import AgricultorSelector from './AgricultorSelector';
 import {
-  isValidFecha,
-  isValidHora,
+  buildDuplicateKeys,
   normalizeHora,
-  recoleccionDuplicateKey,
   todayString,
+  validateProgramarForm,
 } from './utils';
 
 function getFullName(a: AgricultorAgricultorItem): string {
@@ -163,15 +162,10 @@ export default function ScheduleRecoleccionModal({
     },
   });
 
-  const duplicateKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of existing) {
-      if (r.estado !== 'cancelado' && r.fk_agricultor != null) {
-        set.add(recoleccionDuplicateKey(r.fk_agricultor, r.fecha_recoleccion));
-      }
-    }
-    return set;
-  }, [existing]);
+  const duplicateKeys = useMemo(
+    () => buildDuplicateKeys(existing),
+    [existing],
+  );
 
   const gruposFiltrados = useMemo(() => {
     const termino = query.trim().toLowerCase();
@@ -220,34 +214,17 @@ export default function ScheduleRecoleccionModal({
   // eslint-disable-next-line sonarjs/cognitive-complexity
   function handleSubmit() {
     if (mutation.isPending) return;
-    if (!agricultor) {
-      setError('Selecciona un agricultor.');
+    const validationError = validateProgramarForm({
+      agricultorSeleccionado: agricultor !== null,
+      fecha,
+      horaInicio,
+      horaFin,
+    });
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      setError('La fecha debe tener el formato AAAA-MM-DD.');
-      return;
-    }
-    if (!isValidFecha(fecha)) {
-      setError('La fecha ingresada no es válida.');
-      return;
-    }
-    if (fecha < todayString()) {
-      setError('La fecha no puede ser anterior a hoy.');
-      return;
-    }
-    if (horaInicio && !isValidHora(horaInicio)) {
-      setError('La hora de inicio debe tener el formato HH:MM.');
-      return;
-    }
-    if (horaFin && !isValidHora(horaFin)) {
-      setError('La hora de fin debe tener el formato HH:MM.');
-      return;
-    }
-    if (horaInicio && horaFin && horaFin <= horaInicio) {
-      setError('La hora de fin debe ser posterior a la de inicio.');
-      return;
-    }
+    if (!agricultor) return;
     setError(null);
     mutation.mutate({
       fk_agricultor: agricultor.id_usuario,

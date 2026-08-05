@@ -157,6 +157,9 @@ export function validateProgramarForm(
   if (values.horaFin && !isValidHora(values.horaFin)) {
     return 'La hora de fin debe tener el formato HH:MM.';
   }
+  if (values.horaFin && !values.horaInicio) {
+    return 'La hora de fin requiere una hora de inicio.';
+  }
   if (
     values.horaInicio &&
     values.horaFin &&
