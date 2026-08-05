@@ -23,35 +23,69 @@ export default function FilterChips({
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const white = colors.iconWhite;
 
+  const row1 = FILTROS.slice(0, 3);
+  const row2 = FILTROS.slice(3);
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-      {FILTROS.map((e) => {
-        const selected = filter === e.value;
-        return (
-          <Pressable
-            key={e.value}
-            onPress={() => onSelect(e.value)}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderRadius: 20,
-              backgroundColor: selected ? brand : colors.transparent,
-              borderWidth: 1.5,
-              borderColor: selected ? brand : border,
-            }}
-          >
-            <Text
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+        {row1.map((e) => {
+          const selected = filter === e.value;
+          return (
+            <Pressable
+              key={e.value}
+              onPress={() => onSelect(e.value)}
               style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: selected ? white : fg,
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 20,
+                backgroundColor: selected ? brand : colors.transparent,
+                borderWidth: 1.5,
+                borderColor: selected ? brand : border,
               }}
             >
-              {e.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: selected ? white : fg,
+                }}
+              >
+                {e.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+        {row2.map((e) => {
+          const selected = filter === e.value;
+          return (
+            <Pressable
+              key={e.value}
+              onPress={() => onSelect(e.value)}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 20,
+                backgroundColor: selected ? brand : colors.transparent,
+                borderWidth: 1.5,
+                borderColor: selected ? brand : border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: selected ? white : fg,
+                }}
+              >
+                {e.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }

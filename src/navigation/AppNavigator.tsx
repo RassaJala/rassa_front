@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import ChatListScreen from '@/features/chat/screens/ChatListScreen';
@@ -79,6 +80,7 @@ const AdminTab = createBottomTabNavigator();
 
 function AdminTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
@@ -93,10 +95,12 @@ function AdminTabs() {
           backgroundColor: surface,
           borderTopColor: border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
+          justifyContent: 'space-evenly',
         },
+        tabBarItemStyle: { flex: 1 },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
@@ -226,6 +230,7 @@ function AuthStack() {
 
 function BuyerTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
@@ -240,10 +245,12 @@ function BuyerTabs() {
           backgroundColor: surface,
           borderTopColor: border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
+          justifyContent: 'space-evenly',
         },
+        tabBarItemStyle: { flex: 1 },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
@@ -306,13 +313,6 @@ function BuyerTabs() {
         }}
       />
       <BuyerTab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <BuyerTab.Screen
         name="ChatList"
         component={ChatListScreen}
         options={{
@@ -334,6 +334,7 @@ function BuyerNavigator() {
   return (
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
+      <BuyerStack.Screen name="Notificaciones" component={NotificationsScreen} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
       <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
@@ -394,6 +395,7 @@ function FarmerScreens() {
 
 function SellerTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
   const surface = isDark ? colors.admSurfaceD : colors.surface;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
@@ -408,10 +410,12 @@ function SellerTabs() {
           backgroundColor: surface,
           borderTopColor: border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
+          justifyContent: 'space-evenly',
         },
+        tabBarItemStyle: { flex: 1 },
         tabBarActiveTintColor: brand,
         tabBarInactiveTintColor: muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
@@ -460,20 +464,6 @@ function SellerTabs() {
         }}
       />
       <SellerTab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <SellerTab.Screen
-        name="Perfil"
-        component={ProfileSellerScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <SellerTab.Screen
         name="ChatList"
         component={ChatListScreen}
         options={{
@@ -495,6 +485,11 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="Perfil" component={ProfileSellerScreen} />
+      <SellerStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+      />
       <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />

@@ -150,7 +150,7 @@ function RecoleccionActions({
   const redCoral = colors.brandRedCoral;
 
   return (
-    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' }}>
       {canContact ? (
         <Pressable
           onPress={onContact}
@@ -183,7 +183,6 @@ function RecoleccionActions({
           onPress={() => onTransition('recolectado')}
           disabled={busy}
           style={{
-            flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -191,6 +190,7 @@ function RecoleccionActions({
             backgroundColor: colors.success,
             borderRadius: 10,
             paddingVertical: 10,
+            paddingHorizontal: 12,
             opacity: busy ? 0.5 : 1,
           }}
         >
@@ -210,7 +210,6 @@ function RecoleccionActions({
           onPress={() => onTransition('en_ruta')}
           disabled={busy}
           style={{
-            flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -218,6 +217,7 @@ function RecoleccionActions({
             backgroundColor: colors.info,
             borderRadius: 10,
             paddingVertical: 10,
+            paddingHorizontal: 12,
             opacity: busy ? 0.5 : 1,
           }}
         >

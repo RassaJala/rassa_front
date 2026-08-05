@@ -30,7 +30,7 @@ export default function HomeSellerScreen({
   const stats = getSellerStats();
 
   const handleProfilePress = () => {
-    navigation.navigate('Perfil');
+    navigation.getParent()?.navigate('Perfil');
   };
 
   const handleCortePress = () => {
