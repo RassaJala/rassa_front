@@ -89,6 +89,49 @@ const mockOrder = {
   ],
 };
 
+const mockMerma = {
+  id_merma: 1,
+  fk_producto_semanal: 100,
+  fk_pedido: 1,
+  cantidad: 2,
+  motivo: 'Se dañó en el traslado',
+  comentarios: null,
+  fk_decision: 1,
+  creado_en: '2026-07-25T10:00:00Z',
+  estado: true,
+  producto_info: {
+    id: 100,
+    producto: 'Manzana',
+    publicacion: 1,
+    stock_restante: 8,
+  },
+  decision_info: { id: 1, nombre: 'Tirar' },
+  pedido_info: {
+    id: 1,
+    cliente: 'Cliente Test',
+    estado: 'entregado',
+    total: '150.50',
+  },
+};
+
+// Returns the right result per queryKey instead of relying on call order (R3-10).
+function mockQueries(order: unknown, mermas: unknown): void {
+  const base = {
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+  };
+  (useQuery as unknown as jest.Mock).mockImplementation(
+    (options: { queryKey: readonly unknown[] }) => {
+      if (options.queryKey[0] === 'mermas') {
+        return { ...base, data: mermas };
+      }
+      return { ...base, data: order };
+    },
+  );
+}
+
 describe('OrderDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -278,45 +321,7 @@ describe('OrderDetailScreen', () => {
   });
 
   it('muestra la seccion de mermas cuando el pedido tiene mermas', () => {
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: mockOrder,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: [
-        {
-          id_merma: 1,
-          fk_producto_semanal: 100,
-          fk_pedido: 1,
-          cantidad: 2,
-          motivo: 'Se dañó en el traslado',
-          comentarios: null,
-          fk_decision: 1,
-          creado_en: '2026-07-25T10:00:00Z',
-          estado: true,
-          producto_info: {
-            id: 100,
-            producto: 'Manzana',
-            publicacion: 1,
-            stock_restante: 8,
-          },
-          decision_info: { id: 1, nombre: 'Tirar' },
-          pedido_info: {
-            id: 1,
-            cliente: 'Cliente Test',
-            estado: 'entregado',
-            total: '150.50',
-          },
-        },
-      ],
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
+    mockQueries(mockOrder, [mockMerma]);
 
     const { getAllByText, getByText } = render(<OrderDetailScreen />);
 
@@ -326,20 +331,7 @@ describe('OrderDetailScreen', () => {
   });
 
   it('NO muestra la seccion de mermas cuando no hay mermas', () => {
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: mockOrder,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: null,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
+    mockQueries(mockOrder, null);
 
     const { queryByText } = render(<OrderDetailScreen />);
 
@@ -347,23 +339,41 @@ describe('OrderDetailScreen', () => {
   });
 
   it('NO muestra la seccion de mermas cuando mermas es lista vacia', () => {
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: mockOrder,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn(),
-    });
+    mockQueries(mockOrder, []);
 
     const { queryByText } = render(<OrderDetailScreen />);
 
+    expect(queryByText('Mermas')).toBeNull();
+  });
+
+  it('NO muestra la seccion de mermas cuando la query de mermas falla', () => {
+    (useQuery as unknown as jest.Mock).mockImplementation(
+      (options: { queryKey: readonly unknown[] }) => {
+        if (options.queryKey[0] === 'mermas') {
+          return {
+            data: undefined,
+            isLoading: false,
+            isError: true,
+            error: new Error('Network error'),
+            refetch: jest.fn(),
+          };
+        }
+        return {
+          data: mockOrder,
+          isLoading: false,
+          isError: false,
+          error: null,
+          refetch: jest.fn(),
+        };
+      },
+    );
+
+    const { getByText, queryByText } = render(<OrderDetailScreen />);
+
+    // El resto de la pantalla sigue funcionando
+    expect(getByText('Pedido #1')).toBeTruthy();
+    expect(getByText('Historial')).toBeTruthy();
+    // La seccion de mermas desaparece silenciosamente ante un error de query
     expect(queryByText('Mermas')).toBeNull();
   });
 });

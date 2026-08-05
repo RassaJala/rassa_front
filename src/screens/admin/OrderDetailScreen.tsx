@@ -6,14 +6,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 import OrderMermasSection from '@/components/OrderMermasSection';
 import OrderTimeline from '@/components/OrderTimeline';
 import { useAdminColors } from '@/hooks/useAdminColors';
-import api from '@/services/api';
-import type { AdminStackParamList, MermaDePedido } from '@/types';
+import { useOrderMermas } from '@/hooks/useOrderMermas';
+import type { AdminStackParamList } from '@/types';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,17 +53,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
       NativeStackNavigationProp<AdminStackParamList, 'OrderDetail'>
     >();
 
-  const { data: mermas } = useQuery<MermaDePedido[]>({
-    queryKey: ['mermas', orderId],
-    queryFn: async () => {
-      const response = await api.get<{
-        data?: { results?: MermaDePedido[] };
-        results?: MermaDePedido[];
-      }>(`/mermas/?fk_pedido=${orderId}`);
-      return response.data?.data?.results ?? response.data?.results ?? [];
-    },
-    enabled: orderId > 0,
-  });
+  const { mermas } = useOrderMermas(orderId);
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
@@ -83,9 +72,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
       <View
         style={[styles.card, { backgroundColor: surface, borderColor: border }]}
       >
-        {Array.isArray(mermas) && mermas.length > 0 ? (
-          <OrderMermasSection mermas={mermas} />
-        ) : null}
+        {mermas.length > 0 ? <OrderMermasSection mermas={mermas} /> : null}
         <ErrorBoundary>
           <OrderTimeline orderId={orderId} onBack={() => navigation.goBack()} />
         </ErrorBoundary>

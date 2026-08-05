@@ -8,8 +8,11 @@ import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
+import { useOrderMermas } from '~/hooks/useOrderMermas';
 import api from '~/services/api';
-import type { MermaDePedido, OrderDetail } from '~/services/orderTypes';
+import type { OrderDetail } from '~/services/orderTypes';
+
+import { OrderMermasSection } from './OrderMermasSection';
 
 const STATUS_VARIANT: Record<
   string,
@@ -52,17 +55,7 @@ export function BuyerOrderDetail() {
     enabled: orderId > 0,
   });
 
-  const { data: mermas } = useQuery<MermaDePedido[]>({
-    queryKey: ['mermas', orderId],
-    queryFn: async () => {
-      const { data } = await api.get<{
-        data?: { results?: MermaDePedido[] };
-        results?: MermaDePedido[];
-      }>(`/mermas/?fk_pedido=${orderId}`);
-      return data?.data?.results ?? data?.results ?? [];
-    },
-    enabled: orderId > 0,
-  });
+  const { mermas } = useOrderMermas(orderId, { publicView: true });
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
@@ -395,100 +388,8 @@ export function BuyerOrderDetail() {
       </div>
 
       {/* Mermas section */}
-      {Array.isArray(mermas) && mermas.length > 0 ? (
-        <>
-          <h2
-            style={{
-              fontSize: 18,
-              fontWeight: 700,
-              color: t.fg,
-              marginBottom: 12,
-            }}
-          >
-            Mermas
-          </h2>
-          <div
-            style={{
-              background: t.surface,
-              borderRadius: 16,
-              border: `1px solid ${t.border}`,
-              padding: 24,
-              marginBottom: 24,
-            }}
-          >
-            {mermas.map((merma, index) => (
-              <div
-                key={merma.id_merma}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  gap: 16,
-                  padding: '10px 0',
-                  borderBottom:
-                    index < mermas.length - 1
-                      ? `1px solid ${t.border}`
-                      : 'none',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: t.fg,
-                      margin: 0,
-                    }}
-                  >
-                    {merma.producto_info?.producto ?? 'Producto'}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: t.muted,
-                      margin: '2px 0 0 0',
-                    }}
-                  >
-                    {merma.motivo}
-                    {merma.decision_info?.nombre
-                      ? ` · ${merma.decision_info.nombre}`
-                      : ''}
-                  </p>
-                  {merma.comentarios ? (
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: t.muted,
-                        margin: '2px 0 0 0',
-                      }}
-                    >
-                      {merma.comentarios}
-                    </p>
-                  ) : null}
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: t.muted,
-                      margin: '2px 0 0 0',
-                    }}
-                  >
-                    {formatearFecha(merma.creado_en)}
-                  </p>
-                </div>
-                <p
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: t.fg,
-                    margin: 0,
-                  }}
-                >
-                  {merma.cantidad}x
-                </p>
-              </div>
-            ))}
-          </div>
-        </>
+      {mermas.length > 0 ? (
+        <OrderMermasSection mermas={mermas} showComentarios={false} />
       ) : null}
 
       {/* Timeline section */}

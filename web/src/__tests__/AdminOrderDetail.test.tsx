@@ -35,7 +35,7 @@ const mockMerma = {
   fk_pedido: 1,
   cantidad: 2,
   motivo: 'Se dañó en el traslado',
-  comentarios: null,
+  comentarios: 'Nota interna del staff',
   fk_decision: 1,
   creado_en: '2026-07-25T10:00:00Z',
   estado: true,
@@ -107,5 +107,20 @@ describe('AdminOrderDetail', () => {
     expect(
       screen.queryByText('Se dañó en el traslado'),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows internal comments to the admin (showComentarios default true)', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/mermas/')) {
+        return Promise.resolve({ data: { data: { results: [mockMerma] } } });
+      }
+      return Promise.resolve({ data: mockHistorial });
+    });
+
+    renderDetail();
+
+    expect(
+      await screen.findByText('Nota interna del staff'),
+    ).toBeInTheDocument();
   });
 });

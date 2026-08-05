@@ -1,17 +1,20 @@
 import { Text, View } from 'react-native';
 
 import { formatearFecha } from '@/common/dates';
+import type { MermaDePedido, MermaDePedidoPublic } from '@/common/waste';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/store/ThemeContext';
-import type { MermaDePedido } from '@/types';
 
 interface OrderMermasSectionProps {
-  readonly mermas: readonly MermaDePedido[];
+  readonly mermas: readonly (MermaDePedido | MermaDePedidoPublic)[];
+  /** Set false in buyer views so internal staff notes are never shown. */
+  readonly showComentarios?: boolean;
 }
 
 /** Renders the per-order mermas (none when the list is empty/undefined). */
 export default function OrderMermasSection({
   mermas,
+  showComentarios = true,
 }: OrderMermasSectionProps): React.JSX.Element | null {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -48,48 +51,56 @@ export default function OrderMermasSection({
           marginBottom: 20,
         }}
       >
-        {mermas.map((merma, index) => (
-          <View
-            key={merma.id_merma}
-            style={{
-              paddingVertical: 8,
-              ...(index < mermas.length - 1
-                ? { borderBottomWidth: 1, borderBottomColor: border }
-                : {}),
-            }}
-          >
+        {mermas.map((merma, index) => {
+          const comentarios = 'comentarios' in merma ? merma.comentarios : null;
+          return (
             <View
+              key={merma.id_merma}
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                paddingVertical: 8,
+                ...(index < mermas.length - 1
+                  ? { borderBottomWidth: 1, borderBottomColor: border }
+                  : {}),
               }}
             >
-              <Text
-                style={{ fontSize: 15, fontWeight: '600', color: fg, flex: 1 }}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
               >
-                {merma.producto_info?.producto ?? 'Producto'}
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: fg,
+                    flex: 1,
+                  }}
+                >
+                  {merma.producto_info?.producto ?? 'Producto'}
+                </Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: fg }}>
+                  {merma.cantidad}x
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
+                {merma.motivo}
+                {merma.decision_info?.nombre
+                  ? ` · ${merma.decision_info.nombre}`
+                  : ''}
               </Text>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: fg }}>
-                {merma.cantidad}x
-              </Text>
-            </View>
-            <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-              {merma.motivo}
-              {merma.decision_info?.nombre
-                ? ` · ${merma.decision_info.nombre}`
-                : ''}
-            </Text>
-            <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-              {formatearFecha(merma.creado_en)}
-            </Text>
-            {merma.comentarios ? (
               <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
-                {merma.comentarios}
+                {formatearFecha(merma.creado_en)}
               </Text>
-            ) : null}
-          </View>
-        ))}
+              {showComentarios && comentarios ? (
+                <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
+                  {comentarios}
+                </Text>
+              ) : null}
+            </View>
+          );
+        })}
       </View>
     </>
   );

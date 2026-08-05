@@ -1,5 +1,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+import type { MermaDePedido } from '@/common/waste';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -85,40 +87,17 @@ export interface Order {
   expirado?: boolean;
 }
 
-export interface MermaProductoInfo {
-  id: number | null;
-  producto: string | null;
-  publicacion: number | null;
-  stock_restante: number | null;
-}
-
-export interface MermaDecisionInfo {
-  id: number | null;
-  nombre: string | null;
-}
-
-export interface MermaPedidoInfo {
-  id: number | null;
-  cliente: string | null;
-  estado: string | null;
-  total: string | null;
-}
-
-/** Backend GET /mermas/?fk_pedido= shape (MermaListSerializer, nested fields). */
-export interface MermaDePedido {
-  id_merma: number;
-  fk_producto_semanal: number | null;
-  fk_pedido: number | null;
-  cantidad: number;
-  motivo: string;
-  comentarios: string | null;
-  fk_decision: number | null;
-  creado_en: string; // ISO datetime
-  estado: boolean;
-  producto_info: MermaProductoInfo | null;
-  decision_info: MermaDecisionInfo | null;
-  pedido_info: MermaPedidoInfo | null;
-}
+// ── Mermas ─────────────────────────────────────────────────
+// Single source of truth: packages/common/src/waste.ts (shared with web).
+// Re-exported here so mobile imports (`import type { MermaDePedido } from '@/types'`)
+// keep working without drifting from the web copy.
+export type {
+  MermaDePedido,
+  MermaDePedidoPublic,
+  MermaProductoInfo,
+  MermaDecisionInfo,
+  MermaPedidoInfo,
+} from '@/common/waste';
 
 export interface OrderDetail extends Order {
   subtotal: string;

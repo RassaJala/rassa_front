@@ -17,11 +17,11 @@ import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
 import OrderMermasSection from '@/components/OrderMermasSection';
 import { colors } from '@/constants/colors';
+import { useOrderMermas } from '@/hooks/useOrderMermas';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import type {
   BuyerStackParamList,
-  MermaDePedido,
   OrderDetail,
   OrderHistoryEntry,
 } from '@/types';
@@ -150,17 +150,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
     enabled: orderId > 0,
   });
 
-  const { data: mermas } = useQuery<MermaDePedido[]>({
-    queryKey: ['mermas', orderId],
-    queryFn: async () => {
-      const response = await api.get<{
-        data?: { results?: MermaDePedido[] };
-        results?: MermaDePedido[];
-      }>(`/mermas/?fk_pedido=${orderId}`);
-      return response.data?.data?.results ?? response.data?.results ?? [];
-    },
-    enabled: orderId > 0,
-  });
+  const { mermas } = useOrderMermas(orderId, { publicView: true });
 
   const isPickupReady = order?.estado_actual === 'listo_para_retirar';
 
@@ -471,8 +461,8 @@ export default function OrderDetailScreen(): React.JSX.Element {
           ))}
         </View>
 
-        {Array.isArray(mermas) && mermas.length > 0 ? (
-          <OrderMermasSection mermas={mermas} />
+        {mermas.length > 0 ? (
+          <OrderMermasSection mermas={mermas} showComentarios={false} />
         ) : null}
 
         <Text

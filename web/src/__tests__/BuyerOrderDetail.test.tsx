@@ -47,6 +47,31 @@ const mockOrder = {
   ],
 };
 
+const mockMerma = {
+  id_merma: 1,
+  fk_producto_semanal: 100,
+  fk_pedido: 1,
+  cantidad: 2,
+  motivo: 'Se dañó en el traslado',
+  comentarios: 'Nota interna del staff',
+  fk_decision: 1,
+  creado_en: '2026-07-25T10:00:00Z',
+  estado: true,
+  producto_info: {
+    id: 100,
+    producto: 'Manzana',
+    publicacion: 1,
+    stock_restante: 8,
+  },
+  decision_info: { id: 1, nombre: 'Tirar' },
+  pedido_info: {
+    id: 1,
+    cliente: 'Cliente Test',
+    estado: 'entregado',
+    total: '150.50',
+  },
+};
+
 function renderDetail() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -68,37 +93,11 @@ describe('BuyerOrderDetail', () => {
   });
 
   it('shows mermas section when the order has mermas', async () => {
-    mockGet.mockResolvedValueOnce({ data: mockOrder }).mockResolvedValueOnce({
-      data: {
-        data: {
-          results: [
-            {
-              id_merma: 1,
-              fk_producto_semanal: 100,
-              fk_pedido: 1,
-              cantidad: 2,
-              motivo: 'Se dañó en el traslado',
-              comentarios: null,
-              fk_decision: 1,
-              creado_en: '2026-07-25T10:00:00Z',
-              estado: true,
-              producto_info: {
-                id: 100,
-                producto: 'Manzana',
-                publicacion: 1,
-                stock_restante: 8,
-              },
-              decision_info: { id: 1, nombre: 'Tirar' },
-              pedido_info: {
-                id: 1,
-                cliente: 'Cliente Test',
-                estado: 'entregado',
-                total: '150.50',
-              },
-            },
-          ],
-        },
-      },
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/mermas/')) {
+        return Promise.resolve({ data: { data: { results: [mockMerma] } } });
+      }
+      return Promise.resolve({ data: mockOrder });
     });
 
     renderDetail();
@@ -111,13 +110,32 @@ describe('BuyerOrderDetail', () => {
   });
 
   it('does not show mermas section when the order has none', async () => {
-    mockGet
-      .mockResolvedValueOnce({ data: mockOrder })
-      .mockResolvedValueOnce({ data: { data: { results: [] } } });
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/mermas/')) {
+        return Promise.resolve({ data: { data: { results: [] } } });
+      }
+      return Promise.resolve({ data: mockOrder });
+    });
 
     renderDetail();
 
     expect(await screen.findByText('Pedido #1')).toBeInTheDocument();
     expect(screen.queryByText('Mermas')).not.toBeInTheDocument();
+  });
+
+  it('never shows internal comments to the buyer (showComentarios=false)', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/mermas/')) {
+        return Promise.resolve({ data: { data: { results: [mockMerma] } } });
+      }
+      return Promise.resolve({ data: mockOrder });
+    });
+
+    renderDetail();
+
+    expect(await screen.findByText('Mermas')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nota interna del staff'),
+    ).not.toBeInTheDocument();
   });
 });

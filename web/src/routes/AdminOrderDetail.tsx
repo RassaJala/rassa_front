@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { formatearFecha } from '@/common/dates';
-
 import {
   formatTimestamp,
   isNotFoundError,
@@ -12,9 +10,11 @@ import {
   STATUS_LABELS,
 } from '../constants/orderTimeline';
 import { useAppColors } from '../hooks/useAppColors';
+import { useOrderMermas } from '../hooks/useOrderMermas';
 import api from '../services/api';
-import type { MermaDePedido } from '../services/orderTypes';
 import type { OrderStatusHistory } from '../types';
+
+import { OrderMermasSection } from './OrderMermasSection';
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -43,19 +43,7 @@ export function AdminOrderDetail() {
 
   const entries = data ?? [];
 
-  const { data: mermasData } = useQuery<MermaDePedido[]>({
-    queryKey: ['mermas', orderId] as const,
-    queryFn: async () => {
-      const res = await api.get<{
-        data?: { results?: MermaDePedido[] };
-        results?: MermaDePedido[];
-      }>(`/mermas/?fk_pedido=${orderId}`);
-      return res.data?.data?.results ?? res.data?.results ?? [];
-    },
-    enabled: isValidId,
-  });
-
-  const mermas = mermasData ?? [];
+  const { mermas } = useOrderMermas(orderId);
 
   // ── Styles ──
 
@@ -128,102 +116,7 @@ export function AdminOrderDetail() {
       </div>
 
       {/* Mermas section */}
-      <div style={{ marginBottom: 24 }}>
-        <h2
-          style={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: fg,
-            marginBottom: 12,
-          }}
-        >
-          Mermas
-        </h2>
-        <div
-          style={{
-            background: surface,
-            borderRadius: 16,
-            border: `1px solid ${border}`,
-            padding: 24,
-          }}
-        >
-          {mermas.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 14, color: muted }}>
-              Este pedido no tiene mermas
-            </p>
-          ) : (
-            mermas.map((merma, index) => (
-              <div
-                key={merma.id_merma}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  gap: 16,
-                  padding: '10px 0',
-                  borderBottom:
-                    index < mermas.length - 1 ? `1px solid ${border}` : 'none',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: fg,
-                      margin: 0,
-                    }}
-                  >
-                    {merma.producto_info?.producto ?? 'Producto'}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: muted,
-                      margin: '2px 0 0 0',
-                    }}
-                  >
-                    {merma.motivo}
-                    {merma.decision_info?.nombre
-                      ? ` · ${merma.decision_info.nombre}`
-                      : ''}
-                  </p>
-                  {merma.comentarios ? (
-                    <p
-                      style={{
-                        fontSize: 13,
-                        color: muted,
-                        margin: '2px 0 0 0',
-                      }}
-                    >
-                      {merma.comentarios}
-                    </p>
-                  ) : null}
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: muted,
-                      margin: '2px 0 0 0',
-                    }}
-                  >
-                    {formatearFecha(merma.creado_en)}
-                  </p>
-                </div>
-                <p
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: fg,
-                    margin: 0,
-                  }}
-                >
-                  {merma.cantidad}x
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      <OrderMermasSection mermas={mermas} />
 
       {/* Content */}
       <div
