@@ -73,7 +73,7 @@ export default function ProductDetailScreen(): React.JSX.Element {
             style={{ color: colors.error }}
           >
             {createConversation.error?.message ??
-              'No se pudo iniciar el chat. Intentá de nuevo.'}
+              'No se pudo iniciar el chat. Intenta de nuevo.'}
           </Text>
         ) : null}
       </View>

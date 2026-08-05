@@ -223,7 +223,7 @@ export function StartChatPage() {
               role="alert"
             >
               {createConversation.error?.message ??
-                'No se pudo crear la conversación. Intentá de nuevo.'}
+                'No se pudo crear la conversación. Intenta de nuevo.'}
             </p>
           )}
         </div>

@@ -104,7 +104,7 @@ export function ChatListPage() {
               Error al cargar conversaciones
             </p>
             <p className="mt-1 text-sm" style={{ color: c.muted }}>
-              Revisá tu conexión e intentá de nuevo
+              Revisa tu conexión e intenta de nuevo
             </p>
             <button
               type="button"
