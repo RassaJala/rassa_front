@@ -162,10 +162,7 @@ export default function ScheduleRecoleccionModal({
     },
   });
 
-  const duplicateKeys = useMemo(
-    () => buildDuplicateKeys(existing),
-    [existing],
-  );
+  const duplicateKeys = useMemo(() => buildDuplicateKeys(existing), [existing]);
 
   const gruposFiltrados = useMemo(() => {
     const termino = query.trim().toLowerCase();
