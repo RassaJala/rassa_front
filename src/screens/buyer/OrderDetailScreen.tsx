@@ -21,6 +21,7 @@ import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
 import type {
   BuyerStackParamList,
+  MermaDePedido,
   OrderDetail,
   OrderHistoryEntry,
 } from '@/types';
@@ -145,6 +146,18 @@ export default function OrderDetailScreen(): React.JSX.Element {
     queryFn: async () => {
       const response = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return response.data;
+    },
+    enabled: orderId > 0,
+  });
+
+  const { data: mermas } = useQuery<MermaDePedido[]>({
+    queryKey: ['mermas', orderId],
+    queryFn: async () => {
+      const response = await api.get<{
+        data?: { results?: MermaDePedido[] };
+        results?: MermaDePedido[];
+      }>(`/mermas/?fk_pedido=${orderId}`);
+      return response.data?.data?.results ?? response.data?.results ?? [];
     },
     enabled: orderId > 0,
   });
@@ -458,8 +471,8 @@ export default function OrderDetailScreen(): React.JSX.Element {
           ))}
         </View>
 
-        {Array.isArray(order.mermas) && order.mermas.length > 0 ? (
-          <OrderMermasSection mermas={order.mermas} />
+        {Array.isArray(mermas) && mermas.length > 0 ? (
+          <OrderMermasSection mermas={mermas} />
         ) : null}
 
         <Text

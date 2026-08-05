@@ -83,18 +83,41 @@ export interface Order {
   has_more_productos?: boolean;
   /** Backend flag (list/detail): order is pending and its expiry date passed. */
   expirado?: boolean;
-  /** Backend flag: the order has at least one linked merma. Optional until the backend exposes it. */
-  tiene_mermas?: boolean;
 }
 
+export interface MermaProductoInfo {
+  id: number | null;
+  producto: string | null;
+  publicacion: number | null;
+  stock_restante: number | null;
+}
+
+export interface MermaDecisionInfo {
+  id: number | null;
+  nombre: string | null;
+}
+
+export interface MermaPedidoInfo {
+  id: number | null;
+  cliente: string | null;
+  estado: string | null;
+  total: string | null;
+}
+
+/** Backend GET /mermas/?fk_pedido= shape (MermaListSerializer, nested fields). */
 export interface MermaDePedido {
   id_merma: number;
+  fk_producto_semanal: number | null;
+  fk_pedido: number | null;
   cantidad: number;
   motivo: string;
   comentarios: string | null;
+  fk_decision: number | null;
   creado_en: string; // ISO datetime
-  decision_nombre: string | null;
-  producto_nombre: string | null;
+  estado: boolean;
+  producto_info: MermaProductoInfo | null;
+  decision_info: MermaDecisionInfo | null;
+  pedido_info: MermaPedidoInfo | null;
 }
 
 export interface OrderDetail extends Order {
@@ -103,7 +126,10 @@ export interface OrderDetail extends Order {
   fecha_expiracion: string | null;
   detalles: OrderItem[];
   historial: OrderHistoryEntry[];
-  /** Backend exposes per-order mermas on the detail. Optional until the backend sends them. */
+  /**
+   * Mermas are NOT part of the order detail — they load separately via
+   * GET /mermas/?fk_pedido={id}. Kept only as an optional legacy field.
+   */
   mermas?: MermaDePedido[];
 }
 

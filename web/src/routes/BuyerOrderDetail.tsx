@@ -9,7 +9,7 @@ import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
 import api from '~/services/api';
-import type { OrderDetail } from '~/services/orderTypes';
+import type { MermaDePedido, OrderDetail } from '~/services/orderTypes';
 
 const STATUS_VARIANT: Record<
   string,
@@ -48,6 +48,18 @@ export function BuyerOrderDetail() {
     queryFn: async () => {
       const { data } = await api.get<OrderDetail>(`/pedidos/${orderId}/`);
       return data;
+    },
+    enabled: orderId > 0,
+  });
+
+  const { data: mermas } = useQuery<MermaDePedido[]>({
+    queryKey: ['mermas', orderId],
+    queryFn: async () => {
+      const { data } = await api.get<{
+        data?: { results?: MermaDePedido[] };
+        results?: MermaDePedido[];
+      }>(`/mermas/?fk_pedido=${orderId}`);
+      return data?.data?.results ?? data?.results ?? [];
     },
     enabled: orderId > 0,
   });
@@ -383,7 +395,7 @@ export function BuyerOrderDetail() {
       </div>
 
       {/* Mermas section */}
-      {Array.isArray(order.mermas) && order.mermas.length > 0 ? (
+      {Array.isArray(mermas) && mermas.length > 0 ? (
         <>
           <h2
             style={{
@@ -404,7 +416,7 @@ export function BuyerOrderDetail() {
               marginBottom: 24,
             }}
           >
-            {order.mermas.map((merma, index) => (
+            {mermas.map((merma, index) => (
               <div
                 key={merma.id_merma}
                 style={{
@@ -414,7 +426,7 @@ export function BuyerOrderDetail() {
                   gap: 16,
                   padding: '10px 0',
                   borderBottom:
-                    index < order.mermas.length - 1
+                    index < mermas.length - 1
                       ? `1px solid ${t.border}`
                       : 'none',
                 }}
@@ -428,7 +440,7 @@ export function BuyerOrderDetail() {
                       margin: 0,
                     }}
                   >
-                    {merma.producto_nombre ?? 'Producto'}
+                    {merma.producto_info?.producto ?? 'Producto'}
                   </p>
                   <p
                     style={{
@@ -438,7 +450,9 @@ export function BuyerOrderDetail() {
                     }}
                   >
                     {merma.motivo}
-                    {merma.decision_nombre ? ` · ${merma.decision_nombre}` : ''}
+                    {merma.decision_info?.nombre
+                      ? ` · ${merma.decision_info.nombre}`
+                      : ''}
                   </p>
                   {merma.comentarios ? (
                     <p

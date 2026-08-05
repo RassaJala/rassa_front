@@ -68,7 +68,7 @@ export default function OrderMermasSection({
               <Text
                 style={{ fontSize: 15, fontWeight: '600', color: fg, flex: 1 }}
               >
-                {merma.producto_nombre ?? 'Producto'}
+                {merma.producto_info?.producto ?? 'Producto'}
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '700', color: fg }}>
                 {merma.cantidad}x
@@ -76,7 +76,9 @@ export default function OrderMermasSection({
             </View>
             <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
               {merma.motivo}
-              {merma.decision_nombre ? ` · ${merma.decision_nombre}` : ''}
+              {merma.decision_info?.nombre
+                ? ` · ${merma.decision_info.nombre}`
+                : ''}
             </Text>
             <Text style={{ fontSize: 12, color: muted, marginTop: 2 }}>
               {formatearFecha(merma.creado_en)}

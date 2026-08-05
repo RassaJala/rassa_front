@@ -68,20 +68,36 @@ describe('BuyerOrderDetail', () => {
   });
 
   it('shows mermas section when the order has mermas', async () => {
-    mockGet.mockResolvedValue({
+    mockGet.mockResolvedValueOnce({ data: mockOrder }).mockResolvedValueOnce({
       data: {
-        ...mockOrder,
-        mermas: [
-          {
-            id_merma: 1,
-            cantidad: 2,
-            motivo: 'Se dañó en el traslado',
-            comentarios: null,
-            creado_en: '2026-07-25T10:00:00Z',
-            decision_nombre: 'Tirar',
-            producto_nombre: 'Manzana',
-          },
-        ],
+        data: {
+          results: [
+            {
+              id_merma: 1,
+              fk_producto_semanal: 100,
+              fk_pedido: 1,
+              cantidad: 2,
+              motivo: 'Se dañó en el traslado',
+              comentarios: null,
+              fk_decision: 1,
+              creado_en: '2026-07-25T10:00:00Z',
+              estado: true,
+              producto_info: {
+                id: 100,
+                producto: 'Manzana',
+                publicacion: 1,
+                stock_restante: 8,
+              },
+              decision_info: { id: 1, nombre: 'Tirar' },
+              pedido_info: {
+                id: 1,
+                cliente: 'Cliente Test',
+                estado: 'entregado',
+                total: '150.50',
+              },
+            },
+          ],
+        },
       },
     });
 
@@ -95,7 +111,9 @@ describe('BuyerOrderDetail', () => {
   });
 
   it('does not show mermas section when the order has none', async () => {
-    mockGet.mockResolvedValue({ data: mockOrder });
+    mockGet
+      .mockResolvedValueOnce({ data: mockOrder })
+      .mockResolvedValueOnce({ data: { data: { results: [] } } });
 
     renderDetail();
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -77,26 +77,6 @@ function OrderBadges({
             }}
           >
             Expirado
-          </Text>
-        </View>
-      ) : null}
-      {item.tiene_mermas === true ? (
-        <View
-          style={{
-            backgroundColor: colors.warning,
-            borderRadius: 8,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: colors.iconWhite,
-            }}
-          >
-            Con mermas
           </Text>
         </View>
       ) : null}
@@ -202,80 +182,10 @@ function OrderCard({
   );
 }
 
-interface MermasFilterToggleProps {
-  readonly active: boolean;
-  readonly onToggle: () => void;
-  readonly brand: string;
-  readonly muted: string;
-  readonly border: string;
-  readonly activeBg: string;
-  readonly surface: string;
-}
-
-function MermasFilterToggle({
-  active,
-  onToggle,
-  brand,
-  muted,
-  border,
-  activeBg,
-  surface,
-}: MermasFilterToggleProps): React.JSX.Element {
-  return (
-    <Pressable
-      onPress={onToggle}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        gap: 8,
-        marginTop: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: active ? brand : border,
-        backgroundColor: active ? activeBg : surface,
-      }}
-    >
-      <View
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: 5,
-          borderWidth: 2,
-          borderColor: active ? brand : muted,
-          backgroundColor: active ? brand : colors.transparent,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {active ? (
-          <MaterialCommunityIcons
-            name="check"
-            size={14}
-            color={colors.iconWhite}
-          />
-        ) : null}
-      </View>
-      <Text
-        style={{
-          fontSize: 13,
-          fontWeight: '600',
-          color: active ? brand : muted,
-        }}
-      >
-        Solo con mermas
-      </Text>
-    </Pressable>
-  );
-}
-
 export default function OrderHistoryScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const navigation = useNavigation<Nav>();
-  const [onlyWithMermas, setOnlyWithMermas] = useState(false);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -300,10 +210,6 @@ export default function OrderHistoryScreen(): React.JSX.Element {
   });
 
   const keyExtractor = useCallback((item: Order) => String(item.id_pedido), []);
-
-  const visibleOrders = onlyWithMermas
-    ? orders.filter((item) => item.tiene_mermas === true)
-    : orders;
 
   if (isLoading) {
     return (
@@ -391,18 +297,7 @@ export default function OrderHistoryScreen(): React.JSX.Element {
         >
           Mis Pedidos
         </Text>
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-        >
-          <MermasFilterToggle
-            active={onlyWithMermas}
-            onToggle={() => setOnlyWithMermas((prev) => !prev)}
-            brand={brand}
-            muted={muted}
-            border={border}
-            activeBg={activeBg}
-            surface={surface}
-          />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Pressable
             onPress={() => navigation.navigate('ReceiptList')}
             style={{
@@ -421,7 +316,11 @@ export default function OrderHistoryScreen(): React.JSX.Element {
               color={colors.iconWhite}
             />
             <Text
-              style={{ fontSize: 13, fontWeight: '700', color: colors.iconWhite }}
+              style={{
+                fontSize: 13,
+                fontWeight: '700',
+                color: colors.iconWhite,
+              }}
             >
               Mis Recibos
             </Text>
@@ -430,7 +329,7 @@ export default function OrderHistoryScreen(): React.JSX.Element {
       </View>
 
       <FlatList
-        data={visibleOrders}
+        data={orders}
         keyExtractor={keyExtractor}
         renderItem={({ item }: { readonly item: Order }) => (
           <OrderCard
@@ -466,9 +365,7 @@ export default function OrderHistoryScreen(): React.JSX.Element {
                 textAlign: 'center',
               }}
             >
-              {onlyWithMermas
-                ? 'No hay pedidos con mermas'
-                : 'No tienes pedidos aún'}
+              No tienes pedidos aún
             </Text>
           </View>
         }

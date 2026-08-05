@@ -25,14 +25,39 @@ export interface Pedido {
   creado_en: string;
 }
 
+export interface MermaProductoInfo {
+  id: number | null;
+  producto: string | null;
+  publicacion: number | null;
+  stock_restante: number | null;
+}
+
+export interface MermaDecisionInfo {
+  id: number | null;
+  nombre: string | null;
+}
+
+export interface MermaPedidoInfo {
+  id: number | null;
+  cliente: string | null;
+  estado: string | null;
+  total: string | null;
+}
+
+/** Backend GET /mermas/?fk_pedido= shape (MermaListSerializer, nested fields). */
 export interface MermaDePedido {
   id_merma: number;
+  fk_producto_semanal: number | null;
+  fk_pedido: number | null;
   cantidad: number;
   motivo: string;
   comentarios: string | null;
+  fk_decision: number | null;
   creado_en: string; // ISO datetime
-  decision_nombre: string | null;
-  producto_nombre: string | null;
+  estado: boolean;
+  producto_info: MermaProductoInfo | null;
+  decision_info: MermaDecisionInfo | null;
+  pedido_info: MermaPedidoInfo | null;
 }
 
 /** GET /pedidos/:id/ response type (raw body). */
@@ -48,7 +73,10 @@ export interface OrderDetail {
   expirado?: boolean;
   detalles: PedidoDetalle[];
   historial: OrderHistoryEntry[];
-  /** Backend exposes per-order mermas on the detail. Optional until the backend sends them. */
+  /**
+   * Mermas are NOT part of the order detail — they load separately via
+   * GET /mermas/?fk_pedido={id}. Kept only as an optional legacy field.
+   */
   mermas?: MermaDePedido[];
 }
 
