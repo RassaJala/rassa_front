@@ -11,24 +11,29 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
+import type { FarmerOption } from '@/services/settlements';
 
-import type { AdminPalette } from './colors';
+import type { AdminPalette } from '../merma/colors';
 
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelect: (id: number | undefined) => void;
   readonly selectedId: number | undefined;
-  readonly products: { id: number; nombre: string }[];
+  readonly farmers: FarmerOption[];
+  readonly isError?: boolean;
+  readonly onRetry?: () => void;
   readonly palette: AdminPalette;
 }
 
-export function MermaProductPickerModal({
+export function FarmerPickerModal({
   visible,
   onClose,
   onSelect,
   selectedId,
-  products,
+  farmers,
+  isError = false,
+  onRetry,
   palette,
 }: Props): React.JSX.Element {
   const { surface, fg, muted, brand, bg } = palette;
@@ -39,10 +44,18 @@ export function MermaProductPickerModal({
   }, [visible]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return products;
+    if (!search.trim()) return farmers;
     const q = search.toLowerCase().trim();
-    return products.filter((p) => p.nombre.toLowerCase().includes(q));
-  }, [products, search]);
+    return farmers.filter((f) => f.nombre.toLowerCase().includes(q));
+  }, [farmers, search]);
+
+  // When the fetch failed and there is nothing to show, drop even the
+  // "Todos los agricultores" option so the ListEmptyComponent renders the
+  // error block with a retry action instead of a misleading list.
+  const options = useMemo(() => {
+    if (isError && farmers.length === 0) return [];
+    return [{ id_usuario: -1, nombre: 'Todos los agricultores' }, ...filtered];
+  }, [filtered, isError, farmers.length]);
 
   return (
     <Modal
@@ -62,7 +75,7 @@ export function MermaProductPickerModal({
       >
         <Pressable
           onPress={() => {}}
-          testID="product-picker-modal"
+          testID="farmer-picker-modal"
           style={{
             backgroundColor: surface,
             borderRadius: 16,
@@ -80,7 +93,7 @@ export function MermaProductPickerModal({
             }}
           >
             <Text style={{ fontSize: 17, fontWeight: '700', color: fg }}>
-              Seleccionar producto
+              Seleccionar agricultor
             </Text>
           </View>
 
@@ -98,7 +111,7 @@ export function MermaProductPickerModal({
               <TextInput
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Buscar producto..."
+                placeholder="Buscar agricultor..."
                 placeholderTextColor={muted}
                 style={{
                   flex: 1,
@@ -112,19 +125,21 @@ export function MermaProductPickerModal({
           </View>
 
           <FlatList
-            data={[{ id: -1, nombre: 'Todos los productos' }, ...filtered]}
-            keyExtractor={(item) => String(item.id)}
+            data={options}
+            keyExtractor={(item) => String(item.id_usuario)}
             style={{ maxHeight: 350 }}
             contentContainerStyle={{ paddingBottom: 16 }}
             renderItem={({ item }) => {
               const isSelected =
-                item.id === selectedId ||
-                (item.id === -1 && selectedId === undefined);
+                item.id_usuario === selectedId ||
+                (item.id_usuario === -1 && selectedId === undefined);
               return (
                 <Pressable
-                  key={item.id}
+                  key={item.id_usuario}
                   onPress={() => {
-                    onSelect(item.id === -1 ? undefined : item.id);
+                    onSelect(
+                      item.id_usuario === -1 ? undefined : item.id_usuario,
+                    );
                     onClose();
                   }}
                   style={{
@@ -149,11 +164,37 @@ export function MermaProductPickerModal({
               );
             }}
             ListEmptyComponent={
-              <View style={{ padding: 32, alignItems: 'center' }}>
-                <Text style={{ color: muted, fontSize: 14 }}>
-                  Sin resultados
-                </Text>
-              </View>
+              isError && farmers.length === 0 ? (
+                <View style={{ padding: 32, alignItems: 'center' }}>
+                  <Text style={{ color: muted, fontSize: 14 }}>
+                    No se pudieron cargar los agricultores
+                  </Text>
+                  <Pressable
+                    onPress={onRetry}
+                    testID="farmer-picker-retry"
+                    style={{
+                      marginTop: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: brand,
+                    }}
+                  >
+                    <Text
+                      style={{ color: brand, fontSize: 14, fontWeight: '600' }}
+                    >
+                      Reintentar
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={{ padding: 32, alignItems: 'center' }}>
+                  <Text style={{ color: muted, fontSize: 14 }}>
+                    Sin resultados
+                  </Text>
+                </View>
+              )
             }
           />
         </Pressable>

@@ -23,6 +23,8 @@ import MermaResumenScreen from '@/screens/admin/MermaResumenScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
+import SettlementDetailScreen from '@/screens/admin/SettlementDetailScreen';
+import SettlementListScreen from '@/screens/admin/SettlementListScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserFormScreen from '@/screens/admin/UserFormScreen';
@@ -588,6 +590,15 @@ function AdminScreens() {
       />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />
       <AdminStack.Screen name="MermaResumen" component={MermaResumenScreen} />
+      <AdminStack.Screen
+        name="SettlementList"
+        component={SettlementListScreen}
+      />
+      <AdminStack.Screen
+        name="SettlementDetail"
+        component={SettlementDetailScreen}
+        options={{ title: 'Detalle de Liquidación' }}
+      />
     </AdminStack.Navigator>
   );
 }

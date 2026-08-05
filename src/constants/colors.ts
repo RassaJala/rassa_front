@@ -83,6 +83,13 @@ export const colors = {
   statusCerradoFg: '#6B7280',
   statusCanceladoBg: 'rgba(222,57,58,0.12)',
   statusCanceladoFg: '#DE393A',
+  // ── Settlement badge tokens (R2-4: liquidaciones must not reuse the
+  // publication-status tokens — pagada mirrors the published green, pendiente
+  // mirrors the draft amber) ──
+  settlementPagadaBg: 'rgba(74,138,99,0.12)',
+  settlementPagadaFg: '#4A8A63',
+  settlementPendienteBg: 'rgba(242,169,0,0.12)',
+  settlementPendienteFg: '#F2A900',
   // ── Cart-specific tokens ──
   cartRowBg: 'rgba(128,128,128,0.08)',
   cartRowBgD: 'rgba(255,255,255,0.05)',

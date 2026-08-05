@@ -78,4 +78,12 @@ describe('AdminPanelScreen', () => {
       getByText('Ingresá un ID de pedido válido (número positivo)'),
     ).toBeTruthy();
   });
+
+  it('navigates to the settlements list from the quick action', () => {
+    const { getByText } = render(
+      <AdminPanelScreen navigation={{ navigate: mockNavigate } as any} />,
+    );
+    fireEvent.press(getByText('Liquidaciones'));
+    expect(mockNavigate).toHaveBeenCalledWith('SettlementList');
+  });
 });

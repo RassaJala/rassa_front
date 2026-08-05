@@ -247,6 +247,20 @@ describe('parseApiError', () => {
     };
     expect(parseApiError(axiosError, 'Server error')).toBe('Server error');
   });
+
+  it('R4-2: surfaces the envelope message for an ok:false business error body', () => {
+    // Regression guard: parseAxiosError already reads `.message` from the
+    // response body (review claim refuted — the field never got lost), but
+    // this pins the behavior so it cannot regress.
+    const axiosError = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: { ok: false, message: 'El periodo ya está cerrado.' },
+      },
+    };
+    expect(parseApiError(axiosError)).toBe('El periodo ya está cerrado.');
+  });
 });
 
 describe('extractApiError', () => {

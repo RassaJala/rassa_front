@@ -12,14 +12,14 @@ import { getDaysInMonth, parseInitialDate, toDateString } from '@/common/waste';
 import { colors } from '@/constants/colors';
 import { MONTH_NAMES } from '@/constants/dates';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 
 interface Props {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onSelectDate: (iso: string) => void;
   readonly initialDate?: string;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 const YEARS_RANGE = 5;

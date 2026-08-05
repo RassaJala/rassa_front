@@ -5,13 +5,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { colors } from '@/constants/colors';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 
 interface Props {
   readonly totalGeneral: number;
   readonly totalRegistros: number;
   readonly productoMasAfectado: { nombre: string; total: number } | null;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function MermaSummaryCards({

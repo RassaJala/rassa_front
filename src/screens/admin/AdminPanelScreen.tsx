@@ -318,6 +318,65 @@ export default function AdminPanelScreen({
                   color={muted}
                 />
               </Pressable>
+
+              {/* ═══ Liquidaciones quick action ═══ */}
+              <Pressable
+                onPress={() => navigation.navigate('SettlementList')}
+                style={({ pressed }) => [
+                  styles.lookupCard,
+                  {
+                    backgroundColor: surface,
+                    borderColor: border,
+                    opacity: pressed ? 0.7 : 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  },
+                ]}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
+                      backgroundColor: coralBg,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="cash-check"
+                      size={22}
+                      color={coral}
+                    />
+                  </View>
+                  <View>
+                    <Text
+                      style={[
+                        styles.lookupTitle,
+                        { color: fg, marginBottom: 2 },
+                      ]}
+                    >
+                      Liquidaciones
+                    </Text>
+                    <Text style={{ fontSize: 13, color: muted }}>
+                      Pagos semanales a agricultores
+                    </Text>
+                  </View>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={22}
+                  color={muted}
+                />
+              </Pressable>
             </View>
           </ScrollView>
         </View>
