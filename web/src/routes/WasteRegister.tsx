@@ -3,6 +3,14 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  type PublishedProduct,
+  type PublishedPublication,
+  WASTE_DECISION_OPTIONS,
+  type WasteDecision,
+  type WasteDecisionOption,
+  type WasteRecordPayload,
+} from '@/common/wasteRegister';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { FormSelect } from '../components/ui/FormSelect';
@@ -13,53 +21,6 @@ import { Toast, type ToastState } from '../components/ui/Toast';
 import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
 import { extractApiError } from '../utils/apiErrors';
-
-// --- Types ---
-
-interface WasteDecision {
-  readonly id_decision: number;
-  decision: string;
-  readonly creado_en: string;
-  estado: boolean;
-}
-
-interface WasteDecisionOption {
-  readonly id_decision: number;
-  readonly decision: string;
-}
-
-interface PublishedProduct {
-  readonly id_producto_semanal: number;
-  producto: string;
-  unidad: string;
-  stock: number;
-  precio: string;
-  foto: string;
-}
-
-interface PublishedPublication {
-  readonly id_publicacion: number;
-  agricultor: { id_usuario: number; nombre: string; apellido: string } | null;
-  fecha_publicacion: string;
-  semana: string;
-  productos: PublishedProduct[];
-}
-
-interface WasteRecordPayload {
-  fk_producto_semanal: number;
-  cantidad: number;
-  motivo: string;
-  comentarios?: string;
-  fk_decision: number;
-}
-
-// Opciones iniciales (seed del backend: id 1-4).
-const WASTE_DECISION_OPTIONS: WasteDecisionOption[] = [
-  { id_decision: 1, decision: 'Donar' },
-  { id_decision: 2, decision: 'Desechar' },
-  { id_decision: 3, decision: 'Vender más barato' },
-  { id_decision: 4, decision: 'Compostar' },
-];
 
 const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300';
 
@@ -84,10 +45,14 @@ export function WasteRegister() {
   >({
     queryKey: ['waste-decisions'],
     queryFn: async () => {
-      const res = await api.get<{ data: { results: WasteDecision[] } }>(
-        '/decisiones-merma/',
-      );
-      return res.data.data.results;
+      const res = await api.get<{
+        data: { results: WasteDecision[] } | WasteDecision[];
+      }>('/decisiones-merma/');
+      // The backend may return a paginated {results} envelope or a bare
+      // array; normalize both so a shape change does not crash the selector.
+      const payload = res.data.data;
+      if (Array.isArray(payload)) return payload;
+      return payload?.results ?? [];
     },
     staleTime: 60_000,
   });
@@ -134,6 +99,9 @@ export function WasteRegister() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['waste-records'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['publicaciones-current'],
+      });
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setProductoId('');
       setCantidad('');
@@ -167,6 +135,8 @@ export function WasteRegister() {
     }
     if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
       nextErrors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
+    } else if (cantidadNum > 999_999_999) {
+      nextErrors.cantidad = 'La cantidad es demasiado grande.';
     } else if (selectedProduct && cantidadNum > selectedProduct.stock) {
       nextErrors.cantidad = `Stock disponible: ${selectedProduct.stock}.`;
     }

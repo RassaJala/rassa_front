@@ -29,7 +29,12 @@ export async function fetchMermaResumen(
 export async function fetchWasteDecisions(): Promise<WasteDecision[]> {
   const { data } =
     await api.get<ApiResponse<{ results: WasteDecision[] }>>(DECISIONES_URL);
-  return data.data.results;
+  // The backend may return a paginated {results} envelope or a bare array;
+  // normalize both so a shape change does not crash the selector.
+  const payload = data.data as
+    { results?: WasteDecision[] } | WasteDecision[] | undefined;
+  if (Array.isArray(payload)) return payload;
+  return payload?.results ?? [];
 }
 
 export async function createWasteRecord(

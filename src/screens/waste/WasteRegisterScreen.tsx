@@ -120,7 +120,9 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     marginTop: 4,
   } as const;
 
-  const { data: decisions = [] } = useQuery<WasteDecision[]>({
+  const { data: decisions = [], isLoading: loadingDecisions } = useQuery<
+    WasteDecision[]
+  >({
     queryKey: ['waste-decisions'],
     queryFn: fetchWasteDecisions,
     staleTime: 60_000,
@@ -155,6 +157,9 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     mutationFn: createWasteRecord,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['waste-records'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['publicaciones-current'],
+      });
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setSelectedProduct(null);
       setCantidad('');
@@ -174,6 +179,8 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     }
     if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
       errors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
+    } else if (cantidadNum > 999_999_999) {
+      errors.cantidad = 'La cantidad es demasiado grande.';
     } else if (selectedProduct && cantidadNum > selectedProduct.stock) {
       errors.cantidad = `Stock disponible: ${selectedProduct.stock}.`;
     }
@@ -220,6 +227,23 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     setSelectedProduct(product);
     setProductModalOpen(false);
   };
+
+  // Wait for the initial queries (decisions + publications) before rendering
+  // the form, so the user cannot submit without available options.
+  if (loadingDecisions || loadingProducts) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.bg,
+        }}
+      >
+        <ActivityIndicator size="large" color={t.brand} />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -314,6 +338,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
           value={cantidad}
           onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
           keyboardType="number-pad"
+          maxLength={10}
           placeholder="0"
           placeholderTextColor={t.muted}
           style={{
