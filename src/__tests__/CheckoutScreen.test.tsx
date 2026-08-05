@@ -770,7 +770,9 @@ describe('CheckoutScreen', () => {
 
     await waitFor(() => {
       expect(
-        getByText('Error al procesar el pedido. Intente de nuevo.'),
+        getByText(
+          'Error de conexión. Revisá tu conexión a internet e intentá de nuevo.',
+        ),
       ).toBeTruthy();
     });
 
@@ -799,7 +801,9 @@ describe('CheckoutScreen', () => {
 
     await waitFor(() => {
       expect(
-        getByText('Error al procesar el pedido. Intente de nuevo.'),
+        getByText(
+          'Error de conexión. Revisá tu conexión a internet e intentá de nuevo.',
+        ),
       ).toBeTruthy();
     });
 

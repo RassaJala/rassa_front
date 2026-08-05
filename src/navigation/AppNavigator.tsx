@@ -49,6 +49,8 @@ import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
+import CashClosingScreen from '@/screens/seller/CashClosingScreen';
+import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
@@ -101,7 +103,7 @@ function AdminTabs() {
       }}
     >
       <AdminTab.Screen
-        name="AdminPanel"
+        name="AdminInicio"
         component={AdminPanelScreen}
         options={{
           tabBarLabel: 'Inicio',
@@ -199,6 +201,8 @@ function AdminTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -314,6 +318,8 @@ function BuyerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -386,6 +392,16 @@ function FarmerScreens() {
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
       />
+      <FarmerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <FarmerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
+      />
     </FarmerStack.Navigator>
   );
 }
@@ -444,6 +460,20 @@ function SellerTabs() {
         }}
       />
       <SellerTab.Screen
+        name="Recolecciones"
+        component={CollectionScheduleScreen}
+        options={{
+          tabBarLabel: 'Recolecciones',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-month"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <SellerTab.Screen
         name="Notificaciones"
         component={NotificationsScreen}
         options={{
@@ -461,6 +491,8 @@ function SellerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -479,6 +511,7 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
@@ -490,6 +523,16 @@ function SellerNavigator() {
         name="GroupDetail"
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <SellerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <SellerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
       />
     </SellerStack.Navigator>
   );

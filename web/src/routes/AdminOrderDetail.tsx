@@ -2,13 +2,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import {
-  buildDescription,
-  DOT_SIZE,
   formatTimestamp,
-  getStatusColor,
   isNotFoundError,
   normalizeOrderHistoryResponse,
   STALE_TIME,
+  STATUS_COLORS,
   STATUS_LABELS,
 } from '../constants/orderTimeline';
 import api from '../services/api';

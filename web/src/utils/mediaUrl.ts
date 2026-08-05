@@ -50,8 +50,11 @@ export function mediaUrl(path: string | null | undefined): string | null {
     .replace(/\0/g, '')
     .replace(/\.\./g, '')
     .replace(/\/+/g, '/')
-    .replace(/^\/+/, '/')
-    .replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑüÜ0-9_%\-/.?&=#]/g, '');
+    .replace(/^\/+/, '/');
   const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
-  return `${BASE}${prefixed}`;
+  try {
+    return `${BASE}${encodeURI(prefixed).replace(/'/g, '%27').replace(/@/g, '%40')}`;
+  } catch {
+    return null;
+  }
 }

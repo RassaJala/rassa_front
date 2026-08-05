@@ -7,6 +7,7 @@ import { ResumenStep } from '../ResumenStep';
 const baseColors = {
   isDark: false,
   brand: '#24563C',
+  onBrand: '#FFFFFF',
   coral: '#DE393A',
   muted: '#5E6B5E',
   border: '#E2E6DF',
@@ -15,7 +16,7 @@ const baseColors = {
   bg: '#F5F7F0',
   fg: '#2D3328',
   accentBg: 'rgba(36,86,60,0.07)',
-};
+} as const;
 
 const defaultUnidades = [
   { id_unidad: 1, tipo: 'kg' },
@@ -177,7 +178,7 @@ describe('ResumenStep', () => {
     expect(screen.getByText('10 kg · $500')).toBeDefined();
   });
 
-  it('uses fallback name when nombre_producto is empty', () => {
+  it('shows unavailable label when nombre_producto is empty (deleted product)', () => {
     render(
       <ResumenStep
         weekNumber={32}
@@ -187,7 +188,9 @@ describe('ResumenStep', () => {
         colors={baseColors}
       />,
     );
-    expect(screen.getByText('Producto #1')).toBeDefined();
+    expect(
+      screen.getByText('Producto no disponible (eliminado del catálogo)'),
+    ).toBeDefined();
   });
 
   it('shows different product count variants', () => {

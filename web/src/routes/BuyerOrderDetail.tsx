@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '~/components/ui/Badge';
 import { Button } from '~/components/ui/Button';
 import { LoadingSpinner } from '~/components/ui/LoadingSpinner';
+import { formatearFecha } from '@/common/dates';
+import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
 import api from '~/services/api';
@@ -29,17 +31,6 @@ const TIMELINE_COLORS: Record<string, string> = {
   entregado: colors.success,
   cancelado: colors.error,
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function BuyerOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -237,6 +228,47 @@ export function BuyerOrderDetail() {
               }}
             >
               Pasa al punto de entrega por tu pedido
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Expired order banner */}
+      {isOrderExpired(order) ? (
+        <div
+          style={{
+            background: colors.error,
+            borderRadius: 16,
+            padding: 20,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          <span style={{ fontSize: 28 }}>⏰</span>
+          <div>
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: colors.iconWhite,
+                margin: 0,
+              }}
+            >
+              Pedido expirado
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: colors.iconWhite,
+                margin: '4px 0 0 0',
+                opacity: 0.9,
+              }}
+            >
+              {order.fecha_expiracion
+                ? `Este pedido expiró el ${formatearFecha(order.fecha_expiracion)}. Ya no se puede modificar ni confirmar.`
+                : 'Este pedido expiró. Ya no se puede modificar ni confirmar.'}
             </p>
           </div>
         </div>

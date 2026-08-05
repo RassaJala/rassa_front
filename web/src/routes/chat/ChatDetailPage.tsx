@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
@@ -7,13 +13,19 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { useSendMessage } from '~/hooks/chat/useSendMessage';
 import { useEditMessage } from '~/hooks/chat/useEditMessage';
 import { useDeleteMessage } from '~/hooks/chat/useDeleteMessage';
+import { useSendMessageWithMedia } from '~/hooks/chat/useSendMessageWithMedia';
 import { useMarkAsRead } from '~/hooks/chat/useMarkAsRead';
 import { ChatBubble } from '~/components/chat/ChatBubble';
+import {
+  decideScroll,
+  initialScrollState,
+  type ScrollState,
+} from '~/utils/chatScroll';
 import { ChatInput } from '~/components/chat/ChatInput';
 import { MessageEditModal } from '~/components/chat/MessageEditModal';
 import { ConfirmDialog } from '~/components/ui/ConfirmDialog';
 import { Toast, type ToastState } from '~/components/ui/Toast';
-import type { Message } from '@rassa/chat';
+import type { AttachmentType, Message } from '@rassa/chat';
 
 interface ChatLocationState {
   tipo?: 'privada' | 'grupal';
@@ -37,8 +49,10 @@ export function ChatDetailPage() {
   const nombreOverride =
     currentConv?.nombre_override ?? locationState?.nombre_override ?? false;
 
-  const { data, isLoading } = useChatMessages(conversationId);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useChatMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
+  const sendMedia = useSendMessageWithMedia(conversationId);
   const editMessage = useEditMessage(conversationId);
   const deleteMessage = useDeleteMessage(conversationId);
   const markAsRead = useMarkAsRead();
@@ -55,16 +69,88 @@ export function ChatDetailPage() {
     return () => clearTimeout(timer);
   }, [conversationId]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
-  const realCountRef = useRef(0);
+  const prevScrollHeightRef = useRef(0);
+  const prevPageCountRef = useRef(0);
+  const initialScrollPendingRef = useRef(false);
+  const scrollStateRef = useRef<ScrollState>({ ...initialScrollState });
 
-  const realMessages = messages.filter((m) => typeof m.id === 'number');
-  realCountRef.current = realMessages.length;
+  const messages = [...(data?.pages.flatMap((p) => p.results) ?? [])].reverse();
+  const realCount = messages.filter((m) => typeof m.id === 'number').length;
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [realCountRef.current]);
+    scrollStateRef.current = { ...initialScrollState };
+    initialScrollPendingRef.current = false;
+    prevScrollHeightRef.current = 0;
+    prevPageCountRef.current = 0;
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (realCount === 0) return;
+    const pageCount = data?.pages.length ?? 0;
+    const { action, next } = decideScroll(
+      scrollStateRef.current,
+      pageCount,
+      realCount,
+    );
+    scrollStateRef.current = next;
+    if (action === 'initial') {
+      initialScrollPendingRef.current = true;
+      endRef.current?.scrollIntoView({ behavior: 'auto' });
+      requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: 'auto' });
+      });
+      window.setTimeout(() => {
+        initialScrollPendingRef.current = false;
+      }, 300);
+    } else if (action === 'append') {
+      const container = containerRef.current;
+      const nearBottom = container
+        ? container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 80
+        : true;
+      if (nearBottom) {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [realCount, data?.pages.length]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const pageCount = data?.pages.length ?? 0;
+    if (
+      !container ||
+      !prevScrollHeightRef.current ||
+      prevPageCountRef.current === pageCount
+    )
+      return;
+    const newScrollHeight = container.scrollHeight;
+    container.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+    prevPageCountRef.current = pageCount;
+    prevScrollHeightRef.current = 0;
+  }, [data?.pages.length]);
+
+  const handleScroll = useCallback(() => {
+    if (initialScrollPendingRef.current) return;
+    const container = containerRef.current;
+    if (!container || !hasNextPage || isFetchingNextPage) return;
+    if (container.scrollTop < 50) {
+      prevScrollHeightRef.current = container.scrollHeight;
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleMediaLoad = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const nearBottom =
+      container.scrollTop + container.clientHeight >=
+      container.scrollHeight - 80;
+    if (nearBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, []);
 
   const handleSend = (text: string) => {
     sendMessage.mutate(
@@ -72,6 +158,27 @@ export function ChatDetailPage() {
       {
         onError: () =>
           setToast({ message: 'Error al enviar mensaje', type: 'error' }),
+      },
+    );
+  };
+
+  const handleSendMedia = (
+    file: File,
+    tipo: AttachmentType,
+    contenido?: string,
+  ) => {
+    sendMedia.mutate(
+      {
+        conversacion: conversationId,
+        tipo_documento: tipo,
+        documento: file,
+        contenido,
+        remitente: user?.id ?? 0,
+        remitente_nombre: user?.nombre ?? 'Tú',
+      },
+      {
+        onError: () =>
+          setToast({ message: 'Error al enviar archivo', type: 'error' }),
       },
     );
   };
@@ -106,7 +213,10 @@ export function ChatDetailPage() {
   };
 
   return (
-    <div className="flex h-full flex-col" style={{ background: c.bg }}>
+    <div
+      className="flex flex-col"
+      style={{ position: 'absolute', inset: 0, background: c.bg }}
+    >
       {/* Header */}
       <div
         className="flex items-center gap-3 px-5 py-3"
@@ -144,7 +254,31 @@ export function ChatDetailPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div
+        ref={containerRef}
+        className="chat-scroll flex-1 overflow-y-auto px-4 py-4"
+        style={
+          {
+            background: c.bg,
+            '--chat-scroll-thumb': c.isDark
+              ? 'rgba(157,168,157,0.45)'
+              : 'rgba(0,0,0,0.25)',
+            '--chat-scroll-thumb-hover': c.isDark
+              ? 'rgba(157,168,157,0.65)'
+              : 'rgba(0,0,0,0.4)',
+          } as CSSProperties
+        }
+        onScroll={handleScroll}
+      >
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-2">
+            <div
+              className="h-4 w-4 animate-spin rounded-full border-2"
+              style={{ borderColor: c.border, borderTopColor: c.brand }}
+            />
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div
@@ -169,13 +303,18 @@ export function ChatDetailPage() {
             message={msg}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onMediaLoad={handleMediaLoad}
           />
         ))}
         <div ref={endRef} />
       </div>
 
       {/* Input */}
-      <ChatInput onSend={handleSend} disabled={sendMessage.isPending} />
+      <ChatInput
+        onSend={handleSend}
+        onSendMedia={handleSendMedia}
+        disabled={sendMessage.isPending || sendMedia.isPending}
+      />
 
       {/* Edit modal */}
       {editingMessage && (

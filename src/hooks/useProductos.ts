@@ -23,7 +23,7 @@ export function useProductos(params?: {
   precio_max?: number | undefined;
   unidad?: number | undefined;
   ordering?: string | undefined;
-}): UseQueryResult<ApiResponse<Producto[]>> {
+}): UseQueryResult<ApiResponse<{ results: Producto[] }>> {
   return useQuery({
     queryKey: ['productos', params],
     queryFn: () => productosApi.getProductos(params),

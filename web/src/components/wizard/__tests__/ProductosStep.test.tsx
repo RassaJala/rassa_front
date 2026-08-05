@@ -11,6 +11,7 @@ import { ProductosStep } from '../ProductosStep';
 const baseColors = {
   isDark: false,
   brand: '#24563C',
+  onBrand: '#FFFFFF',
   coral: '#DE393A',
   muted: '#5E6B5E',
   border: '#E2E6DF',
@@ -19,7 +20,7 @@ const baseColors = {
   bg: '#F5F7F0',
   fg: '#2D3328',
   accentBg: 'rgba(36,86,60,0.07)',
-};
+} as const;
 
 const defaultUnidades = [
   { id_unidad: 1, tipo: 'kg' },
@@ -220,11 +221,18 @@ describe('ProductosStep', () => {
     expect(removeImgBtns.length).toBe(2);
   });
 
-  it('uses numeric fallback when nombre_producto is missing', () => {
+  it('shows deleted-product label and warning when nombre_producto is missing', () => {
     renderStep({
       items: [makeItem({ nombre_producto: '' })],
     });
-    expect(screen.getByText('Producto #1')).toBeDefined();
+    expect(
+      screen.getByText('Producto no disponible (eliminado del catálogo)'),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        'Este producto fue eliminado del catálogo y ya no se puede publicar. Quitalo de la publicación para continuar.',
+      ),
+    ).toBeDefined();
   });
 
   it('empty state includes action button', () => {
