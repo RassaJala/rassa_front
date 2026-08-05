@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
+import OrderMermasSection from '@/components/OrderMermasSection';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -456,6 +457,10 @@ export default function OrderDetailScreen(): React.JSX.Element {
             </View>
           ))}
         </View>
+
+        {Array.isArray(order.mermas) && order.mermas.length > 0 ? (
+          <OrderMermasSection mermas={order.mermas} />
+        ) : null}
 
         <Text
           style={{

@@ -83,6 +83,18 @@ export interface Order {
   has_more_productos?: boolean;
   /** Backend flag (list/detail): order is pending and its expiry date passed. */
   expirado?: boolean;
+  /** Backend flag: the order has at least one linked merma. Optional until the backend exposes it. */
+  tiene_mermas?: boolean;
+}
+
+export interface MermaDePedido {
+  id_merma: number;
+  cantidad: number;
+  motivo: string;
+  comentarios: string | null;
+  creado_en: string; // ISO datetime
+  decision_nombre: string | null;
+  producto_nombre: string | null;
 }
 
 export interface OrderDetail extends Order {
@@ -91,6 +103,8 @@ export interface OrderDetail extends Order {
   fecha_expiracion: string | null;
   detalles: OrderItem[];
   historial: OrderHistoryEntry[];
+  /** Backend exposes per-order mermas on the detail. Optional until the backend sends them. */
+  mermas?: MermaDePedido[];
 }
 
 export interface OrderItem {

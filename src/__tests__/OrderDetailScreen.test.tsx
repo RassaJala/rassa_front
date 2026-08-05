@@ -276,4 +276,66 @@ describe('OrderDetailScreen', () => {
 
     expect(getByText('Pedido #1')).toBeTruthy();
   });
+
+  it('muestra la seccion de mermas cuando el pedido tiene mermas', () => {
+    const orderWithMermas = {
+      ...mockOrder,
+      mermas: [
+        {
+          id_merma: 1,
+          cantidad: 2,
+          motivo: 'Se dañó en el traslado',
+          comentarios: null,
+          creado_en: '2026-07-25T10:00:00Z',
+          decision_nombre: 'Tirar',
+          producto_nombre: 'Manzana',
+        },
+      ],
+    };
+    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
+      data: orderWithMermas,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { getAllByText, getByText } = render(<OrderDetailScreen />);
+
+    expect(getByText('Mermas')).toBeTruthy();
+    expect(getAllByText('Manzana').length).toBeGreaterThan(1);
+    expect(getByText('Se dañó en el traslado · Tirar')).toBeTruthy();
+  });
+
+  it('NO muestra la seccion de mermas cuando no hay mermas', () => {
+    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
+      data: mockOrder,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { queryByText } = render(<OrderDetailScreen />);
+
+    expect(queryByText('Mermas')).toBeNull();
+  });
+
+  it('NO muestra la seccion de mermas cuando mermas es lista vacia', () => {
+    const orderWithEmptyMermas = {
+      ...mockOrder,
+      mermas: [],
+    };
+    (useQuery as unknown as jest.Mock).mockReturnValueOnce({
+      data: orderWithEmptyMermas,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { queryByText } = render(<OrderDetailScreen />);
+
+    expect(queryByText('Mermas')).toBeNull();
+  });
 });

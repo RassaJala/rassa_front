@@ -382,6 +382,101 @@ export function BuyerOrderDetail() {
         </table>
       </div>
 
+      {/* Mermas section */}
+      {Array.isArray(order.mermas) && order.mermas.length > 0 ? (
+        <>
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: t.fg,
+              marginBottom: 12,
+            }}
+          >
+            Mermas
+          </h2>
+          <div
+            style={{
+              background: t.surface,
+              borderRadius: 16,
+              border: `1px solid ${t.border}`,
+              padding: 24,
+              marginBottom: 24,
+            }}
+          >
+            {order.mermas.map((merma, index) => (
+              <div
+                key={merma.id_merma}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 16,
+                  padding: '10px 0',
+                  borderBottom:
+                    index < order.mermas.length - 1
+                      ? `1px solid ${t.border}`
+                      : 'none',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: t.fg,
+                      margin: 0,
+                    }}
+                  >
+                    {merma.producto_nombre ?? 'Producto'}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: t.muted,
+                      margin: '2px 0 0 0',
+                    }}
+                  >
+                    {merma.motivo}
+                    {merma.decision_nombre ? ` · ${merma.decision_nombre}` : ''}
+                  </p>
+                  {merma.comentarios ? (
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: t.muted,
+                        margin: '2px 0 0 0',
+                      }}
+                    >
+                      {merma.comentarios}
+                    </p>
+                  ) : null}
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: t.muted,
+                      margin: '2px 0 0 0',
+                    }}
+                  >
+                    {formatearFecha(merma.creado_en)}
+                  </p>
+                </div>
+                <p
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: t.fg,
+                    margin: 0,
+                  }}
+                >
+                  {merma.cantidad}x
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+
       {/* Timeline section */}
       <h2
         style={{

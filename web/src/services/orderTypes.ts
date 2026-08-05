@@ -25,6 +25,16 @@ export interface Pedido {
   creado_en: string;
 }
 
+export interface MermaDePedido {
+  id_merma: number;
+  cantidad: number;
+  motivo: string;
+  comentarios: string | null;
+  creado_en: string; // ISO datetime
+  decision_nombre: string | null;
+  producto_nombre: string | null;
+}
+
 /** GET /pedidos/:id/ response type (raw body). */
 export interface OrderDetail {
   id_pedido: number;
@@ -38,6 +48,8 @@ export interface OrderDetail {
   expirado?: boolean;
   detalles: PedidoDetalle[];
   historial: OrderHistoryEntry[];
+  /** Backend exposes per-order mermas on the detail. Optional until the backend sends them. */
+  mermas?: MermaDePedido[];
 }
 
 export interface OrderHistoryEntry {

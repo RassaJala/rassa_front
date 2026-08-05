@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
@@ -18,6 +19,7 @@ interface OrderRow {
   productos?: string[];
   has_more_productos?: boolean;
   expirado?: boolean;
+  tiene_mermas?: boolean;
 }
 
 const STATUS_VARIANT: Record<
@@ -33,6 +35,7 @@ const STATUS_VARIANT: Record<
 };
 
 export function BuyerOrders() {
+  const [onlyWithMermas, setOnlyWithMermas] = useState(false);
   const {
     data: orders = [],
     isLoading,
@@ -45,6 +48,10 @@ export function BuyerOrders() {
       return data.results ?? [];
     },
   });
+
+  const visibleOrders = onlyWithMermas
+    ? orders.filter((o) => o.tiene_mermas === true)
+    : orders;
 
   const columns: Column<OrderRow>[] = [
     {
@@ -88,6 +95,9 @@ export function BuyerOrders() {
             {o.estado_actual.replace(/_/g, ' ')}
           </Badge>
           {o.expirado === true ? <Badge variant="error">Expirado</Badge> : null}
+          {o.tiene_mermas === true ? (
+            <Badge variant="warning">Con mermas</Badge>
+          ) : null}
         </div>
       ),
     },
@@ -123,12 +133,35 @@ export function BuyerOrders() {
   return (
     <div>
       <PageHeader title="Mis Pedidos" />
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+        <label
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={onlyWithMermas}
+            onChange={(e) => setOnlyWithMermas(e.target.checked)}
+          />
+          Solo con mermas
+        </label>
+      </div>
       <DataTable
-        data={orders}
+        data={visibleOrders}
         columns={columns}
         keyExtractor={(o) => o.id_pedido}
         emptyTitle="No tienes pedidos"
-        emptyMessage="Cuando hagas tu primera compra, los pedidos aparecerán acá."
+        emptyMessage={
+          onlyWithMermas
+            ? 'No hay pedidos con mermas.'
+            : 'Cuando hagas tu primera compra, los pedidos aparecerán acá.'
+        }
       />
     </div>
   );
