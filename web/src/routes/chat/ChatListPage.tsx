@@ -132,6 +132,7 @@ export function ChatListPage() {
         )}
 
         {!isLoading &&
+          !error &&
           filtered.map((conv) => (
             <ConversationItem key={conv.id} conversation={conv} />
           ))}
