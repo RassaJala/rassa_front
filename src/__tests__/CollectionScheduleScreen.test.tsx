@@ -305,6 +305,7 @@ describe('CollectionScheduleScreen', () => {
     expect(mockMutate).toHaveBeenCalledWith({
       id: 1,
       estado: 'en_ruta',
+      estadoActual: 'pendiente',
     });
   });
 
@@ -370,7 +371,7 @@ describe('CollectionScheduleScreen', () => {
   });
 
   it('crea una recolección al llenar el formulario', () => {
-    mockUseQuery(mockRecolecciones);
+    mockUseQuery([]);
 
     const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
@@ -443,7 +444,7 @@ describe('CollectionScheduleScreen', () => {
   });
 
   it('muestra el error del servidor al crear y mantiene el modal abierto', () => {
-    mockUseQuery(mockRecolecciones);
+    mockUseQuery([]);
 
     const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
 
@@ -484,7 +485,7 @@ describe('CollectionScheduleScreen', () => {
   });
 
   it('no envía duplicados mientras el guardado está en curso', () => {
-    mockUseQuery(mockRecolecciones);
+    mockUseQuery([]);
 
     const { getByText, getAllByText, rerender } = render(
       <CollectionScheduleScreen />,
