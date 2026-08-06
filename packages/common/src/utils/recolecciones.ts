@@ -8,7 +8,7 @@ export interface NombreAgricultor {
   readonly apellido_materno: string | null;
 }
 
-interface RecoleccionDuplicadoCandidate {
+export interface RecoleccionDuplicadoCandidate {
   readonly estado: string;
   readonly fk_agricultor: number | null;
   readonly fecha_recoleccion: string;
@@ -90,7 +90,7 @@ export function formatFechaHeader(
   const todayDate = parseFecha(today);
   const manana = todayDate
     ? toDateString(addDays(todayDate, 1))
-    : toDateString(addDays(new Date(), 1));
+    : toDateString(addDays(parseFecha(todayString())!, 1));
   if (fecha === manana) return 'Mañana';
   const date = parseFecha(fecha);
   if (!date) return fecha;
@@ -161,6 +161,7 @@ export function buildDuplicateKeys(
 
 export function validateProgramarForm(
   values: ProgramarFormValues,
+  today?: string,
 ): string | null {
   if (!values.agricultorSeleccionado) return 'Selecciona un agricultor.';
   if (!isValidFechaFormato(values.fecha)) {
@@ -169,7 +170,7 @@ export function validateProgramarForm(
   if (!isValidFecha(values.fecha)) {
     return 'La fecha ingresada no es válida.';
   }
-  if (values.fecha < todayString()) {
+  if (values.fecha < (today ?? todayString())) {
     return 'La fecha no puede ser anterior a hoy.';
   }
   if (values.horaInicio && !isValidHora(values.horaInicio)) {

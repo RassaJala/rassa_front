@@ -27,6 +27,7 @@ import {
   buildDuplicateKeys,
   getFullName,
   normalizeHora,
+  recoleccionDuplicateKey,
   todayString,
   validateProgramarForm,
 } from './utils';
@@ -143,6 +144,12 @@ export default function ScheduleRecoleccionModal({
       return;
     }
     if (!agricultor) return;
+    if (
+      duplicateKeys.has(recoleccionDuplicateKey(agricultor.id_usuario, fecha))
+    ) {
+      setError('Este agricultor ya tiene una recolección para esta fecha.');
+      return;
+    }
     setError(null);
     mutation.mutate({
       fk_agricultor: agricultor.id_usuario,

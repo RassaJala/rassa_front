@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import { useQuery } from '@tanstack/react-query';
 
+import { getFullName } from '@/common/utils/recolecciones';
 import api from '@/services/api';
 import { fetchAllPages, unwrapOk } from '@/services/pagination';
 import type { Localidad, Municipio } from '@/types';
@@ -21,12 +22,6 @@ export interface AgricultorAgricultorItem {
   readonly apellido_materno: string | null;
   readonly role: string;
   readonly localidad: number;
-}
-
-function getFullName(a: AgricultorAgricultorItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
 }
 
 const AGRICULTORES_URL = '/recolecciones/agricultores/';
