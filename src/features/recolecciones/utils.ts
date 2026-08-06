@@ -4,9 +4,11 @@ import { DIAS } from './constants';
 export {
   buildDuplicateKeys,
   esRecoleccionDuplicada,
+  getFullName,
   ocupaFechaParaDuplicado,
   recoleccionDuplicateKey,
   validateProgramarForm,
+  type NombreAgricultor,
   type ProgramarFormValues,
 } from '@/common/utils/recolecciones';
 export {

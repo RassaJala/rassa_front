@@ -8,13 +8,7 @@ import type {
 } from '@/hooks/useAgricultoresUbicacion';
 import { useTheme } from '@/store/ThemeContext';
 
-import { recoleccionDuplicateKey } from './utils';
-
-function getFullName(a: AgricultorAgricultorItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
+import { getFullName, recoleccionDuplicateKey } from './utils';
 
 interface AgricultorSelectorProps {
   readonly grupos: readonly AgricultorUbicacion[];

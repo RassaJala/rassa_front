@@ -25,16 +25,11 @@ import { extractApiError } from '@/utils/apiErrors';
 import AgricultorSelector from './AgricultorSelector';
 import {
   buildDuplicateKeys,
+  getFullName,
   normalizeHora,
   todayString,
   validateProgramarForm,
 } from './utils';
-
-function getFullName(a: AgricultorAgricultorItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
-}
 
 interface ScheduleRecoleccionModalProps {
   readonly visible: boolean;

@@ -2,6 +2,12 @@ import { MONTH_NAMES } from '../dates';
 
 // ── Types ───────────────────────────────────────────────────
 
+export interface NombreAgricultor {
+  readonly nombre: string;
+  readonly apellido_paterno: string;
+  readonly apellido_materno: string | null;
+}
+
 interface RecoleccionDuplicadoCandidate {
   readonly estado: string;
   readonly fk_agricultor: number | null;
@@ -13,6 +19,14 @@ export interface ProgramarFormValues {
   readonly fecha: string;
   readonly horaInicio: string;
   readonly horaFin: string;
+}
+
+// ── Name helpers ────────────────────────────────────────────
+
+export function getFullName(a: NombreAgricultor): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
 }
 
 // ── Date helpers ────────────────────────────────────────────
@@ -53,10 +67,11 @@ export function isValidFecha(fecha: string): boolean {
 
 export function parseFecha(fecha: string): Date | null {
   if (!isValidFecha(fecha)) return null;
-  const parts = fecha.split('-').map(Number);
-  const anio = parts[0] ?? 0;
-  const mes = parts[1] ?? 1;
-  const dia = parts[2] ?? 1;
+  const [anio, mes, dia] = fecha.split('-').map(Number) as [
+    number,
+    number,
+    number,
+  ];
   return new Date(Date.UTC(anio, mes - 1, dia));
 }
 
