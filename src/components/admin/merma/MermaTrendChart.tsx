@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { WASTE_DETAIL_LIMIT } from '@/common/waste';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 
 export interface TrendItem {
   nombre: string;
@@ -15,7 +15,7 @@ interface Props {
   readonly maxTotal: number;
   readonly agruparPor: 'mes' | 'semana';
   readonly truncated: boolean;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 export function MermaTrendChart({

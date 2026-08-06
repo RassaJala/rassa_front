@@ -1,6 +1,24 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatInput } from '../ChatInput';
+
+const { recorderState } = vi.hoisted(() => ({
+  recorderState: {
+    isSupported: true,
+    isRecording: false,
+    elapsed: 0,
+    error: null as string | null,
+    startRecording: vi.fn(async () => undefined),
+    stopRecording: vi.fn(
+      async () => new File(['chunk'], 'grabacion.webm', { type: 'audio/webm' }),
+    ),
+    cancelRecording: vi.fn(),
+  },
+}));
+
+vi.mock('~/hooks/chat/useAudioRecorder', () => ({
+  useAudioRecorder: () => recorderState,
+}));
 
 vi.mock('~/hooks/useAppColors', () => ({
   useAppColors: () => ({
@@ -11,20 +29,29 @@ vi.mock('~/hooks/useAppColors', () => ({
     surface: '#FFFFFF',
     muted: '#5E6B5E',
     fg: '#2D3328',
+    coral: '#DE393A',
   }),
 }));
 
 describe('ChatInput', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    recorderState.isSupported = true;
+    recorderState.isRecording = false;
+    recorderState.error = null;
+    recorderState.elapsed = 0;
+  });
+
   it('renders input and send button', () => {
     render(<ChatInput onSend={vi.fn()} />);
-    expect(screen.getByPlaceholderText('Escribí un mensaje...')).toBeDefined();
+    expect(screen.getByPlaceholderText('Escribe un mensaje...')).toBeDefined();
     expect(screen.getByLabelText('Enviar mensaje')).toBeDefined();
   });
 
   it('calls onSend with trimmed text on Enter', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).toHaveBeenCalledWith('Hola');
@@ -33,7 +60,7 @@ describe('ChatInput', () => {
   it('does not call onSend when text is empty', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).not.toHaveBeenCalled();
   });
@@ -41,7 +68,7 @@ describe('ChatInput', () => {
   it('does not call onSend when text is only whitespace', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.change(input, { target: { value: '   ' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSend).not.toHaveBeenCalled();
@@ -50,7 +77,7 @@ describe('ChatInput', () => {
   it('does not call onSend on Shift+Enter', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
     expect(onSend).not.toHaveBeenCalled();
@@ -58,7 +85,7 @@ describe('ChatInput', () => {
 
   it('disables input and button when disabled prop is true', () => {
     render(<ChatInput onSend={vi.fn()} disabled />);
-    expect(screen.getByPlaceholderText('Escribí un mensaje...')).toBeDisabled();
+    expect(screen.getByPlaceholderText('Escribe un mensaje...')).toBeDisabled();
     expect(screen.getByLabelText('Enviar mensaje')).toBeDisabled();
   });
 
@@ -69,7 +96,7 @@ describe('ChatInput', () => {
 
   it('send button is enabled when text is not empty', () => {
     render(<ChatInput onSend={vi.fn()} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     expect(screen.getByLabelText('Enviar mensaje')).toBeEnabled();
   });
@@ -77,9 +104,74 @@ describe('ChatInput', () => {
   it('clears input after sending', () => {
     const onSend = vi.fn();
     render(<ChatInput onSend={onSend} />);
-    const input = screen.getByPlaceholderText('Escribí un mensaje...');
+    const input = screen.getByPlaceholderText('Escribe un mensaje...');
     fireEvent.change(input, { target: { value: 'Hola' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(input).toHaveValue('');
+  });
+
+  it('renders mic button when onSendMedia is provided', () => {
+    render(<ChatInput onSend={vi.fn()} onSendMedia={vi.fn()} />);
+    expect(screen.getByLabelText('Grabar audio')).toBeDefined();
+  });
+
+  it('does not render mic button without onSendMedia', () => {
+    render(<ChatInput onSend={vi.fn()} />);
+    expect(screen.queryByLabelText('Grabar audio')).toBeNull();
+  });
+
+  it('starts recording when mic button is clicked', () => {
+    render(<ChatInput onSend={vi.fn()} onSendMedia={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Grabar audio'));
+    expect(recorderState.startRecording).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends recorded audio without text on stop', async () => {
+    recorderState.isRecording = true;
+    const onSendMedia = vi.fn();
+    render(<ChatInput onSend={vi.fn()} onSendMedia={onSendMedia} />);
+    fireEvent.click(screen.getByLabelText('Detener y enviar audio'));
+    await waitFor(() => expect(onSendMedia).toHaveBeenCalledTimes(1));
+    expect(onSendMedia).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'audio/webm' }),
+      'audio',
+    );
+  });
+
+  it('cancels recording without sending', () => {
+    recorderState.isRecording = true;
+    const onSendMedia = vi.fn();
+    render(<ChatInput onSend={vi.fn()} onSendMedia={onSendMedia} />);
+    fireEvent.click(screen.getByLabelText('Cancelar grabación'));
+    expect(recorderState.cancelRecording).toHaveBeenCalledTimes(1);
+    expect(onSendMedia).not.toHaveBeenCalled();
+  });
+
+  it('shows recording error message', () => {
+    recorderState.error = 'Permiso de micrófono denegado.';
+    render(<ChatInput onSend={vi.fn()} />);
+    expect(screen.getByText('Permiso de micrófono denegado.')).toBeDefined();
+  });
+
+  it('rejects files larger than 20MB', () => {
+    const alertSpy = vi
+      .spyOn(window, 'alert')
+      .mockImplementation(() => undefined);
+    const { container } = render(
+      <ChatInput onSend={vi.fn()} onSendMedia={vi.fn()} />,
+    );
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const bigFile = new File(
+      [new Uint8Array(20 * 1024 * 1024 + 1)],
+      'big.mp4',
+      { type: 'video/mp4' },
+    );
+    fireEvent.change(input, { target: { files: [bigFile] } });
+    expect(alertSpy).toHaveBeenCalledWith(
+      'El archivo supera el tamaño máximo permitido de 20MB.',
+    );
+    alertSpy.mockRestore();
   });
 });

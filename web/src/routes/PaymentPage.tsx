@@ -126,7 +126,9 @@ export function PaymentPage() {
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
         queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-      ]).catch(() => {});
+      ]).catch((err) => {
+        console.error('Invalidación de caché falló:', err);
+      });
       navigate(`/vendedor/recibo/${data.id_pago}`, { replace: true });
       paymentInFlight.current = false;
     },
@@ -140,7 +142,9 @@ export function PaymentPage() {
           void Promise.all([
             queryClient.invalidateQueries({ queryKey: ['pedidos'] }),
             queryClient.invalidateQueries({ queryKey: ['pedido', orderId] }),
-          ]).catch(() => {});
+          ]).catch((err) => {
+            console.error('Invalidación de caché falló:', err);
+          });
           navigate(`/vendedor/recibo/${pago.id_pago}`, { replace: true });
           paymentInFlight.current = false;
           return;

@@ -45,6 +45,8 @@ import {
   messageDeletePath,
   messageEditPath,
   messagesPath,
+  overrideNombrePath,
+  removeGroupMemberPath,
   renameGroupPath,
   searchUsersPath,
 } from './endpoints';
@@ -89,6 +91,11 @@ export interface ChatApi {
   addGroupMember(
     conversationId: number,
     payload: AddGroupMemberPayload,
+  ): Promise<void>;
+  removeGroupMember(conversationId: number, usuarioId: number): Promise<void>;
+  overrideGroupName(
+    conversationId: number,
+    nombreOverride: boolean,
   ): Promise<void>;
   searchUsers(q: string, signal?: AbortSignal): Promise<SearchUser[]>;
 }
@@ -153,6 +160,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
         nombre: '',
         tipo: 'privada',
         es_familia: false,
+        nombre_override: false,
         ultimo_mensaje: null,
         ultimo_mensaje_fecha: null,
         no_leidos: 0,
@@ -179,7 +187,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async sendMessageWithMedia(payload) {
       const formData = new FormData();
-      formData.append('fk_conversacion', String(payload.conversacion));
+      formData.append('conversacion', String(payload.conversacion));
       formData.append('tipo_documento', payload.tipo_documento);
       if (payload.contenido) {
         formData.append('contenido', payload.contenido);
@@ -187,7 +195,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
       appendDocument(formData, payload.documento);
 
       const res = await http.post(SEND_MEDIA_PATH, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': null },
       });
       const data = unwrap<{
         id_mensaje: number;
@@ -233,6 +241,7 @@ export function createChatApi(http: AxiosInstance): ChatApi {
         nombre: payload.nombre,
         tipo: 'grupal',
         es_familia: false,
+        nombre_override: false,
         ultimo_mensaje: null,
         ultimo_mensaje_fecha: null,
         no_leidos: 0,
@@ -244,14 +253,21 @@ export function createChatApi(http: AxiosInstance): ChatApi {
     async renameGroup(conversationId, payload) {
       const res = await http.patch(renameGroupPath(conversationId), payload);
       const data = unwrap<
-        { id_conversacion: number; nombre: string } | Conversation
+        | {
+            id_conversacion: number;
+            nombre: string;
+            es_familia?: boolean;
+            nombre_override?: boolean;
+          }
+        | Conversation
       >(res);
       if (typeof data === 'object' && 'id_conversacion' in data) {
         return {
           id: data.id_conversacion,
           nombre: data.nombre,
           tipo: 'grupal',
-          es_familia: false,
+          es_familia: data.es_familia ?? false,
+          nombre_override: data.nombre_override ?? false,
           ultimo_mensaje: null,
           ultimo_mensaje_fecha: null,
           no_leidos: 0,
@@ -264,6 +280,20 @@ export function createChatApi(http: AxiosInstance): ChatApi {
 
     async addGroupMember(conversationId, payload) {
       const res = await http.post(addGroupMemberPath(conversationId), payload);
+      unwrap(res);
+    },
+
+    async removeGroupMember(conversationId, usuarioId) {
+      const res = await http.delete(
+        removeGroupMemberPath(conversationId, usuarioId),
+      );
+      unwrap(res);
+    },
+
+    async overrideGroupName(conversationId, nombreOverride) {
+      const res = await http.patch(overrideNombrePath(conversationId), {
+        nombre_override: nombreOverride,
+      });
       unwrap(res);
     },
 

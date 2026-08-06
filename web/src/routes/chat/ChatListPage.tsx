@@ -6,12 +6,13 @@ import { useConversations } from '~/hooks/chat/useConversations';
 import { ConversationItem } from '~/components/chat/ConversationItem';
 import { Toast, type ToastState } from '~/components/ui/Toast';
 
-type FiltroTipo = 'todos' | 'individual' | 'grupal';
+type FiltroTipo = 'todos' | 'individual' | 'grupal' | 'familia';
 
 const FILTROS: { label: string; value: FiltroTipo }[] = [
   { label: 'Todos', value: 'todos' },
   { label: 'Individuales', value: 'individual' },
   { label: 'Grupales', value: 'grupal' },
+  { label: 'Familia', value: 'familia' },
 ];
 
 export function ChatListPage() {
@@ -27,7 +28,9 @@ export function ChatListPage() {
   const filtered = conversations.filter((conv) => {
     if (filtro === 'todos') return true;
     if (filtro === 'individual') return conv.tipo === 'privada';
-    return conv.tipo === 'grupal';
+    if (filtro === 'grupal') return conv.tipo === 'grupal';
+    if (filtro === 'familia') return conv.es_familia === true;
+    return true;
   });
 
   useEffect(() => {
@@ -48,15 +51,17 @@ export function ChatListPage() {
         <h1 className="text-lg font-bold" style={{ color: c.fg }}>
           Conversaciones
         </h1>
-        <button
-          type="button"
-          onClick={() => user?.rol && navigate(`/${user.rol}/chat/nuevo`)}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          style={{ background: c.brand }}
-          aria-label="Iniciar nuevo chat"
-        >
-          Nuevo chat
-        </button>
+        {user?.rol !== 'cliente' && (
+          <button
+            type="button"
+            onClick={() => user?.rol && navigate(`/${user.rol}/chat/nuevo`)}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style={{ background: c.brand }}
+            aria-label="Iniciar nuevo chat"
+          >
+            Nuevo chat
+          </button>
+        )}
       </div>
 
       {/* Filter toggles */}
@@ -100,7 +105,7 @@ export function ChatListPage() {
             <p className="text-sm" style={{ color: c.muted }}>
               {filtro === 'todos'
                 ? 'No tenés conversaciones aún'
-                : `No tenés conversaciones ${filtro === 'individual' ? 'individuales' : 'grupales'} aún`}
+                : `No tenés conversaciones ${filtro === 'individual' ? 'individuales' : filtro === 'familia' ? 'de familia' : 'grupales'} aún`}
             </p>
           </div>
         )}
