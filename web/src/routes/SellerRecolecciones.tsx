@@ -142,7 +142,13 @@ export function SellerRecolecciones() {
     mutationFn: (payload: {
       readonly id: number;
       readonly estado: RecoleccionEstado;
-    }) => cambiarEstadoRecoleccion(payload.id, payload.estado),
+      readonly estadoActual: RecoleccionEstado;
+    }) =>
+      cambiarEstadoRecoleccion(
+        payload.id,
+        payload.estado,
+        payload.estadoActual,
+      ),
     onMutate: ({ id }) => markPending(id),
     onSettled: (_data, _error, { id }) => clearPending(id),
     onSuccess: () => notifySuccess('Estado actualizado correctamente.'),
@@ -277,6 +283,7 @@ export function SellerRecolecciones() {
                   transicionMutation.mutate({
                     id: item.id_recoleccion,
                     estado,
+                    estadoActual: item.estado,
                   })
                 }
                 onCancel={() => setCancelId(item.id_recoleccion)}

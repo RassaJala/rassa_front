@@ -33,6 +33,10 @@ export default function HomeSellerScreen({
     navigation.getParent()?.navigate('Perfil');
   };
 
+  const handleNotificationsPress = () => {
+    navigation.getParent()?.navigate('Notificaciones');
+  };
+
   const handleCortePress = () => {
     navigation.getParent()?.navigate('CashClosing');
   };
@@ -97,6 +101,7 @@ export default function HomeSellerScreen({
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
+                    onPress={handleNotificationsPress}
                     style={({ pressed }) => ({
                       width: 48,
                       height: 48,

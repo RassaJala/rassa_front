@@ -2,6 +2,12 @@ import { MONTH_NAMES } from '../dates';
 
 // ── Types ───────────────────────────────────────────────────
 
+export interface NombreAgricultor {
+  readonly nombre: string;
+  readonly apellido_paterno: string;
+  readonly apellido_materno: string | null;
+}
+
 interface RecoleccionDuplicadoCandidate {
   readonly estado: string;
   readonly fk_agricultor: number | null;
@@ -13,6 +19,14 @@ export interface ProgramarFormValues {
   readonly fecha: string;
   readonly horaInicio: string;
   readonly horaFin: string;
+}
+
+// ── Name helpers ────────────────────────────────────────────
+
+export function getFullName(a: NombreAgricultor): string {
+  return [a.nombre, a.apellido_paterno, a.apellido_materno]
+    .filter(Boolean)
+    .join(' ');
 }
 
 // ── Date helpers ────────────────────────────────────────────

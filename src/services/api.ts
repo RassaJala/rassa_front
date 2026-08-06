@@ -239,10 +239,10 @@ export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const base = baseURL.replace(/\/api\/?$/, '');
-  const decoded = decodeURIComponent(path);
-  const clean = decoded.replace(/\.\./g, '').replace(/^\/+/, '/');
-  const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
   try {
+    const decoded = decodeURIComponent(path);
+    const clean = decoded.replace(/\.\./g, '').replace(/^\/+/, '/');
+    const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
     return `${base}${encodeURI(prefixed)}`;
   } catch {
     return null;

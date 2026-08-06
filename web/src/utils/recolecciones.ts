@@ -4,9 +4,11 @@ import { DIAS } from '../constants/recolecciones';
 export {
   buildDuplicateKeys,
   esRecoleccionDuplicada,
+  getFullName,
   ocupaFechaParaDuplicado,
   recoleccionDuplicateKey,
   validateProgramarForm,
+  type NombreAgricultor,
   type ProgramarFormValues,
 } from '@/common/utils/recolecciones';
 export {
@@ -26,9 +28,7 @@ export function nombreCompletoAgricultor(a: {
   readonly apellido_paterno: string;
   readonly apellido_materno: string | null;
 }): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
+  return getFullName(a);
 }
 
 export function formatFechaHeader(fecha: string, today: string): string {

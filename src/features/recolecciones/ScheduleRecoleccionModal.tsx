@@ -55,6 +55,7 @@ interface ScheduleRecoleccionModalProps {
   readonly onClose: () => void;
   readonly onSaved: (message: string) => void;
   readonly existing: readonly Recoleccion[];
+  readonly duplicateCheckFailed?: boolean;
 }
 
 function resolveColors(isDark: boolean) {
@@ -76,6 +77,7 @@ export default function ScheduleRecoleccionModal({
   onClose,
   onSaved,
   existing,
+  duplicateCheckFailed = false,
 }: ScheduleRecoleccionModalProps): React.JSX.Element | null {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -144,10 +146,11 @@ export default function ScheduleRecoleccionModal({
   const mutation = useMutation({
     mutationFn: (payload: RecoleccionPayload) => createRecoleccion(payload),
     onSuccess: () => {
-      if (!isMounted.current) return;
-      setError(null);
+      if (isMounted.current) {
+        setError(null);
+        onClose();
+      }
       onSaved('Recolección programada correctamente.');
-      onClose();
     },
     onError: (err: unknown) => {
       if (!isMounted.current) return;
@@ -281,6 +284,7 @@ export default function ScheduleRecoleccionModal({
               agricultoresTruncados={agricultoresTruncados}
               erroresAgricultores={erroresAgricultores}
               duplicateKeys={duplicateKeys}
+              duplicateCheckFailed={duplicateCheckFailed}
               formatDateDisplay={formatDateDisplay}
               onFechaPress={() => setShowDatePicker(true)}
               onHoraInicioPress={() => setShowTimePicker('inicio')}
@@ -393,6 +397,7 @@ interface RecoleccionFormFieldsProps {
   readonly agricultoresTruncados: boolean;
   readonly erroresAgricultores: number;
   readonly duplicateKeys: Set<string>;
+  readonly duplicateCheckFailed: boolean;
   readonly formatDateDisplay: (dateStr: string) => string;
   readonly onFechaPress: () => void;
   readonly onHoraInicioPress: () => void;
@@ -424,6 +429,7 @@ function RecoleccionFormFields({
   agricultoresTruncados,
   erroresAgricultores,
   duplicateKeys,
+  duplicateCheckFailed,
   formatDateDisplay,
   onFechaPress,
   onHoraInicioPress,
@@ -578,6 +584,25 @@ function RecoleccionFormFields({
         onRetry={() => refetchAgricultores()}
         onSelect={setAgricultor}
       />
+
+      {duplicateCheckFailed ? (
+        <Text
+          style={{
+            marginTop: 12,
+            fontSize: 13,
+            fontWeight: '600',
+            color: redCoral,
+            backgroundColor: activeBg,
+            borderRadius: 10,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            overflow: 'hidden',
+          }}
+        >
+          No se pudieron cargar todas las recolecciones. El servidor validará
+          duplicados al programar.
+        </Text>
+      ) : null}
 
       {error ? (
         <Text

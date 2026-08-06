@@ -195,16 +195,18 @@ function mockUseQuery(
   data: Recoleccion[],
   extra: Partial<RecoleccionesResult> = {},
 ): void {
-  (
-    jest.requireMock('@tanstack/react-query').useQuery as jest.Mock
-  ).mockReturnValue({
-    data: { data, truncated: false, errores: 0, ...extra },
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: jest.fn(),
-    isRefetching: false,
-  });
+  const useQueryMock = jest.requireMock('@tanstack/react-query')
+    .useQuery as jest.Mock;
+  useQueryMock.mockImplementation(
+    (_options: { queryKey: readonly string[] }) => ({
+      data: { data, truncated: false, errores: 0, ...extra },
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: jest.fn(),
+      isRefetching: false,
+    }),
+  );
 }
 
 describe('CollectionScheduleScreen', () => {
@@ -375,13 +377,15 @@ describe('CollectionScheduleScreen', () => {
   it('crea una recolección al llenar el formulario', () => {
     mockUseQuery([]);
 
-    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
+    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    fireEvent.press(getAllByText('Juan Pérez')[0]);
-    fireEvent.press(getAllByText('Programar recolección')[1]);
+    const agricultores = getAllByText('Juan Pérez');
+    fireEvent.press(agricultores[agricultores.length - 1]!);
+    const botonesProgramar = getAllByText('Programar recolección');
+    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
 
     expect(mockMutate).toHaveBeenCalledWith({
       fk_agricultor: 11,
@@ -448,13 +452,15 @@ describe('CollectionScheduleScreen', () => {
   it('muestra el error del servidor al crear y mantiene el modal abierto', () => {
     mockUseQuery([]);
 
-    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
+    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    fireEvent.press(getAllByText('Juan Pérez')[0]);
-    fireEvent.press(getAllByText('Programar recolección')[1]);
+    const agricultores = getAllByText('Juan Pérez');
+    fireEvent.press(agricultores[agricultores.length - 1]!);
+    const botonesProgramar = getAllByText('Programar recolección');
+    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
 
@@ -469,9 +475,9 @@ describe('CollectionScheduleScreen', () => {
     expect(
       getByText('Ya existe una recolección para este agricultor.'),
     ).toBeTruthy();
-    expect(getAllByText('Programar recolección').length).toBeGreaterThanOrEqual(
-      1,
-    );
+    expect(
+      getAllByText('Programar recolección').length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('avisa cuando no se puede abrir el chat', () => {
@@ -490,14 +496,16 @@ describe('CollectionScheduleScreen', () => {
   it('no envía duplicados mientras el guardado está en curso', () => {
     mockUseQuery([]);
 
-    const { getByText, getAllByText, rerender } = render(
+    const { getAllByText, getByText, rerender } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
 
-    fireEvent.press(getAllByText('Juan Pérez')[0]);
-    fireEvent.press(getAllByText('Programar recolección')[1]);
+    const agricultores = getAllByText('Juan Pérez');
+    fireEvent.press(agricultores[agricultores.length - 1]!);
+    const botonesProgramar = getAllByText('Programar recolección');
+    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
 
@@ -510,10 +518,11 @@ describe('CollectionScheduleScreen', () => {
   it('rechaza el envío sin agricultor seleccionado', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
+    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
-    fireEvent.press(getAllByText('Programar recolección')[1]);
+    const botonesProgramar = getAllByText('Programar recolección');
+    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
 
     expect(getByText('Selecciona un agricultor.')).toBeTruthy();
   });
@@ -521,10 +530,11 @@ describe('CollectionScheduleScreen', () => {
   it('valida que la hora de fin sea posterior a la de inicio', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getByText, getAllByText } = render(<CollectionScheduleScreen />);
+    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
-    fireEvent.press(getAllByText('Juan Pérez')[1]);
+    const agricultores = getAllByText('Juan Pérez');
+    fireEvent.press(agricultores[agricultores.length - 1]!);
 
     const opcionales = getAllByText('Opcional');
     fireEvent.press(opcionales[0]!);
@@ -534,7 +544,8 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(opcionales2[0]!);
     fireEvent.press(getByText('Seleccionar'));
 
-    fireEvent.press(getAllByText('Programar recolección')[1]);
+    const botonesProgramar = getAllByText('Programar recolección');
+    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
 
     expect(
       getByText('La hora de fin debe ser posterior a la de inicio.'),

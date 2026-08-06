@@ -1,13 +1,13 @@
 import { formatFechaHeader as formatFechaHeaderCommon } from '@/common/utils/recolecciones';
-import type { AgricultorAgricultorItem } from '@/hooks/useAgricultoresUbicacion';
 
 import { DIAS } from './constants';
 export {
   buildDuplicateKeys,
-  esRecoleccionDuplicada,
+  getFullName,
   ocupaFechaParaDuplicado,
   recoleccionDuplicateKey,
   validateProgramarForm,
+  type NombreAgricultor,
   type ProgramarFormValues,
 } from '@/common/utils/recolecciones';
 export {
@@ -24,12 +24,6 @@ export {
 
 export function formatFechaHeader(fecha: string, today: string): string {
   return formatFechaHeaderCommon(fecha, today, DIAS);
-}
-
-export function getFullName(a: AgricultorAgricultorItem): string {
-  return [a.nombre, a.apellido_paterno, a.apellido_materno]
-    .filter(Boolean)
-    .join(' ');
 }
 
 export function getDaysInMonth(year: number, month: number): number {

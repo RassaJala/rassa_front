@@ -72,6 +72,8 @@ function buildQuery(filters: RecoleccionFilters): string {
   return qs ? `?${qs}` : '';
 }
 
+const RECOLECCIONES_MAX_DURATION_MS = 30_000;
+
 export async function fetchRecolecciones(
   filters: RecoleccionFilters = {},
   signal?: AbortSignal,
@@ -79,6 +81,22 @@ export async function fetchRecolecciones(
   const baseOptions = {
     keyOf: (r: Recoleccion) => r.id_recoleccion,
     source: 'recolecciones',
+    maxDurationMs: RECOLECCIONES_MAX_DURATION_MS,
+  } as const;
+  return fetchAllPages<Recoleccion>(
+    `${RECOLECCIONES_URL}${buildQuery(filters)}`,
+    signal !== undefined ? { ...baseOptions, signal } : baseOptions,
+  );
+}
+
+export async function fetchTodasLasRecolecciones(
+  filters: Omit<RecoleccionFilters, 'estado'> = {},
+  signal?: AbortSignal,
+): Promise<RecoleccionesResult> {
+  const baseOptions = {
+    keyOf: (r: Recoleccion) => r.id_recoleccion,
+    source: 'recolecciones-todas',
+    maxDurationMs: RECOLECCIONES_MAX_DURATION_MS,
   } as const;
   return fetchAllPages<Recoleccion>(
     `${RECOLECCIONES_URL}${buildQuery(filters)}`,
@@ -88,14 +106,18 @@ export async function fetchRecolecciones(
 
 export async function createRecoleccion(
   payload: RecoleccionPayload,
+  idempotencyKey?: string,
 ): Promise<Recoleccion> {
   addRecoleccionBreadcrumb('createRecoleccion', {
     fk_agricultor: payload.fk_agricultor,
     fecha_recoleccion: payload.fecha_recoleccion,
   });
+  const headers: Record<string, string> = {
+    'Idempotency-Key': idempotencyKey ?? uuidV4(),
+  };
   return withRecoleccionErrorHandling(async () => {
     const { data } = await api.post<unknown>(RECOLECCIONES_URL, payload, {
-      headers: { 'Idempotency-Key': uuidV4() },
+      headers,
     });
     return unwrapOk<Recoleccion>(data);
   });
