@@ -17,6 +17,7 @@ import {
   buildDuplicateKeys,
   nombreCompletoAgricultor,
   normalizeHora,
+  recoleccionDuplicateKey,
   todayString,
   validateProgramarForm,
 } from '../../utils/recolecciones';
@@ -126,6 +127,16 @@ export function ScheduleRecoleccionModal({
       return;
     }
     if (!agricultor) return;
+    if (
+      duplicateKeys.has(
+        recoleccionDuplicateKey(agricultor.id_usuario, fecha),
+      )
+    ) {
+      setError(
+        'Este agricultor ya tiene una recolección para esta fecha.',
+      );
+      return;
+    }
     setError(null);
     mutation.mutate({
       fk_agricultor: agricultor.id_usuario,
@@ -244,7 +255,17 @@ export function ScheduleRecoleccionModal({
                 type="time"
                 value={horaFin}
                 onChange={(e) => setHoraFin(e.target.value)}
-                style={inputStyle(colors)}
+                disabled={!horaInicio}
+                style={{
+                  ...inputStyle(colors),
+                  opacity: !horaInicio ? 0.5 : 1,
+                  cursor: !horaInicio ? 'not-allowed' : 'pointer',
+                }}
+                title={
+                  !horaInicio
+                    ? 'Selecciona primero la hora de inicio'
+                    : undefined
+                }
               />
             </div>
           </div>

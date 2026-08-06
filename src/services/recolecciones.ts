@@ -1,11 +1,14 @@
 import * as Sentry from '@sentry/react-native';
+import { isAxiosError } from 'axios';
 
+import { TRANSICIONES } from '@/features/recolecciones/constants';
 import type {
   Recoleccion,
   RecoleccionEstado,
   RecoleccionPayload,
 } from '@/types/recolecciones';
 import { assertValidId } from '@/utils/ids';
+import { uuidV4 } from '@/utils/uuid';
 
 import api from './api';
 import { fetchAllPages, unwrapOk } from './pagination';
@@ -13,6 +16,39 @@ import type { PaginatedFetchResult } from './pagination';
 import { sanitizeSentryError } from './sentry';
 
 const RECOLECCIONES_URL = '/recolecciones/';
+
+function isServerError(error: unknown): boolean {
+  return (
+    !isAxiosError(error) ||
+    error.response?.status === undefined ||
+    error.response.status >= 500
+  );
+}
+
+function addRecoleccionBreadcrumb(
+  action: string,
+  data: Record<string, unknown>,
+): void {
+  Sentry.addBreadcrumb({
+    category: 'recoleccion',
+    message: action,
+    data,
+    level: 'info',
+  });
+}
+
+async function withRecoleccionErrorHandling<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: unknown) {
+    if (isServerError(error)) {
+      Sentry.captureException(sanitizeSentryError(error));
+    }
+    throw error;
+  }
+}
 
 export type RecoleccionesResult = PaginatedFetchResult<Recoleccion>;
 
@@ -27,7 +63,7 @@ interface RecoleccionFilters {
 function buildQuery(filters: RecoleccionFilters): string {
   const params = new URLSearchParams();
   if (filters.estado) params.set('estado', filters.estado);
-  if (filters.fkAgricultor)
+  if (filters.fkAgricultor != null)
     params.set('fk_agricultor', String(filters.fkAgricultor));
   if (filters.fecha) params.set('fecha', filters.fecha);
   if (filters.fechaDesde) params.set('fecha_desde', filters.fechaDesde);
@@ -38,75 +74,68 @@ function buildQuery(filters: RecoleccionFilters): string {
 
 export async function fetchRecolecciones(
   filters: RecoleccionFilters = {},
+  signal?: AbortSignal,
 ): Promise<RecoleccionesResult> {
+  const baseOptions = {
+    keyOf: (r: Recoleccion) => r.id_recoleccion,
+    source: 'recolecciones',
+  } as const;
   return fetchAllPages<Recoleccion>(
     `${RECOLECCIONES_URL}${buildQuery(filters)}`,
-    { keyOf: (r) => r.id_recoleccion },
+    signal !== undefined ? { ...baseOptions, signal } : baseOptions,
   );
-}
-
-function uuidV4(): string {
-  if (
-    typeof crypto !== 'undefined' &&
-    typeof crypto.getRandomValues === 'function'
-  ) {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40;
-    bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80;
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(
-      '',
-    );
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-  }
-
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function createRecoleccion(
   payload: RecoleccionPayload,
 ): Promise<Recoleccion> {
-  try {
+  addRecoleccionBreadcrumb('createRecoleccion', {
+    fk_agricultor: payload.fk_agricultor,
+    fecha_recoleccion: payload.fecha_recoleccion,
+  });
+  return withRecoleccionErrorHandling(async () => {
     const { data } = await api.post<unknown>(RECOLECCIONES_URL, payload, {
       headers: { 'Idempotency-Key': uuidV4() },
     });
     return unwrapOk<Recoleccion>(data);
-  } catch (error: unknown) {
-    Sentry.captureException(sanitizeSentryError(error));
-    throw error;
-  }
+  });
 }
 
 export async function cambiarEstadoRecoleccion(
   id: number,
   estado: RecoleccionEstado,
+  estadoActual: RecoleccionEstado,
 ): Promise<Recoleccion> {
   assertValidId(id, 'recoleccion');
-  try {
+  const permitidos = TRANSICIONES[estadoActual];
+  if (!permitidos.includes(estado)) {
+    throw new Error(
+      `Transición inválida: ${estadoActual} → ${estado}`,
+    );
+  }
+  addRecoleccionBreadcrumb('cambiarEstadoRecoleccion', {
+    id_recoleccion: id,
+    estado,
+    estado_actual: estadoActual,
+  });
+  return withRecoleccionErrorHandling(async () => {
     const { data } = await api.post<unknown>(
       `${RECOLECCIONES_URL}${id}/estado/`,
       { estado },
     );
     return unwrapOk<Recoleccion>(data);
-  } catch (error: unknown) {
-    Sentry.captureException(sanitizeSentryError(error));
-    throw error;
-  }
+  });
 }
 
 export async function cancelarRecoleccion(id: number): Promise<Recoleccion> {
   assertValidId(id, 'recoleccion');
-  try {
+  addRecoleccionBreadcrumb('cancelarRecoleccion', {
+    id_recoleccion: id,
+  });
+  return withRecoleccionErrorHandling(async () => {
     const { data } = await api.post<unknown>(
       `${RECOLECCIONES_URL}${id}/cancelar/`,
     );
     return unwrapOk<Recoleccion>(data);
-  } catch (error: unknown) {
-    Sentry.captureException(sanitizeSentryError(error));
-    throw error;
-  }
+  });
 }

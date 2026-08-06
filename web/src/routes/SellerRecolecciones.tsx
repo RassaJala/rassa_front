@@ -133,29 +133,6 @@ export function SellerRecolecciones() {
   const notifySuccess = (message: string) => {
     invalidate();
     setToast({ message, type: 'success' });
-    // El refetch corre en segundo plano y no retrasa el toast de éxito: el
-    // guardado no implica que la pantalla quedó al día, pero en red degradada
-    // esperar el refetch podía retrasar el aviso ~15s o incluso reemplazar el
-    // éxito por un error. Si la actualización falla, se degrada a un aviso
-    // secundario.
-    void refetch().then((refreshed) => {
-      if (!refreshed.isError) return;
-      // La degradación reemplaza el toast de éxito de esta operación; si ya se
-      // despidió (el éxito vive ~3.3s y en red degradada el refetch puede
-      // fallar mucho después), se muestra igual: la lista quedó desactualizada
-      // y el usuario debe saberlo. Solo se respeta un aviso más reciente de
-      // otra acción (toast distinto), que no debe pisarse.
-      setToast((current) =>
-        current == null ||
-        (current.type === 'success' && current.message === message)
-          ? {
-              message:
-                'El cambio se guardó, pero no se pudo actualizar la lista.',
-              type: 'error',
-            }
-          : current,
-      );
-    });
   };
   const notifyError = (error: unknown) => {
     setToast({ message: extractApiError(error, ['estado']), type: 'error' });

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Platform,
   Pressable,
   RefreshControl,
@@ -48,10 +49,19 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
 
   // Midnight rollover: recalculate 'today' when the date changes.
   useEffect(() => {
+    const recalculate = () => setToday(todayString());
     const msUntilMidnight =
       new Date().setHours(24, 0, 0, 0) - Date.now() + 1000;
-    const timer = setTimeout(() => setToday(todayString()), msUntilMidnight);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(recalculate, msUntilMidnight);
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') recalculate();
+    });
+
+    return () => {
+      clearTimeout(timer);
+      subscription.remove();
+    };
   }, [today]);
 
   const [filter, setFilter] = useState<RecoleccionEstado | ''>('');
@@ -73,11 +83,14 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     isRefetching,
   } = useQuery<RecoleccionesResult>({
     queryKey: ['recolecciones', filter, today],
-    queryFn: () =>
-      fetchRecolecciones({
-        ...(filter ? { estado: filter } : {}),
-        fechaDesde: today,
-      }),
+    queryFn: ({ signal }) =>
+      fetchRecolecciones(
+        {
+          ...(filter ? { estado: filter } : {}),
+          fechaDesde: today,
+        },
+        signal,
+      ),
     retry: false,
   });
 
@@ -116,31 +129,21 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     (message: string) => {
       invalidate();
       showToast(message, 'success');
-      const refetchPromise = refetch();
-      if (refetchPromise) {
-        refetchPromise
-          .then((res) => {
-            if (res.isError) {
-              showToast(
-                'El cambio se guardó, pero no se pudo actualizar la lista.',
-                'error',
-              );
-            }
-            return res;
-          })
-          .catch(() => {
-            /* noop */
-          });
-      }
     },
-    [invalidate, showToast, refetch],
+    [invalidate, showToast],
   );
 
   const transicionMutation = useMutation({
     mutationFn: (payload: {
       readonly id: number;
       readonly estado: RecoleccionEstado;
-    }) => cambiarEstadoRecoleccion(payload.id, payload.estado),
+      readonly estadoActual: RecoleccionEstado;
+    }) =>
+      cambiarEstadoRecoleccion(
+        payload.id,
+        payload.estado,
+        payload.estadoActual,
+      ),
     onMutate: ({ id }) => {
       setPendingIds((prev) => new Set(prev).add(id));
     },
@@ -329,7 +332,11 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
               item.fk_agricultor !== user?.id_usuario
             }
             onTransition={(estado) =>
-              transicionMutation.mutate({ id: item.id_recoleccion, estado })
+              transicionMutation.mutate({
+                id: item.id_recoleccion,
+                estado,
+                estadoActual: item.estado,
+              })
             }
             onCancel={() => confirmCancel(item.id_recoleccion)}
             onContact={() => {

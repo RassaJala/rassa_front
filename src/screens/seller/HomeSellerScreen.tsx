@@ -53,8 +53,8 @@ export default function HomeSellerScreen({
 
   return (
     <ProfileDrawerProvider
-      defaultName="Vendedor"
-      defaultEmail="vendedor@rassa.com"
+      defaultName="Cargando…"
+      defaultEmail="Cargando…"
       onProfilePress={handleProfilePress}
     >
       <View style={{ flex: 1, backgroundColor: bg }}>
