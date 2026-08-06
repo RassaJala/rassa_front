@@ -366,7 +366,9 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(getByText('Nueva'));
 
     expect(
-      getByText('Solo se muestran los primeros agricultores.'),
+      getByText(
+        'Solo se muestran los primeros agricultores y algunos no se pudieron cargar.',
+      ),
     ).toBeTruthy();
   });
 
@@ -378,7 +380,7 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    fireEvent.press(getAllByText('Juan Pérez')[1]);
+    fireEvent.press(getAllByText('Juan Pérez')[0]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
     expect(mockMutate).toHaveBeenCalledWith({
@@ -451,8 +453,9 @@ describe('CollectionScheduleScreen', () => {
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    fireEvent.press(getAllByText('Juan Pérez')[1]);
+    fireEvent.press(getAllByText('Juan Pérez')[0]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
+
     expect(mockMutate).toHaveBeenCalledTimes(1);
 
     act(() => {
@@ -493,7 +496,7 @@ describe('CollectionScheduleScreen', () => {
 
     fireEvent.press(getByText('Nueva'));
 
-    fireEvent.press(getAllByText('Juan Pérez')[1]);
+    fireEvent.press(getAllByText('Juan Pérez')[0]);
     fireEvent.press(getAllByText('Programar recolección')[1]);
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
