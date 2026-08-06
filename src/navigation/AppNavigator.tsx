@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -637,7 +643,9 @@ function SplashTimeoutScreen({
           paddingVertical: 14,
         }}
       >
-        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.iconWhite }}>
+        <Text
+          style={{ fontSize: 15, fontWeight: '700', color: colors.iconWhite }}
+        >
           Reintentar
         </Text>
       </Pressable>

@@ -109,9 +109,7 @@ export async function cambiarEstadoRecoleccion(
   assertValidId(id, 'recoleccion');
   const permitidos = TRANSICIONES[estadoActual];
   if (!permitidos.includes(estado)) {
-    throw new Error(
-      `Transición inválida: ${estadoActual} → ${estado}`,
-    );
+    throw new Error(`Transición inválida: ${estadoActual} → ${estado}`);
   }
   addRecoleccionBreadcrumb('cambiarEstadoRecoleccion', {
     id_recoleccion: id,

@@ -128,13 +128,9 @@ export function ScheduleRecoleccionModal({
     }
     if (!agricultor) return;
     if (
-      duplicateKeys.has(
-        recoleccionDuplicateKey(agricultor.id_usuario, fecha),
-      )
+      duplicateKeys.has(recoleccionDuplicateKey(agricultor.id_usuario, fecha))
     ) {
-      setError(
-        'Este agricultor ya tiene una recolección para esta fecha.',
-      );
+      setError('Este agricultor ya tiene una recolección para esta fecha.');
       return;
     }
     setError(null);

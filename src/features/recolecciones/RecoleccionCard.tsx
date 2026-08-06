@@ -178,7 +178,7 @@ function ActionButton({
       }}
     >
       <MaterialCommunityIcons
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         name={icon as any}
         size={16}
         color={textColor}

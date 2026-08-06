@@ -30,45 +30,44 @@ export default function FilterChips({
 
   return (
     <View style={{ gap: 6 }}>
-      {rows.map(
-        (row, ri) =>
-          row.length > 0 ? (
-            <View
-              key={ri}
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-              }}
-            >
-              {row.map((e) => {
-                const selected = filter === e.value;
-                return (
-                  <Pressable
-                    key={e.value}
-                    onPress={() => onSelect(e.value)}
+      {rows.map((row, ri) =>
+        row.length > 0 ? (
+          <View
+            key={ri}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+            }}
+          >
+            {row.map((e) => {
+              const selected = filter === e.value;
+              return (
+                <Pressable
+                  key={e.value}
+                  onPress={() => onSelect(e.value)}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 20,
+                    backgroundColor: selected ? brand : colors.transparent,
+                    borderWidth: 1.5,
+                    borderColor: selected ? brand : border,
+                  }}
+                >
+                  <Text
                     style={{
-                      paddingHorizontal: 14,
-                      paddingVertical: 7,
-                      borderRadius: 20,
-                      backgroundColor: selected ? brand : colors.transparent,
-                      borderWidth: 1.5,
-                      borderColor: selected ? brand : border,
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: selected ? white : fg,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: '600',
-                        color: selected ? white : fg,
-                      }}
-                    >
-                      {e.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null,
+                    {e.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null,
       )}
     </View>
   );
