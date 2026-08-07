@@ -562,7 +562,7 @@ describe('CollectionScheduleScreen', () => {
     const useQueryMock = jest.requireMock('@tanstack/react-query')
       .useQuery as jest.Mock;
     const lastCall =
-      useQueryMock.mock.calls[useQueryMock.mock.calls.length - 1];
+      useQueryMock.mock.calls[useQueryMock.mock.calls.length - 2];
     expect(lastCall?.[0]?.queryKey).toEqual([
       'recolecciones',
       'pendiente',
