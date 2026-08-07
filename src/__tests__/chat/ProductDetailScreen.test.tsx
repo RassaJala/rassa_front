@@ -81,16 +81,35 @@ describe('ProductDetailScreen — Contact Farmer', () => {
     });
   });
 
-  it('shows inline error message when backend fails', async () => {
+  it('shows inline error message when backend fails (envelope)', async () => {
     mockApiPost.mockResolvedValue({
       data: { ok: false, mensaje: 'Error del servidor.', data: null },
     });
 
-    const { getByText, queryByText } = renderScreen();
+    const { getByText } = renderScreen();
 
     fireEvent.press(getByText('Contactar agricultor'));
 
     expect(await screen.findByText('Error del servidor.')).toBeTruthy();
-    expect(queryByText('Error del servidor.')).not.toBeNull();
+  });
+
+  it('shows a friendly inline error on a real HTTP 500 (rejection path)', async () => {
+    // MAJOR #3 (#82): the rejection path (real HTTP 500) behaves completely
+    // differently from the envelope path and was previously untested. The
+    // interceptor normalizes `message` via parseApiError, so a rejected call
+    // carries a friendly message and the component renders it inline.
+    const axiosErr = Object.assign(
+      new Error('Error del servidor. Intenta de nuevo.'),
+      { isAxiosError: true, response: { status: 500, data: undefined } },
+    );
+    mockApiPost.mockRejectedValue(axiosErr);
+
+    const { getByText } = renderScreen();
+
+    fireEvent.press(getByText('Contactar agricultor'));
+
+    expect(
+      await screen.findByText('Error del servidor. Intenta de nuevo.'),
+    ).toBeTruthy();
   });
 });
