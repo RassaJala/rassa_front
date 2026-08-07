@@ -3,6 +3,7 @@ import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 
 import { API_RETRY_LIMIT } from '@/common/networking';
+import { parseApiError } from '@/common/apiErrors';
 import { redirect } from './navigate';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -318,6 +319,10 @@ api.interceptors.response.use(
 
     if (!is401) {
       reportError(error);
+      // Normalize non-401 failures so users never see the raw axios message
+      // (e.g. "Request failed with status code 500"). 401 flow is untouched.
+      // R1/R4: CRITICAL #1, MAJOR #2.
+      error.message = parseApiError(error);
       return Promise.reject(error);
     }
 

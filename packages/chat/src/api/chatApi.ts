@@ -54,12 +54,24 @@ import {
 import { mapConversation, mapGroupMember, mapMessage } from './mappers';
 
 // Unwrap the {ok, data, mensaje} envelope. Throws on ok === false.
+//
+// `mensaje` is backend-controlled text; per the repo's safety policy (R10) a
+// traceback/DB-error/template detail must never reach the UI. The api package
+// cannot import @rassa/common (boundaries allow: []), so the same sanitizer
+// pattern is kept here locally — never render a raw `mensaje` that looks like
+// an internal error, only safe, user-facing detail (MAJOR #2).
+const INSECURE_DETAIL =
+  /(traceback|django\.db|database\s+error|sql\s+syntax|operationalerror|programmingerror|integrityerror|exception\s+at)/i;
+
 function unwrap<T>(response: { data: unknown }): T {
   const body = response.data as ChatApiEnvelope<T>;
   if (body.ok === false) {
-    throw new Error(
-      body.mensaje ?? body.message ?? 'Error en la respuesta del servidor',
-    );
+    const raw = body.mensaje ?? body.message ?? '';
+    const message =
+      typeof raw === 'string' && raw.trim() !== '' && !INSECURE_DETAIL.test(raw)
+        ? raw
+        : 'Error al procesar la solicitud. Intenta de nuevo.';
+    throw new Error(message);
   }
   return body.data;
 }
