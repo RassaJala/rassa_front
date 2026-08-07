@@ -4,12 +4,13 @@ import { DIAS } from '../constants/recolecciones';
 export {
   buildDuplicateKeys,
   esRecoleccionDuplicada,
-  getFullName,
+  getFullName as nombreCompletoAgricultor,
   ocupaFechaParaDuplicado,
   recoleccionDuplicateKey,
   validateProgramarForm,
   type NombreAgricultor,
   type ProgramarFormValues,
+  type RecoleccionDuplicadoCandidate,
 } from '@/common/utils/recolecciones';
 export {
   addDays,
@@ -23,13 +24,6 @@ export {
   toDateString,
 } from '@/common/utils/recolecciones';
 
-export function nombreCompletoAgricultor(a: {
-  readonly nombre: string;
-  readonly apellido_paterno: string;
-  readonly apellido_materno: string | null;
-}): string {
-  return getFullName(a);
-}
 
 export function formatFechaHeader(fecha: string, today: string): string {
   return formatFechaHeaderCommon(fecha, today, DIAS);

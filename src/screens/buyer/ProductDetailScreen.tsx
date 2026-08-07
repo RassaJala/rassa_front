@@ -67,6 +67,15 @@ export default function ProductDetailScreen(): React.JSX.Element {
               : 'Contactar agricultor'}
           </Text>
         </Pressable>
+        {createConversation.isError ? (
+          <Text
+            className="mt-3 text-center text-sm"
+            style={{ color: colors.error }}
+          >
+            {createConversation.error?.message ??
+              'No se pudo iniciar el chat. Intenta de nuevo.'}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

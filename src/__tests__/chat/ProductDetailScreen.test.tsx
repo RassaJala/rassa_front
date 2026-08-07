@@ -2,7 +2,12 @@
 import React from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
@@ -74,5 +79,18 @@ describe('ProductDetailScreen — Contact Farmer', () => {
         { fk_usuario: 5 },
       );
     });
+  });
+
+  it('shows inline error message when backend fails', async () => {
+    mockApiPost.mockResolvedValue({
+      data: { ok: false, mensaje: 'Error del servidor.', data: null },
+    });
+
+    const { getByText, queryByText } = renderScreen();
+
+    fireEvent.press(getByText('Contactar agricultor'));
+
+    expect(await screen.findByText('Error del servidor.')).toBeTruthy();
+    expect(queryByText('Error del servidor.')).not.toBeNull();
   });
 });

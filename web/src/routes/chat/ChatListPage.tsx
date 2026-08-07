@@ -19,7 +19,7 @@ export function ChatListPage() {
   const navigate = useNavigate();
   const c = useAppColors();
   const { user } = useAuth();
-  const { data, isLoading, error } = useConversations();
+  const { data, isLoading, error, refetch } = useConversations();
   const [toast, setToast] = useState<ToastState | null>(null);
   const [filtro, setFiltro] = useState<FiltroTipo>('todos');
 
@@ -99,7 +99,28 @@ export function ChatListPage() {
           </div>
         )}
 
-        {!isLoading && filtered.length === 0 && (
+        {!isLoading && error && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <span className="mb-3 text-4xl">⚠️</span>
+            <p className="text-sm font-medium" style={{ color: c.fg }}>
+              Error al cargar conversaciones
+            </p>
+            <p className="mt-1 text-sm" style={{ color: c.muted }}>
+              Revisa tu conexión e intenta de nuevo
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              style={{ background: c.brand }}
+              aria-label="Reintentar cargar conversaciones"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="mb-3 text-4xl">💬</span>
             <p className="text-sm" style={{ color: c.muted }}>
@@ -111,6 +132,7 @@ export function ChatListPage() {
         )}
 
         {!isLoading &&
+          !error &&
           filtered.map((conv) => (
             <ConversationItem key={conv.id} conversation={conv} />
           ))}

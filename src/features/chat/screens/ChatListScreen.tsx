@@ -1,17 +1,24 @@
 import React from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import { FAB } from 'react-native-paper';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { colors } from '@/constants/colors';
 import ConversationItem from '@/features/chat/components/ConversationItem';
 import { useConversations } from '@/features/chat/hooks/useConversations';
 import { useAuth } from '@/store/AuthContext';
 import type { ChatStackParamList } from '@/types/chat';
 
 export default function ChatListScreen(): React.JSX.Element {
-  const { data, isLoading, error } = useConversations();
+  const { data, isLoading, error, refetch } = useConversations();
   const navigation =
     useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
   const { user } = useAuth();
@@ -31,8 +38,18 @@ export default function ChatListScreen(): React.JSX.Element {
     return (
       <View className="flex-1 items-center justify-center bg-rassa-bg p-4 dark:bg-rassa-bg-dark">
         <Text className="text-center text-base text-rassa-muted dark:text-rassa-muted-dark">
-          Error al cargar conversaciones. Toca Reintentar.
+          Error al cargar conversaciones
         </Text>
+        <Pressable
+          onPress={() => void refetch()}
+          accessibilityLabel="Reintentar cargar conversaciones"
+          className="mt-4 rounded-lg px-5 py-2"
+          style={{ backgroundColor: colors.primary }}
+        >
+          <Text className="font-medium" style={{ color: colors.iconWhite }}>
+            Reintentar
+          </Text>
+        </Pressable>
       </View>
     );
   }

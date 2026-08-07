@@ -136,6 +136,7 @@ export function StartChatPage() {
                   onClick={() => {
                     setSelected(null);
                     setQuery('');
+                    createConversation.reset();
                   }}
                   className="cursor-pointer border-none bg-transparent text-sm"
                   style={{ color: c.coral }}
@@ -153,6 +154,7 @@ export function StartChatPage() {
                   onChange={(e) => {
                     setQuery(e.target.value);
                     setSelected(null);
+                    createConversation.reset();
                   }}
                   placeholder="Buscar por nombre o correo..."
                   className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
@@ -232,6 +234,17 @@ export function StartChatPage() {
             >
               {createConversation.isPending ? 'Creando…' : 'Iniciar chat'}
             </button>
+
+            {createConversation.isError && (
+              <p
+                className="mt-3 text-center text-sm"
+                style={{ color: c.coral }}
+                role="alert"
+              >
+                {createConversation.error?.message ??
+                  'No se pudo crear la conversación. Intenta de nuevo.'}
+              </p>
+            )}
           </div>
         )}
       </div>

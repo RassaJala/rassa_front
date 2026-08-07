@@ -3,6 +3,7 @@ import { formatFechaHeader as formatFechaHeaderCommon } from '@/common/utils/rec
 import { DIAS } from './constants';
 export {
   buildDuplicateKeys,
+  esRecoleccionDuplicada,
   getFullName,
   ocupaFechaParaDuplicado,
   recoleccionDuplicateKey,
