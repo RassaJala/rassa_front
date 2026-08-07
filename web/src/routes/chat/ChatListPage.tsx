@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
 import { useConversations } from '~/hooks/chat/useConversations';
 import { ConversationItem } from '~/components/chat/ConversationItem';
-import { Toast, type ToastState } from '~/components/ui/Toast';
 
 type FiltroTipo = 'todos' | 'individual' | 'grupal' | 'familia';
 
@@ -19,8 +18,7 @@ export function ChatListPage() {
   const navigate = useNavigate();
   const c = useAppColors();
   const { user } = useAuth();
-  const { data, isLoading, error, refetch } = useConversations();
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const { data, isLoading, error, refetch, isFetching } = useConversations();
   const [filtro, setFiltro] = useState<FiltroTipo>('todos');
 
   const conversations = data?.results ?? [];
@@ -33,13 +31,9 @@ export function ChatListPage() {
     return true;
   });
 
-  useEffect(() => {
-    if (error) {
-      setToast({ message: 'Error al cargar conversaciones', type: 'error' });
-    } else {
-      setToast(null);
-    }
-  }, [error]);
+  // MAJOR #5 (#82): with existing data + a transient failure, keep showing the
+  // list with a non-blocking banner instead of replacing the whole screen.
+  const withBanner = !isLoading && error && filtered.length > 0;
 
   return (
     <div className="flex h-full flex-col" style={{ background: c.bg }}>
@@ -88,6 +82,33 @@ export function ChatListPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
+        {withBanner && (
+          <div
+            role="alert"
+            className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-lg border px-4 py-3"
+            style={{ borderColor: c.coral, background: c.surface }}
+          >
+            <div>
+              <p className="text-sm font-medium" style={{ color: c.fg }}>
+                Error al cargar conversaciones
+              </p>
+              <p className="text-xs" style={{ color: c.muted }}>
+                Revisa tu conexión e intenta de nuevo
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:cursor-not-allowed"
+              style={{ background: c.brand, opacity: isFetching ? 0.6 : 1 }}
+              aria-label="Reintentar cargar conversaciones"
+            >
+              {isFetching ? 'Reintentando…' : 'Reintentar'}
+            </button>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div
@@ -99,7 +120,7 @@ export function ChatListPage() {
           </div>
         )}
 
-        {!isLoading && error && (
+        {!isLoading && error && !withBanner && (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="mb-3 text-4xl">⚠️</span>
             <p className="text-sm font-medium" style={{ color: c.fg }}>
@@ -111,11 +132,12 @@ export function ChatListPage() {
             <button
               type="button"
               onClick={() => refetch()}
+              disabled={isFetching}
               className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: c.brand }}
+              style={{ background: c.brand, opacity: isFetching ? 0.6 : 1 }}
               aria-label="Reintentar cargar conversaciones"
             >
-              Reintentar
+              {isFetching ? 'Reintentando…' : 'Reintentar'}
             </button>
           </div>
         )}
@@ -132,13 +154,11 @@ export function ChatListPage() {
         )}
 
         {!isLoading &&
-          !error &&
+          (withBanner || (!error && filtered.length > 0)) &&
           filtered.map((conv) => (
             <ConversationItem key={conv.id} conversation={conv} />
           ))}
       </div>
-
-      <Toast toast={toast} onDone={() => setToast(null)} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 
+import { safeErrorMessage } from '@/common/apiErrors';
 import { colors } from '@/constants/colors';
 import { useCreatePrivateConversation } from '@/features/chat/hooks/useCreatePrivateConversation';
 import { useTheme } from '@/store/ThemeContext';
@@ -72,8 +73,10 @@ export default function ProductDetailScreen(): React.JSX.Element {
             className="mt-3 text-center text-sm"
             style={{ color: colors.error }}
           >
-            {createConversation.error?.message ??
-              'No se pudo iniciar el chat. Intenta de nuevo.'}
+            {safeErrorMessage(
+              createConversation.error,
+              'No se pudo iniciar el chat. Intenta de nuevo.',
+            )}
           </Text>
         ) : null}
       </View>

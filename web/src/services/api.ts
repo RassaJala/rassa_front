@@ -2,6 +2,8 @@ import * as Sentry from '@sentry/react';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 
+import { parseApiError } from '@/common/apiErrors';
+import type { SafeMessageError } from '@/common/apiErrors';
 import { API_RETRY_LIMIT } from '@/common/networking';
 import { redirect } from './navigate';
 
@@ -318,6 +320,10 @@ api.interceptors.response.use(
 
     if (!is401) {
       reportError(error);
+      // Expose a UI-safe `safeMessage` without mutating the original `message`
+      // (R1-002/R4-002): Sentry/downstream keep the raw text, surfaces read the
+      // sanitized variant. 401 flow is untouched (CRITICAL #1 from #82).
+      (error as SafeMessageError).safeMessage = parseApiError(error);
       return Promise.reject(error);
     }
 
