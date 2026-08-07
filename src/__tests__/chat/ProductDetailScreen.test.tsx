@@ -96,11 +96,14 @@ describe('ProductDetailScreen — Contact Farmer', () => {
   it('shows a friendly inline error on a real HTTP 500 (rejection path)', async () => {
     // MAJOR #3 (#82): the rejection path (real HTTP 500) behaves completely
     // differently from the envelope path and was previously untested. The
-    // interceptor normalizes `message` via parseApiError, so a rejected call
-    // carries a friendly message and the component renders it inline.
+    // interceptor exposes a sanitized `safeMessage`; the screen renders it.
     const axiosErr = Object.assign(
-      new Error('Error del servidor. Intenta de nuevo.'),
-      { isAxiosError: true, response: { status: 500, data: undefined } },
+      new Error('Request failed with status code 500'),
+      {
+        isAxiosError: true,
+        response: { status: 500, data: undefined },
+        safeMessage: 'Error del servidor. Intenta de nuevo.',
+      },
     );
     mockApiPost.mockRejectedValue(axiosErr);
 

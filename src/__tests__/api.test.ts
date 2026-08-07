@@ -105,15 +105,22 @@ describe('API Interceptors', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('refresh_token');
   });
 
-  it('normaliza errores no-401 a un mensaje amigable (CRITICAL #1)', async () => {
+  it('expone un safeMessage amigable en errores no-401 sin mutar el original (R1-002)', async () => {
     const originalRequest = { headers: {}, url: '/some-endpoint' };
     const axiosError = makeAxiosError(403, originalRequest);
 
-    // Non-401 failures no longer leak the raw axios text
-    // ("Request failed with status code 403"); the interceptor routes them
-    // through parseApiError so the user sees a safe, friendly message.
-    await expect(responseInterceptor(axiosError)).rejects.toThrow(
+    // Non-401 failures expose a UI-safe `safeMessage` via parseApiError while
+    // the raw `message` stays untouched for downstream handlers (Sentry,
+    // axios-retry, error boundaries).
+    const rejection: unknown = await responseInterceptor(axiosError).catch(
+      (e: unknown) => e,
+    );
+
+    expect((rejection as { safeMessage?: string }).safeMessage).toBe(
       'No tienes permiso para realizar esta acción.',
+    );
+    expect((rejection as Error).message).toBe(
+      'Request failed with status code 403',
     );
 
     expect(SecureStore.getItemAsync).not.toHaveBeenCalled();

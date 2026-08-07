@@ -60,6 +60,8 @@ import { mapConversation, mapGroupMember, mapMessage } from './mappers';
 // cannot import @rassa/common (boundaries allow: []), so the same sanitizer
 // pattern is kept here locally — never render a raw `mensaje` that looks like
 // an internal error, only safe, user-facing detail (MAJOR #2).
+// ponytail: denylist covers Django/DB patterns. Add an allowlist driven by an
+// explicit backend `userFacing` flag when/if the API exposes it (R1-001).
 const INSECURE_DETAIL =
   /(traceback|django\.db|database\s+error|sql\s+syntax|operationalerror|programmingerror|integrityerror|exception\s+at)/i;
 
