@@ -5,7 +5,6 @@ import { useAuth } from '~/hooks/useAuth';
 import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
 import type { SearchUser } from '@rassa/chat';
-import { Toast, type ToastState } from '~/components/ui/Toast';
 
 export function StartChatPage() {
   const navigate = useNavigate();
@@ -17,8 +16,6 @@ export function StartChatPage() {
   const { results, loading, error } = useSearchUsers(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -47,13 +44,7 @@ export function StartChatPage() {
 
   const handleSubmit = () => {
     if (!selected || isSelfChat) return;
-    createConversation.mutate(
-      { fk_usuario: selected.idUsuario },
-      {
-        onError: () =>
-          setToast({ message: 'Error al crear conversación', type: 'error' }),
-      },
-    );
+    createConversation.mutate({ fk_usuario: selected.idUsuario });
   };
 
   return (
@@ -136,7 +127,11 @@ export function StartChatPage() {
                   onClick={() => {
                     setSelected(null);
                     setQuery('');
-                    createConversation.reset();
+                    // MAJOR #4 (#82): never reset mid-flight — dropping a
+                    // pending creation would race its onSuccess navigation.
+                    if (!createConversation.isPending) {
+                      createConversation.reset();
+                    }
                   }}
                   className="cursor-pointer border-none bg-transparent text-sm"
                   style={{ color: c.coral }}
@@ -154,7 +149,11 @@ export function StartChatPage() {
                   onChange={(e) => {
                     setQuery(e.target.value);
                     setSelected(null);
-                    createConversation.reset();
+                    // MAJOR #4 (#82): don't reset on every keystroke while a
+                    // creation is in flight.
+                    if (!createConversation.isPending) {
+                      createConversation.reset();
+                    }
                   }}
                   placeholder="Buscar por nombre o correo..."
                   className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
@@ -248,8 +247,6 @@ export function StartChatPage() {
           </div>
         )}
       </div>
-
-      <Toast toast={toast} onDone={() => setToast(null)} />
     </div>
   );
 }
