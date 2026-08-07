@@ -51,7 +51,12 @@ export async function createWasteRecord(
 export async function fetchWasteRecords(): Promise<WasteRecord[]> {
   const { data } =
     await api.get<ApiResponse<{ results: WasteRecord[] }>>(MERMAS_URL);
-  return data.data.results;
+  // The backend may return a paginated {results} envelope or a bare array;
+  // normalize both so a shape change does not crash consumers.
+  const payload = data.data as
+    { results?: WasteRecord[] } | WasteRecord[] | undefined;
+  if (Array.isArray(payload)) return payload;
+  return payload?.results ?? [];
 }
 
 export async function fetchWasteRecord(id: number): Promise<WasteRecord> {
@@ -63,7 +68,13 @@ export async function fetchWasteRecord(id: number): Promise<WasteRecord> {
 
 export async function fetchWasteOrders(): Promise<Order[]> {
   const { data } = await api.get<{ results?: Order[] }>(PEDIDOS_URL);
-  return data.results ?? [];
+  // A merma references an order that is still in flight; terminal states
+  // (entregado/cancelado) are not valid candidates and would only bloat the
+  // selector with historical orders.
+  const TERMINAL_STATES = new Set(['entregado', 'cancelado']);
+  return (data.results ?? []).filter(
+    (order) => !TERMINAL_STATES.has(order.estado_actual),
+  );
 }
 
 export async function fetchCurrentPublications(): Promise<

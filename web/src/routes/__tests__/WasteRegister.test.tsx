@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -18,6 +18,13 @@ const pedidos = [
     total: '120',
     estado_actual: 'pendiente',
     creado_en: '2026-08-03T00:00:00-03:00',
+  },
+  {
+    id_pedido: 2,
+    cliente_nombre: 'María Gómez',
+    total: '80',
+    estado_actual: 'entregado',
+    creado_en: '2026-08-02T00:00:00-03:00',
   },
 ];
 
@@ -62,6 +69,20 @@ function renderPage() {
   );
 }
 
+async function selectFields(user: ReturnType<typeof userEvent.setup>) {
+  await user.selectOptions(screen.getByLabelText(/^Pedido/), '1');
+  await user.selectOptions(screen.getByLabelText(/Producto publicado/), '100');
+  await user.selectOptions(screen.getByLabelText(/Decisión/), '1');
+}
+
+function seedPostSuccess() {
+  server.use(
+    http.post(`${BASE}/mermas/`, () =>
+      HttpResponse.json({ data: { id_merma: 1 } }),
+    ),
+  );
+}
+
 describe('WasteRegister', () => {
   it('renders the form with products and the fixed decision options', async () => {
     seedMocks();
@@ -97,37 +118,47 @@ describe('WasteRegister', () => {
     expect(screen.getByText('Elige una decisión.')).toBeInTheDocument();
   });
 
-  it('rejects a quantity above the available stock', async () => {
+  it('accepts a quantity equal to the stock and rejects one above it', async () => {
     seedMocks();
+    seedPostSuccess();
     renderPage();
     const user = userEvent.setup();
 
     await screen.findByRole('option', { name: /Tomate/ });
-    const comboboxes = screen.getAllByRole('combobox');
-    await user.selectOptions(comboboxes[0] as HTMLElement, '1');
-    await user.selectOptions(comboboxes[1] as HTMLElement, '100');
-    await user.type(screen.getByPlaceholderText('0'), '99');
+    await selectFields(user);
+
+    // boundary: 5 == stock passes validation
+    await user.type(screen.getByPlaceholderText('0'), '5');
     await user.type(
       screen.getByPlaceholderText('Ej: producto dañado por el clima'),
       'Se venció',
     );
-    await user.selectOptions(comboboxes[2] as HTMLElement, '1');
     await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
+    expect(
+      await screen.findByText('Merma registrada correctamente.'),
+    ).toBeInTheDocument();
 
+    // boundary: 6 > stock is rejected before submit (unmount the previous
+    // render so the second page instance is the only one in the DOM)
+    cleanup();
+    renderPage();
+    await screen.findByRole('option', { name: /Tomate/ });
+    await selectFields(user);
+    await user.type(screen.getByPlaceholderText('0'), '6');
+    await user.type(
+      screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+      'Se venció',
+    );
+    await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
     expect(await screen.findByText('Stock disponible: 5.')).toBeInTheDocument();
   });
 
   it('posts the record and invalidates the products query on success', async () => {
     seedMocks();
-    let posted = false;
+    let postedBody: Record<string, unknown> | null = null;
     server.use(
       http.post(`${BASE}/mermas/`, async ({ request }) => {
-        posted = true;
-        const body = (await request.json()) as Record<string, unknown>;
-        expect(body.fk_producto_semanal).toBe(100);
-        expect(body.fk_pedido).toBe(1);
-        expect(body.cantidad).toBe(2);
-        expect(body.motivo).toBe('Se venció');
+        postedBody = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json({ data: { id_merma: 1 } });
       }),
     );
@@ -136,20 +167,103 @@ describe('WasteRegister', () => {
     const user = userEvent.setup();
 
     await screen.findByRole('option', { name: /Tomate/ });
-    const comboboxes = screen.getAllByRole('combobox');
-    await user.selectOptions(comboboxes[0] as HTMLElement, '1');
-    await user.selectOptions(comboboxes[1] as HTMLElement, '100');
+    await selectFields(user);
     await user.type(screen.getByPlaceholderText('0'), '2');
     await user.type(
       screen.getByPlaceholderText('Ej: producto dañado por el clima'),
       'Se venció',
     );
-    await user.selectOptions(comboboxes[2] as HTMLElement, '1');
     await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
 
-    await waitFor(() => expect(posted).toBe(true));
+    await waitFor(() => expect(postedBody).not.toBeNull());
+    expect(postedBody).toMatchObject({
+      fk_producto_semanal: 100,
+      fk_pedido: 1,
+      cantidad: 2,
+      motivo: 'Se venció',
+      fk_decision: 1,
+    });
     expect(
       await screen.findByText('Merma registrada correctamente.'),
     ).toBeInTheDocument();
+  });
+
+  it('excludes terminal orders from the pedido selector', async () => {
+    seedMocks();
+    renderPage();
+
+    await screen.findByRole('option', { name: /Pedido #1 · Juan Pérez/ });
+    expect(
+      screen.queryByRole('option', { name: /Pedido #2 · María Gómez/ }),
+    ).toBeNull();
+  });
+
+  it('shows the loading spinner while queries are in flight', async () => {
+    seedMocks();
+    renderPage();
+
+    expect(
+      screen.getByRole('status', { name: /Cargando/ }),
+    ).toBeInTheDocument();
+    // resolves once the queries land
+    expect(await screen.findByRole('option', { name: /Tomate/ })).toBeTruthy();
+  });
+
+  it('shows the empty product notice when there are no publications', async () => {
+    server.use(
+      http.get(`${BASE}/pedidos/`, () =>
+        HttpResponse.json({ results: pedidos }),
+      ),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({ data: [] }),
+      ),
+    );
+    renderPage();
+    const user = userEvent.setup();
+
+    expect(
+      await screen.findByText(/No hay publicaciones activas esta semana/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
+    expect(
+      await screen.findByText('Selecciona un producto publicado.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the error fallback UI and recovers with Reintentar when queries fail', async () => {
+    server.use(
+      http.get(`${BASE}/pedidos/`, () =>
+        HttpResponse.json({ detail: 'boom' }, { status: 500 }),
+      ),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({ detail: 'boom' }, { status: 500 }),
+      ),
+    );
+    renderPage();
+    const user = userEvent.setup();
+
+    // The web api client applies axios-retry (exponential backoff) on 5xx
+    // before the query settles into isError, so give the fallback time to
+    // appear after the retries are exhausted.
+    expect(
+      await screen.findByText('No se pudieron cargar los datos.', undefined, {
+        timeout: 12_000,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Reintentar/ }),
+    ).toBeInTheDocument();
+
+    // Reintentar refetches; the seed now succeeds so the form appears.
+    server.use(
+      http.get(`${BASE}/pedidos/`, () =>
+        HttpResponse.json({ results: pedidos }),
+      ),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({ data: publications }),
+      ),
+    );
+    await user.click(screen.getByRole('button', { name: /Reintentar/ }));
+    expect(await screen.findByRole('option', { name: /Tomate/ })).toBeTruthy();
   });
 });

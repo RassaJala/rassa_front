@@ -5,6 +5,8 @@ import {
   fetchMermaResumen,
   fetchWasteDecisions,
   fetchWasteOrders,
+  fetchWasteRecord,
+  fetchWasteRecords,
 } from '@/services/waste';
 import api from '@/services/api';
 
@@ -100,7 +102,7 @@ describe('waste register service (mobile)', () => {
       data: { data: { id_merma: 1, cantidad: 2 } },
     });
 
-    await createWasteRecord({
+    const result = await createWasteRecord({
       fk_producto_semanal: 100,
       fk_pedido: 7,
       cantidad: 2,
@@ -117,6 +119,7 @@ describe('waste register service (mobile)', () => {
       fk_decision: 1,
       comentarios: 'nota',
     });
+    expect(result).toEqual({ id_merma: 1, cantidad: 2 });
   });
 
   it('fetches the seller orders for the pedido selector', async () => {
@@ -153,5 +156,44 @@ describe('waste register service (mobile)', () => {
       { id_publicacion: 10, productos: [] },
     ]);
     expect(mockApi.get).toHaveBeenCalledWith('/publicaciones/current/');
+  });
+
+  it('normalizes waste records from a paginated {results} envelope', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: { results: [{ id_merma: 1, cantidad: 2 }] } },
+    });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([
+      { id_merma: 1, cantidad: 2 },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/mermas/');
+  });
+
+  it('normalizes waste records from a bare array response', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: [{ id_merma: 2, cantidad: 3 }] },
+    });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([
+      { id_merma: 2, cantidad: 3 },
+    ]);
+  });
+
+  it('returns an empty list when the records payload is missing', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: {} });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([]);
+  });
+
+  it('fetches a single waste record by id', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: { id_merma: 5, cantidad: 2 } },
+    });
+
+    await expect(fetchWasteRecord(5)).resolves.toEqual({
+      id_merma: 5,
+      cantidad: 2,
+    });
+    expect(mockApi.get).toHaveBeenCalledWith('/mermas/5/');
   });
 });

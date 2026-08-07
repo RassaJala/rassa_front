@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -15,6 +17,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import {
+  validateWasteRecord,
+  WASTE_DECISION_OPTIONS,
+} from '@/common/wasteRegister';
 import Toast from '@/components/Toast';
 import { colors, themeColors } from '@/constants/colors';
 import {
@@ -30,14 +36,9 @@ import type {
   WasteDecisionOption,
   WasteRecordPayload,
 } from '@/types/waste';
-import { WASTE_DECISION_OPTIONS } from '@/types/waste';
 import { extractApiError } from '@/utils/apiErrors';
 
-function productModalHint(loading: boolean, productCount: number): string {
-  if (loading) return 'Cargando productos…';
-  if (productCount === 0) return 'No hay productos publicados con stock.';
-  return 'Selecciona el producto a dar de baja.';
-}
+import { ProductModal } from './ProductModal';
 
 function orderModalHint(loading: boolean, orderCount: number): string {
   if (loading) return 'Cargando pedidos…';
@@ -615,19 +616,41 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     [decisionId, decisionOptions],
   );
 
-  const { data: publications = [], isLoading: loadingProducts } = useQuery<
-    PublishedPublication[]
-  >({
+  const {
+    data: publications = [],
+    isLoading: loadingProducts,
+    isError: productsError,
+    refetch: refetchProducts,
+  } = useQuery<PublishedPublication[]>({
     queryKey: ['publicaciones-current'],
     queryFn: fetchCurrentPublications,
     staleTime: 60_000,
+    // Retry storm guard: axios-retry (3x) + TanStack retry (3x) would send up
+    // to 9 attempts per endpoint on a degraded backend; the form has a manual
+    // "Reintentar" button instead.
+    retry: false,
   });
 
-  const { data: orders = [], isLoading: loadingOrders } = useQuery<Order[]>({
+  const {
+    data: orders = [],
+    isLoading: loadingOrders,
+    isError: ordersError,
+    refetch: refetchOrders,
+  } = useQuery<Order[]>({
     queryKey: ['waste-pedidos'],
     queryFn: fetchWasteOrders,
     staleTime: 60_000,
+    retry: false,
   });
+
+  useEffect(() => {
+    if (productsError) {
+      console.error('[waste] publications query failed', productsError);
+    }
+    if (ordersError) {
+      console.error('[waste] orders query failed', ordersError);
+    }
+  }, [productsError, ordersError]);
 
   const products = useMemo<PublishedProduct[]>(
     () =>
@@ -639,11 +662,13 @@ export default function WasteRegisterScreen(): React.JSX.Element {
 
   const createMutation = useMutation({
     mutationFn: createWasteRecord,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['waste-records'] });
-      void queryClient.invalidateQueries({
-        queryKey: ['publicaciones-current'],
-      });
+    onSuccess: async () => {
+      // Refresh product stock BEFORE resetting the form so the next payload is
+      // validated against the real stock, not the stale pre-merma value.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['waste-records'] }),
+        queryClient.invalidateQueries({ queryKey: ['publicaciones-current'] }),
+      ]);
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setSelectedProduct(null);
       setSelectedPedido(null);
@@ -656,27 +681,16 @@ export default function WasteRegisterScreen(): React.JSX.Element {
   });
 
   const handleSubmit = (): void => {
-    const errors: Record<string, string> = {};
-    const cantidadNum = Number(cantidad);
+    const errors: Record<string, string> = {
+      ...validateWasteRecord({
+        pedido: selectedPedido,
+        producto: selectedProduct,
+        cantidad,
+        motivo,
+        stock: selectedProduct?.stock,
+      }),
+    };
 
-    if (!selectedPedido) {
-      errors.pedido = 'Selecciona un pedido.';
-    }
-    if (!selectedProduct) {
-      errors.producto = 'Selecciona un producto publicado.';
-    }
-    if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
-      errors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
-    } else if (cantidadNum > 999_999_999) {
-      errors.cantidad = 'La cantidad es demasiado grande.';
-    } else if (selectedProduct && cantidadNum > selectedProduct.stock) {
-      errors.cantidad = `Stock disponible: ${selectedProduct.stock}.`;
-    }
-    if (!motivo.trim()) {
-      errors.motivo = 'El motivo es obligatorio.';
-    } else if (motivo.trim().length > 300) {
-      errors.motivo = 'El motivo no puede superar los 300 caracteres.';
-    }
     if (!decisionId) {
       errors.decision = 'Elige una decisión.';
     }
@@ -694,7 +708,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     const payload: WasteRecordPayload = {
       fk_producto_semanal: selectedProduct.id_producto_semanal,
       fk_pedido: selectedPedido.id_pedido,
-      cantidad: cantidadNum,
+      cantidad: Number(cantidad),
       motivo: motivo.trim(),
       fk_decision: decisionId,
       ...(comentarios.trim() ? { comentarios: comentarios.trim() } : {}),
@@ -750,379 +764,312 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <ScrollView
-        contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 24,
+  if (productsError || ordersError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          backgroundColor: t.bg,
         }}
-        keyboardShouldPersistTaps="handled"
       >
-        <View
+        <MaterialCommunityIcons
+          name="cloud-alert-outline"
+          size={48}
+          color={t.fg}
+        />
+        <Text
           style={{
-            backgroundColor: t.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: t.border,
-            padding: 16,
-            shadowColor: colors.shadow,
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 2,
+            marginTop: 12,
+            fontSize: 16,
+            fontWeight: '600',
+            color: t.fg,
+            textAlign: 'center',
           }}
         >
-          {/* Header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Pressable
-              onPress={() => navigation.goBack()}
-              hitSlop={12}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: t.surface,
-                borderWidth: 1,
-                borderColor: t.border,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="arrow-left"
-                size={20}
-                color={t.fg}
-              />
-            </Pressable>
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: t.fg }}>
-                Registrar merma
-              </Text>
-              <Text style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
-                Descuenta stock del producto publicado.
-              </Text>
-            </View>
-          </View>
-
-          {/* Pedido */}
-          <PedidoSelector
-            selected={selectedPedido}
-            error={fieldErrors.pedido}
-            t={t}
-            coral={coral}
-            onPress={() => setPedidoModalOpen(true)}
-          />
-
-          {/* Producto publicado */}
-          <Text style={[labelStyle, { marginTop: 16 }]}>
-            Producto publicado *
-          </Text>
-          <Pressable
-            onPress={() => setProductModalOpen(true)}
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: fieldErrors.producto ? coral : t.border,
-              backgroundColor: t.input,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            {selectedProduct ? (
-              <View style={{ flex: 1, marginRight: 12 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-                  {selectedProduct.producto}
-                </Text>
-                <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-                  Stock: {selectedProduct.stock} · {selectedProduct.unidad}
-                </Text>
-              </View>
-            ) : (
-              <Text style={{ fontSize: 15, color: t.muted }}>
-                Elige un producto publicado…
-              </Text>
-            )}
-            <MaterialCommunityIcons
-              name="chevron-down"
-              size={20}
-              color={t.muted}
-            />
-          </Pressable>
-          {fieldErrors.producto ? (
-            <Text style={errorStyle}>{fieldErrors.producto}</Text>
-          ) : null}
-          <ProductEmptyNotice
-            products={products}
-            loading={loadingProducts}
-            inputBg={t.input}
-            borderColor={t.border}
-            muted={t.muted}
-          />
-
-          {/* Cantidad */}
-          <Text style={[labelStyle, { marginTop: 16 }]}>Cantidad *</Text>
-          <TextInput
-            value={cantidad}
-            onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
-            keyboardType="number-pad"
-            maxLength={10}
-            placeholder="0"
-            placeholderTextColor={t.muted}
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: fieldErrors.cantidad ? coral : t.border,
-              backgroundColor: t.input,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              fontSize: 15,
-              color: t.fg,
-            }}
-          />
-          {fieldErrors.cantidad ? (
-            <Text style={errorStyle}>{fieldErrors.cantidad}</Text>
-          ) : null}
-
-          {/* Motivo */}
-          <Text style={[labelStyle, { marginTop: 16 }]}>Motivo *</Text>
-          <TextInput
-            value={motivo}
-            onChangeText={setMotivo}
-            maxLength={300}
-            placeholder="Ej.: se venció la fecha de caducidad"
-            placeholderTextColor={t.muted}
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: fieldErrors.motivo ? coral : t.border,
-              backgroundColor: t.input,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              fontSize: 15,
-              color: t.fg,
-            }}
-          />
-          {fieldErrors.motivo ? (
-            <Text style={errorStyle}>{fieldErrors.motivo}</Text>
-          ) : null}
-
-          {/* Comentarios (opcional) */}
-          <Text style={[labelStyle, { marginTop: 16 }]}>
-            Comentarios (opcional)
-          </Text>
-          <TextInput
-            value={comentarios}
-            onChangeText={setComentarios}
-            multiline
-            numberOfLines={4}
-            placeholder="Notas adicionales…"
-            placeholderTextColor={t.muted}
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: t.border,
-              backgroundColor: t.input,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              fontSize: 15,
-              color: t.fg,
-              minHeight: 96,
-              textAlignVertical: 'top',
-            }}
-          />
-
-          {/* Decisión */}
-          <DecisionSelector
-            selected={selectedDecision}
-            error={fieldErrors.decision}
-            t={t}
-            coral={coral}
-            onPress={() => setDecisionModalOpen(true)}
-          />
-
-          {/* Submit */}
-          <Pressable
-            onPress={handleSubmit}
-            disabled={createMutation.isPending}
-            style={{
-              marginTop: 28,
-              borderRadius: 14,
-              backgroundColor: t.brand,
-              paddingVertical: 15,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: createMutation.isPending ? 0.6 : 1,
-            }}
-          >
-            {createMutation.isPending ? (
-              <ActivityIndicator color={white} />
-            ) : (
-              <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
-                Registrar merma
-              </Text>
-            )}
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      {/* Selector de producto */}
-      <Modal
-        visible={productModalOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setProductModalOpen(false)}
-      >
-        <View
+          No se pudieron cargar los datos.
+        </Text>
+        <Text
           style={{
-            flex: 1,
-            justifyContent: 'flex-end',
-            backgroundColor: colors.modalOverlayBg,
+            marginTop: 4,
+            fontSize: 13,
+            color: t.fg,
+            opacity: 0.7,
+            textAlign: 'center',
           }}
+        >
+          Revisa tu conexión e inténtalo de nuevo.
+        </Text>
+        <Pressable
+          onPress={() => {
+            void refetchProducts();
+            void refetchOrders();
+          }}
+          style={{
+            marginTop: 20,
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            backgroundColor: t.brand,
+          }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
+            Reintentar
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{ marginTop: 16, paddingVertical: 8, paddingHorizontal: 16 }}
+        >
+          <Text style={{ fontSize: 14, color: t.fg, opacity: 0.8 }}>
+            ← Volver
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={{
+            paddingTop: insets.top + 8,
+            paddingHorizontal: 20,
+            paddingBottom: insets.bottom + 24,
+          }}
+          keyboardShouldPersistTaps="handled"
         >
           <View
             style={{
               backgroundColor: t.surface,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              paddingHorizontal: 16,
-              paddingTop: 12,
-              paddingBottom: insets.bottom + 16,
-              maxHeight: '70%',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: t.border,
+              padding: 16,
+              shadowColor: colors.shadow,
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 2,
             }}
           >
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: t.border,
-                }}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 4,
-              }}
-            >
-              <Text
-                style={{
-                  flex: 1,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: t.fg,
-                  marginRight: 12,
-                }}
-              >
-                Producto publicado
-              </Text>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Pressable
-                onPress={() => setProductModalOpen(false)}
-                hitSlop={8}
+                onPress={() => navigation.goBack()}
+                hitSlop={12}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: t.input,
+                  backgroundColor: t.surface,
                   borderWidth: 1,
                   borderColor: t.border,
                 }}
-                accessibilityLabel="Cerrar selector de producto"
               >
-                <MaterialCommunityIcons name="close" size={18} color={t.fg} />
+                <MaterialCommunityIcons
+                  name="arrow-left"
+                  size={20}
+                  color={t.fg}
+                />
               </Pressable>
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text style={{ fontSize: 20, fontWeight: '700', color: t.fg }}>
+                  Registrar merma
+                </Text>
+                <Text style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
+                  Descuenta stock del producto publicado.
+                </Text>
+              </View>
             </View>
-            <Text
+
+            {/* Pedido */}
+            <PedidoSelector
+              selected={selectedPedido}
+              error={fieldErrors.pedido}
+              t={t}
+              coral={coral}
+              onPress={() => setPedidoModalOpen(true)}
+            />
+
+            {/* Producto publicado */}
+            <Text style={[labelStyle, { marginTop: 16 }]}>
+              Producto publicado *
+            </Text>
+            <Pressable
+              onPress={() => setProductModalOpen(true)}
               style={{
-                fontSize: 13,
-                color: t.muted,
-                marginBottom: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: fieldErrors.producto ? coral : t.border,
+                backgroundColor: t.input,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {productModalHint(loadingProducts, products.length)}
-            </Text>
-            {loadingProducts ? (
-              <ActivityIndicator
-                color={t.brand}
-                style={{ marginVertical: 24 }}
-              />
-            ) : (
-              <FlatList
-                data={products}
-                keyExtractor={(item) => String(item.id_producto_semanal)}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <Pressable
-                    onPress={() => handleSelectProduct(item)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingVertical: 12,
-                      paddingHorizontal: 12,
-                      borderRadius: 12,
-                      backgroundColor: t.surface,
-                      borderBottomWidth: 1,
-                      borderBottomColor: t.border,
-                    }}
+              {selectedProduct ? (
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text
+                    style={{ fontSize: 15, fontWeight: '600', color: t.fg }}
                   >
-                    <View style={{ flex: 1, marginRight: 12 }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '600',
-                          color: t.fg,
-                        }}
-                      >
-                        {item.producto}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: t.muted,
-                          marginTop: 2,
-                        }}
-                      >
-                        Unidad: {item.unidad}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '700',
-                          color: t.brand,
-                        }}
-                      >
-                        ${item.precio}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: t.muted,
-                          marginTop: 2,
-                        }}
-                      >
-                        Stock: {item.stock}
-                      </Text>
-                    </View>
-                  </Pressable>
-                )}
+                    {selectedProduct.producto}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
+                    Stock: {selectedProduct.stock} · {selectedProduct.unidad}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={{ fontSize: 15, color: t.muted }}>
+                  Elige un producto publicado…
+                </Text>
+              )}
+              <MaterialCommunityIcons
+                name="chevron-down"
+                size={20}
+                color={t.muted}
               />
-            )}
+            </Pressable>
+            {fieldErrors.producto ? (
+              <Text style={errorStyle}>{fieldErrors.producto}</Text>
+            ) : null}
+            <ProductEmptyNotice
+              products={products}
+              loading={loadingProducts}
+              inputBg={t.input}
+              borderColor={t.border}
+              muted={t.muted}
+            />
+
+            {/* Cantidad */}
+            <Text style={[labelStyle, { marginTop: 16 }]}>Cantidad *</Text>
+            <TextInput
+              value={cantidad}
+              onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
+              keyboardType="number-pad"
+              maxLength={10}
+              placeholder="0"
+              placeholderTextColor={t.muted}
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: fieldErrors.cantidad ? coral : t.border,
+                backgroundColor: t.input,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 15,
+                color: t.fg,
+              }}
+            />
+            {fieldErrors.cantidad ? (
+              <Text style={errorStyle}>{fieldErrors.cantidad}</Text>
+            ) : null}
+
+            {/* Motivo */}
+            <Text style={[labelStyle, { marginTop: 16 }]}>Motivo *</Text>
+            <TextInput
+              value={motivo}
+              onChangeText={setMotivo}
+              maxLength={300}
+              placeholder="Ej.: se venció la fecha de caducidad"
+              placeholderTextColor={t.muted}
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: fieldErrors.motivo ? coral : t.border,
+                backgroundColor: t.input,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 15,
+                color: t.fg,
+              }}
+            />
+            {fieldErrors.motivo ? (
+              <Text style={errorStyle}>{fieldErrors.motivo}</Text>
+            ) : null}
+
+            {/* Comentarios (opcional) */}
+            <Text style={[labelStyle, { marginTop: 16 }]}>
+              Comentarios (opcional)
+            </Text>
+            <TextInput
+              value={comentarios}
+              onChangeText={setComentarios}
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+              placeholder="Notas adicionales…"
+              placeholderTextColor={t.muted}
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: t.border,
+                backgroundColor: t.input,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                fontSize: 15,
+                color: t.fg,
+                minHeight: 96,
+                textAlignVertical: 'top',
+              }}
+            />
+
+            {/* Decisión */}
+            <DecisionSelector
+              selected={selectedDecision}
+              error={fieldErrors.decision}
+              t={t}
+              coral={coral}
+              onPress={() => setDecisionModalOpen(true)}
+            />
+
+            {/* Submit */}
+            <Pressable
+              onPress={handleSubmit}
+              disabled={createMutation.isPending}
+              style={{
+                marginTop: 28,
+                borderRadius: 14,
+                backgroundColor: t.brand,
+                paddingVertical: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: createMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {createMutation.isPending ? (
+                <ActivityIndicator color={white} />
+              ) : (
+                <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
+                  Registrar merma
+                </Text>
+              )}
+            </Pressable>
           </View>
-        </View>
-      </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Selector de producto */}
+      <ProductModal
+        visible={productModalOpen}
+        loading={loadingProducts}
+        products={products}
+        selectedId={selectedProduct?.id_producto_semanal ?? null}
+        bottomInset={insets.bottom}
+        t={t}
+        onClose={() => setProductModalOpen(false)}
+        onSelect={handleSelectProduct}
+      />
 
       {/* Selector de pedido */}
       <PedidoModal

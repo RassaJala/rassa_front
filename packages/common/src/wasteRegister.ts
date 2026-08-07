@@ -83,3 +83,48 @@ export interface PublishedPublication {
   semana: string;
   productos: PublishedProduct[];
 }
+
+// Client-side validation shared by mobile (WasteRegisterScreen) and web
+// (WasteRegister). Returns a plain error map keyed by field; an empty map
+// means the payload can be submitted. Keeps business rules in one place so a
+// new rule is not implemented twice with different messages.
+export interface WasteFormValues {
+  pedido: unknown;
+  producto: unknown;
+  cantidad: string;
+  motivo: string;
+  // Explicitly includes undefined: callers pass `selected?.stock` which may be
+  // undefined when nothing is selected; exactOptionalPropertyTypes rejects
+  // `stock?: number` for that shape.
+  stock?: number | undefined;
+}
+
+export function validateWasteRecord(
+  values: WasteFormValues,
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+
+  if (!values.pedido) {
+    errors.pedido = 'Selecciona un pedido.';
+  }
+  if (!values.producto) {
+    errors.producto = 'Selecciona un producto publicado.';
+  }
+
+  const cantidadNum = Number(values.cantidad);
+  if (!values.cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
+    errors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
+  } else if (cantidadNum > 999_999_999) {
+    errors.cantidad = 'La cantidad es demasiado grande.';
+  } else if (typeof values.stock === 'number' && cantidadNum > values.stock) {
+    errors.cantidad = `Stock disponible: ${values.stock}.`;
+  }
+
+  if (!values.motivo.trim()) {
+    errors.motivo = 'El motivo es obligatorio.';
+  } else if (values.motivo.trim().length > 300) {
+    errors.motivo = 'El motivo no puede superar los 300 caracteres.';
+  }
+
+  return errors;
+}

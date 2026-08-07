@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import {
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
   type WasteDecisionOption,
-  type WasteRecordPayload,
+  validateWasteRecord,
 } from '@/common/wasteRegister';
 import type { Order } from '@root/types';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -19,8 +19,12 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { TextArea } from '../components/ui/TextArea';
 import { Toast, type ToastState } from '../components/ui/Toast';
 import { useAppColors } from '../hooks/useAppColors';
-import api from '../services/api';
 import { extractApiError } from '../utils/apiErrors';
+import {
+  createWasteRecord,
+  fetchWasteOrders,
+  fetchWastePublications,
+} from '../services/waste';
 
 const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300';
 
@@ -41,27 +45,41 @@ export function WasteRegister() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  const { data: publications = [], isLoading: loadingProducts } = useQuery<
-    PublishedPublication[]
-  >({
+  const {
+    data: publications = [],
+    isLoading: loadingProducts,
+    isError: productsError,
+    refetch: refetchProducts,
+  } = useQuery<PublishedPublication[]>({
     queryKey: ['publicaciones-current'],
-    queryFn: async () => {
-      const res = await api.get<{ data: PublishedPublication[] }>(
-        '/publicaciones/current/',
-      );
-      return res.data.data;
-    },
+    queryFn: fetchWastePublications,
     staleTime: 60_000,
+    // Retry storm guard: axios-retry (3x) + TanStack retry (3x) would send up
+    // to 9 attempts per endpoint on a degraded backend; the form has a manual
+    // "Reintentar" button instead.
+    retry: false,
   });
 
-  const { data: pedidos = [], isLoading: loadingPedidos } = useQuery<Order[]>({
+  const {
+    data: pedidos = [],
+    isLoading: loadingPedidos,
+    isError: pedidosError,
+    refetch: refetchPedidos,
+  } = useQuery<Order[]>({
     queryKey: ['waste-pedidos'],
-    queryFn: async () => {
-      const res = await api.get<{ results?: Order[] }>('/pedidos/');
-      return res.data.results ?? [];
-    },
+    queryFn: fetchWasteOrders,
     staleTime: 60_000,
+    retry: false,
   });
+
+  useEffect(() => {
+    if (productsError) {
+      console.error('[waste] publications query failed', productsError);
+    }
+    if (pedidosError) {
+      console.error('[waste] orders query failed', pedidosError);
+    }
+  }, [productsError, pedidosError]);
 
   const products = useMemo<PublishedProduct[]>(
     () =>
@@ -82,15 +100,14 @@ export function WasteRegister() {
     ) ?? null;
 
   const mutation = useMutation({
-    mutationFn: async (payload: WasteRecordPayload) => {
-      const res = await api.post<{ data: unknown }>('/mermas/', payload);
-      return res.data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['waste-records'] });
-      void queryClient.invalidateQueries({
-        queryKey: ['publicaciones-current'],
-      });
+    mutationFn: createWasteRecord,
+    onSuccess: async () => {
+      // Refresh product stock BEFORE resetting the form so the next payload is
+      // validated against the real stock, not the stale pre-merma value.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['waste-records'] }),
+        queryClient.invalidateQueries({ queryKey: ['publicaciones-current'] }),
+      ]);
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setProductoId('');
       setPedidoId('');
@@ -118,27 +135,16 @@ export function WasteRegister() {
 
   function handleSubmit(e: React.FormEvent): void {
     e.preventDefault();
-    const nextErrors: Record<string, string> = {};
-    const cantidadNum = Number(cantidad);
+    const nextErrors: Record<string, string> = {
+      ...validateWasteRecord({
+        pedido: pedidoId,
+        producto: selectedProduct,
+        cantidad,
+        motivo,
+        stock: selectedProduct?.stock,
+      }),
+    };
 
-    if (!pedidoId) {
-      nextErrors.pedidoId = 'Selecciona un pedido.';
-    }
-    if (!productoId) {
-      nextErrors.productoId = 'Selecciona un producto publicado.';
-    }
-    if (!cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
-      nextErrors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
-    } else if (cantidadNum > 999_999_999) {
-      nextErrors.cantidad = 'La cantidad es demasiado grande.';
-    } else if (selectedProduct && cantidadNum > selectedProduct.stock) {
-      nextErrors.cantidad = `Stock disponible: ${selectedProduct.stock}.`;
-    }
-    if (!motivo.trim()) {
-      nextErrors.motivo = 'El motivo es obligatorio.';
-    } else if (motivo.trim().length > 300) {
-      nextErrors.motivo = 'El motivo no puede superar los 300 caracteres.';
-    }
     if (!decisionId) {
       nextErrors.decisionId = 'Elige una decisión.';
     }
@@ -156,7 +162,7 @@ export function WasteRegister() {
     mutation.mutate({
       fk_producto_semanal: selectedProduct.id_producto_semanal,
       fk_pedido: Number(pedidoId),
-      cantidad: cantidadNum,
+      cantidad: Number(cantidad),
       motivo: motivo.trim(),
       fk_decision: Number(decisionId),
       ...(comentarios.trim() ? { comentarios: comentarios.trim() } : {}),
@@ -167,6 +173,36 @@ export function WasteRegister() {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (productsError || pedidosError) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-3 py-24 text-center">
+        <span className="text-5xl" aria-hidden>
+          ⚠️
+        </span>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          No se pudieron cargar los datos.
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Revisa tu conexión e inténtalo de nuevo.
+        </p>
+        <div className="mt-2 flex gap-3">
+          <Button
+            variant="primary"
+            onClick={() => {
+              void refetchProducts();
+              void refetchPedidos();
+            }}
+          >
+            Reintentar
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/vendedor/ventas')}>
+            ← Volver
+          </Button>
+        </div>
       </div>
     );
   }
@@ -199,10 +235,13 @@ export function WasteRegister() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>Pedido *</label>
+            <label className={labelClass} htmlFor="waste-pedido">
+              Pedido *
+            </label>
             <FormSelect
+              id="waste-pedido"
               colors={colors}
-              hasError={Boolean(errors.pedidoId)}
+              hasError={Boolean(errors.pedido)}
               value={pedidoId}
               onChange={(e) => setPedidoId(e.target.value)}
             >
@@ -213,16 +252,19 @@ export function WasteRegister() {
                 </option>
               ))}
             </FormSelect>
-            {errors.pedidoId ? (
-              <p className="text-xs text-red-500">{errors.pedidoId}</p>
+            {errors.pedido ? (
+              <p className="text-xs text-red-500">{errors.pedido}</p>
             ) : null}
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>Producto publicado *</label>
+            <label className={labelClass} htmlFor="waste-producto">
+              Producto publicado *
+            </label>
             <FormSelect
+              id="waste-producto"
               colors={colors}
-              hasError={Boolean(errors.productoId)}
+              hasError={Boolean(errors.producto)}
               value={productoId}
               onChange={(e) => setProductoId(e.target.value)}
             >
@@ -236,8 +278,8 @@ export function WasteRegister() {
                 </option>
               ))}
             </FormSelect>
-            {errors.productoId ? (
-              <p className="text-xs text-red-500">{errors.productoId}</p>
+            {errors.producto ? (
+              <p className="text-xs text-red-500">{errors.producto}</p>
             ) : null}
             {!loadingProducts && products.length === 0 ? (
               <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
@@ -280,14 +322,18 @@ export function WasteRegister() {
             <TextArea
               colors={colors}
               placeholder="Detalles adicionales…"
+              maxLength={500}
               value={comentarios}
               onChange={(e) => setComentarios(e.target.value)}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>Decisión *</label>
+            <label className={labelClass} htmlFor="waste-decision">
+              Decisión *
+            </label>
             <FormSelect
+              id="waste-decision"
               colors={colors}
               hasError={Boolean(errors.decisionId)}
               value={decisionId}
