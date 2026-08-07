@@ -154,7 +154,7 @@ export function ChatListPage() {
         )}
 
         {!isLoading &&
-          !error &&
+          (withBanner || (!error && filtered.length > 0)) &&
           filtered.map((conv) => (
             <ConversationItem key={conv.id} conversation={conv} />
           ))}
