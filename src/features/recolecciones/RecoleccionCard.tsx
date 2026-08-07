@@ -23,6 +23,8 @@ function estadoColors(estado: RecoleccionEstado): {
       return { bg: colors.statusPublicadoBg, fg: colors.statusPublicadoFg };
     case 'cancelado':
       return { bg: colors.statusCanceladoBg, fg: colors.statusCanceladoFg };
+    default:
+      return { bg: colors.statusCanceladoBg, fg: colors.statusCanceladoFg };
   }
 }
 
@@ -138,6 +140,56 @@ interface RecoleccionActionsProps {
   readonly onContact: () => void;
 }
 
+interface ActionButtonProps {
+  readonly icon: string;
+  readonly label: string;
+  readonly backgroundColor: string;
+  readonly outline: boolean;
+  readonly textColor: string;
+  readonly onPress: () => void;
+  readonly disabled: boolean;
+}
+
+function ActionButton({
+  icon,
+  label,
+  backgroundColor,
+  outline,
+  textColor,
+  onPress,
+  disabled,
+}: ActionButtonProps): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: outline ? colors.transparent : backgroundColor,
+        borderRadius: 10,
+        borderWidth: outline ? 1 : 0,
+        borderColor: outline ? backgroundColor : colors.transparent,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <MaterialCommunityIcons
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        name={icon as any}
+        size={16}
+        color={textColor}
+      />
+      <Text style={{ fontSize: 13, fontWeight: '700', color: textColor }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function RecoleccionActions({
   canContact,
   transiciones,
@@ -150,110 +202,61 @@ function RecoleccionActions({
   const redCoral = colors.brandRedCoral;
 
   return (
-    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 12,
+        justifyContent: 'center',
+      }}
+    >
       {canContact ? (
-        <Pressable
+        <ActionButton
+          icon="message-outline"
+          label="Contactar"
+          backgroundColor={colors.info}
+          outline={false}
+          textColor={white}
           onPress={onContact}
           disabled={busy}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: colors.info,
-            borderRadius: 10,
-            paddingVertical: 10,
-            paddingHorizontal: 12,
-            opacity: busy ? 0.5 : 1,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="message-outline"
-            size={16}
-            color={white}
-          />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: white }}>
-            Contactar
-          </Text>
-        </Pressable>
+        />
       ) : null}
 
       {transiciones.includes('recolectado') ? (
-        <Pressable
+        <ActionButton
+          icon="check-circle-outline"
+          label="Recolectado"
+          backgroundColor={colors.success}
+          outline={false}
+          textColor={white}
           onPress={() => onTransition('recolectado')}
           disabled={busy}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: colors.success,
-            borderRadius: 10,
-            paddingVertical: 10,
-            opacity: busy ? 0.5 : 1,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="check-circle-outline"
-            size={16}
-            color={white}
-          />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: white }}>
-            Recolectado
-          </Text>
-        </Pressable>
+        />
       ) : null}
 
       {transiciones.includes('en_ruta') ? (
-        <Pressable
+        <ActionButton
+          icon="truck-fast-outline"
+          label="Iniciar ruta"
+          backgroundColor={colors.info}
+          outline={false}
+          textColor={white}
           onPress={() => onTransition('en_ruta')}
           disabled={busy}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: colors.info,
-            borderRadius: 10,
-            paddingVertical: 10,
-            opacity: busy ? 0.5 : 1,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="truck-fast-outline"
-            size={16}
-            color={white}
-          />
-          <Text style={{ fontSize: 13, fontWeight: '700', color: white }}>
-            Iniciar ruta
-          </Text>
-        </Pressable>
+        />
       ) : null}
 
       {transiciones.includes('cancelado') ? (
-        <Pressable
+        <ActionButton
+          icon="close"
+          label="Cancelar"
+          backgroundColor={redCoral}
+          outline={true}
+          textColor={redCoral}
           onPress={onCancel}
           disabled={busy}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: redCoral,
-            paddingVertical: 10,
-            paddingHorizontal: 14,
-            opacity: busy ? 0.5 : 1,
-          }}
-        >
-          <MaterialCommunityIcons name="close" size={16} color={redCoral} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: redCoral }}>
-            Cancelar
-          </Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );

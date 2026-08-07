@@ -30,7 +30,11 @@ export default function HomeSellerScreen({
   const stats = getSellerStats();
 
   const handleProfilePress = () => {
-    navigation.navigate('Perfil');
+    navigation.getParent()?.navigate('Perfil');
+  };
+
+  const handleNotificationsPress = () => {
+    navigation.getParent()?.navigate('Notificaciones');
   };
 
   const handleCortePress = () => {
@@ -53,8 +57,8 @@ export default function HomeSellerScreen({
 
   return (
     <ProfileDrawerProvider
-      defaultName="Vendedor"
-      defaultEmail="vendedor@rassa.com"
+      defaultName="Cargando…"
+      defaultEmail="Cargando…"
       onProfilePress={handleProfilePress}
     >
       <View style={{ flex: 1, backgroundColor: bg }}>
@@ -97,6 +101,7 @@ export default function HomeSellerScreen({
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
+                    onPress={handleNotificationsPress}
                     style={({ pressed }) => ({
                       width: 48,
                       height: 48,

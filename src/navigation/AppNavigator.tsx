@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -81,30 +88,52 @@ const FarmerStack = createNativeStackNavigator<FarmerStackParamList>();
 const SellerStack = createNativeStackNavigator<SellerStackParamList>();
 const AdminTab = createBottomTabNavigator();
 
+function getTabColors(isDark: boolean) {
+  return {
+    surface: isDark ? colors.admSurfaceD : colors.surface,
+    border: isDark ? colors.admBorderD : colors.admBorderL,
+    muted: isDark ? colors.admMutedD : colors.admMutedL,
+    brand: isDark ? colors.admBrandD : colors.admBrandL,
+  };
+}
+
+function createTabBarScreenOptions(
+  tabColors: {
+    readonly surface: string;
+    readonly border: string;
+    readonly muted: string;
+    readonly brand: string;
+  },
+  insetsBottom: number,
+) {
+  return {
+    headerShown: false,
+    tabBarStyle: {
+      backgroundColor: tabColors.surface,
+      borderTopColor: tabColors.border,
+      borderTopWidth: 1,
+      height: 60 + insetsBottom,
+      paddingBottom: 8 + insetsBottom,
+      paddingTop: 6,
+      justifyContent: 'space-evenly' as const,
+    },
+    tabBarItemStyle: { flex: 1 },
+    tabBarActiveTintColor: tabColors.brand,
+    tabBarInactiveTintColor: tabColors.muted,
+    tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as const },
+  };
+}
+
 function AdminTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
+
+  const tabColors = getTabColors(isDark);
 
   return (
     <AdminTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: surface,
-          borderTopColor: border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}
+      screenOptions={createTabBarScreenOptions(tabColors, insets.bottom)}
     >
       <AdminTab.Screen
         name="AdminInicio"
@@ -232,28 +261,14 @@ function AuthStack() {
 
 function BuyerTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
+
+  const tabColors = getTabColors(isDark);
 
   return (
     <BuyerTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: surface,
-          borderTopColor: border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}
+      screenOptions={createTabBarScreenOptions(tabColors, insets.bottom)}
     >
       <BuyerTab.Screen
         name="Home"
@@ -312,13 +327,6 @@ function BuyerTabs() {
         }}
       />
       <BuyerTab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <BuyerTab.Screen
         name="ChatList"
         component={ChatListScreen}
         options={{
@@ -342,6 +350,11 @@ function BuyerNavigator() {
   return (
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
+      <BuyerStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+        options={{ headerShown: true, title: 'Notificaciones' }}
+      />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
       <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
@@ -414,28 +427,14 @@ function FarmerScreens() {
 
 function SellerTabs() {
   const { colorScheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
-  const surface = isDark ? colors.admSurfaceD : colors.surface;
-  const muted = isDark ? colors.admMutedD : colors.admMutedL;
-  const brand = isDark ? colors.admBrandD : colors.admBrandL;
-  const border = isDark ? colors.admBorderD : colors.admBorderL;
+
+  const tabColors = getTabColors(isDark);
 
   return (
     <SellerTab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: surface,
-          borderTopColor: border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}
+      screenOptions={createTabBarScreenOptions(tabColors, insets.bottom)}
     >
       <SellerTab.Screen
         name="HomeSeller"
@@ -480,20 +479,6 @@ function SellerTabs() {
         }}
       />
       <SellerTab.Screen
-        name="Notificaciones"
-        component={NotificationsScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <SellerTab.Screen
-        name="Perfil"
-        component={ProfileSellerScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <SellerTab.Screen
         name="ChatList"
         component={ChatListScreen}
         options={{
@@ -517,6 +502,12 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="Perfil" component={ProfileSellerScreen} />
+      <SellerStack.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+        options={{ headerShown: true, title: 'Notificaciones' }}
+      />
       <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
@@ -605,6 +596,63 @@ function AdminScreens() {
 
 const SPLASH_TIMEOUT_MS = 5000;
 
+function SplashTimeoutScreen({
+  onRetry,
+}: {
+  readonly onRetry: () => void;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.admBgL,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 32,
+      }}
+    >
+      <ActivityIndicator size="large" color={colors.admBrandL} />
+      <Text
+        style={{
+          marginTop: 24,
+          fontSize: 18,
+          fontWeight: '700',
+          color: colors.admFgL,
+          textAlign: 'center',
+        }}
+      >
+        La carga está tardando más de lo esperado
+      </Text>
+      <Text
+        style={{
+          marginTop: 8,
+          fontSize: 14,
+          color: colors.admMutedL,
+          textAlign: 'center',
+        }}
+      >
+        Verifica tu conexión e intenta de nuevo.
+      </Text>
+      <Pressable
+        onPress={onRetry}
+        style={{
+          marginTop: 24,
+          backgroundColor: colors.admBrandL,
+          borderRadius: 12,
+          paddingHorizontal: 32,
+          paddingVertical: 14,
+        }}
+      >
+        <Text
+          style={{ fontSize: 15, fontWeight: '700', color: colors.iconWhite }}
+        >
+          Reintentar
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function AppNavigator(): React.JSX.Element {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
 
@@ -654,7 +702,13 @@ export default function AppNavigator(): React.JSX.Element {
 
   if (isLoading || checkingOnboarding) {
     if (splashTimedOut) {
-      return <RoleErrorScreen onLogout={() => void logout()} />;
+      return (
+        <SplashTimeoutScreen
+          onRetry={() => {
+            setSplashTimedOut(false);
+          }}
+        />
+      );
     }
 
     return <SplashScreen />;

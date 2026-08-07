@@ -85,11 +85,9 @@ axiosRetry(api, {
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => {
     return (
-      (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-        (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
-      error.response?.status !== 429 &&
-      error.config?.method !== 'post'
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status !== undefined &&
+        error.response.status >= SERVER_ERROR_THRESHOLD)
     );
   },
 });
@@ -104,7 +102,12 @@ api.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch {
-    // Token read failure is non-fatal; server returns 401 if auth is needed
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'Token read from storage failed',
+      data: { key: Storage.ACCESS_TOKEN_KEY },
+      level: 'warning',
+    });
   }
 
   return config;
@@ -155,11 +158,7 @@ async function refreshTokens(): Promise<string> {
     }
   })();
 
-  try {
-    return await refreshPromise;
-  } finally {
-    refreshPromise = null;
-  }
+  return refreshPromise;
 }
 
 /**
@@ -212,6 +211,7 @@ api.interceptors.response.use(
     try {
       newAccessToken = await refreshTokens();
     } catch (refreshError) {
+      refreshPromise = null;
       Sentry.captureException(sanitizeSentryError(refreshError));
       await Promise.all([
         Storage.deleteItemAsync(Storage.ACCESS_TOKEN_KEY),
@@ -225,7 +225,11 @@ api.interceptors.response.use(
     if (originalRequest.headers && newAccessToken) {
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
     }
-    return api(originalRequest);
+    try {
+      return await api(originalRequest);
+    } finally {
+      refreshPromise = null;
+    }
   },
 );
 
@@ -235,10 +239,10 @@ export function mediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const base = baseURL.replace(/\/api\/?$/, '');
-  // ponytail: sanitizar path para evitar traversal (#34)
-  const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
-  const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
   try {
+    const decoded = decodeURIComponent(path);
+    const clean = decoded.replace(/\.\./g, '').replace(/^\/+/, '/');
+    const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
     return `${base}${encodeURI(prefixed)}`;
   } catch {
     return null;

@@ -24,6 +24,7 @@ interface AgricultorSelectorProps {
 }
 
 interface CuerpoAgricultoresProps {
+  readonly isDark: boolean;
   readonly grupos: readonly AgricultorUbicacion[];
   readonly isLoading: boolean;
   readonly isError: boolean;
@@ -35,6 +36,7 @@ interface CuerpoAgricultoresProps {
 }
 
 interface FilaAgricultorProps {
+  readonly isDark: boolean;
   readonly agricultor: AgricultorAgricultorItem;
   readonly selectedId: number | null;
   readonly duplicateKeys: ReadonlySet<string>;
@@ -43,22 +45,29 @@ interface FilaAgricultorProps {
 }
 
 function NoticeAgricultores({
+  isDark,
   truncated,
   errores,
   onRetry,
 }: {
+  readonly isDark: boolean;
   readonly truncated: boolean;
   readonly errores: number;
   readonly onRetry: () => void;
 }): React.JSX.Element | null {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
 
   if (!truncated && errores === 0) {
     return null;
   }
+
+  const mensaje =
+    truncated && errores > 0
+      ? 'Solo se muestran los primeros agricultores y algunos no se pudieron cargar.'
+      : truncated
+        ? 'Solo se muestran los primeros agricultores.'
+        : 'Algunos agricultores no se pudieron cargar.';
 
   return (
     <View
@@ -70,9 +79,7 @@ function NoticeAgricultores({
       }}
     >
       <Text style={{ fontSize: 12, color: muted, textAlign: 'center' }}>
-        {truncated
-          ? 'Solo se muestran los primeros agricultores.'
-          : 'Algunos agricultores no se pudieron cargar.'}
+        {mensaje}
       </Text>
       <Pressable onPress={onRetry} style={{ marginTop: 6 }}>
         <Text
@@ -91,6 +98,7 @@ function NoticeAgricultores({
 }
 
 function CuerpoAgricultores({
+  isDark,
   grupos,
   isLoading,
   isError,
@@ -100,8 +108,6 @@ function CuerpoAgricultores({
   onRetry,
   onSelect,
 }: CuerpoAgricultoresProps): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const muted = isDark ? colors.admMutedD : colors.admMutedL;
 
@@ -173,6 +179,7 @@ function CuerpoAgricultores({
               {localidad.agricultores.map((a) => (
                 <FilaAgricultor
                   key={a.id_usuario}
+                  isDark={isDark}
                   agricultor={a}
                   selectedId={selectedId}
                   duplicateKeys={duplicateKeys}
@@ -189,14 +196,13 @@ function CuerpoAgricultores({
 }
 
 function FilaAgricultor({
+  isDark,
   agricultor,
   selectedId,
   duplicateKeys,
   fecha,
   onSelect,
 }: FilaAgricultorProps): React.JSX.Element {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
   const activeBg = isDark ? colors.admActiveBgD : colors.admActiveBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
   const redCoral = colors.brandRedCoral;
@@ -273,11 +279,13 @@ export default function AgricultorSelector({
       }}
     >
       <NoticeAgricultores
+        isDark={isDark}
         truncated={truncated}
         errores={errores}
         onRetry={onRetry}
       />
       <CuerpoAgricultores
+        isDark={isDark}
         grupos={grupos}
         isLoading={isLoading}
         isError={isError}
