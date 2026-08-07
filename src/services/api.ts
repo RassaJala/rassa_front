@@ -6,6 +6,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
 import { parseApiError } from '@/common/apiErrors';
+import type { SafeMessageError } from '@/common/apiErrors';
 import { API_RETRY_LIMIT } from '@/common/networking';
 
 import { sanitizeSentryError } from './sentry';
@@ -182,13 +183,13 @@ api.interceptors.response.use(
     // Only handle Axios errors
     if (!axios.isAxiosError(error)) throw error;
 
-    // Normalize non-401 failures so the message shown to users is always
-    // parseable and safe (never the raw axios "Request failed with status code
-    // 500"). 401s are handled below (token refresh/force-logout) and keep
-    // their own path. Errors are mutated in place — callers still get an
-    // AxiosError, just with a friendly `message` (R1/R4: CRITICAL #1, MAJOR #2).
+    // Normalize non-401 failures by exposing a UI-safe `safeMessage` instead of
+    // mutating the original `message` (R1-002/R4-002): downstream handlers
+    // (Sentry, axios-retry, error boundaries) keep the raw text, surfaces read
+    // the sanitized variant. 401s are handled below (token refresh/force-logout)
+    // and keep their own path.
     if (error.response?.status !== 401) {
-      error.message = parseApiError(error);
+      (error as SafeMessageError).safeMessage = parseApiError(error);
     }
 
     const axiosErr = error as AxiosError;

@@ -2,8 +2,9 @@ import * as Sentry from '@sentry/react';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import axiosRetry from 'axios-retry';
 
-import { API_RETRY_LIMIT } from '@/common/networking';
 import { parseApiError } from '@/common/apiErrors';
+import type { SafeMessageError } from '@/common/apiErrors';
+import { API_RETRY_LIMIT } from '@/common/networking';
 import { redirect } from './navigate';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -319,10 +320,10 @@ api.interceptors.response.use(
 
     if (!is401) {
       reportError(error);
-      // Normalize non-401 failures so users never see the raw axios message
-      // (e.g. "Request failed with status code 500"). 401 flow is untouched.
-      // R1/R4: CRITICAL #1, MAJOR #2.
-      error.message = parseApiError(error);
+      // Expose a UI-safe `safeMessage` without mutating the original `message`
+      // (R1-002/R4-002): Sentry/downstream keep the raw text, surfaces read the
+      // sanitized variant. 401 flow is untouched (CRITICAL #1 from #82).
+      (error as SafeMessageError).safeMessage = parseApiError(error);
       return Promise.reject(error);
     }
 

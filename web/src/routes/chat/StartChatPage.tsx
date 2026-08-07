@@ -2,9 +2,10 @@ import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppColors } from '~/hooks/useAppColors';
 import { useAuth } from '~/hooks/useAuth';
+import { safeErrorMessage } from '@/common/apiErrors';
+import type { SearchUser } from '@rassa/chat';
 import { useCreatePrivateConversation } from '~/hooks/chat/useCreatePrivateConversation';
 import { useSearchUsers } from '~/hooks/chat/useSearchUsers';
-import type { SearchUser } from '@rassa/chat';
 
 export function StartChatPage() {
   const navigate = useNavigate();
@@ -240,8 +241,10 @@ export function StartChatPage() {
                 style={{ color: c.coral }}
                 role="alert"
               >
-                {createConversation.error?.message ??
-                  'No se pudo crear la conversación. Intenta de nuevo.'}
+                {safeErrorMessage(
+                  createConversation.error,
+                  'No se pudo crear la conversación. Intenta de nuevo.',
+                )}
               </p>
             )}
           </div>
