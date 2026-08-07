@@ -475,9 +475,9 @@ describe('CollectionScheduleScreen', () => {
     expect(
       getByText('Ya existe una recolección para este agricultor.'),
     ).toBeTruthy();
-    expect(
-      getAllByText('Programar recolección').length,
-    ).toBeGreaterThanOrEqual(1);
+    expect(getAllByText('Programar recolección').length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   it('avisa cuando no se puede abrir el chat', () => {

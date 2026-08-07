@@ -328,7 +328,7 @@ describe('cambiarEstadoRecoleccion', () => {
     mockedApi.post.mockResolvedValue({
       data: { data: { id_recoleccion: 1, estado: 'en_ruta' } },
     });
-    const result = await cambiarEstadoRecoleccion(1, 'en_ruta');
+    const result = await cambiarEstadoRecoleccion(1, 'en_ruta', 'pendiente');
     expect(mockedApi.post).toHaveBeenCalledWith('/recolecciones/1/estado/', {
       estado: 'en_ruta',
     });
@@ -336,15 +336,15 @@ describe('cambiarEstadoRecoleccion', () => {
   });
 
   it('SECURITY: rejects invalid ids', async () => {
-    await expect(cambiarEstadoRecoleccion(0, 'en_ruta')).rejects.toThrow(
-      'Invalid recoleccion: 0',
-    );
-    await expect(cambiarEstadoRecoleccion(-1, 'en_ruta')).rejects.toThrow(
-      'Invalid recoleccion: -1',
-    );
-    await expect(cambiarEstadoRecoleccion(NaN, 'en_ruta')).rejects.toThrow(
-      'Invalid recoleccion: NaN',
-    );
+    await expect(
+      cambiarEstadoRecoleccion(0, 'en_ruta', 'pendiente'),
+    ).rejects.toThrow('Invalid recoleccion: 0');
+    await expect(
+      cambiarEstadoRecoleccion(-1, 'en_ruta', 'pendiente'),
+    ).rejects.toThrow('Invalid recoleccion: -1');
+    await expect(
+      cambiarEstadoRecoleccion(NaN, 'en_ruta', 'pendiente'),
+    ).rejects.toThrow('Invalid recoleccion: NaN');
   });
 
   it('rejects on 409 conflict', async () => {
@@ -354,9 +354,9 @@ describe('cambiarEstadoRecoleccion', () => {
       value: { status: 409, data: { detail: 'Estado inválido' } },
     });
     mockedApi.post.mockRejectedValue(err);
-    await expect(cambiarEstadoRecoleccion(1, 'en_ruta')).rejects.toThrow(
-      'Conflict',
-    );
+    await expect(
+      cambiarEstadoRecoleccion(1, 'en_ruta', 'pendiente'),
+    ).rejects.toThrow('Conflict');
   });
 });
 

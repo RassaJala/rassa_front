@@ -24,7 +24,6 @@ export {
   toDateString,
 } from '@/common/utils/recolecciones';
 
-
 export function formatFechaHeader(fecha: string, today: string): string {
   return formatFechaHeaderCommon(fecha, today, DIAS);
 }
