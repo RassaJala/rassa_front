@@ -87,8 +87,8 @@ axiosRetry(api, {
     return (
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD) ||
-        error.response?.status === 429) &&
+          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
+      error.response?.status !== 429 &&
       error.config?.method !== 'post'
     );
   },
