@@ -4,7 +4,7 @@ import type {
   ResumenParams,
   WasteEnvelope,
 } from '@/common/waste';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, Order } from '@/types';
 import type {
   PublishedPublication,
   WasteDecision,
@@ -16,6 +16,7 @@ import api from './api';
 
 const DECISIONES_URL = '/decisiones-merma/';
 const MERMAS_URL = '/mermas/';
+const PEDIDOS_URL = '/pedidos/';
 
 export async function fetchMermaResumen(
   params: ResumenParams = {},
@@ -58,6 +59,11 @@ export async function fetchWasteRecord(id: number): Promise<WasteRecord> {
     `${MERMAS_URL}${id}/`,
   );
   return data.data;
+}
+
+export async function fetchWasteOrders(): Promise<Order[]> {
+  const { data } = await api.get<{ results?: Order[] }>(PEDIDOS_URL);
+  return data.results ?? [];
 }
 
 export async function fetchCurrentPublications(): Promise<

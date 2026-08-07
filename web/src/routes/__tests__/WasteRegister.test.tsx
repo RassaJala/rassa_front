@@ -11,9 +11,14 @@ import { WasteRegister } from '../WasteRegister';
 
 const BASE = '/api';
 
-const decisions = [
-  { id_decision: 1, decision: 'Donar', creado_en: '', estado: true },
-  { id_decision: 2, decision: 'Desechar', creado_en: '', estado: true },
+const pedidos = [
+  {
+    id_pedido: 1,
+    cliente_nombre: 'Juan Pérez',
+    total: '120',
+    estado_actual: 'pendiente',
+    creado_en: '2026-08-03T00:00:00-03:00',
+  },
 ];
 
 const publications = [
@@ -37,9 +42,7 @@ const publications = [
 
 function seedMocks() {
   server.use(
-    http.get(`${BASE}/decisiones-merma/`, () =>
-      HttpResponse.json({ data: { results: decisions } }),
-    ),
+    http.get(`${BASE}/pedidos/`, () => HttpResponse.json({ results: pedidos })),
     http.get(`${BASE}/publicaciones/current/`, () =>
       HttpResponse.json({ data: publications }),
     ),
@@ -60,7 +63,7 @@ function renderPage() {
 }
 
 describe('WasteRegister', () => {
-  it('renders the form with products and decisions from the API', async () => {
+  it('renders the form with products and the fixed decision options', async () => {
     seedMocks();
     renderPage();
 
@@ -82,6 +85,9 @@ describe('WasteRegister', () => {
     await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
 
     expect(
+      await screen.findByText('Selecciona un pedido.'),
+    ).toBeInTheDocument();
+    expect(
       await screen.findByText('Selecciona un producto publicado.'),
     ).toBeInTheDocument();
     expect(
@@ -98,13 +104,14 @@ describe('WasteRegister', () => {
 
     await screen.findByRole('option', { name: /Tomate/ });
     const comboboxes = screen.getAllByRole('combobox');
-    await user.selectOptions(comboboxes[0] as HTMLElement, '100');
+    await user.selectOptions(comboboxes[0] as HTMLElement, '1');
+    await user.selectOptions(comboboxes[1] as HTMLElement, '100');
     await user.type(screen.getByPlaceholderText('0'), '99');
     await user.type(
       screen.getByPlaceholderText('Ej: producto dañado por el clima'),
       'Se venció',
     );
-    await user.selectOptions(comboboxes[1] as HTMLElement, '1');
+    await user.selectOptions(comboboxes[2] as HTMLElement, '1');
     await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
 
     expect(await screen.findByText('Stock disponible: 5.')).toBeInTheDocument();
@@ -118,6 +125,7 @@ describe('WasteRegister', () => {
         posted = true;
         const body = (await request.json()) as Record<string, unknown>;
         expect(body.fk_producto_semanal).toBe(100);
+        expect(body.fk_pedido).toBe(1);
         expect(body.cantidad).toBe(2);
         expect(body.motivo).toBe('Se venció');
         return HttpResponse.json({ data: { id_merma: 1 } });
@@ -129,13 +137,14 @@ describe('WasteRegister', () => {
 
     await screen.findByRole('option', { name: /Tomate/ });
     const comboboxes = screen.getAllByRole('combobox');
-    await user.selectOptions(comboboxes[0] as HTMLElement, '100');
+    await user.selectOptions(comboboxes[0] as HTMLElement, '1');
+    await user.selectOptions(comboboxes[1] as HTMLElement, '100');
     await user.type(screen.getByPlaceholderText('0'), '2');
     await user.type(
       screen.getByPlaceholderText('Ej: producto dañado por el clima'),
       'Se venció',
     );
-    await user.selectOptions(comboboxes[1] as HTMLElement, '1');
+    await user.selectOptions(comboboxes[2] as HTMLElement, '1');
     await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
 
     await waitFor(() => expect(posted).toBe(true));

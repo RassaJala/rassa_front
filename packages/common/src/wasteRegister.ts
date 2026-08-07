@@ -34,9 +34,17 @@ export interface WasteDecisionInfo {
   readonly nombre: string;
 }
 
+export interface WastePedidoInfo {
+  readonly id: number;
+  readonly cliente: string | null;
+  readonly estado: string | null;
+  readonly total: string | null;
+}
+
 export interface WasteRecord {
   readonly id_merma: number;
   readonly fk_producto_semanal: number | null;
+  readonly fk_pedido: number | null;
   readonly cantidad: number;
   readonly motivo: string;
   readonly comentarios: string | null;
@@ -44,12 +52,14 @@ export interface WasteRecord {
   readonly creado_en: string;
   readonly estado: boolean;
   readonly producto_info: WasteProductInfo | null;
+  readonly pedido_info: WastePedidoInfo | null;
   readonly decision_info: WasteDecisionInfo | null;
 }
 
 // Payload para crear un registro de merma (POST /api/mermas/).
 export interface WasteRecordPayload {
   fk_producto_semanal: number;
+  fk_pedido: number;
   cantidad: number;
   motivo: string;
   comentarios?: string;

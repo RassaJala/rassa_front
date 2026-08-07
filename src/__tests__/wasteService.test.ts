@@ -4,6 +4,7 @@ import {
   fetchCurrentPublications,
   fetchMermaResumen,
   fetchWasteDecisions,
+  fetchWasteOrders,
 } from '@/services/waste';
 import api from '@/services/api';
 
@@ -101,6 +102,7 @@ describe('waste register service (mobile)', () => {
 
     await createWasteRecord({
       fk_producto_semanal: 100,
+      fk_pedido: 7,
       cantidad: 2,
       motivo: 'Se venció',
       fk_decision: 1,
@@ -109,11 +111,37 @@ describe('waste register service (mobile)', () => {
 
     expect(mockApi.post).toHaveBeenCalledWith('/mermas/', {
       fk_producto_semanal: 100,
+      fk_pedido: 7,
       cantidad: 2,
       motivo: 'Se venció',
       fk_decision: 1,
       comentarios: 'nota',
     });
+  });
+
+  it('fetches the seller orders for the pedido selector', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id_pedido: 1,
+            total: '10',
+            estado_actual: 'pendiente',
+            creado_en: '',
+          },
+        ],
+      },
+    });
+
+    await expect(fetchWasteOrders()).resolves.toEqual([
+      {
+        id_pedido: 1,
+        total: '10',
+        estado_actual: 'pendiente',
+        creado_en: '',
+      },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/pedidos/');
   });
 
   it('fetches current publications for the product selector', async () => {

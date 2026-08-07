@@ -7,10 +7,10 @@ import {
   type PublishedProduct,
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
-  type WasteDecision,
   type WasteDecisionOption,
   type WasteRecordPayload,
 } from '@/common/wasteRegister';
+import type { Order } from '@root/types';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { FormSelect } from '../components/ui/FormSelect';
@@ -33,29 +33,13 @@ export function WasteRegister() {
   const queryClient = useQueryClient();
 
   const [productoId, setProductoId] = useState('');
+  const [pedidoId, setPedidoId] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [motivo, setMotivo] = useState('');
   const [comentarios, setComentarios] = useState('');
   const [decisionId, setDecisionId] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<ToastState | null>(null);
-
-  const { data: decisions = [], isLoading: loadingDecisions } = useQuery<
-    WasteDecision[]
-  >({
-    queryKey: ['waste-decisions'],
-    queryFn: async () => {
-      const res = await api.get<{
-        data: { results: WasteDecision[] } | WasteDecision[];
-      }>('/decisiones-merma/');
-      // The backend may return a paginated {results} envelope or a bare
-      // array; normalize both so a shape change does not crash the selector.
-      const payload = res.data.data;
-      if (Array.isArray(payload)) return payload;
-      return payload?.results ?? [];
-    },
-    staleTime: 60_000,
-  });
 
   const { data: publications = [], isLoading: loadingProducts } = useQuery<
     PublishedPublication[]
@@ -70,6 +54,15 @@ export function WasteRegister() {
     staleTime: 60_000,
   });
 
+  const { data: pedidos = [], isLoading: loadingPedidos } = useQuery<Order[]>({
+    queryKey: ['waste-pedidos'],
+    queryFn: async () => {
+      const res = await api.get<{ results?: Order[] }>('/pedidos/');
+      return res.data.results ?? [];
+    },
+    staleTime: 60_000,
+  });
+
   const products = useMemo<PublishedProduct[]>(
     () =>
       publications
@@ -78,14 +71,10 @@ export function WasteRegister() {
     [publications],
   );
 
-  const decisionOptions = useMemo<WasteDecisionOption[]>(() => {
-    const active = decisions.filter((decision) => decision.estado);
-    if (active.length === 0) return WASTE_DECISION_OPTIONS;
-    return active.map((decision) => ({
-      id_decision: decision.id_decision,
-      decision: decision.decision,
-    }));
-  }, [decisions]);
+  // Decisiones de merma: catálogo fijo (ids 1-4 sincronizados con el seed del
+  // backend). El endpoint /decisiones-merma/ es solo-admin y el vendedor que
+  // registra mermas recibiría 403; usar el fallback evita el error.
+  const decisionOptions = WASTE_DECISION_OPTIONS;
 
   const selectedProduct =
     products.find(
@@ -104,6 +93,7 @@ export function WasteRegister() {
       });
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setProductoId('');
+      setPedidoId('');
       setCantidad('');
       setMotivo('');
       setComentarios('');
@@ -114,6 +104,7 @@ export function WasteRegister() {
       setToast({
         message: extractApiError(err, [
           'fk_producto_semanal',
+          'fk_pedido',
           'cantidad',
           'motivo',
           'fk_decision',
@@ -130,6 +121,9 @@ export function WasteRegister() {
     const nextErrors: Record<string, string> = {};
     const cantidadNum = Number(cantidad);
 
+    if (!pedidoId) {
+      nextErrors.pedidoId = 'Selecciona un pedido.';
+    }
     if (!productoId) {
       nextErrors.productoId = 'Selecciona un producto publicado.';
     }
@@ -150,12 +144,18 @@ export function WasteRegister() {
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !selectedProduct || !decisionId) {
+    if (
+      Object.keys(nextErrors).length > 0 ||
+      !pedidoId ||
+      !selectedProduct ||
+      !decisionId
+    ) {
       return;
     }
 
     mutation.mutate({
       fk_producto_semanal: selectedProduct.id_producto_semanal,
+      fk_pedido: Number(pedidoId),
       cantidad: cantidadNum,
       motivo: motivo.trim(),
       fk_decision: Number(decisionId),
@@ -163,7 +163,7 @@ export function WasteRegister() {
     });
   }
 
-  if (loadingDecisions || loadingProducts) {
+  if (loadingPedidos || loadingProducts) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <LoadingSpinner />
@@ -198,6 +198,26 @@ export function WasteRegister() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className={labelClass}>Pedido *</label>
+            <FormSelect
+              colors={colors}
+              hasError={Boolean(errors.pedidoId)}
+              value={pedidoId}
+              onChange={(e) => setPedidoId(e.target.value)}
+            >
+              <option value="">Elige un pedido…</option>
+              {pedidos.map((order) => (
+                <option key={order.id_pedido} value={order.id_pedido}>
+                  {`Pedido #${order.id_pedido} · ${order.cliente_nombre ?? 'Cliente'} · $${order.total}`}
+                </option>
+              ))}
+            </FormSelect>
+            {errors.pedidoId ? (
+              <p className="text-xs text-red-500">{errors.pedidoId}</p>
+            ) : null}
+          </div>
+
           <div className="flex flex-col gap-1">
             <label className={labelClass}>Producto publicado *</label>
             <FormSelect

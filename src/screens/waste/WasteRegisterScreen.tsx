@@ -20,13 +20,13 @@ import { colors, themeColors } from '@/constants/colors';
 import {
   createWasteRecord,
   fetchCurrentPublications,
-  fetchWasteDecisions,
+  fetchWasteOrders,
 } from '@/services/waste';
 import { useTheme } from '@/store/ThemeContext';
+import type { Order } from '@/types';
 import type {
   PublishedProduct,
   PublishedPublication,
-  WasteDecision,
   WasteDecisionOption,
   WasteRecordPayload,
 } from '@/types/waste';
@@ -37,6 +37,25 @@ function productModalHint(loading: boolean, productCount: number): string {
   if (loading) return 'Cargando productos…';
   if (productCount === 0) return 'No hay productos publicados con stock.';
   return 'Selecciona el producto a dar de baja.';
+}
+
+function orderModalHint(loading: boolean, orderCount: number): string {
+  if (loading) return 'Cargando pedidos…';
+  if (orderCount === 0) return 'No hay pedidos para este vendedor.';
+  return 'Selecciona el pedido afectado por la merma.';
+}
+
+function formatEstado(estado: string): string {
+  return estado.replaceAll('_', ' ');
+}
+
+function formatFecha(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+  });
 }
 
 interface ProductEmptyNoticeProps {
@@ -83,6 +102,467 @@ function ProductEmptyNotice({
   );
 }
 
+interface PedidoSelectorProps {
+  readonly selected: Order | null;
+  readonly error: string | undefined;
+  readonly t: ReturnType<typeof themeColors>;
+  readonly coral: string;
+  readonly onPress: () => void;
+}
+
+function PedidoSelector({
+  selected,
+  error,
+  t,
+  coral,
+  onPress,
+}: PedidoSelectorProps): React.JSX.Element {
+  const labelStyle = {
+    fontSize: 13,
+    fontWeight: '600',
+    color: t.fg,
+    marginBottom: 6,
+  } as const;
+
+  const errorStyle = {
+    fontSize: 12,
+    color: coral,
+    marginTop: 4,
+  } as const;
+
+  return (
+    <>
+      <Text style={[labelStyle, { marginTop: 24 }]}>Pedido *</Text>
+      <Pressable
+        onPress={onPress}
+        style={{
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: error ? coral : t.border,
+          backgroundColor: t.input,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {selected ? (
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+              Pedido #{selected.id_pedido} ·{' '}
+              {selected.cliente_nombre ?? 'Cliente'}
+            </Text>
+            <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
+              Total: ${selected.total} · {selected.estado_actual}
+            </Text>
+          </View>
+        ) : (
+          <Text style={{ fontSize: 15, color: t.muted }}>Elige un pedido…</Text>
+        )}
+        <MaterialCommunityIcons name="chevron-down" size={20} color={t.muted} />
+      </Pressable>
+      {error ? <Text style={errorStyle}>{error}</Text> : null}
+    </>
+  );
+}
+
+interface PedidoModalProps {
+  readonly visible: boolean;
+  readonly loading: boolean;
+  readonly orders: readonly Order[];
+  readonly selectedId: number | null;
+  readonly overlay: string;
+  readonly bottomInset: number;
+  readonly t: ReturnType<typeof themeColors>;
+  readonly onClose: () => void;
+  readonly onSelect: (pedido: Order) => void;
+}
+
+function PedidoModal({
+  visible,
+  loading,
+  orders,
+  selectedId,
+  overlay,
+  bottomInset,
+  t,
+  onClose,
+  onSelect,
+}: PedidoModalProps): React.JSX.Element {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: overlay,
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: bottomInset + 16,
+            maxHeight: '70%',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: t.border,
+              }}
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 4,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 16,
+                fontWeight: '700',
+                color: t.fg,
+                marginRight: 12,
+              }}
+            >
+              Seleccionar pedido
+            </Text>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.input,
+                borderWidth: 1,
+                borderColor: t.border,
+              }}
+              accessibilityLabel="Cerrar selector de pedido"
+            >
+              <MaterialCommunityIcons name="close" size={18} color={t.fg} />
+            </Pressable>
+          </View>
+          <Text
+            style={{
+              fontSize: 13,
+              color: t.muted,
+              marginBottom: 12,
+            }}
+          >
+            {orderModalHint(loading, orders.length)}
+          </Text>
+          {loading ? (
+            <ActivityIndicator color={t.brand} style={{ marginVertical: 24 }} />
+          ) : (
+            <FlatList
+              data={orders}
+              keyExtractor={(item) => String(item.id_pedido)}
+              showsVerticalScrollIndicator={false}
+              style={{ flexShrink: 1 }}
+              renderItem={({ item }) => {
+                const isSelected = item.id_pedido === selectedId;
+                return (
+                  <Pressable
+                    onPress={() => onSelect(item)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingVertical: 12,
+                      paddingHorizontal: 12,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? t.input : t.surface,
+                      borderWidth: 1,
+                      borderColor: isSelected ? t.brand : t.border,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '600',
+                          color: t.fg,
+                        }}
+                      >
+                        Pedido #{item.id_pedido}
+                        {formatFecha(item.creado_en) !== ''
+                          ? ` · ${formatFecha(item.creado_en)}`
+                          : ''}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: t.muted,
+                          marginTop: 2,
+                        }}
+                      >
+                        {item.cliente_nombre ?? 'Cliente'} · ${item.total}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '600',
+                          color: isSelected ? t.brand : t.muted,
+                        }}
+                      >
+                        {formatEstado(item.estado_actual)}
+                      </Text>
+                      {isSelected ? (
+                        <MaterialCommunityIcons
+                          name="check-circle"
+                          size={18}
+                          color={t.brand}
+                        />
+                      ) : null}
+                    </View>
+                  </Pressable>
+                );
+              }}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+interface DecisionSelectorProps {
+  readonly selected: WasteDecisionOption | null;
+  readonly error: string | undefined;
+  readonly t: ReturnType<typeof themeColors>;
+  readonly coral: string;
+  readonly onPress: () => void;
+}
+
+function DecisionSelector({
+  selected,
+  error,
+  t,
+  coral,
+  onPress,
+}: DecisionSelectorProps): React.JSX.Element {
+  const labelStyle = {
+    fontSize: 13,
+    fontWeight: '600',
+    color: t.fg,
+    marginBottom: 6,
+  } as const;
+
+  const errorStyle = {
+    fontSize: 12,
+    color: coral,
+    marginTop: 4,
+  } as const;
+
+  return (
+    <>
+      <Text style={[labelStyle, { marginTop: 16 }]}>Decisión *</Text>
+      <Pressable
+        onPress={onPress}
+        style={{
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: error ? coral : t.border,
+          backgroundColor: t.input,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text
+          style={{
+            flex: 1,
+            fontSize: 15,
+            color: selected ? t.fg : t.muted,
+          }}
+        >
+          {selected ? selected.decision : 'Elige una decisión…'}
+        </Text>
+        <MaterialCommunityIcons name="chevron-down" size={20} color={t.muted} />
+      </Pressable>
+      {error ? <Text style={errorStyle}>{error}</Text> : null}
+    </>
+  );
+}
+
+interface DecisionModalProps {
+  readonly visible: boolean;
+  readonly options: readonly WasteDecisionOption[];
+  readonly selectedId: number | null;
+  readonly overlay: string;
+  readonly bottomInset: number;
+  readonly t: ReturnType<typeof themeColors>;
+  readonly onClose: () => void;
+  readonly onSelect: (option: WasteDecisionOption) => void;
+}
+
+function DecisionModal({
+  visible,
+  options,
+  selectedId,
+  overlay,
+  bottomInset,
+  t,
+  onClose,
+  onSelect,
+}: DecisionModalProps): React.JSX.Element {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: overlay,
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: t.surface,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: bottomInset + 16,
+            maxHeight: '60%',
+          }}
+        >
+          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: t.border,
+              }}
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 4,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 16,
+                fontWeight: '700',
+                color: t.fg,
+                marginRight: 12,
+              }}
+            >
+              Seleccionar decisión
+            </Text>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.input,
+                borderWidth: 1,
+                borderColor: t.border,
+              }}
+              accessibilityLabel="Cerrar selector de decisión"
+            >
+              <MaterialCommunityIcons name="close" size={18} color={t.fg} />
+            </Pressable>
+          </View>
+          <Text
+            style={{
+              fontSize: 13,
+              color: t.muted,
+              marginBottom: 12,
+            }}
+          >
+            Elige qué hacer con el producto.
+          </Text>
+          <FlatList
+            data={options}
+            keyExtractor={(item) => String(item.id_decision)}
+            showsVerticalScrollIndicator={false}
+            style={{ flexShrink: 1 }}
+            renderItem={({ item }) => {
+              const isSelected = item.id_decision === selectedId;
+              return (
+                <Pressable
+                  onPress={() => onSelect(item)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 12,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: isSelected ? t.input : t.surface,
+                    borderWidth: 1,
+                    borderColor: isSelected ? t.brand : t.border,
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      flex: 1,
+                      marginRight: 12,
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: t.fg,
+                    }}
+                  >
+                    {item.decision}
+                  </Text>
+                  {isSelected ? (
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={18}
+                      color={t.brand}
+                    />
+                  ) : null}
+                </Pressable>
+              );
+            }}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function WasteRegisterScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -96,11 +576,14 @@ export default function WasteRegisterScreen(): React.JSX.Element {
 
   const [selectedProduct, setSelectedProduct] =
     useState<PublishedProduct | null>(null);
+  const [selectedPedido, setSelectedPedido] = useState<Order | null>(null);
   const [cantidad, setCantidad] = useState('');
   const [motivo, setMotivo] = useState('');
   const [comentarios, setComentarios] = useState('');
   const [decisionId, setDecisionId] = useState<number | null>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
+  const [pedidoModalOpen, setPedidoModalOpen] = useState(false);
+  const [decisionModalOpen, setDecisionModalOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<{
     message: string;
@@ -120,28 +603,29 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     marginTop: 4,
   } as const;
 
-  const { data: decisions = [], isLoading: loadingDecisions } = useQuery<
-    WasteDecision[]
-  >({
-    queryKey: ['waste-decisions'],
-    queryFn: fetchWasteDecisions,
-    staleTime: 60_000,
-  });
+  // Decisiones de merma: catálogo fijo (ids 1-4 sincronizados con el seed del
+  // backend). El endpoint /decisiones-merma/ es solo-admin y el vendedor que
+  // registra mermas recibiría 403; usar el fallback evita el error en LogBox.
+  const decisionOptions = WASTE_DECISION_OPTIONS;
 
-  const decisionOptions = useMemo<WasteDecisionOption[]>(() => {
-    const active = decisions.filter((decision) => decision.estado);
-    if (active.length === 0) return [...WASTE_DECISION_OPTIONS];
-    return active.map((decision) => ({
-      id_decision: decision.id_decision,
-      decision: decision.decision,
-    }));
-  }, [decisions]);
+  const selectedDecision = useMemo<WasteDecisionOption | null>(
+    () =>
+      decisionOptions.find((option) => option.id_decision === decisionId) ??
+      null,
+    [decisionId, decisionOptions],
+  );
 
   const { data: publications = [], isLoading: loadingProducts } = useQuery<
     PublishedPublication[]
   >({
     queryKey: ['publicaciones-current'],
     queryFn: fetchCurrentPublications,
+    staleTime: 60_000,
+  });
+
+  const { data: orders = [], isLoading: loadingOrders } = useQuery<Order[]>({
+    queryKey: ['waste-pedidos'],
+    queryFn: fetchWasteOrders,
     staleTime: 60_000,
   });
 
@@ -162,6 +646,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
       });
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setSelectedProduct(null);
+      setSelectedPedido(null);
       setCantidad('');
       setMotivo('');
       setComentarios('');
@@ -174,6 +659,9 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     const errors: Record<string, string> = {};
     const cantidadNum = Number(cantidad);
 
+    if (!selectedPedido) {
+      errors.pedido = 'Selecciona un pedido.';
+    }
     if (!selectedProduct) {
       errors.producto = 'Selecciona un producto publicado.';
     }
@@ -194,12 +682,18 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     }
 
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0 || !selectedProduct || !decisionId) {
+    if (
+      Object.keys(errors).length > 0 ||
+      !selectedPedido ||
+      !selectedProduct ||
+      !decisionId
+    ) {
       return;
     }
 
     const payload: WasteRecordPayload = {
       fk_producto_semanal: selectedProduct.id_producto_semanal,
+      fk_pedido: selectedPedido.id_pedido,
       cantidad: cantidadNum,
       motivo: motivo.trim(),
       fk_decision: decisionId,
@@ -211,6 +705,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
         setToast({
           message: extractApiError(err, [
             'fk_producto_semanal',
+            'fk_pedido',
             'cantidad',
             'motivo',
             'fk_decision',
@@ -228,9 +723,19 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     setProductModalOpen(false);
   };
 
-  // Wait for the initial queries (decisions + publications) before rendering
-  // the form, so the user cannot submit without available options.
-  if (loadingDecisions || loadingProducts) {
+  const handleSelectPedido = (pedido: Order): void => {
+    setSelectedPedido(pedido);
+    setPedidoModalOpen(false);
+  };
+
+  const handleSelectDecision = (option: WasteDecisionOption): void => {
+    setDecisionId(option.id_decision);
+    setDecisionModalOpen(false);
+  };
+
+  // Wait for the initial queries (orders + publications) before
+  // rendering the form, so the user cannot submit without available options.
+  if (loadingOrders || loadingProducts) {
     return (
       <View
         style={{
@@ -255,212 +760,214 @@ export default function WasteRegisterScreen(): React.JSX.Element {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            hitSlop={12}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: t.surface,
-              borderWidth: 1,
-              borderColor: t.border,
-            }}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={20} color={t.fg} />
-          </Pressable>
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: t.fg }}>
-              Registrar merma
-            </Text>
-            <Text style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
-              Descuenta stock del producto publicado.
-            </Text>
-          </View>
-        </View>
-
-        {/* Producto publicado */}
-        <Text style={[labelStyle, { marginTop: 24 }]}>
-          Producto publicado *
-        </Text>
-        <Pressable
-          onPress={() => setProductModalOpen(true)}
+        <View
           style={{
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: fieldErrors.producto ? coral : t.border,
-            backgroundColor: t.input,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          {selectedProduct ? (
-            <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-                {selectedProduct.producto}
-              </Text>
-              <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-                Stock: {selectedProduct.stock} · {selectedProduct.unidad}
-              </Text>
-            </View>
-          ) : (
-            <Text style={{ fontSize: 15, color: t.muted }}>
-              Elige un producto publicado…
-            </Text>
-          )}
-          <MaterialCommunityIcons
-            name="chevron-down"
-            size={20}
-            color={t.muted}
-          />
-        </Pressable>
-        {fieldErrors.producto ? (
-          <Text style={errorStyle}>{fieldErrors.producto}</Text>
-        ) : null}
-        <ProductEmptyNotice
-          products={products}
-          loading={loadingProducts}
-          inputBg={t.input}
-          borderColor={t.border}
-          muted={t.muted}
-        />
-
-        {/* Cantidad */}
-        <Text style={[labelStyle, { marginTop: 16 }]}>Cantidad *</Text>
-        <TextInput
-          value={cantidad}
-          onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
-          keyboardType="number-pad"
-          maxLength={10}
-          placeholder="0"
-          placeholderTextColor={t.muted}
-          style={{
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: fieldErrors.cantidad ? coral : t.border,
-            backgroundColor: t.input,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            fontSize: 15,
-            color: t.fg,
-          }}
-        />
-        {fieldErrors.cantidad ? (
-          <Text style={errorStyle}>{fieldErrors.cantidad}</Text>
-        ) : null}
-
-        {/* Motivo */}
-        <Text style={[labelStyle, { marginTop: 16 }]}>Motivo *</Text>
-        <TextInput
-          value={motivo}
-          onChangeText={setMotivo}
-          maxLength={300}
-          placeholder="Ej.: se venció la fecha de caducidad"
-          placeholderTextColor={t.muted}
-          style={{
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: fieldErrors.motivo ? coral : t.border,
-            backgroundColor: t.input,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            fontSize: 15,
-            color: t.fg,
-          }}
-        />
-        {fieldErrors.motivo ? (
-          <Text style={errorStyle}>{fieldErrors.motivo}</Text>
-        ) : null}
-
-        {/* Comentarios (opcional) */}
-        <Text style={[labelStyle, { marginTop: 16 }]}>
-          Comentarios (opcional)
-        </Text>
-        <TextInput
-          value={comentarios}
-          onChangeText={setComentarios}
-          multiline
-          numberOfLines={4}
-          placeholder="Notas adicionales…"
-          placeholderTextColor={t.muted}
-          style={{
-            borderRadius: 12,
+            backgroundColor: t.surface,
+            borderRadius: 16,
             borderWidth: 1,
             borderColor: t.border,
-            backgroundColor: t.input,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            fontSize: 15,
-            color: t.fg,
-            minHeight: 96,
-            textAlignVertical: 'top',
-          }}
-        />
-
-        {/* Decisión */}
-        <Text style={[labelStyle, { marginTop: 16 }]}>Decisión *</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {decisionOptions.map((option) => {
-            const isSelected = option.id_decision === decisionId;
-            return (
-              <Pressable
-                key={option.id_decision}
-                onPress={() => setDecisionId(option.id_decision)}
-                style={{
-                  borderRadius: 20,
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderWidth: 1,
-                  borderColor: isSelected ? t.brand : t.border,
-                  backgroundColor: isSelected ? t.brand : t.surface,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: isSelected ? white : t.fg,
-                  }}
-                >
-                  {option.decision}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        {fieldErrors.decision ? (
-          <Text style={errorStyle}>{fieldErrors.decision}</Text>
-        ) : null}
-
-        {/* Submit */}
-        <Pressable
-          onPress={handleSubmit}
-          disabled={createMutation.isPending}
-          style={{
-            marginTop: 28,
-            borderRadius: 14,
-            backgroundColor: t.brand,
-            paddingVertical: 15,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: createMutation.isPending ? 0.6 : 1,
+            padding: 16,
+            shadowColor: colors.shadow,
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 2,
           }}
         >
-          {createMutation.isPending ? (
-            <ActivityIndicator color={white} />
-          ) : (
-            <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
-              Registrar merma
-            </Text>
-          )}
-        </Pressable>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              hitSlop={12}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: t.surface,
+                borderWidth: 1,
+                borderColor: t.border,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="arrow-left"
+                size={20}
+                color={t.fg}
+              />
+            </Pressable>
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: t.fg }}>
+                Registrar merma
+              </Text>
+              <Text style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
+                Descuenta stock del producto publicado.
+              </Text>
+            </View>
+          </View>
+
+          {/* Pedido */}
+          <PedidoSelector
+            selected={selectedPedido}
+            error={fieldErrors.pedido}
+            t={t}
+            coral={coral}
+            onPress={() => setPedidoModalOpen(true)}
+          />
+
+          {/* Producto publicado */}
+          <Text style={[labelStyle, { marginTop: 16 }]}>
+            Producto publicado *
+          </Text>
+          <Pressable
+            onPress={() => setProductModalOpen(true)}
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: fieldErrors.producto ? coral : t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            {selectedProduct ? (
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
+                  {selectedProduct.producto}
+                </Text>
+                <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
+                  Stock: {selectedProduct.stock} · {selectedProduct.unidad}
+                </Text>
+              </View>
+            ) : (
+              <Text style={{ fontSize: 15, color: t.muted }}>
+                Elige un producto publicado…
+              </Text>
+            )}
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={20}
+              color={t.muted}
+            />
+          </Pressable>
+          {fieldErrors.producto ? (
+            <Text style={errorStyle}>{fieldErrors.producto}</Text>
+          ) : null}
+          <ProductEmptyNotice
+            products={products}
+            loading={loadingProducts}
+            inputBg={t.input}
+            borderColor={t.border}
+            muted={t.muted}
+          />
+
+          {/* Cantidad */}
+          <Text style={[labelStyle, { marginTop: 16 }]}>Cantidad *</Text>
+          <TextInput
+            value={cantidad}
+            onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
+            keyboardType="number-pad"
+            maxLength={10}
+            placeholder="0"
+            placeholderTextColor={t.muted}
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: fieldErrors.cantidad ? coral : t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 15,
+              color: t.fg,
+            }}
+          />
+          {fieldErrors.cantidad ? (
+            <Text style={errorStyle}>{fieldErrors.cantidad}</Text>
+          ) : null}
+
+          {/* Motivo */}
+          <Text style={[labelStyle, { marginTop: 16 }]}>Motivo *</Text>
+          <TextInput
+            value={motivo}
+            onChangeText={setMotivo}
+            maxLength={300}
+            placeholder="Ej.: se venció la fecha de caducidad"
+            placeholderTextColor={t.muted}
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: fieldErrors.motivo ? coral : t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 15,
+              color: t.fg,
+            }}
+          />
+          {fieldErrors.motivo ? (
+            <Text style={errorStyle}>{fieldErrors.motivo}</Text>
+          ) : null}
+
+          {/* Comentarios (opcional) */}
+          <Text style={[labelStyle, { marginTop: 16 }]}>
+            Comentarios (opcional)
+          </Text>
+          <TextInput
+            value={comentarios}
+            onChangeText={setComentarios}
+            multiline
+            numberOfLines={4}
+            placeholder="Notas adicionales…"
+            placeholderTextColor={t.muted}
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: t.border,
+              backgroundColor: t.input,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 15,
+              color: t.fg,
+              minHeight: 96,
+              textAlignVertical: 'top',
+            }}
+          />
+
+          {/* Decisión */}
+          <DecisionSelector
+            selected={selectedDecision}
+            error={fieldErrors.decision}
+            t={t}
+            coral={coral}
+            onPress={() => setDecisionModalOpen(true)}
+          />
+
+          {/* Submit */}
+          <Pressable
+            onPress={handleSubmit}
+            disabled={createMutation.isPending}
+            style={{
+              marginTop: 28,
+              borderRadius: 14,
+              backgroundColor: t.brand,
+              paddingVertical: 15,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: createMutation.isPending ? 0.6 : 1,
+            }}
+          >
+            {createMutation.isPending ? (
+              <ActivityIndicator color={white} />
+            ) : (
+              <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
+                Registrar merma
+              </Text>
+            )}
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Selector de producto */}
@@ -477,10 +984,6 @@ export default function WasteRegisterScreen(): React.JSX.Element {
             backgroundColor: colors.modalOverlayBg,
           }}
         >
-          <Pressable
-            style={{ flex: 1 }}
-            onPress={() => setProductModalOpen(false)}
-          />
           <View
             style={{
               backgroundColor: t.surface,
@@ -502,16 +1005,43 @@ export default function WasteRegisterScreen(): React.JSX.Element {
                 }}
               />
             </View>
-            <Text
+            <View
               style={{
-                fontSize: 16,
-                fontWeight: '700',
-                color: t.fg,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 marginBottom: 4,
               }}
             >
-              Producto publicado
-            </Text>
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: t.fg,
+                  marginRight: 12,
+                }}
+              >
+                Producto publicado
+              </Text>
+              <Pressable
+                onPress={() => setProductModalOpen(false)}
+                hitSlop={8}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: t.input,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                }}
+                accessibilityLabel="Cerrar selector de producto"
+              >
+                <MaterialCommunityIcons name="close" size={18} color={t.fg} />
+              </Pressable>
+            </View>
             <Text
               style={{
                 fontSize: 13,
@@ -593,6 +1123,31 @@ export default function WasteRegisterScreen(): React.JSX.Element {
           </View>
         </View>
       </Modal>
+
+      {/* Selector de pedido */}
+      <PedidoModal
+        visible={pedidoModalOpen}
+        loading={loadingOrders}
+        orders={orders}
+        selectedId={selectedPedido?.id_pedido ?? null}
+        overlay="rgba(0, 0, 0, 0.7)"
+        bottomInset={insets.bottom}
+        t={t}
+        onClose={() => setPedidoModalOpen(false)}
+        onSelect={handleSelectPedido}
+      />
+
+      {/* Selector de decisión */}
+      <DecisionModal
+        visible={decisionModalOpen}
+        options={decisionOptions}
+        selectedId={decisionId}
+        overlay="rgba(0, 0, 0, 0.7)"
+        bottomInset={insets.bottom}
+        t={t}
+        onClose={() => setDecisionModalOpen(false)}
+        onSelect={handleSelectDecision}
+      />
 
       {/* Toast */}
       {toast ? (
