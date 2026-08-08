@@ -124,23 +124,45 @@ describe('ReceiptDetailScreen', () => {
     expect(await findByText('Reintentar')).toBeTruthy();
   });
 
-  it('shows the error state and does not fetch when paymentId is invalid', async () => {
+  it('shows the not-found state and does not fetch when paymentId is invalid', async () => {
     mockParams.current = { paymentId: 'abc' as unknown as number };
 
     const { findByText } = renderScreen();
-    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(await findByText('No se encontró el recibo')).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('shows a not-found message when the receipt does not exist', async () => {
+    mockedFetchPago.mockResolvedValue(null as unknown as typeof mockPago);
+
+    const { findByText, queryByText } = renderScreen();
+    expect(await findByText('No se encontró el recibo')).toBeTruthy();
+    expect(await findByText('Reintentar')).toBeTruthy();
+    expect(queryByText('Error al cargar el recibo')).toBeNull();
   });
 
   it('does not render a receipt owned by another user (IDOR defense)', async () => {
     (useAuth as jest.Mock).mockReturnValue({ user: { id: 99 } });
 
     const { findByText, queryByText } = renderScreen();
-    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    expect(await findByText(/No tienes acceso a este recibo/i)).toBeTruthy();
     // El recibo ajeno fue cargado por la API (mock activo) pero NUNCA se
     // renderiza su contenido: ni folio, ni productos, ni monto.
     expect(queryByText('PAG-0009')).toBeNull();
     expect(queryByText('Manzana')).toBeNull();
     expect(queryByText('Cliente Test')).toBeNull();
+  });
+
+  it('renders without crashing when productos is null (defensive ?? [])', async () => {
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      productos: null as unknown as typeof mockPago.productos,
+    });
+
+    const { findByText, queryByText } = renderScreen();
+    // No filas de productos y el resto del recibo sigue visible.
+    expect(await findByText('Subtotal')).toBeTruthy();
+    expect(queryByText('Manzana')).toBeNull();
+    expect(await findByText('Recibo PAG-0009')).toBeTruthy();
   });
 });

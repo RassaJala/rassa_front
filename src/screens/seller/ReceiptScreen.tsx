@@ -135,7 +135,6 @@ export default function ReceiptScreen(): React.JSX.Element {
       },
     );
   };
-
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}

@@ -85,11 +85,13 @@ function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <PaymentPage />
     </QueryClientProvider>,
   );
+  return { ...utils, invalidateSpy };
 }
 
 describe('PaymentPage', () => {

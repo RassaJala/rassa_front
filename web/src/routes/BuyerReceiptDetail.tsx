@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
 import {
+  calcularImporte,
   calcularSubtotal,
+  esPagoIdValido,
   esPropietarioPago,
   fetchPago,
   formatearMonto,
@@ -48,13 +50,14 @@ function DetailRow({
 export function BuyerReceiptDetail() {
   const { paymentId: rawPaymentId } = useParams<{ paymentId: string }>();
   const paymentId = Number(rawPaymentId);
-  const paymentIdValid =
-    rawPaymentId !== undefined && Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
   const navigate = useNavigate();
   const colors = useAppColors();
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
   const { user } = useAuth();
 
+  // Defensa en profundidad: el backend ya filtra por cliente autenticado
+  // (PR #72 backend); este check es redundancia defensiva.
   const {
     data: pago,
     isLoading,
@@ -75,10 +78,18 @@ export function BuyerReceiptDetail() {
   const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
+    // isError (fallo técnico) y !pago (recibo inexistente) son casos
+    // distinguibles: solo el primero es un error de carga.
+    let mensaje = 'No tienes acceso a este recibo';
+    if (isError) {
+      mensaje = 'Error al cargar el recibo';
+    } else if (pago == null) {
+      mensaje = 'No se encontró el recibo';
+    }
     return (
       <div className="py-20 text-center">
         <p className="mb-4 text-lg" style={{ color: muted }}>
-          Error al cargar el recibo
+          {mensaje}
         </p>
         <div className="flex items-center justify-center gap-3">
           <Button variant="secondary" onClick={() => void refetch()}>
@@ -165,7 +176,7 @@ export function BuyerReceiptDetail() {
                   className="w-28 text-right text-sm font-semibold"
                   style={{ color: fg }}
                 >
-                  {formatearMonto(prod.cantidad * Number(prod.precio))}
+                  {formatearMonto(calcularImporte(prod))}
                 </span>
               </div>
             ))}

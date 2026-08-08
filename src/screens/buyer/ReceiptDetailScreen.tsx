@@ -15,7 +15,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
 import {
+  calcularImporte,
   calcularSubtotal,
+  esPagoIdValido,
   esPropietarioPago,
   fetchPago,
   formatearMonto,
@@ -38,7 +40,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const route = useRoute<Route>();
   const { user } = useAuth();
   const { paymentId } = route.params;
-  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -47,6 +49,8 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const surface = isDark ? colors.admSurfaceD : colors.admSurfaceL;
 
+  // Defensa en profundidad: el backend ya filtra por cliente autenticado
+  // (PR #72 backend); este check es redundancia defensiva.
   const {
     data: pago,
     isLoading,
@@ -84,6 +88,14 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
   const esPropietario = esPropietarioPago(pago, user?.id);
 
   if (isError || !pago || !esPropietario) {
+    // isError (fallo técnico) y !pago (recibo inexistente) son casos
+    // distinguibles: solo el primero es un error de carga.
+    let mensaje = 'No tienes acceso a este recibo';
+    if (isError) {
+      mensaje = 'Error al cargar el recibo';
+    } else if (pago == null) {
+      mensaje = 'No se encontró el recibo';
+    }
     return (
       <View
         style={{
@@ -107,7 +119,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
             textAlign: 'center',
           }}
         >
-          Error al cargar el recibo
+          {mensaje}
         </Text>
         <LinkLikeButton
           label="Reintentar"
@@ -254,7 +266,7 @@ export default function ReceiptDetailScreen(): React.JSX.Element {
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                {formatearMonto(prod.cantidad * Number(prod.precio))}
+                {formatearMonto(calcularImporte(prod))}
               </Text>
             </View>
           ))}

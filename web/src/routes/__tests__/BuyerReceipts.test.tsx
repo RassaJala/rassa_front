@@ -17,8 +17,12 @@ vi.mock('../../hooks/useAppColors', () => ({
   }),
 }));
 
+const { mockUseAuth } = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(() => ({ user: { id: 4 } })),
+}));
+
 vi.mock('../../hooks/useAuth', () => ({
-  useAuth: vi.fn(() => ({ user: { id: 4 } })),
+  useAuth: mockUseAuth,
 }));
 
 vi.mock('@/common/payments', async () => ({
@@ -29,7 +33,7 @@ vi.mock('@/common/payments', async () => ({
   fetchPagos: vi.fn(),
 }));
 
-import { fetchPagos } from '@/common/payments';
+import { fetchPagos, PAGOS_CLIENTE_QUERY_KEY } from '@/common/payments';
 import { BuyerReceipts } from '../BuyerReceipts';
 
 const mockedFetchPagos = vi.mocked(fetchPagos);
@@ -69,19 +73,21 @@ function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/cliente/recibos']}>
         <BuyerReceipts />
       </MemoryRouter>
     </QueryClientProvider>,
   );
+  return { ...utils, queryClient };
 }
 
 describe('BuyerReceipts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedFetchPagos.mockResolvedValue(mockPagos);
+    mockUseAuth.mockReturnValue({ user: { id: 4 } });
   });
 
   it('renders only the receipts owned by the current user (mixed payload)', async () => {
@@ -126,5 +132,41 @@ describe('BuyerReceipts', () => {
     screen.getByText('Reintentar').click();
     await waitFor(() => expect(mockedFetchPagos).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('PAG-0009')).toBeTruthy();
+  });
+
+  it('shows error state when fetchPagos receives a null response', async () => {
+    mockedFetchPagos.mockRejectedValueOnce(
+      new Error('La respuesta del servidor es null al listar pagos'),
+    );
+
+    renderPage();
+    expect(await screen.findByText('Error al cargar recibos')).toBeTruthy();
+  });
+
+  it('shows error state when fetchPagos receives a non-list results field', async () => {
+    mockedFetchPagos.mockRejectedValueOnce(
+      new Error("El campo 'results' no es una lista al listar pagos"),
+    );
+
+    renderPage();
+    expect(await screen.findByText('Error al cargar recibos')).toBeTruthy();
+  });
+
+  it('fetches per user id in the query key (cache isolation)', async () => {
+    const first = renderPage();
+    await waitFor(() => expect(mockedFetchPagos).toHaveBeenCalledTimes(1));
+
+    // Cambio de usuario: remontar con otro id debe disparar un fetch nuevo
+    // (queryKey [pagos-cliente, 99]), no reutilizar la caché del usuario A.
+    mockUseAuth.mockReturnValue({ user: { id: 99 } });
+    first.unmount();
+    const second = renderPage();
+
+    await waitFor(() => expect(mockedFetchPagos).toHaveBeenCalledTimes(2));
+    const keys = second.queryClient
+      .getQueryCache()
+      .findAll({ queryKey: [PAGOS_CLIENTE_QUERY_KEY] })
+      .map((q) => q.queryKey);
+    expect(keys).toContainEqual([PAGOS_CLIENTE_QUERY_KEY, 99]);
   });
 });
