@@ -44,13 +44,21 @@ export const WASTE_DETAIL_LIMIT = 100;
 export const WASTE_RETRY_LIMIT = API_RETRY_LIMIT;
 export const WASTE_STALE_TIME_MS = 5 * 60 * 1000;
 
-// Decision strings shared by the mobile and web dashboards.
+// Decision strings shared by the mobile and web dashboards. Values match the
+// backend seed (Donar / Desechar / Vender más barato / Compostar); 'tirar' is
+// kept as a legacy alias for records created before the rename.
 export const DECISION_DONAR = 'donar';
-export const DECISION_TIRAR = 'tirar';
+export const DECISION_DESECHAR = 'desechar';
+export const DECISION_VENDER_MAS_BARATO = 'vender más barato';
 export const DECISION_COMPOSTAR = 'compostar';
+// Legacy backend value for the Desechar decision.
+export const DECISION_TIRAR = 'tirar';
 
 export type DecisionMerma =
-  typeof DECISION_DONAR | typeof DECISION_TIRAR | typeof DECISION_COMPOSTAR;
+  | typeof DECISION_DONAR
+  | typeof DECISION_DESECHAR
+  | typeof DECISION_VENDER_MAS_BARATO
+  | typeof DECISION_COMPOSTAR;
 
 // --- Date helpers ------------------------------------------------------------
 // Backend sends full ISO datetimes ("2026-07-01T00:00:00-03:00"); only the date
@@ -293,7 +301,13 @@ export function getDecisionColor(
 ): string {
   const key = decision.toLowerCase().trim();
   if (key === DECISION_DONAR) return palette.donar;
-  if (key === DECISION_TIRAR) return palette.tirar;
+  if (key === DECISION_DESECHAR || key === DECISION_TIRAR) {
+    return palette.tirar;
+  }
+  if (key === DECISION_VENDER_MAS_BARATO) {
+    // No dedicated palette slot; a stable color beats an arbitrary hash.
+    return palette.fallback[0] ?? palette.defaultColor;
+  }
   if (key === DECISION_COMPOSTAR) return palette.compostar;
   const idx = hashString(key) % palette.fallback.length;
   return palette.fallback[idx] ?? palette.defaultColor;

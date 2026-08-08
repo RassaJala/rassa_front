@@ -147,6 +147,18 @@ describe('getDecisionColor', () => {
     expect(getDecisionColor('Tirar', palette)).toBe('#T0');
   });
 
+  it('maps the real backend decision names (seed: Donar/Desechar/.../Compostar)', () => {
+    expect(getDecisionColor('Donar', palette)).toBe('#D0');
+    expect(getDecisionColor('Desechar', palette)).toBe('#T0');
+    expect(getDecisionColor('Vender más barato', palette)).toBe('#F1');
+    expect(getDecisionColor('Compostar', palette)).toBe('#C0');
+  });
+
+  it('keeps the legacy "tirar" alias mapped to the desechar color', () => {
+    expect(getDecisionColor('tirar', palette)).toBe('#T0');
+    expect(getDecisionColor('desechar', palette)).toBe('#T0');
+  });
+
   it('falls back to a hashed fallback color for unknown decisions, stably', () => {
     const first = getDecisionColor('lechuga', palette);
     expect(getDecisionColor('lechuga', palette)).toBe(first);

@@ -22,6 +22,14 @@ export const WASTE_DECISION_OPTIONS: readonly WasteDecisionOption[] = [
   { id_decision: 4, decision: 'Compostar' },
 ];
 
+// A merma references an order that is still in flight; terminal states
+// (entregado/cancelado) are not valid candidates and would only bloat the
+// selector with historical orders. Shared by the mobile and web services.
+export const TERMINAL_ORDER_STATES: ReadonlySet<string> = new Set([
+  'entregado',
+  'cancelado',
+]);
+
 export interface WasteProductInfo {
   readonly id: number;
   readonly producto: string;
@@ -69,11 +77,11 @@ export interface WasteRecordPayload {
 // Producto publicado (ProductoSemanal) para el selector de la pantalla.
 export interface PublishedProduct {
   readonly id_producto_semanal: number;
-  producto: string;
-  unidad: string;
-  stock: number;
-  precio: string;
-  foto: string;
+  readonly producto: string;
+  readonly unidad: string;
+  readonly stock: number;
+  readonly precio: string;
+  readonly foto: string;
 }
 
 export interface PublishedPublication {

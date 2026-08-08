@@ -6,10 +6,11 @@ import type {
   ResumenParams,
   WasteEnvelope,
 } from '@/common/waste';
-import type {
-  PublishedPublication,
-  WasteRecord,
-  WasteRecordPayload,
+import {
+  TERMINAL_ORDER_STATES,
+  type PublishedPublication,
+  type WasteRecord,
+  type WasteRecordPayload,
 } from '@/common/wasteRegister';
 import type { Order } from '@root/types';
 
@@ -29,9 +30,8 @@ export async function fetchWasteOrders(): Promise<Order[]> {
   // A merma references an order that is still in flight; terminal states
   // (entregado/cancelado) are not valid candidates and would only bloat the
   // selector with historical orders.
-  const TERMINAL_STATES = new Set(['entregado', 'cancelado']);
   return (data.results ?? []).filter(
-    (order) => !TERMINAL_STATES.has(order.estado_actual),
+    (order) => !TERMINAL_ORDER_STATES.has(order.estado_actual),
   );
 }
 

@@ -13,6 +13,7 @@ import {
 import type { Order } from '@root/types';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 import { FormSelect } from '../components/ui/FormSelect';
 import { Input } from '../components/ui/Input';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -33,7 +34,6 @@ const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300';
 export function WasteRegister() {
   const navigate = useNavigate();
   const colors = useAppColors();
-  const { muted, border, surface } = colors;
   const queryClient = useQueryClient();
 
   const [productoId, setProductoId] = useState('');
@@ -146,7 +146,7 @@ export function WasteRegister() {
     };
 
     if (!decisionId) {
-      nextErrors.decisionId = 'Elige una decisión.';
+      nextErrors.decision = 'Elige una decisión.';
     }
 
     setErrors(nextErrors);
@@ -218,18 +218,8 @@ export function WasteRegister() {
         }
       />
 
-      <div
-        style={{
-          maxWidth: 560,
-          background: surface,
-          border: `1px solid ${border}`,
-          borderRadius: 16,
-          padding: 24,
-        }}
-      >
-        <p
-          style={{ fontSize: 13, color: muted, marginTop: 0, marginBottom: 20 }}
-        >
+      <Card className="max-w-[560px]">
+        <p className="mb-5 mt-0 text-[13px] text-gray-500 dark:text-gray-400">
           Descuenta stock del producto publicado.
         </p>
 
@@ -288,7 +278,7 @@ export function WasteRegister() {
               </div>
             ) : null}
             {selectedProduct ? (
-              <p style={{ fontSize: 13, color: muted }}>
+              <p className="text-[13px] text-gray-500 dark:text-gray-400">
                 Stock disponible: {selectedProduct.stock}{' '}
                 {selectedProduct.unidad} · Precio: ${selectedProduct.precio}
               </p>
@@ -335,7 +325,7 @@ export function WasteRegister() {
             <FormSelect
               id="waste-decision"
               colors={colors}
-              hasError={Boolean(errors.decisionId)}
+              hasError={Boolean(errors.decision)}
               value={decisionId}
               onChange={(e) => setDecisionId(e.target.value)}
             >
@@ -346,19 +336,12 @@ export function WasteRegister() {
                 </option>
               ))}
             </FormSelect>
-            {errors.decisionId ? (
-              <p className="text-xs text-red-500">{errors.decisionId}</p>
+            {errors.decision ? (
+              <p className="text-xs text-red-500">{errors.decision}</p>
             ) : null}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 10,
-              marginTop: 8,
-            }}
-          >
+          <div className="mt-2 flex justify-end gap-2.5">
             <Button
               type="button"
               variant="ghost"
@@ -375,7 +358,7 @@ export function WasteRegister() {
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
 
       <Toast toast={toast} onDone={() => setToast(null)} />
     </div>
