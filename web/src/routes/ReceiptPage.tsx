@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPago } from '@/common/payments';
+import { buildReceiptHtml } from '@/common/receipt';
+import { calcularSubtotal, fetchPago, formatearMonto } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -82,22 +83,63 @@ export function ReceiptPage() {
     );
   }
 
-  const totalProductos = pago.productos.reduce(
-    (acc, prod) => acc + prod.cantidad * Number(prod.precio),
-    0,
-  );
+  const productos = pago.productos ?? [];
+  const subtotal = calcularSubtotal(productos);
+
+  const handleImprimir = () => {
+    let win: Window | null = null;
+    try {
+      win = window.open('', '_blank');
+    } catch {
+      // algunos navegadores lanzan excepción al bloquear popups
+    }
+    if (!win) {
+      alert('Permite popups para este sitio para poder imprimir el recibo.');
+      return;
+    }
+    const notificarError = (error: unknown) => {
+      console.error('Error al imprimir el recibo:', error);
+      alert('No se pudo imprimir el recibo. Inténtalo de nuevo.');
+    };
+    try {
+      win.document.write(buildReceiptHtml(pago));
+      win.document.close();
+      win.focus();
+      // Imprimir recién cuando el navegador terminó de procesar el documento,
+      // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
+      let printed = false;
+      const doPrint = () => {
+        if (printed) return;
+        printed = true;
+        try {
+          win?.print();
+        } catch (error: unknown) {
+          notificarError(error);
+        }
+      };
+      win.onload = doPrint;
+      setTimeout(doPrint, 400);
+    } catch (error: unknown) {
+      notificarError(error);
+    }
+  };
 
   return (
     <div>
       <PageHeader
         title="Recibo de Pago"
         action={
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/vendedor/pedidos')}
-          >
-            ← Volver a pedidos
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleImprimir}>
+              <span aria-hidden>🖨</span> Imprimir / PDF
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/vendedor/pedidos')}
+            >
+              ← Volver a pedidos
+            </Button>
+          </div>
         }
       />
 
@@ -147,12 +189,12 @@ export function ReceiptPage() {
               <span className="w-24 text-right">Precio</span>
               <span className="w-28 text-right">Importe</span>
             </div>
-            {pago.productos.map((prod, idx) => (
+            {productos.map((prod, idx) => (
               <div
                 key={`${prod.nombre}-${idx}`}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-6 py-4"
                 style={
-                  idx < pago.productos.length - 1
+                  idx < productos.length - 1
                     ? { borderBottom: `1px solid ${border}` }
                     : undefined
                 }
@@ -195,7 +237,7 @@ export function ReceiptPage() {
                 className="w-28 text-right text-sm font-bold"
                 style={{ color: fg }}
               >
-                ${totalProductos.toFixed(2)}
+                {formatearMonto(subtotal)}
               </span>
             </div>
           </div>

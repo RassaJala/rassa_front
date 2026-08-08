@@ -64,6 +64,7 @@ function renderPage() {
 
 describe('ReceiptPage', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
     mockNavigate.mockReset();
     mockParams.current = { paymentId: '9' };
@@ -111,5 +112,98 @@ describe('ReceiptPage', () => {
 
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('opens a printable window with the receipt HTML when Imprimir is clicked', async () => {
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(mockWin.document.write).toHaveBeenCalled();
+    expect(mockWin.document.close).toHaveBeenCalled();
+
+    // La impresión se dispara recién cuando el popup termina de cargar.
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
+    expect(mockWin.print).toHaveBeenCalled();
+
+    const html = (
+      mockWin.document.write as unknown as { mock: { calls: string[][] } }
+    ).mock.calls[0][0] as string;
+    expect(html).toContain('PAG-0009');
+    expect(html).toContain('Manzana');
+    expect(html).toContain('RASSA');
+    // Montos reales del mock: 2 × $59.74 = $119.48 (importe, subtotal y total).
+    expect(html).toContain('$59.74');
+    expect(html).toContain('$119.48');
+    openSpy.mockRestore();
+  });
+
+  it('muestra alerta cuando el popup está bloqueado (window.open devuelve null)', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    // Sin ventana no hay document.write ni print: solo la alerta al usuario.
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Permite popups para este sitio para poder imprimir el recibo.',
+    );
+    alertSpy.mockRestore();
+    openSpy.mockRestore();
+  });
+
+  it('imprime vía fallback por timeout cuando el popup nunca dispara onload', async () => {
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    vi.useFakeTimers();
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(mockWin.document.write).toHaveBeenCalled();
+    // El evento onload nunca ocurre; el fallback setTimeout(doPrint, 400) debe imprimir.
+    expect(mockWin.print).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(400);
+    expect(mockWin.print).toHaveBeenCalledTimes(1);
+    // El guard printed evita dobles impresiones si el fallback vuelve a correr.
+    vi.advanceTimersByTime(400);
+    expect(mockWin.print).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+
+    openSpy.mockRestore();
   });
 });

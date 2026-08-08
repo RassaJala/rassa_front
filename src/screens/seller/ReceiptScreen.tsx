@@ -1,11 +1,14 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
+
+import * as Print from 'expo-print';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
 import { fetchPago } from '@/common/payments';
+import { buildReceiptHtml } from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -120,6 +124,17 @@ export default function ReceiptScreen(): React.JSX.Element {
 
   const productos = pago.productos ?? [];
 
+  const handleImprimir = () => {
+    void Print.printAsync({ html: buildReceiptHtml(pago) }).catch(
+      (error: unknown) => {
+        console.warn('No se pudo imprimir el recibo', error);
+        Alert.alert(
+          'No se pudo imprimir',
+          'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+        );
+      },
+    );
+  };
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
@@ -151,6 +166,27 @@ export default function ReceiptScreen(): React.JSX.Element {
         <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
           Recibo de Pago
         </Text>
+        <Pressable
+          onPress={handleImprimir}
+          accessibilityLabel="Imprimir recibo en PDF"
+          style={{
+            marginLeft: 'auto',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+          }}
+        >
+          <MaterialCommunityIcons name="printer" size={18} color={brand} />
+          <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
+            PDF
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView
