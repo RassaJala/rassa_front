@@ -97,24 +97,11 @@ export function parseDate(raw: string): Date | null {
 // Backend sends bare dates ("2026-08-10") that must not be parsed with
 // `new Date()` (UTC midnight shifts the day back in negative-offset zones).
 // Shared by both apps so the timezone fix lives in exactly one place (W1).
-// Falls back to "now" for malformed input, with a dev warning (W3).
-// Uses a globalThis guard (not `process`) so the package typechecks in both
-// the RN app and the web tsconfig, which does not include Node types.
-function isNonProduction(): boolean {
-  const env = (globalThis as { process?: { env?: { NODE_ENV?: string } } })
-    .process?.env?.NODE_ENV;
-  return env !== 'production';
-}
-
-export function parseLocalDate(iso: string): Date {
-  const d = toLocalDate(iso);
-  if (d === null) {
-    if (isNonProduction()) {
-      console.warn('[parseLocalDate] invalid date input:', iso);
-    }
-    return new Date();
-  }
-  return d;
+// Strict alias: rejects malformed input exactly like toLocalDate (no silent
+// fallback to "now", which would corrupt filters and date math). Callers that
+// need a safe display fallback decide it themselves.
+export function parseLocalDate(iso: string): Date | null {
+  return toLocalDate(iso);
 }
 
 // Backend rule: publications can only be created/edited on Monday

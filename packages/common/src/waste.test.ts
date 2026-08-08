@@ -81,15 +81,15 @@ describe('waste date helpers', () => {
 
   it('parseLocalDate parses bare dates as LOCAL dates (no UTC off-by-one)', () => {
     const d = parseLocalDate('2026-08-10');
-    expect(d.getFullYear()).toBe(2026);
-    expect(d.getMonth()).toBe(7);
-    expect(d.getDate()).toBe(10);
-    expect(d.getHours()).toBe(0);
+    expect(d?.getFullYear()).toBe(2026);
+    expect(d?.getMonth()).toBe(7);
+    expect(d?.getDate()).toBe(10);
+    expect(d?.getHours()).toBe(0);
   });
 
-  it('parseLocalDate falls back to a valid Date for malformed input', () => {
-    const d = parseLocalDate('not-a-date');
-    expect(Number.isNaN(d.getTime())).toBe(false);
+  it('parseLocalDate rejects malformed input like toLocalDate', () => {
+    expect(parseLocalDate('not-a-date')).toBeNull();
+    expect(parseLocalDate('2026-02-30')).toBeNull();
   });
 
   it('isMondayToday respects the device day of week', () => {

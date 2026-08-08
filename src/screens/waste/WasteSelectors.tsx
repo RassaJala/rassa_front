@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { formatEstado } from '@/common/wasteRegister';
 import type { ThemeColors } from '@/constants/colors';
 import type { Order } from '@/types';
 import type { WasteDecisionOption } from '@/types/waste';
@@ -59,7 +60,7 @@ export function PedidoSelector({
               {selected.cliente_nombre ?? 'Cliente'}
             </Text>
             <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-              Total: ${selected.total} · {selected.estado_actual}
+              Total: ${selected.total} · {formatEstado(selected.estado_actual)}
             </Text>
           </View>
         ) : (

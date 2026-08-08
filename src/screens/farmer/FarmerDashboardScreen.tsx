@@ -37,11 +37,13 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
 
 function formatDate(iso: string): string {
   const d = parseLocalDate(iso);
-  return d.toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  return d === null
+    ? iso
+    : d.toLocaleDateString('es-AR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
 }
 
 const STATUS_LABELS: Record<PublicacionEstado, string> = {

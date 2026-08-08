@@ -30,6 +30,12 @@ export const TERMINAL_ORDER_STATES: ReadonlySet<string> = new Set([
   'cancelado',
 ]);
 
+// Estado legible para el selector de pedidos (móvil y web): el backend usa
+// guiones bajos ("listo_para_retirar"), la UI muestra espacios.
+export function formatEstado(estado: string): string {
+  return estado.replaceAll('_', ' ');
+}
+
 export interface WasteProductInfo {
   readonly id: number;
   readonly producto: string;

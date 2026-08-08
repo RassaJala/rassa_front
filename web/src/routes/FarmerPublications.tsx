@@ -56,6 +56,11 @@ const MONTHS = [
   { value: 12, label: 'Diciembre' },
 ];
 
+function pubDateLabel(iso: string): string {
+  const d = parseLocalDate(iso);
+  return d ? formatDate(d, { short: true }) : iso;
+}
+
 // ── FarmerPublications ─────────────────────────────────────
 
 export function FarmerPublications() {
@@ -93,8 +98,9 @@ export function FarmerPublications() {
   const yearOptions = useMemo(() => {
     const years = [0];
     for (const p of publications) {
-      const y = parseLocalDate(p.fecha_publicacion).getFullYear();
-      if (!years.includes(y)) years.push(y);
+      const d = parseLocalDate(p.fecha_publicacion);
+      const y = d ? d.getFullYear() : 0;
+      if (y !== 0 && !years.includes(y)) years.push(y);
     }
     return years.sort((a, b) => b - a);
   }, [publications]);
@@ -103,11 +109,11 @@ export function FarmerPublications() {
     return publications.filter((pub) => {
       if (filterMonth) {
         const d = parseLocalDate(pub.fecha_publicacion);
-        if (d.getMonth() + 1 !== filterMonth) return false;
+        if (!d || d.getMonth() + 1 !== filterMonth) return false;
       }
       if (filterYear) {
         const d = parseLocalDate(pub.fecha_publicacion);
-        if (d.getFullYear() !== filterYear) return false;
+        if (!d || d.getFullYear() !== filterYear) return false;
       }
       if (
         filterMinProducts > 0 &&
@@ -462,9 +468,7 @@ export function FarmerPublications() {
                         className="px-[18px] py-4 text-[14px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(parseLocalDate(pub.fecha_publicacion), {
-                          short: true,
-                        })}
+                        {pubDateLabel(pub.fecha_publicacion)}
                       </td>
                       <td
                         className="px-[18px] py-4 text-[14px]"
@@ -544,9 +548,7 @@ export function FarmerPublications() {
                         className="text-[13px]"
                         style={{ color: colors.muted }}
                       >
-                        {formatDate(parseLocalDate(pub.fecha_publicacion), {
-                          short: true,
-                        })}
+                        {pubDateLabel(pub.fecha_publicacion)}
                       </p>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>

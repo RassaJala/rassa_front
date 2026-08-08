@@ -11,6 +11,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { toLocalDate } from '@/common/waste';
+import { formatEstado } from '@/common/wasteRegister';
 import type { ThemeColors } from '@/constants/colors';
 import { colors } from '@/constants/colors';
 import type { Order } from '@/types';
@@ -19,10 +20,6 @@ function orderModalHint(loading: boolean, orderCount: number): string {
   if (loading) return 'Cargando pedidos…';
   if (orderCount === 0) return 'No hay pedidos para este vendedor.';
   return 'Selecciona el pedido afectado por la merma.';
-}
-
-function formatEstado(estado: string): string {
-  return estado.replaceAll('_', ' ');
 }
 
 // toLocalDate slices the ISO date part and builds a local Date, avoiding the

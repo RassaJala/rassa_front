@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  formatEstado,
   type PublishedProduct,
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
@@ -234,7 +235,7 @@ export function WasteRegister() {
               <option value="">Elige un pedido…</option>
               {pedidos.map((order) => (
                 <option key={order.id_pedido} value={order.id_pedido}>
-                  {`Pedido #${order.id_pedido} · ${order.cliente_nombre ?? 'Cliente'} · $${order.total}`}
+                  {`Pedido #${order.id_pedido} · ${order.cliente_nombre ?? 'Cliente'} · $${order.total} · ${formatEstado(order.estado_actual)}`}
                 </option>
               ))}
             </FormSelect>

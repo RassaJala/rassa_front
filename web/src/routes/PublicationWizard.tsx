@@ -181,7 +181,7 @@ export function PublicationWizard() {
   const pubData = isEditing ? pubQuery.data?.data : undefined;
   const nextMonday =
     isEditing && pubData
-      ? parseLocalDate(pubData.fecha_publicacion)
+      ? (parseLocalDate(pubData.fecha_publicacion) ?? getNextMonday())
       : getNextMonday();
   const weekNumber =
     isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
