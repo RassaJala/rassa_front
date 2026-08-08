@@ -13,6 +13,16 @@ jest.mock('@/store/AuthContext', () => ({
   }),
 }));
 
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({
+    colorScheme: 'light',
+    themePreference: 'system',
+    isLoaded: true,
+    toggleColorScheme: jest.fn(),
+    setThemePreference: jest.fn(),
+  }),
+}));
+
 const ownMessage: Message = {
   id: 1,
   conversacion: 1,

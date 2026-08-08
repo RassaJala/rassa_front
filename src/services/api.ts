@@ -5,6 +5,8 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
+import { parseApiError } from '@/common/apiErrors';
+import type { SafeMessageError } from '@/common/apiErrors';
 import { API_RETRY_LIMIT } from '@/common/networking';
 
 import { sanitizeSentryError } from './sentry';
@@ -41,8 +43,30 @@ function resolveBaseURL(): string {
 
 const baseURL = resolveBaseURL();
 
-// Guard: reject HTTP in production to prevent credential leakage
-if (baseURL.startsWith('http://') && process.env.NODE_ENV === 'production') {
+function isPrivateHost(rawUrl: string): boolean {
+  const withoutScheme = rawUrl.replace(/^https?:\/\//i, '');
+  const host = withoutScheme.split(/[/:]/)[0]?.toLowerCase();
+
+  if (!host) return false;
+
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host === '[::1]' ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(host)
+  );
+}
+
+// Guard: reject HTTP in production to prevent credential leakage,
+// but allow private/LAN hosts so physical devices can reach a local backend.
+if (
+  baseURL.startsWith('http://') &&
+  process.env.NODE_ENV === 'production' &&
+  !isPrivateHost(baseURL)
+) {
   throw new Error(
     'EXPO_PUBLIC_API_URL must use HTTPS in production. ' +
       'Unencrypted HTTP exposes authentication tokens to network interception.',
@@ -65,8 +89,8 @@ axiosRetry(api, {
     return (
       (axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         (error.response?.status !== undefined &&
-          error.response.status >= SERVER_ERROR_THRESHOLD) ||
-        error.response?.status === 429) &&
+          error.response.status >= SERVER_ERROR_THRESHOLD)) &&
+      error.response?.status !== 429 &&
       error.config?.method !== 'post'
     );
   },
@@ -159,6 +183,15 @@ api.interceptors.response.use(
     // Only handle Axios errors
     if (!axios.isAxiosError(error)) throw error;
 
+    // Normalize non-401 failures by exposing a UI-safe `safeMessage` instead of
+    // mutating the original `message` (R1-002/R4-002): downstream handlers
+    // (Sentry, axios-retry, error boundaries) keep the raw text, surfaces read
+    // the sanitized variant. 401s are handled below (token refresh/force-logout)
+    // and keep their own path.
+    if (error.response?.status !== 401) {
+      (error as SafeMessageError).safeMessage = parseApiError(error);
+    }
+
     const axiosErr = error as AxiosError;
     const originalRequest = axiosErr.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
@@ -215,7 +248,12 @@ export function mediaUrl(path: string | null | undefined): string | null {
   const base = baseURL.replace(/\/api\/?$/, '');
   // ponytail: sanitizar path para evitar traversal (#34)
   const clean = path.replace(/\.\./g, '').replace(/^\/+/, '/');
-  return `${base}${clean}`;
+  const prefixed = clean.startsWith('/') ? clean : `/${clean}`;
+  try {
+    return `${base}${encodeURI(prefixed)}`;
+  } catch {
+    return null;
+  }
 }
 
 /**

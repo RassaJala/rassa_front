@@ -1,0 +1,379 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { ESTADO_PAGADA, SETTLEMENTS_MAX_PAGES } from '@/common/settlements';
+import type { Settlement, SettlementDetail } from '@/common/settlements';
+
+import api from '../services/api';
+import {
+  fetchFarmers,
+  fetchSettlement,
+  fetchSettlements,
+  marcarSettlementPagada,
+} from '../services/settlements';
+
+vi.mock('../services/api', () => ({
+  default: { get: vi.fn(), post: vi.fn() },
+}));
+
+const mockGet = vi.mocked(api.get);
+const mockPost = vi.mocked(api.post);
+
+const liquidacion: Settlement = {
+  id_liquidacion: 10,
+  agricultor_id: 3,
+  agricultor_nombre: 'Juan Pérez',
+  periodo_inicio: '2026-07-01',
+  periodo_fin: '2026-07-31',
+  monto_ventas: '1000.00',
+  comision: '100.00',
+  monto_liquidar: '900.00',
+  estado: 'pendiente',
+  creado_en: '2026-08-01T10:00:00-03:00',
+};
+
+const detalle: SettlementDetail = {
+  ...liquidacion,
+  ventas: [
+    {
+      id_pedido: 5,
+      cliente_nombre: 'Ana Gómez',
+      total: '500.00',
+      creado_en: '2026-07-15T12:00:00-03:00',
+      pago_folio: null,
+    },
+  ],
+  pago_liquidacion: null,
+};
+
+const farmerRaw = {
+  id_usuario: 7,
+  email: 'juan@correo.com',
+  role: 'farmer',
+  nombre: 'Juan',
+  apellido_paterno: 'Pérez',
+  apellido_materno: null,
+  localidad: null,
+  localidad_nombre: null,
+  estado: true,
+  creado_en: '2026-01-01T09:00:00-03:00',
+};
+
+describe('settlements service', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    // Deterministic origin for the isSafeNextUrl same-origin checks (CONV-2):
+    // the real backend emits `next` as an ABSOLUTE URL, so the guard compares
+    // its origin against the api instance's baseURL.
+    (api as unknown as { defaults: { baseURL: string } }).defaults = {
+      baseURL: 'http://localhost:3000/api',
+    };
+  });
+
+  it('unwraps the envelope and returns the settlement results', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    expect(mockGet).toHaveBeenCalledWith('/liquidaciones/');
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(1);
+    expect(result.truncated).toBe(false);
+  });
+
+  it('builds the query string from the filter params', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: { count: 0, next: null, previous: null, results: [] },
+      },
+    });
+
+    await fetchSettlements({
+      agricultor: 3,
+      estado: ESTADO_PAGADA,
+      periodo_inicio: '2026-07-01',
+      periodo_fin: '2026-07-31',
+    });
+
+    expect(mockGet).toHaveBeenCalledWith(
+      '/liquidaciones/?agricultor=3&estado=pagada&periodo_inicio=2026-07-01&periodo_fin=2026-07-31',
+    );
+  });
+
+  it('follows the next links and concatenates every page', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: '/liquidaciones/?page=2',
+            previous: null,
+            results: [liquidacion],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: null,
+            previous: '/liquidaciones/',
+            results: [{ ...liquidacion, id_liquidacion: 11 }],
+          },
+        },
+      });
+
+    const result = await fetchSettlements();
+
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(result.items).toEqual([
+      liquidacion,
+      { ...liquidacion, id_liquidacion: 11 },
+    ]);
+    // The walk completed on the last page (next null) → not truncated.
+    expect(result.truncated).toBe(false);
+  });
+
+  it('stops following next links at the page cap and flags truncation', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 100,
+          next: '/liquidaciones/?page=2',
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    expect(mockGet).toHaveBeenCalledTimes(SETTLEMENTS_MAX_PAGES);
+    expect(result.items).toHaveLength(SETTLEMENTS_MAX_PAGES);
+    expect(result.count).toBe(100);
+    // The cap bound while the server still exposed a `next` link → the list
+    // is silently truncated and the UI must surface it (JD-003).
+    expect(result.truncated).toBe(true);
+  });
+
+  it('returns partial items with truncated=true when a later page fails (CONV-2)', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: '/liquidaciones/?page=2',
+            previous: null,
+            results: [liquidacion],
+          },
+        },
+      })
+      .mockRejectedValueOnce(new Error('Request failed with status code 500'));
+
+    const result = await fetchSettlements();
+
+    // Page 1 is kept; the mid-chain failure stops the walk instead of wiping
+    // the partial results — the truncated flag carries the signal.
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(2);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('CONV-2: follows an absolute next URL on the SAME origin (DRF emits absolute next links)', async () => {
+    mockGet
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: 'http://localhost:3000/api/liquidaciones/?page=2',
+            previous: null,
+            results: [liquidacion],
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          ok: true,
+          data: {
+            count: 2,
+            next: null,
+            previous: 'http://localhost:3000/api/liquidaciones/',
+            results: [{ ...liquidacion, id_liquidacion: 11 }],
+          },
+        },
+      });
+
+    const result = await fetchSettlements();
+
+    // Page 1's absolute URL matches the api baseURL origin → the walk
+    // continues to page 2 and completes normally.
+    expect(result.items).toEqual([
+      liquidacion,
+      { ...liquidacion, id_liquidacion: 11 },
+    ]);
+    expect(result.count).toBe(2);
+    expect(result.truncated).toBe(false);
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockGet).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:3000/api/liquidaciones/?page=2',
+    );
+  });
+
+  it('CONV-2: never follows a cross-origin absolute next URL (JWT guard)', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 100,
+          next: 'https://evil.example/steal?page=2',
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    // The api instance attaches the JWT to every request: following the
+    // external URL would leak the token. The walk stops after page 1, the
+    // collected page is kept, truncated is flagged and the URL never requested.
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.count).toBe(100);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet).not.toHaveBeenCalledWith(
+      'https://evil.example/steal?page=2',
+    );
+  });
+
+  it('CONV-2: never follows a protocol-relative next URL (JWT guard)', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 1,
+          next: '//evil.example/steal',
+          previous: null,
+          results: [liquidacion],
+        },
+      },
+    });
+
+    const result = await fetchSettlements();
+
+    expect(result.items).toEqual([liquidacion]);
+    expect(result.truncated).toBe(true);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects when a page has ok:false', async () => {
+    mockGet.mockResolvedValue({
+      data: { ok: false, message: 'Error del servidor' },
+    });
+
+    await expect(fetchSettlements()).rejects.toThrow('Error del servidor');
+  });
+
+  it('unwraps the settlement detail envelope', async () => {
+    mockGet.mockResolvedValue({ data: { ok: true, data: detalle } });
+
+    const result = await fetchSettlement(10);
+
+    expect(mockGet).toHaveBeenCalledWith('/liquidaciones/10/');
+    expect(result).toEqual(detalle);
+  });
+
+  it('rejects when the detail envelope has no data', async () => {
+    mockGet.mockResolvedValue({ data: { ok: true } });
+
+    await expect(fetchSettlement(10)).rejects.toThrow(
+      'Error en la respuesta del servidor',
+    );
+  });
+
+  it('posts the marcar-pagada body and returns detail plus message', async () => {
+    mockPost.mockResolvedValue({
+      data: {
+        ok: true,
+        data: detalle,
+        message: 'Liquidación marcada como pagada',
+      },
+    });
+
+    const result = await marcarSettlementPagada(10, {
+      tipo_pago: 2,
+      referencia: 'REF-123',
+    });
+
+    expect(mockPost).toHaveBeenCalledWith('/liquidaciones/10/marcar-pagada/', {
+      tipo_pago: 2,
+      referencia: 'REF-123',
+    });
+    expect(result).toEqual({
+      detail: detalle,
+      message: 'Liquidación marcada como pagada',
+    });
+  });
+
+  it('propagates the rejection on an HTTP 400 business error (ok:true)', async () => {
+    // The backend answers 400 with an ok:true envelope for business errors.
+    // The service must branch on HTTP status (axios rejection), never on
+    // envelope.ok, so this rejection must propagate untouched.
+    mockPost.mockRejectedValue(
+      new Error('Request failed with status code 400'),
+    );
+
+    await expect(marcarSettlementPagada(10, { tipo_pago: 2 })).rejects.toThrow(
+      'Request failed with status code 400',
+    );
+  });
+
+  it('fetches active agricultores and maps id_usuario to id', async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: {
+          count: 1,
+          next: null,
+          previous: null,
+          results: [farmerRaw],
+        },
+      },
+    });
+
+    const result = await fetchFarmers();
+
+    expect(mockGet).toHaveBeenCalledWith(
+      '/admin/usuarios/?rol=Agricultor&estado=true',
+    );
+    expect(result).toEqual([
+      {
+        id: 7,
+        nombre: 'Juan',
+        apellido_paterno: 'Pérez',
+        apellido_materno: null,
+        email: 'juan@correo.com',
+        role: 'farmer',
+        estado: true,
+        creado_en: '2026-01-01T09:00:00-03:00',
+      },
+    ]);
+  });
+});

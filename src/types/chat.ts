@@ -18,6 +18,7 @@ export type {
   Message,
   PaginatedResponse,
   RenameGroupPayload,
+  SearchUser,
   SendMessagePayload,
   SendMessageWithMediaPayload,
 } from '@rassa/chat';
@@ -30,11 +31,13 @@ export type ChatStackParamList = {
     title: string;
     tipo: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;

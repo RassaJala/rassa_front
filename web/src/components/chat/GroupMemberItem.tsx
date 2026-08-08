@@ -3,10 +3,19 @@ import type { GroupMember } from '@rassa/chat';
 
 interface GroupMemberItemProps {
   member: GroupMember;
+  onRemove?: (usuarioId: number) => void;
+  onChat?: (member: GroupMember) => void;
+  chatDisabled?: boolean;
 }
 
-export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
+export function GroupMemberItem({
+  member,
+  onRemove,
+  onChat,
+  chatDisabled,
+}: Readonly<GroupMemberItemProps>) {
   const c = useAppColors();
+  const rolLabel = member.rol === 'admin' ? 'Jefe' : 'Miembro';
 
   return (
     <div
@@ -27,9 +36,38 @@ export function GroupMemberItem({ member }: Readonly<GroupMemberItemProps>) {
           {member.nombre || 'Sin nombre'}
         </div>
         <div className="text-xs capitalize" style={{ color: c.muted }}>
-          {member.rol || 'Miembro'}
+          {rolLabel}
         </div>
       </div>
+
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={() => onRemove(member.idUsuario)}
+          className="cursor-pointer rounded-lg border-none bg-transparent text-xs font-medium"
+          style={{ color: c.coral }}
+          aria-label={`Remover a ${member.nombre}`}
+        >
+          Remover
+        </button>
+      ) : null}
+
+      {/* Chat button */}
+      {onChat && (
+        <button
+          type="button"
+          disabled={chatDisabled}
+          onClick={() => onChat(member)}
+          className="shrink-0 cursor-pointer rounded-md border-none px-3 py-1.5 text-sm font-medium"
+          style={{
+            background: chatDisabled ? c.border : c.brand,
+            color: chatDisabled ? c.muted : '#FFFFFF',
+          }}
+          aria-label={`Chatear con ${member.nombre || 'miembro'}`}
+        >
+          Chatear
+        </button>
+      )}
     </div>
   );
 }

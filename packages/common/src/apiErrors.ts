@@ -11,6 +11,29 @@ const STATUS_MESSAGES: Record<number, string> = {
 export const INTERNAL_SERVER_HTML_MESSAGE =
   'Error interno del servidor. Revisa los logs del backend.';
 
+// An Error that carries a UI-safe `safeMessage` alongside the raw `message`.
+// Interceptors set `safeMessage` without mutating `message`, so downstream
+// handlers (Sentry, axios-retry, error boundaries) keep the original text
+// while surfaces can render the sanitized variant (R1-002 / R4-002).
+export type SafeMessageError = Error & { safeMessage?: string };
+
+export function hasSafeMessage(error: unknown): error is SafeMessageError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'safeMessage' in error &&
+    typeof (error as SafeMessageError).safeMessage === 'string'
+  );
+}
+
+export function safeErrorMessage(
+  error: unknown,
+  fallback = 'Error al procesar la solicitud. Intenta de nuevo.',
+): string {
+  if (hasSafeMessage(error) && error.safeMessage) return error.safeMessage;
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 function parseHtmlOrStringError(data: string, status?: number): string {
   const trimmed = data.trim();
 

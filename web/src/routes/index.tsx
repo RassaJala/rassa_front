@@ -21,6 +21,8 @@ import { AdminFamilies } from './AdminFamilies';
 import { AdminFamilyDetail } from './AdminFamilyDetail';
 import { AdminUnits } from './AdminUnits';
 import { AdminProducts } from './AdminProducts';
+import { AdminSettlementDetail } from './AdminSettlementDetail';
+import { AdminSettlements } from './AdminSettlements';
 import { AdminMunicipios } from './AdminMunicipios';
 import { AdminLocalidades } from './AdminLocalidades';
 import { AdminUsers } from './AdminUsers';
@@ -31,16 +33,20 @@ import { BuyerCart } from './BuyerCart';
 import { BuyerCheckout } from './BuyerCheckout';
 import { BuyerOrderDetail } from './BuyerOrderDetail';
 import { BuyerOrders } from './BuyerOrders';
+import { BuyerReceiptDetail } from './BuyerReceiptDetail';
+import { BuyerReceipts } from './BuyerReceipts';
 import { ProfilePage } from './ProfilePage';
 import { ChatListPage } from './chat/ChatListPage';
 import { ChatDetailPage } from './chat/ChatDetailPage';
 import { GroupDetailPage } from './chat/GroupDetailPage';
 import { StartChatPage } from './chat/StartChatPage';
+import { CreateGroupPage } from './chat/CreateGroupPage';
 import { useAuth } from '../hooks/useAuth';
 
 const CHAT_ROUTE_CONFIGS = [
   { path: 'chat', element: <ChatListPage /> },
   { path: 'chat/nuevo', element: <StartChatPage /> },
+  { path: 'chat/nuevo/grupo', element: <CreateGroupPage /> },
   { path: 'chat/:id', element: <ChatDetailPage /> },
   { path: 'chat/:id/grupo', element: <GroupDetailPage /> },
 ];
@@ -174,6 +180,11 @@ export function AppRouter() {
                 <Route path="localidades" element={<AdminLocalidades />} />
                 <Route path="usuarios" element={<AdminUsers />} />
                 <Route path="mermas" element={<AdminMermasDashboard />} />
+                <Route path="liquidaciones" element={<AdminSettlements />} />
+                <Route
+                  path="liquidaciones/:id"
+                  element={<AdminSettlementDetail />}
+                />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />
@@ -198,6 +209,11 @@ export function AppRouter() {
                 <Route path="checkout" element={<BuyerCheckout />} />
                 <Route path="pedidos" element={<BuyerOrders />} />
                 <Route path="pedidos/:id" element={<BuyerOrderDetail />} />
+                <Route path="recibos" element={<BuyerReceipts />} />
+                <Route
+                  path="recibos/:paymentId"
+                  element={<BuyerReceiptDetail />}
+                />
                 <Route path="perfil" element={<ProfilePage />} />
                 {CHAT_ROUTE_CONFIGS.map((cfg) => (
                   <Route key={cfg.path} path={cfg.path} element={cfg.element} />

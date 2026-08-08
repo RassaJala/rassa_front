@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { WASTE_DETAIL_LIMIT } from '@/common/waste';
 
-import type { MermaPalette } from './colors';
+import type { AdminPalette } from './colors';
 import { getDecisionColor } from './colors';
 
 export interface RankingItem {
@@ -17,7 +17,7 @@ interface Props {
   readonly maxTotal: number;
   readonly truncated: boolean;
   readonly isDark: boolean;
-  readonly palette: MermaPalette;
+  readonly palette: AdminPalette;
 }
 
 // Palette for ranked bars; module-scope so color literals are not inline styles.

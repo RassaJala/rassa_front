@@ -3,6 +3,7 @@
 // web app (web/src/services/waste.ts, AdminMermasDashboard).
 
 import { MONTH_NAMES } from './dates';
+import { buildListUrl, unwrapEnvelope } from './http';
 import { API_RETRY_LIMIT } from './networking';
 
 // --- Types -------------------------------------------------------------------
@@ -236,30 +237,24 @@ export interface WasteEnvelope<T> {
 }
 
 // Unwrap the {ok, data} envelope returned by the merma endpoints. Throws when
-// ok === false or data is missing.
+// ok === false or data is missing (including null — see unwrapEnvelope).
 export function unwrapWasteEnvelope<T>(envelope: {
   ok: boolean;
   data?: T;
   message?: string;
 }): T {
-  if (envelope.ok === false || envelope.data === undefined) {
-    throw new Error(envelope.message ?? 'Error en la respuesta del servidor');
-  }
-  return envelope.data;
+  return unwrapEnvelope<T>(envelope);
 }
 
 // Build the /mermas/resumen/ URL with the query params the backend expects
 // (fecha_desde, fecha_hasta, producto_id, agrupar_por).
 export function buildResumenUrl(params: ResumenParams): string {
-  const query = new URLSearchParams();
-  if (params.fecha_desde) query.set('fecha_desde', params.fecha_desde);
-  if (params.fecha_hasta) query.set('fecha_hasta', params.fecha_hasta);
-  if (params.producto_id !== undefined) {
-    query.set('producto_id', String(params.producto_id));
-  }
-  if (params.agrupar_por) query.set('agrupar_por', params.agrupar_por);
-  const qs = query.toString();
-  return qs ? `/mermas/resumen/?${qs}` : '/mermas/resumen/';
+  return buildListUrl('/mermas/resumen/', {
+    fecha_desde: params.fecha_desde,
+    fecha_hasta: params.fecha_hasta,
+    producto_id: params.producto_id,
+    agrupar_por: params.agrupar_por,
+  });
 }
 
 // --- Decision colors ----------------------------------------------------------

@@ -1,5 +1,14 @@
 import { http, HttpResponse } from 'msw';
-import { PEDIDO_45 } from './fixtures';
+import {
+  FARMERS_RAW,
+  LIQUIDACIONES,
+  LIQUIDACION_DETAIL_PAGADA,
+  LIQUIDACION_DETAIL_PENDIENTE,
+  marcarPagadaResponse,
+  PEDIDO_45,
+  TIPOS_PAGO,
+  YA_PAGADA_RESPONSE,
+} from './fixtures';
 
 import { TRANSICIONES } from '../constants/recolecciones';
 import type { Recoleccion, RecoleccionEstado } from '../types/recolecciones';
@@ -312,4 +321,100 @@ export const handlers = [
   // el pedido #45 (fixture compartido, ver fixtures.ts); los casos de error se
   // sobreescriben por test con server.use.
   http.post(`${BASE}/pedidos/`, () => HttpResponse.json({ data: PEDIDO_45 })),
+
+  // --- Liquidaciones (settlements) ---
+
+  // Server-filtered list with DRF-style pagination (pageSize 10) so the
+  // fetch-all walk and the client-side page slice are both exercised.
+  http.get(`${BASE}/liquidaciones/`, ({ request }) => {
+    // request.url can be relative under jsdom — resolve against a base first.
+    const url = new URL(request.url, 'http://localhost');
+    const estado = url.searchParams.get('estado');
+    const agricultor = url.searchParams.get('agricultor');
+    const periodoInicio = url.searchParams.get('periodo_inicio');
+    const periodoFin = url.searchParams.get('periodo_fin');
+    const pageParam = url.searchParams.get('page');
+    const page = Math.max(1, pageParam === null ? 1 : Number(pageParam) || 1);
+
+    let results = LIQUIDACIONES;
+    if (estado !== null) results = results.filter((s) => s.estado === estado);
+    if (agricultor !== null) {
+      results = results.filter((s) => s.agricultor_id === Number(agricultor));
+    }
+    if (periodoInicio !== null) {
+      results = results.filter((s) => s.periodo_inicio >= periodoInicio);
+    }
+    if (periodoFin !== null) {
+      results = results.filter((s) => s.periodo_fin <= periodoFin);
+    }
+
+    const pageSize = 10;
+    const start = (page - 1) * pageSize;
+    const slice = results.slice(start, start + pageSize);
+    const nextParams = new URLSearchParams(url.searchParams);
+    nextParams.set('page', String(page + 1));
+    // `next` must stay relative to the API base: axios re-prepends the
+    // baseURL (/api), so an absolute `/api/...` path here would double it.
+    const next =
+      start + pageSize < results.length
+        ? `liquidaciones/?${nextParams.toString()}`
+        : null;
+
+    return HttpResponse.json({
+      ok: true,
+      data: {
+        count: results.length,
+        next,
+        previous: null,
+        results: slice,
+      },
+    });
+  }),
+
+  http.get(`${BASE}/liquidaciones/:id/`, ({ params }) => {
+    const id = Number(params.id);
+    if (id === LIQUIDACION_DETAIL_PAGADA.id_liquidacion) {
+      return HttpResponse.json({ ok: true, data: LIQUIDACION_DETAIL_PAGADA });
+    }
+    if (id === LIQUIDACION_DETAIL_PENDIENTE.id_liquidacion) {
+      return HttpResponse.json({
+        ok: true,
+        data: LIQUIDACION_DETAIL_PENDIENTE,
+      });
+    }
+    return HttpResponse.json(
+      { ok: false, message: 'Liquidación no encontrada' },
+      { status: 404 },
+    );
+  }),
+
+  // Default: success; an already-paid id answers the R4 idempotent 200. The
+  // success payload echoes the REQUESTED id (CRIT-1) so the paid detail never
+  // renders a different liquidación after setQueryData. Business errors
+  // (400/409 ok:true) are overridden per test with server.use.
+  http.post(`${BASE}/liquidaciones/:id/marcar-pagada/`, ({ params }) => {
+    const id = Number(params.id);
+    return HttpResponse.json(
+      id === LIQUIDACION_DETAIL_PAGADA.id_liquidacion
+        ? YA_PAGADA_RESPONSE
+        : marcarPagadaResponse(id),
+    );
+  }),
+
+  // Flat list (no {ok,data} envelope) — fetchTiposPago reads res.data directly.
+  http.get(`${BASE}/tipos-pago/`, () => HttpResponse.json(TIPOS_PAGO)),
+
+  // Active agricultores for the filter dropdown (raw backend payload with
+  // id_usuario; the service maps it to the web User shape).
+  http.get(`${BASE}/admin/usuarios/`, () =>
+    HttpResponse.json({
+      ok: true,
+      data: {
+        count: FARMERS_RAW.length,
+        next: null,
+        previous: null,
+        results: FARMERS_RAW,
+      },
+    }),
+  ),
 ];

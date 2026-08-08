@@ -27,5 +27,13 @@ export const addGroupMemberPath = (conversationId: number): string =>
 export const conversationReadPath = (conversationId: number): string =>
   `/chat/conversaciones/${conversationId}/leer/`;
 
+export const removeGroupMemberPath = (
+  conversationId: number,
+  usuarioId: number,
+): string => `/chat/conversaciones/${conversationId}/integrantes/${usuarioId}/`;
+
+export const overrideNombrePath = (conversationId: number): string =>
+  `/chat/conversaciones/${conversationId}/override-nombre/`;
+
 export const searchUsersPath = (q: string): string =>
   `/chat/usuarios/buscar/?q=${encodeURIComponent(q)}`;

@@ -40,6 +40,10 @@ describe('unwrapWasteEnvelope', () => {
   it('returns falsy-but-defined data such as 0', () => {
     expect(unwrapWasteEnvelope({ ok: true, data: 0 })).toBe(0);
   });
+
+  it('R4-4: throws when data is null instead of passing it through', () => {
+    expect(() => unwrapWasteEnvelope({ ok: true, data: null })).toThrow();
+  });
 });
 
 describe('waste date helpers', () => {

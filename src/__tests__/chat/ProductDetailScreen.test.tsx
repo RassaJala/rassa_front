@@ -2,7 +2,12 @@
 import React from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
@@ -74,5 +79,40 @@ describe('ProductDetailScreen — Contact Farmer', () => {
         { fk_usuario: 5 },
       );
     });
+  });
+
+  it('shows inline error message when backend fails (envelope)', async () => {
+    mockApiPost.mockResolvedValue({
+      data: { ok: false, mensaje: 'Error del servidor.', data: null },
+    });
+
+    const { getByText } = renderScreen();
+
+    fireEvent.press(getByText('Contactar agricultor'));
+
+    expect(await screen.findByText('Error del servidor.')).toBeTruthy();
+  });
+
+  it('shows a friendly inline error on a real HTTP 500 (rejection path)', async () => {
+    // MAJOR #3 (#82): the rejection path (real HTTP 500) behaves completely
+    // differently from the envelope path and was previously untested. The
+    // interceptor exposes a sanitized `safeMessage`; the screen renders it.
+    const axiosErr = Object.assign(
+      new Error('Request failed with status code 500'),
+      {
+        isAxiosError: true,
+        response: { status: 500, data: undefined },
+        safeMessage: 'Error del servidor. Intenta de nuevo.',
+      },
+    );
+    mockApiPost.mockRejectedValue(axiosErr);
+
+    const { getByText } = renderScreen();
+
+    fireEvent.press(getByText('Contactar agricultor'));
+
+    expect(
+      await screen.findByText('Error del servidor. Intenta de nuevo.'),
+    ).toBeTruthy();
   });
 });
