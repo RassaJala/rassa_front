@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import {
   formatTimestamp,
@@ -9,9 +9,12 @@ import {
   STATUS_COLORS,
   STATUS_LABELS,
 } from '../constants/orderTimeline';
-import api from '../services/api';
 import { useAppColors } from '../hooks/useAppColors';
+import { useOrderMermas } from '../hooks/useOrderMermas';
+import api from '../services/api';
 import type { OrderStatusHistory } from '../types';
+
+import { OrderMermasSection } from './OrderMermasSection';
 
 export function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +42,8 @@ export function AdminOrderDetail() {
   });
 
   const entries = data ?? [];
+
+  const { mermas } = useOrderMermas(orderId);
 
   // ── Styles ──
 
@@ -109,6 +114,9 @@ export function AdminOrderDetail() {
           Pedido #{orderId}
         </h2>
       </div>
+
+      {/* Mermas section */}
+      <OrderMermasSection mermas={mermas} />
 
       {/* Content */}
       <div

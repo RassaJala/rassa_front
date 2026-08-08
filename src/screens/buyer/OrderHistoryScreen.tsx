@@ -21,6 +21,167 @@ import type { BuyerStackParamList, Order } from '@/types';
 
 type Nav = NativeStackNavigationProp<BuyerStackParamList>;
 
+interface OrderBadgesProps {
+  readonly item: Order;
+  readonly brand: string;
+  readonly activeBg: string;
+}
+
+function OrderBadges({
+  item,
+  brand,
+  activeBg,
+}: OrderBadgesProps): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        gap: 6,
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: activeBg,
+          borderRadius: 8,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 12,
+            fontWeight: '600',
+            color: brand,
+            textTransform: 'capitalize',
+          }}
+        >
+          {item.estado_actual.replace(/_/g, ' ')}
+        </Text>
+      </View>
+      {item.expirado === true ? (
+        <View
+          style={{
+            backgroundColor: colors.error,
+            borderRadius: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '600',
+              color: colors.iconWhite,
+            }}
+          >
+            Expirado
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+interface OrderCardProps {
+  readonly item: Order;
+  readonly surface: string;
+  readonly border: string;
+  readonly fg: string;
+  readonly muted: string;
+  readonly brand: string;
+  readonly activeBg: string;
+  readonly navigation: Nav;
+}
+
+function OrderCard({
+  item,
+  surface,
+  border,
+  fg,
+  muted,
+  brand,
+  activeBg,
+  navigation,
+}: OrderCardProps): React.JSX.Element {
+  return (
+    <View
+      style={{
+        backgroundColor: surface,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: border,
+        padding: 16,
+        marginBottom: 10,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: fg }}>
+            #{item.id_pedido}
+          </Text>
+          <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
+            {formatearFecha(item.creado_en)}
+          </Text>
+        </View>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: fg }}>
+          ${parseFloat(item.total).toFixed(2)}
+        </Text>
+      </View>
+
+      {item.productos && item.productos.length > 0 ? (
+        <Text
+          style={{ fontSize: 13, color: muted, marginTop: 8 }}
+          numberOfLines={2}
+        >
+          {item.productos.join(', ')}
+          {item.has_more_productos ? '...' : ''}
+        </Text>
+      ) : null}
+
+      <OrderBadges item={item} brand={brand} activeBg={activeBg} />
+
+      <Pressable
+        onPress={() =>
+          navigation.navigate('OrderDetail', { orderId: item.id_pedido })
+        }
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          marginTop: 12,
+          backgroundColor: brand,
+          borderRadius: 10,
+          paddingVertical: 10,
+        }}
+      >
+        <MaterialCommunityIcons
+          name="eye-outline"
+          size={18}
+          color={colors.iconWhite}
+        />
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: '700',
+            color: colors.iconWhite,
+          }}
+        >
+          Ver estatus
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function OrderHistoryScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -49,132 +210,6 @@ export default function OrderHistoryScreen(): React.JSX.Element {
   });
 
   const keyExtractor = useCallback((item: Order) => String(item.id_pedido), []);
-
-  const renderOrder = useCallback(
-    ({ item }: { readonly item: Order }) => (
-      <View
-        style={{
-          backgroundColor: surface,
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: border,
-          padding: 16,
-          marginBottom: 10,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: fg }}>
-              #{item.id_pedido}
-            </Text>
-            <Text style={{ fontSize: 13, color: muted, marginTop: 2 }}>
-              {formatearFecha(item.creado_en)}
-            </Text>
-          </View>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: fg }}>
-            ${parseFloat(item.total).toFixed(2)}
-          </Text>
-        </View>
-
-        {item.productos && item.productos.length > 0 ? (
-          <Text
-            style={{ fontSize: 13, color: muted, marginTop: 8 }}
-            numberOfLines={2}
-          >
-            {item.productos.join(', ')}
-            {item.has_more_productos ? '...' : ''}
-          </Text>
-        ) : null}
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 10,
-            gap: 6,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: activeBg,
-              borderRadius: 8,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '600',
-                color: brand,
-                textTransform: 'capitalize',
-              }}
-            >
-              {item.estado_actual.replace(/_/g, ' ')}
-            </Text>
-          </View>
-          {item.expirado === true ? (
-            <View
-              style={{
-                backgroundColor: colors.error,
-                borderRadius: 8,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '600',
-                  color: colors.iconWhite,
-                }}
-              >
-                Expirado
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        <Pressable
-          onPress={() =>
-            navigation.navigate('OrderDetail', { orderId: item.id_pedido })
-          }
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            marginTop: 12,
-            backgroundColor: brand,
-            borderRadius: 10,
-            paddingVertical: 10,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="eye-outline"
-            size={18}
-            color={colors.iconWhite}
-          />
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: '700',
-              color: colors.iconWhite,
-            }}
-          >
-            Ver estatus
-          </Text>
-        </Pressable>
-      </View>
-    ),
-    [surface, border, fg, muted, activeBg, brand, navigation],
-  );
 
   if (isLoading) {
     return (
@@ -262,35 +297,52 @@ export default function OrderHistoryScreen(): React.JSX.Element {
         >
           Mis Pedidos
         </Text>
-        <Pressable
-          onPress={() => navigation.navigate('ReceiptList')}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: brand,
-            borderRadius: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="receipt"
-            size={16}
-            color={colors.iconWhite}
-          />
-          <Text
-            style={{ fontSize: 13, fontWeight: '700', color: colors.iconWhite }}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable
+            onPress={() => navigation.navigate('ReceiptList')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: brand,
+              borderRadius: 10,
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+            }}
           >
-            Mis Recibos
-          </Text>
-        </Pressable>
+            <MaterialCommunityIcons
+              name="receipt"
+              size={16}
+              color={colors.iconWhite}
+            />
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '700',
+                color: colors.iconWhite,
+              }}
+            >
+              Mis Recibos
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
         data={orders}
-        renderItem={renderOrder}
         keyExtractor={keyExtractor}
+        renderItem={({ item }: { readonly item: Order }) => (
+          <OrderCard
+            item={item}
+            surface={surface}
+            border={border}
+            fg={fg}
+            muted={muted}
+            brand={brand}
+            activeBg={activeBg}
+            navigation={navigation}
+          />
+        )}
         ListEmptyComponent={
           <View
             style={{

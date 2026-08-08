@@ -4,6 +4,8 @@
 // with `estado_actual` + `historial`. Both live here so the two call sites
 // cannot drift again — they already diverged once (`estado` vs `estado_actual`).
 
+import type { MermaDePedido } from '@/common/waste';
+
 export interface PedidoDetalle {
   id_detalle: number;
   nombre_producto: string;
@@ -25,6 +27,18 @@ export interface Pedido {
   creado_en: string;
 }
 
+// ── Mermas ─────────────────────────────────────────────────
+// Single source of truth: packages/common/src/waste.ts (shared with mobile).
+// Re-exported here so web imports (`import type { MermaDePedido } from '~/services/orderTypes'`)
+// keep working without drifting from the mobile copy.
+export type {
+  MermaDePedido,
+  MermaDePedidoPublic,
+  MermaProductoInfo,
+  MermaDecisionInfo,
+  MermaPedidoInfo,
+} from '@/common/waste';
+
 /** GET /pedidos/:id/ response type (raw body). */
 export interface OrderDetail {
   id_pedido: number;
@@ -38,6 +52,11 @@ export interface OrderDetail {
   expirado?: boolean;
   detalles: PedidoDetalle[];
   historial: OrderHistoryEntry[];
+  /**
+   * Mermas are NOT part of the order detail — they load separately via
+   * GET /mermas/?fk_pedido={id}. Kept only as an optional legacy field.
+   */
+  mermas?: MermaDePedido[];
 }
 
 export interface OrderHistoryEntry {

@@ -8,8 +8,11 @@ import { formatearFecha } from '@/common/dates';
 import { isOrderExpired } from '@/common/orders';
 import { colors } from '~/constants/colors';
 import { useAppColors } from '~/hooks/useAppColors';
+import { useOrderMermas } from '~/hooks/useOrderMermas';
 import api from '~/services/api';
 import type { OrderDetail } from '~/services/orderTypes';
+
+import { OrderMermasSection } from './OrderMermasSection';
 
 const STATUS_VARIANT: Record<
   string,
@@ -51,6 +54,8 @@ export function BuyerOrderDetail() {
     },
     enabled: orderId > 0,
   });
+
+  const { mermas } = useOrderMermas(orderId, { publicView: true });
 
   if (isLoading) {
     return <LoadingSpinner className="mt-20" />;
@@ -381,6 +386,11 @@ export function BuyerOrderDetail() {
           </tbody>
         </table>
       </div>
+
+      {/* Mermas section */}
+      {mermas.length > 0 ? (
+        <OrderMermasSection mermas={mermas} showComentarios={false} />
+      ) : null}
 
       {/* Timeline section */}
       <h2

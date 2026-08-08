@@ -8,9 +8,11 @@ import {
   parseLocalDate,
   periodLabel,
   toLocalDate,
+  toPublicMerma,
+  unwrapOrderMermas,
   unwrapWasteEnvelope,
 } from './waste';
-import type { DecisionPalette } from './waste';
+import type { DecisionPalette, MermaDePedido } from './waste';
 
 describe('unwrapWasteEnvelope', () => {
   it('returns data when ok is true', () => {
@@ -168,5 +170,71 @@ describe('getDecisionColor', () => {
     expect(getDecisionColor('compostar')).toBe(
       DEFAULT_DECISION_PALETTE.compostar,
     );
+  });
+});
+
+describe('unwrapOrderMermas', () => {
+  it('returns results from the nested envelope', () => {
+    const payload = {
+      ok: true,
+      data: { count: 1, results: [{ id_merma: 1 }] },
+    };
+    expect(unwrapOrderMermas(payload)).toEqual([{ id_merma: 1 }]);
+  });
+
+  it('falls back to the top-level results (legacy flat shape)', () => {
+    expect(unwrapOrderMermas({ results: [{ id_merma: 2 }] })).toEqual([
+      { id_merma: 2 },
+    ]);
+  });
+
+  it('returns [] for missing or non-array results', () => {
+    expect(unwrapOrderMermas({ ok: true, data: {} })).toEqual([]);
+    expect(unwrapOrderMermas({ ok: true, data: { results: 'nope' } })).toEqual(
+      [],
+    );
+    expect(unwrapOrderMermas({})).toEqual([]);
+    expect(unwrapOrderMermas(null)).toEqual([]);
+    expect(unwrapOrderMermas(undefined)).toEqual([]);
+  });
+
+  it('never lets empty results become nullish', () => {
+    expect(unwrapOrderMermas({ ok: true, data: { results: [] } })).toEqual([]);
+  });
+});
+
+describe('toPublicMerma', () => {
+  const fullMerma: MermaDePedido = {
+    id_merma: 1,
+    fk_producto_semanal: 100,
+    fk_pedido: 1,
+    cantidad: 2,
+    motivo: 'Se dañó en el traslado',
+    comentarios: 'Nota interna del staff',
+    fk_decision: 1,
+    creado_en: '2026-07-25T10:00:00Z',
+    estado: true,
+    producto_info: {
+      id: 100,
+      producto: 'Manzana',
+      publicacion: 1,
+      stock_restante: 8,
+    },
+    decision_info: { id: 1, nombre: 'Tirar' },
+    pedido_info: {
+      id: 1,
+      cliente: 'Cliente Test',
+      estado: 'entregado',
+      total: '150.50',
+    },
+  };
+
+  it('strips pedido_info and comentarios but keeps display fields', () => {
+    const pub = toPublicMerma(fullMerma);
+    expect(pub).not.toHaveProperty('pedido_info');
+    expect(pub).not.toHaveProperty('comentarios');
+    expect(pub.cantidad).toBe(2);
+    expect(pub.motivo).toBe('Se dañó en el traslado');
+    expect(pub.producto_info?.producto).toBe('Manzana');
   });
 });

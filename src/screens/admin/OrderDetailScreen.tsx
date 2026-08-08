@@ -8,8 +8,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import OrderMermasSection from '@/components/OrderMermasSection';
 import OrderTimeline from '@/components/OrderTimeline';
 import { useAdminColors } from '@/hooks/useAdminColors';
+import { useOrderMermas } from '@/hooks/useOrderMermas';
 import type { AdminStackParamList } from '@/types';
 
 const styles = StyleSheet.create({
@@ -51,6 +53,8 @@ export default function OrderDetailScreen(): React.JSX.Element {
       NativeStackNavigationProp<AdminStackParamList, 'OrderDetail'>
     >();
 
+  const { mermas } = useOrderMermas(orderId);
+
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -68,6 +72,7 @@ export default function OrderDetailScreen(): React.JSX.Element {
       <View
         style={[styles.card, { backgroundColor: surface, borderColor: border }]}
       >
+        {mermas.length > 0 ? <OrderMermasSection mermas={mermas} /> : null}
         <ErrorBoundary>
           <OrderTimeline orderId={orderId} onBack={() => navigation.goBack()} />
         </ErrorBoundary>

@@ -1,5 +1,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+import type { MermaDePedido } from '@/common/waste';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -85,12 +87,29 @@ export interface Order {
   expirado?: boolean;
 }
 
+// ── Mermas ─────────────────────────────────────────────────
+// Single source of truth: packages/common/src/waste.ts (shared with web).
+// Re-exported here so mobile imports (`import type { MermaDePedido } from '@/types'`)
+// keep working without drifting from the web copy.
+export type {
+  MermaDePedido,
+  MermaDePedidoPublic,
+  MermaProductoInfo,
+  MermaDecisionInfo,
+  MermaPedidoInfo,
+} from '@/common/waste';
+
 export interface OrderDetail extends Order {
   subtotal: string;
   iva: string;
   fecha_expiracion: string | null;
   detalles: OrderItem[];
   historial: OrderHistoryEntry[];
+  /**
+   * Mermas are NOT part of the order detail — they load separately via
+   * GET /mermas/?fk_pedido={id}. Kept only as an optional legacy field.
+   */
+  mermas?: MermaDePedido[];
 }
 
 export interface OrderItem {

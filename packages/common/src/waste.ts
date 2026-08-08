@@ -293,3 +293,94 @@ export function getDecisionColor(
   const idx = hashString(key) % palette.fallback.length;
   return palette.fallback[idx] ?? palette.defaultColor;
 }
+
+// --- Per-order mermas (GET /mermas/?fk_pedido={id}) -------------------------
+// Single source of truth shared by the mobile and web order views. The backend
+// serializes these nested fields (MermaListSerializer); every one is nullable,
+// so consumers must not assume they exist.
+
+export interface MermaProductoInfo {
+  id: number | null;
+  producto: string | null;
+  publicacion: number | null;
+  stock_restante: number | null;
+}
+
+export interface MermaDecisionInfo {
+  id: number | null;
+  nombre: string | null;
+}
+
+export interface MermaPedidoInfo {
+  id: number | null;
+  cliente: string | null;
+  estado: string | null;
+  total: string | null;
+}
+
+/** Backend GET /mermas/?fk_pedido={id} shape (MermaListSerializer, nested fields). */
+export interface MermaDePedido {
+  id_merma: number;
+  fk_producto_semanal: number | null;
+  fk_pedido: number | null;
+  cantidad: number;
+  motivo: string;
+  comentarios: string | null;
+  fk_decision: number | null;
+  creado_en: string; // ISO datetime
+  estado: boolean;
+  producto_info: MermaProductoInfo | null;
+  decision_info: MermaDecisionInfo | null;
+  pedido_info: MermaPedidoInfo | null;
+}
+
+/**
+ * Buyer-safe projection: internal staff notes (`comentarios`) and `pedido_info`
+ * (PII — buyer identity) are stripped before the data reaches the client cache
+ * (see the `publicView` mode of `useOrderMermas`).
+ */
+export type MermaDePedidoPublic = Omit<
+  MermaDePedido,
+  'comentarios' | 'pedido_info'
+>;
+
+export interface MermaListEnvelope {
+  ok: boolean;
+  data?: {
+    count?: number;
+    next?: string | null;
+    previous?: string | null;
+    results?: MermaDePedido[];
+  };
+  /** Legacy flat shape kept for defensive parsing only. */
+  results?: MermaDePedido[];
+}
+
+/**
+ * Unwraps the envelope returned by GET /mermas/?fk_pedido={id}:
+ * `{ ok, data: { count, next, previous, results } }`. Accepts the axios response
+ * body (no axios dependency, so it is unit-testable in isolation). Defensive:
+ * missing or non-array `results` yields an empty array — never a throw, never
+ * undefined.
+ */
+export function unwrapOrderMermas(payload: unknown): MermaDePedido[] {
+  const envelope =
+    typeof payload === 'object' && payload !== null
+      ? (payload as MermaListEnvelope)
+      : null;
+  const results = envelope?.data?.results ?? envelope?.results;
+  return Array.isArray(results) ? (results as MermaDePedido[]) : [];
+}
+
+/**
+ * Projects a full merma into its buyer-safe public shape (drops comments and
+ * the PII-laden nested pedido info).
+ */
+export function toPublicMerma(merma: MermaDePedido): MermaDePedidoPublic {
+  const {
+    comentarios: _comentarios,
+    pedido_info: _pedidoInfo,
+    ...rest
+  } = merma;
+  return rest;
+}
