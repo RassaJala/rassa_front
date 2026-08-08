@@ -1,9 +1,27 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// The web api client installs axios-retry (exponential backoff) on 5xx; by
+// default the error-fallback test would spend ~12s waiting for the retries to
+// exhaust. Replacing it with a no-op keeps the api layer working while making
+// failures surface immediately, like the mobile tests do with retry: false.
+vi.mock('axios-retry', () => {
+  const noop = Object.assign(() => undefined, {
+    exponentialDelay: () => 0,
+    isNetworkOrIdempotentRequestError: () => false,
+  });
+  return { default: noop, __esModule: true };
+});
 
 import { server } from '../../mocks/server';
 import { ThemeProvider } from '../../providers/ThemeProvider';
@@ -198,6 +216,73 @@ describe('WasteRegister', () => {
     ).toBeNull();
   });
 
+  it('rejects a quantity of 0 (boundary below the minimum)', async () => {
+    seedMocks();
+    renderPage();
+    const user = userEvent.setup();
+
+    await screen.findByRole('option', { name: /Tomate/ });
+    await selectFields(user);
+    // fireEvent.change + fireEvent.submit beat user.type/user.click here: the
+    // <input type="number" min="1"> makes jsdom enforce constraint validation,
+    // so a "0" keystroke is dropped and an invalid value blocks the submit
+    // event before React's handler runs. Driving the DOM events directly
+    // exercises the same payload a real browser produces for the JS rule.
+    fireEvent.change(screen.getByPlaceholderText('0'), {
+      target: { value: '0' },
+    });
+    await user.type(
+      screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+      'Se venció',
+    );
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
+
+    expect(
+      await screen.findByText(
+        'La cantidad debe ser un número entero mayor a 0.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('disables the submit button while the mutation is pending (no double POST)', async () => {
+    seedMocks();
+    let resolvePost: ((value: unknown) => void) | undefined;
+    let postedCount = 0;
+    server.use(
+      http.post(`${BASE}/mermas/`, () => {
+        postedCount += 1;
+        return new Promise((resolve) => {
+          resolvePost = resolve;
+        });
+      }),
+    );
+
+    renderPage();
+    const user = userEvent.setup();
+
+    await screen.findByRole('option', { name: /Tomate/ });
+    await selectFields(user);
+    await user.type(screen.getByPlaceholderText('0'), '2');
+    await user.type(
+      screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+      'Se venció',
+    );
+
+    const submit = screen.getByRole('button', { name: /Registrar Merma/ });
+    await user.click(submit);
+
+    // While the mutation is in flight the button turns into "Guardando…" and
+    // is disabled, so a second click cannot fire a second request.
+    expect(
+      await screen.findByRole('button', { name: /Guardando/ }),
+    ).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: /Guardando/ }));
+    await waitFor(() => expect(resolvePost).toBeDefined());
+    resolvePost?.(HttpResponse.json({ data: { id_merma: 1 } }));
+
+    await waitFor(() => expect(postedCount).toBe(1));
+  });
+
   it('shows the loading spinner while queries are in flight', async () => {
     seedMocks();
     renderPage();
@@ -242,13 +327,10 @@ describe('WasteRegister', () => {
     renderPage();
     const user = userEvent.setup();
 
-    // The web api client applies axios-retry (exponential backoff) on 5xx
-    // before the query settles into isError, so give the fallback time to
-    // appear after the retries are exhausted.
+    // axios-retry is a no-op in tests, so the failed query settles into
+    // isError immediately and the fallback shows without a backoff wait.
     expect(
-      await screen.findByText('No se pudieron cargar los datos.', undefined, {
-        timeout: 12_000,
-      }),
+      await screen.findByText('No se pudieron cargar los datos.'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Reintentar/ }),

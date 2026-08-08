@@ -15,14 +15,14 @@ import { colors } from '@/constants/colors';
 import type { PublishedProduct } from '@/types/waste';
 
 interface ProductModalProps {
-  visible: boolean;
-  loading: boolean;
-  products: PublishedProduct[];
-  selectedId: number | null;
-  bottomInset: number;
-  t: ThemeColors;
-  onClose: () => void;
-  onSelect: (product: PublishedProduct) => void;
+  readonly visible: boolean;
+  readonly loading: boolean;
+  readonly products: readonly PublishedProduct[];
+  readonly selectedId: number | null;
+  readonly bottomInset: number;
+  readonly t: ThemeColors;
+  readonly onClose: () => void;
+  readonly onSelect: (product: PublishedProduct) => void;
 }
 
 function productModalHint(loading: boolean, productCount: number): string {

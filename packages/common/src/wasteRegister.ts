@@ -96,15 +96,22 @@ export interface PublishedPublication {
 // (WasteRegister). Returns a plain error map keyed by field; an empty map
 // means the payload can be submitted. Keeps business rules in one place so a
 // new rule is not implemented twice with different messages.
+// `pedido`/`producto` stay loosely typed on purpose: mobile passes the full
+// Order/PublishedProduct objects, web passes a string id (pedido) plus the
+// selected product object. Only the guards shown below touch them.
 export interface WasteFormValues {
-  pedido: unknown;
-  producto: unknown;
+  pedido: { readonly id_pedido: number } | string | null | undefined;
+  producto:
+    { readonly id_producto_semanal: number } | string | null | undefined;
   cantidad: string;
   motivo: string;
   // Explicitly includes undefined: callers pass `selected?.stock` which may be
   // undefined when nothing is selected; exactOptionalPropertyTypes rejects
   // `stock?: number` for that shape.
   stock?: number | undefined;
+  // Numeric id (mobile uses `number | null`) or the empty string (web uses
+  // `''` until an option is chosen).
+  decision: number | string | null | undefined;
 }
 
 export function validateWasteRecord(
@@ -117,6 +124,9 @@ export function validateWasteRecord(
   }
   if (!values.producto) {
     errors.producto = 'Selecciona un producto publicado.';
+  }
+  if (!values.decision) {
+    errors.decision = 'Elige una decisión.';
   }
 
   const cantidadNum = Number(values.cantidad);

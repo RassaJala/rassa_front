@@ -54,16 +54,20 @@ export const DECISION_COMPOSTAR = 'compostar';
 // Legacy backend value for the Desechar decision.
 export const DECISION_TIRAR = 'tirar';
 
+// DECISION_TIRAR is included as a legacy alias: records created before the
+// rename may still carry 'tirar' and getDecisionColor() maps it to the same
+// color as DESECHAR, so the type union must accept it too.
 export type DecisionMerma =
   | typeof DECISION_DONAR
   | typeof DECISION_DESECHAR
   | typeof DECISION_VENDER_MAS_BARATO
-  | typeof DECISION_COMPOSTAR;
+  | typeof DECISION_COMPOSTAR
+  | typeof DECISION_TIRAR;
 
 // --- Date helpers ------------------------------------------------------------
 // Backend sends full ISO datetimes ("2026-07-01T00:00:00-03:00"); only the date
-// part matters. parseDate is a direct alias of toLocalDate (kept as a
-// backward-compatible name for callers that only pass strict YYYY-MM-DD).
+// part matters. toLocalDate() builds a local Date from the YYYY-MM-DD part and
+// rejects malformed input instead of falling back to "now".
 
 export function toLocalDate(iso: string): Date | null {
   const datePart = iso.slice(0, 10);
@@ -79,10 +83,6 @@ export function toLocalDate(iso: string): Date | null {
     return null;
   }
   return date;
-}
-
-export function parseDate(raw: string): Date | null {
-  return toLocalDate(raw);
 }
 
 // Backend sends bare dates ("2026-08-10") that must not be parsed with

@@ -39,19 +39,12 @@ import { extractApiError } from '@/utils/apiErrors';
 import { DecisionModal } from './DecisionModal';
 import { PedidoModal } from './PedidoModal';
 import { ProductModal } from './ProductModal';
-
-// Shared field label/error text styles (deduplicated from three identical
-// definitions); the theme-dependent color is merged at each usage site.
-const labelStyle = {
-  fontSize: 13,
-  fontWeight: '600',
-  marginBottom: 6,
-} as const;
-
-const errorStyle = {
-  fontSize: 12,
-  marginTop: 4,
-} as const;
+import {
+  DecisionSelector,
+  errorStyle,
+  labelStyle,
+  PedidoSelector,
+} from './WasteSelectors';
 
 interface ProductEmptyNoticeProps {
   readonly products: readonly PublishedProduct[];
@@ -94,112 +87,6 @@ function ProductEmptyNotice({
         registrar mermas.
       </Text>
     </View>
-  );
-}
-
-interface PedidoSelectorProps {
-  readonly selected: Order | null;
-  readonly error: string | undefined;
-  readonly t: ReturnType<typeof themeColors>;
-  readonly coral: string;
-  readonly onPress: () => void;
-}
-
-function PedidoSelector({
-  selected,
-  error,
-  t,
-  coral,
-  onPress,
-}: PedidoSelectorProps): React.JSX.Element {
-  return (
-    <>
-      <Text style={[labelStyle, { marginTop: 24, color: t.fg }]}>Pedido *</Text>
-      <Pressable
-        onPress={onPress}
-        style={{
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: error ? coral : t.border,
-          backgroundColor: t.input,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {selected ? (
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: t.fg }}>
-              Pedido #{selected.id_pedido} ·{' '}
-              {selected.cliente_nombre ?? 'Cliente'}
-            </Text>
-            <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-              Total: ${selected.total} · {selected.estado_actual}
-            </Text>
-          </View>
-        ) : (
-          <Text style={{ fontSize: 15, color: t.muted }}>Elige un pedido…</Text>
-        )}
-        <MaterialCommunityIcons name="chevron-down" size={20} color={t.muted} />
-      </Pressable>
-      {error ? (
-        <Text style={[errorStyle, { color: coral }]}>{error}</Text>
-      ) : null}
-    </>
-  );
-}
-
-interface DecisionSelectorProps {
-  readonly selected: WasteDecisionOption | null;
-  readonly error: string | undefined;
-  readonly t: ReturnType<typeof themeColors>;
-  readonly coral: string;
-  readonly onPress: () => void;
-}
-
-function DecisionSelector({
-  selected,
-  error,
-  t,
-  coral,
-  onPress,
-}: DecisionSelectorProps): React.JSX.Element {
-  return (
-    <>
-      <Text style={[labelStyle, { marginTop: 16, color: t.fg }]}>
-        Decisión *
-      </Text>
-      <Pressable
-        onPress={onPress}
-        style={{
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: error ? coral : t.border,
-          backgroundColor: t.input,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text
-          style={{
-            flex: 1,
-            fontSize: 15,
-            color: selected ? t.fg : t.muted,
-          }}
-        >
-          {selected ? selected.decision : 'Elige una decisión…'}
-        </Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color={t.muted} />
-      </Pressable>
-      {error ? (
-        <Text style={[errorStyle, { color: coral }]}>{error}</Text>
-      ) : null}
-    </>
   );
 }
 
@@ -291,10 +178,9 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     onSuccess: async () => {
       // Refresh product stock BEFORE resetting the form so the next payload is
       // validated against the real stock, not the stale pre-merma value.
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['waste-records'] }),
-        queryClient.invalidateQueries({ queryKey: ['publicaciones-current'] }),
-      ]);
+      await queryClient.invalidateQueries({
+        queryKey: ['publicaciones-current'],
+      });
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setSelectedProduct(null);
       setSelectedPedido(null);
@@ -314,12 +200,9 @@ export default function WasteRegisterScreen(): React.JSX.Element {
         cantidad,
         motivo,
         stock: selectedProduct?.stock,
+        decision: decisionId,
       }),
     };
-
-    if (!decisionId) {
-      errors.decision = 'Elige una decisión.';
-    }
 
     setFieldErrors(errors);
     if (

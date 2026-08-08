@@ -219,6 +219,47 @@ describe('WasteRegisterScreen (mobile)', () => {
     ).toBeTruthy();
   });
 
+  it('rejects a quantity of 0 at the lower boundary', async () => {
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+    await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+    fireEvent.changeText(render.getByPlaceholderText('0'), '0');
+    fireEvent.press(submitButton(render));
+
+    expect(
+      render.getByText('La cantidad debe ser un número entero mayor a 0.'),
+    ).toBeTruthy();
+    expect(mockCreateWasteRecord).not.toHaveBeenCalled();
+  });
+
+  it('does not fire a second request while the mutation is pending', async () => {
+    let resolveCreate: (() => void) | undefined;
+    mockCreateWasteRecord.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = () => resolve({ id_merma: 1, cantidad: 2 });
+        }),
+    );
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+    await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+    fireEvent.press(submitButton(render));
+    await waitFor(() => expect(mockCreateWasteRecord).toHaveBeenCalledTimes(1));
+
+    // While pending the submit Pressable is disabled, so a second press does
+    // not dispatch another mutation.
+    fireEvent.press(submitButton(render));
+    expect(mockCreateWasteRecord).toHaveBeenCalledTimes(1);
+
+    // Resolve so the mutation settles and the test does not leak a pending
+    // promise into the next test.
+    resolveCreate?.();
+  });
+
   it('shows the error fallback UI and recovers with Reintentar when queries fail', async () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { fetchCurrentPublications } = jest.requireMock('@/services/waste');
