@@ -324,6 +324,7 @@ export type SellerStackParamList = {
   CashClosing: undefined;
   Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
+  WasteRegister: undefined;
   Chat: {
     conversationId: number;
     title: string;

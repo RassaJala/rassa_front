@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
@@ -194,11 +196,22 @@ const sellerOrderColumns: Column<SellerOrderRow>[] = [
 // --- Pages ---
 
 export function SellerSales() {
+  const navigate = useNavigate();
   return (
     <>
       <PageHeader
         title="Mis Ventas"
-        action={<Button variant="primary">Nueva venta</Button>}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary">Nueva venta</Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/vendedor/mermas')}
+            >
+              Registrar Merma
+            </Button>
+          </div>
+        }
       />
       <DataTable
         data={sampleSales}

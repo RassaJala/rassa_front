@@ -197,7 +197,7 @@ export default function PublicationWizardScreen({
   // When editing, the step must show the stored publication date, not the
   // date computed from today.
   const displayedFecha = publicacion
-    ? parseLocalDate(publicacion.fecha_publicacion)
+    ? (parseLocalDate(publicacion.fecha_publicacion) ?? nextMondayDate)
     : nextMondayDate;
 
   if (isLoadingData) {

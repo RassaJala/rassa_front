@@ -81,15 +81,15 @@ describe('waste date helpers', () => {
 
   it('parseLocalDate parses bare dates as LOCAL dates (no UTC off-by-one)', () => {
     const d = parseLocalDate('2026-08-10');
-    expect(d.getFullYear()).toBe(2026);
-    expect(d.getMonth()).toBe(7);
-    expect(d.getDate()).toBe(10);
-    expect(d.getHours()).toBe(0);
+    expect(d?.getFullYear()).toBe(2026);
+    expect(d?.getMonth()).toBe(7);
+    expect(d?.getDate()).toBe(10);
+    expect(d?.getHours()).toBe(0);
   });
 
-  it('parseLocalDate falls back to a valid Date for malformed input', () => {
-    const d = parseLocalDate('not-a-date');
-    expect(Number.isNaN(d.getTime())).toBe(false);
+  it('parseLocalDate rejects malformed input like toLocalDate', () => {
+    expect(parseLocalDate('not-a-date')).toBeNull();
+    expect(parseLocalDate('2026-02-30')).toBeNull();
   });
 
   it('isMondayToday respects the device day of week', () => {
@@ -149,6 +149,18 @@ describe('getDecisionColor', () => {
   it('is case- and whitespace-insensitive for known decisions', () => {
     expect(getDecisionColor(' DONAR ', palette)).toBe('#D0');
     expect(getDecisionColor('Tirar', palette)).toBe('#T0');
+  });
+
+  it('maps the real backend decision names (seed: Donar/Desechar/.../Compostar)', () => {
+    expect(getDecisionColor('Donar', palette)).toBe('#D0');
+    expect(getDecisionColor('Desechar', palette)).toBe('#T0');
+    expect(getDecisionColor('Vender más barato', palette)).toBe('#F1');
+    expect(getDecisionColor('Compostar', palette)).toBe('#C0');
+  });
+
+  it('keeps the legacy "tirar" alias mapped to the desechar color', () => {
+    expect(getDecisionColor('tirar', palette)).toBe('#T0');
+    expect(getDecisionColor('desechar', palette)).toBe('#T0');
   });
 
   it('falls back to a hashed fallback color for unknown decisions, stably', () => {

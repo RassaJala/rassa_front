@@ -45,18 +45,30 @@ export const WASTE_DETAIL_LIMIT = 100;
 export const WASTE_RETRY_LIMIT = API_RETRY_LIMIT;
 export const WASTE_STALE_TIME_MS = 5 * 60 * 1000;
 
-// Decision strings shared by the mobile and web dashboards.
+// Decision strings shared by the mobile and web dashboards. Values match the
+// backend seed (Donar / Desechar / Vender más barato / Compostar); 'tirar' is
+// kept as a legacy alias for records created before the rename.
 export const DECISION_DONAR = 'donar';
-export const DECISION_TIRAR = 'tirar';
+export const DECISION_DESECHAR = 'desechar';
+export const DECISION_VENDER_MAS_BARATO = 'vender más barato';
 export const DECISION_COMPOSTAR = 'compostar';
+// Legacy backend value for the Desechar decision.
+export const DECISION_TIRAR = 'tirar';
 
+// DECISION_TIRAR is included as a legacy alias: records created before the
+// rename may still carry 'tirar' and getDecisionColor() maps it to the same
+// color as DESECHAR, so the type union must accept it too.
 export type DecisionMerma =
-  typeof DECISION_DONAR | typeof DECISION_TIRAR | typeof DECISION_COMPOSTAR;
+  | typeof DECISION_DONAR
+  | typeof DECISION_DESECHAR
+  | typeof DECISION_VENDER_MAS_BARATO
+  | typeof DECISION_COMPOSTAR
+  | typeof DECISION_TIRAR;
 
 // --- Date helpers ------------------------------------------------------------
 // Backend sends full ISO datetimes ("2026-07-01T00:00:00-03:00"); only the date
-// part matters. parseDate is a direct alias of toLocalDate (kept as a
-// backward-compatible name for callers that only pass strict YYYY-MM-DD).
+// part matters. toLocalDate() builds a local Date from the YYYY-MM-DD part and
+// rejects malformed input instead of falling back to "now".
 
 export function toLocalDate(iso: string): Date | null {
   const datePart = iso.slice(0, 10);
@@ -74,6 +86,10 @@ export function toLocalDate(iso: string): Date | null {
   return date;
 }
 
+// Backward-compatible alias kept for callers in main (e.g. useSettlementFilters)
+// that import `parseDate`. Prefer `toLocalDate` (or `parseLocalDate` when a
+// fallback is desired) in new code; this wrapper exists only so the shared
+// package does not break existing consumers.
 export function parseDate(raw: string): Date | null {
   return toLocalDate(raw);
 }
@@ -81,24 +97,11 @@ export function parseDate(raw: string): Date | null {
 // Backend sends bare dates ("2026-08-10") that must not be parsed with
 // `new Date()` (UTC midnight shifts the day back in negative-offset zones).
 // Shared by both apps so the timezone fix lives in exactly one place (W1).
-// Falls back to "now" for malformed input, with a dev warning (W3).
-// Uses a globalThis guard (not `process`) so the package typechecks in both
-// the RN app and the web tsconfig, which does not include Node types.
-function isNonProduction(): boolean {
-  const env = (globalThis as { process?: { env?: { NODE_ENV?: string } } })
-    .process?.env?.NODE_ENV;
-  return env !== 'production';
-}
-
-export function parseLocalDate(iso: string): Date {
-  const d = toLocalDate(iso);
-  if (d === null) {
-    if (isNonProduction()) {
-      console.warn('[parseLocalDate] invalid date input:', iso);
-    }
-    return new Date();
-  }
-  return d;
+// Strict alias: rejects malformed input exactly like toLocalDate (no silent
+// fallback to "now", which would corrupt filters and date math). Callers that
+// need a safe display fallback decide it themselves.
+export function parseLocalDate(iso: string): Date | null {
+  return toLocalDate(iso);
 }
 
 // Backend rule: publications can only be created/edited on Monday
@@ -288,7 +291,13 @@ export function getDecisionColor(
 ): string {
   const key = decision.toLowerCase().trim();
   if (key === DECISION_DONAR) return palette.donar;
-  if (key === DECISION_TIRAR) return palette.tirar;
+  if (key === DECISION_DESECHAR || key === DECISION_TIRAR) {
+    return palette.tirar;
+  }
+  if (key === DECISION_VENDER_MAS_BARATO) {
+    // No dedicated palette slot; a stable color beats an arbitrary hash.
+    return palette.fallback[0] ?? palette.defaultColor;
+  }
   if (key === DECISION_COMPOSTAR) return palette.compostar;
   const idx = hashString(key) % palette.fallback.length;
   return palette.fallback[idx] ?? palette.defaultColor;

@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, no-undef -- Test files are less strict */
-import { fetchMermaResumen } from '@/services/waste';
+import {
+  createWasteRecord,
+  fetchCurrentPublications,
+  fetchMermaResumen,
+  fetchWasteDecisions,
+  fetchWasteOrders,
+  fetchWasteRecord,
+  fetchWasteRecords,
+} from '@/services/waste';
 import api from '@/services/api';
 
 jest.mock('@/services/api');
@@ -54,5 +62,138 @@ describe('waste service (mobile)', () => {
     expect(mockApi.get).toHaveBeenCalledWith(
       '/mermas/resumen/?fecha_desde=2026-07-01&fecha_hasta=2026-07-31&producto_id=2&agrupar_por=mes',
     );
+  });
+});
+
+describe('waste register service (mobile)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('normalizes decisions from a paginated {results} envelope', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: { results: [{ id_decision: 1, decision: 'Donar' }] } },
+    });
+
+    await expect(fetchWasteDecisions()).resolves.toEqual([
+      { id_decision: 1, decision: 'Donar' },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/decisiones-merma/');
+  });
+
+  it('normalizes decisions from a bare array response', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: [{ id_decision: 2, decision: 'Desechar' }] },
+    });
+
+    await expect(fetchWasteDecisions()).resolves.toEqual([
+      { id_decision: 2, decision: 'Desechar' },
+    ]);
+  });
+
+  it('returns an empty list when the decision payload is missing', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: {} });
+
+    await expect(fetchWasteDecisions()).resolves.toEqual([]);
+  });
+
+  it('posts a waste record with the full payload', async () => {
+    mockApi.post.mockResolvedValueOnce({
+      data: { data: { id_merma: 1, cantidad: 2 } },
+    });
+
+    const result = await createWasteRecord({
+      fk_producto_semanal: 100,
+      fk_pedido: 7,
+      cantidad: 2,
+      motivo: 'Se venció',
+      fk_decision: 1,
+      comentarios: 'nota',
+    });
+
+    expect(mockApi.post).toHaveBeenCalledWith('/mermas/', {
+      fk_producto_semanal: 100,
+      fk_pedido: 7,
+      cantidad: 2,
+      motivo: 'Se venció',
+      fk_decision: 1,
+      comentarios: 'nota',
+    });
+    expect(result).toEqual({ id_merma: 1, cantidad: 2 });
+  });
+
+  it('fetches the seller orders for the pedido selector', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        results: [
+          {
+            id_pedido: 1,
+            total: '10',
+            estado_actual: 'pendiente',
+            creado_en: '',
+          },
+        ],
+      },
+    });
+
+    await expect(fetchWasteOrders()).resolves.toEqual([
+      {
+        id_pedido: 1,
+        total: '10',
+        estado_actual: 'pendiente',
+        creado_en: '',
+      },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/pedidos/');
+  });
+
+  it('fetches current publications for the product selector', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: [{ id_publicacion: 10, productos: [] }] },
+    });
+
+    await expect(fetchCurrentPublications()).resolves.toEqual([
+      { id_publicacion: 10, productos: [] },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/publicaciones/current/');
+  });
+
+  it('normalizes waste records from a paginated {results} envelope', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: { results: [{ id_merma: 1, cantidad: 2 }] } },
+    });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([
+      { id_merma: 1, cantidad: 2 },
+    ]);
+    expect(mockApi.get).toHaveBeenCalledWith('/mermas/');
+  });
+
+  it('normalizes waste records from a bare array response', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: [{ id_merma: 2, cantidad: 3 }] },
+    });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([
+      { id_merma: 2, cantidad: 3 },
+    ]);
+  });
+
+  it('returns an empty list when the records payload is missing', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: {} });
+
+    await expect(fetchWasteRecords()).resolves.toEqual([]);
+  });
+
+  it('fetches a single waste record by id', async () => {
+    mockApi.get.mockResolvedValueOnce({
+      data: { data: { id_merma: 5, cantidad: 2 } },
+    });
+
+    await expect(fetchWasteRecord(5)).resolves.toEqual({
+      id_merma: 5,
+      cantidad: 2,
+    });
+    expect(mockApi.get).toHaveBeenCalledWith('/mermas/5/');
   });
 });

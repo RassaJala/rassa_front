@@ -22,8 +22,8 @@ import axios from 'axios';
 import {
   extractProducts,
   groupBy,
-  parseDate,
   periodLabel,
+  toLocalDate,
   WASTE_DETAIL_LIMIT,
   WASTE_PAGE_SIZE,
 } from '@/common/waste';
@@ -119,8 +119,8 @@ export default function MermaResumenScreen({
   const dataLoadedAtRef = useRef(0);
 
   // Date validation
-  const desdeDate = draftDesde ? parseDate(draftDesde) : null;
-  const hastaDate = draftHasta ? parseDate(draftHasta) : null;
+  const desdeDate = draftDesde ? toLocalDate(draftDesde) : null;
+  const hastaDate = draftHasta ? toLocalDate(draftHasta) : null;
   const isDateRangeInvalid =
     desdeDate !== null && hastaDate !== null && desdeDate > hastaDate;
 

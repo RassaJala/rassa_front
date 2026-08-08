@@ -6,23 +6,23 @@ import {
   getWeekNumber,
   groupBy,
   hashString,
-  parseDate,
   toDateString,
+  toLocalDate,
 } from '@/common/waste';
 
 describe('waste date helpers', () => {
-  it('parseDate tolerates full ISO datetimes and slices the date part', () => {
-    const d = parseDate('2026-07-01T00:00:00-03:00');
+  it('toLocalDate tolerates full ISO datetimes and slices the date part', () => {
+    const d = toLocalDate('2026-07-01T00:00:00-03:00');
     expect(d?.getFullYear()).toBe(2026);
     expect(d?.getMonth()).toBe(6);
     expect(d?.getDate()).toBe(1);
   });
 
-  it('parseDate rejects invalid dates', () => {
-    expect(parseDate('2026-13-01')).toBeNull();
-    expect(parseDate('2026-02-30')).toBeNull();
-    expect(parseDate('not-a-date')).toBeNull();
-    expect(parseDate('')).toBeNull();
+  it('toLocalDate rejects invalid dates', () => {
+    expect(toLocalDate('2026-13-01')).toBeNull();
+    expect(toLocalDate('2026-02-30')).toBeNull();
+    expect(toLocalDate('not-a-date')).toBeNull();
+    expect(toLocalDate('')).toBeNull();
   });
 
   it('getWeekNumber follows ISO 8601 (Monday-based, matching Django TruncWeek)', () => {

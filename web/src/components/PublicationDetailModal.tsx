@@ -36,9 +36,12 @@ export function DetailModal({ pub, onClose, colors }: DetailModalProps) {
               Semana {pub.semana}
             </h2>
             <p className="text-[13px]" style={{ color: colors.muted }}>
-              {formatDate(parseLocalDate(pub.fecha_publicacion), {
-                short: true,
-              })}
+              {(() => {
+                const d = parseLocalDate(pub.fecha_publicacion);
+                return d
+                  ? formatDate(d, { short: true })
+                  : pub.fecha_publicacion;
+              })()}
             </p>
           </div>
           <Badge variant={getStatusBadge(pub.estado).variant}>

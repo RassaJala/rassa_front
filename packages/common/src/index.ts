@@ -7,4 +7,5 @@ export * from './orders';
 export * from './publicationLabels';
 export * from './settlements';
 export * from './waste';
+export * from './wasteRegister';
 export * from './withTimeout';
