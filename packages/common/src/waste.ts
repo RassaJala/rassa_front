@@ -86,6 +86,14 @@ export function toLocalDate(iso: string): Date | null {
   return date;
 }
 
+// Backward-compatible alias kept for callers in main (e.g. useSettlementFilters)
+// that import `parseDate`. Prefer `toLocalDate` (or `parseLocalDate` when a
+// fallback is desired) in new code; this wrapper exists only so the shared
+// package does not break existing consumers.
+export function parseDate(raw: string): Date | null {
+  return toLocalDate(raw);
+}
+
 // Backend sends bare dates ("2026-08-10") that must not be parsed with
 // `new Date()` (UTC midnight shifts the day back in negative-offset zones).
 // Shared by both apps so the timezone fix lives in exactly one place (W1).
