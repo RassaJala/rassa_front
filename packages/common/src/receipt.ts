@@ -25,17 +25,20 @@ export function calcularSubtotalVisible(pago: PaymentDetail): number {
 
 /**
  * Diferencia entre lo cobrado (monto) y el subtotal visible. Devuelve 0
- * cuando el monto no es un número finito, así el documento nunca imprime
- * ajustes fantasma frente a datos corruptos.
+ * cuando el monto o el subtotal no son números finitos, así el documento
+ * nunca imprime ajustes fantasma frente a datos corruptos.
  */
 export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
   const monto = Number(pago.monto);
-  if (!Number.isFinite(monto)) return 0;
+  if (!Number.isFinite(monto) || !Number.isFinite(subtotal)) return 0;
   return monto - subtotal;
 }
 
-/** Cantidad de una partida con fallback defensivo (nunca imprime "NaN"). */
+/** Cantidad de una partida con fallback defensivo (nunca imprime "NaN" ni "0" falso). */
 function formatearCantidad(valor: unknown): string {
+  if (valor == null || (typeof valor === 'string' && valor.trim() === '')) {
+    return '—';
+  }
   const n = Number(valor);
   return Number.isFinite(n) ? String(n) : '—';
 }
@@ -65,12 +68,16 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 
   // Ajuste = monto cobrado − subtotal visible; con signo explícito para que
   // "Ajuste +$X" (recargo) / "Ajuste −$X" (descuento) se lea correcto.
+  // Se compara el ajuste REDONDEADO a centavos (lo mismo que se imprime):
+  // así la frontera de EPSILON no depende del ruido de punto flotante y la
+  // tabla siempre cierra (filas + ajuste = total redondeado).
+  const ajusteRedondeado = Math.round(ajuste * 100) / 100;
   const filaAjuste =
-    subtotalValido && Math.abs(ajuste) > EPSILON
+    subtotalValido && Math.abs(ajusteRedondeado) >= EPSILON
       ? `
         <tr class="ajuste">
           <td colspan="3">Ajuste</td>
-          <td class="num">${formatearAjuste(ajuste)}</td>
+          <td class="num">${formatearAjuste(ajusteRedondeado)}</td>
         </tr>`
       : '';
 
@@ -80,26 +87,32 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   // filas + ajuste = total pagado.
   const totalPedidoRaw = pago.total_pedido;
   const totalPedido = totalPedidoRaw == null ? NaN : Number(totalPedidoRaw);
+  const totalPedidoRedondeado = Math.round(totalPedido * 100) / 100;
   const filaTotalPedido =
     subtotalValido &&
     totalPedidoRaw != null &&
     totalPedidoRaw.trim() !== '' &&
     Number.isFinite(totalPedido) &&
-    Math.abs(totalPedido - subtotal) > EPSILON
+    Math.abs(totalPedidoRedondeado - subtotal) >= EPSILON
       ? `
         <tr class="total-pedido">
           <td colspan="3">Total del pedido</td>
-          <td class="num">${formatearMonto(totalPedido)}</td>
+          <td class="num">${formatearMonto(totalPedidoRedondeado)}</td>
         </tr>`
       : '';
 
   const avisoCorrupto = subtotalValido
     ? ''
     : `<p class="notice">No se pudieron calcular los montos del pedido.</p>`;
+  const avisoMontoCorrupto = Number.isFinite(Number(pago.monto))
+    ? ''
+    : `<p class="notice">El total pagado del pago no pudo calcularse.</p>`;
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
-    ...(pago.pedido ? [['Pedido', `#${pago.pedido}`] as const] : []),
+    ...(pago.pedido != null
+      ? [['Pedido', escapeHtml(`#${pago.pedido}`)] as const]
+      : []),
     ['Fecha', formatearFecha(pago.fecha_pago)],
     ['Cliente', escapeHtml(pago.cliente_nombre ?? '—')],
     ['Método de pago', escapeHtml(pago.tipo_pago_nombre)],
@@ -183,10 +196,10 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   <table>
     <thead>
       <tr>
-        <td>Producto</td>
-        <td class="num">Cantidad</td>
-        <td class="num">Precio</td>
-        <td class="num">Importe</td>
+        <th>Producto</th>
+        <th class="num">Cantidad</th>
+        <th class="num">Precio</th>
+        <th class="num">Importe</th>
       </tr>
     </thead>
     <tbody>${filas}</tbody>
@@ -197,6 +210,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     </tfoot>
   </table>
   ${avisoCorrupto}
+  ${avisoMontoCorrupto}
 
   <div class="total">
     <span>Total pagado</span>

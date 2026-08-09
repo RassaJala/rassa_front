@@ -62,10 +62,23 @@ export function printHtml(html: string): void {
       printed = true;
       try {
         win?.print();
-        win?.close();
+        // Cerrar recién cuando la impresión terminó: en Safari print() no
+        // bloquea, así que close() inmediato mataría el popup antes de
+        // imprimir. afterprint + matchMedia('print') cubren los casos reales.
+        win.onafterprint = () => closeAndDetach();
+        const mql = win.matchMedia('print');
+        const onPrintChange = (event: MediaQueryListEvent) => {
+          if (!event.matches) closeAndDetach();
+        };
+        mql.addEventListener('change', onPrintChange);
       } catch (error: unknown) {
         notificarError(error);
       }
+    };
+    const closeAndDetach = () => {
+      if (!win) return;
+      win.onafterprint = null;
+      win.close();
     };
     fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
     win.onload = doPrint;
@@ -108,6 +121,25 @@ export function ReceiptPage() {
   const colors = useAppColors();
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
 
+  // Semáforo anti doble-clic: evita abrir dos popups de impresión si el
+  // usuario hace doble clic en Imprimir (mismo patrón que el mobile).
+  const imprimiendoRef = useRef(false);
+  const liberarSemRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  useEffect(() => () => clearTimeout(liberarSemRef.current), []);
+
+  const handleImprimir = () => {
+    if (imprimiendoRef.current) return;
+    imprimiendoRef.current = true;
+    printHtml(buildReceiptHtml(pago));
+    // printHtml abre el popup y dispara print() de forma síncrona; la ventana
+    // de guard cubre el doble clic y no deja el botón bloqueado de por vida.
+    liberarSemRef.current = setTimeout(() => {
+      imprimiendoRef.current = false;
+    }, PRINT_FALLBACK_MS * 3);
+  };
+
   const {
     data: pago,
     isLoading,
@@ -146,10 +178,6 @@ export function ReceiptPage() {
 
   const productos = pago.productos ?? [];
   const subtotal = calcularSubtotal(productos);
-
-  const handleImprimir = () => {
-    printHtml(buildReceiptHtml(pago));
-  };
 
   return (
     <div>

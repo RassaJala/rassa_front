@@ -62,6 +62,53 @@ function renderPage() {
   );
 }
 
+/** Mock de Window con soporte afterprint/matchMedia para el popup. */
+function makeMockWin(
+  overrides: {
+    readonly readyState?: string;
+    readonly print?: () => void;
+    readonly write?: () => void;
+  } = {},
+) {
+  const listeners = {
+    print: [] as Array<(event: MediaQueryListEvent) => void>,
+  };
+  return {
+    document: {
+      write: overrides.write ? vi.fn(overrides.write) : vi.fn(),
+      close: vi.fn(),
+      readyState: overrides.readyState ?? 'complete',
+    },
+    focus: vi.fn(),
+    print: overrides.print ? vi.fn(overrides.print) : vi.fn(),
+    close: vi.fn(),
+    matchMedia: (query: string) => {
+      if (query !== 'print') return { matches: false };
+      return {
+        matches: false,
+        addEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) => {
+          listeners.print.push(cb);
+        },
+        removeEventListener: (
+          _: string,
+          cb: (e: MediaQueryListEvent) => void,
+        ) => {
+          listeners.print = listeners.print.filter((l) => l !== cb);
+        },
+      };
+    },
+    /** Helper de test: dispara el cambio de matchMedia('print') que cierra. */
+    firePrintExit() {
+      for (const cb of [...listeners.print]) {
+        cb({ matches: false } as MediaQueryListEvent);
+      }
+    },
+  } as unknown as Window & { firePrintExit: () => void } & Record<
+      string,
+      unknown
+    >;
+}
+
 describe('ReceiptPage', () => {
   beforeEach(() => {
     vi.useRealTimers();
@@ -120,18 +167,8 @@ describe('ReceiptPage', () => {
   });
 
   it('opens a printable window with the receipt HTML when Imprimir is clicked', async () => {
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-      },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    const openSpy = vi
-      .spyOn(window, 'open')
-      .mockReturnValue(mockWin as unknown as Window);
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -147,7 +184,12 @@ describe('ReceiptPage', () => {
     const onload = (mockWin as unknown as { onload: () => void }).onload;
     onload();
     expect(mockWin.print).toHaveBeenCalled();
-    expect(mockWin.close).toHaveBeenCalled();
+
+    // En Safari print() no bloquea: el popup NO se cierra en el acto, se
+    // cierra cuando matchMedia('print') sale del modo impresión.
+    expect(mockWin.close).not.toHaveBeenCalled();
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
+    expect(mockWin.close).toHaveBeenCalledTimes(1);
 
     const html = (
       mockWin.document.write as unknown as { mock: { calls: string[][] } }
@@ -181,18 +223,8 @@ describe('ReceiptPage', () => {
   });
 
   it('imprime vía fallback por timeout cuando el popup nunca dispara onload', async () => {
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-      },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    const openSpy = vi
-      .spyOn(window, 'open')
-      .mockReturnValue(mockWin as unknown as Window);
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -207,6 +239,9 @@ describe('ReceiptPage', () => {
     expect(mockWin.print).not.toHaveBeenCalled();
     vi.advanceTimersByTime(PRINT_FALLBACK_MS);
     expect(mockWin.print).toHaveBeenCalledTimes(1);
+    // El popup no se cierra en el acto; se cierra en la salida de impresión.
+    expect(mockWin.close).not.toHaveBeenCalled();
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
     expect(mockWin.close).toHaveBeenCalledTimes(1);
     // El guard printed evita dobles impresiones si el fallback vuelve a correr.
     vi.advanceTimersByTime(PRINT_FALLBACK_MS);
@@ -217,19 +252,8 @@ describe('ReceiptPage', () => {
   });
 
   it('re-programa la impresión mientras readyState siga en loading', async () => {
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-        readyState: 'loading',
-      },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    const openSpy = vi
-      .spyOn(window, 'open')
-      .mockReturnValue(mockWin as unknown as Window);
+    const mockWin = makeMockWin({ readyState: 'loading' });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -246,6 +270,8 @@ describe('ReceiptPage', () => {
     mockWin.document.readyState = 'complete';
     vi.advanceTimersByTime(PRINT_FALLBACK_MS);
     expect(mockWin.print).toHaveBeenCalledTimes(1);
+    expect(mockWin.close).not.toHaveBeenCalled();
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
     expect(mockWin.close).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
 
@@ -253,19 +279,8 @@ describe('ReceiptPage', () => {
   });
 
   it('desacopla la ventana nueva del opener (no retiene referencias)', async () => {
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-        readyState: 'complete',
-      },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    const openSpy = vi
-      .spyOn(window, 'open')
-      .mockReturnValue(mockWin as unknown as Window);
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -281,6 +296,31 @@ describe('ReceiptPage', () => {
     openSpy.mockRestore();
   });
 
+  it('no abre dos popups con doble clic en Imprimir', async () => {
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    // La ventana de guard del semáforo (PRINT_FALLBACK_MS*3) se controla con
+    // fake timers para poder liberarla sin esperar en tiempo real.
+    vi.useFakeTimers();
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(mockWin.document.write).toHaveBeenCalledTimes(1);
+
+    // El semáforo se libera y un clic posterior (no doble clic) imprime de nuevo.
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS * 3);
+    printer.click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+    openSpy.mockRestore();
+  });
+
   it('pantalla y PDF usan el mismo subtotal (consistencia con descuentos)', async () => {
     // Filas: 2×59.74 + 3×30.50 = 210.98; monto cobrado 119.48; total_pedido 112.00.
     mockedFetchPago.mockResolvedValue({
@@ -292,19 +332,8 @@ describe('ReceiptPage', () => {
         { nombre: 'Plátano', precio: '30.50', cantidad: 3 },
       ],
     });
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-        readyState: 'complete',
-      },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    const openSpy = vi
-      .spyOn(window, 'open')
-      .mockReturnValue(mockWin as unknown as Window);
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Manzana')).toBeTruthy();
@@ -330,25 +359,22 @@ describe('ReceiptPage', () => {
   it('alerta y loguea el error cuando document.write lanza', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const mockWin = {
-      document: {
-        write: vi.fn(() => {
-          throw new Error('write failed');
-        }),
-        close: vi.fn(),
+    const mockWin = makeMockWin({
+      write: () => {
+        throw new Error('write failed');
       },
-      focus: vi.fn(),
-      print: vi.fn(),
-      close: vi.fn(),
-    };
-    vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window);
+    });
+    vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
 
     screen.getByRole('button', { name: /Imprimir/i }).click();
 
-    expect(mockWin.document.write).toHaveBeenCalled();
+    expect(
+      (mockWin as unknown as { document: { write: () => void } }).document
+        .write,
+    ).toHaveBeenCalled();
     expect(mockWin.print).not.toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith(
@@ -359,19 +385,12 @@ describe('ReceiptPage', () => {
   it('alerta y loguea el error cuando win.print() lanza', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const mockWin = {
-      document: {
-        write: vi.fn(),
-        close: vi.fn(),
-        readyState: 'complete',
-      },
-      focus: vi.fn(),
-      print: vi.fn(() => {
+    const mockWin = makeMockWin({
+      print: () => {
         throw new Error('print failed');
-      }),
-      close: vi.fn(),
-    };
-    vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window);
+      },
+    });
+    vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -380,7 +399,9 @@ describe('ReceiptPage', () => {
 
     const onload = (mockWin as unknown as { onload: () => void }).onload;
     onload();
-    expect(mockWin.print).toHaveBeenCalled();
+    expect(
+      (mockWin as unknown as { print: () => void }).print,
+    ).toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith(
       'No se pudo imprimir el recibo. Inténtalo de nuevo.',

@@ -35,6 +35,11 @@ describe('calcularSubtotalVisible / calcularAjuste', () => {
     const corrupto: PaymentDetail = { ...mockPago, monto: 'abc' };
     expect(calcularAjuste(corrupto, 210.98)).toBe(0);
   });
+
+  it('devuelve ajuste 0 cuando el subtotal no es finito (contrato cubre ambos lados)', () => {
+    // Documenta el contrato: con subtotal NaN no se genera un ajuste NaN.
+    expect(calcularAjuste(mockPago, Number.NaN)).toBe(0);
+  });
 });
 
 describe('buildReceiptHtml', () => {
@@ -68,16 +73,36 @@ describe('buildReceiptHtml', () => {
     expect(html).not.toContain('Total del pedido');
   });
 
-  it('no muestra ajuste cuando monto y suma de filas coinciden', () => {
-    const sinTotal: PaymentDetail = {
+  it('suprime la fila Total del pedido cuando coincide con el subtotal visible', () => {
+    // total_pedido (210.98) == suma de filas: la fila informativa se omite
+    // porque sería ruido duplicado.
+    const coincide: PaymentDetail = {
+      ...mockPago,
+      monto: '210.98',
+      total_pedido: '210.98',
+    };
+    const html = buildReceiptHtml(coincide);
+    expect(html).not.toContain('Total del pedido');
+    expect(html).not.toContain('Ajuste');
+    expect(html).toContain('<strong>$210.98</strong>');
+  });
+
+  it('no muestra ajuste cuando el monto coincide con la suma de filas (caso 0 y frontera)', () => {
+    const casoCero: PaymentDetail = {
       ...mockPago,
       monto: '210.98',
       total_pedido: null,
     };
-    const html = buildReceiptHtml(sinTotal);
-    expect(html).toContain('$210.98');
-    expect(html).toContain('<strong>$210.98</strong>');
-    expect(html).not.toContain('Ajuste');
+    expect(buildReceiptHtml(casoCero)).not.toContain('Ajuste');
+    // Cualquier diferencia visible a centavos genera la fila (>= sobre el
+    // ajuste ya redondeado): 210.99 − 210.98 = 0.01.
+    const frontera: PaymentDetail = {
+      ...mockPago,
+      monto: '210.99',
+      total_pedido: null,
+    };
+    expect(buildReceiptHtml(frontera)).toContain('Ajuste');
+    expect(buildReceiptHtml(frontera)).toContain('+$0.01');
   });
 
   it('etiqueta el ajuste con signo explícito (recargo vs descuento)', () => {
@@ -125,6 +150,55 @@ describe('buildReceiptHtml', () => {
     expect(html).not.toContain('$NaN');
     expect(html).not.toContain('Ajuste');
     expect(html).toContain('<strong>—</strong>');
+  });
+
+  it('avisa en el documento cuando el monto está corrupto', () => {
+    const corrupto: PaymentDetail = { ...mockPago, monto: 'abc' };
+    const html = buildReceiptHtml(corrupto);
+    expect(html).toContain('El total pagado del pago no pudo calcularse.');
+  });
+
+  it('tolera productos: null sin romper el documento', () => {
+    const sinProductos: PaymentDetail = { ...mockPago, productos: null };
+    const html = buildReceiptHtml(sinProductos);
+    expect(html).toContain('$119.48');
+    expect(html).toContain('<strong>$119.48</strong>');
+  });
+
+  it('tolera cliente_nombre: null (imprime "—")', () => {
+    const sinCliente: PaymentDetail = { ...mockPago, cliente_nombre: null };
+    const html = buildReceiptHtml(sinCliente);
+    expect(html).toContain('>—<');
+  });
+
+  it('tolera pedido: null (omite la fila Pedido)', () => {
+    const sinPedido: PaymentDetail = { ...mockPago, pedido: null };
+    const html = buildReceiptHtml(sinPedido);
+    expect(html).not.toContain('>Pedido<');
+  });
+
+  it('tolera referencia: "" (omite la fila Referencia)', () => {
+    const sinReferencia: PaymentDetail = { ...mockPago, referencia: '' };
+    const html = buildReceiptHtml(sinReferencia);
+    expect(html).not.toContain('>Referencia<');
+  });
+
+  it('escapa el id de pedido aunque el backend lo envíe como string', () => {
+    const pedidoString: PaymentDetail = {
+      ...mockPago,
+      pedido: '<img src=x onerror=alert(1)>' as unknown as number,
+    };
+    const html = buildReceiptHtml(pedidoString);
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+  });
+
+  it('usa <th> en el header de la tabla (el CSS de thead th aplica)', () => {
+    const html = buildReceiptHtml(mockPago);
+    const thead = html.match(/<thead>([\s\S]*?)<\/thead>/)?.[1] ?? '';
+    expect(thead).toContain('<th>Producto</th>');
+    expect(thead).toContain('<th class="num">Importe</th>');
+    expect(thead).not.toContain('<td>');
   });
 
   it('avisa en el documento cuando los montos de las filas son corruptos', () => {
