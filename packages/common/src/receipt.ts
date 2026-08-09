@@ -10,29 +10,50 @@ const MUTED = '#5E6B5E';
 const BORDER = '#E2E6DF';
 
 /**
- * Formatea un monto para el recibo. Ante datos corruptos (null, undefined,
- * NaN o texto no numérico) devuelve '—' en lugar de un monto falso.
+ * Subtotal autoritativo del recibo: el total_pedido del backend cuando viene,
+ * o la suma de filas (cantidad × precio) como respaldo. total_pedido es la
+ * única fuente de verdad — las filas de producto pueden desviarse (redondeos,
+ * ajustes) y el documento debe cuadrar contra lo que el vendedor cobró.
  */
-export function fmt(amount: string | number | null | undefined): string {
-  if (amount == null) return '—';
-  const n = Number(amount);
-  return Number.isFinite(n) ? formatearMonto(n) : '—';
+function subtotalAutoritativo(pago: PaymentDetail): number {
+  const totalPedidoRaw = pago.total_pedido;
+  const totalPedidoValido =
+    typeof totalPedidoRaw === 'string' && totalPedidoRaw.trim() !== '';
+  if (!totalPedidoValido) return calcularSubtotal(pago.productos ?? []);
+  return Number(totalPedidoRaw);
+}
+
+/** Diferencia entre lo cobrado (monto) y el subtotal del documento. */
+function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
+  const monto = Number(pago.monto);
+  if (!Number.isFinite(monto)) return 0;
+  return monto - subtotal;
 }
 
 export function buildReceiptHtml(pago: PaymentDetail): string {
-  const subtotal = calcularSubtotal(pago.productos ?? []);
+  const subtotal = subtotalAutoritativo(pago);
+  const ajuste = calcularAjuste(pago, subtotal);
 
   const filas = (pago.productos ?? [])
     .map(
       (prod) => `
         <tr>
           <td>${escapeHtml(prod.nombre)}</td>
-          <td class="num">${prod.cantidad}</td>
-          <td class="num">${fmt(prod.precio)}</td>
-          <td class="num">${fmt(prod.cantidad * Number(prod.precio))}</td>
+          <td class="num">${String(Number(prod.cantidad))}</td>
+          <td class="num">${formatearMonto(prod.precio)}</td>
+          <td class="num">${formatearMonto(prod.cantidad * Number(prod.precio))}</td>
         </tr>`,
     )
     .join('');
+
+  const filaAjuste =
+    Math.abs(ajuste) > 0.005
+      ? `
+        <tr class="ajuste">
+          <td colspan="3">Descuento/Ajuste</td>
+          <td class="num">${formatearMonto(ajuste)}</td>
+        </tr>`
+      : '';
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
@@ -126,13 +147,14 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     </thead>
     <tbody>${filas}</tbody>
     <tfoot>
-      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${fmt(subtotal)}</td></tr>
+      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${formatearMonto(subtotal)}</td></tr>
+      ${filaAjuste}
     </tfoot>
   </table>
 
   <div class="total">
     <span>Total pagado</span>
-    <strong>${fmt(pago.monto)}</strong>
+    <strong>${formatearMonto(pago.monto)}</strong>
   </div>
 
   <p class="footer">Documento generado el ${formatearFecha(pago.fecha_pago)} — RASSA</p>

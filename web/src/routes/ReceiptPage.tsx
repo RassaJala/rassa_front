@@ -3,7 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
 import { buildReceiptHtml } from '@/common/receipt';
-import { calcularSubtotal, fetchPago, formatearMonto } from '@/common/payments';
+import {
+  calcularSubtotal,
+  esPagoIdValido,
+  fetchPago,
+  formatearMonto,
+} from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -11,6 +16,9 @@ import { useAppColors } from '../hooks/useAppColors';
 import api from '../services/api';
 
 // ── Helpers ────────────────────────────────────────────────
+
+/** Tiempo de espera del fallback de impresión si onload no dispara. */
+export const PRINT_FALLBACK_MS = 400;
 
 function DetailRow({
   label,
@@ -41,8 +49,7 @@ function DetailRow({
 export function ReceiptPage() {
   const { paymentId: rawPaymentId } = useParams<{ paymentId: string }>();
   const paymentId = Number(rawPaymentId);
-  const paymentIdValid =
-    rawPaymentId !== undefined && Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
   const navigate = useNavigate();
   const colors = useAppColors();
   const { brand, fg, muted, border, surface, bg, accentBg } = colors;
@@ -108,17 +115,26 @@ export function ReceiptPage() {
       // Imprimir recién cuando el navegador terminó de procesar el documento,
       // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
       let printed = false;
+      let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
       const doPrint = () => {
         if (printed) return;
+        // El documento aún no terminó de procesarse: reintentar en vez de
+        // imprimir una página en blanco (el timer anterior ya se ejecutó).
+        if (win?.document.readyState === 'loading') {
+          fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
+          return;
+        }
+        clearTimeout(fallbackTimer);
         printed = true;
         try {
           win?.print();
+          win?.close();
         } catch (error: unknown) {
           notificarError(error);
         }
       };
+      fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
       win.onload = doPrint;
-      setTimeout(doPrint, 400);
     } catch (error: unknown) {
       notificarError(error);
     }
@@ -215,13 +231,13 @@ export function ReceiptPage() {
                   className="w-24 text-right text-sm"
                   style={{ color: muted }}
                 >
-                  ${Number(prod.precio).toFixed(2)}
+                  {formatearMonto(prod.precio)}
                 </span>
                 <span
                   className="w-28 text-right text-sm font-semibold"
                   style={{ color: fg }}
                 >
-                  ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                  {formatearMonto(prod.cantidad * Number(prod.precio))}
                 </span>
               </div>
             ))}
@@ -296,7 +312,7 @@ export function ReceiptPage() {
                 Total pagado
               </span>
               <span className="text-2xl font-bold" style={{ color: brand }}>
-                ${Number(pago.monto).toFixed(2)}
+                {formatearMonto(pago.monto)}
               </span>
             </div>
           </div>

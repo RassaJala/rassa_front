@@ -232,6 +232,11 @@ describe('payments service', () => {
       expect(formatearMonto('12,50')).toBe('—');
     });
 
+    it('returns — for an empty or whitespace-only string (no fake $0.00)', () => {
+      expect(formatearMonto('')).toBe('—');
+      expect(formatearMonto('   ')).toBe('—');
+    });
+
     it.each([[undefined], [null]])('returns — for %s', (valor) => {
       expect(formatearMonto(valor)).toBe('—');
     });

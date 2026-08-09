@@ -17,7 +17,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
-import { fetchPago } from '@/common/payments';
+import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
 import { buildReceiptHtml } from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -37,7 +37,7 @@ export default function ReceiptScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { paymentId } = route.params;
-  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -309,11 +309,11 @@ export default function ReceiptScreen(): React.JSX.Element {
                   {prod.nombre}
                 </Text>
                 <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
-                  {prod.cantidad}x ${Number(prod.precio).toFixed(2)}
+                  {prod.cantidad}x {formatearMonto(prod.precio)}
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                {formatearMonto(prod.cantidad * Number(prod.precio))}
               </Text>
             </View>
           ))}
@@ -337,7 +337,7 @@ export default function ReceiptScreen(): React.JSX.Element {
             Total pagado
           </Text>
           <Text style={{ fontSize: 22, fontWeight: '700', color: brand }}>
-            ${Number(pago.monto).toFixed(2)}
+            {formatearMonto(pago.monto)}
           </Text>
         </View>
 

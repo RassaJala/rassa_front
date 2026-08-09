@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockNavigate = vi.fn();
 const mockParams = { current: { paymentId: '9' } };
@@ -32,7 +32,7 @@ vi.mock('@/common/payments', async () => ({
 }));
 
 import { fetchPago } from '@/common/payments';
-import { ReceiptPage } from '../ReceiptPage';
+import { PRINT_FALLBACK_MS, ReceiptPage } from '../ReceiptPage';
 
 const mockedFetchPago = vi.mocked(fetchPago);
 
@@ -69,6 +69,11 @@ describe('ReceiptPage', () => {
     mockNavigate.mockReset();
     mockParams.current = { paymentId: '9' };
     mockedFetchPago.mockResolvedValue(mockPago);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('renders payment details after fetch', async () => {
@@ -122,6 +127,7 @@ describe('ReceiptPage', () => {
       },
       focus: vi.fn(),
       print: vi.fn(),
+      close: vi.fn(),
     };
     const openSpy = vi
       .spyOn(window, 'open')
@@ -141,6 +147,7 @@ describe('ReceiptPage', () => {
     const onload = (mockWin as unknown as { onload: () => void }).onload;
     onload();
     expect(mockWin.print).toHaveBeenCalled();
+    expect(mockWin.close).toHaveBeenCalled();
 
     const html = (
       mockWin.document.write as unknown as { mock: { calls: string[][] } }
@@ -181,6 +188,7 @@ describe('ReceiptPage', () => {
       },
       focus: vi.fn(),
       print: vi.fn(),
+      close: vi.fn(),
     };
     const openSpy = vi
       .spyOn(window, 'open')
@@ -195,15 +203,76 @@ describe('ReceiptPage', () => {
 
     expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.document.write).toHaveBeenCalled();
-    // El evento onload nunca ocurre; el fallback setTimeout(doPrint, 400) debe imprimir.
+    // El evento onload nunca ocurre; el fallback setTimeout(doPrint, PRINT_FALLBACK_MS) debe imprimir.
     expect(mockWin.print).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS);
     expect(mockWin.print).toHaveBeenCalledTimes(1);
+    expect(mockWin.close).toHaveBeenCalledTimes(1);
     // El guard printed evita dobles impresiones si el fallback vuelve a correr.
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS);
     expect(mockWin.print).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
 
     openSpy.mockRestore();
+  });
+
+  it('alerta y loguea el error cuando document.write lanza', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockWin = {
+      document: {
+        write: vi.fn(() => {
+          throw new Error('write failed');
+        }),
+        close: vi.fn(),
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+      close: vi.fn(),
+    };
+    vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    screen.getByRole('button', { name: /Imprimir/i }).click();
+
+    expect(mockWin.document.write).toHaveBeenCalled();
+    expect(mockWin.print).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir el recibo. Inténtalo de nuevo.',
+    );
+  });
+
+  it('alerta y loguea el error cuando win.print() lanza', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+        readyState: 'complete',
+      },
+      focus: vi.fn(),
+      print: vi.fn(() => {
+        throw new Error('print failed');
+      }),
+      close: vi.fn(),
+    };
+    vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    screen.getByRole('button', { name: /Imprimir/i }).click();
+
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
+    expect(mockWin.print).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir el recibo. Inténtalo de nuevo.',
+    );
   });
 });

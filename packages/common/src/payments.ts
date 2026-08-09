@@ -51,6 +51,8 @@ export function formatearMonto(
   valor: number | string | null | undefined,
 ): string {
   if (valor == null) return '—';
+  // Un string vacío o solo espacios no es un monto: no mostrar un falso $0.00.
+  if (typeof valor === 'string' && valor.trim() === '') return '—';
   const n = typeof valor === 'string' ? Number(valor) : valor;
   return Number.isFinite(n) ? `$${n.toFixed(2)}` : '—';
 }

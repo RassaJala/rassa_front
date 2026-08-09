@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test files are less strict */
 import React from 'react';
 
+import { Alert } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -121,5 +122,23 @@ describe('ReceiptScreen', () => {
     expect(printCall.html).toContain('PAG-0009');
     expect(printCall.html).toContain('Manzana');
     expect(printCall.html).toContain('$59.74');
+  });
+
+  it('muestra una alerta de error cuando la impresión del PDF falla', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    printAsync.mockRejectedValueOnce(new Error('print explosion'));
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('Imprimir recibo en PDF'));
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir',
+      'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+    );
+    alertSpy.mockRestore();
   });
 });

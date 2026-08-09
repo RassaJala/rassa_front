@@ -1,4 +1,4 @@
-import { buildReceiptHtml, escapeHtml, fmt } from '@/common/receipt';
+import { buildReceiptHtml, escapeHtml } from '@/common/receipt';
 import type { PaymentDetail } from '@/common/payments';
 
 const mockPago: PaymentDetail = {
@@ -20,10 +20,40 @@ const mockPago: PaymentDetail = {
 };
 
 describe('buildReceiptHtml', () => {
-  it('calcula el subtotal como cantidad × precio', () => {
+  it('usa total_pedido como subtotal autoritativo del documento', () => {
     const html = buildReceiptHtml(mockPago);
-    // 2 × 59.74 + 3 × 30.50 = 210.98
+    // total_pedido del backend (119.48) manda sobre la suma de filas (210.98).
+    expect(html).toContain('$119.48');
+    expect(html).not.toContain('$210.98');
+  });
+
+  it('cuadra el documento cuando monto y subtotal no coinciden con una fila de ajuste', () => {
+    // La suma de filas es 210.98 pero el pedido real cerró en 112.00 y se
+    // cobró 119.48: el ajuste (7.48) debe aparecer antes del total.
+    const descuento: PaymentDetail = {
+      ...mockPago,
+      monto: '119.48',
+      total_pedido: '112.00',
+    };
+    const html = buildReceiptHtml(descuento);
+    expect(html).toContain('$112.00');
+    expect(html).not.toContain('$210.98');
+    expect(html).toContain('Descuento/Ajuste');
+    expect(html).toContain('$7.48');
+  });
+
+  it('usa la suma de filas como subtotal cuando falta total_pedido', () => {
+    // Sin total_pedido el subtotal sale de las filas (210.98) y coincide con
+    // el monto: el documento cuadra sin fila de ajuste.
+    const sinTotal: PaymentDetail = {
+      ...mockPago,
+      monto: '210.98',
+      total_pedido: null,
+    };
+    const html = buildReceiptHtml(sinTotal);
     expect(html).toContain('$210.98');
+    expect(html).toContain('<strong>$210.98</strong>');
+    expect(html).not.toContain('Descuento/Ajuste');
   });
 
   it('imprime el total pagado con $ y 2 decimales', () => {
@@ -75,31 +105,5 @@ describe('escapeHtml', () => {
     expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
       '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;',
     );
-  });
-});
-
-describe('fmt', () => {
-  it('formatea un valor numérico normal con $ y 2 decimales', () => {
-    expect(fmt(59.74)).toBe('$59.74');
-  });
-
-  it('redondea a 2 decimales los valores con más decimales', () => {
-    expect(fmt(19.999)).toBe('$20.00');
-    expect(fmt(10.126)).toBe('$10.13');
-  });
-
-  it('formatea un string numérico', () => {
-    expect(fmt('59.74')).toBe('$59.74');
-    expect(fmt('0')).toBe('$0.00');
-  });
-
-  it('devuelve "—" ante NaN y textos no numéricos', () => {
-    expect(fmt(NaN)).toBe('—');
-    expect(fmt('12,50')).toBe('—');
-  });
-
-  it('devuelve "—" ante null y undefined (datos corruptos)', () => {
-    expect(fmt(null)).toBe('—');
-    expect(fmt(undefined)).toBe('—');
   });
 });
