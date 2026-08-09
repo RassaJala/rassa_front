@@ -97,8 +97,10 @@ describe('DatePickerSheet', () => {
     expect(getByText('2025')).toBeTruthy();
 
     fireEvent.press(getByText('Día'));
-    fireEvent.press(getByText('24'));
+    // Se presiona un día distinto al del tab (24) para no depender de la
+    // zona horaria: parseFecha usa Date.UTC y getDate() varía por TZ.
+    fireEvent.press(getByText('25'));
 
-    expect(onSelect).toHaveBeenCalledWith('2025-12-24');
+    expect(onSelect).toHaveBeenCalledWith('2025-12-25');
   });
 });
