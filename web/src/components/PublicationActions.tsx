@@ -1,6 +1,5 @@
 import type { AppColors } from '../hooks/useAppColors';
 import type { Publicacion, PublicacionEstado } from '../services/publications';
-import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 
 // ── Shared types & helpers ──────────────────────────────────
@@ -22,7 +21,7 @@ const statusBadge: Record<
 > = {
   borrador: { variant: 'warning', label: 'Borrador' },
   publicado: { variant: 'success', label: 'Publicada' },
-  cerrado: { variant: 'default', label: 'Cerrada' },
+  cerrado: { variant: 'success', label: 'Cerrada' },
   cancelado: { variant: 'error', label: 'Cancelada' },
 };
 
@@ -127,7 +126,7 @@ function renderAction(
   action: ActionDef,
   variant: 'button' | 'icon',
   colors: AppColors,
-): JSX.Element {
+): React.JSX.Element {
   const s = action.style(colors);
   if (variant === 'button') {
     return (

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { formatearFecha } from '@/common/dates';
 import { fetchPagoPorPedido, ORDER_STATUS_READY } from '@/common/payments';
 import { DataTable } from '../components/layout/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -76,17 +77,6 @@ function extraerError(err: unknown): string | null {
     if (typeof data.message === 'string') return data.message;
   }
   return null;
-}
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export function VendorPanelScreen() {

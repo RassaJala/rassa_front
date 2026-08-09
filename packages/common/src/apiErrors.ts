@@ -6,6 +6,34 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: 'Límite de peticiones excedido. Intenta más tarde.',
 };
 
+// Shared across clients: the sanitized message shown when the backend returns
+// HTML / a traceback body instead of JSON (never render the raw body — R10).
+export const INTERNAL_SERVER_HTML_MESSAGE =
+  'Error interno del servidor. Revisa los logs del backend.';
+
+// An Error that carries a UI-safe `safeMessage` alongside the raw `message`.
+// Interceptors set `safeMessage` without mutating `message`, so downstream
+// handlers (Sentry, axios-retry, error boundaries) keep the original text
+// while surfaces can render the sanitized variant (R1-002 / R4-002).
+export type SafeMessageError = Error & { safeMessage?: string };
+
+export function hasSafeMessage(error: unknown): error is SafeMessageError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'safeMessage' in error &&
+    typeof (error as SafeMessageError).safeMessage === 'string'
+  );
+}
+
+export function safeErrorMessage(
+  error: unknown,
+  fallback = 'Error al procesar la solicitud. Intenta de nuevo.',
+): string {
+  if (hasSafeMessage(error) && error.safeMessage) return error.safeMessage;
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 function parseHtmlOrStringError(data: string, status?: number): string {
   const trimmed = data.trim();
 
@@ -20,6 +48,12 @@ function parseHtmlOrStringError(data: string, status?: number): string {
         status,
       );
     }
+    return INTERNAL_SERVER_HTML_MESSAGE;
+  }
+
+  // String bodies enforce the same safety policy as the JSON paths: text that
+  // looks like a traceback or DB error must never reach the user.
+  if (trimmed === '' || !isSafeDetail(trimmed)) {
     return 'Error interno del servidor. Revisa los logs del backend.';
   }
   return trimmed;
@@ -57,20 +91,45 @@ function isAxiosError(error: unknown): error is {
   );
 }
 
+// Reads error.cause without requiring lib es2022 (web tsconfig lib is ES2020;
+// `Error.cause` is only typed from ES2022 onward). Shared by every extractor.
+export function unwrapCause(error: unknown): unknown {
+  if (!(error instanceof Error)) return error;
+  const cause = (error as { cause?: unknown }).cause;
+  return cause !== undefined ? cause : error;
+}
+
 function parseAxiosError(error: unknown): string | null {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) return null;
 
   const status = candidate.response?.status;
   const data = candidate.response?.data as unknown;
 
-  if (data && typeof data === 'object') {
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (trimmed !== '' && !trimmed.startsWith('<') && isSafeDetail(trimmed)) {
+      return trimmed;
+    }
+  } else if (Array.isArray(data)) {
+    // DRF non-field errors arrive as a top-level array (["Stock insuficiente..."]).
+    // NOTE: arrays are `typeof 'object'`, so this branch must come before the
+    // generic object branch below.
+    const first = data[0];
+    if (first !== undefined) {
+      const text = String(first).trim();
+      if (text !== '' && isSafeDetail(text)) return text;
+    }
+  } else if (data !== null && typeof data === 'object') {
     const record = data as Record<string, unknown>;
-    if (typeof record.detail === 'string') {
-      if (isSafeDetail(record.detail)) {
-        return record.detail;
+    if (typeof record.detail === 'string' && isSafeDetail(record.detail)) {
+      return record.detail;
+    }
+    for (const key of ['message', 'error'] as const) {
+      const value = record[key];
+      if (typeof value === 'string' && value !== '' && isSafeDetail(value)) {
+        return value;
       }
     }
     const fieldsErr = extractFieldErrorsFromList(record);
@@ -93,9 +152,16 @@ function extractFieldErrorsFromList(
   for (const [key, val] of Object.entries(data)) {
     if (key === 'non_field_errors') {
       const arr = Array.isArray(val) ? val : [val];
-      fieldErrors.push(...arr.map(String));
+      // R3-W: traceback items must never reach the UI — only safe items are
+      // kept; an all-unsafe list contributes nothing.
+      fieldErrors.push(...arr.map(String).filter((item) => isSafeDetail(item)));
     } else if (Array.isArray(val)) {
-      fieldErrors.push(`${key}: ${val.map(String).join(', ')}`);
+      // R3-W: the field line is built only from safe items — a traceback item
+      // must not leak through the list path either.
+      const safeItems = val.map(String).filter((item) => isSafeDetail(item));
+      if (safeItems.length > 0) {
+        fieldErrors.push(`${key}: ${safeItems.join(', ')}`);
+      }
     }
   }
 
@@ -107,7 +173,17 @@ export function parseApiError(
   defaultMessage = 'Ocurrió un error inesperado.',
 ): string {
   const parsed = parseAxiosError(error);
-  return parsed ?? defaultMessage;
+  if (parsed !== null) return parsed;
+
+  // No response was produced (timeout, DNS, ECONNREFUSED, etc.): the default
+  // server-side message would mislead the user into thinking the backend
+  // failed. Surface a connectivity-specific message instead (C4).
+  const candidate = unwrapCause(error);
+  if (isAxiosError(candidate) && candidate.response === undefined) {
+    return 'Error de conexión. Revisá tu conexión a internet e intentá de nuevo.';
+  }
+
+  return defaultMessage;
 }
 
 export function extractApiError(
@@ -115,16 +191,22 @@ export function extractApiError(
   fieldKeys: string[],
   defaultMessage = 'Error del servidor. Intenta de nuevo.',
 ): string {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) {
     return error instanceof Error ? error.message : 'Error desconocido.';
   }
 
   const data = candidate.response?.data;
+  const status = candidate.response?.status;
 
-  if (!data) return defaultMessage;
+  if (!data) {
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return mapped;
+    }
+    return defaultMessage;
+  }
 
   if (typeof data === 'string') {
     return parseHtmlOrStringError(data, candidate.response?.status);
@@ -136,12 +218,60 @@ export function extractApiError(
       return record.detail;
     }
   }
-  if (typeof record.message === 'string') return record.message;
+  if (typeof record.message === 'string') {
+    if (isSafeDetail(record.message)) {
+      return record.message;
+    }
+  }
+  if (typeof record.non_field_errors === 'string') {
+    if (isSafeDetail(record.non_field_errors)) {
+      return record.non_field_errors;
+    }
+  }
+  if (
+    Array.isArray(record.non_field_errors) &&
+    record.non_field_errors.length > 0
+  ) {
+    const first = record.non_field_errors[0];
+    if (
+      typeof first === 'string' ||
+      typeof first === 'number' ||
+      typeof first === 'boolean'
+    ) {
+      const text = String(first);
+      if (isSafeDetail(text)) {
+        return text;
+      }
+    }
+  }
 
   for (const key of fieldKeys) {
     const value = record[key];
 
-    if (Array.isArray(value) && value[0]) return String(value[0]);
+    if (typeof value === 'string') {
+      if (isSafeDetail(value)) {
+        return value;
+      }
+    }
+    if (Array.isArray(value) && value[0] !== undefined) {
+      const item = value[0];
+      if (
+        typeof item !== 'string' &&
+        typeof item !== 'number' &&
+        typeof item !== 'boolean'
+      ) {
+        continue;
+      }
+      const text = String(item);
+      if (isSafeDetail(text)) {
+        return text;
+      }
+    }
+  }
+
+  if (status !== undefined) {
+    const mapped = STATUS_MESSAGES[status];
+    if (mapped) return mapped;
   }
 
   return defaultMessage;
@@ -150,6 +280,7 @@ export function extractApiError(
 function extractFieldErrorsFromData(
   data: Record<string, unknown>,
   fieldKeys: string[],
+  status?: number,
 ): { fields: Record<string, string>; general: string | null } {
   const fields: Record<string, string> = {};
 
@@ -162,28 +293,69 @@ function extractFieldErrorsFromData(
     };
   }
   if (typeof data.message === 'string') {
-    return { fields, general: data.message };
+    // R3-W: `message` passes through the same sanitizer as `detail` — a
+    // traceback body in `message` must never render raw in the UI.
+    return {
+      fields,
+      general: isSafeDetail(data.message)
+        ? data.message
+        : 'Error interno del servidor.',
+    };
   }
 
   let foundField = false;
   for (const key of fieldKeys) {
     const value = data[key];
     if (Array.isArray(value) && value.length > 0) {
-      fields[key] = String(value[0]);
-      foundField = true;
+      const first = value[0];
+      if (
+        typeof first !== 'string' &&
+        typeof first !== 'number' &&
+        typeof first !== 'boolean'
+      ) {
+        continue;
+      }
+      const item = String(first);
+      if (isSafeDetail(item)) {
+        fields[key] = item;
+        foundField = true;
+      }
     } else if (typeof value === 'string') {
-      fields[key] = value;
-      foundField = true;
+      if (isSafeDetail(value)) {
+        fields[key] = value;
+        foundField = true;
+      }
     }
   }
 
   if (!foundField) {
     for (const [k, v] of Object.entries(data)) {
       if (Array.isArray(v) && v.length > 0) {
-        return { fields, general: `${k}: ${String(v[0])}` };
+        const first = v[0];
+        if (
+          typeof first !== 'string' &&
+          typeof first !== 'number' &&
+          typeof first !== 'boolean'
+        ) {
+          continue;
+        }
+        const item = String(first);
+        if (isSafeDetail(item)) {
+          const key = k === 'non_field_errors' ? '' : `${k}: `;
+          return { fields, general: `${key}${item}` };
+        }
       }
     }
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return { fields, general: mapped };
+    }
     return { fields, general: 'Error del servidor. Intenta de nuevo.' };
+  }
+
+  if (status !== undefined) {
+    const mapped = STATUS_MESSAGES[status];
+    if (mapped) return { fields, general: mapped };
   }
 
   return { fields, general: null };
@@ -193,8 +365,7 @@ export function extractFieldErrors(
   error: unknown,
   fieldKeys: string[],
 ): { fields: Record<string, string>; general: string | null } {
-  const candidate =
-    error instanceof Error && error.cause !== undefined ? error.cause : error;
+  const candidate = unwrapCause(error);
 
   if (!isAxiosError(candidate)) {
     return {
@@ -206,6 +377,11 @@ export function extractFieldErrors(
   const data = candidate.response?.data;
 
   if (!data) {
+    const status = candidate.response?.status;
+    if (status !== undefined) {
+      const mapped = STATUS_MESSAGES[status];
+      if (mapped) return { fields: {}, general: mapped };
+    }
     return { fields: {}, general: 'Error del servidor. Intenta de nuevo.' };
   }
 
@@ -216,5 +392,9 @@ export function extractFieldErrors(
     };
   }
 
-  return extractFieldErrorsFromData(data as Record<string, unknown>, fieldKeys);
+  return extractFieldErrorsFromData(
+    data as Record<string, unknown>,
+    fieldKeys,
+    candidate.response?.status,
+  );
 }

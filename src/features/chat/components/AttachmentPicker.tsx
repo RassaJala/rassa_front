@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Pressable } from 'react-native';
 import { Menu } from 'react-native-paper';
 
 import * as DocumentPicker from 'expo-document-picker';
@@ -85,7 +85,9 @@ export default function AttachmentPicker({
     <Menu
       visible={menuVisible}
       onDismiss={() => setMenuVisible(false)}
-      anchor={<>{children}</>}
+      anchor={
+        <Pressable onPress={() => setMenuVisible(true)}>{children}</Pressable>
+      }
     >
       <Menu.Item onPress={handleImage} title="Imagen / Video" />
       <Menu.Item onPress={handleAudio} title="Audio" />

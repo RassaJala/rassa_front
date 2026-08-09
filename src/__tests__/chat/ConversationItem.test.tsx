@@ -12,6 +12,10 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn() }),
 }));
 
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light' }),
+}));
+
 const emptyNameConversation: Conversation = {
   id: 1,
   nombre: '',

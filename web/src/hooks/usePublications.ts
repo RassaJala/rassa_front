@@ -5,7 +5,6 @@ import { logError } from '../utils/logger';
 import { QUERY_OPTIONS } from '../constants/api';
 import type {
   AddProductoPayload as AddProductoServicePayload,
-  ApiResponse,
   Producto,
   ProductoSemanal,
   Publicacion,
@@ -13,6 +12,7 @@ import type {
   PublicacionList,
   UpdateProductoPayload as UpdateProductoServicePayload,
 } from '../services/publications';
+import type { ApiResponse } from '../types';
 import * as publicationsApi from '../services/publications';
 
 // ── Error logging helper ──────────────────────────────────
@@ -42,13 +42,13 @@ function usePubMutation<TData, TVariables>(
       for (const key of invalidateKeys(vars)) {
         void qc.invalidateQueries({ queryKey: key });
       }
-      // TanStack Query v5 dropped the third context argument
-      options?.onSuccess?.(data, vars, undefined as never);
+      // TanStack Query v5 passes (data, vars, context, mutationFnContext)
+      options?.onSuccess?.(data, vars, undefined as never, undefined as never);
     },
     onError: (err: unknown, vars: TVariables) => {
       logMutationError(context, err);
-      // TanStack Query v5 dropped the third context argument
-      options?.onError?.(err, vars, undefined as never);
+      // TanStack Query v5 passes (err, vars, context, mutationFnContext)
+      options?.onError?.(err, vars, undefined as never, undefined as never);
     },
   });
 }
@@ -77,7 +77,7 @@ export function usePublicacion(id: number) {
 }
 
 export function useProductosSemanales(pubId: number) {
-  return useQuery<ApiResponse<ProductoSemanal[]>>({
+  return useQuery<ApiResponse<{ results: ProductoSemanal[] }>>({
     queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),
     enabled: pubId > 0,

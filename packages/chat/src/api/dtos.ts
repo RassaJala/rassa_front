@@ -7,6 +7,8 @@ export interface BackendMessage {
   leido: boolean;
   editado: boolean;
   creado_en: string;
+  tipo?: 'texto' | 'imagen' | 'audio' | 'video';
+  url_documento?: string | null;
 }
 
 export interface BackendConversation {
@@ -17,6 +19,7 @@ export interface BackendConversation {
   ultimo_mensaje_creado_en: string | null;
   no_leidos?: number;
   es_familia?: boolean;
+  nombre_override?: boolean;
 }
 
 export interface BackendGroupMember {
@@ -25,6 +28,7 @@ export interface BackendGroupMember {
   nombre_completo: string;
   correo: string;
   creado_en: string;
+  rol?: string;
 }
 
 // Backend envelope: { ok, data, mensaje } — `message` kept as alias for legacy/mock parity.

@@ -1,4 +1,3 @@
-import React from 'react';
 import { User, UserRole, ROLE_OPTIONS, getFullName } from './types';
 
 interface RoleChangeModalProps {

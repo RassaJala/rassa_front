@@ -20,6 +20,7 @@ function makeProduct(overrides: Partial<Producto> = {}): Producto {
 const baseColors = {
   isDark: false,
   brand: '#24563C',
+  onBrand: '#FFFFFF',
   coral: '#DE393A',
   muted: '#5E6B5E',
   border: '#E2E6DF',
@@ -28,7 +29,7 @@ const baseColors = {
   bg: '#F5F7F0',
   fg: '#2D3328',
   accentBg: 'rgba(36,86,60,0.07)',
-};
+} as const;
 
 function renderModal({
   catalog = [makeProduct()],

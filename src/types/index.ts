@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type UserRole = 'admin' | 'seller' | 'farmer' | 'buyer';
 
 export interface User {
@@ -79,6 +81,8 @@ export interface Order {
   creado_en: string;
   productos?: string[];
   has_more_productos?: boolean;
+  /** Backend flag (list/detail): order is pending and its expiry date passed. */
+  expirado?: boolean;
 }
 
 export interface OrderDetail extends Order {
@@ -181,6 +185,9 @@ export interface CreditLimit {
 // ── Navigation param lists ────────────────────────────────
 export type AdminStackParamList = {
   AdminPanel: undefined;
+  MermaResumen: undefined;
+  SettlementList: undefined;
+  SettlementDetail: { readonly settlementId: number };
   AdminProfile: undefined;
   OrderDetail: { readonly orderId: number };
   UserManagement: undefined;
@@ -190,11 +197,13 @@ export type AdminStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   CreateGroup: undefined;
   StartChat: undefined;
@@ -227,13 +236,18 @@ export type AuthStackParamList = {
 export type BuyerTabsParamList = {
   Home: undefined;
   Pedidos: undefined;
+  Catalog: undefined;
+  Carrito: undefined;
+  Notificaciones: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
-  BuyerTabs: undefined;
+  BuyerTabs: NavigatorScreenParams<BuyerTabsParamList>;
   Catalog: undefined;
   OrderDetail: { orderId: number };
+  Checkout: undefined;
+  OrderSuccess: { orderId: number; total: string; estado: string };
   Profile: undefined;
   ProductDetail: { productId: number; farmerId: number };
   ReceiptList: undefined;
@@ -243,16 +257,18 @@ export type BuyerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
 };
 
 export type AdminTabsParamList = {
-  AdminPanel: undefined;
+  AdminInicio: undefined;
   AdminProducts: undefined;
   CategoryList: undefined;
   UnitList: undefined;
@@ -274,12 +290,16 @@ export type FarmerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
+  CreateGroup: undefined;
+  StartChat: undefined;
 };
 
 export interface SearchUserResult {
@@ -293,6 +313,7 @@ export interface SearchUserResult {
 export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
+  Recolecciones: undefined;
   Notificaciones: undefined;
   Perfil: undefined;
   ChatList: undefined;
@@ -300,6 +321,7 @@ export type SellerTabsParamList = {
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  CashClosing: undefined;
   Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
   Chat: {
@@ -307,10 +329,14 @@ export type SellerStackParamList = {
     title: string;
     tipo?: 'privada' | 'grupal';
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
   GroupDetail: {
     conversationId: number;
     title: string;
     isFamily?: boolean | undefined;
+    nombreOverride?: boolean | undefined;
   };
+  CreateGroup: undefined;
+  StartChat: undefined;
 };

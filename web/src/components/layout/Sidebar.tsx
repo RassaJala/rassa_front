@@ -34,6 +34,18 @@ const adminNav: NavItem[] = [
     icon: '📍',
     path: '/admin/localidades',
   },
+  {
+    key: 'waste',
+    label: 'Mermas',
+    icon: '📉',
+    path: '/admin/mermas',
+  },
+  {
+    key: 'settlements',
+    label: 'Liquidaciones',
+    icon: '💰',
+    path: '/admin/liquidaciones',
+  },
   { key: 'users', label: 'Usuarios', icon: '👥', path: '/admin/usuarios' },
   { key: 'chat', label: 'Chat', icon: '💬', path: '/admin/chat' },
   { key: 'profile', label: 'Mi Perfil', icon: '👤', path: '/admin/perfil' },
@@ -71,6 +83,18 @@ const roleNavMap: Record<string, NavItem[]> = {
   vendedor: [
     { key: 'sales', label: 'Ventas', icon: '📊', path: '/vendedor/ventas' },
     { key: 'orders', label: 'Pedidos', icon: '📦', path: '/vendedor/pedidos' },
+    {
+      key: 'recolecciones',
+      label: 'Recolecciones',
+      icon: '🗓️',
+      path: '/vendedor/recolecciones',
+    },
+    {
+      key: 'corte',
+      label: 'Corte de caja',
+      icon: '💰',
+      path: '/vendedor/corte-caja',
+    },
     { key: 'chat', label: 'Chat', icon: '💬', path: '/vendedor/chat' },
     {
       key: 'profile',

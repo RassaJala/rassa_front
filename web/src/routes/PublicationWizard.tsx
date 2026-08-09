@@ -45,6 +45,8 @@ import {
   generateTempId,
   getNextMonday,
   getWeekNumber,
+  isMondayToday,
+  parseLocalDate,
   validateAllItems,
   validateItem,
 } from '../utils/publicationWizard';
@@ -127,7 +129,7 @@ export function PublicationWizard() {
       );
 
       const existingItems: WizardItemDraft[] = (
-        itemsQuery.data?.data ?? []
+        itemsQuery.data?.data?.results ?? []
       ).map((p) => ({
         tempId: String(p.id_producto_semanal),
         isNew: false,
@@ -179,10 +181,24 @@ export function PublicationWizard() {
   const pubData = isEditing ? pubQuery.data?.data : undefined;
   const nextMonday =
     isEditing && pubData
-      ? new Date(pubData.fecha_publicacion)
+      ? parseLocalDate(pubData.fecha_publicacion)
       : getNextMonday();
   const weekNumber =
     isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
+
+  // Backend rule: publications can only be created/edited on Mondays, and an
+  // existing publication can only be edited while in 'borrador' state.
+  const isEditableWeekday = isMondayToday();
+  const isBorrador =
+    isEditing && pubData ? pubData.estado === 'borrador' : true;
+  const canEdit = isEditableWeekday && isBorrador;
+  const lockReason = canEdit
+    ? null
+    : !isEditableWeekday
+      ? isEditing
+        ? 'Solo puedes editar publicaciones los lunes.'
+        : 'Solo se pueden crear publicaciones los lunes.'
+      : 'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.';
 
   // ── Navigation ──
   function nextStep() {
@@ -305,6 +321,7 @@ export function PublicationWizard() {
     tempIdToServerId: Map<string, number>;
     newServerIds: number[];
     updatedServerIds: number[];
+    failedUploads: number;
   }> {
     return upsertItems(
       pubId,
@@ -420,7 +437,8 @@ export function PublicationWizard() {
         onSaving: setSaving,
         onError: setError,
         onToast: (message, type) => setToast({ message, type }),
-        onTempIdSync: setItems,
+        onTempIdSync: (updater) =>
+          setItems((prev) => updater(prev) as WizardItemDraft[]),
         onPersisted: () => setPersisted(true),
       },
       opts,
@@ -498,6 +516,31 @@ export function PublicationWizard() {
           </Button>
           <Button
             variant="ghost"
+            onClick={() => void navigate('/agricultor/publicaciones')}
+          >
+            Volver
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Backend rule gate: publications can only be created/edited on Mondays and
+  // an existing publication only while in 'borrador' state. Rendered here at
+  // the component level (NOT inside a useEffect — that would never reach the
+  // DOM), after loading and error states so connectivity failures show their
+  // own screen instead of being masked as a business rule.
+  if (lockReason) {
+    return (
+      <div className="py-12 text-center" style={{ color: colors.muted }}>
+        <div className="mb-3 text-4xl">🔒</div>
+        <h2 className="mb-1 text-lg font-semibold" style={{ color: colors.fg }}>
+          Publicación bloqueada
+        </h2>
+        <p className="mx-auto mb-4 max-w-sm text-[14px]">{lockReason}</p>
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="secondary"
             onClick={() => void navigate('/agricultor/publicaciones')}
           >
             Volver

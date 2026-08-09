@@ -248,4 +248,31 @@ describe('mediaUrl', () => {
     expect(result).toBeTruthy();
     expect(result).toContain('2026');
   });
+
+  // ── Real uploaded filenames (spaces must be encoded, not stripped) ──
+
+  it('encodes spaces in relative paths instead of stripping them', () => {
+    const result = mediaUrl('/documentos/WhatsApp Image.jpg');
+    expect(result).toBe(
+      'https://api.example.com/documentos/WhatsApp%20Image.jpg',
+    );
+  });
+
+  it('encodes spaces in real WhatsApp-style filenames', () => {
+    const result = mediaUrl(
+      '/documentos/dec66a05ade04600aa2b89f8a50cc23d_WhatsApp Image 2026-07-14 at 10.06.40 PM.jpeg',
+    );
+    expect(result).toBe(
+      'https://api.example.com/documentos/dec66a05ade04600aa2b89f8a50cc23d_WhatsApp%20Image%202026-07-14%20at%2010.06.40%20PM.jpeg',
+    );
+  });
+
+  it('encodes spaces in real mp3 filenames with dashes', () => {
+    const result = mediaUrl(
+      '/documentos/bade5b7023ac4e73b22045b138f37992_Green A - Tragedia de amor.mp3',
+    );
+    expect(result).toBe(
+      'https://api.example.com/documentos/bade5b7023ac4e73b22045b138f37992_Green%20A%20-%20Tragedia%20de%20amor.mp3',
+    );
+  });
 });

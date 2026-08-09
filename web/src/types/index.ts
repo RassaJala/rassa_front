@@ -21,15 +21,15 @@ export interface User {
   nombre: string;
   rol: Role;
   apellido_paterno: string;
-  apellido_materno?: string;
-  telefono?: string;
-  fecha_nacimiento?: string;
-  genero?: string;
-  direccion?: string;
-  municipio_id?: number;
-  municipio_nombre?: string;
-  localidad?: number;
-  localidad_nombre?: string;
+  apellido_materno?: string | undefined;
+  telefono?: string | undefined;
+  fecha_nacimiento?: string | undefined;
+  genero?: string | undefined;
+  direccion?: string | undefined;
+  municipio_id?: number | undefined;
+  municipio_nombre?: string | undefined;
+  localidad?: number | undefined;
+  localidad_nombre?: string | undefined;
 }
 
 export interface AuthState {

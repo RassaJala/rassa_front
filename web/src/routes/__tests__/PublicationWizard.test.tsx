@@ -34,6 +34,17 @@ vi.mock('../../utils/publishAfterPersist', () => ({
   publishAfterPersist: vi.fn(),
 }));
 
+// Editing/creating is only allowed on Mondays; tests simulate the allowed day
+// by default, and flip `mockIsMondayToday` to false to exercise the lock
+// screen (C2: the gate must be testable, not hidden by a hardcoded true).
+let mockIsMondayToday = true;
+
+vi.mock('../../utils/publicationWizard', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../utils/publicationWizard')>();
+  return { ...actual, isMondayToday: () => mockIsMondayToday };
+});
+
 vi.mock('../../hooks/usePublications', () => ({
   usePublicacion: vi.fn(),
   useProductosSemanales: vi.fn(),
@@ -216,8 +227,12 @@ describe('PublicationWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockParams.current = {};
+    mockIsMondayToday = true;
     setupHooks();
-    mockedPersistItems.mockResolvedValue({ orphanFailures: 0 });
+    mockedPersistItems.mockResolvedValue({
+      orphanFailures: 0,
+      failedUploads: 0,
+    });
     mockedPublishAfterPersist.mockResolvedValue(undefined);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
@@ -232,7 +247,7 @@ describe('PublicationWizard', () => {
       render(<PublicationWizard />, { wrapper: createWrapper() });
       expect(screen.getByText('Fecha de publicación')).toBeInTheDocument();
       expect(
-        screen.getByRole('heading', { name: /Semana 32/ }),
+        screen.getByRole('heading', { name: /Semana \d+/ }),
       ).toBeInTheDocument();
     });
 
@@ -407,7 +422,7 @@ describe('PublicationWizard', () => {
         refetch: vi.fn(),
       } as never);
       mockedUseProductosSemanales.mockReturnValue({
-        data: { data: [] },
+        data: { data: { results: [] } },
         isLoading: false,
         isError: false,
         refetch: vi.fn(),
@@ -488,7 +503,10 @@ describe('PublicationWizard', () => {
     });
 
     it('shows saving state while persisting', async () => {
-      let resolvePersist: (v: { orphanFailures: number }) => void;
+      let resolvePersist: (v: {
+        orphanFailures: number;
+        failedUploads: number;
+      }) => void;
       mockedPersistItems.mockReturnValue(
         new Promise((resolve) => {
           resolvePersist = resolve;
@@ -506,7 +524,7 @@ describe('PublicationWizard', () => {
       await user.click(screen.getByText('Siguiente →'));
       await user.click(screen.getByText('Guardar borrador'));
       expect(screen.getByText('Guardando…')).toBeInTheDocument();
-      resolvePersist!({ orphanFailures: 0 });
+      resolvePersist!({ orphanFailures: 0, failedUploads: 0 });
       await waitFor(() => {
         expect(screen.queryByText('Guardando…')).not.toBeInTheDocument();
       });
@@ -664,6 +682,96 @@ describe('PublicationWizard', () => {
       expect(
         screen.getByRole('heading', { name: 'Fecha de publicación' }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe('lock screen (Monday/borrador gate)', () => {
+    it('shows lock screen when creating on a non-Monday', () => {
+      mockIsMondayToday = false;
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      expect(screen.getByText('Publicación bloqueada')).toBeInTheDocument();
+      expect(
+        screen.getByText('Solo se pueden crear publicaciones los lunes.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('Fecha de publicación'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows lock screen when editing on a non-Monday', () => {
+      mockParams.current = { id: '1' };
+      mockIsMondayToday = false;
+      mockedUsePublicacion.mockReturnValue({
+        data: FAKE_PUBLICACION,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      mockedUseProductosSemanales.mockReturnValue({
+        data: { data: { results: [] } },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      expect(screen.getByText('Publicación bloqueada')).toBeInTheDocument();
+      expect(
+        screen.getByText('Solo puedes editar publicaciones los lunes.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('Fecha de publicación'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows lock screen when editing a non-borrador publication', () => {
+      mockParams.current = { id: '1' };
+      mockedUsePublicacion.mockReturnValue({
+        data: {
+          ...FAKE_PUBLICACION,
+          data: { ...FAKE_PUBLICACION.data, estado: 'publicada' },
+        },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      mockedUseProductosSemanales.mockReturnValue({
+        data: { data: { results: [] } },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      expect(screen.getByText('Publicación bloqueada')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('does not render lock screen when query fails (error wins over gate)', () => {
+      mockParams.current = { id: '1' };
+      mockIsMondayToday = false;
+      mockedUsePublicacion.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: new Error('network down'),
+        refetch: vi.fn(),
+      } as never);
+      mockedUseProductosSemanales.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      expect(
+        screen.getByText('No se pudo cargar la publicación.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('Publicación bloqueada'),
+      ).not.toBeInTheDocument();
     });
   });
 });

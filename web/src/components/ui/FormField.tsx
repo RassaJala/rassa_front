@@ -2,7 +2,7 @@ import type { AppColors } from '../../hooks/useAppColors';
 
 interface FormFieldProps {
   label: string;
-  error?: string;
+  error?: string | undefined;
   children: React.ReactNode;
   colors: AppColors;
 }

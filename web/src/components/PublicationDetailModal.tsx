@@ -1,6 +1,6 @@
 import type { AppColors } from '../hooks/useAppColors';
 import type { Publicacion } from '../services/publications';
-import { formatDate } from '../utils/publicationWizard';
+import { formatDate, parseLocalDate } from '../utils/publicationWizard';
 import { mediaUrl } from '../utils/mediaUrl';
 import { hideBrokenImage } from '../utils/imageHelpers';
 import { Badge } from './ui/Badge';
@@ -36,7 +36,9 @@ export function DetailModal({ pub, onClose, colors }: DetailModalProps) {
               Semana {pub.semana}
             </h2>
             <p className="text-[13px]" style={{ color: colors.muted }}>
-              {formatDate(new Date(pub.fecha_publicacion), { short: true })}
+              {formatDate(parseLocalDate(pub.fecha_publicacion), {
+                short: true,
+              })}
             </p>
           </div>
           <Badge variant={getStatusBadge(pub.estado).variant}>

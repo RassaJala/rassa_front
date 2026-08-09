@@ -3,7 +3,7 @@ import type { AppColors } from '../../hooks/useAppColors';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: string | undefined;
   colors?: AppColors;
 }
 

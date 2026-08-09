@@ -6,6 +6,7 @@ import { getColors } from '../constants/colors';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCartStore } from '../store/cartStore';
 import api from '../services/api';
+import { mediaUrl } from '../utils/mediaUrl';
 
 interface CatalogProduct {
   id_producto_semanal: number;
@@ -25,16 +26,6 @@ interface CatalogPublication {
 interface FlatProduct extends CatalogProduct {
   id_publicacion: number;
   agricultor: string;
-}
-
-function mediaUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(
-    /\/api\/?$/,
-    '',
-  );
-  return `${base}${path}`;
 }
 
 interface Categoria {

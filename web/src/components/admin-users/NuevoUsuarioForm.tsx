@@ -109,7 +109,11 @@ export default function NuevoUsuarioForm({
       localidadId: catalogs.localidadId,
     };
     const basePayload = buildRegistrationPayload(formData);
-    if (formRole === 'farmer') delete basePayload.role;
+    if (formRole === 'farmer') {
+      const { role: _role, ...farmerPayload } = basePayload;
+      createMutation.mutate(farmerPayload);
+      return;
+    }
     createMutation.mutate(basePayload);
   }
 

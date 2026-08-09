@@ -8,6 +8,7 @@ import {
   ProfileDrawerProvider,
   ProfileDrawerTrigger,
 } from '@/components/ProfileDrawer';
+import CorteCard from '@/components/seller/CorteCard';
 import StatCard from '@/components/StatCard';
 import { colors } from '@/constants/colors';
 import { useFormattedDate } from '@/hooks/useFormattedDate';
@@ -30,6 +31,10 @@ export default function HomeSellerScreen({
 
   const handleProfilePress = () => {
     navigation.navigate('Perfil');
+  };
+
+  const handleCortePress = () => {
+    navigation.getParent()?.navigate('CashClosing');
   };
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
@@ -148,6 +153,16 @@ export default function HomeSellerScreen({
                   iconColor={pumpkin}
                 />
               </View>
+
+              <CorteCard
+                onPress={handleCortePress}
+                surface={surface}
+                border={border}
+                fg={fg}
+                muted={muted}
+                brand={brand}
+                accentBg={accentBg}
+              />
             </View>
           </ScrollView>
         </View>

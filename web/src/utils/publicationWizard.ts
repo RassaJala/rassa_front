@@ -1,36 +1,18 @@
 // ── Pure helpers — extracted for testability ────────────────
 
+// Date helpers are shared with mobile through packages/common (W1):
+// parseLocalDate / isMondayToday / getWeekNumber live in @/common/waste.
+export {
+  getNextMonday,
+  getWeekNumber,
+  isMondayToday,
+  parseLocalDate,
+} from '@/common/waste';
+
+import { DELETED_PRODUCT_VALIDATION } from '@/common/publicationLabels';
+
 export function generateTempId(): string {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const MS_PER_DAY = 86_400_000;
-
-/** Returns the next Monday from today (or today if it's already Monday). */
-export function getNextMonday(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? 1 : day <= 1 ? 0 : 8 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
-
-export function getWeekNumber(date: Date): number {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  return (
-    1 +
-    Math.round(
-      ((d.getTime() - week1.getTime()) / MS_PER_DAY -
-        3 +
-        ((week1.getDay() + 6) % 7)) /
-        7,
-    )
-  );
 }
 
 export function formatDate(iso: Date, opts?: { short?: boolean }): string {
@@ -66,10 +48,14 @@ export interface ItemValidation {
   stock?: string;
   precio?: string;
   fk_unidad?: string;
+  producto?: string;
 }
 
 export function validateItem(item: WizardItemDraft): ItemValidation {
   const errors: ItemValidation = {};
+  if (!item.nombre_producto) {
+    errors.producto = DELETED_PRODUCT_VALIDATION;
+  }
   const stockNum = Number(item.stock);
   if (!item.stock || Number.isNaN(stockNum) || stockNum <= 0) {
     errors.stock = 'Stock debe ser mayor a 0.';

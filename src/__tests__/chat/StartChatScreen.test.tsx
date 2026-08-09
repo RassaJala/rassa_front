@@ -1,12 +1,14 @@
 import React from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import '@testing-library/jest-native/extend-expect';
 
 import StartChatScreen from '@/features/chat/screens/StartChatScreen';
+import api from '@/services/api';
 
 const mockNavigate = jest.fn();
+const mockCreatePrivate = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
@@ -19,14 +21,22 @@ jest.mock('@/store/AuthContext', () => ({
   }),
 }));
 
+jest.mock('@/store/ThemeContext', () => ({
+  useTheme: () => ({ colorScheme: 'light' }),
+}));
+
 jest.mock('@/features/chat/hooks/useCreatePrivateConversation', () => ({
   useCreatePrivateConversation: () => ({
-    mutate: jest.fn(),
+    mutate: mockCreatePrivate,
     isPending: false,
     isError: false,
     error: null,
   }),
 }));
+
+jest.mock('@/services/api');
+
+const mockApiGet = api.get as jest.Mock;
 
 describe('StartChatScreen', () => {
   let queryClient: QueryClient;
@@ -59,39 +69,45 @@ describe('StartChatScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('CreateGroup');
   });
 
-  it('shows ID input when Chat privado is tapped', () => {
+  it('shows search input when Chat privado is tapped', () => {
     const { getByText, getByLabelText } = renderScreen();
     fireEvent.press(getByText('Chat privado'));
-    expect(getByLabelText('ID de usuario')).toBeTruthy();
+    expect(getByLabelText('Buscar usuario')).toBeTruthy();
   });
 
-  it('disables button when input is empty', () => {
+  it('disables button when no user is selected', () => {
     const { getByText } = renderScreen();
     fireEvent.press(getByText('Chat privado'));
     const button = getByText('Iniciar chat');
     expect(button).toBeDisabled();
   });
 
-  it('disables button when input is non-numeric', () => {
-    const { getByText, getByLabelText } = renderScreen();
-    fireEvent.press(getByText('Chat privado'));
-    fireEvent.changeText(getByLabelText('ID de usuario'), 'abc');
-    const button = getByText('Iniciar chat');
-    expect(button).toBeDisabled();
-  });
+  it('creates private chat with selected user', async () => {
+    mockApiGet.mockResolvedValue({
+      data: {
+        ok: true,
+        data: [
+          {
+            id_usuario: 99,
+            nombre_completo: 'Jane Doe',
+            correo: 'jane@test.com',
+            rol: 'Agricultor',
+          },
+        ],
+      },
+    });
 
-  it('shows self-chat error when input matches user own ID', () => {
     const { getByText, getByLabelText } = renderScreen();
     fireEvent.press(getByText('Chat privado'));
-    fireEvent.changeText(getByLabelText('ID de usuario'), '42');
-    expect(getByText('No puedes iniciar un chat contigo mismo')).toBeTruthy();
-  });
+    fireEvent.changeText(getByLabelText('Buscar usuario'), 'jane');
 
-  it('enables button for valid numeric ID different from self', () => {
-    const { getByText, getByLabelText } = renderScreen();
-    fireEvent.press(getByText('Chat privado'));
-    fireEvent.changeText(getByLabelText('ID de usuario'), '99');
-    const button = getByText('Iniciar chat');
-    expect(button).not.toBeDisabled();
+    await waitFor(() => {
+      expect(getByLabelText('Seleccionar Jane Doe')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('Seleccionar Jane Doe'));
+    fireEvent.press(getByText('Iniciar chat'));
+
+    expect(mockCreatePrivate).toHaveBeenCalledWith({ fk_usuario: 99 });
   });
 });

@@ -181,6 +181,21 @@ export function LocationSelector({
             </option>
           ))}
         </select>
+        {selectedMunicipioId &&
+        !loadingLocalidades &&
+        localidades.length === 0 ? (
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: isDark ? '#fbbf24' : '#b45309',
+              margin: 0,
+            }}
+          >
+            Este municipio no tiene localidades cargadas. Elegí otro municipio o
+            contactá soporte.
+          </p>
+        ) : null}
         {fieldErrors.localidad_id && (
           <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>
             {fieldErrors.localidad_id}

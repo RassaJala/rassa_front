@@ -16,7 +16,6 @@ interface WizardBottomActionsProps {
   surface: string;
   border: string;
   fg: string;
-  brand: string;
   white: string;
   onPrev: () => void;
   onNext: () => void;
@@ -33,7 +32,6 @@ export default function WizardBottomActions({
   surface,
   border,
   fg,
-  brand,
   white,
   onPrev,
   onNext,
@@ -95,20 +93,18 @@ export default function WizardBottomActions({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: brand,
+              backgroundColor: surface,
               borderRadius: 14,
+              borderWidth: 1,
+              borderColor: border,
               paddingVertical: 14,
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontSize: 15, fontWeight: '600', color: white }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: fg }}>
               Siguiente
             </Text>
-            <MaterialCommunityIcons
-              name="arrow-right"
-              size={18}
-              color={white}
-            />
+            <MaterialCommunityIcons name="arrow-right" size={18} color={fg} />
           </Pressable>
         ) : (
           <>

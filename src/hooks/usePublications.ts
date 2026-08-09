@@ -39,7 +39,7 @@ export function usePublicacion(
 
 export function useProductosSemanales(
   pubId: number,
-): UseQueryResult<ApiResponse<ProductoSemanal[]>> {
+): UseQueryResult<ApiResponse<{ results: ProductoSemanal[] }>> {
   return useQuery({
     queryKey: ['publicaciones', pubId, 'productos'],
     queryFn: () => publicationsApi.getProductosSemanales(pubId),

@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../providers/ThemeProvider';
 import { useCartStore } from '../store/cartStore';
 import api from '../services/api';
+import { mediaUrl } from '../utils/mediaUrl';
 
 interface CatalogProduct {
   id_producto_semanal: number;
@@ -20,16 +21,6 @@ interface CatalogPublication {
   id_publicacion: number;
   agricultor: { id_usuario: number; nombre: string; apellido: string };
   productos: CatalogProduct[];
-}
-
-function mediaUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const base = (import.meta.env.VITE_API_URL ?? '/api').replace(
-    /\/api\/?$/,
-    '',
-  );
-  return `${base}${path}`;
 }
 
 export function BuyerHome() {

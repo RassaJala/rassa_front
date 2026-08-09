@@ -48,6 +48,13 @@ vi.mock('../../hooks/usePublications', () => ({
   }),
 }));
 
+// Editing/creating is only allowed on Mondays; tests simulate the allowed day.
+vi.mock('../../utils/publicationWizard', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../utils/publicationWizard')>();
+  return { ...actual, isMondayToday: () => true };
+});
+
 import { usePublicaciones } from '../../hooks/usePublications';
 import { FarmerPublications } from '../FarmerPublications';
 

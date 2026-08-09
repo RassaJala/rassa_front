@@ -19,9 +19,12 @@ import CategoryListScreen from '@/screens/admin/CategoryListScreen';
 import CategoryTrashScreen from '@/screens/admin/CategoryTrashScreen';
 import LocalidadListScreen from '@/screens/admin/LocalidadListScreen';
 import LocalidadTrashScreen from '@/screens/admin/LocalidadTrashScreen';
+import MermaResumenScreen from '@/screens/admin/MermaResumenScreen';
 import MunicipioListScreen from '@/screens/admin/MunicipioListScreen';
 import MunicipioTrashScreen from '@/screens/admin/MunicipioTrashScreen';
 import AdminOrderDetailScreen from '@/screens/admin/OrderDetailScreen';
+import SettlementDetailScreen from '@/screens/admin/SettlementDetailScreen';
+import SettlementListScreen from '@/screens/admin/SettlementListScreen';
 import UnitListScreen from '@/screens/admin/UnitListScreen';
 import UnitTrashScreen from '@/screens/admin/UnitTrashScreen';
 import UserFormScreen from '@/screens/admin/UserFormScreen';
@@ -36,8 +39,10 @@ import ProductDetailScreen from '@/screens/buyer/ProductDetailScreen';
 import ReceiptDetailScreen from '@/screens/buyer/ReceiptDetailScreen';
 import ReceiptListScreen from '@/screens/buyer/ReceiptListScreen';
 import CarritoScreen from '@/screens/common/CarritoScreen';
+import CheckoutScreen from '@/screens/common/CheckoutScreen';
 import NotificationsScreen from '@/screens/common/NotificationsScreen';
 import OnboardingScreen from '@/screens/common/OnboardingScreen';
+import OrderSuccessScreen from '@/screens/common/OrderSuccessScreen';
 import ProfileScreen from '@/screens/common/ProfileScreen';
 import SplashScreen from '@/screens/common/SplashScreen';
 import FamilyDetailScreen from '@/screens/families/FamilyDetailScreen';
@@ -48,6 +53,8 @@ import FarmerHomeScreen from '@/screens/farmer/FarmerHomeScreen';
 import ProductFormScreen from '@/screens/farmer/ProductFormScreen';
 import ProductListScreen from '@/screens/farmer/ProductListScreen';
 import PublicationWizardScreen from '@/screens/farmer/PublicationWizardScreen';
+import CashClosingScreen from '@/screens/seller/CashClosingScreen';
+import CollectionScheduleScreen from '@/screens/seller/CollectionScheduleScreen';
 import HomeSellerScreen from '@/screens/seller/HomeSellerScreen';
 import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
@@ -100,7 +107,7 @@ function AdminTabs() {
       }}
     >
       <AdminTab.Screen
-        name="AdminPanel"
+        name="AdminInicio"
         component={AdminPanelScreen}
         options={{
           tabBarLabel: 'Inicio',
@@ -198,6 +205,8 @@ function AdminTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -313,6 +322,8 @@ function BuyerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -332,6 +343,8 @@ function BuyerNavigator() {
     <BuyerStack.Navigator screenOptions={{ headerShown: false }}>
       <BuyerStack.Screen name="BuyerTabs" component={BuyerTabs} />
       <BuyerStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <BuyerStack.Screen name="Checkout" component={CheckoutScreen} />
+      <BuyerStack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <BuyerStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <BuyerStack.Screen name="ReceiptList" component={ReceiptListScreen} />
       <BuyerStack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} />
@@ -384,6 +397,16 @@ function FarmerScreens() {
         name="GroupDetail"
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <FarmerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <FarmerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
       />
     </FarmerStack.Navigator>
   );
@@ -443,6 +466,20 @@ function SellerTabs() {
         }}
       />
       <SellerTab.Screen
+        name="Recolecciones"
+        component={CollectionScheduleScreen}
+        options={{
+          tabBarLabel: 'Recolecciones',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-month"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <SellerTab.Screen
         name="Notificaciones"
         component={NotificationsScreen}
         options={{
@@ -460,6 +497,8 @@ function SellerTabs() {
         name="ChatList"
         component={ChatListScreen}
         options={{
+          headerShown: true,
+          title: 'Chats',
           tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
@@ -478,6 +517,7 @@ function SellerNavigator() {
   return (
     <SellerStack.Navigator screenOptions={{ headerShown: false }}>
       <SellerStack.Screen name="SellerTabs" component={SellerTabs} />
+      <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
       <SellerStack.Screen
@@ -489,6 +529,16 @@ function SellerNavigator() {
         name="GroupDetail"
         component={GroupDetailScreen}
         options={{ headerShown: true, title: 'Detalle del grupo' }}
+      />
+      <SellerStack.Screen
+        name="CreateGroup"
+        component={CreateGroupScreen}
+        options={{ headerShown: true, title: 'Nuevo grupo' }}
+      />
+      <SellerStack.Screen
+        name="StartChat"
+        component={StartChatScreen}
+        options={{ headerShown: true, title: 'Iniciar conversación' }}
       />
     </SellerStack.Navigator>
   );
@@ -539,6 +589,16 @@ function AdminScreens() {
         options={{ title: 'Detalle del Pedido' }}
       />
       <AdminStack.Screen name="Profile" component={ProfileScreen} />
+      <AdminStack.Screen name="MermaResumen" component={MermaResumenScreen} />
+      <AdminStack.Screen
+        name="SettlementList"
+        component={SettlementListScreen}
+      />
+      <AdminStack.Screen
+        name="SettlementDetail"
+        component={SettlementDetailScreen}
+        options={{ title: 'Detalle de Liquidación' }}
+      />
     </AdminStack.Navigator>
   );
 }

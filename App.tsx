@@ -1,5 +1,6 @@
 import '~/styles/global.css';
 import React from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import {
   MD3DarkTheme,
   MD3LightTheme,
@@ -8,7 +9,13 @@ import {
 
 import { StatusBar } from 'expo-status-bar';
 
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
+import type { Theme as NavigationTheme } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import {
   QueryCache,
   QueryClient,
@@ -17,9 +24,28 @@ import {
 import { useColorScheme } from 'nativewind';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { colors } from '@/constants/colors';
+import { sentryBeforeSend } from '@/services/sentry';
 import AppNavigator from '~/navigation/AppNavigator';
 import { AuthProvider } from '~/store/AuthContext';
 import { ThemeProvider } from '~/store/ThemeContext';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN ?? '';
+
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    beforeSend: sentryBeforeSend,
+  });
+} else if (!__DEV__) {
+  console.error(
+    '[Sentry] EXPO_PUBLIC_SENTRY_DSN no está configurado — los errores de producción no serán reportados.',
+  );
+}
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,8 +66,20 @@ export default function App(): React.JSX.Element {
   const { colorScheme } = useColorScheme();
   const brandCoral = '#DE393A';
 
-  const brandCoralLight = '#FEF2F2'; // red-50 tint — active segment background (light)
-  const brandCoralDark = '#3B1212'; // dark coral tint — active segment background (dark)
+  const isDark = colorScheme === 'dark';
+
+  const navigationTheme: NavigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      primary: isDark ? colors.admBrandD : colors.admBrandL,
+      background: isDark ? colors.admBgD : colors.admBgL,
+      card: isDark ? colors.admSurfaceD : colors.admSurfaceL,
+      text: isDark ? colors.admFgD : colors.admFgL,
+      border: isDark ? colors.admBorderD : colors.admBorderL,
+      notification: brandCoral,
+    },
+  };
 
   const theme =
     colorScheme === 'dark'
@@ -49,18 +87,18 @@ export default function App(): React.JSX.Element {
           ...MD3DarkTheme,
           colors: {
             ...MD3DarkTheme.colors,
-            primary: brandCoral,
-            secondaryContainer: brandCoralDark,
-            onSecondaryContainer: brandCoral,
+            primary: colors.admBrandD,
+            secondaryContainer: colors.admActiveBgD,
+            onSecondaryContainer: colors.admBrandD,
           },
         }
       : {
           ...MD3LightTheme,
           colors: {
             ...MD3LightTheme.colors,
-            primary: brandCoral,
-            secondaryContainer: brandCoralLight,
-            onSecondaryContainer: brandCoral,
+            primary: colors.admBrandL,
+            secondaryContainer: colors.admActiveBgL,
+            onSecondaryContainer: colors.admBrandL,
           },
         };
 
@@ -70,10 +108,12 @@ export default function App(): React.JSX.Element {
         <PaperProvider theme={theme}>
           <AuthProvider>
             <ErrorBoundary>
-              <NavigationContainer>
-                <AppNavigator />
-                <StatusBar style="auto" />
-              </NavigationContainer>
+              <KeyboardProvider preload={false}>
+                <NavigationContainer theme={navigationTheme}>
+                  <AppNavigator />
+                  <StatusBar style="auto" />
+                </NavigationContainer>
+              </KeyboardProvider>
             </ErrorBoundary>
           </AuthProvider>
         </PaperProvider>

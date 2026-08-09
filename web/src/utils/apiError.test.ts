@@ -1,12 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { extractApiError } from './apiErrors';
+import {
+  extractApiError,
+  extractFieldErrors,
+  parseApiError,
+} from './apiErrors';
 
-function makeAxiosError(data: unknown): unknown {
+function makeAxiosError(data: unknown, status = 500): unknown {
   const error = new Error('Request failed');
   Object.defineProperty(error, 'isAxiosError', { value: true });
   Object.defineProperty(error, 'response', {
-    value: { data, status: 500, statusText: '', headers: {}, config: {} },
+    value: { data, status, statusText: '', headers: {}, config: {} },
   });
   return error;
 }
@@ -149,9 +153,11 @@ describe('extractApiError', () => {
     expect(extractApiError(error, fields)).toBe('123');
   });
 
-  it('SECURITY: handles object in array', () => {
+  it('SECURITY: treats object in array as unsafe', () => {
     const error = makeAxiosError({ errors: [{ msg: 'nested' }] });
-    expect(extractApiError(error, fields)).toBe('[object Object]');
+    expect(extractApiError(error, fields)).toBe(
+      'Error del servidor. Intenta de nuevo.',
+    );
   });
 
   it('SECURITY: returns full error message without truncation', () => {
@@ -191,6 +197,37 @@ describe('extractApiError', () => {
     expect(result).toBe('First error');
   });
 
+  it('returns string value of fieldKey (backend dict shape)', () => {
+    const error = makeAxiosError({
+      id_recoleccion: 'Recolección no encontrada.',
+    });
+    const result = extractApiError(error, ['id_recoleccion']);
+    expect(result).toBe('Recolección no encontrada.');
+  });
+
+  it('returns non_field_errors first element (DRF serializer shape)', () => {
+    const error = makeAxiosError({
+      non_field_errors: ["No se puede cambiar de 'pendiente' a 'recolectado'."],
+    });
+    const result = extractApiError(error, ['estado']);
+    expect(result).toBe("No se puede cambiar de 'pendiente' a 'recolectado'.");
+  });
+
+  it('prefers non_field_errors over fieldKeys', () => {
+    const error = makeAxiosError({
+      non_field_errors: ['General error'],
+      estado: ['Field error'],
+    });
+    const result = extractApiError(error, ['estado']);
+    expect(result).toBe('General error');
+  });
+
+  it('skips empty non_field_errors array', () => {
+    const error = makeAxiosError({ non_field_errors: [], estado: ['X'] });
+    const result = extractApiError(error, ['estado']);
+    expect(result).toBe('X');
+  });
+
   it('prefers detail over message over errors', () => {
     const error = makeAxiosError({
       detail: 'A',
@@ -209,5 +246,207 @@ describe('extractApiError', () => {
     });
     const result = extractApiError(error, ['detail', 'message', 'errors']);
     expect(result).toBe('Actual error');
+  });
+
+  it('returns string non_field_errors (DRF dict shape)', () => {
+    const error = makeAxiosError({
+      non_field_errors: 'La recolección ya está en ese estado.',
+    });
+    const result = extractApiError(error, ['estado']);
+    expect(result).toBe('La recolección ya está en ese estado.');
+  });
+
+  it('prefers string non_field_errors over fieldKeys', () => {
+    const error = makeAxiosError({
+      non_field_errors: 'General string error',
+      estado: ['Field error'],
+    });
+    const result = extractApiError(error, ['estado']);
+    expect(result).toBe('General string error');
+  });
+
+  it('SECURITY: filters unsafe message containing a traceback', () => {
+    const error = makeAxiosError({
+      message:
+        'Traceback (most recent call last):\n  File "/app/views.py", line 3',
+    });
+    const result = extractApiError(error, ['message']);
+    expect(result).toBe('Error del servidor. Intenta de nuevo.');
+    expect(result).not.toContain('Traceback');
+    expect(result).not.toContain('views.py');
+  });
+
+  it('SECURITY: filters unsafe message containing a DB error', () => {
+    const error = makeAxiosError({
+      message: 'database error: relation "publicaciones" does not exist',
+    });
+    const result = extractApiError(error, ['message']);
+    expect(result).toBe('Error del servidor. Intenta de nuevo.');
+  });
+
+  it('keeps safe message after unsafe detail', () => {
+    const error = makeAxiosError({
+      detail: 'Traceback (most recent call last)',
+      message: 'Todo salió bien pero el estado sigue pendiente.',
+    });
+    const result = extractApiError(error, ['detail', 'message']);
+    expect(result).toBe('Todo salió bien pero el estado sigue pendiente.');
+  });
+
+  it('SECURITY: sanitizes traceback inside non_field_errors', () => {
+    const error = makeAxiosError({
+      non_field_errors: [
+        'Traceback (most recent call last):\n  File "/app/views.py", line 3',
+      ],
+    });
+    expect(extractApiError(error, ['estado'])).toBe(
+      'Error del servidor. Intenta de nuevo.',
+    );
+  });
+
+  it('SECURITY: sanitizes DB error inside fieldKeys value', () => {
+    const error = makeAxiosError({
+      estado: ['database error: relation "recolecciones" does not exist'],
+    });
+    expect(extractApiError(error, ['estado'])).toBe(
+      'Error del servidor. Intenta de nuevo.',
+    );
+  });
+
+  it('SECURITY: replaces HTML string body with generic message', () => {
+    const error = makeAxiosError('<!DOCTYPE html><html>Server Error</html>');
+    expect(extractApiError(error, fields)).toBe(
+      'Error interno del servidor. Revisa los logs del backend.',
+    );
+  });
+
+  it('SECURITY: replaces traceback string body with generic message', () => {
+    const error = makeAxiosError(
+      'Traceback (most recent call last):\n  File "views.py", line 5',
+    );
+    expect(extractApiError(error, fields)).toBe(
+      'Error interno del servidor. Revisa los logs del backend.',
+    );
+  });
+
+  it('SECURITY: detects uppercase HTML string body', () => {
+    const error = makeAxiosError('<!DOCTYPE HTML><HTML><body>x</body></HTML>');
+    expect(extractApiError(error, fields)).toBe(
+      'Error interno del servidor. Revisa los logs del backend.',
+    );
+  });
+
+  it('falls back to status message when body has no extractable message', () => {
+    const error = makeAxiosError({}, 403);
+    expect(extractApiError(error, ['estado'])).toBe(
+      'No tienes permiso para realizar esta acción.',
+    );
+  });
+
+  it('maps status message even with null body', () => {
+    const error = new Error('Request failed');
+    Object.defineProperty(error, 'isAxiosError', { value: true });
+    Object.defineProperty(error, 'response', {
+      value: { data: null, status: 404 },
+    });
+    expect(extractApiError(error, ['estado'])).toBe(
+      'El recurso solicitado no fue encontrado.',
+    );
+  });
+});
+
+describe('parseApiError', () => {
+  it('returns joined field errors (non_field_errors + field arrays)', () => {
+    const error = makeAxiosError({
+      non_field_errors: ['Invalid credentials'],
+      email: ['Este campo es obligatorio.'],
+    });
+    const result = parseApiError(error);
+    expect(result).toContain('Invalid credentials');
+    expect(result).toContain('email: Este campo es obligatorio.');
+  });
+
+  it('maps status codes when data has no extractable message', () => {
+    const error = new Error('Request failed');
+    Object.defineProperty(error, 'isAxiosError', { value: true });
+    Object.defineProperty(error, 'response', {
+      value: { data: {}, status: 403, statusText: '', headers: {}, config: {} },
+    });
+    expect(parseApiError(error)).toBe(
+      'No tienes permiso para realizar esta acción.',
+    );
+  });
+
+  it('SECURITY: sanitizes traceback detail and falls back to default', () => {
+    const error = makeAxiosError({
+      detail:
+        'Traceback (most recent call last):\n  File "/app/views.py", line 12',
+    });
+    expect(parseApiError(error, 'Server error')).toBe('Server error');
+  });
+
+  it('SECURITY: sanitizes unsafe non_field_errors items', () => {
+    const error = makeAxiosError({
+      non_field_errors: [
+        'Traceback (most recent call last):\n  File "/app/views.py", line 3',
+      ],
+    });
+    const result = parseApiError(error);
+    expect(result).not.toContain('Traceback');
+    expect(result).not.toContain('views.py');
+  });
+});
+
+describe('extractFieldErrors', () => {
+  it('extracts per-field errors with general null', () => {
+    const error = makeAxiosError({ nombre: ['El nombre es obligatorio.'] });
+    expect(extractFieldErrors(error, ['nombre'])).toEqual({
+      fields: { nombre: 'El nombre es obligatorio.' },
+      general: null,
+    });
+  });
+
+  it('returns non_field_errors as general', () => {
+    const error = makeAxiosError({
+      non_field_errors: ['La recolección ya está en ese estado.'],
+    });
+    expect(extractFieldErrors(error, ['estado'])).toEqual({
+      fields: {},
+      general: 'La recolección ya está en ese estado.',
+    });
+  });
+
+  it('SECURITY: sanitizes unsafe field value', () => {
+    const error = makeAxiosError({
+      nombre: ['database error: relation "usuarios" does not exist'],
+    });
+    expect(extractFieldErrors(error, ['nombre'])).toEqual({
+      fields: {},
+      general: 'Error del servidor. Intenta de nuevo.',
+    });
+  });
+
+  it('catches arbitrary array fields as general when no fieldKey matches', () => {
+    const error = makeAxiosError({ otro_campo: ['error'] });
+    expect(extractFieldErrors(error, ['nombre'])).toEqual({
+      fields: {},
+      general: 'otro_campo: error',
+    });
+  });
+
+  it('falls back to status message when nothing matches', () => {
+    const error = makeAxiosError({ foo: 'bar' }, 429);
+    expect(extractFieldErrors(error, ['nombre'])).toEqual({
+      fields: {},
+      general: 'Límite de peticiones excedido. Intenta más tarde.',
+    });
+  });
+
+  it('SECURITY: ignores non-primitive items in field arrays', () => {
+    const error = makeAxiosError({ nombre: [{ msg: 'nested' }] });
+    expect(extractFieldErrors(error, ['nombre'])).toEqual({
+      fields: {},
+      general: 'Error del servidor. Intenta de nuevo.',
+    });
   });
 });

@@ -37,6 +37,7 @@ import { colors } from '@/constants/colors';
 import { useRegistrationForm } from '@/hooks/useRegistrationForm';
 import { useSubmitNewUser } from '@/hooks/useSubmitNewUser';
 import api from '@/services/api';
+import { fetchAllPages } from '@/services/pagination';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
 import type { ApiResponse, RegisterRole } from '@/types';
@@ -317,56 +318,11 @@ function getFullName(u: AdminUser): string {
 }
 
 // ── Multi-page fetch (like web) ──
-const MAX_PAGES = 20;
-
-async function fetchAllPages(
-  url: string,
-  accumulated: AdminUser[],
-  depth: number = 0,
-): Promise<AdminUser[]> {
-  if (depth >= MAX_PAGES) {
-    console.warn(
-      `[UserManagement] max pages (${MAX_PAGES}) reached, stopping fetch`,
-    );
-    return accumulated;
-  }
-  try {
-    const response = await api.get<unknown>(url);
-    const body = response.data;
-    const payload: unknown =
-      body &&
-      typeof body === 'object' &&
-      'data' in (body as Record<string, unknown>)
-        ? (body as Record<string, unknown>).data
-        : body;
-
-    const results: AdminUser[] =
-      payload &&
-      typeof payload === 'object' &&
-      'results' in (payload as Record<string, unknown>)
-        ? (payload as { results: AdminUser[] }).results
-        : Array.isArray(payload)
-          ? (payload as AdminUser[])
-          : [];
-
-    const all = [...accumulated, ...results];
-    const next: string | null =
-      payload && typeof payload === 'object'
-        ? (((payload as Record<string, unknown>).next as string | null) ?? null)
-        : null;
-
-    if (next) return fetchAllPages(next, all, depth + 1);
-    return all;
-  } catch (error) {
-    console.warn(
-      `[UserManagement] error fetching page at depth ${depth}:`,
-      error,
-    );
-    if (accumulated.length > 0) {
-      return accumulated;
-    }
-    throw error;
-  }
+async function fetchAllUsers(url: string): Promise<AdminUser[]> {
+  const { data } = await fetchAllPages<AdminUser>(url, {
+    source: 'UserManagement',
+  });
+  return data;
 }
 
 function UserManagementScreenContent(): React.JSX.Element {
@@ -434,7 +390,7 @@ function UserManagementScreenContent(): React.JSX.Element {
     isRefetching,
   } = useQuery<AdminUser[]>({
     queryKey: ['admin-users'],
-    queryFn: () => fetchAllPages('/admin/usuarios/', []),
+    queryFn: () => fetchAllUsers('/admin/usuarios/'),
   });
 
   const errorMessage =

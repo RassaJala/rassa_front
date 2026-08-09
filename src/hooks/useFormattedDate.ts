@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 
+import { getNextMonday } from '@/common/waste';
+
 const days = [
   'Domingo',
   'Lunes',
@@ -24,15 +26,6 @@ const months = [
   'noviembre',
   'diciembre',
 ];
-
-function getNextMonday(from: Date): Date {
-  const d = new Date(from);
-  const dayOfWeek = d.getDay();
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
-  d.setDate(d.getDate() + daysUntilMonday);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 export function useFormattedDate(): {
   today: string;

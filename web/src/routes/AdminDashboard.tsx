@@ -28,13 +28,6 @@ const months = [
   'noviembre',
   'diciembre',
 ];
-const topProducts = [
-  { name: '🥑 Aguacate Hass', sales: '$4,200' },
-  { name: '🍅 Tomate orgánico', sales: '$3,150' },
-  { name: '🌿 Café especial', sales: '$2,880' },
-  { name: '🧅 Cebolla larga', sales: '$1,940' },
-  { name: '🌽 Maíz criollo', sales: '$1,620' },
-];
 const recentActivity = [
   {
     id: '#2841',

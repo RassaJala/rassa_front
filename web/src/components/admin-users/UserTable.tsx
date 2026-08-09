@@ -5,7 +5,7 @@ interface UserTableProps {
   readonly users: User[];
   readonly filteredCount: number;
   readonly paginatedUsers: User[];
-  readonly currentUserId?: number;
+  readonly currentUserId?: number | undefined;
   readonly isTogglePending: boolean;
   readonly isRolePending: boolean;
   readonly onToggleStatus: (user: User) => void;

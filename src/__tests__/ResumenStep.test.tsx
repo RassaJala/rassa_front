@@ -132,7 +132,7 @@ describe('ResumenStep', () => {
     expect(getByText('icon:check-circle')).toBeTruthy();
   });
 
-  it('falls back to Producto #id when name not found', () => {
+  it('shows unavailable message when product not found in catalog', () => {
     const unknownItem: WizardItemDraft = {
       tempId: 'temp_99',
       fk_producto: 999,
@@ -147,6 +147,13 @@ describe('ResumenStep', () => {
         items: [unknownItem],
       }),
     );
-    expect(getByText('Producto #999')).toBeTruthy();
+    expect(
+      getByText('Producto no disponible (eliminado del catálogo)'),
+    ).toBeTruthy();
+    expect(
+      getByText(
+        'Este producto fue eliminado del catálogo. Quitalo para poder publicar.',
+      ),
+    ).toBeTruthy();
   });
 });

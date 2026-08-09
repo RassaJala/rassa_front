@@ -75,7 +75,7 @@ export function AdminCrudTable<
       items,
       searchDebounced,
       statusFilter,
-      searchFields,
+      searchFields as (keyof T & string)[],
     );
     return result;
   }, [items, searchDebounced, statusFilter, searchFields]);

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
+import { formatearFecha } from '@/common/dates';
 import { DataTable } from '~/components/layout/DataTable';
 import { PageHeader } from '~/components/layout/PageHeader';
 import { Badge } from '~/components/ui/Badge';
@@ -16,6 +17,7 @@ interface OrderRow {
   creado_en: string;
   productos?: string[];
   has_more_productos?: boolean;
+  expirado?: boolean;
 }
 
 const STATUS_VARIANT: Record<
@@ -29,17 +31,6 @@ const STATUS_VARIANT: Record<
   entregado: 'success',
   cancelado: 'error',
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function BuyerOrders() {
   const {
@@ -92,9 +83,12 @@ export function BuyerOrders() {
       key: 'estado_actual',
       label: 'Estado',
       render: (o) => (
-        <Badge variant={STATUS_VARIANT[o.estado_actual] ?? 'default'}>
-          {o.estado_actual.replace(/_/g, ' ')}
-        </Badge>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Badge variant={STATUS_VARIANT[o.estado_actual] ?? 'default'}>
+            {o.estado_actual.replace(/_/g, ' ')}
+          </Badge>
+          {o.expirado === true ? <Badge variant="error">Expirado</Badge> : null}
+        </div>
       ),
     },
     {

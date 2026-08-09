@@ -227,6 +227,9 @@ export default function ProfileEditForm({
         onSelectMunicipio={catalog.handleSelectMunicipio}
         onSelectLocalidad={catalog.handleSelectLocalidad}
         colors={c}
+        isLoadingLocalidades={catalog.isLoadingLocalidades}
+        errorLocalidades={catalog.errorLocalidades}
+        onRetryLocalidades={() => void catalog.refetchLocalidades()}
       />
     </>
   );

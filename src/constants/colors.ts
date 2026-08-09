@@ -83,6 +83,13 @@ export const colors = {
   statusCerradoFg: '#6B7280',
   statusCanceladoBg: 'rgba(222,57,58,0.12)',
   statusCanceladoFg: '#DE393A',
+  // ── Settlement badge tokens (R2-4: liquidaciones must not reuse the
+  // publication-status tokens — pagada mirrors the published green, pendiente
+  // mirrors the draft amber) ──
+  settlementPagadaBg: 'rgba(74,138,99,0.12)',
+  settlementPagadaFg: '#4A8A63',
+  settlementPendienteBg: 'rgba(242,169,0,0.12)',
+  settlementPendienteFg: '#F2A900',
   // ── Cart-specific tokens ──
   cartRowBg: 'rgba(128,128,128,0.08)',
   cartRowBgD: 'rgba(255,255,255,0.05)',
@@ -148,6 +155,6 @@ export function themeColors(isDark: boolean): ThemeColors {
     brand: isDark ? '#4A8A63' : '#24563C',
     segBg: isDark ? '#263028' : '#E8ECE4',
     shadowBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-    subtleBg: isDark ? 'rgba(74,138,99,0.08)' : 'rgba(36,86,60,0.04)',
+    subtleBg: isDark ? 'rgba(74,138,99,0.14)' : 'rgba(36,86,60,0.08)',
   };
 }

@@ -13,6 +13,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
+import { formatearFecha } from '@/common/dates';
+import { isOrderExpired } from '@/common/orders';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -38,17 +40,6 @@ const TIMELINE_MAP: Readonly<Record<string, TimelineConfig>> = {
   entregado: { icon: 'handshake', color: colors.success },
   cancelado: { icon: 'close-circle', color: colors.error },
 };
-
-function formatearFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function TimelineEntry({
   entry,
@@ -325,6 +316,38 @@ export default function OrderDetailScreen(): React.JSX.Element {
               </Text>
             </View>
           </View>
+
+          {isOrderExpired(order) ? (
+            <View
+              style={{
+                backgroundColor: colors.error,
+                borderRadius: 12,
+                padding: 14,
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <MaterialCommunityIcons
+                name="timer-off-outline"
+                size={22}
+                color={white}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: white }}>
+                  Pedido expirado
+                </Text>
+                <Text style={{ fontSize: 13, color: white, marginTop: 1 }}>
+                  Este pedido expiró el{' '}
+                  {order.fecha_expiracion
+                    ? formatearFecha(order.fecha_expiracion)
+                    : 'en una fecha no disponible'}
+                  . Ya no se puede modificar ni confirmar.
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           <View style={{ flexDirection: 'row', gap: 24, marginTop: 12 }}>
             <View>
