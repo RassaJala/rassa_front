@@ -216,6 +216,117 @@ describe('ReceiptPage', () => {
     openSpy.mockRestore();
   });
 
+  it('re-programa la impresión mientras readyState siga en loading', async () => {
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+        readyState: 'loading',
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+      close: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    vi.useFakeTimers();
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    // Primer fallback: el documento aún carga → no imprime, se reprograma.
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS);
+    expect(mockWin.print).not.toHaveBeenCalled();
+
+    // El documento terminó de cargar → el siguiente fallback imprime.
+    mockWin.document.readyState = 'complete';
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS);
+    expect(mockWin.print).toHaveBeenCalledTimes(1);
+    expect(mockWin.close).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+
+    openSpy.mockRestore();
+  });
+
+  it('desacopla la ventana nueva del opener (no retiene referencias)', async () => {
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+        readyState: 'complete',
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+      close: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect((mockWin as unknown as { opener: unknown }).opener).toBeNull();
+
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
+    expect(mockWin.print).toHaveBeenCalledTimes(1);
+    openSpy.mockRestore();
+  });
+
+  it('pantalla y PDF usan el mismo subtotal (consistencia con descuentos)', async () => {
+    // Filas: 2×59.74 + 3×30.50 = 210.98; monto cobrado 119.48; total_pedido 112.00.
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      monto: '119.48',
+      total_pedido: '112.00',
+      productos: [
+        { nombre: 'Manzana', precio: '59.74', cantidad: 2 },
+        { nombre: 'Plátano', precio: '30.50', cantidad: 3 },
+      ],
+    });
+    const mockWin = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+        readyState: 'complete',
+      },
+      focus: vi.fn(),
+      print: vi.fn(),
+      close: vi.fn(),
+    };
+    const openSpy = vi
+      .spyOn(window, 'open')
+      .mockReturnValue(mockWin as unknown as Window);
+
+    renderPage();
+    expect(await screen.findByText('Manzana')).toBeTruthy();
+
+    // La pantalla muestra el subtotal como suma de filas.
+    expect((await screen.findAllByText('$210.98')).length).toBeGreaterThan(0);
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    const html = (
+      mockWin.document.write as unknown as { mock: { calls: string[][] } }
+    ).mock.calls[0][0] as string;
+    // El PDF usa el MISMO subtotal (suma de filas), más ajuste y total informativo.
+    expect(html).toContain('$210.98');
+    expect(html).toContain('−$91.50');
+    expect(html).toContain('Total del pedido');
+    expect(html).toContain('$112.00');
+    expect(html).toContain('<strong>$119.48</strong>');
+    openSpy.mockRestore();
+  });
+
   it('alerta y loguea el error cuando document.write lanza', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

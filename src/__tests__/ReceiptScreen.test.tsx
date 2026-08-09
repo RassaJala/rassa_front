@@ -128,6 +128,7 @@ describe('ReceiptScreen', () => {
     const printAsync = jest.requireMock('expo-print').printAsync;
     printAsync.mockRejectedValueOnce(new Error('print explosion'));
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { findByText, getByLabelText } = renderScreen();
     expect(await findByText('Recibo de Pago')).toBeTruthy();
@@ -139,6 +140,22 @@ describe('ReceiptScreen', () => {
       'No se pudo imprimir',
       'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
     );
+    expect(warnSpy).toHaveBeenCalled();
     alertSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it('ignora un doble tap: solo abre un diálogo de impresión por vez', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    printAsync.mockResolvedValue(undefined);
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+    fireEvent.press(pdfBtn);
+
+    await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(1));
   });
 });

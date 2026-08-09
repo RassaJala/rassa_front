@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -19,6 +20,59 @@ import api from '../services/api';
 
 /** Tiempo de espera del fallback de impresión si onload no dispara. */
 export const PRINT_FALLBACK_MS = 400;
+
+/**
+ * Imprime un documento HTML en una ventana nueva. Extraído a un helper
+ * unit-testable: abre el popup, escribe el HTML, espera a que cargue (con
+ * fallback por timeout) y ejecuta print + close.
+ */
+export function printHtml(html: string): void {
+  let win: Window | null = null;
+  try {
+    win = window.open('', '_blank');
+  } catch {
+    // algunos navegadores lanzan excepción al bloquear popups
+  }
+  if (!win) {
+    alert('Permite popups para este sitio para poder imprimir el recibo.');
+    return;
+  }
+  win.opener = null;
+  const notificarError = (error: unknown) => {
+    console.error('Error al imprimir el recibo:', error);
+    alert('No se pudo imprimir el recibo. Inténtalo de nuevo.');
+  };
+  try {
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Imprimir recién cuando el navegador terminó de procesar el documento,
+    // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
+    let printed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const doPrint = () => {
+      if (printed) return;
+      // El documento aún no terminó de procesarse: reintentar en vez de
+      // imprimir una página en blanco (el timer anterior ya se ejecutó).
+      if (win?.document.readyState === 'loading') {
+        fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
+        return;
+      }
+      clearTimeout(fallbackTimer);
+      printed = true;
+      try {
+        win?.print();
+        win?.close();
+      } catch (error: unknown) {
+        notificarError(error);
+      }
+    };
+    fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
+    win.onload = doPrint;
+  } catch (error: unknown) {
+    notificarError(error);
+  }
+}
 
 function DetailRow({
   label,
@@ -94,50 +148,7 @@ export function ReceiptPage() {
   const subtotal = calcularSubtotal(productos);
 
   const handleImprimir = () => {
-    let win: Window | null = null;
-    try {
-      win = window.open('', '_blank');
-    } catch {
-      // algunos navegadores lanzan excepción al bloquear popups
-    }
-    if (!win) {
-      alert('Permite popups para este sitio para poder imprimir el recibo.');
-      return;
-    }
-    const notificarError = (error: unknown) => {
-      console.error('Error al imprimir el recibo:', error);
-      alert('No se pudo imprimir el recibo. Inténtalo de nuevo.');
-    };
-    try {
-      win.document.write(buildReceiptHtml(pago));
-      win.document.close();
-      win.focus();
-      // Imprimir recién cuando el navegador terminó de procesar el documento,
-      // así el CSS está aplicado; timeout corto como fallback por si load no dispara.
-      let printed = false;
-      let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-      const doPrint = () => {
-        if (printed) return;
-        // El documento aún no terminó de procesarse: reintentar en vez de
-        // imprimir una página en blanco (el timer anterior ya se ejecutó).
-        if (win?.document.readyState === 'loading') {
-          fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
-          return;
-        }
-        clearTimeout(fallbackTimer);
-        printed = true;
-        try {
-          win?.print();
-          win?.close();
-        } catch (error: unknown) {
-          notificarError(error);
-        }
-      };
-      fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
-      win.onload = doPrint;
-    } catch (error: unknown) {
-      notificarError(error);
-    }
+    printHtml(buildReceiptHtml(pago));
   };
 
   return (

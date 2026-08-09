@@ -9,51 +9,93 @@ const INK = '#2D3328';
 const MUTED = '#5E6B5E';
 const BORDER = '#E2E6DF';
 
+/** Umbral (en pesos) bajo el cual un ajuste o discrepancia se ignora. */
+const EPSILON = 0.005;
+
 /**
- * Subtotal autoritativo del recibo: el total_pedido del backend cuando viene,
- * o la suma de filas (cantidad × precio) como respaldo. total_pedido es la
- * única fuente de verdad — las filas de producto pueden desviarse (redondeos,
- * ajustes) y el documento debe cuadrar contra lo que el vendedor cobró.
+ * Subtotal del recibo: la suma de las filas de producto VISIBLES. Es la única
+ * fuente de verdad del subtotal y coincide con el que muestran las pantallas
+ * (web y mobile), de modo que documento y pantalla nunca se contradicen.
+ * total_pedido del backend solo se despliega como fila informativa cuando no
+ * cuadra con la suma (ver buildReceiptHtml).
  */
-function subtotalAutoritativo(pago: PaymentDetail): number {
-  const totalPedidoRaw = pago.total_pedido;
-  const totalPedidoValido =
-    typeof totalPedidoRaw === 'string' && totalPedidoRaw.trim() !== '';
-  if (!totalPedidoValido) return calcularSubtotal(pago.productos ?? []);
-  return Number(totalPedidoRaw);
+export function calcularSubtotalVisible(pago: PaymentDetail): number {
+  return calcularSubtotal(pago.productos ?? []);
 }
 
-/** Diferencia entre lo cobrado (monto) y el subtotal del documento. */
-function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
+/**
+ * Diferencia entre lo cobrado (monto) y el subtotal visible. Devuelve 0
+ * cuando el monto no es un número finito, así el documento nunca imprime
+ * ajustes fantasma frente a datos corruptos.
+ */
+export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
   const monto = Number(pago.monto);
   if (!Number.isFinite(monto)) return 0;
   return monto - subtotal;
 }
 
+/** Cantidad de una partida con fallback defensivo (nunca imprime "NaN"). */
+function formatearCantidad(valor: unknown): string {
+  const n = Number(valor);
+  return Number.isFinite(n) ? String(n) : '—';
+}
+
+/** Ajuste con signo explícito: "+$7.48" (recargo) / "−$7.48" (descuento). */
+function formatearAjuste(ajuste: number): string {
+  const signo = ajuste > 0 ? '+' : '−';
+  return `${signo}${formatearMonto(Math.abs(ajuste))}`;
+}
+
 export function buildReceiptHtml(pago: PaymentDetail): string {
-  const subtotal = subtotalAutoritativo(pago);
+  const subtotal = calcularSubtotalVisible(pago);
   const ajuste = calcularAjuste(pago, subtotal);
+  const subtotalValido = Number.isFinite(subtotal);
 
   const filas = (pago.productos ?? [])
     .map(
       (prod) => `
         <tr>
           <td>${escapeHtml(prod.nombre)}</td>
-          <td class="num">${String(Number(prod.cantidad))}</td>
+          <td class="num">${formatearCantidad(prod.cantidad)}</td>
           <td class="num">${formatearMonto(prod.precio)}</td>
           <td class="num">${formatearMonto(prod.cantidad * Number(prod.precio))}</td>
         </tr>`,
     )
     .join('');
 
+  // Ajuste = monto cobrado − subtotal visible; con signo explícito para que
+  // "Ajuste +$X" (recargo) / "Ajuste −$X" (descuento) se lea correcto.
   const filaAjuste =
-    Math.abs(ajuste) > 0.005
+    subtotalValido && Math.abs(ajuste) > EPSILON
       ? `
         <tr class="ajuste">
-          <td colspan="3">Descuento/Ajuste</td>
-          <td class="num">${formatearMonto(ajuste)}</td>
+          <td colspan="3">Ajuste</td>
+          <td class="num">${formatearAjuste(ajuste)}</td>
         </tr>`
       : '';
+
+  // total_pedido es INFORMATIVO: se muestra solo cuando el backend lo manda y
+  // no cuadra con la suma de filas (descuentos/recargos aplicados en el
+  // pedido). Nunca altera la aritmética del documento, que cierra con
+  // filas + ajuste = total pagado.
+  const totalPedidoRaw = pago.total_pedido;
+  const totalPedido = totalPedidoRaw == null ? NaN : Number(totalPedidoRaw);
+  const filaTotalPedido =
+    subtotalValido &&
+    totalPedidoRaw != null &&
+    totalPedidoRaw.trim() !== '' &&
+    Number.isFinite(totalPedido) &&
+    Math.abs(totalPedido - subtotal) > EPSILON
+      ? `
+        <tr class="total-pedido">
+          <td colspan="3">Total del pedido</td>
+          <td class="num">${formatearMonto(totalPedido)}</td>
+        </tr>`
+      : '';
+
+  const avisoCorrupto = subtotalValido
+    ? ''
+    : `<p class="notice">No se pudieron calcular los montos del pedido.</p>`;
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
@@ -105,6 +147,8 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   tbody td { padding: 9px 10px; border-bottom: 1px dashed ${BORDER}; font-size: 14px; color: ${INK}; }
   tfoot td { padding: 10px; font-weight: 700; }
   tfoot td:first-child { text-align: right; }
+  tfoot tr.total-pedido td { font-weight: 400; color: ${MUTED}; }
+  .notice { color: ${CORAL}; font-size: 12px; margin-top: 4px; }
   .summary { border: 1px solid ${BORDER}; border-radius: 10px; padding: 6px 16px; margin-top: 8px; max-width: 420px; }
   .row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; color: ${INK}; }
   .row span { color: ${MUTED}; }
@@ -149,8 +193,10 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     <tfoot>
       <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${formatearMonto(subtotal)}</td></tr>
       ${filaAjuste}
+      ${filaTotalPedido}
     </tfoot>
   </table>
+  ${avisoCorrupto}
 
   <div class="total">
     <span>Total pagado</span>
@@ -162,7 +208,13 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 </html>`;
 }
 
-export function escapeHtml(value: string): string {
+/**
+ * Escapa caracteres XML/HTML. Es null-safe para tolerar campos omitidos por
+ * el backend: null/undefined se imprimen como "—", mismo contrato defensivo
+ * que formatearMonto.
+ */
+export function escapeHtml(value: string | null | undefined): string {
+  if (value == null) return '—';
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

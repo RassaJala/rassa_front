@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -38,6 +38,10 @@ export default function ReceiptScreen(): React.JSX.Element {
   const route = useRoute<Route>();
   const { paymentId } = route.params;
   const paymentIdValid = esPagoIdValido(paymentId);
+
+  // Semáforo anti doble-tap: evita abrir dos diálogos de impresión si el
+  // usuario toca el botón dos veces seguidas mientras el PDF se genera.
+  const imprimiendoRef = useRef(false);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -125,15 +129,19 @@ export default function ReceiptScreen(): React.JSX.Element {
   const productos = pago.productos ?? [];
 
   const handleImprimir = () => {
-    void Print.printAsync({ html: buildReceiptHtml(pago) }).catch(
-      (error: unknown) => {
+    if (imprimiendoRef.current) return;
+    imprimiendoRef.current = true;
+    void Print.printAsync({ html: buildReceiptHtml(pago) })
+      .catch((error: unknown) => {
         console.warn('No se pudo imprimir el recibo', error);
         Alert.alert(
           'No se pudo imprimir',
           'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
         );
-      },
-    );
+      })
+      .finally(() => {
+        imprimiendoRef.current = false;
+      });
   };
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
