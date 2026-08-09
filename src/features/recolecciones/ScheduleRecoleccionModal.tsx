@@ -307,6 +307,7 @@ export default function ScheduleRecoleccionModal({
           }}
         >
           <Pressable
+            testID="programar-recoleccion-button"
             onPress={handleSubmit}
             disabled={mutation.isPending}
             style={{
@@ -467,6 +468,7 @@ function RecoleccionFormFields({
         <View style={{ flex: 1 }}>
           <Text style={fieldLabel}>Hora inicio</Text>
           <TouchableOpacity
+            testID="campo-hora-inicio"
             onPress={onHoraInicioPress}
             activeOpacity={0.7}
             style={[
@@ -500,6 +502,7 @@ function RecoleccionFormFields({
         <View style={{ flex: 1 }}>
           <Text style={fieldLabel}>Hora fin</Text>
           <TouchableOpacity
+            testID="campo-hora-fin"
             onPress={onHoraFinPress}
             activeOpacity={0.7}
             style={[

@@ -377,15 +377,13 @@ describe('CollectionScheduleScreen', () => {
   it('crea una recolección al llenar el formulario', () => {
     mockUseQuery([]);
 
-    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
+    const { getByTestId, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    const agricultores = getAllByText('Juan Pérez');
-    fireEvent.press(agricultores[agricultores.length - 1]!);
-    const botonesProgramar = getAllByText('Programar recolección');
-    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
+    fireEvent.press(getByTestId('agricultor-11'));
+    fireEvent.press(getByTestId('programar-recoleccion-button'));
 
     expect(mockMutate).toHaveBeenCalledWith({
       fk_agricultor: 11,
@@ -452,15 +450,15 @@ describe('CollectionScheduleScreen', () => {
   it('muestra el error del servidor al crear y mantiene el modal abierto', () => {
     mockUseQuery([]);
 
-    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
+    const { getAllByText, getByTestId, getByText } = render(
+      <CollectionScheduleScreen />,
+    );
 
     fireEvent.press(getByText('Nueva'));
 
     const fechaHoy = toDateString(new Date());
-    const agricultores = getAllByText('Juan Pérez');
-    fireEvent.press(agricultores[agricultores.length - 1]!);
-    const botonesProgramar = getAllByText('Programar recolección');
-    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
+    fireEvent.press(getByTestId('agricultor-11'));
+    fireEvent.press(getByTestId('programar-recoleccion-button'));
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
 
@@ -496,16 +494,14 @@ describe('CollectionScheduleScreen', () => {
   it('no envía duplicados mientras el guardado está en curso', () => {
     mockUseQuery([]);
 
-    const { getAllByText, getByText, rerender } = render(
+    const { getByTestId, getByText, rerender } = render(
       <CollectionScheduleScreen />,
     );
 
     fireEvent.press(getByText('Nueva'));
 
-    const agricultores = getAllByText('Juan Pérez');
-    fireEvent.press(agricultores[agricultores.length - 1]!);
-    const botonesProgramar = getAllByText('Programar recolección');
-    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
+    fireEvent.press(getByTestId('agricultor-11'));
+    fireEvent.press(getByTestId('programar-recoleccion-button'));
 
     expect(mockMutate).toHaveBeenCalledTimes(1);
 
@@ -518,11 +514,10 @@ describe('CollectionScheduleScreen', () => {
   it('rechaza el envío sin agricultor seleccionado', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
+    const { getByTestId, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
-    const botonesProgramar = getAllByText('Programar recolección');
-    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
+    fireEvent.press(getByTestId('programar-recoleccion-button'));
 
     expect(getByText('Selecciona un agricultor.')).toBeTruthy();
   });
@@ -530,22 +525,18 @@ describe('CollectionScheduleScreen', () => {
   it('valida que la hora de fin sea posterior a la de inicio', () => {
     mockUseQuery(mockRecolecciones);
 
-    const { getAllByText, getByText } = render(<CollectionScheduleScreen />);
+    const { getByTestId, getByText } = render(<CollectionScheduleScreen />);
 
     fireEvent.press(getByText('Nueva'));
-    const agricultores = getAllByText('Juan Pérez');
-    fireEvent.press(agricultores[agricultores.length - 1]!);
+    fireEvent.press(getByTestId('agricultor-11'));
 
-    const opcionales = getAllByText('Opcional');
-    fireEvent.press(opcionales[0]!);
+    fireEvent.press(getByTestId('campo-hora-inicio'));
     fireEvent.press(getByText('Seleccionar'));
 
-    const opcionales2 = getAllByText('Opcional');
-    fireEvent.press(opcionales2[0]!);
+    fireEvent.press(getByTestId('campo-hora-fin'));
     fireEvent.press(getByText('Seleccionar'));
 
-    const botonesProgramar = getAllByText('Programar recolección');
-    fireEvent.press(botonesProgramar[botonesProgramar.length - 1]!);
+    fireEvent.press(getByTestId('programar-recoleccion-button'));
 
     expect(
       getByText('La hora de fin debe ser posterior a la de inicio.'),

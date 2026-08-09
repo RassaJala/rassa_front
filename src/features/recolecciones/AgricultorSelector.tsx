@@ -213,6 +213,7 @@ function FilaAgricultor({
 
   return (
     <Pressable
+      testID={`agricultor-${agricultor.id_usuario}`}
       onPress={() => onSelect(agricultor)}
       style={{
         flexDirection: 'row',

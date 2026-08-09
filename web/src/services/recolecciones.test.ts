@@ -347,6 +347,13 @@ describe('cambiarEstadoRecoleccion', () => {
     ).rejects.toThrow('Invalid recoleccion: NaN');
   });
 
+  it('rejects invalid transitions before reaching the server', async () => {
+    await expect(
+      cambiarEstadoRecoleccion(1, 'en_ruta', 'recolectado'),
+    ).rejects.toThrow('Transición inválida: recolectado → en_ruta');
+    expect(mockedApi.post).not.toHaveBeenCalled();
+  });
+
   it('rejects on 409 conflict', async () => {
     const err = new Error('Conflict');
     Object.defineProperty(err, 'isAxiosError', { value: true });
