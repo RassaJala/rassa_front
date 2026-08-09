@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Platform,
   Pressable,
   RefreshControl,
@@ -24,6 +25,7 @@ import {
   cambiarEstadoRecoleccion,
   cancelarRecoleccion,
   fetchRecolecciones,
+  fetchTodasLasRecolecciones,
 } from '@/services/recolecciones';
 import type { RecoleccionesResult } from '@/services/recolecciones';
 import { useAuth } from '@/store/AuthContext';
@@ -48,10 +50,19 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
 
   // Midnight rollover: recalculate 'today' when the date changes.
   useEffect(() => {
+    const recalculate = () => setToday(todayString());
     const msUntilMidnight =
       new Date().setHours(24, 0, 0, 0) - Date.now() + 1000;
-    const timer = setTimeout(() => setToday(todayString()), msUntilMidnight);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(recalculate, msUntilMidnight);
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') recalculate();
+    });
+
+    return () => {
+      clearTimeout(timer);
+      subscription.remove();
+    };
   }, [today]);
 
   const [filter, setFilter] = useState<RecoleccionEstado | ''>('');
@@ -73,17 +84,36 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     isRefetching,
   } = useQuery<RecoleccionesResult>({
     queryKey: ['recolecciones', filter, today],
-    queryFn: () =>
-      fetchRecolecciones({
-        ...(filter ? { estado: filter } : {}),
-        fechaDesde: today,
-      }),
+    queryFn: ({ signal }) =>
+      fetchRecolecciones(
+        {
+          ...(filter ? { estado: filter } : {}),
+          fechaDesde: today,
+        },
+        signal,
+      ),
     retry: false,
   });
 
   const recolecciones = useMemo(() => result?.data ?? [], [result]);
   const truncated = result?.truncated ?? false;
   const erroresParciales = result?.errores ?? 0;
+
+  const { data: todasResult } = useQuery<RecoleccionesResult>({
+    queryKey: ['recolecciones', 'todas', today],
+    queryFn: ({ signal }) =>
+      fetchTodasLasRecolecciones({ fechaDesde: today }, signal),
+    enabled: modalVisible,
+    retry: false,
+  });
+
+  const totalErroresTodas = todasResult?.errores ?? 0;
+  const duplicateSource =
+    totalErroresTodas > 0
+      ? recolecciones
+      : (todasResult?.data ?? recolecciones);
+  const duplicateCheckFailed =
+    totalErroresTodas > 0 || (todasResult?.truncated ?? false);
 
   const showToast = useCallback(
     (message: string, type: 'success' | 'error' | 'info') => {
@@ -116,31 +146,21 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
     (message: string) => {
       invalidate();
       showToast(message, 'success');
-      const refetchPromise = refetch();
-      if (refetchPromise) {
-        refetchPromise
-          .then((res) => {
-            if (res.isError) {
-              showToast(
-                'El cambio se guardó, pero no se pudo actualizar la lista.',
-                'error',
-              );
-            }
-            return res;
-          })
-          .catch(() => {
-            /* noop */
-          });
-      }
     },
-    [invalidate, showToast, refetch],
+    [invalidate, showToast],
   );
 
   const transicionMutation = useMutation({
     mutationFn: (payload: {
       readonly id: number;
       readonly estado: RecoleccionEstado;
-    }) => cambiarEstadoRecoleccion(payload.id, payload.estado),
+      readonly estadoActual: RecoleccionEstado;
+    }) =>
+      cambiarEstadoRecoleccion(
+        payload.id,
+        payload.estado,
+        payload.estadoActual,
+      ),
     onMutate: ({ id }) => {
       setPendingIds((prev) => new Set(prev).add(id));
     },
@@ -329,7 +349,11 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
               item.fk_agricultor !== user?.id_usuario
             }
             onTransition={(estado) =>
-              transicionMutation.mutate({ id: item.id_recoleccion, estado })
+              transicionMutation.mutate({
+                id: item.id_recoleccion,
+                estado,
+                estadoActual: item.estado,
+              })
             }
             onCancel={() => confirmCancel(item.id_recoleccion)}
             onContact={() => {
@@ -467,7 +491,8 @@ export default function CollectionScheduleScreen(): React.JSX.Element {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSaved={handleSaved}
-        existing={recolecciones}
+        existing={duplicateSource}
+        duplicateCheckFailed={duplicateCheckFailed}
       />
 
       <Toast

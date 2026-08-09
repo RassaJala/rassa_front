@@ -23,35 +23,52 @@ export default function FilterChips({
   const brand = isDark ? colors.admBrandD : colors.admBrandL;
   const white = colors.iconWhite;
 
+  const itemsPerRow = Math.ceil(FILTROS.length / 2);
+  const rows = Array.from({ length: 2 }, (_, i) =>
+    FILTROS.slice(i * itemsPerRow, (i + 1) * itemsPerRow),
+  );
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-      {FILTROS.map((e) => {
-        const selected = filter === e.value;
-        return (
-          <Pressable
-            key={e.value}
-            onPress={() => onSelect(e.value)}
+    <View style={{ gap: 6 }}>
+      {rows.map((row, ri) =>
+        row.length > 0 ? (
+          <View
+            key={ri}
             style={{
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderRadius: 20,
-              backgroundColor: selected ? brand : colors.transparent,
-              borderWidth: 1.5,
-              borderColor: selected ? brand : border,
+              flexDirection: 'row',
+              justifyContent: 'space-around',
             }}
           >
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: selected ? white : fg,
-              }}
-            >
-              {e.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+            {row.map((e) => {
+              const selected = filter === e.value;
+              return (
+                <Pressable
+                  key={e.value}
+                  onPress={() => onSelect(e.value)}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 20,
+                    backgroundColor: selected ? brand : colors.transparent,
+                    borderWidth: 1.5,
+                    borderColor: selected ? brand : border,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: selected ? white : fg,
+                    }}
+                  >
+                    {e.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null,
+      )}
     </View>
   );
 }

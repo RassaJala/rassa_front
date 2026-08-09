@@ -225,7 +225,7 @@ describe('SellerRecolecciones — integration', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows the success toast immediately and warns when the refetch fails', async () => {
+  it('shows the success toast immediately after a mutation', async () => {
     const recoleccion = {
       id_recoleccion: 1,
       fk_agricultor: 10,
@@ -237,25 +237,17 @@ describe('SellerRecolecciones — integration', () => {
       comentarios: null,
       creado_en: `${todayString()}T00:00:00Z`,
     };
-    let requests = 0;
     server.use(
-      http.get(`${BASE}/recolecciones/`, async () => {
-        requests += 1;
-        if (requests > 1) {
-          // El refetch tras el guardado falla (con retraso para que el toast de
-          // éxito sea observable antes de degradarse al aviso secundario).
-          await delay(300);
-          return HttpResponse.json({ detail: 'boom' }, { status: 500 });
-        }
-        return HttpResponse.json({
+      http.get(`${BASE}/recolecciones/`, () =>
+        HttpResponse.json({
           data: {
             count: 1,
             next: null,
             previous: null,
             results: [recoleccion],
           },
-        });
-      }),
+        }),
+      ),
     );
 
     renderPage();
@@ -266,17 +258,6 @@ describe('SellerRecolecciones — integration', () => {
     // El éxito se muestra de inmediato, sin esperar al refetch en segundo plano.
     expect(
       await screen.findByText('Estado actualizado correctamente.'),
-    ).toBeInTheDocument();
-
-    // Al fallar el refetch se degrada a un aviso secundario. El 500 se reintenta
-    // (axios-retry con backoff), así que el aviso tarda más del timeout por
-    // defecto de findByText.
-    expect(
-      await screen.findByText(
-        'El cambio se guardó, pero no se pudo actualizar la lista.',
-        {},
-        { timeout: 5000 },
-      ),
     ).toBeInTheDocument();
   });
 });

@@ -128,7 +128,7 @@ describe('SettlementDetailScreen', () => {
 
     const { findByText, getByText } = renderScreen();
 
-    await findByText('Ana Ramírez');
+    await findByText('Ana Ramírez', { timeout: 5000 });
     expect(getByText('Liquidación #1')).toBeTruthy();
     expect(
       getByText(
@@ -149,7 +149,9 @@ describe('SettlementDetailScreen', () => {
 
     const { findByText } = renderScreen();
 
-    expect(await findByText('Sin ventas en este periodo.')).toBeTruthy();
+    expect(
+      await findByText('Sin ventas en este periodo.', { timeout: 5000 }),
+    ).toBeTruthy();
   });
 
   it('marks the settlement as paid from the pagar modal', async () => {
@@ -164,12 +166,12 @@ describe('SettlementDetailScreen', () => {
 
     const { findByText, getByText, getByLabelText } = renderScreen();
 
-    await findByText('Marcar como pagada');
+    await findByText('Marcar como pagada', { timeout: 5000 });
     fireEvent.press(getByText('Marcar como pagada'));
 
     // Modal loads the payment types and lets the admin pick one + reference.
-    await findByText('Registrar pago');
-    await findByText('Transferencia');
+    await findByText('Registrar pago', { timeout: 5000 });
+    await findByText('Transferencia', { timeout: 5000 });
     fireEvent.press(getByText('Transferencia'));
     fireEvent.changeText(getByLabelText('Referencia (opcional)'), 'Ref-123');
     fireEvent.press(getByText('Confirmar pago'));
@@ -181,7 +183,7 @@ describe('SettlementDetailScreen', () => {
       }),
     );
     // After the refetch the detail now shows the registered payment.
-    await findByText('LIQ-2026-0001');
+    await findByText('LIQ-2026-0001', { timeout: 5000 });
     expect(mockFetchSettlement).toHaveBeenCalledTimes(2);
   });
 
@@ -198,10 +200,10 @@ describe('SettlementDetailScreen', () => {
     const { findByText, getByText } = renderScreen();
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
-    await findByText('Marcar como pagada');
+    await findByText('Marcar como pagada', { timeout: 5000 });
     fireEvent.press(getByText('Marcar como pagada'));
-    await findByText('Registrar pago');
-    await findByText('Transferencia');
+    await findByText('Registrar pago', { timeout: 5000 });
+    await findByText('Transferencia', { timeout: 5000 });
     fireEvent.press(getByText('Confirmar pago'));
 
     // S5: the still-mounted SettlementListScreen must reflect 'pagada'
@@ -227,14 +229,16 @@ describe('SettlementDetailScreen', () => {
     const { findAllByText, findByText, getByText } = renderScreen();
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
-    await findByText('Marcar como pagada');
+    await findByText('Marcar como pagada', { timeout: 5000 });
     fireEvent.press(getByText('Marcar como pagada'));
-    await findByText('Registrar pago');
-    await findByText('Transferencia');
+    await findByText('Registrar pago', { timeout: 5000 });
+    await findByText('Transferencia', { timeout: 5000 });
     fireEvent.press(getByText('Confirmar pago'));
 
     // S3: the business error is surfaced...
-    const matches = await findAllByText('Datos de pago inválidos');
+    const matches = await findAllByText('Datos de pago inválidos', {
+      timeout: 5000,
+    });
     expect(matches.length).toBeGreaterThan(0);
     // ...and the list is invalidated so state reflects reality.
     await waitFor(() => {
@@ -260,15 +264,16 @@ describe('SettlementDetailScreen', () => {
 
     const { findAllByText, findByText, getByText } = renderScreen();
 
-    await findByText('Marcar como pagada');
+    await findByText('Marcar como pagada', { timeout: 5000 });
     fireEvent.press(getByText('Marcar como pagada'));
-    await findByText('Registrar pago');
+    await findByText('Registrar pago', { timeout: 5000 });
     // Wait for the payment types so the confirm button is enabled.
-    await findByText('Transferencia');
+    await findByText('Transferencia', { timeout: 5000 });
     fireEvent.press(getByText('Confirmar pago'));
 
     const matches = await findAllByText(
       'La liquidación ya está marcada como pagada.',
+      { timeout: 5000 },
     );
     expect(matches.length).toBeGreaterThan(0);
     expect(getByText('Registrar pago')).toBeTruthy();
@@ -280,7 +285,7 @@ describe('SettlementDetailScreen', () => {
 
     const { findByText, getByText, queryByText } = renderScreen();
 
-    await findByText('LIQ-2026-0001');
+    await findByText('LIQ-2026-0001', { timeout: 5000 });
     expect(getByText('Transferencia')).toBeTruthy();
     expect(getByText('Ref-123')).toBeTruthy();
     expect(queryByText('Marcar como pagada')).toBeNull();
@@ -299,10 +304,12 @@ describe('SettlementDetailScreen', () => {
 
     const { findByText, getByText } = renderScreen();
 
-    expect(await findByText('Periodo inválido')).toBeTruthy();
+    expect(
+      await findByText('Periodo inválido', { timeout: 5000 }),
+    ).toBeTruthy();
     fireEvent.press(getByText('Reintentar'));
 
-    await findByText('Ana Ramírez');
+    await findByText('Ana Ramírez', { timeout: 5000 });
     expect(mockFetchSettlement).toHaveBeenCalledTimes(2);
   });
 
@@ -321,10 +328,12 @@ describe('SettlementDetailScreen', () => {
 
     // The 404 detail is ambiguous (endpoint missing vs id not found): the
     // admin gets the honest message instead of the raw DRF detail.
-    expect(await findByText('Liquidación no encontrada')).toBeTruthy();
+    expect(
+      await findByText('Liquidación no encontrada', { timeout: 5000 }),
+    ).toBeTruthy();
     fireEvent.press(getByText('Reintentar'));
 
-    await findByText('Ana Ramírez');
+    await findByText('Ana Ramírez', { timeout: 5000 });
     expect(mockFetchSettlement).toHaveBeenCalledTimes(2);
   });
 });

@@ -33,6 +33,10 @@ function toPage<T>(body: unknown): PagePayload<T> {
     return { results: payload, next: null };
   }
   if (!payload || typeof payload !== 'object') {
+    console.warn('[fetchAllPages] unexpected payload type:', typeof payload);
+    Sentry.captureMessage(
+      `[fetchAllPages] se recibió un payload inesperado de tipo ${typeof payload}`,
+    );
     return { results: [], next: null };
   }
   const results = Array.isArray(payload.results) ? payload.results : [];

@@ -1,4 +1,5 @@
 import { assertValidId } from '../constants/api';
+import { TRANSICIONES } from '../constants/recolecciones';
 import type { ApiResponse } from '../types';
 import type {
   Recoleccion,
@@ -86,8 +87,13 @@ export async function createRecoleccion(
 export async function cambiarEstadoRecoleccion(
   id: number,
   estado: RecoleccionEstado,
+  estadoActual: RecoleccionEstado,
 ): Promise<ApiResponse<Recoleccion>> {
   assertValidId(id, 'recoleccion');
+  const permitidos = TRANSICIONES[estadoActual];
+  if (!permitidos.includes(estado)) {
+    throw new Error(`Transición inválida: ${estadoActual} → ${estado}`);
+  }
   const { data } = await api.post<ApiResponse<Recoleccion>>(
     `/recolecciones/${String(id)}/estado/`,
     { estado },

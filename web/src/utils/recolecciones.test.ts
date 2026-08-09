@@ -361,6 +361,17 @@ describe('validateProgramarForm', () => {
       }),
     ).toBe('La hora de fin debe tener el formato HH:MM.');
   });
+
+  it('rechaza hora de fin sin hora de inicio', () => {
+    expect(
+      validateProgramarForm({
+        agricultorSeleccionado: true,
+        fecha: todayString(),
+        horaInicio: '',
+        horaFin: '09:00',
+      }),
+    ).toBe('La hora de fin requiere una hora de inicio.');
+  });
 });
 
 describe('buildDuplicateKeys', () => {

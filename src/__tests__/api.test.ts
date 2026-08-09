@@ -11,6 +11,12 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('axios-retry', () => jest.fn());
 
+jest.mock('@sentry/react-native', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+}));
+
 jest.mock('axios', () => {
   const mockAxios = jest.fn() as any;
   mockAxios.create = jest.fn(() => mockAxios);

@@ -238,12 +238,12 @@ export type BuyerTabsParamList = {
   Pedidos: undefined;
   Catalog: undefined;
   Carrito: undefined;
-  Notificaciones: undefined;
   ChatList: undefined;
 };
 
 export type BuyerStackParamList = {
   BuyerTabs: NavigatorScreenParams<BuyerTabsParamList>;
+  Notificaciones: undefined;
   Catalog: undefined;
   OrderDetail: { orderId: number };
   Checkout: undefined;
@@ -314,13 +314,13 @@ export type SellerTabsParamList = {
   HomeSeller: undefined;
   Sales: undefined;
   Recolecciones: undefined;
-  Notificaciones: undefined;
-  Perfil: undefined;
   ChatList: undefined;
 };
 
 export type SellerStackParamList = {
   SellerTabs: undefined;
+  Perfil: undefined;
+  Notificaciones: undefined;
   CashClosing: undefined;
   Payment: { readonly orderId: number };
   Receipt: { readonly paymentId: number };
