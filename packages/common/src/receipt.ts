@@ -27,15 +27,25 @@ export function calcularSubtotalVisible(pago: PaymentDetail): number {
  * Diferencia entre lo cobrado (monto) y el subtotal visible. Devuelve 0
  * cuando el monto o el subtotal no son números finitos, así el documento
  * nunca imprime ajustes fantasma frente a datos corruptos.
+ *
+ * Ambos valores se redondean a centavos ANTES de restar: lo que se imprime es
+ * lo que se compara, así la tabla siempre cierra (filas + ajuste = total)
+ * incluso con subtotales que redondean (off-by-a-cent).
  */
 export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
-  const monto = Number(pago.monto);
+  const montoRaw = pago.monto;
+  const monto =
+    typeof montoRaw === 'string' && montoRaw.trim() === ''
+      ? Number.NaN
+      : Number(montoRaw);
   if (!Number.isFinite(monto) || !Number.isFinite(subtotal)) return 0;
-  return monto - subtotal;
+  const subtotalCent = Math.round(subtotal * 100) / 100;
+  const montoCent = Math.round(monto * 100) / 100;
+  return montoCent - subtotalCent;
 }
 
 /** Cantidad de una partida con fallback defensivo (nunca imprime "NaN" ni "0" falso). */
-function formatearCantidad(valor: unknown): string {
+export function formatearCantidad(valor: unknown): string {
   if (valor == null || (typeof valor === 'string' && valor.trim() === '')) {
     return '—';
   }
@@ -44,14 +54,18 @@ function formatearCantidad(valor: unknown): string {
 }
 
 /** Ajuste con signo explícito: "+$7.48" (recargo) / "−$7.48" (descuento). */
-function formatearAjuste(ajuste: number): string {
+export function formatearAjuste(ajuste: number): string {
   const signo = ajuste > 0 ? '+' : '−';
   return `${signo}${formatearMonto(Math.abs(ajuste))}`;
 }
 
 export function buildReceiptHtml(pago: PaymentDetail): string {
   const subtotal = calcularSubtotalVisible(pago);
-  const ajuste = calcularAjuste(pago, subtotal);
+  // Se muestra el subtotal redondeado a centavos; el ajuste se calculó sobre
+  // ese mismo valor redondeado (ver calcularAjuste), así filas + ajuste
+  // cierran exactamente con lo impreso.
+  const subtotalCent = Math.round(subtotal * 100) / 100;
+  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
   const subtotalValido = Number.isFinite(subtotal);
 
   const filas = (pago.productos ?? [])
@@ -68,32 +82,34 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 
   // Ajuste = monto cobrado − subtotal visible; con signo explícito para que
   // "Ajuste +$X" (recargo) / "Ajuste −$X" (descuento) se lea correcto.
-  // Se compara el ajuste REDONDEADO a centavos (lo mismo que se imprime):
-  // así la frontera de EPSILON no depende del ruido de punto flotante y la
-  // tabla siempre cierra (filas + ajuste = total redondeado).
-  const ajusteRedondeado = Math.round(ajuste * 100) / 100;
+  // La frontera de EPSILON se evalúa sobre valores ya redondeados a centavos
+  // (sin ruido de punto flotante) y la tabla siempre cierra.
   const filaAjuste =
-    subtotalValido && Math.abs(ajusteRedondeado) >= EPSILON
+    subtotalValido && Math.abs(ajuste) >= EPSILON
       ? `
         <tr class="ajuste">
           <td colspan="3">Ajuste</td>
-          <td class="num">${formatearAjuste(ajusteRedondeado)}</td>
+          <td class="num">${formatearAjuste(ajuste)}</td>
         </tr>`
       : '';
 
   // total_pedido es INFORMATIVO: se muestra solo cuando el backend lo manda y
   // no cuadra con la suma de filas (descuentos/recargos aplicados en el
   // pedido). Nunca altera la aritmética del documento, que cierra con
-  // filas + ajuste = total pagado.
+  // filas + ajuste = total pagado. El backend puede serializar Decimal como
+  // string o number: se coacciona antes de tocar strings.
   const totalPedidoRaw = pago.total_pedido;
-  const totalPedido = totalPedidoRaw == null ? NaN : Number(totalPedidoRaw);
+  const totalPedido =
+    totalPedidoRaw == null ||
+    (typeof totalPedidoRaw === 'string' && totalPedidoRaw.trim() === '')
+      ? Number.NaN
+      : Number(totalPedidoRaw);
   const totalPedidoRedondeado = Math.round(totalPedido * 100) / 100;
   const filaTotalPedido =
     subtotalValido &&
     totalPedidoRaw != null &&
-    totalPedidoRaw.trim() !== '' &&
     Number.isFinite(totalPedido) &&
-    Math.abs(totalPedidoRedondeado - subtotal) >= EPSILON
+    Math.abs(totalPedidoRedondeado - subtotalCent) >= EPSILON
       ? `
         <tr class="total-pedido">
           <td colspan="3">Total del pedido</td>
@@ -104,16 +120,24 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   const avisoCorrupto = subtotalValido
     ? ''
     : `<p class="notice">No se pudieron calcular los montos del pedido.</p>`;
-  const avisoMontoCorrupto = Number.isFinite(Number(pago.monto))
+  const montoCoercion =
+    typeof pago.monto === 'string' && pago.monto.trim() === ''
+      ? Number.NaN
+      : Number(pago.monto);
+  const avisoMontoCorrupto = Number.isFinite(montoCoercion)
     ? ''
     : `<p class="notice">El total pagado del pago no pudo calcularse.</p>`;
+
+  // new Date(null) es el epoch (01/01/1970): un fecha_pago omitido no debe
+  // imprimir una fecha legalmente falsa, sino "—".
+  const fecha = pago.fecha_pago ? formatearFecha(pago.fecha_pago) : '—';
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
     ...(pago.pedido != null
       ? [['Pedido', escapeHtml(`#${pago.pedido}`)] as const]
       : []),
-    ['Fecha', formatearFecha(pago.fecha_pago)],
+    ['Fecha', fecha],
     ['Cliente', escapeHtml(pago.cliente_nombre ?? '—')],
     ['Método de pago', escapeHtml(pago.tipo_pago_nombre)],
     ...(pago.referencia
@@ -204,7 +228,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     </thead>
     <tbody>${filas}</tbody>
     <tfoot>
-      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${formatearMonto(subtotal)}</td></tr>
+      <tr class="sub"><td colspan="3">Subtotal</td><td class="num">${formatearMonto(subtotalCent)}</td></tr>
       ${filaAjuste}
       ${filaTotalPedido}
     </tfoot>
@@ -217,7 +241,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     <strong>${formatearMonto(pago.monto)}</strong>
   </div>
 
-  <p class="footer">Documento generado el ${formatearFecha(pago.fecha_pago)} — RASSA</p>
+  <p class="footer">Documento generado el ${fecha} — RASSA</p>
 </body>
 </html>`;
 }

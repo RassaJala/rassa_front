@@ -18,7 +18,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import { formatearFecha } from '@/common/dates';
 import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
-import { buildReceiptHtml } from '@/common/receipt';
+import {
+  buildReceiptHtml,
+  calcularAjuste,
+  calcularSubtotalVisible,
+  formatearAjuste,
+} from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -127,21 +132,39 @@ export default function ReceiptScreen(): React.JSX.Element {
   }
 
   const productos = pago.productos ?? [];
+  // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
+  // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
+  const subtotal = calcularSubtotalVisible(pago);
+  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
 
   const handleImprimir = () => {
     if (imprimiendoRef.current) return;
     imprimiendoRef.current = true;
-    void Print.printAsync({ html: buildReceiptHtml(pago) })
-      .catch((error: unknown) => {
-        console.warn('No se pudo imprimir el recibo', error);
-        Alert.alert(
-          'No se pudo imprimir',
-          'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
-        );
-      })
-      .finally(() => {
-        imprimiendoRef.current = false;
-      });
+    try {
+      const html = buildReceiptHtml(pago);
+      void Print.printAsync({ html })
+        .catch((error: unknown) => {
+          console.warn('No se pudo imprimir el recibo', error);
+          Alert.alert(
+            'No se pudo imprimir',
+            'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+          );
+        })
+        .finally(() => {
+          imprimiendoRef.current = false;
+        });
+    } catch (error: unknown) {
+      // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: el
+      // semáforo se libera y el usuario recibe feedback, el botón no queda
+      // muerto de por vida.
+      console.warn('No se pudo generar el recibo', error);
+      Alert.alert(
+        'No se pudo imprimir',
+        'No se pudo generar el recibo. Intentá de nuevo.',
+      );
+      imprimiendoRef.current = false;
+    }
   };
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
@@ -325,6 +348,51 @@ export default function ReceiptScreen(): React.JSX.Element {
               </Text>
             </View>
           ))}
+        </View>
+
+        {/* Subtotal + Ajuste */}
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: border,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingVertical: 4,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+              Subtotal
+            </Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
+              {formatearMonto(subtotal)}
+            </Text>
+          </View>
+          {mostrarAjuste ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 4,
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                Ajuste
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
+                {formatearAjuste(ajuste)}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Total */}

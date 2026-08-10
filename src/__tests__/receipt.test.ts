@@ -3,6 +3,7 @@ import {
   calcularAjuste,
   calcularSubtotalVisible,
   escapeHtml,
+  formatearCantidad,
 } from '@/common/receipt';
 import type { PaymentDetail } from '@/common/payments';
 
@@ -39,6 +40,46 @@ describe('calcularSubtotalVisible / calcularAjuste', () => {
   it('devuelve ajuste 0 cuando el subtotal no es finito (contrato cubre ambos lados)', () => {
     // Documenta el contrato: con subtotal NaN no se genera un ajuste NaN.
     expect(calcularAjuste(mockPago, Number.NaN)).toBe(0);
+  });
+
+  it('devuelve ajuste 0 cuando el monto es vacío o solo espacios (no un falso $0)', () => {
+    // Number('') === 0 y Number(' ') === 0: sin la coerción serían finitos y
+    // generarían un ajuste fantasma de $210.98.
+    expect(calcularAjuste({ ...mockPago, monto: '' }, 210.98)).toBe(0);
+    expect(calcularAjuste({ ...mockPago, monto: ' ' }, 210.98)).toBe(0);
+  });
+
+  it('reconcilia a centavos con subtotales de 3 decimales (penny-off)', () => {
+    // 3 × 3.335 = 10.005 en matemática; en flotante el subtotal raw tiene
+    // ruido (10.0049…). El fix redondea subtotal y monto a centavos ANTES de
+    // restar, así lo impreso siempre cierra: subtotal $10.00 + ajuste +$0.01
+    // = total $10.01 (la tabla NUNCA muestra 10.00 + 0.00 ni 10.01 + 0.01).
+    const pennyOff: PaymentDetail = {
+      ...mockPago,
+      monto: '10.01',
+      total_pedido: null,
+      productos: [{ nombre: 'Trucha', precio: '3.335', cantidad: 3 }],
+    };
+    const html = buildReceiptHtml(pennyOff);
+    expect(html).toContain(
+      '<td colspan="3">Subtotal</td><td class="num">$10.00</td>',
+    );
+    expect(html).toContain('<td colspan="3">Ajuste</td>');
+    expect(html).toContain('<td class="num">+$0.01</td>');
+    expect(html).toContain('<strong>$10.01</strong>');
+  });
+});
+
+describe('formatearCantidad', () => {
+  it('es null-safe y nunca imprime NaN ni un 0 falso', () => {
+    expect(formatearCantidad(null)).toBe('—');
+    expect(formatearCantidad(undefined)).toBe('—');
+    expect(formatearCantidad('')).toBe('—');
+    expect(formatearCantidad('  ')).toBe('—');
+    expect(formatearCantidad('abc')).toBe('—');
+    expect(formatearCantidad(0)).toBe('0');
+    expect(formatearCantidad('2')).toBe('2');
+    expect(formatearCantidad(2.5)).toBe('2.5');
   });
 });
 
@@ -142,6 +183,30 @@ describe('buildReceiptHtml', () => {
     expect(html).not.toContain('Total del pedido');
     expect(html).toContain('$210.98');
     expect(html).toContain('−$91.50');
+  });
+
+  it('tolera total_pedido numérico sin lanzar (trim is not a function)', () => {
+    // El backend puede serializar Decimal como número: la coerción previa
+    // evita el throw que dejaría el botón de impresión muerto (CRITICAL R4).
+    const numerico: PaymentDetail = {
+      ...mockPago,
+      total_pedido: 119.48 as unknown as string,
+    };
+    const html = buildReceiptHtml(numerico);
+    expect(html).toContain('$210.98');
+    expect(html).toContain('−$91.50');
+    expect(html).toContain('<strong>$119.48</strong>');
+  });
+
+  it('tolera monto vacío o con espacios sin ajuste fantasma ni $0 falso', () => {
+    for (const monto of ['', ' ']) {
+      const corrupto: PaymentDetail = { ...mockPago, monto };
+      const html = buildReceiptHtml(corrupto);
+      expect(html).toContain('<strong>—</strong>');
+      expect(html).not.toContain('Ajuste');
+      // El monto vacío es tan corrupto como 'abc': el aviso debe aparecer.
+      expect(html).toContain('El total pagado del pago no pudo calcularse.');
+    }
   });
 
   it('tolera monto corrupto sin imprimir $NaN ni ajuste fantasma', () => {

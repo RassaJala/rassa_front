@@ -3,13 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { formatearFecha } from '@/common/dates';
-import { buildReceiptHtml } from '@/common/receipt';
 import {
-  calcularSubtotal,
-  esPagoIdValido,
-  fetchPago,
-  formatearMonto,
-} from '@/common/payments';
+  buildReceiptHtml,
+  calcularAjuste,
+  calcularSubtotalVisible,
+  formatearAjuste,
+} from '@/common/receipt';
+import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -29,7 +29,7 @@ export const PRINT_FALLBACK_MS = 400;
 export function printHtml(html: string): void {
   let win: Window | null = null;
   try {
-    win = window.open('', '_blank');
+    win = window.open('', '_blank', 'noopener');
   } catch {
     // algunos navegadores lanzan excepción al bloquear popups
   }
@@ -132,12 +132,22 @@ export function ReceiptPage() {
   const handleImprimir = () => {
     if (imprimiendoRef.current) return;
     imprimiendoRef.current = true;
-    printHtml(buildReceiptHtml(pago));
-    // printHtml abre el popup y dispara print() de forma síncrona; la ventana
-    // de guard cubre el doble clic y no deja el botón bloqueado de por vida.
-    liberarSemRef.current = setTimeout(() => {
+    try {
+      const html = buildReceiptHtml(pago);
+      printHtml(html);
+      // printHtml abre el popup y dispara print() de forma síncrona; la ventana
+      // de guard cubre el doble clic y no deja el botón bloqueado de por vida.
+      liberarSemRef.current = setTimeout(() => {
+        imprimiendoRef.current = false;
+      }, PRINT_FALLBACK_MS * 3);
+    } catch (error: unknown) {
+      // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: se
+      // libera el semáforo y se informa, el botón no queda muerto de por vida.
+      clearTimeout(liberarSemRef.current);
       imprimiendoRef.current = false;
-    }, PRINT_FALLBACK_MS * 3);
+      console.error('No se pudo generar el recibo:', error);
+      alert('No se pudo generar el recibo. Inténtalo de nuevo.');
+    }
   };
 
   const {
@@ -177,7 +187,12 @@ export function ReceiptPage() {
   }
 
   const productos = pago.productos ?? [];
-  const subtotal = calcularSubtotal(productos);
+  // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
+  // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
+  const subtotal = calcularSubtotalVisible(pago);
+  const subtotalCent = Math.round(subtotal * 100) / 100;
+  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
 
   return (
     <div>
@@ -292,9 +307,28 @@ export function ReceiptPage() {
                 className="w-28 text-right text-sm font-bold"
                 style={{ color: fg }}
               >
-                {formatearMonto(subtotal)}
+                {formatearMonto(subtotalCent)}
               </span>
             </div>
+            {mostrarAjuste ? (
+              <div
+                className="flex items-center justify-end gap-6 px-6 py-4"
+                style={{ borderTop: `1px solid ${border}` }}
+              >
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: muted }}
+                >
+                  Ajuste
+                </span>
+                <span
+                  className="w-28 text-right text-sm font-bold"
+                  style={{ color: fg }}
+                >
+                  {formatearAjuste(ajuste)}
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
 

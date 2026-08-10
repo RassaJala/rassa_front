@@ -81,6 +81,10 @@ describe('ReceiptScreen', () => {
     mockedFetchPago.mockResolvedValue(mockPago);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('renders payment details after fetch', async () => {
     const { findByText, findAllByText } = renderScreen();
 
@@ -141,8 +145,24 @@ describe('ReceiptScreen', () => {
       'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
     );
     expect(warnSpy).toHaveBeenCalled();
-    alertSpy.mockRestore();
-    warnSpy.mockRestore();
+  });
+
+  it('reintenta tras un fallo de impresión (el finally libera el semáforo)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    printAsync.mockRejectedValueOnce(new Error('first attempt fails'));
+    fireEvent.press(pdfBtn);
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
+
+    // El finally liberó imprimiendoRef: un segundo tap vuelve a intentar.
+    printAsync.mockResolvedValueOnce(undefined);
+    fireEvent.press(pdfBtn);
+    await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(2));
   });
 
   it('ignora un doble tap: solo abre un diálogo de impresión por vez', async () => {
@@ -157,5 +177,23 @@ describe('ReceiptScreen', () => {
     fireEvent.press(pdfBtn);
 
     await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(1));
+  });
+
+  it('muestra la fila Ajuste en pantalla cuando hay descuento/recargo (misma historia que el PDF)', async () => {
+    // Filas: 2 × 59.74 = 119.48; monto cobrado 210.98 → ajuste +$91.50.
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      monto: '210.98',
+      total_pedido: '210.98',
+    });
+
+    const { findByText, findAllByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    expect(await findByText('Ajuste')).toBeTruthy();
+    expect(await findByText('+$91.50')).toBeTruthy();
+    // '$119.48' aparece dos veces: importe de la fila Manzana y subtotal.
+    expect((await findAllByText('$119.48')).length).toBeGreaterThan(0);
+    expect(await findByText('$210.98')).toBeTruthy();
   });
 });

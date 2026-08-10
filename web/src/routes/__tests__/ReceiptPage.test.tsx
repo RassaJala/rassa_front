@@ -176,7 +176,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
     expect(mockWin.document.write).toHaveBeenCalled();
     expect(mockWin.document.close).toHaveBeenCalled();
 
@@ -213,8 +213,28 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
     // Sin ventana no hay document.write ni print: solo la alerta al usuario.
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Permite popups para este sitio para poder imprimir el recibo.',
+    );
+    alertSpy.mockRestore();
+    openSpy.mockRestore();
+  });
+
+  it('muestra alerta cuando window.open LANZA (popup bloqueado con excepción)', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => {
+      throw new Error('blocked by browser');
+    });
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    // El catch interno captura la excepción y cae en la misma alerta que null.
     expect(alertSpy).toHaveBeenCalledWith(
       'Permite popups para este sitio para poder imprimir el recibo.',
     );
@@ -233,7 +253,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
     expect(mockWin.document.write).toHaveBeenCalled();
     // El evento onload nunca ocurre; el fallback setTimeout(doPrint, PRINT_FALLBACK_MS) debe imprimir.
     expect(mockWin.print).not.toHaveBeenCalled();
@@ -338,8 +358,11 @@ describe('ReceiptPage', () => {
     renderPage();
     expect(await screen.findByText('Manzana')).toBeTruthy();
 
-    // La pantalla muestra el subtotal como suma de filas.
+    // La pantalla muestra el subtotal como suma de filas Y la fila Ajuste
+    // (misma historia que el PDF, R2-W2).
     expect((await screen.findAllByText('$210.98')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Ajuste')).toBeTruthy();
+    expect(screen.getByText('−$91.50')).toBeTruthy();
 
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
