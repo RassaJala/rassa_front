@@ -6,6 +6,8 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ReceiptScreen from '@/screens/seller/ReceiptScreen';
+import { mockPago } from '@/common/payment-fixtures';
+import * as receipt from '@/common/receipt';
 import { fetchPago } from '@/common/payments';
 
 const mockGoBack = jest.fn();
@@ -47,21 +49,6 @@ jest.mock('@/common/payments', () => ({
 }));
 
 const mockedFetchPago = fetchPago as jest.MockedFunction<typeof fetchPago>;
-
-const mockPago = {
-  id_pago: 9,
-  folio: 'PAG-0009',
-  pedido: 5,
-  tipo_pago: 1,
-  tipo_pago_nombre: 'Efectivo',
-  cliente_nombre: 'Cliente Test',
-  cliente_id: 4,
-  monto: '119.48',
-  referencia: 'TEST-001',
-  total_pedido: '119.48',
-  productos: [{ nombre: 'Manzana', precio: '59.74', cantidad: 2 }],
-  fecha_pago: '2026-07-30T12:00:00Z',
-};
 
 function renderScreen() {
   const queryClient = new QueryClient({
@@ -194,6 +181,55 @@ describe('ReceiptScreen', () => {
     expect(await findByText('+$91.50')).toBeTruthy();
     // '$119.48' aparece dos veces: importe de la fila Manzana y subtotal.
     expect((await findAllByText('$119.48')).length).toBeGreaterThan(0);
-    expect(await findByText('$210.98')).toBeTruthy();
+    // '$210.98' aparece en la fila informativa Total del pedido y en Total
+    // pagado (R2-S), ya que total_pedido difiere del subtotal visible.
+    expect((await findAllByText('$210.98')).length).toBeGreaterThan(0);
+  });
+
+  it('muestra la fila Total del pedido en pantalla cuando difiere de la suma (R2-S)', async () => {
+    // Filas: 119.48; total_pedido 112.00 → fila informativa, misma que el PDF.
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      monto: '119.48',
+      total_pedido: '112.00',
+    });
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    expect(await findByText('Total del pedido')).toBeTruthy();
+    expect(await findByText('$112.00')).toBeTruthy();
+  });
+
+  it('liberar el semáforo cuando buildReceiptHtml LANZA síncrono (R3-W2)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: el
+    // catch debe informar y NO dejar el botón muerto.
+    const buildSpy = jest
+      .spyOn(receipt, 'buildReceiptHtml')
+      .mockImplementationOnce(() => {
+        throw new Error('sync explosion');
+      });
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    expect(buildSpy).toHaveBeenCalledTimes(1);
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir',
+      'No se pudo generar el recibo. Intentá de nuevo.',
+    );
+    expect(warnSpy).toHaveBeenCalled();
+    expect(printAsync).not.toHaveBeenCalled();
+
+    // El catch liberó imprimiendoRef: un segundo tap vuelve a intentar con el
+    // buildReceiptHtml real (mockImplementationOnce ya se consumió).
+    fireEvent.press(pdfBtn);
+    expect(printAsync).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,29 +1,16 @@
+// La suite del documento usa la variante de DOS partidas (suma 210.98): es la
+// que ejercita la reconciliación real (monto 119.48 → ajuste −91.50). Las
+// pantallas usan mockPago (una partida). Ambos viven en common, sin divergir.
+import { mockPagoDosProductos as mockPago } from '@/common/payment-fixtures';
 import {
   buildReceiptHtml,
   calcularAjuste,
+  calcularImportePartida,
   calcularSubtotalVisible,
   escapeHtml,
   formatearCantidad,
 } from '@/common/receipt';
 import type { PaymentDetail } from '@/common/payments';
-
-const mockPago: PaymentDetail = {
-  id_pago: 9,
-  folio: 'PAG-0009',
-  pedido: 5,
-  tipo_pago: 1,
-  tipo_pago_nombre: 'Efectivo',
-  cliente_nombre: 'Cliente Test',
-  cliente_id: 4,
-  monto: '119.48',
-  referencia: 'TEST-001',
-  total_pedido: '119.48',
-  productos: [
-    { nombre: 'Manzana', precio: '59.74', cantidad: 2 },
-    { nombre: 'Plátano', precio: '30.50', cantidad: 3 },
-  ],
-  fecha_pago: '2026-07-30T12:00:00Z',
-};
 
 describe('calcularSubtotalVisible / calcularAjuste', () => {
   it('exporta la reconciliación para que se pruebe directamente', () => {
@@ -47,6 +34,14 @@ describe('calcularSubtotalVisible / calcularAjuste', () => {
     // generarían un ajuste fantasma de $210.98.
     expect(calcularAjuste({ ...mockPago, monto: '' }, 210.98)).toBe(0);
     expect(calcularAjuste({ ...mockPago, monto: ' ' }, 210.98)).toBe(0);
+  });
+
+  it('devuelve ajuste 0 cuando el monto es null (no un falso $0)', () => {
+    // Number(null) === 0: sin el guard sería un ajuste fantasma de $210.98
+    // (R4-W1). El backend podría serializar el monto como null.
+    expect(
+      calcularAjuste({ ...mockPago, monto: null as unknown as string }, 210.98),
+    ).toBe(0);
   });
 
   it('reconcilia a centavos con subtotales de 3 decimales (penny-off)', () => {
@@ -83,6 +78,33 @@ describe('formatearCantidad', () => {
   });
 });
 
+describe('calcularImportePartida', () => {
+  it('multiplica cantidad × precio con valores normales', () => {
+    expect(
+      calcularImportePartida({ cantidad: 2, precio: '59.74' }),
+    ).toBeCloseTo(119.48, 2);
+  });
+
+  it('devuelve NaN cuando la cantidad es null (no un falso $0.00)', () => {
+    // Number(null) === 0: sin el guard la fila mostraría $0.00 (R4-W2).
+    expect(calcularImportePartida({ cantidad: null, precio: '10.00' })).toBe(
+      Number.NaN,
+    );
+    expect(calcularImportePartida({ cantidad: 'abc', precio: '10.00' })).toBe(
+      Number.NaN,
+    );
+  });
+
+  it('devuelve NaN cuando el precio es corrupto (R4-W2)', () => {
+    expect(calcularImportePartida({ cantidad: 1, precio: '12,50' })).toBe(
+      Number.NaN,
+    );
+    expect(calcularImportePartida({ cantidad: 1, precio: null })).toBe(
+      Number.NaN,
+    );
+  });
+});
+
 describe('buildReceiptHtml', () => {
   it('cierra aritméticamente: suma de filas + ajuste = total pagado', () => {
     // Filas: 210.98; monto cobrado: 119.48 → ajuste = −91.50.
@@ -91,6 +113,55 @@ describe('buildReceiptHtml', () => {
     expect(html).toContain('Ajuste');
     expect(html).toContain('−$91.50');
     expect(html).toContain('<strong>$119.48</strong>');
+  });
+
+  it('la aritmética REAL del HTML cierra: filas + ajuste = total (test estructural)', () => {
+    // No basta con buscar strings sueltos: se parsean las celdas del tbody y
+    // el tfoot y se verifica que filas + ajuste = total pagado (R3-W3).
+    const html = buildReceiptHtml(mockPago);
+
+    // Subtotal: celda de la fila <tr class="sub"> del tfoot (210.98).
+    const subtotalMatch = html.match(
+      /<tr class="sub"><td colspan="3">Subtotal<\/td><td class="num">\$(.+?)<\/td>/,
+    );
+    const subtotal = Number(subtotalMatch?.[1] ?? Number.NaN);
+    expect(subtotal).toBeCloseTo(210.98, 2);
+
+    // Suma de los importes de las filas del tbody: en cada <tr>, la última
+    // celda .num es el importe (cantidad y precio también son .num).
+    const filas = [
+      ...html.matchAll(/<tbody>([\s\S]*?)<\/tbody>/g),
+    ][0]?.[1] as string;
+    const importesFilas = [...filas.matchAll(/<tr>([\s\S]*?)<\/tr>/g)]
+      .map((f) => {
+        const celdas = [
+          ...(f[1] ?? '').matchAll(/<td class="num">\$(.+?)<\/td>/g),
+        ];
+        return celdas.at(-1) as RegExpMatchArray | undefined;
+      })
+      .filter((c): c is RegExpMatchArray => c != null)
+      .map((m) => Number(m[1] ?? Number.NaN));
+    expect(importesFilas).toEqual([119.48, 91.5]);
+    expect(importesFilas.reduce((acc, n) => acc + n, 0)).toBeCloseTo(210.98, 2);
+    expect(subtotal).toBeCloseTo(
+      importesFilas.reduce((acc, n) => acc + n, 0),
+      2,
+    );
+
+    // Ajuste: celda de la fila <tr class="ajuste"> (−$91.50).
+    const ajusteMatch = html.match(
+      /<tr class="ajuste">[\s\S]*?<td class="num">−\$([\d.]+)<\/td>/,
+    );
+    const ajuste = -Number(ajusteMatch?.[1] ?? Number.NaN);
+    expect(ajuste).toBeCloseTo(-91.5, 2);
+
+    // filas + ajuste = total pagado del documento.
+    const totalMatch = html.match(
+      /<div class="total">[\s\S]*?<strong>\$(.+?)<\/strong>/,
+    );
+    const total = Number(totalMatch?.[1] ?? Number.NaN);
+    expect(subtotal + ajuste).toBeCloseTo(total, 2);
+    expect(total).toBeCloseTo(119.48, 2);
   });
 
   it('muestra Total del pedido como fila informativa cuando difiere de la suma', () => {
@@ -217,6 +288,19 @@ describe('buildReceiptHtml', () => {
     expect(html).toContain('<strong>—</strong>');
   });
 
+  it('tolera monto null sin ajuste fantasma ni $0 falso (R4-W1)', () => {
+    // Number(null) === 0: sin el guard imprimiría Total pagado $0.00 y un
+    // ajuste fantasma. Con el guard: total "—" y el aviso correspondiente.
+    const corrupto: PaymentDetail = {
+      ...mockPago,
+      monto: null as unknown as string,
+    };
+    const html = buildReceiptHtml(corrupto);
+    expect(html).not.toContain('Ajuste');
+    expect(html).toContain('<strong>—</strong>');
+    expect(html).toContain('El total pagado del pago no pudo calcularse.');
+  });
+
   it('avisa en el documento cuando el monto está corrupto', () => {
     const corrupto: PaymentDetail = { ...mockPago, monto: 'abc' };
     const html = buildReceiptHtml(corrupto);
@@ -234,6 +318,49 @@ describe('buildReceiptHtml', () => {
     const sinCliente: PaymentDetail = { ...mockPago, cliente_nombre: null };
     const html = buildReceiptHtml(sinCliente);
     expect(html).toContain('>—<');
+  });
+
+  it('tolera fecha_pago corrupta sin imprimir "Invalid Date" (R4-W3)', () => {
+    const corrupto: PaymentDetail = {
+      ...mockPago,
+      fecha_pago: 'esto-no-es-una-fecha',
+    };
+    const html = buildReceiptHtml(corrupto);
+    expect(html).not.toContain('Invalid Date');
+    expect(html).toContain('>—<');
+  });
+
+  it('tolera cantidad corrupta: importe "—" y aviso, no $0.00 falso (R4-W2)', () => {
+    // cantidad null con Number(null) === 0 mostraba $0.00 fantasma en la
+    // fila; el helper NaN-safe lo convierte en "—" y vuelve NaN el subtotal.
+    const corrupto: PaymentDetail = {
+      ...mockPago,
+      productos: [
+        {
+          nombre: 'Raro',
+          precio: '10.00',
+          cantidad: null as unknown as number,
+        },
+      ],
+    };
+    const html = buildReceiptHtml(corrupto);
+    expect(html).not.toContain('$0.00');
+    expect(html).toContain('>—<');
+    expect(html).toContain('No se pudieron calcular los montos del pedido');
+  });
+
+  it('mantiene $0.00 como importe LEGÍTIMO cuando la cantidad es 0', () => {
+    // 0 × 10.00 = $0.00 es un importe válido, no corrupción: el helper no
+    // debe confundir el cero con datos corruptos.
+    const conCero: PaymentDetail = {
+      ...mockPago,
+      monto: '210.98',
+      total_pedido: null,
+      productos: [{ nombre: 'Raro', precio: '10.00', cantidad: 0 }],
+    };
+    const html = buildReceiptHtml(conCero);
+    expect(html).toContain('$0.00');
+    expect(html).not.toContain('No se pudieron calcular los montos');
   });
 
   it('tolera pedido: null (omite la fila Pedido)', () => {

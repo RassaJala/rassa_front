@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { formatearFecha } from '@/common/dates';
 import {
   buildReceiptHtml,
   calcularAjuste,
+  calcularImportePartida,
   calcularSubtotalVisible,
+  calcularTotalPedidoVisible,
+  deberiaMostrarTotalPedido,
   formatearAjuste,
+  formatearFechaSegura,
 } from '@/common/receipt';
 import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -52,6 +55,13 @@ export function printHtml(html: string): void {
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     const doPrint = () => {
       if (printed) return;
+      // El usuario pudo cerrar el popup mientras esperábamos el load: no
+      // imprimir ni reintentar en una ventana muerta.
+      if (win?.closed) {
+        clearTimeout(fallbackTimer);
+        printed = true;
+        return;
+      }
       // El documento aún no terminó de procesarse: reintentar en vez de
       // imprimir una página en blanco (el timer anterior ya se ejecutó).
       if (win?.document.readyState === 'loading') {
@@ -193,6 +203,10 @@ export function ReceiptPage() {
   const subtotalCent = Math.round(subtotal * 100) / 100;
   const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
   const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
+  // Misma fila informativa que el PDF cuando total_pedido no cuadra con la
+  // suma de filas (R2-S): pantalla y documento cuentan la misma historia.
+  const totalPedidoVisible = calcularTotalPedidoVisible(pago);
+  const mostrarTotalPedido = deberiaMostrarTotalPedido(pago, subtotal);
 
   return (
     <div>
@@ -291,7 +305,7 @@ export function ReceiptPage() {
                   className="w-28 text-right text-sm font-semibold"
                   style={{ color: fg }}
                 >
-                  {formatearMonto(prod.cantidad * Number(prod.precio))}
+                  {formatearMonto(calcularImportePartida(prod))}
                 </span>
               </div>
             ))}
@@ -329,6 +343,25 @@ export function ReceiptPage() {
                 </span>
               </div>
             ) : null}
+            {mostrarTotalPedido ? (
+              <div
+                className="flex items-center justify-end gap-6 px-6 py-4"
+                style={{ borderTop: `1px solid ${border}` }}
+              >
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: muted }}
+                >
+                  Total del pedido
+                </span>
+                <span
+                  className="w-28 text-right text-sm font-semibold"
+                  style={{ color: muted }}
+                >
+                  {formatearMonto(totalPedidoVisible)}
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -356,7 +389,7 @@ export function ReceiptPage() {
               ) : null}
               <DetailRow
                 label="Fecha"
-                value={formatearFecha(pago.fecha_pago)}
+                value={formatearFechaSegura(pago.fecha_pago)}
                 colors={colors}
               />
               <DetailRow

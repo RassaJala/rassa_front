@@ -16,13 +16,16 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
-import { formatearFecha } from '@/common/dates';
 import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
 import {
   buildReceiptHtml,
   calcularAjuste,
+  calcularImportePartida,
   calcularSubtotalVisible,
+  calcularTotalPedidoVisible,
+  deberiaMostrarTotalPedido,
   formatearAjuste,
+  formatearFechaSegura,
 } from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -137,6 +140,10 @@ export default function ReceiptScreen(): React.JSX.Element {
   const subtotal = calcularSubtotalVisible(pago);
   const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
   const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
+  // Misma fila informativa que el PDF cuando total_pedido no cuadra con la
+  // suma de filas (R2-S): pantalla y documento cuentan la misma historia.
+  const totalPedidoVisible = calcularTotalPedidoVisible(pago);
+  const mostrarTotalPedido = deberiaMostrarTotalPedido(pago, subtotal);
 
   const handleImprimir = () => {
     if (imprimiendoRef.current) return;
@@ -275,7 +282,7 @@ export default function ReceiptScreen(): React.JSX.Element {
           <DetailRow label="Folio" value={pago.folio} fg={fg} muted={muted} />
           <DetailRow
             label="Fecha"
-            value={formatearFecha(pago.fecha_pago)}
+            value={formatearFechaSegura(pago.fecha_pago)}
             fg={fg}
             muted={muted}
           />
@@ -344,7 +351,7 @@ export default function ReceiptScreen(): React.JSX.Element {
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                {formatearMonto(prod.cantidad * Number(prod.precio))}
+                {formatearMonto(calcularImportePartida(prod))}
               </Text>
             </View>
           ))}
@@ -390,6 +397,23 @@ export default function ReceiptScreen(): React.JSX.Element {
               </Text>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
                 {formatearAjuste(ajuste)}
+              </Text>
+            </View>
+          ) : null}
+          {mostrarTotalPedido ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 4,
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                Total del pedido
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                {formatearMonto(totalPedidoVisible)}
               </Text>
             </View>
           ) : null}

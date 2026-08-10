@@ -31,25 +31,11 @@ vi.mock('@/common/payments', async () => ({
   fetchPago: vi.fn(),
 }));
 
+import { mockPago } from '@/common/payment-fixtures';
 import { fetchPago } from '@/common/payments';
 import { PRINT_FALLBACK_MS, ReceiptPage } from '../ReceiptPage';
 
 const mockedFetchPago = vi.mocked(fetchPago);
-
-const mockPago = {
-  id_pago: 9,
-  folio: 'PAG-0009',
-  pedido: 5,
-  tipo_pago: 1,
-  tipo_pago_nombre: 'Efectivo',
-  cliente_nombre: 'Cliente Test',
-  cliente_id: 4,
-  monto: '119.48',
-  referencia: 'TEST-001',
-  total_pedido: '119.48',
-  productos: [{ nombre: 'Manzana', precio: '59.74', cantidad: 2 }],
-  fecha_pago: '2026-07-30T12:00:00Z',
-};
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -68,12 +54,14 @@ function makeMockWin(
     readonly readyState?: string;
     readonly print?: () => void;
     readonly write?: () => void;
+    readonly closed?: boolean;
   } = {},
 ) {
   const listeners = {
     print: [] as Array<(event: MediaQueryListEvent) => void>,
   };
   return {
+    closed: overrides.closed ?? false,
     document: {
       write: overrides.write ? vi.fn(overrides.write) : vi.fn(),
       close: vi.fn(),
@@ -298,6 +286,30 @@ describe('ReceiptPage', () => {
     openSpy.mockRestore();
   });
 
+  it('no imprime ni reprograma cuando el popup se cerró antes del fallback (win.closed, R4-W4)', async () => {
+    const mockWin = makeMockWin({ closed: true });
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    vi.useFakeTimers();
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
+    expect(mockWin.document.write).toHaveBeenCalled();
+    // El popup está cerrado: el fallback por timeout no imprime ni reintenta.
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS);
+    expect(mockWin.print).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(PRINT_FALLBACK_MS * 3);
+    expect(mockWin.print).not.toHaveBeenCalled();
+    expect(mockWin.close).not.toHaveBeenCalled();
+    vi.useRealTimers();
+
+    openSpy.mockRestore();
+  });
+
   it('desacopla la ventana nueva del opener (no retiene referencias)', async () => {
     const mockWin = makeMockWin();
     const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
@@ -359,10 +371,13 @@ describe('ReceiptPage', () => {
     expect(await screen.findByText('Manzana')).toBeTruthy();
 
     // La pantalla muestra el subtotal como suma de filas Y la fila Ajuste
-    // (misma historia que el PDF, R2-W2).
+    // (misma historia que el PDF, R2-W2) y la fila informativa Total del
+    // pedido cuando difiere (R2-S).
     expect((await screen.findAllByText('$210.98')).length).toBeGreaterThan(0);
     expect(screen.getByText('Ajuste')).toBeTruthy();
     expect(screen.getByText('−$91.50')).toBeTruthy();
+    expect(screen.getByText('Total del pedido')).toBeTruthy();
+    expect(screen.getByText('$112.00')).toBeTruthy();
 
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();

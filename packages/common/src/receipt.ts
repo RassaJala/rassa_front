@@ -1,16 +1,40 @@
+import {
+  BADGE_PAGADO,
+  BORDER,
+  BRAND,
+  BRAND_DARK,
+  BRAND_NAME,
+  BRAND_TAGLINE,
+  CORAL,
+  INK,
+  MUTED,
+} from './brand';
 import { formatearFecha } from './dates';
-import { calcularSubtotal, formatearMonto } from './payments';
+import { formatearMonto } from './payments';
 import type { PaymentDetail } from './payments';
-
-const BRAND = '#24563C';
-const BRAND_DARK = '#1B402E';
-const CORAL = '#DE393A';
-const INK = '#2D3328';
-const MUTED = '#5E6B5E';
-const BORDER = '#E2E6DF';
 
 /** Umbral (en pesos) bajo el cual un ajuste o discrepancia se ignora. */
 const EPSILON = 0.005;
+
+/**
+ * Importe de una partida (cantidad × precio) con contrato NaN-safe: si la
+ * cantidad o el precio no son números finitos (null, '', '12,50', 'abc'),
+ * devuelve NaN en lugar de un falso $0.00. Una fila corrupta vuelve NaN el
+ * subtotal y dispara el aviso del documento, nunca un importe inventado.
+ * Compartido con las pantallas (mobile y web) para que fila, subtotal y
+ * documento cuenten la misma historia.
+ */
+export function calcularImportePartida(partida: {
+  readonly cantidad?: number | string | null;
+  readonly precio?: number | string | null;
+}): number {
+  const cantidad =
+    partida.cantidad == null ? Number.NaN : Number(partida.cantidad);
+  const precio = partida.precio == null ? Number.NaN : Number(partida.precio);
+  return Number.isFinite(cantidad) && Number.isFinite(precio)
+    ? cantidad * precio
+    : Number.NaN;
+}
 
 /**
  * Subtotal del recibo: la suma de las filas de producto VISIBLES. Es la única
@@ -20,7 +44,10 @@ const EPSILON = 0.005;
  * cuadra con la suma (ver buildReceiptHtml).
  */
 export function calcularSubtotalVisible(pago: PaymentDetail): number {
-  return calcularSubtotal(pago.productos ?? []);
+  return (pago.productos ?? []).reduce(
+    (acc, prod) => acc + calcularImportePartida(prod),
+    0,
+  );
 }
 
 /**
@@ -35,7 +62,7 @@ export function calcularSubtotalVisible(pago: PaymentDetail): number {
 export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
   const montoRaw = pago.monto;
   const monto =
-    typeof montoRaw === 'string' && montoRaw.trim() === ''
+    montoRaw == null || (typeof montoRaw === 'string' && montoRaw.trim() === '')
       ? Number.NaN
       : Number(montoRaw);
   if (!Number.isFinite(monto) || !Number.isFinite(subtotal)) return 0;
@@ -59,6 +86,47 @@ export function formatearAjuste(ajuste: number): string {
   return `${signo}${formatearMonto(Math.abs(ajuste))}`;
 }
 
+/**
+ * Fecha legible del pago, con contrato defensivo: un fecha_pago ausente o no
+ * parseable se imprime como "—", nunca "Invalid Date" ni el epoch.
+ */
+export function formatearFechaSegura(fecha: string | null | undefined): string {
+  if (fecha == null || !Number.isFinite(Date.parse(fecha))) return '—';
+  return formatearFecha(fecha);
+}
+
+/**
+ * total_pedido coaccionado a number (el backend puede serializar Decimal como
+ * string o number). Devuelve NaN cuando el campo es null, vacío o corrupto.
+ */
+export function calcularTotalPedidoVisible(pago: PaymentDetail): number {
+  const raw = pago.total_pedido;
+  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
+    return Number.NaN;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : Number.NaN;
+}
+
+/**
+ * True cuando total_pedido debe mostrarse como fila INFORMATIVA: el backend lo
+ * mandó y no cuadra con el subtotal visible (descuentos/recargos aplicados en
+ * el pedido). Compartido por el documento y las pantallas (R2-S) para que
+ * todas cuenten la misma historia.
+ */
+export function deberiaMostrarTotalPedido(
+  pago: PaymentDetail,
+  subtotal: number,
+): boolean {
+  const total = calcularTotalPedidoVisible(pago);
+  if (!Number.isFinite(total) || !Number.isFinite(subtotal)) return false;
+  return (
+    Math.abs(
+      Math.round(total * 100) / 100 - Math.round(subtotal * 100) / 100,
+    ) >= EPSILON
+  );
+}
+
 export function buildReceiptHtml(pago: PaymentDetail): string {
   const subtotal = calcularSubtotalVisible(pago);
   // Se muestra el subtotal redondeado a centavos; el ajuste se calculó sobre
@@ -75,7 +143,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
           <td>${escapeHtml(prod.nombre)}</td>
           <td class="num">${formatearCantidad(prod.cantidad)}</td>
           <td class="num">${formatearMonto(prod.precio)}</td>
-          <td class="num">${formatearMonto(prod.cantidad * Number(prod.precio))}</td>
+          <td class="num">${formatearMonto(calcularImportePartida(prod))}</td>
         </tr>`,
     )
     .join('');
@@ -96,41 +164,32 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   // total_pedido es INFORMATIVO: se muestra solo cuando el backend lo manda y
   // no cuadra con la suma de filas (descuentos/recargos aplicados en el
   // pedido). Nunca altera la aritmética del documento, que cierra con
-  // filas + ajuste = total pagado. El backend puede serializar Decimal como
-  // string o number: se coacciona antes de tocar strings.
-  const totalPedidoRaw = pago.total_pedido;
-  const totalPedido =
-    totalPedidoRaw == null ||
-    (typeof totalPedidoRaw === 'string' && totalPedidoRaw.trim() === '')
-      ? Number.NaN
-      : Number(totalPedidoRaw);
+  // filas + ajuste = total pagado.
+  const totalPedido = calcularTotalPedidoVisible(pago);
   const totalPedidoRedondeado = Math.round(totalPedido * 100) / 100;
-  const filaTotalPedido =
-    subtotalValido &&
-    totalPedidoRaw != null &&
-    Number.isFinite(totalPedido) &&
-    Math.abs(totalPedidoRedondeado - subtotalCent) >= EPSILON
-      ? `
+  const filaTotalPedido = deberiaMostrarTotalPedido(pago, subtotal)
+    ? `
         <tr class="total-pedido">
           <td colspan="3">Total del pedido</td>
           <td class="num">${formatearMonto(totalPedidoRedondeado)}</td>
         </tr>`
-      : '';
+    : '';
 
   const avisoCorrupto = subtotalValido
     ? ''
     : `<p class="notice">No se pudieron calcular los montos del pedido.</p>`;
+  const montoRaw = pago.monto;
   const montoCoercion =
-    typeof pago.monto === 'string' && pago.monto.trim() === ''
+    montoRaw == null || (typeof montoRaw === 'string' && montoRaw.trim() === '')
       ? Number.NaN
-      : Number(pago.monto);
+      : Number(montoRaw);
   const avisoMontoCorrupto = Number.isFinite(montoCoercion)
     ? ''
     : `<p class="notice">El total pagado del pago no pudo calcularse.</p>`;
 
-  // new Date(null) es el epoch (01/01/1970): un fecha_pago omitido no debe
-  // imprimir una fecha legalmente falsa, sino "—".
-  const fecha = pago.fecha_pago ? formatearFecha(pago.fecha_pago) : '—';
+  // Un fecha_pago ausente o no parseable no debe imprimir "Invalid Date" ni
+  // el epoch (01/01/1970), sino "—".
+  const fecha = formatearFechaSegura(pago.fecha_pago);
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
@@ -203,13 +262,13 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 <body>
   <div class="header">
     <div class="brand">
-      RASSA
-      <small>Frutas del campo a tu mesa</small>
+      ${BRAND_NAME}
+      <small>${BRAND_TAGLINE}</small>
     </div>
     <div class="folio">
       <div class="label">Recibo</div>
       <div class="value">${escapeHtml(pago.folio)}</div>
-      <span class="badge">Pagado</span>
+      <span class="badge">${BADGE_PAGADO}</span>
     </div>
   </div>
 
@@ -241,7 +300,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     <strong>${formatearMonto(pago.monto)}</strong>
   </div>
 
-  <p class="footer">Documento generado el ${fecha} — RASSA</p>
+  <p class="footer">Documento generado el ${fecha} — ${BRAND_NAME}</p>
 </body>
 </html>`;
 }
