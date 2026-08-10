@@ -70,6 +70,7 @@ function makeMockWin(
     focus: vi.fn(),
     print: overrides.print ? vi.fn(overrides.print) : vi.fn(),
     close: vi.fn(),
+    listeners,
     matchMedia: (query: string) => {
       if (query !== 'print') return { matches: false };
       return {
@@ -181,7 +182,7 @@ describe('ReceiptPage', () => {
 
     const html = (
       mockWin.document.write as unknown as { mock: { calls: string[][] } }
-    ).mock.calls[0][0] as string;
+    ).mock.calls[0]?.[0] as string;
     expect(html).toContain('PAG-0009');
     expect(html).toContain('Manzana');
     expect(html).toContain('RASSA');
@@ -275,7 +276,8 @@ describe('ReceiptPage', () => {
     expect(mockWin.print).not.toHaveBeenCalled();
 
     // El documento terminó de cargar → el siguiente fallback imprime.
-    mockWin.document.readyState = 'complete';
+    (mockWin.document as unknown as { readyState: string }).readyState =
+      'complete';
     vi.advanceTimersByTime(PRINT_FALLBACK_MS);
     expect(mockWin.print).toHaveBeenCalledTimes(1);
     expect(mockWin.close).not.toHaveBeenCalled();
@@ -353,6 +355,55 @@ describe('ReceiptPage', () => {
     openSpy.mockRestore();
   });
 
+  it('libera el semáforo al cerrar el popup, no solo por timeout (R3-S)', async () => {
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+    expect(openSpy).toHaveBeenCalledTimes(1);
+
+    // La impresión termina y el popup cierra vía matchMedia('print'): el
+    // callback onClosed libera el semáforo ANTES del timeout de seguridad.
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
+    expect(mockWin.print).toHaveBeenCalled();
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
+    expect(mockWin.close).toHaveBeenCalledTimes(1);
+
+    // Sin avanzar timers, un nuevo clic abre otro popup: el semáforo ya se
+    // liberó con el cierre, no esperó los PRINT_FALLBACK_MS * 3.
+    printer.click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
+    openSpy.mockRestore();
+  });
+
+  it('remueve el listener de matchMedia al cerrar el popup (R4-S)', async () => {
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    printer.click();
+
+    const onload = (mockWin as unknown as { onload: () => void }).onload;
+    onload();
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
+    expect(mockWin.close).toHaveBeenCalledTimes(1);
+
+    // closeAndDetach des-registra el change listener del matchMedia: el popup
+    // muerto no sigue escuchando cambios de estado de impresión.
+    const listeners = (
+      mockWin as unknown as { listeners: { print: unknown[] } }
+    ).listeners;
+    expect(listeners.print).toHaveLength(0);
+    openSpy.mockRestore();
+  });
   it('pantalla y PDF usan el mismo subtotal (consistencia con descuentos)', async () => {
     // Filas: 2×59.74 + 3×30.50 = 210.98; monto cobrado 119.48; total_pedido 112.00.
     mockedFetchPago.mockResolvedValue({
@@ -384,7 +435,7 @@ describe('ReceiptPage', () => {
 
     const html = (
       mockWin.document.write as unknown as { mock: { calls: string[][] } }
-    ).mock.calls[0][0] as string;
+    ).mock.calls[0]?.[0] as string;
     // El PDF usa el MISMO subtotal (suma de filas), más ajuste y total informativo.
     expect(html).toContain('$210.98');
     expect(html).toContain('−$91.50');

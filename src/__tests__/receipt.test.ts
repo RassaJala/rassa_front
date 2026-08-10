@@ -6,7 +6,9 @@ import {
   buildReceiptHtml,
   calcularAjuste,
   calcularImportePartida,
+  calcularMontoVisible,
   calcularSubtotalVisible,
+  deberiaMostrarAjuste,
   escapeHtml,
   formatearCantidad,
 } from '@/common/receipt';
@@ -42,6 +44,42 @@ describe('calcularSubtotalVisible / calcularAjuste', () => {
     expect(
       calcularAjuste({ ...mockPago, monto: null as unknown as string }, 210.98),
     ).toBe(0);
+  });
+
+  it('calcularMontoVisible es null/empty-safe y comparte la coerción', () => {
+    // La coerción de monto vive en UN solo lugar (R2-S): calcularAjuste y
+    // buildReceiptHtml la consumen sin duplicarla.
+    expect(calcularMontoVisible(mockPago)).toBeCloseTo(119.48, 2);
+    expect(
+      calcularMontoVisible({ ...mockPago, monto: '' as unknown as string }),
+    ).toBe(Number.NaN);
+    expect(
+      calcularMontoVisible({ ...mockPago, monto: null as unknown as string }),
+    ).toBe(Number.NaN);
+    expect(calcularMontoVisible({ ...mockPago, monto: 'abc' })).toBe(
+      Number.NaN,
+    );
+  });
+
+  it('deberiaMostrarAjuste centraliza el umbral de centavos (R2-S)', () => {
+    // El documento y las pantallas deciden con el MISMO helper: si el umbral
+    // cambia, no pueden divergir.
+    expect(deberiaMostrarAjuste(mockPago, 210.98)).toBe(true); // −91.50
+    expect(deberiaMostrarAjuste({ ...mockPago, monto: '210.98' }, 210.98)).toBe(
+      false,
+    );
+    // Subtotal no finito → no muestra ajuste (misma red que calcularAjuste).
+    expect(deberiaMostrarAjuste(mockPago, Number.NaN)).toBe(false);
+  });
+
+  it('productos: null devuelve subtotal NaN (no un falso $0.00, R3-S)', () => {
+    // Antes `?? []` daba $0.00 finito → pantalla/PDF "Subtotal $0.00" +
+    // "Ajuste +$X" sin aviso. Ahora NaN dispara el aviso de documento.
+    expect(calcularSubtotalVisible({ ...mockPago, productos: null })).toBe(
+      Number.NaN,
+    );
+    // El array vacío sigue siendo un caso legítimo de $0.00 (no corrupción).
+    expect(calcularSubtotalVisible({ ...mockPago, productos: [] })).toBe(0);
   });
 
   it('reconcilia a centavos con subtotales de 3 decimales (penny-off)', () => {

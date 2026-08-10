@@ -8,8 +8,10 @@ import {
   calcularImportePartida,
   calcularSubtotalVisible,
   calcularTotalPedidoVisible,
+  deberiaMostrarAjuste,
   deberiaMostrarTotalPedido,
   formatearAjuste,
+  formatearCantidad,
   formatearFechaSegura,
 } from '@/common/receipt';
 import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
@@ -27,9 +29,11 @@ export const PRINT_FALLBACK_MS = 400;
 /**
  * Imprime un documento HTML en una ventana nueva. Extraído a un helper
  * unit-testable: abre el popup, escribe el HTML, espera a que cargue (con
- * fallback por timeout) y ejecuta print + close.
+ * fallback por timeout) y ejecuta print + close. `onClosed` se invoca cuando
+ * el popup se cierra (o no pudo abrirse), para que el llamador libere su
+ * semáforo de impresión al cierre real y no por un timeout arbitrario.
  */
-export function printHtml(html: string): void {
+export function printHtml(html: string, onClosed?: () => void): void {
   let win: Window | null = null;
   try {
     win = window.open('', '_blank', 'noopener');
@@ -38,12 +42,26 @@ export function printHtml(html: string): void {
   }
   if (!win) {
     alert('Permite popups para este sitio para poder imprimir el recibo.');
+    onClosed?.();
     return;
   }
   win.opener = null;
   const notificarError = (error: unknown) => {
     console.error('Error al imprimir el recibo:', error);
     alert('No se pudo imprimir el recibo. Inténtalo de nuevo.');
+  };
+  let mql: MediaQueryList | null = null;
+  let onPrintChange: ((event: MediaQueryListEvent) => void) | null = null;
+  const closeAndDetach = () => {
+    if (!win) return;
+    win.onafterprint = null;
+    // Quitar el listener de matchMedia al cerrar (R4-S): el popup muere y
+    // no debe seguir escuchando cambios de estado de impresión.
+    if (mql && onPrintChange) {
+      mql.removeEventListener('change', onPrintChange);
+    }
+    win.close();
+    onClosed?.();
   };
   try {
     win.document.write(html);
@@ -60,6 +78,7 @@ export function printHtml(html: string): void {
       if (win?.closed) {
         clearTimeout(fallbackTimer);
         printed = true;
+        onClosed?.();
         return;
       }
       // El documento aún no terminó de procesarse: reintentar en vez de
@@ -76,24 +95,21 @@ export function printHtml(html: string): void {
         // bloquea, así que close() inmediato mataría el popup antes de
         // imprimir. afterprint + matchMedia('print') cubren los casos reales.
         win.onafterprint = () => closeAndDetach();
-        const mql = win.matchMedia('print');
-        const onPrintChange = (event: MediaQueryListEvent) => {
+        mql = win.matchMedia('print');
+        onPrintChange = (event: MediaQueryListEvent) => {
           if (!event.matches) closeAndDetach();
         };
         mql.addEventListener('change', onPrintChange);
       } catch (error: unknown) {
         notificarError(error);
+        onClosed?.();
       }
-    };
-    const closeAndDetach = () => {
-      if (!win) return;
-      win.onafterprint = null;
-      win.close();
     };
     fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
     win.onload = doPrint;
   } catch (error: unknown) {
     notificarError(error);
+    onClosed?.();
   }
 }
 
@@ -140,21 +156,29 @@ export function ReceiptPage() {
   useEffect(() => () => clearTimeout(liberarSemRef.current), []);
 
   const handleImprimir = () => {
+    // Guard de narrowing: pago viene de useQuery (PaymentDetail | undefined)
+    // y el botón solo existe tras el guard de render, pero TS no lo sabe en
+    // este punto (R2-W1). Sin esto, buildReceiptHtml recibe PaymentDetail |
+    // undefined y un typecheck estricto falla.
+    if (!pago) return;
     if (imprimiendoRef.current) return;
     imprimiendoRef.current = true;
+    const liberar = () => {
+      clearTimeout(liberarSemRef.current);
+      imprimiendoRef.current = false;
+    };
     try {
       const html = buildReceiptHtml(pago);
-      printHtml(html);
-      // printHtml abre el popup y dispara print() de forma síncrona; la ventana
-      // de guard cubre el doble clic y no deja el botón bloqueado de por vida.
-      liberarSemRef.current = setTimeout(() => {
-        imprimiendoRef.current = false;
-      }, PRINT_FALLBACK_MS * 3);
+      // printHtml abre el popup y dispara print() de forma síncrona; la
+      // ventana de guard cubre el doble clic y no deja el botón bloqueado.
+      // El semáforo se libera cuando el popup REALMENTE cierra (R3-S, como el
+      // .finally() del mobile); el timeout queda solo como red de seguridad.
+      printHtml(html, liberar);
+      liberarSemRef.current = setTimeout(liberar, PRINT_FALLBACK_MS * 3);
     } catch (error: unknown) {
       // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: se
       // libera el semáforo y se informa, el botón no queda muerto de por vida.
-      clearTimeout(liberarSemRef.current);
-      imprimiendoRef.current = false;
+      liberar();
       console.error('No se pudo generar el recibo:', error);
       alert('No se pudo generar el recibo. Inténtalo de nuevo.');
     }
@@ -202,7 +226,9 @@ export function ReceiptPage() {
   const subtotal = calcularSubtotalVisible(pago);
   const subtotalCent = Math.round(subtotal * 100) / 100;
   const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
-  const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
+  // Mismo umbral compartido que el PDF (EPSILON en receipt.ts): si cambia,
+  // pantalla y documento no divergen (R2-S).
+  const mostrarAjuste = deberiaMostrarAjuste(pago, subtotal);
   // Misma fila informativa que el PDF cuando total_pedido no cuadra con la
   // suma de filas (R2-S): pantalla y documento cuentan la misma historia.
   const totalPedidoVisible = calcularTotalPedidoVisible(pago);
@@ -293,7 +319,7 @@ export function ReceiptPage() {
                   className="w-20 text-center text-sm"
                   style={{ color: muted }}
                 >
-                  {prod.cantidad}
+                  {formatearCantidad(prod.cantidad)}
                 </span>
                 <span
                   className="w-24 text-right text-sm"

@@ -166,6 +166,33 @@ describe('ReceiptScreen', () => {
     await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(1));
   });
 
+  it('muestra feedback visual mientras imprime (spinner/disabled, R4-S)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    let liberarPrint: (() => void) | undefined;
+    printAsync.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          liberarPrint = resolve;
+        }),
+    );
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    // Mientras printAsync está pendiente, el botón está deshabilitado y con
+    // spinner (antes el segundo tap se ignoraba en silencio, R4-S).
+    expect(pdfBtn.props.accessibilityState?.disabled).toBe(true);
+
+    // Al completarse la impresión, el botón vuelve a estar habilitado.
+    liberarPrint?.();
+    await waitFor(() =>
+      expect(pdfBtn.props.accessibilityState?.disabled).toBe(false),
+    );
+  });
+
   it('muestra la fila Ajuste en pantalla cuando hay descuento/recargo (misma historia que el PDF)', async () => {
     // Filas: 2 × 59.74 = 119.48; monto cobrado 210.98 → ajuste +$91.50.
     mockedFetchPago.mockResolvedValue({

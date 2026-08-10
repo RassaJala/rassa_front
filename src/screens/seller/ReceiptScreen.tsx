@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,8 +23,10 @@ import {
   calcularImportePartida,
   calcularSubtotalVisible,
   calcularTotalPedidoVisible,
+  deberiaMostrarAjuste,
   deberiaMostrarTotalPedido,
   formatearAjuste,
+  formatearCantidad,
   formatearFechaSegura,
 } from '@/common/receipt';
 import { colors } from '@/constants/colors';
@@ -50,6 +52,9 @@ export default function ReceiptScreen(): React.JSX.Element {
   // Semáforo anti doble-tap: evita abrir dos diálogos de impresión si el
   // usuario toca el botón dos veces seguidas mientras el PDF se genera.
   const imprimiendoRef = useRef(false);
+  // Estado de UI para el feedback visual "imprimiendo" (R4-S): el segundo tap
+  // ya se ignoraba en silencio, ahora el botón muestra un spinner.
+  const [imprimiendo, setImprimiendo] = useState(false);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -139,7 +144,9 @@ export default function ReceiptScreen(): React.JSX.Element {
   // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
   const subtotal = calcularSubtotalVisible(pago);
   const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
-  const mostrarAjuste = Number.isFinite(subtotal) && Math.abs(ajuste) >= 0.005;
+  // Mismo umbral compartido que el PDF (EPSILON en receipt.ts): si cambia,
+  // pantalla y documento no divergen (R2-S).
+  const mostrarAjuste = deberiaMostrarAjuste(pago, subtotal);
   // Misma fila informativa que el PDF cuando total_pedido no cuadra con la
   // suma de filas (R2-S): pantalla y documento cuentan la misma historia.
   const totalPedidoVisible = calcularTotalPedidoVisible(pago);
@@ -148,6 +155,7 @@ export default function ReceiptScreen(): React.JSX.Element {
   const handleImprimir = () => {
     if (imprimiendoRef.current) return;
     imprimiendoRef.current = true;
+    setImprimiendo(true);
     try {
       const html = buildReceiptHtml(pago);
       void Print.printAsync({ html })
@@ -160,6 +168,7 @@ export default function ReceiptScreen(): React.JSX.Element {
         })
         .finally(() => {
           imprimiendoRef.current = false;
+          setImprimiendo(false);
         });
     } catch (error: unknown) {
       // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: el
@@ -171,6 +180,7 @@ export default function ReceiptScreen(): React.JSX.Element {
         'No se pudo generar el recibo. Intentá de nuevo.',
       );
       imprimiendoRef.current = false;
+      setImprimiendo(false);
     }
   };
   return (
@@ -206,6 +216,7 @@ export default function ReceiptScreen(): React.JSX.Element {
         </Text>
         <Pressable
           onPress={handleImprimir}
+          disabled={imprimiendo}
           accessibilityLabel="Imprimir recibo en PDF"
           style={{
             marginLeft: 'auto',
@@ -218,9 +229,14 @@ export default function ReceiptScreen(): React.JSX.Element {
             borderRadius: 12,
             paddingHorizontal: 12,
             paddingVertical: 8,
+            opacity: imprimiendo ? 0.6 : 1,
           }}
         >
-          <MaterialCommunityIcons name="printer" size={18} color={brand} />
+          {imprimiendo ? (
+            <ActivityIndicator size="small" color={brand} />
+          ) : (
+            <MaterialCommunityIcons name="printer" size={18} color={brand} />
+          )}
           <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
             PDF
           </Text>
@@ -347,7 +363,8 @@ export default function ReceiptScreen(): React.JSX.Element {
                   {prod.nombre}
                 </Text>
                 <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
-                  {prod.cantidad}x {formatearMonto(prod.precio)}
+                  {formatearCantidad(prod.cantidad)}x{' '}
+                  {formatearMonto(prod.precio)}
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>

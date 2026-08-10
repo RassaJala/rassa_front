@@ -42,12 +42,27 @@ export function calcularImportePartida(partida: {
  * (web y mobile), de modo que documento y pantalla nunca se contradicen.
  * total_pedido del backend solo se despliega como fila informativa cuando no
  * cuadra con la suma (ver buildReceiptHtml).
+ *
+ * Contrato anti-corrupción: productos: null (campo ausente/corrupto) devuelve
+ * NaN en lugar de un falso $0.00, para que el aviso del documento se dispare
+ * y la pantalla no muestre "Subtotal $0.00" + "Ajuste +$X" sin contexto.
  */
 export function calcularSubtotalVisible(pago: PaymentDetail): number {
-  return (pago.productos ?? []).reduce(
+  if (pago.productos == null) return Number.NaN;
+  return pago.productos.reduce(
     (acc, prod) => acc + calcularImportePartida(prod),
     0,
   );
+}
+
+/** monto del pago coaccionado a number; NaN cuando es null, vacío o corrupto. */
+export function calcularMontoVisible(pago: PaymentDetail): number {
+  const raw = pago.monto;
+  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
+    return Number.NaN;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : Number.NaN;
 }
 
 /**
@@ -60,15 +75,25 @@ export function calcularSubtotalVisible(pago: PaymentDetail): number {
  * incluso con subtotales que redondean (off-by-a-cent).
  */
 export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
-  const montoRaw = pago.monto;
-  const monto =
-    montoRaw == null || (typeof montoRaw === 'string' && montoRaw.trim() === '')
-      ? Number.NaN
-      : Number(montoRaw);
+  const monto = calcularMontoVisible(pago);
   if (!Number.isFinite(monto) || !Number.isFinite(subtotal)) return 0;
   const subtotalCent = Math.round(subtotal * 100) / 100;
   const montoCent = Math.round(monto * 100) / 100;
   return montoCent - subtotalCent;
+}
+
+/**
+ * True cuando el ajuste debe mostrarse: el monto difiere del subtotal visible
+ * por más del umbral de centavos (EPSILON). Compartido por el documento y las
+ * pantallas para que ninguna hardcodee el umbral y puedan divergir.
+ */
+export function deberiaMostrarAjuste(
+  pago: PaymentDetail,
+  subtotal: number,
+): boolean {
+  if (!Number.isFinite(subtotal)) return false;
+  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  return Math.abs(ajuste) >= EPSILON;
 }
 
 /** Cantidad de una partida con fallback defensivo (nunca imprime "NaN" ni "0" falso). */
@@ -150,16 +175,16 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 
   // Ajuste = monto cobrado − subtotal visible; con signo explícito para que
   // "Ajuste +$X" (recargo) / "Ajuste −$X" (descuento) se lea correcto.
-  // La frontera de EPSILON se evalúa sobre valores ya redondeados a centavos
-  // (sin ruido de punto flotante) y la tabla siempre cierra.
-  const filaAjuste =
-    subtotalValido && Math.abs(ajuste) >= EPSILON
-      ? `
+  // La frontera se evalúa sobre valores ya redondeados a centavos (sin ruido
+  // de punto flotante) con el mismo umbral compartido que las pantallas
+  // (deberiaMostrarAjuste), y la tabla siempre cierra.
+  const filaAjuste = deberiaMostrarAjuste(pago, subtotal)
+    ? `
         <tr class="ajuste">
           <td colspan="3">Ajuste</td>
           <td class="num">${formatearAjuste(ajuste)}</td>
         </tr>`
-      : '';
+    : '';
 
   // total_pedido es INFORMATIVO: se muestra solo cuando el backend lo manda y
   // no cuadra con la suma de filas (descuentos/recargos aplicados en el
@@ -178,12 +203,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   const avisoCorrupto = subtotalValido
     ? ''
     : `<p class="notice">No se pudieron calcular los montos del pedido.</p>`;
-  const montoRaw = pago.monto;
-  const montoCoercion =
-    montoRaw == null || (typeof montoRaw === 'string' && montoRaw.trim() === '')
-      ? Number.NaN
-      : Number(montoRaw);
-  const avisoMontoCorrupto = Number.isFinite(montoCoercion)
+  const avisoMontoCorrupto = Number.isFinite(calcularMontoVisible(pago))
     ? ''
     : `<p class="notice">El total pagado del pago no pudo calcularse.</p>`;
 
