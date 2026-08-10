@@ -165,7 +165,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.document.write).toHaveBeenCalled();
     expect(mockWin.document.close).toHaveBeenCalled();
 
@@ -202,7 +202,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
     // Sin ventana no hay document.write ni print: solo la alerta al usuario.
     expect(alertSpy).toHaveBeenCalledWith(
       'Permite popups para este sitio para poder imprimir el recibo.',
@@ -242,7 +242,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.document.write).toHaveBeenCalled();
     // El evento onload nunca ocurre; el fallback setTimeout(doPrint, PRINT_FALLBACK_MS) debe imprimir.
     expect(mockWin.print).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe('ReceiptPage', () => {
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
 
-    expect(openSpy).toHaveBeenCalledWith('', '_blank', 'noopener');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
     expect(mockWin.document.write).toHaveBeenCalled();
     // El popup está cerrado: el fallback por timeout no imprime ni reintenta.
     vi.advanceTimersByTime(PRINT_FALLBACK_MS);
@@ -307,6 +307,10 @@ describe('ReceiptPage', () => {
     vi.advanceTimersByTime(PRINT_FALLBACK_MS * 3);
     expect(mockWin.print).not.toHaveBeenCalled();
     expect(mockWin.close).not.toHaveBeenCalled();
+    // R3-04: la rama win.closed también libera el semáforo (onClosed) — un
+    // clic posterior vuelve a intentar con un popup nuevo.
+    printer.click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
 
     openSpy.mockRestore();
@@ -453,7 +457,7 @@ describe('ReceiptPage', () => {
         throw new Error('write failed');
       },
     });
-    vi.spyOn(window, 'open').mockReturnValue(mockWin);
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -469,6 +473,11 @@ describe('ReceiptPage', () => {
     expect(alertSpy).toHaveBeenCalledWith(
       'No se pudo imprimir el recibo. Inténtalo de nuevo.',
     );
+    // R3-04: el fallo de document.write libera el semáforo (onClosed) — el
+    // botón no queda muerto y un segundo intento vuelve a abrir el popup.
+    screen.getByRole('button', { name: /Imprimir/i }).click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
+    openSpy.mockRestore();
   });
 
   it('alerta y loguea el error cuando win.print() lanza', async () => {
@@ -479,7 +488,7 @@ describe('ReceiptPage', () => {
         throw new Error('print failed');
       },
     });
-    vi.spyOn(window, 'open').mockReturnValue(mockWin);
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
 
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
@@ -495,5 +504,10 @@ describe('ReceiptPage', () => {
     expect(alertSpy).toHaveBeenCalledWith(
       'No se pudo imprimir el recibo. Inténtalo de nuevo.',
     );
+    // R3-04: el fallo de print() libera el semáforo (onClosed) — el botón no
+    // queda muerto y un segundo intento vuelve a abrir el popup.
+    screen.getByRole('button', { name: /Imprimir/i }).click();
+    expect(openSpy).toHaveBeenCalledTimes(2);
+    openSpy.mockRestore();
   });
 });

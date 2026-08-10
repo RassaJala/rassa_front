@@ -13,6 +13,7 @@ import {
   formatearAjuste,
   formatearCantidad,
   formatearFechaSegura,
+  redondearCentavos,
 } from '@/common/receipt';
 import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -36,7 +37,11 @@ export const PRINT_FALLBACK_MS = 400;
 export function printHtml(html: string, onClosed?: () => void): void {
   let win: Window | null = null;
   try {
-    win = window.open('', '_blank', 'noopener');
+    // NOTA (R1-01): NO usar 'noopener' aquí. Con noopener, window.open()
+    // devuelve null en Chrome/Firefox/Edge (la referencia se corta), así que
+    // el helper siempre tomaría la rama "popup bloqueado" y nunca imprimiría.
+    // La desconexión del opener se hace explícitamente con win.opener = null.
+    win = window.open('', '_blank');
   } catch {
     // algunos navegadores lanzan excepción al bloquear popups
   }
@@ -224,8 +229,8 @@ export function ReceiptPage() {
   // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
   // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
   const subtotal = calcularSubtotalVisible(pago);
-  const subtotalCent = Math.round(subtotal * 100) / 100;
-  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  const subtotalCent = redondearCentavos(subtotal);
+  const ajuste = redondearCentavos(calcularAjuste(pago, subtotal));
   // Mismo umbral compartido que el PDF (EPSILON en receipt.ts): si cambia,
   // pantalla y documento no divergen (R2-S).
   const mostrarAjuste = deberiaMostrarAjuste(pago, subtotal);

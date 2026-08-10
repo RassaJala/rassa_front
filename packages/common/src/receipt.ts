@@ -16,6 +16,20 @@ import type { PaymentDetail } from './payments';
 /** Umbral (en pesos) bajo el cual un ajuste o discrepancia se ignora. */
 const EPSILON = 0.005;
 
+/** Redondea a centavos: lo que se imprime es lo que se compara. */
+export function redondearCentavos(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** Coacciona un valor numérico del backend a number; NaN cuando es corrupto. */
+function coercerNumero(raw: unknown): number {
+  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
+    return Number.NaN;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : Number.NaN;
+}
+
 /**
  * Importe de una partida (cantidad × precio) con contrato NaN-safe: si la
  * cantidad o el precio no son números finitos (null, '', '12,50', 'abc'),
@@ -48,7 +62,10 @@ export function calcularImportePartida(partida: {
  * y la pantalla no muestre "Subtotal $0.00" + "Ajuste +$X" sin contexto.
  */
 export function calcularSubtotalVisible(pago: PaymentDetail): number {
-  if (pago.productos == null) return Number.NaN;
+  // Guard de forma, no solo de null (R3-01): un backend corrupto puede mandar
+  // {} o un string en lugar de un array, y .reduce sobre eso lanzaría
+  // TypeError. Solo un array real suma filas; cualquier otra forma es NaN.
+  if (!Array.isArray(pago.productos)) return Number.NaN;
   return pago.productos.reduce(
     (acc, prod) => acc + calcularImportePartida(prod),
     0,
@@ -57,12 +74,7 @@ export function calcularSubtotalVisible(pago: PaymentDetail): number {
 
 /** monto del pago coaccionado a number; NaN cuando es null, vacío o corrupto. */
 export function calcularMontoVisible(pago: PaymentDetail): number {
-  const raw = pago.monto;
-  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
-    return Number.NaN;
-  }
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : Number.NaN;
+  return coercerNumero(pago.monto);
 }
 
 /**
@@ -77,9 +89,7 @@ export function calcularMontoVisible(pago: PaymentDetail): number {
 export function calcularAjuste(pago: PaymentDetail, subtotal: number): number {
   const monto = calcularMontoVisible(pago);
   if (!Number.isFinite(monto) || !Number.isFinite(subtotal)) return 0;
-  const subtotalCent = Math.round(subtotal * 100) / 100;
-  const montoCent = Math.round(monto * 100) / 100;
-  return montoCent - subtotalCent;
+  return redondearCentavos(monto) - redondearCentavos(subtotal);
 }
 
 /**
@@ -92,8 +102,7 @@ export function deberiaMostrarAjuste(
   subtotal: number,
 ): boolean {
   if (!Number.isFinite(subtotal)) return false;
-  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
-  return Math.abs(ajuste) >= EPSILON;
+  return Math.abs(redondearCentavos(calcularAjuste(pago, subtotal))) >= EPSILON;
 }
 
 /** Cantidad de una partida con fallback defensivo (nunca imprime "NaN" ni "0" falso). */
@@ -125,12 +134,7 @@ export function formatearFechaSegura(fecha: string | null | undefined): string {
  * string o number). Devuelve NaN cuando el campo es null, vacío o corrupto.
  */
 export function calcularTotalPedidoVisible(pago: PaymentDetail): number {
-  const raw = pago.total_pedido;
-  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
-    return Number.NaN;
-  }
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : Number.NaN;
+  return coercerNumero(pago.total_pedido);
 }
 
 /**
@@ -146,9 +150,7 @@ export function deberiaMostrarTotalPedido(
   const total = calcularTotalPedidoVisible(pago);
   if (!Number.isFinite(total) || !Number.isFinite(subtotal)) return false;
   return (
-    Math.abs(
-      Math.round(total * 100) / 100 - Math.round(subtotal * 100) / 100,
-    ) >= EPSILON
+    Math.abs(redondearCentavos(total) - redondearCentavos(subtotal)) >= EPSILON
   );
 }
 
@@ -157,21 +159,23 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   // Se muestra el subtotal redondeado a centavos; el ajuste se calculó sobre
   // ese mismo valor redondeado (ver calcularAjuste), así filas + ajuste
   // cierran exactamente con lo impreso.
-  const subtotalCent = Math.round(subtotal * 100) / 100;
-  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  const subtotalCent = redondearCentavos(subtotal);
+  const ajuste = redondearCentavos(calcularAjuste(pago, subtotal));
   const subtotalValido = Number.isFinite(subtotal);
 
-  const filas = (pago.productos ?? [])
-    .map(
-      (prod) => `
+  const filas = Array.isArray(pago.productos)
+    ? pago.productos
+        .map(
+          (prod) => `
         <tr>
           <td>${escapeHtml(prod.nombre)}</td>
           <td class="num">${formatearCantidad(prod.cantidad)}</td>
           <td class="num">${formatearMonto(prod.precio)}</td>
           <td class="num">${formatearMonto(calcularImportePartida(prod))}</td>
         </tr>`,
-    )
-    .join('');
+        )
+        .join('')
+    : '';
 
   // Ajuste = monto cobrado − subtotal visible; con signo explícito para que
   // "Ajuste +$X" (recargo) / "Ajuste −$X" (descuento) se lea correcto.
@@ -191,7 +195,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   // pedido). Nunca altera la aritmética del documento, que cierra con
   // filas + ajuste = total pagado.
   const totalPedido = calcularTotalPedidoVisible(pago);
-  const totalPedidoRedondeado = Math.round(totalPedido * 100) / 100;
+  const totalPedidoRedondeado = redondearCentavos(totalPedido);
   const filaTotalPedido = deberiaMostrarTotalPedido(pago, subtotal)
     ? `
         <tr class="total-pedido">
