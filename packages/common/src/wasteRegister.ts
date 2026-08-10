@@ -3,9 +3,9 @@
 
 export interface WasteDecision {
   readonly id_decision: number;
-  decision: string;
+  readonly decision: string;
   readonly creado_en: string;
-  estado: boolean;
+  readonly estado: boolean;
 }
 
 export interface WasteDecisionOption {
@@ -25,10 +25,16 @@ export const WASTE_DECISION_OPTIONS: readonly WasteDecisionOption[] = [
 // A merma references an order that is still in flight; terminal states
 // (entregado/cancelado) are not valid candidates and would only bloat the
 // selector with historical orders. Shared by the mobile and web services.
-export const TERMINAL_ORDER_STATES: ReadonlySet<string> = new Set([
+const TERMINAL_ORDER_STATES: ReadonlySet<string> = new Set([
   'entregado',
   'cancelado',
 ]);
+
+// True when the ORDER is in a terminal state (entregado/cancelado) and can no
+// longer be linked to a merma record.
+export function isTerminalOrderState(estado: string): boolean {
+  return TERMINAL_ORDER_STATES.has(estado);
+}
 
 // Estado legible para el selector de pedidos (móvil y web): el backend usa
 // guiones bajos ("listo_para_retirar"), la UI muestra espacios.
@@ -92,10 +98,14 @@ export interface PublishedProduct {
 
 export interface PublishedPublication {
   readonly id_publicacion: number;
-  agricultor: { id_usuario: number; nombre: string; apellido: string } | null;
-  fecha_publicacion: string;
-  semana: string;
-  productos: PublishedProduct[];
+  readonly agricultor: {
+    readonly id_usuario: number;
+    readonly nombre: string;
+    readonly apellido: string;
+  } | null;
+  readonly fecha_publicacion: string;
+  readonly semana: string;
+  readonly productos: PublishedProduct[];
 }
 
 // Client-side validation shared by mobile (WasteRegisterScreen) and web
@@ -111,6 +121,10 @@ export interface WasteFormValues {
     { readonly id_producto_semanal: number } | string | null | undefined;
   cantidad: string;
   motivo: string;
+  // Optional free-text note. Explicitly includes undefined: both screens keep
+  // a string state that may be empty; exactOptionalPropertyTypes rejects
+  // `comentarios?: string` when callers pass `comentarios` directly.
+  comentarios?: string | undefined;
   // Explicitly includes undefined: callers pass `selected?.stock` which may be
   // undefined when nothing is selected; exactOptionalPropertyTypes rejects
   // `stock?: number` for that shape.
@@ -148,6 +162,13 @@ export function validateWasteRecord(
     errors.motivo = 'El motivo es obligatorio.';
   } else if (values.motivo.trim().length > 300) {
     errors.motivo = 'El motivo no puede superar los 300 caracteres.';
+  }
+
+  // The UI caps the input at maxLength={500}; this rule guards programmatic
+  // submits (pasted/autofilled values bypass the cap).
+  if (values.comentarios && values.comentarios.trim().length > 500) {
+    errors.comentarios =
+      'Los comentarios no pueden superar los 500 caracteres.';
   }
 
   return errors;

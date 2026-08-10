@@ -44,51 +44,8 @@ import {
   errorStyle,
   labelStyle,
   PedidoSelector,
+  ProductSelector,
 } from './WasteSelectors';
-
-interface ProductEmptyNoticeProps {
-  readonly products: readonly PublishedProduct[];
-  readonly loading: boolean;
-  readonly inputBg: string;
-  readonly borderColor: string;
-  readonly muted: string;
-}
-
-function ProductEmptyNotice({
-  products,
-  loading,
-  inputBg,
-  borderColor,
-  muted,
-}: ProductEmptyNoticeProps): React.JSX.Element | null {
-  if (loading || products.length > 0) return null;
-  return (
-    <View
-      style={{
-        marginTop: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: inputBg,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-      }}
-    >
-      <MaterialCommunityIcons
-        name="alert-circle-outline"
-        size={16}
-        color={colors.accent}
-      />
-      <Text style={{ fontSize: 13, color: muted, flex: 1 }}>
-        No hay publicaciones activas esta semana. Publica un producto para poder
-        registrar mermas.
-      </Text>
-    </View>
-  );
-}
 
 export default function WasteRegisterScreen(): React.JSX.Element {
   const { colorScheme } = useTheme();
@@ -193,12 +150,14 @@ export default function WasteRegisterScreen(): React.JSX.Element {
   });
 
   const handleSubmit = (): void => {
+    if (createMutation.isPending) return;
     const errors: Record<string, string> = {
       ...validateWasteRecord({
         pedido: selectedPedido,
         producto: selectedProduct,
         cantidad,
         motivo,
+        comentarios,
         stock: selectedProduct?.stock,
         decision: decisionId,
       }),
@@ -225,6 +184,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
 
     createMutation.mutate(payload, {
       onError: (err) => {
+        console.error('[WasteRegister] createWasteRecord failed', err);
         setToast({
           message: extractApiError(err, [
             'fk_producto_semanal',
@@ -410,56 +370,14 @@ export default function WasteRegisterScreen(): React.JSX.Element {
             />
 
             {/* Producto publicado */}
-            <Text style={[labelStyle, { marginTop: 16, color: t.fg }]}>
-              Producto publicado *
-            </Text>
-            <Pressable
-              onPress={() => setProductModalOpen(true)}
-              style={{
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: fieldErrors.producto ? coral : t.border,
-                backgroundColor: t.input,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              {selectedProduct ? (
-                <View style={{ flex: 1, marginRight: 12 }}>
-                  <Text
-                    style={{ fontSize: 15, fontWeight: '600', color: t.fg }}
-                  >
-                    {selectedProduct.producto}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-                    Stock: {selectedProduct.stock} · {selectedProduct.unidad}
-                  </Text>
-                </View>
-              ) : (
-                <Text style={{ fontSize: 15, color: t.muted }}>
-                  Elige un producto publicado…
-                </Text>
-              )}
-              <MaterialCommunityIcons
-                name="chevron-down"
-                size={20}
-                color={t.muted}
-              />
-            </Pressable>
-            {fieldErrors.producto ? (
-              <Text style={[errorStyle, { color: coral }]}>
-                {fieldErrors.producto}
-              </Text>
-            ) : null}
-            <ProductEmptyNotice
+            <ProductSelector
+              selected={selectedProduct}
+              error={fieldErrors.producto}
               products={products}
               loading={loadingProducts}
-              inputBg={t.input}
-              borderColor={t.border}
-              muted={t.muted}
+              t={t}
+              coral={coral}
+              onPress={() => setProductModalOpen(true)}
             />
 
             {/* Cantidad */}

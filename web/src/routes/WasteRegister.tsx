@@ -21,12 +21,13 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { TextArea } from '../components/ui/TextArea';
 import { Toast, type ToastState } from '../components/ui/Toast';
 import { useAppColors } from '../hooks/useAppColors';
-import { extractApiError } from '../utils/apiErrors';
 import {
   createWasteRecord,
   fetchWasteOrders,
   fetchWastePublications,
 } from '../services/waste';
+import { extractApiError } from '../utils/apiErrors';
+import { logError } from '../utils/logger';
 
 const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300';
 
@@ -118,6 +119,7 @@ export function WasteRegister() {
       setErrors({});
     },
     onError: (err: unknown) => {
+      logError('WasteRegister', err, { step: 'createWasteRecord' });
       setToast({
         message: extractApiError(err, [
           'fk_producto_semanal',
@@ -135,12 +137,17 @@ export function WasteRegister() {
 
   function handleSubmit(e: React.FormEvent): void {
     e.preventDefault();
+    // The submit button is disabled while pending, but Enter-key implicit
+    // submission can still reach here; preventDefault must run first so the
+    // guard never triggers a native form submit (page reload).
+    if (mutation.isPending) return;
     const nextErrors: Record<string, string> = {
       ...validateWasteRecord({
         pedido: pedidoId,
         producto: selectedProduct,
         cantidad,
         motivo,
+        comentarios,
         stock: selectedProduct?.stock,
         decision: decisionId,
       }),

@@ -174,9 +174,11 @@ describe('WasteRegister', () => {
   it('posts the record and invalidates the products query on success', async () => {
     seedMocks();
     let postedBody: Record<string, unknown> | null = null;
+    let postedIdempotencyKey: string | null = null;
     server.use(
       http.post(`${BASE}/mermas/`, async ({ request }) => {
         postedBody = (await request.json()) as Record<string, unknown>;
+        postedIdempotencyKey = request.headers.get('Idempotency-Key');
         return HttpResponse.json({ data: { id_merma: 1 } });
       }),
     );
@@ -201,6 +203,9 @@ describe('WasteRegister', () => {
       motivo: 'Se venció',
       fk_decision: 1,
     });
+    // POST /mermas/ carries an Idempotency-Key so a re-dispatch after a 401
+    // refresh can be deduped server-side.
+    expect(postedIdempotencyKey).toBeTruthy();
     expect(
       await screen.findByText('Merma registrada correctamente.'),
     ).toBeInTheDocument();
@@ -214,6 +219,49 @@ describe('WasteRegister', () => {
     expect(
       screen.queryByRole('option', { name: /Pedido #2 · María Gómez/ }),
     ).toBeNull();
+  });
+
+  it('follows DRF pagination and shows orders from page 2 in the selector', async () => {
+    const pedidoA = {
+      id_pedido: 3,
+      cliente_nombre: 'Ana Ruiz',
+      total: '45',
+      estado_actual: 'pendiente',
+      creado_en: '2026-08-01T00:00:00-03:00',
+    };
+    const pedidoB = {
+      id_pedido: 4,
+      cliente_nombre: 'Luis Díaz',
+      total: '60',
+      estado_actual: 'pendiente',
+      creado_en: '2026-08-01T00:00:00-03:00',
+    };
+    // DRF emits absolute next links (request.build_absolute_uri); the origin
+    // matches the jsdom default (http://localhost:3000) so the walk continues.
+    server.use(
+      http.get(`${BASE}/pedidos/`, ({ request }) => {
+        const page = new URL(request.url).searchParams.get('page');
+        return HttpResponse.json(
+          page === '2'
+            ? { results: [pedidoB], next: null }
+            : {
+                results: [pedidoA],
+                next: 'http://localhost:3000/api/pedidos/?page=2',
+              },
+        );
+      }),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({ data: publications }),
+      ),
+    );
+    renderPage();
+
+    expect(
+      await screen.findByRole('option', { name: /Pedido #3 · Ana Ruiz/ }),
+    ).toBeTruthy();
+    expect(
+      await screen.findByRole('option', { name: /Pedido #4 · Luis Díaz/ }),
+    ).toBeTruthy();
   });
 
   it('rejects a quantity of 0 (boundary below the minimum)', async () => {
@@ -280,6 +328,44 @@ describe('WasteRegister', () => {
     await waitFor(() => expect(resolvePost).toBeDefined());
     resolvePost?.(HttpResponse.json({ data: { id_merma: 1 } }));
 
+    await waitFor(() => expect(postedCount).toBe(1));
+  });
+
+  it('ignores Enter-key implicit submission while a mutation is pending (no double POST)', async () => {
+    seedMocks();
+    let resolvePost: ((value: unknown) => void) | undefined;
+    let postedCount = 0;
+    server.use(
+      http.post(`${BASE}/mermas/`, () => {
+        postedCount += 1;
+        return new Promise((resolve) => {
+          resolvePost = resolve;
+        });
+      }),
+    );
+
+    renderPage();
+    const user = userEvent.setup();
+
+    await screen.findByRole('option', { name: /Tomate/ });
+    await selectFields(user);
+    await user.type(screen.getByPlaceholderText('0'), '2');
+    await user.type(
+      screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+      'Se venció',
+    );
+
+    await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
+    // The first POST is parked on a deferred promise: the mutation is pending.
+    await waitFor(() => expect(resolvePost).toBeDefined());
+
+    // Pressing Enter in an input fires the form's onSubmit implicitly (native
+    // behavior); the handleSubmit isPending guard must swallow that second
+    // submission so the POST is not dispatched again.
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
+    await waitFor(() => expect(postedCount).toBe(1));
+
+    resolvePost?.(HttpResponse.json({ data: { id_merma: 1 } }));
     await waitFor(() => expect(postedCount).toBe(1));
   });
 

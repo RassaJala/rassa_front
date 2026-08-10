@@ -1,10 +1,11 @@
+import { createIdempotencyKey } from '@/common/payments';
 import { buildResumenUrl, unwrapWasteEnvelope } from '@/common/waste';
 import type {
   MermaResumenResponse,
   ResumenParams,
   WasteEnvelope,
 } from '@/common/waste';
-import { TERMINAL_ORDER_STATES } from '@/common/wasteRegister';
+import { isTerminalOrderState } from '@/common/wasteRegister';
 import type { ApiResponse, Order } from '@/types';
 import type {
   PublishedPublication,
@@ -14,6 +15,7 @@ import type {
 } from '@/types/waste';
 
 import api from './api';
+import { fetchAllPages } from './pagination';
 
 const DECISIONES_URL = '/decisiones-merma/';
 const MERMAS_URL = '/mermas/';
@@ -42,9 +44,12 @@ export async function fetchWasteDecisions(): Promise<WasteDecision[]> {
 export async function createWasteRecord(
   payload: WasteRecordPayload,
 ): Promise<WasteRecord> {
+  // Idempotency-Key: a 401 re-dispatch reuses the same config → same key →
+  // the backend can dedupe if the original POST was already persisted.
   const { data } = await api.post<ApiResponse<WasteRecord>>(
     MERMAS_URL,
     payload,
+    { headers: { 'Idempotency-Key': createIdempotencyKey() } },
   );
   return data.data;
 }
@@ -68,13 +73,11 @@ export async function fetchWasteRecord(id: number): Promise<WasteRecord> {
 }
 
 export async function fetchWasteOrders(): Promise<Order[]> {
-  const { data } = await api.get<{ results?: Order[] }>(PEDIDOS_URL);
-  // A merma references an order that is still in flight; terminal states
-  // (entregado/cancelado) are not valid candidates and would only bloat the
-  // selector with historical orders.
-  return (data.results ?? []).filter(
-    (order) => !TERMINAL_ORDER_STATES.has(order.estado_actual),
-  );
+  const { data } = await fetchAllPages<Order>(PEDIDOS_URL, {
+    source: 'waste-orders',
+    keyOf: (order) => order.id_pedido,
+  });
+  return data.filter((order) => !isTerminalOrderState(order.estado_actual));
 }
 
 export async function fetchCurrentPublications(): Promise<
