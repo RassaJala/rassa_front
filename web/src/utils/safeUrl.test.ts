@@ -21,11 +21,20 @@ describe('safeNextUrl', () => {
     expect(safeNextUrl('?page=2')).toBeNull();
   });
 
-  it('rejects absolute URLs with scheme', () => {
+  it('accepts same-origin absolute URLs (DRF emits absolute next links)', () => {
+    // jsdom default origin is http://localhost:3000; a same-origin absolute
+    // URL is safe to follow because the request stays on the API origin.
+    expect(safeNextUrl('http://localhost:3000/api/pedidos/?page=2')).toBe(
+      'http://localhost:3000/api/pedidos/?page=2',
+    );
+  });
+
+  it('rejects different-origin absolute URLs with scheme', () => {
     expect(
       safeNextUrl('https://evil.example/recolecciones/?page=2'),
     ).toBeNull();
     expect(safeNextUrl('http://localhost:8000/recolecciones/')).toBeNull();
+    expect(safeNextUrl('http://localhost:9999/api/pedidos/?page=2')).toBeNull();
   });
 
   it('rejects protocol-relative URLs', () => {
