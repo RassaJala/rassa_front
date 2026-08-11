@@ -149,6 +149,7 @@ export function PedidoModal({
               style={{ flexShrink: 1 }}
               renderItem={({ item }) => {
                 const isSelected = item.id_pedido === selectedId;
+                const fecha = formatFecha(item.creado_en);
                 return (
                   <Pressable
                     onPress={() => onSelect(item)}
@@ -174,9 +175,7 @@ export function PedidoModal({
                         }}
                       >
                         Pedido #{item.id_pedido}
-                        {formatFecha(item.creado_en) !== ''
-                          ? ` · ${formatFecha(item.creado_en)}`
-                          : ''}
+                        {fecha !== '' ? ` · ${fecha}` : ''}
                       </Text>
                       <Text
                         style={{

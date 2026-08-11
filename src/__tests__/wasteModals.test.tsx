@@ -120,6 +120,15 @@ describe('PedidoModal', () => {
     expect(view.getByText('No hay pedidos para este vendedor.')).toBeTruthy();
   });
 
+  it('renders the order id without a date suffix when creado_en is not a date', () => {
+    const { view } = renderPedidoModal({
+      orders: [{ ...pedido, creado_en: 'malformed' }],
+    });
+
+    expect(view.getByText('Pedido #1')).toBeTruthy();
+    expect(view.queryByText(/Pedido #1 ·/)).toBeNull();
+  });
+
   it('calls onSelect with the pressed order', () => {
     const { view, onSelect } = renderPedidoModal({ orders: [pedido] });
 
