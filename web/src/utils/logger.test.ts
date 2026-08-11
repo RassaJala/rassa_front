@@ -20,7 +20,7 @@ describe('logError', () => {
     expect(console.error).toHaveBeenCalledWith(
       '[test-context]',
       expect.any(Error),
-      '',
+      {},
     );
   });
 
@@ -34,17 +34,17 @@ describe('logError', () => {
 
   it('handles string error', () => {
     logError('ctx', 'something broke');
-    expect(console.error).toHaveBeenCalledWith('[ctx]', 'something broke', '');
+    expect(console.error).toHaveBeenCalledWith('[ctx]', 'something broke', {});
   });
 
   it('handles null error', () => {
     logError('ctx', null);
-    expect(console.error).toHaveBeenCalledWith('[ctx]', null, '');
+    expect(console.error).toHaveBeenCalledWith('[ctx]', null, {});
   });
 
   it('handles undefined error', () => {
     logError('ctx', undefined);
-    expect(console.error).toHaveBeenCalledWith('[ctx]', undefined, '');
+    expect(console.error).toHaveBeenCalledWith('[ctx]', undefined, {});
   });
 
   it('handles error with extra as empty object', () => {
@@ -59,13 +59,64 @@ describe('logError', () => {
     expect(console.error).toHaveBeenCalledWith(
       '[persistItems]',
       expect.any(Error),
-      '',
+      {},
     );
     expect(console.error).toHaveBeenCalledWith(
       '[upsertItems]',
       expect.any(Error),
-      '',
+      {},
     );
+  });
+
+  it('describes axios errors so the JWT never reaches the console in dev', () => {
+    const axiosError = new Error('Request failed');
+    Object.defineProperty(axiosError, 'isAxiosError', { value: true });
+    Object.defineProperty(axiosError, 'config', {
+      value: {
+        url: '/mermas/?apikey=SECRET-API-KEY',
+        method: 'post',
+        headers: { Authorization: 'Bearer SUPER-SECRET-TOKEN' },
+      },
+    });
+    Object.defineProperty(axiosError, 'response', {
+      value: {
+        status: 400,
+        config: { url: '/mermas/?apikey=SECRET-API-KEY', method: 'post' },
+      },
+    });
+
+    logError('WasteRegister', axiosError);
+
+    const serialized = JSON.stringify(console.error.mock.calls);
+    expect(serialized).not.toContain('SUPER-SECRET-TOKEN');
+    expect(serialized).not.toContain('SECRET-API-KEY');
+    expect(console.error).toHaveBeenCalledWith(
+      '[WasteRegister]',
+      {
+        message: 'Request failed',
+        status: 400,
+        method: 'post',
+        url: '/mermas/?apikey=[redacted]',
+      },
+      {},
+    );
+  });
+
+  it('redacts sensitive keys from the extra context in dev', () => {
+    logError('ctx', new Error('boom'), {
+      userId: 42,
+      token: 'JWT-SECRET',
+      refresh: 'refresh-rotado',
+    });
+
+    expect(console.error).toHaveBeenCalledWith('[ctx]', expect.any(Error), {
+      userId: 42,
+      token: '[redacted]',
+      refresh: '[redacted]',
+    });
+    const serialized = JSON.stringify(console.error.mock.calls);
+    expect(serialized).not.toContain('JWT-SECRET');
+    expect(serialized).not.toContain('refresh-rotado');
   });
 });
 

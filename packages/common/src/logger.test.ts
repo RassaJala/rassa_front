@@ -1,4 +1,8 @@
-import { describeError, redactSensitive } from './logger';
+import {
+  describeError,
+  redactSensitive,
+  redactUrlQueryParams,
+} from './logger';
 
 describe('describeError', () => {
   it('reduces an axios error to {message, status, method, url} without headers', () => {
@@ -30,6 +34,50 @@ describe('describeError', () => {
     expect(describeError('string error')).toBe('string error');
     expect(describeError(null)).toBeNull();
     expect(describeError(undefined)).toBeUndefined();
+  });
+
+  it('redacts sensitive query params from the url', () => {
+    const axiosError = new Error('Request failed');
+    Object.assign(axiosError, {
+      isAxiosError: true,
+      config: {
+        url: '/mermas/?apikey=SECRET-API-KEY&page=2',
+        method: 'get',
+        headers: { Authorization: 'Bearer SUPER-SECRET-TOKEN' },
+      },
+      response: {
+        status: 400,
+        config: {
+          url: '/mermas/?apikey=SECRET-API-KEY&page=2',
+          method: 'get',
+        },
+      },
+    });
+
+    expect(describeError(axiosError)).toEqual({
+      message: 'Request failed',
+      status: 400,
+      method: 'get',
+      url: '/mermas/?apikey=[redacted]&page=2',
+    });
+  });
+});
+
+describe('redactUrlQueryParams', () => {
+  it('leaves URLs without a query unchanged', () => {
+    expect(redactUrlQueryParams('/mermas/')).toBe('/mermas/');
+  });
+
+  it('redacts sensitive query values and preserves the fragment', () => {
+    expect(redactUrlQueryParams('/mermas/?token=abc#section')).toBe(
+      '/mermas/?token=[redacted]#section',
+    );
+  });
+
+  it('matches query keys case-insensitively', () => {
+    expect(redactUrlQueryParams('/?APIKey=secret&x=1')).toBe(
+      '/?APIKey=[redacted]&x=1',
+    );
   });
 });
 
