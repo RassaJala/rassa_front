@@ -1,7 +1,8 @@
-import type { PublishedProduct } from './wasteRegister';
+import type { PublishedProduct, PublishedPublication } from './wasteRegister';
 import {
   filterProductsForOrder,
   isTerminalOrderState,
+  listPublishedProducts,
   validateWasteRecord,
   WASTE_DECISION_OPTIONS,
   wasteOrderProductMismatch,
@@ -144,5 +145,57 @@ describe('filterProductsForOrder', () => {
     expect(
       filterProductsForOrder([tomate, papa], { productos: ['Lechuga'] }),
     ).toEqual([]);
+  });
+});
+
+describe('listPublishedProducts', () => {
+  const tomate: PublishedProduct = {
+    id_producto_semanal: 100,
+    producto: 'Tomate',
+    unidad: 'kg',
+    stock: 5,
+    precio: '120',
+    foto: '',
+  };
+  const papa: PublishedProduct = {
+    id_producto_semanal: 101,
+    producto: 'Papa',
+    unidad: 'kg',
+    stock: 3,
+    precio: '60',
+    foto: '',
+  };
+  const publications: PublishedPublication[] = [
+    {
+      id_publicacion: 1,
+      agricultor: null,
+      fecha_publicacion: '',
+      semana: '',
+      productos: [tomate, papa],
+    },
+    {
+      id_publicacion: 2,
+      agricultor: null,
+      fecha_publicacion: '',
+      semana: '',
+      productos: [tomate],
+    },
+  ];
+
+  it('dedupes products shared by multiple publications, keeping the first', () => {
+    expect(listPublishedProducts(publications)).toEqual([tomate, papa]);
+  });
+
+  it('drops products without stock', () => {
+    const sinStock = { ...tomate, stock: 0 };
+    expect(
+      listPublishedProducts([
+        { ...publications[0]!, productos: [sinStock, papa] },
+      ]),
+    ).toEqual([papa]);
+  });
+
+  it('returns an empty list when there are no publications', () => {
+    expect(listPublishedProducts([])).toEqual([]);
   });
 });

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   filterProductsForOrder,
   formatEstado,
+  listPublishedProducts,
   type PublishedProduct,
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
@@ -96,9 +97,7 @@ export function WasteRegister() {
   const products = useMemo<PublishedProduct[]>(
     () =>
       filterProductsForOrder(
-        publications
-          .flatMap((publication) => publication.productos)
-          .filter((product) => product.stock > 0),
+        listPublishedProducts(publications),
         selectedPedido,
       ),
     [publications, selectedPedido],
@@ -181,12 +180,13 @@ export function WasteRegister() {
     };
 
     setErrors(nextErrors);
-    if (
-      Object.keys(nextErrors).length > 0 ||
-      !pedidoId ||
-      !selectedProduct ||
-      !decisionId
-    ) {
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+    // validateWasteRecord above is the only validation source; these checks
+    // never fire when the error map is empty and exist solely to narrow the
+    // unselected state so the payload below can use the chosen values.
+    if (pedidoId === '' || selectedProduct === null || decisionId === '') {
       return;
     }
 

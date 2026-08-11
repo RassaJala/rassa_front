@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   filterProductsForOrder,
+  listPublishedProducts,
   validateWasteRecord,
   WASTE_DECISION_OPTIONS,
   wasteOrderProductMismatch,
@@ -132,9 +133,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
   const products = useMemo<PublishedProduct[]>(
     () =>
       filterProductsForOrder(
-        publications
-          .flatMap((publication) => publication.productos)
-          .filter((product) => product.stock > 0),
+        listPublishedProducts(publications),
         selectedPedido,
       ),
     [publications, selectedPedido],
@@ -186,11 +185,16 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     };
 
     setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+    // validateWasteRecord above is the only validation source; these checks
+    // never fire when the error map is empty and exist solely to narrow the
+    // nullable state so the payload below can use the selected values.
     if (
-      Object.keys(errors).length > 0 ||
-      !selectedPedido ||
-      !selectedProduct ||
-      !decisionId
+      selectedPedido === null ||
+      selectedProduct === null ||
+      decisionId === null
     ) {
       return;
     }

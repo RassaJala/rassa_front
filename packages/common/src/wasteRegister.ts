@@ -87,6 +87,26 @@ export function formatEstado(estado: string): string {
   return estado.replaceAll('_', ' ');
 }
 
+// Reúne los productos de todas las publicaciones semanales activas, descarta
+// los sin stock y elimina duplicados por id_producto_semanal (un mismo
+// ProductoSemanal puede repetirse entre publicaciones). El selector usa
+// id_producto_semanal como key, así que una lista duplicada rompería FlatList.
+export function listPublishedProducts(
+  publications: readonly PublishedPublication[],
+): PublishedProduct[] {
+  const seen = new Set<number>();
+  const result: PublishedProduct[] = [];
+  for (const publication of publications) {
+    for (const product of publication.productos) {
+      if (product.stock <= 0) continue;
+      if (seen.has(product.id_producto_semanal)) continue;
+      seen.add(product.id_producto_semanal);
+      result.push(product);
+    }
+  }
+  return result;
+}
+
 export interface WasteProductInfo {
   readonly id: number;
   readonly producto: string;
