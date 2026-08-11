@@ -400,4 +400,61 @@ describe('WasteRegisterScreen (mobile)', () => {
     await waitFor(() => render.getByText('Tomate'));
     expect(render.queryByText('Papa')).toBeNull();
   });
+
+  it('blames the selected order when it empties the product list', async () => {
+    const { fetchWasteOrders } = jest.requireMock('@/services/waste');
+    (fetchWasteOrders as jest.Mock).mockResolvedValueOnce([
+      {
+        id_pedido: 1,
+        cliente_nombre: 'Juan Pérez',
+        total: '120',
+        estado_actual: 'pendiente',
+        creado_en: '2026-08-03T00:00:00-03:00',
+        productos: ['Zanahoria'],
+      },
+    ]);
+    const { fetchCurrentPublications } = jest.requireMock('@/services/waste');
+    (fetchCurrentPublications as jest.Mock).mockResolvedValueOnce([
+      {
+        id_publicacion: 10,
+        agricultor: null,
+        fecha_publicacion: '2026-08-03T00:00:00-03:00',
+        semana: '2026-W32',
+        productos: [
+          {
+            id_producto_semanal: 100,
+            producto: 'Tomate',
+            unidad: 'kg',
+            stock: 5,
+            precio: '120',
+            foto: '',
+          },
+        ],
+      },
+    ]);
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+
+    // There ARE published products; before selecting an order no notice shows.
+    expect(
+      render.queryByText(/No hay publicaciones activas esta semana/),
+    ).toBeNull();
+
+    // Selecting an order whose products do not match empties the filtered list.
+    fireEvent.press(render.getByText('Elige un pedido…'));
+    await waitFor(() => render.getByText(/Pedido #1/));
+    fireEvent.press(render.getByText(/Pedido #1/));
+
+    expect(
+      await waitFor(() =>
+        render.getByText(
+          'El pedido seleccionado no tiene productos publicados. Elige otro pedido.',
+        ),
+      ),
+    ).toBeTruthy();
+    expect(
+      render.queryByText(/No hay publicaciones activas esta semana/),
+    ).toBeNull();
+  });
 });

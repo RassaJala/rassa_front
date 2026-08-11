@@ -403,6 +403,48 @@ describe('WasteRegister', () => {
     ).toBeInTheDocument();
   });
 
+  it('blames the selected order when it empties the product list', async () => {
+    server.use(
+      http.get(`${BASE}/pedidos/`, () =>
+        HttpResponse.json({
+          results: [
+            {
+              id_pedido: 1,
+              cliente_nombre: 'Juan Pérez',
+              total: '120',
+              estado_actual: 'pendiente',
+              creado_en: '2026-08-03T00:00:00-03:00',
+              productos: ['Zanahoria'],
+            },
+          ],
+        }),
+      ),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({ data: publications }),
+      ),
+    );
+    renderPage();
+    const user = userEvent.setup();
+
+    // Wait for the queries to land (form rendered) before asserting or selecting.
+    await screen.findByRole('option', { name: /Tomate/ });
+    // Publications exist, so before selecting an order no notice shows.
+    expect(
+      screen.queryByText(/No hay publicaciones activas esta semana/),
+    ).toBeNull();
+
+    await user.selectOptions(screen.getByLabelText(/^Pedido/), '1');
+
+    expect(
+      await screen.findByText(
+        /El pedido seleccionado no tiene productos publicados/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/No hay publicaciones activas esta semana/),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows the error fallback UI and recovers with Reintentar when queries fail', async () => {
     server.use(
       http.get(`${BASE}/pedidos/`, () =>
