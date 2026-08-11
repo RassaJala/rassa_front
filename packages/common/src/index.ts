@@ -3,6 +3,7 @@ export * from './apiErrors';
 export * from './validation';
 export * from './roles';
 export * from './payments';
+export * from './receipt';
 export * from './orders';
 export * from './publicationLabels';
 export * from './settlements';

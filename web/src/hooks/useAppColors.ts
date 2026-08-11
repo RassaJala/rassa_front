@@ -1,3 +1,4 @@
+import { BORDER, BRAND, CORAL, INK, MUTED } from '@/common/brand';
 import { useTheme } from '../providers/ThemeProvider';
 
 // ponytail: hook único para colores del tema (#30) — reemplaza la duplicación
@@ -7,16 +8,16 @@ export function useAppColors() {
   const isDark = resolved === 'dark';
   return {
     isDark,
-    brand: isDark ? '#4A8A63' : '#24563C',
+    brand: isDark ? '#4A8A63' : BRAND,
     // NOTE: onBrand is intentionally static white — brand text always needs max contrast; if brand bg ever lightens, this must become dynamic
     onBrand: '#FFFFFF',
-    coral: '#DE393A',
-    muted: isDark ? '#9DA89D' : '#5E6B5E',
-    border: isDark ? '#2A332A' : '#E2E6DF',
+    coral: CORAL,
+    muted: isDark ? '#9DA89D' : MUTED,
+    border: isDark ? '#2A332A' : BORDER,
     inputBorder: isDark ? '#4A5C4F' : '#D6DAD4',
     surface: isDark ? '#263028' : '#FFFFFF',
     bg: isDark ? '#1A211B' : '#F5F7F0',
-    fg: isDark ? '#E8EAE4' : '#2D3328',
+    fg: isDark ? '#E8EAE4' : INK,
     accentBg: isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)',
   } as const;
 }

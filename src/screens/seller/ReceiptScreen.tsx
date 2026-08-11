@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
+
+import * as Print from 'expo-print';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -13,8 +16,20 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 
-import { formatearFecha } from '@/common/dates';
-import { fetchPago } from '@/common/payments';
+import { esPagoIdValido, fetchPago, formatearMonto } from '@/common/payments';
+import {
+  buildReceiptHtml,
+  calcularAjuste,
+  calcularImportePartida,
+  calcularSubtotalVisible,
+  calcularTotalPedidoVisible,
+  deberiaMostrarAjuste,
+  deberiaMostrarTotalPedido,
+  formatearAjuste,
+  formatearCantidad,
+  formatearFechaSegura,
+  redondearCentavos,
+} from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
 import { useTheme } from '@/store/ThemeContext';
@@ -33,7 +48,14 @@ export default function ReceiptScreen(): React.JSX.Element {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { paymentId } = route.params;
-  const paymentIdValid = Number.isInteger(paymentId) && paymentId > 0;
+  const paymentIdValid = esPagoIdValido(paymentId);
+
+  // Semáforo anti doble-tap: evita abrir dos diálogos de impresión si el
+  // usuario toca el botón dos veces seguidas mientras el PDF se genera.
+  const imprimiendoRef = useRef(false);
+  // Estado de UI para el feedback visual "imprimiendo" (R4-S): el segundo tap
+  // ya se ignoraba en silencio, ahora el botón muestra un spinner.
+  const [imprimiendo, setImprimiendo] = useState(false);
 
   const bg = isDark ? colors.admBgD : colors.admBgL;
   const fg = isDark ? colors.admFgD : colors.admFgL;
@@ -71,55 +93,65 @@ export default function ReceiptScreen(): React.JSX.Element {
 
   if (isError || !pago) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 24,
-        }}
-      >
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={48}
-          color={muted}
-        />
-        <Text
-          style={{
-            marginTop: 12,
-            fontSize: 15,
-            color: muted,
-            textAlign: 'center',
-          }}
-        >
-          Error al cargar el recibo
-        </Text>
-        <Pressable
-          onPress={() => void refetch()}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-          }}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
-            Reintentar
-          </Text>
-        </Pressable>
-      </View>
+      <ReceiptErrorView
+        bg={bg}
+        muted={muted}
+        border={border}
+        brand={brand}
+        paymentIdValid={paymentIdValid}
+        refetch={refetch}
+      />
     );
   }
 
-  const productos = pago.productos ?? [];
+  const productos = (pago.productos ?? []).filter(
+    // Guard por ELEMENTO (R3-01): un backend corrupto puede mandar [null];
+    // el map de abajo accedería a prod.nombre y rompería el render.
+    (prod): prod is NonNullable<typeof prod> => prod != null,
+  );
+  // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
+  // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
+  const subtotal = calcularSubtotalVisible(pago);
+  const ajuste = redondearCentavos(calcularAjuste(pago, subtotal));
+  // Mismo umbral compartido que el PDF (EPSILON en receipt.ts): si cambia,
+  // pantalla y documento no divergen (R2-S).
+  const mostrarAjuste = deberiaMostrarAjuste(pago, subtotal);
+  // Misma fila informativa que el PDF cuando total_pedido no cuadra con la
+  // suma de filas (R2-S): pantalla y documento cuentan la misma historia.
+  const totalPedidoVisible = calcularTotalPedidoVisible(pago);
+  const mostrarTotalPedido = deberiaMostrarTotalPedido(pago, subtotal);
 
+  const handleImprimir = () => {
+    if (imprimiendoRef.current) return;
+    imprimiendoRef.current = true;
+    setImprimiendo(true);
+    try {
+      const html = buildReceiptHtml(pago);
+      void Print.printAsync({ html })
+        .catch((error: unknown) => {
+          console.warn('No se pudo imprimir el recibo', error);
+          Alert.alert(
+            'No se pudo imprimir',
+            'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+          );
+        })
+        .finally(() => {
+          imprimiendoRef.current = false;
+          setImprimiendo(false);
+        });
+    } catch (error: unknown) {
+      // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: el
+      // semáforo se libera y el usuario recibe feedback, el botón no queda
+      // muerto de por vida.
+      console.warn('No se pudo generar el recibo', error);
+      Alert.alert(
+        'No se pudo imprimir',
+        'No se pudo generar el recibo. Intentá de nuevo.',
+      );
+      imprimiendoRef.current = false;
+      setImprimiendo(false);
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
@@ -151,6 +183,33 @@ export default function ReceiptScreen(): React.JSX.Element {
         <Text style={{ fontSize: 22, fontWeight: '700', color: fg }}>
           Recibo de Pago
         </Text>
+        <Pressable
+          onPress={handleImprimir}
+          disabled={imprimiendo}
+          accessibilityLabel="Imprimir recibo en PDF"
+          style={{
+            marginLeft: 'auto',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: surface,
+            borderWidth: 1,
+            borderColor: border,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            opacity: imprimiendo ? 0.6 : 1,
+          }}
+        >
+          {imprimiendo ? (
+            <ActivityIndicator size="small" color={brand} />
+          ) : (
+            <MaterialCommunityIcons name="printer" size={18} color={brand} />
+          )}
+          <Text style={{ fontSize: 13, fontWeight: '600', color: brand }}>
+            PDF
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -206,9 +265,19 @@ export default function ReceiptScreen(): React.JSX.Element {
           }}
         >
           <DetailRow label="Folio" value={pago.folio} fg={fg} muted={muted} />
+          {pago.pedido != null ? (
+            // R2-06: misma fila que web y PDF (incluye pedido: 0, que `?` falsy
+            // hubiera ocultado en la web). Tres artefactos, una sola historia.
+            <DetailRow
+              label="Pedido"
+              value={`#${pago.pedido}`}
+              fg={fg}
+              muted={muted}
+            />
+          ) : null}
           <DetailRow
             label="Fecha"
-            value={formatearFecha(pago.fecha_pago)}
+            value={formatearFechaSegura(pago.fecha_pago)}
             fg={fg}
             muted={muted}
           />
@@ -273,14 +342,99 @@ export default function ReceiptScreen(): React.JSX.Element {
                   {prod.nombre}
                 </Text>
                 <Text style={{ fontSize: 13, color: muted, marginTop: 1 }}>
-                  {prod.cantidad}x ${Number(prod.precio).toFixed(2)}
+                  {formatearCantidad(prod.cantidad)}x{' '}
+                  {formatearMonto(prod.precio)}
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                ${(prod.cantidad * Number(prod.precio)).toFixed(2)}
+                {formatearMonto(
+                  // R4-05: redondear a centavos ANTES de formatear (la fila
+                  // debe cerrar con el subtotal ya redondeado).
+                  redondearCentavos(calcularImportePartida(prod)),
+                )}
               </Text>
             </View>
           ))}
+        </View>
+
+        {/* Subtotal + Ajuste */}
+        {!Number.isFinite(subtotal) ? (
+          // R3-02: la pantalla muestra el mismo aviso que el PDF. Sin esto,
+          // un subtotal corrupto se veía como "Subtotal —" sin explicación.
+          <View
+            style={{
+              backgroundColor: colors.admErrorBgL,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.admErrorBorderL,
+              padding: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 13, color: colors.admErrorTextL }}>
+              No se pudieron calcular los montos del pedido.
+            </Text>
+          </View>
+        ) : null}
+        <View
+          style={{
+            backgroundColor: surface,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: border,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingVertical: 4,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+              Subtotal
+            </Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
+              {formatearMonto(subtotal)}
+            </Text>
+          </View>
+          {mostrarAjuste ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 4,
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                Ajuste
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
+                {formatearAjuste(ajuste)}
+              </Text>
+            </View>
+          ) : null}
+          {mostrarTotalPedido ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 4,
+              }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                Total del pedido
+              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: muted }}>
+                {formatearMonto(totalPedidoVisible)}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Total */}
@@ -301,7 +455,7 @@ export default function ReceiptScreen(): React.JSX.Element {
             Total pagado
           </Text>
           <Text style={{ fontSize: 22, fontWeight: '700', color: brand }}>
-            ${Number(pago.monto).toFixed(2)}
+            {formatearMonto(pago.monto)}
           </Text>
         </View>
 
@@ -323,6 +477,76 @@ export default function ReceiptScreen(): React.JSX.Element {
           </Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+// ── Error view ─────────────────────────────────────────────
+
+function ReceiptErrorView({
+  bg,
+  muted,
+  border,
+  brand,
+  paymentIdValid,
+  refetch,
+}: {
+  readonly bg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly brand: string;
+  readonly paymentIdValid: boolean;
+  readonly refetch: () => Promise<unknown>;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={48}
+        color={muted}
+      />
+      <Text
+        style={{
+          marginTop: 12,
+          fontSize: 15,
+          color: muted,
+          textAlign: 'center',
+        }}
+      >
+        Error al cargar el recibo
+      </Text>
+      {paymentIdValid ? (
+        // R4-07: con paymentId inválido, refetch() dispararía fetchPago(api,
+        // 'abc') — un callejón sin salida. Solo se ofrece reintentar cuando
+        // el id es válido y la falla fue de red/servidor.
+        <Pressable
+          onPress={() => void refetch()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 16,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: border,
+          }}
+        >
+          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+            Reintentar
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

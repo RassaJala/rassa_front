@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Test files are less strict */
 import React from 'react';
 
-import { render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ReceiptScreen from '@/screens/seller/ReceiptScreen';
+import { mockPago } from '@/common/payment-fixtures';
+import * as receipt from '@/common/receipt';
 import { fetchPago } from '@/common/payments';
 
 const mockGoBack = jest.fn();
@@ -34,6 +37,10 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
+jest.mock('expo-print', () => ({
+  printAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('@/common/payments', () => ({
   ...jest.requireActual('@/common/payments'),
   fetchTiposPago: jest.fn(),
@@ -42,21 +49,6 @@ jest.mock('@/common/payments', () => ({
 }));
 
 const mockedFetchPago = fetchPago as jest.MockedFunction<typeof fetchPago>;
-
-const mockPago = {
-  id_pago: 9,
-  folio: 'PAG-0009',
-  pedido: 5,
-  tipo_pago: 1,
-  tipo_pago_nombre: 'Efectivo',
-  cliente_nombre: 'Cliente Test',
-  cliente_id: 4,
-  monto: '119.48',
-  referencia: 'TEST-001',
-  total_pedido: '119.48',
-  productos: [{ nombre: 'Manzana', precio: '59.74', cantidad: 2 }],
-  fecha_pago: '2026-07-30T12:00:00Z',
-};
 
 function renderScreen() {
   const queryClient = new QueryClient({
@@ -74,6 +66,10 @@ describe('ReceiptScreen', () => {
     jest.clearAllMocks();
     mockParams.current = { paymentId: 9 };
     mockedFetchPago.mockResolvedValue(mockPago);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders payment details after fetch', async () => {
@@ -101,5 +97,205 @@ describe('ReceiptScreen', () => {
     const { findByText } = renderScreen();
     expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('oculta Reintentar con paymentId inválido (R4-07)', async () => {
+    mockParams.current = { paymentId: 'abc' as unknown as number };
+
+    const { findByText, queryByText } = renderScreen();
+    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    // refetch() con id inválido dispararía fetchPago(api, 'abc'): un callejón
+    // sin salida. Sin el botón, la única salida es volver atrás.
+    expect(queryByText('Reintentar')).toBeNull();
+  });
+
+  it('muestra la fila Pedido, misma historia que web y PDF (R2-06)', async () => {
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    // mockPago trae pedido: 5; la fila debe existir en la pantalla mobile.
+    expect(await findByText('#5')).toBeTruthy();
+  });
+
+  it('muestra la fila Pedido con pedido: 0 (R2-06)', async () => {
+    mockedFetchPago.mockResolvedValue({ ...mockPago, pedido: 0 });
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+    expect(await findByText('#0')).toBeTruthy();
+  });
+
+  it('no crashea con productos: [null] y avisa en pantalla (R3-01/R3-02)', async () => {
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      productos: [null],
+    } as unknown as typeof mockPago);
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+    expect(
+      await findByText('No se pudieron calcular los montos del pedido.'),
+    ).toBeTruthy();
+  });
+
+  it('opens the print dialog with the real receipt HTML when PDF is pressed', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    // buildReceiptHtml no está mockeado: el HTML que se imprime es el real.
+    const printCall = printAsync.mock.calls[0][0] as { html: string };
+    expect(printCall.html).toContain('PAG-0009');
+    expect(printCall.html).toContain('Manzana');
+    expect(printCall.html).toContain('$59.74');
+  });
+
+  it('muestra una alerta de error cuando la impresión del PDF falla', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    printAsync.mockRejectedValueOnce(new Error('print explosion'));
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('Imprimir recibo en PDF'));
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir',
+      'Ocurrió un error al generar el PDF del recibo. Intentá de nuevo.',
+    );
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('reintenta tras un fallo de impresión (el finally libera el semáforo)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    printAsync.mockRejectedValueOnce(new Error('first attempt fails'));
+    fireEvent.press(pdfBtn);
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1));
+
+    // El finally liberó imprimiendoRef: un segundo tap vuelve a intentar.
+    printAsync.mockResolvedValueOnce(undefined);
+    fireEvent.press(pdfBtn);
+    await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(2));
+  });
+
+  it('ignora un doble tap: solo abre un diálogo de impresión por vez', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    printAsync.mockResolvedValue(undefined);
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+    fireEvent.press(pdfBtn);
+
+    await waitFor(() => expect(printAsync).toHaveBeenCalledTimes(1));
+  });
+
+  it('muestra feedback visual mientras imprime (spinner/disabled, R4-S)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    let liberarPrint: (() => void) | undefined;
+    printAsync.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          liberarPrint = resolve;
+        }),
+    );
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    // Mientras printAsync está pendiente, el botón está deshabilitado y con
+    // spinner (antes el segundo tap se ignoraba en silencio, R4-S).
+    expect(pdfBtn.props.accessibilityState?.disabled).toBe(true);
+
+    // Al completarse la impresión, el botón vuelve a estar habilitado.
+    liberarPrint?.();
+    await waitFor(() =>
+      expect(pdfBtn.props.accessibilityState?.disabled).toBe(false),
+    );
+  });
+
+  it('muestra la fila Ajuste en pantalla cuando hay descuento/recargo (misma historia que el PDF)', async () => {
+    // Filas: 2 × 59.74 = 119.48; monto cobrado 210.98 → ajuste +$91.50.
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      monto: '210.98',
+      total_pedido: '210.98',
+    });
+
+    const { findByText, findAllByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    expect(await findByText('Ajuste')).toBeTruthy();
+    expect(await findByText('+$91.50')).toBeTruthy();
+    // '$119.48' aparece dos veces: importe de la fila Manzana y subtotal.
+    expect((await findAllByText('$119.48')).length).toBeGreaterThan(0);
+    // '$210.98' aparece en la fila informativa Total del pedido y en Total
+    // pagado (R2-S), ya que total_pedido difiere del subtotal visible.
+    expect((await findAllByText('$210.98')).length).toBeGreaterThan(0);
+  });
+
+  it('muestra la fila Total del pedido en pantalla cuando difiere de la suma (R2-S)', async () => {
+    // Filas: 119.48; total_pedido 112.00 → fila informativa, misma que el PDF.
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      monto: '119.48',
+      total_pedido: '112.00',
+    });
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    expect(await findByText('Total del pedido')).toBeTruthy();
+    expect(await findByText('$112.00')).toBeTruthy();
+  });
+
+  it('liberar el semáforo cuando buildReceiptHtml LANZA síncrono (R3-W2)', async () => {
+    const printAsync = jest.requireMock('expo-print').printAsync;
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: el
+    // catch debe informar y NO dejar el botón muerto.
+    const buildSpy = jest
+      .spyOn(receipt, 'buildReceiptHtml')
+      .mockImplementationOnce(() => {
+        throw new Error('sync explosion');
+      });
+
+    const { findByText, getByLabelText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    const pdfBtn = getByLabelText('Imprimir recibo en PDF');
+    fireEvent.press(pdfBtn);
+
+    expect(buildSpy).toHaveBeenCalledTimes(1);
+    expect(alertSpy).toHaveBeenCalledWith(
+      'No se pudo imprimir',
+      'No se pudo generar el recibo. Intentá de nuevo.',
+    );
+    expect(warnSpy).toHaveBeenCalled();
+    expect(printAsync).not.toHaveBeenCalled();
+
+    // El catch liberó imprimiendoRef: un segundo tap vuelve a intentar con el
+    // buildReceiptHtml real (mockImplementationOnce ya se consumió).
+    fireEvent.press(pdfBtn);
+    expect(printAsync).toHaveBeenCalledTimes(1);
   });
 });
