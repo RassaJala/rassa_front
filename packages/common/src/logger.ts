@@ -38,7 +38,9 @@ export function redactUrlQueryParams(url: string): string {
       if (!pair) return pair;
       const eq = pair.indexOf('=');
       const key = eq === -1 ? pair : pair.slice(0, eq);
-      if (SENSITIVE_KEY_PARTS.some((part) => key.toLowerCase().includes(part))) {
+      if (
+        SENSITIVE_KEY_PARTS.some((part) => key.toLowerCase().includes(part))
+      ) {
         return `${key}=[redacted]`;
       }
       return pair;

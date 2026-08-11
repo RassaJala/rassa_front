@@ -76,7 +76,8 @@ function seedMocks() {
 
 function renderPage(client?: QueryClient) {
   const qc =
-    client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client ??
+    new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <MemoryRouter>
       <ThemeProvider>

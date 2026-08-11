@@ -153,19 +153,19 @@ describe('filterProductsForOrder', () => {
     // products that do belong to the order but were cut off, so the full list
     // must be kept.
     expect(
-      filterProductsForOrder(
-        [tomate, papa],
-        { productos: ['Tomate'], has_more_productos: true },
-      ),
+      filterProductsForOrder([tomate, papa], {
+        productos: ['Tomate'],
+        has_more_productos: true,
+      }),
     ).toEqual([tomate, papa]);
   });
 
   it('filters normally when the order product list is complete (has_more_productos false)', () => {
     expect(
-      filterProductsForOrder(
-        [tomate, papa],
-        { productos: ['TOMATE'], has_more_productos: false },
-      ),
+      filterProductsForOrder([tomate, papa], {
+        productos: ['TOMATE'],
+        has_more_productos: false,
+      }),
     ).toEqual([tomate]);
   });
 });

@@ -1,8 +1,4 @@
-import {
-  describeError,
-  redactSensitive,
-  redactUrlQueryParams,
-} from './logger';
+import { describeError, redactSensitive, redactUrlQueryParams } from './logger';
 
 describe('describeError', () => {
   it('reduces an axios error to {message, status, method, url} without headers', () => {
