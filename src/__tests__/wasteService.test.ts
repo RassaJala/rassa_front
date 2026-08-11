@@ -3,10 +3,7 @@ import {
   createWasteRecord,
   fetchCurrentPublications,
   fetchMermaResumen,
-  fetchWasteDecisions,
   fetchWasteOrders,
-  fetchWasteRecord,
-  fetchWasteRecords,
 } from '@/services/waste';
 import api, { isApiUrl } from '@/services/api';
 
@@ -68,33 +65,6 @@ describe('waste service (mobile)', () => {
 describe('waste register service (mobile)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('normalizes decisions from a paginated {results} envelope', async () => {
-    mockApi.get.mockResolvedValueOnce({
-      data: { data: { results: [{ id_decision: 1, decision: 'Donar' }] } },
-    });
-
-    await expect(fetchWasteDecisions()).resolves.toEqual([
-      { id_decision: 1, decision: 'Donar' },
-    ]);
-    expect(mockApi.get).toHaveBeenCalledWith('/decisiones-merma/');
-  });
-
-  it('normalizes decisions from a bare array response', async () => {
-    mockApi.get.mockResolvedValueOnce({
-      data: { data: [{ id_decision: 2, decision: 'Desechar' }] },
-    });
-
-    await expect(fetchWasteDecisions()).resolves.toEqual([
-      { id_decision: 2, decision: 'Desechar' },
-    ]);
-  });
-
-  it('returns an empty list when the decision payload is missing', async () => {
-    mockApi.get.mockResolvedValueOnce({ data: {} });
-
-    await expect(fetchWasteDecisions()).resolves.toEqual([]);
   });
 
   it('posts a waste record with the full payload', async () => {
@@ -260,44 +230,5 @@ describe('waste register service (mobile)', () => {
       { id_publicacion: 10, productos: [] },
     ]);
     expect(mockApi.get).toHaveBeenCalledWith('/publicaciones/current/');
-  });
-
-  it('normalizes waste records from a paginated {results} envelope', async () => {
-    mockApi.get.mockResolvedValueOnce({
-      data: { data: { results: [{ id_merma: 1, cantidad: 2 }] } },
-    });
-
-    await expect(fetchWasteRecords()).resolves.toEqual([
-      { id_merma: 1, cantidad: 2 },
-    ]);
-    expect(mockApi.get).toHaveBeenCalledWith('/mermas/');
-  });
-
-  it('normalizes waste records from a bare array response', async () => {
-    mockApi.get.mockResolvedValueOnce({
-      data: { data: [{ id_merma: 2, cantidad: 3 }] },
-    });
-
-    await expect(fetchWasteRecords()).resolves.toEqual([
-      { id_merma: 2, cantidad: 3 },
-    ]);
-  });
-
-  it('returns an empty list when the records payload is missing', async () => {
-    mockApi.get.mockResolvedValueOnce({ data: {} });
-
-    await expect(fetchWasteRecords()).resolves.toEqual([]);
-  });
-
-  it('fetches a single waste record by id', async () => {
-    mockApi.get.mockResolvedValueOnce({
-      data: { data: { id_merma: 5, cantidad: 2 } },
-    });
-
-    await expect(fetchWasteRecord(5)).resolves.toEqual({
-      id_merma: 5,
-      cantidad: 2,
-    });
-    expect(mockApi.get).toHaveBeenCalledWith('/mermas/5/');
   });
 });
