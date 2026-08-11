@@ -1,5 +1,4 @@
 import {
-  BADGE_PAGADO,
   BORDER,
   BRAND,
   BRAND_DARK,
@@ -12,6 +11,9 @@ import {
 import { formatearFecha } from './dates';
 import { formatearMonto } from './payments';
 import type { PaymentDetail } from './payments';
+
+/** Etiqueta UI del badge del documento (R2-05: no es un token de marca). */
+const BADGE_PAGADO = 'Pagado';
 
 /** Umbral (en pesos) bajo el cual un ajuste o discrepancia se ignora. */
 const EPSILON = 0.005;
@@ -38,10 +40,16 @@ function coercerNumero(raw: unknown): number {
  * Compartido con las pantallas (mobile y web) para que fila, subtotal y
  * documento cuenten la misma historia.
  */
-export function calcularImportePartida(partida: {
-  readonly cantidad?: number | string | null;
-  readonly precio?: number | string | null;
-}): number {
+export function calcularImportePartida(
+  partida: {
+    readonly cantidad?: number | string | null;
+    readonly precio?: number | string | null;
+  } | null,
+): number {
+  // Guard por ELEMENTO, no solo por forma del array (R3-01): un backend
+  // corrupto puede mandar [null] y partida.cantidad sobre null lanzaría
+  // TypeError en el top-level del render (pantalla en blanco).
+  if (partida == null) return Number.NaN;
   const cantidad =
     partida.cantidad == null ? Number.NaN : Number(partida.cantidad);
   const precio = partida.precio == null ? Number.NaN : Number(partida.precio);
@@ -165,13 +173,20 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
 
   const filas = Array.isArray(pago.productos)
     ? pago.productos
+        // Guard por ELEMENTO (R3-01): [null] no debe lanzar en prod.nombre.
+        .filter((prod): prod is NonNullable<typeof prod> => prod != null)
         .map(
           (prod) => `
         <tr>
           <td>${escapeHtml(prod.nombre)}</td>
           <td class="num">${formatearCantidad(prod.cantidad)}</td>
           <td class="num">${formatearMonto(prod.precio)}</td>
-          <td class="num">${formatearMonto(calcularImportePartida(prod))}</td>
+          <td class="num">${formatearMonto(
+            // R4-05: redondear a centavos ANTES de formatear; toFixed(2) y
+            // Math.round divergen con >2 decimales (p.ej. 10.005) y la fila
+            // debe cerrar con el subtotal ya redondeado.
+            redondearCentavos(calcularImportePartida(prod)),
+          )}</td>
         </tr>`,
         )
         .join('')
@@ -214,6 +229,10 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
   // Un fecha_pago ausente o no parseable no debe imprimir "Invalid Date" ni
   // el epoch (01/01/1970), sino "—".
   const fecha = formatearFechaSegura(pago.fecha_pago);
+  // R3-03: el pie indica cuándo se GENERÓ el documento, no cuándo se pagó.
+  // La fecha del pago ya aparece en la fila Fecha del resumen; con fecha_pago
+  // corrupta el pie decía "Documento generado el —", un contrasentido.
+  const fechaGeneracion = formatearFecha(new Date().toISOString());
 
   const resumen = [
     ['Folio', escapeHtml(pago.folio)],
@@ -324,7 +343,7 @@ export function buildReceiptHtml(pago: PaymentDetail): string {
     <strong>${formatearMonto(pago.monto)}</strong>
   </div>
 
-  <p class="footer">Documento generado el ${fecha} — ${BRAND_NAME}</p>
+  <p class="footer">Documento generado el ${fechaGeneracion} — ${BRAND_NAME}</p>
 </body>
 </html>`;
 }

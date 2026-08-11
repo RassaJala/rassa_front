@@ -11,6 +11,7 @@ import {
   deberiaMostrarAjuste,
   escapeHtml,
   formatearCantidad,
+  formatearFechaSegura,
 } from '@/common/receipt';
 import type { PaymentDetail } from '@/common/payments';
 
@@ -140,6 +141,12 @@ describe('calcularImportePartida', () => {
     expect(calcularImportePartida({ cantidad: 1, precio: null })).toBe(
       Number.NaN,
     );
+  });
+
+  it('devuelve NaN cuando la partida es null (guard por ELEMENTO, R3-01)', () => {
+    // Un backend corrupto puede mandar productos: [null]; sin el guard,
+    // partida.cantidad lanzaría TypeError en el top-level del render.
+    expect(calcularImportePartida(null)).toBe(Number.NaN);
   });
 });
 
@@ -352,6 +359,17 @@ describe('buildReceiptHtml', () => {
     expect(html).toContain('<strong>$119.48</strong>');
   });
 
+  it('tolera productos: [null] sin romper el documento (guard por ELEMENTO, R3-01)', () => {
+    const conNull = {
+      ...mockPago,
+      productos: [null],
+    } as unknown as PaymentDetail;
+    const html = buildReceiptHtml(conNull);
+    // No crashea: la fila null se filtra y el subtotal NaN dispara el aviso.
+    expect(html).not.toContain('$NaN');
+    expect(html).toContain('No se pudieron calcular los montos del pedido');
+  });
+
   it('tolera cliente_nombre: null (imprime "—")', () => {
     const sinCliente: PaymentDetail = { ...mockPago, cliente_nombre: null };
     const html = buildReceiptHtml(sinCliente);
@@ -366,6 +384,23 @@ describe('buildReceiptHtml', () => {
     const html = buildReceiptHtml(corrupto);
     expect(html).not.toContain('Invalid Date');
     expect(html).toContain('>—<');
+  });
+
+  it('imprime la fecha de GENERACIÓN en el footer, no fecha_pago (R3-03)', () => {
+    const html = buildReceiptHtml(mockPago);
+    expect(html).toContain('Documento generado el');
+    // El pie no debe depender de fecha_pago: aunque el pago sea corrupto, el
+    // documento siempre informa cuándo se generó.
+    const corrupto: PaymentDetail = {
+      ...mockPago,
+      fecha_pago: 'esto-no-es-una-fecha',
+    };
+    const htmlCorrupto = buildReceiptHtml(corrupto);
+    expect(htmlCorrupto).toContain('Documento generado el');
+    expect(htmlCorrupto).not.toContain('Documento generado el —');
+    expect(html).not.toContain(
+      `Documento generado el ${formatearFechaSegura(mockPago.fecha_pago)}`,
+    );
   });
 
   it('tolera cantidad corrupta: importe "—" y aviso, no $0.00 falso (R4-W2)', () => {

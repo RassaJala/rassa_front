@@ -1,3 +1,5 @@
+import { BORDER, BRAND, CORAL, INK, MUTED } from '@/common/brand';
+
 export const colors = {
   primary: '#16a34a',
   primaryDark: '#15803d',
@@ -27,10 +29,10 @@ export const colors = {
     mountainMid: '#B2C2B2',
     mountainBot: '#A19FB6',
   },
-  brandPrimary: '#24563C', // redesign palette brand green (light)
+  brandPrimary: BRAND, // redesign palette brand green (light) — R2-01 fuente única
   brandPrimaryDark: '#4A8A63', // redesign palette brand green (dark)
   brandGreenForest: '#3A6D56',
-  brandRedCoral: '#DE393A',
+  brandRedCoral: CORAL,
   brandOrange: '#E46C38',
   mutedDark: '#9DA89D', // redesign dark mode muted text
   iconDark: '#1D1D1D',
@@ -46,13 +48,13 @@ export const colors = {
   // ── Redesign/Admin palette ──
   admSurfaceL: '#FFFFFF',
   admSurfaceD: '#263028',
-  admFgL: '#2D3328',
+  admFgL: INK,
   admFgD: '#E8EAE4',
-  admMutedL: '#5E6B5E',
+  admMutedL: MUTED,
   admMutedD: '#9DA89D',
-  admBorderL: '#E2E6DF',
+  admBorderL: BORDER,
   admBorderD: '#353D35',
-  admBrandL: '#24563C',
+  admBrandL: BRAND,
   admBrandD: '#4A8A63',
   admBgL: '#F5F7F0',
   admBgD: '#1A211B',
@@ -144,15 +146,15 @@ export function themeColors(isDark: boolean): ThemeColors {
   return {
     bg: isDark ? '#1A211B' : '#F5F7F0',
     surface: isDark ? '#263028' : '#FFFFFF',
-    fg: isDark ? '#E8EAE4' : '#2D3328',
-    muted: isDark ? '#9DA89D' : '#5E6B5E',
-    border: isDark ? '#353D35' : '#E2E6DF',
+    fg: isDark ? '#E8EAE4' : INK,
+    muted: isDark ? '#9DA89D' : MUTED,
+    border: isDark ? '#353D35' : BORDER,
     input: isDark ? '#263028' : '#F5F7F0',
     errorBg: isDark ? '#3D2023' : '#FDEDEE',
     accentBg: isDark ? 'rgba(74,138,99,0.12)' : 'rgba(36,86,60,0.07)',
     coralBg: isDark ? 'rgba(232,74,74,0.12)' : 'rgba(222,57,58,0.07)',
     ...statusColors(isDark),
-    brand: isDark ? '#4A8A63' : '#24563C',
+    brand: isDark ? '#4A8A63' : BRAND,
     segBg: isDark ? '#263028' : '#E8ECE4',
     shadowBg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
     subtleBg: isDark ? 'rgba(74,138,99,0.14)' : 'rgba(36,86,60,0.08)',

@@ -99,6 +99,45 @@ describe('ReceiptScreen', () => {
     expect(mockedFetchPago).not.toHaveBeenCalled();
   });
 
+  it('oculta Reintentar con paymentId inválido (R4-07)', async () => {
+    mockParams.current = { paymentId: 'abc' as unknown as number };
+
+    const { findByText, queryByText } = renderScreen();
+    expect(await findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    // refetch() con id inválido dispararía fetchPago(api, 'abc'): un callejón
+    // sin salida. Sin el botón, la única salida es volver atrás.
+    expect(queryByText('Reintentar')).toBeNull();
+  });
+
+  it('muestra la fila Pedido, misma historia que web y PDF (R2-06)', async () => {
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+
+    // mockPago trae pedido: 5; la fila debe existir en la pantalla mobile.
+    expect(await findByText('#5')).toBeTruthy();
+  });
+
+  it('muestra la fila Pedido con pedido: 0 (R2-06)', async () => {
+    mockedFetchPago.mockResolvedValue({ ...mockPago, pedido: 0 });
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+    expect(await findByText('#0')).toBeTruthy();
+  });
+
+  it('no crashea con productos: [null] y avisa en pantalla (R3-01/R3-02)', async () => {
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      productos: [null],
+    } as unknown as typeof mockPago);
+
+    const { findByText } = renderScreen();
+    expect(await findByText('Recibo de Pago')).toBeTruthy();
+    expect(
+      await findByText('No se pudieron calcular los montos del pedido.'),
+    ).toBeTruthy();
+  });
+
   it('opens the print dialog with the real receipt HTML when PDF is pressed', async () => {
     const printAsync = jest.requireMock('expo-print').printAsync;
 

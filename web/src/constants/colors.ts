@@ -1,3 +1,5 @@
+import { BORDER, BRAND, CORAL, INK, MUTED } from '@/common/brand';
+
 export const colors = {
   primary: '#16a34a',
   primaryDark: '#15803d',
@@ -27,10 +29,10 @@ export const colors = {
     mountainMid: '#B2C2B2',
     mountainBot: '#A19FB6',
   },
-  brandPrimary: '#24563C',
+  brandPrimary: BRAND,
   brandPrimaryDark: '#4A8A63',
   brandGreenForest: '#3A6D56',
-  brandRedCoral: '#DE393A',
+  brandRedCoral: CORAL,
   brandOrange: '#E46C38',
   mutedDark: '#9DA89D',
   iconDark: '#1D1D1D',
@@ -45,13 +47,13 @@ export const colors = {
   inactiveGrayBg: 'rgba(0, 0, 0, 0.03)',
   admSurfaceL: '#FFFFFF',
   admSurfaceD: '#263028',
-  admFgL: '#2D3328',
+  admFgL: INK,
   admFgD: '#E8EAE4',
-  admMutedL: '#5E6B5E',
+  admMutedL: MUTED,
   admMutedD: '#9DA89D',
-  admBorderL: '#E2E6DF',
+  admBorderL: BORDER,
   admBorderD: '#353D35',
-  admBrandL: '#24563C',
+  admBrandL: BRAND,
   admBrandD: '#4A8A63',
   admBgL: '#F5F7F0',
   admBgD: '#1A211B',
@@ -82,13 +84,13 @@ export interface ThemeColors {
 }
 
 const light: ThemeColors = {
-  fg: '#2D3328',
-  muted: '#5E6B5E',
+  fg: INK,
+  muted: MUTED,
   border: '#D6DAD4',
   surface: '#FFFFFF',
   bg: '#F5F7F0',
-  brand: '#24563C',
-  coral: '#DE393A',
+  brand: BRAND,
+  coral: CORAL,
   sidebarBg: '#F5F7F0',
   activeBg: '#E2F0E6',
 };

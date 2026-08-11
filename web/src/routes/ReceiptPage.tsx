@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -33,8 +33,12 @@ export const PRINT_FALLBACK_MS = 400;
  * fallback por timeout) y ejecuta print + close. `onClosed` se invoca cuando
  * el popup se cierra (o no pudo abrirse), para que el llamador libere su
  * semáforo de impresión al cierre real y no por un timeout arbitrario.
+ *
+ * Devuelve la ventana creada (o null si el popup fue bloqueado/lanzó), para
+ * que el llamador pueda verificar win.closed en su red de seguridad (R4-03)
+ * en lugar de liberar el semáforo mientras el popup sigue abierto.
  */
-export function printHtml(html: string, onClosed?: () => void): void {
+export function printHtml(html: string, onClosed?: () => void): Window | null {
   let win: Window | null = null;
   try {
     // NOTA (R1-01): NO usar 'noopener' aquí. Con noopener, window.open()
@@ -48,7 +52,7 @@ export function printHtml(html: string, onClosed?: () => void): void {
   if (!win) {
     alert('Permite popups para este sitio para poder imprimir el recibo.');
     onClosed?.();
-    return;
+    return null;
   }
   win.opener = null;
   const notificarError = (error: unknown) => {
@@ -57,8 +61,13 @@ export function printHtml(html: string, onClosed?: () => void): void {
   };
   let mql: MediaQueryList | null = null;
   let onPrintChange: ((event: MediaQueryListEvent) => void) | null = null;
+  // R4-06: flag + nulling de win. En Chrome afterprint y change de
+  // matchMedia('print') pueden dispararse juntos; sin el flag closeAndDetach
+  // ejecutaría doble close()/onClosed().
+  let detachado = false;
   const closeAndDetach = () => {
-    if (!win) return;
+    if (!win || detachado) return;
+    detachado = true;
     win.onafterprint = null;
     // Quitar el listener de matchMedia al cerrar (R4-S): el popup muere y
     // no debe seguir escuchando cambios de estado de impresión.
@@ -66,6 +75,7 @@ export function printHtml(html: string, onClosed?: () => void): void {
       mql.removeEventListener('change', onPrintChange);
     }
     win.close();
+    win = null;
     onClosed?.();
   };
   try {
@@ -94,8 +104,12 @@ export function printHtml(html: string, onClosed?: () => void): void {
       }
       clearTimeout(fallbackTimer);
       printed = true;
+      // closeAndDetach también nullea la variable `win` (R4-06); por eso TS
+      // no puede probar que sea no-null aquí aunque doPrint ya verificó su
+      // existencia arriba. Guard explícito para el narrowing.
+      if (!win) return;
       try {
-        win?.print();
+        win.print();
         // Cerrar recién cuando la impresión terminó: en Safari print() no
         // bloquea, así que close() inmediato mataría el popup antes de
         // imprimir. afterprint + matchMedia('print') cubren los casos reales.
@@ -107,15 +121,21 @@ export function printHtml(html: string, onClosed?: () => void): void {
         mql.addEventListener('change', onPrintChange);
       } catch (error: unknown) {
         notificarError(error);
-        onClosed?.();
+        // R4-04: cerrar el popup huérfano también en error; si no, la red de
+        // seguridad de la página (verificarPopup) lo vería "abierto" y
+        // esperaría para siempre.
+        closeAndDetach();
       }
     };
     fallbackTimer = setTimeout(doPrint, PRINT_FALLBACK_MS);
     win.onload = doPrint;
   } catch (error: unknown) {
     notificarError(error);
-    onClosed?.();
+    // R4-04: ante document.write/focus fallido no dejar el popup en blanco
+    // abierto; closeAndDetach ya libera onClosed una sola vez.
+    closeAndDetach();
   }
+  return win;
 }
 
 function DetailRow({
@@ -150,11 +170,18 @@ export function ReceiptPage() {
   const paymentIdValid = esPagoIdValido(paymentId);
   const navigate = useNavigate();
   const colors = useAppColors();
-  const { brand, fg, muted, border, surface, bg, accentBg } = colors;
+  const { brand, coral, fg, muted, border, surface, bg, accentBg } = colors;
 
   // Semáforo anti doble-clic: evita abrir dos popups de impresión si el
   // usuario hace doble clic en Imprimir (mismo patrón que el mobile).
   const imprimiendoRef = useRef(false);
+  // R4-02: estado de UI para feedback visual (ref no re-renderiza). El botón
+  // muestra "Imprimiendo…" y se deshabilita mientras el popup está abierto.
+  const [imprimiendo, setImprimiendo] = useState(false);
+  // R4-03: referencia a la ventana del popup para que la red de seguridad NO
+  // libere el semáforo mientras el popup siga abierto (un segundo clic abriría
+  // un segundo popup).
+  const popupWinRef = useRef<Window | null>(null);
   const liberarSemRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -168,18 +195,34 @@ export function ReceiptPage() {
     if (!pago) return;
     if (imprimiendoRef.current) return;
     imprimiendoRef.current = true;
+    setImprimiendo(true);
     const liberar = () => {
       clearTimeout(liberarSemRef.current);
+      popupWinRef.current = null;
       imprimiendoRef.current = false;
+      setImprimiendo(false);
     };
     try {
       const html = buildReceiptHtml(pago);
-      // printHtml abre el popup y dispara print() de forma síncrona; la
-      // ventana de guard cubre el doble clic y no deja el botón bloqueado.
-      // El semáforo se libera cuando el popup REALMENTE cierra (R3-S, como el
-      // .finally() del mobile); el timeout queda solo como red de seguridad.
-      printHtml(html, liberar);
-      liberarSemRef.current = setTimeout(liberar, PRINT_FALLBACK_MS * 3);
+      // printHtml abre el popup, dispara print() y llama onClosed (liberar)
+      // cuando el popup CIERRA de verdad. Devuelve la ventana creada para
+      // que la red de seguridad pueda comprobar win.closed (R4-03).
+      popupWinRef.current = printHtml(html, liberar);
+      // Red de seguridad: si onClosed nunca disparó pero el popup YA cerró
+      // (p.ej. el usuario lo cerró a mano), liberar el semáforo; si el popup
+      // sigue abierto, NO liberar y volver a chequear — jamás un segundo
+      // popup encima del primero.
+      const verificarPopup = () => {
+        if (!popupWinRef.current || popupWinRef.current.closed) {
+          liberar();
+          return;
+        }
+        liberarSemRef.current = setTimeout(
+          verificarPopup,
+          PRINT_FALLBACK_MS * 3,
+        );
+      };
+      liberarSemRef.current = setTimeout(verificarPopup, PRINT_FALLBACK_MS * 3);
     } catch (error: unknown) {
       // buildReceiptHtml es síncrono y puede lanzar ante datos corruptos: se
       // libera el semáforo y se informa, el botón no queda muerto de por vida.
@@ -211,9 +254,14 @@ export function ReceiptPage() {
           Error al cargar el recibo
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Button variant="secondary" onClick={() => void refetch()}>
-            Reintentar
-          </Button>
+          {paymentIdValid ? (
+            // R4-07: con paymentId inválido, refetch() dispararía
+            // fetchPago(api, 'abc') — un callejón sin salida. Solo se ofrece
+            // reintentar cuando el id es válido y la falla fue de red/servidor.
+            <Button variant="secondary" onClick={() => void refetch()}>
+              Reintentar
+            </Button>
+          ) : null}
           <Button
             variant="secondary"
             onClick={() => navigate('/vendedor/pedidos')}
@@ -225,7 +273,11 @@ export function ReceiptPage() {
     );
   }
 
-  const productos = pago.productos ?? [];
+  const productos = (pago.productos ?? []).filter(
+    // Guard por ELEMENTO (R3-01): un backend corrupto puede mandar [null];
+    // el map de abajo accedería a prod.nombre y rompería el render.
+    (prod): prod is NonNullable<typeof prod> => prod != null,
+  );
   // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
   // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
   const subtotal = calcularSubtotalVisible(pago);
@@ -245,8 +297,13 @@ export function ReceiptPage() {
         title="Recibo de Pago"
         action={
           <div className="flex items-center gap-3">
-            <Button onClick={handleImprimir}>
-              <span aria-hidden>🖨</span> Imprimir / PDF
+            <Button onClick={handleImprimir} disabled={imprimiendo}>
+              {imprimiendo ? (
+                <LoadingSpinner className="h-4 w-4" />
+              ) : (
+                <span aria-hidden>🖨</span>
+              )}{' '}
+              {imprimiendo ? 'Imprimiendo…' : 'Imprimir / PDF'}
             </Button>
             <Button
               variant="secondary"
@@ -263,6 +320,8 @@ export function ReceiptPage() {
         className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl p-6"
         style={{
           background: brand,
+          // R2-04: sombra del verde de marca (BRAND = rgb(36,86,60)) al 18%.
+          // Un solo uso: no merece un token propio en la paleta.
           boxShadow: '0 8px 24px rgba(36,86,60,0.18)',
         }}
       >
@@ -336,10 +395,24 @@ export function ReceiptPage() {
                   className="w-28 text-right text-sm font-semibold"
                   style={{ color: fg }}
                 >
-                  {formatearMonto(calcularImportePartida(prod))}
+                  {formatearMonto(
+                    // R4-05: redondear a centavos ANTES de formatear (la fila
+                    // debe cerrar con el subtotal ya redondeado).
+                    redondearCentavos(calcularImportePartida(prod)),
+                  )}
                 </span>
               </div>
             ))}
+            {/* R3-02: la pantalla muestra el mismo aviso que el PDF. Sin esto,
+                un subtotal corrupto se veía como "Subtotal —" sin explicación. */}
+            {!Number.isFinite(subtotal) ? (
+              <p
+                className="px-6 py-3 text-sm font-semibold"
+                style={{ color: coral }}
+              >
+                No se pudieron calcular los montos del pedido.
+              </p>
+            ) : null}
             {/* Subtotal row */}
             <div
               className="flex items-center justify-end gap-6 px-6 py-4"
@@ -411,7 +484,9 @@ export function ReceiptPage() {
           >
             <div className="p-5">
               <DetailRow label="Folio" value={pago.folio} colors={colors} />
-              {pago.pedido ? (
+              {pago.pedido != null ? (
+                // R2-06: mismo contrato que el PDF (`!= null`, no truthy): el
+                // pedido 0 es válido y debe mostrarse como "#0".
                 <DetailRow
                   label="Pedido"
                   value={`#${pago.pedido}`}

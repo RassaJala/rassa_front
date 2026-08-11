@@ -28,6 +28,7 @@ import {
   formatearAjuste,
   formatearCantidad,
   formatearFechaSegura,
+  redondearCentavos,
 } from '@/common/receipt';
 import { colors } from '@/constants/colors';
 import api from '@/services/api';
@@ -92,58 +93,26 @@ export default function ReceiptScreen(): React.JSX.Element {
 
   if (isError || !pago) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 24,
-        }}
-      >
-        <MaterialCommunityIcons
-          name="alert-circle-outline"
-          size={48}
-          color={muted}
-        />
-        <Text
-          style={{
-            marginTop: 12,
-            fontSize: 15,
-            color: muted,
-            textAlign: 'center',
-          }}
-        >
-          Error al cargar el recibo
-        </Text>
-        <Pressable
-          onPress={() => void refetch()}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 16,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: border,
-          }}
-        >
-          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
-            Reintentar
-          </Text>
-        </Pressable>
-      </View>
+      <ReceiptErrorView
+        bg={bg}
+        muted={muted}
+        border={border}
+        brand={brand}
+        paymentIdValid={paymentIdValid}
+        refetch={refetch}
+      />
     );
   }
 
-  const productos = pago.productos ?? [];
+  const productos = (pago.productos ?? []).filter(
+    // Guard por ELEMENTO (R3-01): un backend corrupto puede mandar [null];
+    // el map de abajo accedería a prod.nombre y rompería el render.
+    (prod): prod is NonNullable<typeof prod> => prod != null,
+  );
   // La pantalla cuenta la misma historia que el PDF: subtotal = suma de filas
   // visibles y, si hay descuento/recargo, la misma fila "Ajuste ±$X".
   const subtotal = calcularSubtotalVisible(pago);
-  const ajuste = Math.round(calcularAjuste(pago, subtotal) * 100) / 100;
+  const ajuste = redondearCentavos(calcularAjuste(pago, subtotal));
   // Mismo umbral compartido que el PDF (EPSILON en receipt.ts): si cambia,
   // pantalla y documento no divergen (R2-S).
   const mostrarAjuste = deberiaMostrarAjuste(pago, subtotal);
@@ -296,6 +265,16 @@ export default function ReceiptScreen(): React.JSX.Element {
           }}
         >
           <DetailRow label="Folio" value={pago.folio} fg={fg} muted={muted} />
+          {pago.pedido != null ? (
+            // R2-06: misma fila que web y PDF (incluye pedido: 0, que `?` falsy
+            // hubiera ocultado en la web). Tres artefactos, una sola historia.
+            <DetailRow
+              label="Pedido"
+              value={`#${pago.pedido}`}
+              fg={fg}
+              muted={muted}
+            />
+          ) : null}
           <DetailRow
             label="Fecha"
             value={formatearFechaSegura(pago.fecha_pago)}
@@ -368,13 +347,35 @@ export default function ReceiptScreen(): React.JSX.Element {
                 </Text>
               </View>
               <Text style={{ fontSize: 15, fontWeight: '700', color: fg }}>
-                {formatearMonto(calcularImportePartida(prod))}
+                {formatearMonto(
+                  // R4-05: redondear a centavos ANTES de formatear (la fila
+                  // debe cerrar con el subtotal ya redondeado).
+                  redondearCentavos(calcularImportePartida(prod)),
+                )}
               </Text>
             </View>
           ))}
         </View>
 
         {/* Subtotal + Ajuste */}
+        {!Number.isFinite(subtotal) ? (
+          // R3-02: la pantalla muestra el mismo aviso que el PDF. Sin esto,
+          // un subtotal corrupto se veía como "Subtotal —" sin explicación.
+          <View
+            style={{
+              backgroundColor: colors.admErrorBgL,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.admErrorBorderL,
+              padding: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 13, color: colors.admErrorTextL }}>
+              No se pudieron calcular los montos del pedido.
+            </Text>
+          </View>
+        ) : null}
         <View
           style={{
             backgroundColor: surface,
@@ -476,6 +477,76 @@ export default function ReceiptScreen(): React.JSX.Element {
           </Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+// ── Error view ─────────────────────────────────────────────
+
+function ReceiptErrorView({
+  bg,
+  muted,
+  border,
+  brand,
+  paymentIdValid,
+  refetch,
+}: {
+  readonly bg: string;
+  readonly muted: string;
+  readonly border: string;
+  readonly brand: string;
+  readonly paymentIdValid: boolean;
+  readonly refetch: () => Promise<unknown>;
+}): React.JSX.Element {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <MaterialCommunityIcons
+        name="alert-circle-outline"
+        size={48}
+        color={muted}
+      />
+      <Text
+        style={{
+          marginTop: 12,
+          fontSize: 15,
+          color: muted,
+          textAlign: 'center',
+        }}
+      >
+        Error al cargar el recibo
+      </Text>
+      {paymentIdValid ? (
+        // R4-07: con paymentId inválido, refetch() dispararía fetchPago(api,
+        // 'abc') — un callejón sin salida. Solo se ofrece reintentar cuando
+        // el id es válido y la falla fue de red/servidor.
+        <Pressable
+          onPress={() => void refetch()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 16,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: border,
+          }}
+        >
+          <MaterialCommunityIcons name="refresh" size={18} color={brand} />
+          <Text style={{ fontSize: 14, fontWeight: '600', color: brand }}>
+            Reintentar
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

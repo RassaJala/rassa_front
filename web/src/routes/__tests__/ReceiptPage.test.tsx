@@ -1,4 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,19 +16,26 @@ vi.mock('react-router-dom', () => ({
   useParams: () => mockParams.current,
 }));
 
-vi.mock('../../hooks/useAppColors', () => ({
-  useAppColors: () => ({
-    isDark: false,
-    brand: '#24563C',
-    coral: '#DE393A',
-    muted: '#5E6B5E',
-    border: '#E2E6DF',
-    surface: '#FFFFFF',
-    bg: '#F5F7F0',
-    fg: '#2D3328',
-    accentBg: 'rgba(36,86,60,0.07)',
-  }),
-}));
+// R2-03: el mock de colores deriva de la MISMA fuente que el resto de la app
+// (packages/common/src/brand.ts) vía importActual; la paleta no se hardcodea
+// en el test (evita divergencias si un rebrand cambia los tokens).
+vi.mock('../../hooks/useAppColors', async () => {
+  const { BORDER, BRAND, CORAL, INK, MUTED } =
+    await vi.importActual<typeof import('@/common/brand')>('@/common/brand');
+  return {
+    useAppColors: () => ({
+      isDark: false,
+      brand: BRAND,
+      coral: CORAL,
+      muted: MUTED,
+      border: BORDER,
+      surface: '#FFFFFF',
+      bg: '#F5F7F0',
+      fg: INK,
+      accentBg: 'rgba(36,86,60,0.07)',
+    }),
+  };
+});
 
 vi.mock('@/common/payments', async () => ({
   ...(await vi.importActual('@/common/payments')),
@@ -31,6 +44,8 @@ vi.mock('@/common/payments', async () => ({
   fetchPago: vi.fn(),
 }));
 
+// R2-03: el mock de colores deriva de la MISMA fuente que el resto de la app
+// (packages/common/src/brand.ts); la paleta no se hardcodea en el test.
 import { mockPago } from '@/common/payment-fixtures';
 import { fetchPago } from '@/common/payments';
 import { PRINT_FALLBACK_MS, ReceiptPage } from '../ReceiptPage';
@@ -153,6 +168,72 @@ describe('ReceiptPage', () => {
 
     expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
     expect(mockedFetchPago).not.toHaveBeenCalled();
+  });
+
+  it('oculta Reintentar con paymentId inválido (R4-07)', async () => {
+    mockParams.current = { paymentId: 'abc' };
+    renderPage();
+
+    expect(await screen.findByText(/Error al cargar el recibo/i)).toBeTruthy();
+    // refetch() con id inválido dispararía fetchPago(api, 'abc'): un callejón
+    // sin salida. Sin el botón, la única salida es Volver a pedidos.
+    expect(screen.queryByRole('button', { name: /Reintentar/i })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Volver a pedidos/i }),
+    ).toBeTruthy();
+  });
+
+  it('muestra la fila Pedido con pedido: 0 (mismo contrato que el PDF, R2-06)', async () => {
+    mockedFetchPago.mockResolvedValue({ ...mockPago, pedido: 0 });
+    renderPage();
+
+    expect(await screen.findByText('Manzana')).toBeTruthy();
+    expect(screen.getByText('#0')).toBeTruthy();
+  });
+
+  it('no crashea con productos: [null, válido] y avisa en pantalla (R3-01/R3-02)', async () => {
+    mockedFetchPago.mockResolvedValue({
+      ...mockPago,
+      productos: [null, ...(mockPago.productos ?? [])],
+    } as unknown as typeof mockPago);
+    renderPage();
+
+    expect(await screen.findByText('Manzana')).toBeTruthy();
+    expect(
+      screen.getByText('No se pudieron calcular los montos del pedido.'),
+    ).toBeTruthy();
+  });
+
+  it('deshabilita Imprimir mientras el popup está abierto (R4-02)', async () => {
+    const mockWin = makeMockWin();
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(mockWin);
+
+    renderPage();
+    expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
+
+    const printer = screen.getByRole('button', { name: /Imprimir/i });
+    // fireEvent envuelve en act: el estado UI flushea antes del getByRole
+    // siguiente (R4-02). Sin fake timers: el popup se controla manualmente
+    // con onload/firePrintExit como en el test "opens a printable window".
+    fireEvent.click(printer);
+    expect(screen.getByRole('button', { name: /Imprimiendo/i })).toHaveProperty(
+      'disabled',
+      true,
+    );
+
+    // doPrint registra los listeners de matchMedia y llama print().
+    (mockWin as unknown as { onload: () => void }).onload();
+    expect(mockWin.print).toHaveBeenCalledTimes(1);
+
+    // El popup cierra de verdad -> onClosed (liberar) -> semáforo libre.
+    act(() => {
+      (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
+    });
+    expect(screen.getByRole('button', { name: /Imprimir/i })).toHaveProperty(
+      'disabled',
+      false,
+    );
+    openSpy.mockRestore();
   });
 
   it('opens a printable window with the receipt HTML when Imprimir is clicked', async () => {
@@ -341,8 +422,6 @@ describe('ReceiptPage', () => {
     renderPage();
     expect(await screen.findByText('Recibo de Pago')).toBeTruthy();
 
-    // La ventana de guard del semáforo (PRINT_FALLBACK_MS*3) se controla con
-    // fake timers para poder liberarla sin esperar en tiempo real.
     vi.useFakeTimers();
     const printer = screen.getByRole('button', { name: /Imprimir/i });
     printer.click();
@@ -351,8 +430,16 @@ describe('ReceiptPage', () => {
     expect(openSpy).toHaveBeenCalledTimes(1);
     expect(mockWin.document.write).toHaveBeenCalledTimes(1);
 
-    // El semáforo se libera y un clic posterior (no doble clic) imprime de nuevo.
+    // R4-03: mientras el popup siga ABIERTO, el semáforo NO se libera por
+    // timeout — un segundo clic tras la red de seguridad tampoco abre otro
+    // popup (el bug era exactamente ese: dos popups encimados).
     vi.advanceTimersByTime(PRINT_FALLBACK_MS * 3);
+    printer.click();
+    expect(openSpy).toHaveBeenCalledTimes(1);
+
+    // El semáforo se libera cuando el popup CIERRA de verdad (onClosed vía
+    // closeAndDetach): un clic posterior imprime en un popup nuevo.
+    (mockWin as unknown as { firePrintExit: () => void }).firePrintExit();
     printer.click();
     expect(openSpy).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
