@@ -197,9 +197,7 @@ describe('waste register service (mobile)', () => {
     // The api module is auto-mocked, which stubs isApiUrl (the guard that
     // decides whether a relative `next` may be followed); restore its real
     // semantics so the walk actually advances to page 2.
-    jest
-      .mocked(isApiUrl)
-      .mockImplementation((url) => url.startsWith('/'));
+    jest.mocked(isApiUrl).mockImplementation((url) => url.startsWith('/'));
     mockApi.get
       .mockResolvedValueOnce({
         data: {
