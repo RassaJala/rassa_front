@@ -22,12 +22,16 @@ function orderModalHint(loading: boolean, orderCount: number): string {
   return 'Selecciona el pedido afectado por la merma.';
 }
 
+// Locale estándar del repo (mismo que StepFecha/FarmerDashboard) para las
+// fechas del selector de pedidos; evita mezclar es-MX/es-AR entre pantallas.
+export const PEDIDO_FECHA_LOCALE = 'es-AR';
+
 // toLocalDate slices the ISO date part and builds a local Date, avoiding the
 // UTC off-by-one that `new Date()` introduces for date-only strings.
 function formatFecha(iso: string): string {
   const date = toLocalDate(iso);
   if (date === null) return '';
-  return date.toLocaleDateString('es-MX', {
+  return date.toLocaleDateString(PEDIDO_FECHA_LOCALE, {
     day: '2-digit',
     month: 'short',
   });
