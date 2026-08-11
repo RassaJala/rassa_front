@@ -146,6 +146,28 @@ describe('filterProductsForOrder', () => {
       filterProductsForOrder([tomate, papa], { productos: ['Lechuga'] }),
     ).toEqual([]);
   });
+
+  it('does NOT filter when the order product list is truncated (has_more_productos)', () => {
+    // The backend caps `productos` at PRODUCTOS_PREVIEW_LIMIT (3) and marks the
+    // preview as truncated. Filtering by an incomplete list would wrongly drop
+    // products that do belong to the order but were cut off, so the full list
+    // must be kept.
+    expect(
+      filterProductsForOrder(
+        [tomate, papa],
+        { productos: ['Tomate'], has_more_productos: true },
+      ),
+    ).toEqual([tomate, papa]);
+  });
+
+  it('filters normally when the order product list is complete (has_more_productos false)', () => {
+    expect(
+      filterProductsForOrder(
+        [tomate, papa],
+        { productos: ['TOMATE'], has_more_productos: false },
+      ),
+    ).toEqual([tomate]);
+  });
 });
 
 describe('listPublishedProducts', () => {

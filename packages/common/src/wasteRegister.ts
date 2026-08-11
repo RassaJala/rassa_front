@@ -66,13 +66,26 @@ export function wasteOrderProductMismatch(error: unknown): string | null {
 
 // Filtra los productos publicados a los que pertenecen al pedido seleccionado
 // (el listado trae solo nombres, sin ids). Cuando el pedido no trae lista de
-// productos se devuelven todos, para no romper la UI con backends que no la
-// incluyen. Comparación sin distinguir mayúsculas.
+// productos, o la lista es un preview truncado (has_more_productos), se
+// devuelven todos, para no romper la UI con backends que no la incluyen ni
+// descartar productos legítimos que quedaron fuera del preview. Comparación sin
+// distinguir mayúsculas.
 export function filterProductsForOrder(
   products: PublishedProduct[],
-  order: { readonly productos?: string[] } | null | undefined,
+  order:
+    | {
+        readonly productos?: string[];
+        readonly has_more_productos?: boolean;
+      }
+    | null
+    | undefined,
 ): PublishedProduct[] {
-  if (!order || !order.productos || order.productos.length === 0) {
+  if (
+    !order ||
+    !order.productos ||
+    order.productos.length === 0 ||
+    order.has_more_productos === true
+  ) {
     return products;
   }
   const names = new Set(order.productos.map((name) => name.toLowerCase()));
