@@ -134,7 +134,7 @@ describe('MermaResumenScreen', () => {
     await waitFor(() => {
       expect(
         getByText(
-          'Error de conexión. Verificá tu conexión e intentá de nuevo.',
+          'Error de conexión. Verifica tu conexión e intenta de nuevo.',
         ),
       ).toBeTruthy();
     });
