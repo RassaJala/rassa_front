@@ -8,7 +8,6 @@ import {
   type PublishedProduct,
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
-  type WasteDecisionOption,
   validateWasteRecord,
 } from '@/common/wasteRegister';
 import type { Order } from '@root/types';

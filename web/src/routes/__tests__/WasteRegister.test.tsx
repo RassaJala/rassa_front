@@ -294,14 +294,15 @@ describe('WasteRegister', () => {
 
   it('disables the submit button while the mutation is pending (no double POST)', async () => {
     seedMocks();
-    let resolvePost: ((value: unknown) => void) | undefined;
+    let resolvePost: (() => void) | undefined;
     let postedCount = 0;
     server.use(
-      http.post(`${BASE}/mermas/`, () => {
+      http.post(`${BASE}/mermas/`, async () => {
         postedCount += 1;
-        return new Promise((resolve) => {
-          resolvePost = resolve;
+        await new Promise<void>((resolve) => {
+          resolvePost = () => resolve();
         });
+        return HttpResponse.json({ data: { id_merma: 1 } });
       }),
     );
 
@@ -326,21 +327,22 @@ describe('WasteRegister', () => {
     ).toBeDisabled();
     await user.click(screen.getByRole('button', { name: /Guardando/ }));
     await waitFor(() => expect(resolvePost).toBeDefined());
-    resolvePost?.(HttpResponse.json({ data: { id_merma: 1 } }));
+    resolvePost?.();
 
     await waitFor(() => expect(postedCount).toBe(1));
   });
 
   it('ignores Enter-key implicit submission while a mutation is pending (no double POST)', async () => {
     seedMocks();
-    let resolvePost: ((value: unknown) => void) | undefined;
+    let resolvePost: (() => void) | undefined;
     let postedCount = 0;
     server.use(
-      http.post(`${BASE}/mermas/`, () => {
+      http.post(`${BASE}/mermas/`, async () => {
         postedCount += 1;
-        return new Promise((resolve) => {
-          resolvePost = resolve;
+        await new Promise<void>((resolve) => {
+          resolvePost = () => resolve();
         });
+        return HttpResponse.json({ data: { id_merma: 1 } });
       }),
     );
 
@@ -365,7 +367,7 @@ describe('WasteRegister', () => {
     fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     await waitFor(() => expect(postedCount).toBe(1));
 
-    resolvePost?.(HttpResponse.json({ data: { id_merma: 1 } }));
+    resolvePost?.();
     await waitFor(() => expect(postedCount).toBe(1));
   });
 
