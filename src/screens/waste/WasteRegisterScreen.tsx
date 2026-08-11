@@ -258,6 +258,14 @@ export default function WasteRegisterScreen(): React.JSX.Element {
         }}
       >
         <ActivityIndicator size="large" color={t.brand} />
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{ marginTop: 16, paddingVertical: 8, paddingHorizontal: 16 }}
+        >
+          <Text style={{ fontSize: 14, color: t.fg, opacity: 0.8 }}>
+            ← Volver
+          </Text>
+        </Pressable>
       </View>
     );
   }

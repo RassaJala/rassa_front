@@ -202,8 +202,11 @@ export function WasteRegister() {
 
   if (loadingPedidos || loadingProducts) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
         <LoadingSpinner />
+        <Button variant="ghost" onClick={() => navigate('/vendedor/ventas')}>
+          ← Volver
+        </Button>
       </div>
     );
   }
