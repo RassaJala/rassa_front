@@ -436,4 +436,96 @@ describe('WasteRegister', () => {
     await user.click(screen.getByRole('button', { name: /Reintentar/ }));
     expect(await screen.findByRole('option', { name: /Tomate/ })).toBeTruthy();
   });
+
+  it('maps a fk_producto_semanal field error to the mismatch message', async () => {
+    seedMocks();
+    server.use(
+      http.post(`${BASE}/mermas/`, () =>
+        HttpResponse.json(
+          {
+            fk_producto_semanal: ['El producto no pertenece al DetallePedido.'],
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    renderPage();
+    const user = userEvent.setup();
+
+    await screen.findByRole('option', { name: /Tomate/ });
+    await selectFields(user);
+    await user.type(screen.getByPlaceholderText('0'), '2');
+    await user.type(
+      screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+      'Se venció',
+    );
+    await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
+
+    expect(
+      await screen.findByText(
+        'El producto no pertenece al pedido seleccionado.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('filters the product options to the products of the selected order', async () => {
+    server.use(
+      http.get(`${BASE}/pedidos/`, () =>
+        HttpResponse.json({
+          results: [
+            {
+              id_pedido: 1,
+              cliente_nombre: 'Juan Pérez',
+              total: '120',
+              estado_actual: 'pendiente',
+              creado_en: '2026-08-03T00:00:00-03:00',
+              productos: ['Tomate'],
+            },
+          ],
+        }),
+      ),
+      http.get(`${BASE}/publicaciones/current/`, () =>
+        HttpResponse.json({
+          data: [
+            {
+              id_publicacion: 10,
+              agricultor: null,
+              fecha_publicacion: '2026-08-03T00:00:00-03:00',
+              semana: '2026-W32',
+              productos: [
+                {
+                  id_producto_semanal: 100,
+                  producto: 'Tomate',
+                  unidad: 'kg',
+                  stock: 5,
+                  precio: '120',
+                  foto: '',
+                },
+                {
+                  id_producto_semanal: 101,
+                  producto: 'Papa',
+                  unidad: 'kg',
+                  stock: 3,
+                  precio: '60',
+                  foto: '',
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    renderPage();
+    const user = userEvent.setup();
+
+    // No order selected yet → every product is listed.
+    await screen.findByRole('option', { name: /Tomate/ });
+    expect(screen.getByRole('option', { name: /Papa/ })).toBeTruthy();
+
+    await user.selectOptions(screen.getByLabelText(/^Pedido/), '1');
+
+    // The order only contains Tomate → Papa disappears from the product select.
+    expect(screen.queryByRole('option', { name: /Papa/ })).toBeNull();
+    expect(screen.getByRole('option', { name: /Tomate/ })).toBeTruthy();
+  });
 });

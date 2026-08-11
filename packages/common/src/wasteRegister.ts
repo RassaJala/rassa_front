@@ -36,6 +36,51 @@ export function isTerminalOrderState(estado: string): boolean {
   return TERMINAL_ORDER_STATES.has(estado);
 }
 
+// Mensaje claro que reemplaza al error de campo del backend cuando el
+// producto seleccionado no pertenece al pedido seleccionado (R3-A). El backend
+// responde algo técnico como "El producto no pertenece al DetallePedido.".
+export const WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE =
+  'El producto no pertenece al pedido seleccionado.';
+
+// Campos DRF que denuncian el vínculo producto↔pedido roto.
+const WASTE_ORDER_PRODUCT_FIELDS: ReadonlySet<string> = new Set([
+  'fk_producto_semanal',
+  'fk_pedido',
+]);
+
+// Devuelve WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE cuando un error de campo de
+// la API indica que el producto no pertenece al pedido; null en cualquier otro
+// caso (así el call site sigue el flujo normal de errores).
+export function wasteOrderProductMismatch(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const response = (error as { response?: { data?: unknown } }).response;
+  const data = response?.data;
+  if (!data || typeof data !== 'object') return null;
+
+  const hasFieldError = Object.entries(data).some(
+    ([key, value]) =>
+      WASTE_ORDER_PRODUCT_FIELDS.has(key) && Array.isArray(value),
+  );
+  return hasFieldError ? WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE : null;
+}
+
+// Filtra los productos publicados a los que pertenecen al pedido seleccionado
+// (el listado trae solo nombres, sin ids). Cuando el pedido no trae lista de
+// productos se devuelven todos, para no romper la UI con backends que no la
+// incluyen. Comparación sin distinguir mayúsculas.
+export function filterProductsForOrder(
+  products: PublishedProduct[],
+  order: { readonly productos?: string[] } | null | undefined,
+): PublishedProduct[] {
+  if (!order || !order.productos || order.productos.length === 0) {
+    return products;
+  }
+  const names = new Set(order.productos.map((name) => name.toLowerCase()));
+  return products.filter((product) =>
+    names.has(product.producto.toLowerCase()),
+  );
+}
+
 // Estado legible para el selector de pedidos (móvil y web): el backend usa
 // guiones bajos ("listo_para_retirar"), la UI muestra espacios.
 export function formatEstado(estado: string): string {

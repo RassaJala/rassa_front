@@ -279,4 +279,125 @@ describe('WasteRegisterScreen (mobile)', () => {
     fireEvent.press(render.getByText('Reintentar'));
     await waitForForm(render.getByText);
   });
+
+  it('never logs the raw mutation error (with the JWT header)', async () => {
+    mockCreateWasteRecord.mockRejectedValueOnce({
+      isAxiosError: true,
+      message: 'Request failed with status code 400',
+      config: {
+        url: '/mermas/',
+        method: 'post',
+        headers: { Authorization: 'Bearer TOPSECRETJWT' },
+      },
+      response: {
+        status: 400,
+        config: { url: '/mermas/', method: 'post' },
+        data: { detail: 'boom' },
+      },
+    });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const render = renderScreen();
+      await waitForForm(render.getByText);
+      await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+      fireEvent.press(submitButton(render));
+      await waitFor(() => expect(mockCreateWasteRecord).toHaveBeenCalled());
+
+      const serialized = JSON.stringify([
+        ...errorSpy.mock.calls,
+        ...warnSpy.mock.calls,
+      ]);
+      expect(serialized).not.toContain('TOPSECRETJWT');
+    } finally {
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('maps a fk_producto_semanal field error to the mismatch message', async () => {
+    mockCreateWasteRecord.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          fk_producto_semanal: ['El producto no pertenece al DetallePedido.'],
+        },
+      },
+    });
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+    await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+    fireEvent.press(submitButton(render));
+
+    expect(
+      await waitFor(() =>
+        render.getByText('El producto no pertenece al pedido seleccionado.'),
+      ),
+    ).toBeTruthy();
+  });
+
+  it('filters the product options to the products of the selected order', async () => {
+    const { fetchWasteOrders } = jest.requireMock('@/services/waste');
+    (fetchWasteOrders as jest.Mock).mockResolvedValueOnce([
+      {
+        id_pedido: 1,
+        cliente_nombre: 'Juan Pérez',
+        total: '120',
+        estado_actual: 'pendiente',
+        creado_en: '2026-08-03T00:00:00-03:00',
+        productos: ['Tomate'],
+      },
+    ]);
+    const { fetchCurrentPublications } = jest.requireMock('@/services/waste');
+    (fetchCurrentPublications as jest.Mock).mockResolvedValueOnce([
+      {
+        id_publicacion: 10,
+        agricultor: null,
+        fecha_publicacion: '2026-08-03T00:00:00-03:00',
+        semana: '2026-W32',
+        productos: [
+          {
+            id_producto_semanal: 100,
+            producto: 'Tomate',
+            unidad: 'kg',
+            stock: 5,
+            precio: '120',
+            foto: '',
+          },
+          {
+            id_producto_semanal: 101,
+            producto: 'Papa',
+            unidad: 'kg',
+            stock: 3,
+            precio: '60',
+            foto: '',
+          },
+        ],
+      },
+    ]);
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+
+    // Pick Papa first: with no order selected yet, every product is listed.
+    fireEvent.press(render.getByText('Elige un producto publicado…'));
+    await waitFor(() => render.getByText('Papa'));
+    fireEvent.press(render.getByText('Papa'));
+
+    // Now pick the order that only contains Tomate.
+    fireEvent.press(render.getByText('Elige un pedido…'));
+    await waitFor(() => render.getByText(/Pedido #1/));
+    fireEvent.press(render.getByText(/Pedido #1/));
+
+    // Papa no longer belongs to the order: the selection resets and the modal
+    // only lists Tomate.
+    expect(render.getByText('Elige un producto publicado…')).toBeTruthy();
+    fireEvent.press(render.getByText('Elige un producto publicado…'));
+    await waitFor(() => render.getByText('Tomate'));
+    expect(render.queryByText('Papa')).toBeNull();
+  });
 });

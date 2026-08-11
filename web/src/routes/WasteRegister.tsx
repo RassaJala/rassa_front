@@ -4,11 +4,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  filterProductsForOrder,
   formatEstado,
   type PublishedProduct,
   type PublishedPublication,
   WASTE_DECISION_OPTIONS,
   validateWasteRecord,
+  wasteOrderProductMismatch,
 } from '@/common/wasteRegister';
 import type { Order } from '@root/types';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -50,6 +52,7 @@ export function WasteRegister() {
     data: publications = [],
     isLoading: loadingProducts,
     isError: productsError,
+    error: productsQueryError,
     refetch: refetchProducts,
   } = useQuery<PublishedPublication[]>({
     queryKey: ['publicaciones-current'],
@@ -65,6 +68,7 @@ export function WasteRegister() {
     data: pedidos = [],
     isLoading: loadingPedidos,
     isError: pedidosError,
+    error: pedidosQueryError,
     refetch: refetchPedidos,
   } = useQuery<Order[]>({
     queryKey: ['waste-pedidos'],
@@ -74,20 +78,30 @@ export function WasteRegister() {
   });
 
   useEffect(() => {
-    if (productsError) {
-      console.error('[waste] publications query failed', productsError);
+    // R1-A: nunca loguear el error crudo — un AxiosError arrastra el JWT en
+    // `config.headers.Authorization`. logError lo describe y redacta.
+    if (productsError && productsQueryError) {
+      logError('waste', productsQueryError, { step: 'publicaciones-current' });
     }
-    if (pedidosError) {
-      console.error('[waste] orders query failed', pedidosError);
+    if (pedidosError && pedidosQueryError) {
+      logError('waste', pedidosQueryError, { step: 'waste-pedidos' });
     }
-  }, [productsError, pedidosError]);
+  }, [productsError, pedidosError, productsQueryError, pedidosQueryError]);
 
+  const selectedPedido =
+    pedidos.find((order) => order.id_pedido === Number(pedidoId)) ?? null;
+
+  // R3-A: el selector de producto solo ofrece los productos del pedido
+  // elegido; sin pedido se listan todos (el backend puede no mandar la lista).
   const products = useMemo<PublishedProduct[]>(
     () =>
-      publications
-        .flatMap((publication) => publication.productos)
-        .filter((product) => product.stock > 0),
-    [publications],
+      filterProductsForOrder(
+        publications
+          .flatMap((publication) => publication.productos)
+          .filter((product) => product.stock > 0),
+        selectedPedido,
+      ),
+    [publications, selectedPedido],
   );
 
   // Decisiones de merma: catálogo fijo (ids 1-4 sincronizados con el seed del
@@ -99,6 +113,18 @@ export function WasteRegister() {
     products.find(
       (product) => product.id_producto_semanal === Number(productoId),
     ) ?? null;
+
+  // R3-A: si el pedido cambió y el producto elegido ya no le pertenece, se
+  // resetea la selección para que el payload nunca vuelva a emparejarlos.
+  useEffect(() => {
+    if (
+      selectedProduct &&
+      selectedPedido &&
+      filterProductsForOrder([selectedProduct], selectedPedido).length === 0
+    ) {
+      setProductoId('');
+    }
+  }, [selectedPedido, selectedProduct]);
 
   const mutation = useMutation({
     mutationFn: createWasteRecord,
@@ -120,15 +146,17 @@ export function WasteRegister() {
     onError: (err: unknown) => {
       logError('WasteRegister', err, { step: 'createWasteRecord' });
       setToast({
-        message: extractApiError(err, [
-          'fk_producto_semanal',
-          'fk_pedido',
-          'cantidad',
-          'motivo',
-          'fk_decision',
-          'comentarios',
-          'detail',
-        ]),
+        message:
+          wasteOrderProductMismatch(err) ??
+          extractApiError(err, [
+            'fk_producto_semanal',
+            'fk_pedido',
+            'cantidad',
+            'motivo',
+            'fk_decision',
+            'comentarios',
+            'detail',
+          ]),
         type: 'error',
       });
     },

@@ -16,8 +16,10 @@ import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  filterProductsForOrder,
   validateWasteRecord,
   WASTE_DECISION_OPTIONS,
+  wasteOrderProductMismatch,
 } from '@/common/wasteRegister';
 import Toast from '@/components/Toast';
 import { colors, themeColors } from '@/constants/colors';
@@ -35,6 +37,7 @@ import type {
   WasteRecordPayload,
 } from '@/types/waste';
 import { extractApiError } from '@/utils/apiErrors';
+import { logError } from '@/utils/logger';
 
 import { DecisionModal } from './DecisionModal';
 import { PedidoModal } from './PedidoModal';
@@ -90,6 +93,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     data: publications = [],
     isLoading: loadingProducts,
     isError: productsError,
+    error: productsQueryError,
     refetch: refetchProducts,
   } = useQuery<PublishedPublication[]>({
     queryKey: ['publicaciones-current'],
@@ -105,6 +109,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     data: orders = [],
     isLoading: loadingOrders,
     isError: ordersError,
+    error: ordersQueryError,
     refetch: refetchOrders,
   } = useQuery<Order[]>({
     queryKey: ['waste-pedidos'],
@@ -114,21 +119,38 @@ export default function WasteRegisterScreen(): React.JSX.Element {
   });
 
   useEffect(() => {
-    if (productsError) {
-      console.error('[waste] publications query failed', productsError);
+    // R1-A: nunca loguear el error crudo — un AxiosError arrastra el JWT en
+    // `config.headers.Authorization`. logError lo describe y redacta.
+    if (productsError && productsQueryError) {
+      logError('waste', productsQueryError, { step: 'publicaciones-current' });
     }
-    if (ordersError) {
-      console.error('[waste] orders query failed', ordersError);
+    if (ordersError && ordersQueryError) {
+      logError('waste', ordersQueryError, { step: 'waste-pedidos' });
     }
-  }, [productsError, ordersError]);
+  }, [productsError, ordersError, productsQueryError, ordersQueryError]);
 
   const products = useMemo<PublishedProduct[]>(
     () =>
-      publications
-        .flatMap((publication) => publication.productos)
-        .filter((product) => product.stock > 0),
-    [publications],
+      filterProductsForOrder(
+        publications
+          .flatMap((publication) => publication.productos)
+          .filter((product) => product.stock > 0),
+        selectedPedido,
+      ),
+    [publications, selectedPedido],
   );
+
+  // R3-A: si el pedido cambió y el producto elegido ya no le pertenece, se
+  // resetea la selección para que el payload nunca vuelva a emparejarlos.
+  useEffect(() => {
+    if (
+      selectedProduct &&
+      selectedPedido &&
+      filterProductsForOrder([selectedProduct], selectedPedido).length === 0
+    ) {
+      setSelectedProduct(null);
+    }
+  }, [selectedPedido, selectedProduct]);
 
   const createMutation = useMutation({
     mutationFn: createWasteRecord,
@@ -184,17 +206,20 @@ export default function WasteRegisterScreen(): React.JSX.Element {
 
     createMutation.mutate(payload, {
       onError: (err) => {
-        console.error('[WasteRegister] createWasteRecord failed', err);
+        // R1-A: logError describe el error sin los headers (el JWT vive ahí).
+        logError('WasteRegister', err, { step: 'createWasteRecord' });
         setToast({
-          message: extractApiError(err, [
-            'fk_producto_semanal',
-            'fk_pedido',
-            'cantidad',
-            'motivo',
-            'fk_decision',
-            'comentarios',
-            'detail',
-          ]),
+          message:
+            wasteOrderProductMismatch(err) ??
+            extractApiError(err, [
+              'fk_producto_semanal',
+              'fk_pedido',
+              'cantidad',
+              'motivo',
+              'fk_decision',
+              'comentarios',
+              'detail',
+            ]),
           type: 'error',
         });
       },

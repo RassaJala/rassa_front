@@ -1,4 +1,5 @@
 export * from './dates';
+export * from './logger';
 export * from './apiErrors';
 export * from './validation';
 export * from './roles';

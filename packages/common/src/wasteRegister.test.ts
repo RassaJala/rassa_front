@@ -1,7 +1,11 @@
+import type { PublishedProduct } from './wasteRegister';
 import {
+  filterProductsForOrder,
   isTerminalOrderState,
   validateWasteRecord,
   WASTE_DECISION_OPTIONS,
+  wasteOrderProductMismatch,
+  WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE,
 } from './wasteRegister';
 
 describe('WASTE_DECISION_OPTIONS', () => {
@@ -57,5 +61,88 @@ describe('isTerminalOrderState', () => {
     expect(isTerminalOrderState('pendiente_entrega')).toBe(false);
     expect(isTerminalOrderState('pendiente')).toBe(false);
     expect(isTerminalOrderState('')).toBe(false);
+  });
+});
+
+describe('wasteOrderProductMismatch', () => {
+  const fieldError = (field: string): unknown => ({
+    isAxiosError: true,
+    response: {
+      status: 400,
+      data: { [field]: ['El producto no pertenece al DetallePedido.'] },
+    },
+  });
+
+  it('returns the clear message when fk_producto_semanal has a field error', () => {
+    expect(wasteOrderProductMismatch(fieldError('fk_producto_semanal'))).toBe(
+      WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE,
+    );
+  });
+
+  it('returns the clear message when fk_pedido has a field error', () => {
+    expect(wasteOrderProductMismatch(fieldError('fk_pedido'))).toBe(
+      WASTE_PRODUCT_ORDER_MISMATCH_MESSAGE,
+    );
+  });
+
+  it('returns null when the error is unrelated to the order-product link', () => {
+    const error = {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: { cantidad: ['No puede ser mayor al stock disponible.'] },
+      },
+    };
+    expect(wasteOrderProductMismatch(error)).toBeNull();
+  });
+
+  it('returns null for non-axios errors', () => {
+    expect(wasteOrderProductMismatch(new Error('boom'))).toBeNull();
+  });
+});
+
+describe('filterProductsForOrder', () => {
+  const tomate: PublishedProduct = {
+    id_producto_semanal: 100,
+    producto: 'Tomate',
+    unidad: 'kg',
+    stock: 5,
+    precio: '120',
+    foto: '',
+  };
+  const papa: PublishedProduct = {
+    id_producto_semanal: 101,
+    producto: 'Papa',
+    unidad: 'kg',
+    stock: 3,
+    precio: '60',
+    foto: '',
+  };
+
+  it('returns all products when the order carries no product list', () => {
+    expect(filterProductsForOrder([tomate, papa], null)).toEqual([
+      tomate,
+      papa,
+    ]);
+    expect(filterProductsForOrder([tomate, papa], undefined)).toEqual([
+      tomate,
+      papa,
+    ]);
+    expect(filterProductsForOrder([tomate, papa], { productos: [] })).toEqual([
+      tomate,
+      papa,
+    ]);
+  });
+
+  it('keeps only the products present in the order, case-insensitive', () => {
+    expect(
+      filterProductsForOrder([tomate, papa], { productos: ['TOMATE'] }),
+    ).toEqual([tomate]);
+  });
+
+  it('returns an empty list when no publication product matches the order', () => {
+    expect(
+      filterProductsForOrder([tomate, papa], { productos: ['Lechuga'] }),
+    ).toEqual([]);
   });
 });
