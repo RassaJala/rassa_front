@@ -130,14 +130,23 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     }
   }, [productsError, ordersError, productsQueryError, ordersQueryError]);
 
-  const products = useMemo<PublishedProduct[]>(
-    () =>
-      filterProductsForOrder(
-        listPublishedProducts(publications),
-        selectedPedido,
-      ),
-    [publications, selectedPedido],
+  const publishedProducts = useMemo<PublishedProduct[]>(
+    () => listPublishedProducts(publications),
+    [publications],
   );
+
+  const products = useMemo<PublishedProduct[]>(
+    () => filterProductsForOrder(publishedProducts, selectedPedido),
+    [publishedProducts, selectedPedido],
+  );
+
+  // R3-G: cuando el filtro del pedido vacía la lista (pedido sin productos, o
+  // nombres que no matchean), el aviso debe explicar la causa real y no decir
+  // que no hay publicaciones activas (las hay).
+  const orderEmptiedProductList =
+    selectedPedido !== null &&
+    publishedProducts.length > 0 &&
+    products.length === 0;
 
   // R3-A: si el pedido cambió y el producto elegido ya no le pertenece, se
   // resetea la selección para que el payload nunca vuelva a emparejarlos.
@@ -412,6 +421,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
               error={fieldErrors.producto}
               products={products}
               loading={loadingProducts}
+              orderEmptiedList={orderEmptiedProductList}
               t={t}
               coral={coral}
               onPress={() => setProductModalOpen(true)}

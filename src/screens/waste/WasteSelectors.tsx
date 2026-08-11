@@ -135,6 +135,7 @@ interface ProductSelectorProps {
   readonly error: string | undefined;
   readonly products: readonly PublishedProduct[];
   readonly loading: boolean;
+  readonly orderEmptiedList: boolean;
   readonly t: ThemeColors;
   readonly coral: string;
   readonly onPress: () => void;
@@ -145,6 +146,7 @@ export function ProductSelector({
   error,
   products,
   loading,
+  orderEmptiedList,
   t,
   coral,
   onPress,
@@ -190,6 +192,7 @@ export function ProductSelector({
       <ProductEmptyNotice
         products={products}
         loading={loading}
+        orderEmptiedList={orderEmptiedList}
         inputBg={t.input}
         borderColor={t.border}
         muted={t.muted}
@@ -201,6 +204,7 @@ export function ProductSelector({
 interface ProductEmptyNoticeProps {
   readonly products: readonly PublishedProduct[];
   readonly loading: boolean;
+  readonly orderEmptiedList: boolean;
   readonly inputBg: string;
   readonly borderColor: string;
   readonly muted: string;
@@ -209,6 +213,7 @@ interface ProductEmptyNoticeProps {
 function ProductEmptyNotice({
   products,
   loading,
+  orderEmptiedList,
   inputBg,
   borderColor,
   muted,
@@ -235,8 +240,9 @@ function ProductEmptyNotice({
         color={colors.accent}
       />
       <Text style={{ fontSize: 13, color: muted, flex: 1 }}>
-        No hay publicaciones activas esta semana. Publica un producto para poder
-        registrar mermas.
+        {orderEmptiedList
+          ? 'El pedido seleccionado no tiene productos publicados. Elige otro pedido.'
+          : 'No hay publicaciones activas esta semana. Publica un producto para poder registrar mermas.'}
       </Text>
     </View>
   );

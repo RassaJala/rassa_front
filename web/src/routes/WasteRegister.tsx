@@ -94,14 +94,23 @@ export function WasteRegister() {
 
   // R3-A: el selector de producto solo ofrece los productos del pedido
   // elegido; sin pedido se listan todos (el backend puede no mandar la lista).
-  const products = useMemo<PublishedProduct[]>(
-    () =>
-      filterProductsForOrder(
-        listPublishedProducts(publications),
-        selectedPedido,
-      ),
-    [publications, selectedPedido],
+  const publishedProducts = useMemo<PublishedProduct[]>(
+    () => listPublishedProducts(publications),
+    [publications],
   );
+
+  const products = useMemo<PublishedProduct[]>(
+    () => filterProductsForOrder(publishedProducts, selectedPedido),
+    [publishedProducts, selectedPedido],
+  );
+
+  // R3-G: cuando el filtro del pedido vacía la lista (pedido sin productos, o
+  // nombres que no matchean), el aviso debe explicar la causa real y no decir
+  // que no hay publicaciones activas (las hay).
+  const orderEmptiedProductList =
+    selectedPedido !== null &&
+    publishedProducts.length > 0 &&
+    products.length === 0;
 
   // Decisiones de merma: catálogo fijo (ids 1-4 sincronizados con el seed del
   // backend). El endpoint /decisiones-merma/ es solo-admin y el vendedor que
@@ -307,8 +316,9 @@ export function WasteRegister() {
             ) : null}
             {!loadingProducts && products.length === 0 ? (
               <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                No hay publicaciones activas esta semana. Publica un producto
-                para poder registrar mermas.
+                {orderEmptiedProductList
+                  ? 'El pedido seleccionado no tiene productos publicados. Elige otro pedido.'
+                  : 'No hay publicaciones activas esta semana. Publica un producto para poder registrar mermas.'}
               </div>
             ) : null}
             {selectedProduct ? (
