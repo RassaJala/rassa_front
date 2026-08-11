@@ -139,9 +139,11 @@ export function WasteRegister() {
     onSuccess: async () => {
       // Refresh product stock BEFORE resetting the form so the next payload is
       // validated against the real stock, not the stale pre-merma value.
-      await queryClient.invalidateQueries({
-        queryKey: ['publicaciones-current'],
-      });
+      await queryClient
+        .invalidateQueries({
+          queryKey: ['publicaciones-current'],
+        })
+        .catch(() => {});
       setToast({ message: 'Merma registrada correctamente.', type: 'success' });
       setProductoId('');
       setPedidoId('');

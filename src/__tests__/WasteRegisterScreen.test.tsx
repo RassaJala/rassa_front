@@ -81,10 +81,9 @@ jest.mock('@/components/Toast', () => {
 
 import WasteRegisterScreen from '@/screens/waste/WasteRegisterScreen';
 
-function renderScreen() {
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function renderScreen(client?: QueryClient) {
+  const qc =
+    client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <WasteRegisterScreen />
@@ -399,6 +398,33 @@ describe('WasteRegisterScreen (mobile)', () => {
     fireEvent.press(render.getByText('Elige un producto publicado…'));
     await waitFor(() => render.getByText('Tomate'));
     expect(render.queryByText('Papa')).toBeNull();
+  });
+
+  it('resets the form and shows the success toast even when the stock invalidation fails', async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const invalidateSpy = jest
+      .spyOn(qc, 'invalidateQueries')
+      .mockRejectedValue(new Error('invalidate boom'));
+    try {
+      const render = renderScreen(qc);
+
+      await waitForForm(render.getByText);
+      await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+      fireEvent.press(submitButton(render));
+      await waitFor(() => expect(mockCreateWasteRecord).toHaveBeenCalledTimes(1));
+
+      // R4: a failed stock refresh must not prevent the reset + success toast.
+      expect(
+        await waitFor(() => render.getByText('Merma registrada correctamente.')),
+      ).toBeTruthy();
+      expect(render.getByText('Elige un pedido…')).toBeTruthy();
+      expect(render.getByText('Elige un producto publicado…')).toBeTruthy();
+    } finally {
+      invalidateSpy.mockRestore();
+    }
   });
 
   it('blames the selected order when it empties the product list', async () => {

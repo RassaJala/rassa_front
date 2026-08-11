@@ -74,8 +74,9 @@ function seedMocks() {
   );
 }
 
-function renderPage() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderPage(client?: QueryClient) {
+  const qc =
+    client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <MemoryRouter>
       <ThemeProvider>
@@ -443,6 +444,37 @@ describe('WasteRegister', () => {
     expect(
       screen.queryByText(/No hay publicaciones activas esta semana/),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows the success toast even when the products query invalidation fails', async () => {
+    seedMocks();
+    seedPostSuccess();
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const invalidateSpy = vi
+      .spyOn(qc, 'invalidateQueries')
+      .mockRejectedValue(new Error('invalidate boom'));
+    try {
+      renderPage(qc);
+      const user = userEvent.setup();
+
+      await screen.findByRole('option', { name: /Tomate/ });
+      await selectFields(user);
+      await user.type(screen.getByPlaceholderText('0'), '2');
+      await user.type(
+        screen.getByPlaceholderText('Ej: producto dañado por el clima'),
+        'Se venció',
+      );
+      await user.click(screen.getByRole('button', { name: /Registrar Merma/ }));
+
+      // R4: a failed stock refresh must not prevent the success toast.
+      expect(
+        await screen.findByText('Merma registrada correctamente.'),
+      ).toBeInTheDocument();
+    } finally {
+      invalidateSpy.mockRestore();
+    }
   });
 
   it('shows the error fallback UI and recovers with Reintentar when queries fail', async () => {
