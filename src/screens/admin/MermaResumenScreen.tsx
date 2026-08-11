@@ -63,10 +63,10 @@ function fetchErrorMessage(e: unknown): string {
   if (axios.isAxiosError(e)) {
     const status = e.response?.status;
     return status !== undefined && status < 500
-      ? 'No se pudieron cargar los datos. Revisá los filtros y probá de nuevo.'
+      ? 'No se pudieron cargar los datos. Revisa los filtros y prueba de nuevo.'
       : 'Error al cargar los datos.';
   }
-  return 'Error de conexión. Verificá tu conexión e intentá de nuevo.';
+  return 'Error de conexión. Verifica tu conexión e intenta de nuevo.';
 }
 
 export default function MermaResumenScreen({
