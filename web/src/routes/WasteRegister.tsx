@@ -269,7 +269,7 @@ export function WasteRegister() {
               <option value="">Elige un pedido…</option>
               {pedidos.map((order) => (
                 <option key={order.id_pedido} value={order.id_pedido}>
-                  {`Pedido #${order.id_pedido} · ${order.cliente_nombre ?? 'Cliente'} · $${order.total} · ${formatEstado(order.estado_actual)}`}
+                  {`Pedido #${order.id_pedido} · ${order.cliente_nombre ?? 'Cliente'} · $${order.total ?? '—'} · ${formatEstado(order.estado_actual)}`}
                 </option>
               ))}
             </FormSelect>

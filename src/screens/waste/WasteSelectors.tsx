@@ -62,7 +62,8 @@ export function PedidoSelector({
               {selected.cliente_nombre ?? 'Cliente'}
             </Text>
             <Text style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-              Total: ${selected.total} · {formatEstado(selected.estado_actual)}
+              Total: ${selected.total ?? '—'} ·{' '}
+              {formatEstado(selected.estado_actual)}
             </Text>
           </View>
         ) : (

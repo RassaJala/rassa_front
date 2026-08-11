@@ -181,7 +181,8 @@ export function PedidoModal({
                           marginTop: 2,
                         }}
                       >
-                        {item.cliente_nombre ?? 'Cliente'} · ${item.total}
+                        {item.cliente_nombre ?? 'Cliente'} · $
+                        {item.total ?? '—'}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
