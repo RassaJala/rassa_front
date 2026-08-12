@@ -15,7 +15,7 @@ import {
 } from '@/common/wasteRegister';
 import type { Order } from '@root/types';
 
-import { fetchAllPages } from '../utils/pagination';
+import { fetchAllPages, type FetchAllPagesPage } from '../utils/pagination';
 import api from './api';
 
 export async function fetchWastePublications(): Promise<
@@ -29,7 +29,33 @@ export async function fetchWastePublications(): Promise<
 
 // The /pedidos/ endpoint returns the raw DRF shape ({ results, next }) rather
 // than the { ok, data } envelope; fetchAllPages walks every page and unwrap
-// maps the raw body directly.
+// maps the raw body directly. The unwrap is deliberately tolerant, mirroring
+// the mobile toPage (src/services/pagination.ts): raw pages, bare arrays and
+// { ok, data } envelopes all resolve; an invalid body degrades to an empty
+// page instead of crashing the whole walk.
+function unwrapOrdersPage(body: unknown): FetchAllPagesPage<Order> {
+  const payload =
+    body !== null &&
+    typeof body === 'object' &&
+    'data' in (body as Record<string, unknown>)
+      ? (body as { data: unknown }).data
+      : body;
+  if (Array.isArray(payload)) {
+    return { results: payload as Order[], next: null };
+  }
+  if (payload === null || typeof payload !== 'object') {
+    // Un cuerpo inválido no corta el recorrido: página vacía, sin `results`.
+    return { next: null };
+  }
+  const record = payload as { results?: unknown; next?: unknown };
+  return {
+    ...(Array.isArray(record.results)
+      ? { results: record.results as Order[] }
+      : {}),
+    next: typeof record.next === 'string' ? record.next : null,
+  };
+}
+
 export async function fetchWasteOrders(): Promise<Order[]> {
   const { data } = await fetchAllPages<Order>({
     url: '/pedidos/',
@@ -42,7 +68,7 @@ export async function fetchWasteOrders(): Promise<Order[]> {
       };
       return (await api.get<unknown>(url, config)).data;
     },
-    unwrap: (body) => body as { results?: Order[]; next?: string | null },
+    unwrap: unwrapOrdersPage,
   });
   return data.filter((order) => !isTerminalOrderState(order.estado_actual));
 }
