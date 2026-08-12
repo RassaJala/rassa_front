@@ -69,6 +69,11 @@ function dedupePage<T>(
     accumulated.push(...page.results);
     return 0;
   }
+  // first-wins: la primera aparición de una fila define su contenido y su
+  // posición; las repeticiones (dentro de la misma página o en páginas
+  // siguientes) se descartan. Con `seen` no se sobrescribe el dato ya
+  // acumulado, así un duplicado no puede pisar el valor fresco de la primera
+  // aparición ni duplicar keys que FlatList exige únicas.
   let duplicados = 0;
   for (const item of page.results) {
     const key = keyOf(item);

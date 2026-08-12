@@ -50,6 +50,32 @@ describe('validateWasteRecord', () => {
       validateWasteRecord({ ...validValues, comentarios: '   ' }).comentarios,
     ).toBeUndefined();
   });
+
+  it('rejects a stock that is not a number (R3-H)', () => {
+    const errors = validateWasteRecord({
+      ...validValues,
+      stock: '5' as unknown as number,
+    });
+    expect(errors.stock).toBe('El stock debe ser un número válido.');
+  });
+
+  it('rejects a negative or non-finite stock (R3-H)', () => {
+    expect(validateWasteRecord({ ...validValues, stock: -1 }).stock).toBe(
+      'El stock debe ser un número válido.',
+    );
+    expect(
+      validateWasteRecord({ ...validValues, stock: Number.NaN }).stock,
+    ).toBe('El stock debe ser un número válido.');
+  });
+
+  it('accepts a non-negative numeric stock and keeps the cantidad cap (R3-H)', () => {
+    expect(
+      validateWasteRecord({ ...validValues, cantidad: '3', stock: 5 }).stock,
+    ).toBeUndefined();
+    expect(
+      validateWasteRecord({ ...validValues, cantidad: '6', stock: 5 }).cantidad,
+    ).toBe('Stock disponible: 5.');
+  });
 });
 
 describe('isTerminalOrderState', () => {

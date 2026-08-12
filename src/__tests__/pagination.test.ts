@@ -108,6 +108,47 @@ describe('fetchAllPages', () => {
     expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
   });
 
+  it('mantiene la PRIMERA aparición de un duplicado entre páginas (first-wins, R3-I)', async () => {
+    getMock
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            { id: 1, v: 'a' },
+            { id: 2, v: 'b' },
+          ],
+          next: '/x/?page=2',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            { id: 1, v: 'DUPLICADO' },
+            { id: 2, v: 'b' },
+          ],
+          next: null,
+        },
+      });
+
+    const result = await fetchAllPages<{ id: number; v: string }>('/x/', {
+      keyOf: (i) => i.id,
+    });
+
+    expect(result.data).toEqual([
+      { id: 1, v: 'a' },
+      { id: 2, v: 'b' },
+    ]);
+  });
+
+  it('deduplica también dentro de la misma página (first-wins, R3-I)', async () => {
+    getMock.mockResolvedValueOnce(
+      page([{ id: 1 }, { id: 1 }, { id: 2 }], null),
+    );
+
+    const result = await fetchAllPages<Item>('/x/', { keyOf: (i) => i.id });
+
+    expect(result.data).toEqual([{ id: 1 }, { id: 2 }]);
+  });
+
   it('ignora un next fuera del origen de la API', async () => {
     getMock.mockResolvedValueOnce(
       page([{ id: 1 }], 'https://evil.example/x?page=2'),

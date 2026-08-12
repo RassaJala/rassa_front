@@ -227,6 +227,19 @@ export function validateWasteRecord(
     errors.decision = 'Elige una decisión.';
   }
 
+  // El stock, cuando viene, debe ser un número real no negativo. Un string o
+  // un número inválido (NaN) denuncian un producto malformado; rechazarlo
+  // aquí evita que el cap de cantidad de abajo se saltee en silencio (su
+  // guard `typeof stock === 'number'` solo aplica sobre números válidos).
+  if (
+    values.stock !== undefined &&
+    (typeof values.stock !== 'number' ||
+      !Number.isFinite(values.stock) ||
+      values.stock < 0)
+  ) {
+    errors.stock = 'El stock debe ser un número válido.';
+  }
+
   const cantidadNum = Number(values.cantidad);
   if (!values.cantidad || !Number.isInteger(cantidadNum) || cantidadNum <= 0) {
     errors.cantidad = 'La cantidad debe ser un número entero mayor a 0.';
