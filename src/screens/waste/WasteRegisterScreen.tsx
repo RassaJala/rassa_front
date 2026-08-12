@@ -435,7 +435,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
             </Text>
             <TextInput
               value={cantidad}
-              onChangeText={(text) => setCantidad(text.replace(/[^\d]/g, ''))}
+              onChangeText={(text) => setCantidad(text.replace(/[^\d.]/g, ''))}
               keyboardType="number-pad"
               maxLength={10}
               placeholder="0"

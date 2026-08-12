@@ -234,6 +234,23 @@ describe('WasteRegisterScreen (mobile)', () => {
     expect(mockCreateWasteRecord).not.toHaveBeenCalled();
   });
 
+  it('keeps a decimal point typed in the quantity input (no silent 1.5 → 15)', async () => {
+    const render = renderScreen();
+
+    await waitForForm(render.getByText);
+    await fillValidForm(render.getByText, render.getByPlaceholderText);
+
+    fireEvent.changeText(render.getByPlaceholderText('0'), '1.5');
+
+    expect(render.getByPlaceholderText('0').props.value).toBe('1.5');
+    fireEvent.press(submitButton(render));
+
+    expect(
+      render.getByText('La cantidad debe ser un número entero mayor a 0.'),
+    ).toBeTruthy();
+    expect(mockCreateWasteRecord).not.toHaveBeenCalled();
+  });
+
   it('does not fire a second request while the mutation is pending', async () => {
     let resolveCreate: (() => void) | undefined;
     mockCreateWasteRecord.mockImplementationOnce(
