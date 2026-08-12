@@ -5,9 +5,10 @@ import axiosRetry from 'axios-retry';
 import { parseApiError } from '@/common/apiErrors';
 import type { SafeMessageError } from '@/common/apiErrors';
 import { API_RETRY_LIMIT } from '@/common/networking';
+import { API_BASE } from '../utils/apiBase';
 import { redirect } from './navigate';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+const API_URL = API_BASE;
 
 // Safe storage accessors: Firefox blocked-storage mode throws on the property
 // accessor itself. Every direct localStorage/sessionStorage access in this

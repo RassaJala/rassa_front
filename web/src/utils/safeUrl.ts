@@ -7,13 +7,20 @@
  * rechazan para evitar exfiltrar el token de autorización hacia otro origen.
  */
 
-/** Origen de la API: base configurada o `window.location.origin` si es relativa. */
+import { API_BASE } from './apiBase';
+
+// Origen real de la API: el mismo base que usa el axios instance (API_BASE),
+// resuelto contra window.location.origin cuando es relativo. Cuando no hay
+// window (SSR) se resuelve contra un fallback neutral; un `next` absoluto
+// cross-origin válido sigue anclándose al origen configurado porque el
+// resolvedor usa el base absoluto tal cual, sin depender de window.
 function apiOrigin(): string | null {
   try {
-    const base = import.meta.env.VITE_API_URL ?? '/api';
     const baseUrl = new URL(
-      base,
-      typeof window === 'undefined' ? undefined : window.location.origin,
+      API_BASE,
+      typeof window === 'undefined'
+        ? 'http://localhost'
+        : window.location.origin,
     );
     return baseUrl.origin;
   } catch {
