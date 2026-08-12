@@ -120,13 +120,15 @@ export default function WasteRegisterScreen(): React.JSX.Element {
   });
 
   useEffect(() => {
-    // R1-A: nunca loguear el error crudo — un AxiosError arrastra el JWT en
+    // Nunca loguear el error crudo — un AxiosError arrastra el JWT en
     // `config.headers.Authorization`. logError lo describe y redacta.
     if (productsError && productsQueryError) {
-      logError('waste', productsQueryError, { step: 'publicaciones-current' });
+      logError('WasteRegister', productsQueryError, {
+        step: 'publicaciones-current',
+      });
     }
     if (ordersError && ordersQueryError) {
-      logError('waste', ordersQueryError, { step: 'waste-pedidos' });
+      logError('WasteRegister', ordersQueryError, { step: 'waste-pedidos' });
     }
   }, [productsError, ordersError, productsQueryError, ordersQueryError]);
 
@@ -140,7 +142,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     [publishedProducts, selectedPedido],
   );
 
-  // R3-G: cuando el filtro del pedido vacía la lista (pedido sin productos, o
+  // Cuando el filtro del pedido vacía la lista (pedido sin productos, o
   // nombres que no matchean), el aviso debe explicar la causa real y no decir
   // que no hay publicaciones activas (las hay).
   const orderEmptiedProductList =
@@ -148,7 +150,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
     publishedProducts.length > 0 &&
     products.length === 0;
 
-  // R3-A: si el pedido cambió y el producto elegido ya no le pertenece, se
+  // Si el pedido cambió y el producto elegido ya no le pertenece, se
   // resetea la selección para que el payload nunca vuelva a emparejarlos.
   useEffect(() => {
     if (
@@ -221,7 +223,7 @@ export default function WasteRegisterScreen(): React.JSX.Element {
 
     createMutation.mutate(payload, {
       onError: (err) => {
-        // R1-A: logError describe el error sin los headers (el JWT vive ahí).
+        // logError describe el error sin los headers (el JWT vive ahí).
         logError('WasteRegister', err, { step: 'createWasteRecord' });
         setToast({
           message:
@@ -422,7 +424,6 @@ export default function WasteRegisterScreen(): React.JSX.Element {
               selected={selectedProduct}
               error={fieldErrors.producto}
               products={products}
-              loading={loadingProducts}
               orderEmptiedList={orderEmptiedProductList}
               t={t}
               coral={coral}

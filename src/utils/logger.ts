@@ -3,12 +3,12 @@ import * as Sentry from '@sentry/react-native';
 import { describeError, redactSensitive } from '@/common/logger';
 import { sanitizeSentryError } from '@/services/sentry';
 
-// Logger móvil seguro (R1-A): describe los errores de axios sin los headers
+// Logger móvil seguro: describe los errores de axios sin los headers
 // (el JWT viaja en `config.headers.Authorization`) y redacta las claves que
 // parecen credenciales en el contexto extra. Nunca loguear el objeto de error
 // crudo.
 //
-// R1-D: en producción el error también se reporta a Sentry, como ya hace la
+// En producción el error también se reporta a Sentry, como ya hace la
 // web (web/src/utils/logger.ts), para que las fallas del módulo de mermas no
 // sean invisibles al monitoreo. El evento se construye desde la descripción
 // redactada y se pasa por sanitizeSentryError como red defensiva.

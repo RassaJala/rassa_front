@@ -1,13 +1,6 @@
 // Waste registration domain shared by the mobile app (WasteRegisterScreen,
 // src/services/waste.ts) and the web app (web/src/routes/WasteRegister.tsx).
 
-export interface WasteDecision {
-  readonly id_decision: number;
-  readonly decision: string;
-  readonly creado_en: string;
-  readonly estado: boolean;
-}
-
 export interface WasteDecisionOption {
   readonly id_decision: number;
   readonly decision: string;

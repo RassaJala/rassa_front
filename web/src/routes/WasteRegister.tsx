@@ -79,7 +79,7 @@ export function WasteRegister() {
   });
 
   useEffect(() => {
-    // R1-A: nunca loguear el error crudo — un AxiosError arrastra el JWT en
+    // Nunca loguear el error crudo — un AxiosError arrastra el JWT en
     // `config.headers.Authorization`. logError lo describe y redacta.
     if (productsError && productsQueryError) {
       logError('waste', productsQueryError, { step: 'publicaciones-current' });
@@ -92,7 +92,7 @@ export function WasteRegister() {
   const selectedPedido =
     pedidos.find((order) => order.id_pedido === Number(pedidoId)) ?? null;
 
-  // R3-A: el selector de producto solo ofrece los productos del pedido
+  // El selector de producto solo ofrece los productos del pedido
   // elegido; sin pedido se listan todos (el backend puede no mandar la lista).
   const publishedProducts = useMemo<PublishedProduct[]>(
     () => listPublishedProducts(publications),
@@ -104,7 +104,7 @@ export function WasteRegister() {
     [publishedProducts, selectedPedido],
   );
 
-  // R3-G: cuando el filtro del pedido vacía la lista (pedido sin productos, o
+  // Cuando el filtro del pedido vacía la lista (pedido sin productos, o
   // nombres que no matchean), el aviso debe explicar la causa real y no decir
   // que no hay publicaciones activas (las hay).
   const orderEmptiedProductList =
@@ -122,7 +122,7 @@ export function WasteRegister() {
       (product) => product.id_producto_semanal === Number(productoId),
     ) ?? null;
 
-  // R3-A: si el pedido cambió y el producto elegido ya no le pertenece, se
+  // Si el pedido cambió y el producto elegido ya no le pertenece, se
   // resetea la selección para que el payload nunca vuelva a emparejarlos.
   useEffect(() => {
     if (

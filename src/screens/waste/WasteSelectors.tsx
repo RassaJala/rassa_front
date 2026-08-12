@@ -134,7 +134,6 @@ interface ProductSelectorProps {
   readonly selected: PublishedProduct | null;
   readonly error: string | undefined;
   readonly products: readonly PublishedProduct[];
-  readonly loading: boolean;
   readonly orderEmptiedList: boolean;
   readonly t: ThemeColors;
   readonly coral: string;
@@ -145,7 +144,6 @@ export function ProductSelector({
   selected,
   error,
   products,
-  loading,
   orderEmptiedList,
   t,
   coral,
@@ -191,7 +189,6 @@ export function ProductSelector({
       ) : null}
       <ProductEmptyNotice
         products={products}
-        loading={loading}
         orderEmptiedList={orderEmptiedList}
         inputBg={t.input}
         borderColor={t.border}
@@ -203,7 +200,6 @@ export function ProductSelector({
 
 interface ProductEmptyNoticeProps {
   readonly products: readonly PublishedProduct[];
-  readonly loading: boolean;
   readonly orderEmptiedList: boolean;
   readonly inputBg: string;
   readonly borderColor: string;
@@ -212,13 +208,12 @@ interface ProductEmptyNoticeProps {
 
 function ProductEmptyNotice({
   products,
-  loading,
   orderEmptiedList,
   inputBg,
   borderColor,
   muted,
 }: ProductEmptyNoticeProps): React.JSX.Element | null {
-  if (loading || products.length > 0) return null;
+  if (products.length > 0) return null;
   return (
     <View
       style={{
