@@ -15,6 +15,12 @@ jest.mock('@/services/api', () => ({
   isApiUrl: (url: string) => url.startsWith('/'),
 }));
 
+jest.mock('@/utils/logger', () => ({
+  logError: jest.fn(),
+}));
+
+import { logError } from '@/utils/logger';
+
 const getMock = api.get as jest.Mock;
 
 interface Item {
@@ -159,5 +165,45 @@ describe('fetchAllPages', () => {
 
     expect(result.data).toEqual([{ id: 1 }]);
     expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('redacta los query params sensibles del next no seguro en el warning', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      getMock.mockResolvedValueOnce(
+        page([{ id: 1 }], 'https://evil.example/x?token=SECRET&page=2'),
+      );
+
+      const result = await fetchAllPages<Item>('/x/');
+
+      expect(result.data).toEqual([{ id: 1 }]);
+      const serialized = JSON.stringify(warnSpy.mock.calls);
+      expect(serialized).toContain('token=[redacted]');
+      expect(serialized).not.toContain('SECRET');
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('reporta el fallo de página vía logError sin loguear el error crudo', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      getMock
+        .mockResolvedValueOnce(page([{ id: 1 }], '/x/?page=2&token=SECRET'))
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await fetchAllPages<Item>('/x/', { maxPages: 10 });
+
+      expect(result.data).toEqual([{ id: 1 }]);
+      expect(result.errores).toBe(1);
+      expect(logError).toHaveBeenCalledWith(
+        'fetchAllPages',
+        expect.any(Error),
+        expect.objectContaining({ url: '/x/?page=2&token=SECRET' }),
+      );
+      expect(JSON.stringify(warnSpy.mock.calls)).not.toContain('Network error');
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

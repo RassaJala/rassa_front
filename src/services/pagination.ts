@@ -1,7 +1,9 @@
 import * as Sentry from '@sentry/react-native';
 
+import { redactUrlQueryParams } from '@/common/logger';
+import { logError } from '@/utils/logger';
+
 import api, { isApiUrl } from './api';
-import { sanitizeSentryError } from './sentry';
 
 export interface PaginatedFetchResult<T> {
   readonly data: T[];
@@ -91,7 +93,12 @@ function resolveNext(source: string, next: string | null): string | null {
   if (next === null || isApiUrl(next)) {
     return next;
   }
-  console.warn(`[${source}] unsafe next URL ignored:`, next);
+  // El `next` crudo puede arrastrar query params con credenciales (p. ej.
+  // tokens firmados); se redacta antes de llegar a la consola.
+  console.warn(
+    `[${source}] unsafe next URL ignored:`,
+    redactUrlQueryParams(next),
+  );
   Sentry.captureMessage(
     `[${source}] se ignoró un next fuera del origen de la API`,
   );
@@ -130,7 +137,7 @@ export async function fetchAllPages<T>(
         `[${source}] max pages (${maxPages}) reached, stopping fetch`,
       );
       Sentry.captureMessage(
-        `[${source}] se alcanzó el límite de ${maxPages} páginas al obtener ${url}`,
+        `[${source}] se alcanzó el límite de ${maxPages} páginas al obtener ${redactUrlQueryParams(url)}`,
       );
       break;
     }
@@ -138,7 +145,7 @@ export async function fetchAllPages<T>(
       truncated = true;
       console.warn(`[${source}] deadline reached, stopping fetch`);
       Sentry.captureMessage(
-        `[${source}] se alcanzó el deadline al obtener ${url}`,
+        `[${source}] se alcanzó el deadline al obtener ${redactUrlQueryParams(url)}`,
       );
       break;
     }
@@ -148,8 +155,9 @@ export async function fetchAllPages<T>(
       nextUrl = resolveNext(source, page.next);
     } catch (error) {
       errores += 1;
-      console.warn(`[${source}] error fetching page at depth ${depth}:`, error);
-      Sentry.captureException(sanitizeSentryError(error));
+      // logError describe el error (sin headers/JWT) y redacta el extra; el
+      // error crudo nunca llega a la consola.
+      logError(source, error, { url: nextUrl, depth });
       if (accumulated.length === 0) throw error;
       nextUrl = null;
     }
@@ -159,7 +167,7 @@ export async function fetchAllPages<T>(
   if (duplicados > 0) {
     console.warn(`[${source}] ${duplicados} elementos duplicados detectados`);
     Sentry.captureMessage(
-      `[${source}] ${duplicados} elementos duplicados al recorrer ${url}`,
+      `[${source}] ${duplicados} elementos duplicados al recorrer ${redactUrlQueryParams(url)}`,
     );
   }
 
