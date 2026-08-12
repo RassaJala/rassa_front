@@ -16,12 +16,11 @@ import { API_BASE } from './apiBase';
 // resolvedor usa el base absoluto tal cual, sin depender de window.
 function apiOrigin(): string | null {
   try {
-    const baseUrl = new URL(
-      API_BASE,
-      typeof window === 'undefined'
-        ? 'http://localhost'
-        : window.location.origin,
-    );
+    const rawOrigin =
+      typeof window !== 'undefined' ? window.location.origin : undefined;
+    const windowOrigin =
+      !rawOrigin || rawOrigin === 'null' ? 'http://localhost' : rawOrigin;
+    const baseUrl = new URL(API_BASE, windowOrigin);
     return baseUrl.origin;
   } catch {
     return null;
@@ -35,8 +34,12 @@ export function safeNextUrl(next: string | null | undefined): string | null {
   if (next.startsWith('/')) return next;
   try {
     const origin = apiOrigin();
-    if (origin === null) return null;
-    return new URL(next).origin === origin ? next : null;
+    if (origin !== null && new URL(next).origin === origin) return next;
+    const parsed = new URL(next);
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    return null;
   } catch {
     return null;
   }
