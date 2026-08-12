@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -16,7 +9,6 @@ import type { PublishedProduct } from '@/types/waste';
 
 interface ProductModalProps {
   readonly visible: boolean;
-  readonly loading: boolean;
   readonly products: readonly PublishedProduct[];
   readonly selectedId: number | null;
   readonly bottomInset: number;
@@ -25,15 +17,13 @@ interface ProductModalProps {
   readonly onSelect: (product: PublishedProduct) => void;
 }
 
-function productModalHint(loading: boolean, productCount: number): string {
-  if (loading) return 'Cargando productos…';
+function productModalHint(productCount: number): string {
   if (productCount === 0) return 'No hay productos disponibles.';
   return 'Elige un producto publicado…';
 }
 
 export function ProductModal({
   visible,
-  loading,
   products,
   selectedId,
   bottomInset,
@@ -120,78 +110,74 @@ export function ProductModal({
               marginBottom: 12,
             }}
           >
-            {productModalHint(loading, products.length)}
+            {productModalHint(products.length)}
           </Text>
-          {loading ? (
-            <ActivityIndicator color={t.brand} style={{ marginVertical: 24 }} />
-          ) : (
-            <FlatList
-              data={products}
-              keyExtractor={(item) => String(item.id_producto_semanal)}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => {
-                const isSelected = item.id_producto_semanal === selectedId;
-                return (
-                  <Pressable
-                    onPress={() => onSelect(item)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingVertical: 12,
-                      paddingHorizontal: 12,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? t.input : t.surface,
-                      borderWidth: 1,
-                      borderColor: isSelected ? t.brand : t.border,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <View style={{ flex: 1, marginRight: 12 }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '600',
-                          color: t.fg,
-                        }}
-                      >
-                        {item.producto}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: t.muted,
-                          marginTop: 2,
-                        }}
-                      >
-                        Unidad: {item.unidad}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '700',
-                          color: t.brand,
-                        }}
-                      >
-                        ${item.precio}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: t.muted,
-                          marginTop: 2,
-                        }}
-                      >
-                        Stock: {item.stock}
-                      </Text>
-                    </View>
-                  </Pressable>
-                );
-              }}
-            />
-          )}
+          <FlatList
+            data={products}
+            keyExtractor={(item) => String(item.id_producto_semanal)}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const isSelected = item.id_producto_semanal === selectedId;
+              return (
+                <Pressable
+                  onPress={() => onSelect(item)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 12,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: isSelected ? t.input : t.surface,
+                    borderWidth: 1,
+                    borderColor: isSelected ? t.brand : t.border,
+                    marginBottom: 8,
+                  }}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '600',
+                        color: t.fg,
+                      }}
+                    >
+                      {item.producto}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: t.muted,
+                        marginTop: 2,
+                      }}
+                    >
+                      Unidad: {item.unidad}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '700',
+                        color: t.brand,
+                      }}
+                    >
+                      ${item.precio}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: t.muted,
+                        marginTop: 2,
+                      }}
+                    >
+                      Stock: {item.stock}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            }}
+          />
         </View>
       </View>
     </Modal>

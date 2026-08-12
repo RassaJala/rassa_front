@@ -9,10 +9,7 @@ jest.mock('@expo/vector-icons', () => ({
 
 import { themeColors } from '@/constants/colors';
 import { DecisionModal } from '@/screens/waste/DecisionModal';
-import {
-  PEDIDO_FECHA_LOCALE,
-  PedidoModal,
-} from '@/screens/waste/PedidoModal';
+import { PEDIDO_FECHA_LOCALE, PedidoModal } from '@/screens/waste/PedidoModal';
 import { ProductModal } from '@/screens/waste/ProductModal';
 import type { Order } from '@/types';
 import type { PublishedProduct, WasteDecisionOption } from '@/types/waste';
@@ -48,7 +45,6 @@ function renderPedidoModal(props: {
   const view = render(
     <PedidoModal
       visible
-      loading={false}
       orders={props.orders}
       selectedId={props.selectedId ?? null}
       bottomInset={0}
@@ -69,7 +65,6 @@ function renderProductModal(props: {
   const view = render(
     <ProductModal
       visible
-      loading={false}
       products={props.products}
       selectedId={props.selectedId ?? null}
       bottomInset={0}

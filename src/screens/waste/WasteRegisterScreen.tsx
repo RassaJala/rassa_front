@@ -548,7 +548,6 @@ export default function WasteRegisterScreen(): React.JSX.Element {
       {/* Selector de producto */}
       <ProductModal
         visible={productModalOpen}
-        loading={loadingProducts}
         products={products}
         selectedId={selectedProduct?.id_producto_semanal ?? null}
         bottomInset={insets.bottom}
@@ -560,7 +559,6 @@ export default function WasteRegisterScreen(): React.JSX.Element {
       {/* Selector de pedido */}
       <PedidoModal
         visible={pedidoModalOpen}
-        loading={loadingOrders}
         orders={orders}
         selectedId={selectedPedido?.id_pedido ?? null}
         bottomInset={insets.bottom}

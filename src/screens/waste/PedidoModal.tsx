@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Modal, Pressable, Text, View } from 'react-native';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -16,8 +9,7 @@ import type { ThemeColors } from '@/constants/colors';
 import { colors } from '@/constants/colors';
 import type { Order } from '@/types';
 
-function orderModalHint(loading: boolean, orderCount: number): string {
-  if (loading) return 'Cargando pedidos…';
+function orderModalHint(orderCount: number): string {
   if (orderCount === 0) return 'No hay pedidos para este vendedor.';
   return 'Selecciona el pedido afectado por la merma.';
 }
@@ -39,7 +31,6 @@ function formatFecha(iso: string): string {
 
 interface PedidoModalProps {
   readonly visible: boolean;
-  readonly loading: boolean;
   readonly orders: readonly Order[];
   readonly selectedId: number | null;
   readonly bottomInset: number;
@@ -50,7 +41,6 @@ interface PedidoModalProps {
 
 export function PedidoModal({
   visible,
-  loading,
   orders,
   selectedId,
   bottomInset,
@@ -137,80 +127,75 @@ export function PedidoModal({
               marginBottom: 12,
             }}
           >
-            {orderModalHint(loading, orders.length)}
+            {orderModalHint(orders.length)}
           </Text>
-          {loading ? (
-            <ActivityIndicator color={t.brand} style={{ marginVertical: 24 }} />
-          ) : (
-            <FlatList
-              data={orders}
-              keyExtractor={(item) => String(item.id_pedido)}
-              showsVerticalScrollIndicator={false}
-              style={{ flexShrink: 1 }}
-              renderItem={({ item }) => {
-                const isSelected = item.id_pedido === selectedId;
-                const fecha = formatFecha(item.creado_en);
-                return (
-                  <Pressable
-                    onPress={() => onSelect(item)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingVertical: 12,
-                      paddingHorizontal: 12,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? t.input : t.surface,
-                      borderWidth: 1,
-                      borderColor: isSelected ? t.brand : t.border,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <View style={{ flex: 1, marginRight: 12 }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '600',
-                          color: t.fg,
-                        }}
-                      >
-                        Pedido #{item.id_pedido}
-                        {fecha !== '' ? ` · ${fecha}` : ''}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: t.muted,
-                          marginTop: 2,
-                        }}
-                      >
-                        {item.cliente_nombre ?? 'Cliente'} · $
-                        {item.total ?? '—'}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: isSelected ? t.brand : t.muted,
-                        }}
-                      >
-                        {formatEstado(item.estado_actual)}
-                      </Text>
-                      {isSelected ? (
-                        <MaterialCommunityIcons
-                          name="check-circle"
-                          size={18}
-                          color={t.brand}
-                        />
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              }}
-            />
-          )}
+          <FlatList
+            data={orders}
+            keyExtractor={(item) => String(item.id_pedido)}
+            showsVerticalScrollIndicator={false}
+            style={{ flexShrink: 1 }}
+            renderItem={({ item }) => {
+              const isSelected = item.id_pedido === selectedId;
+              const fecha = formatFecha(item.creado_en);
+              return (
+                <Pressable
+                  onPress={() => onSelect(item)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 12,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: isSelected ? t.input : t.surface,
+                    borderWidth: 1,
+                    borderColor: isSelected ? t.brand : t.border,
+                    marginBottom: 8,
+                  }}
+                >
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '600',
+                        color: t.fg,
+                      }}
+                    >
+                      Pedido #{item.id_pedido}
+                      {fecha !== '' ? ` · ${fecha}` : ''}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: t.muted,
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.cliente_nombre ?? 'Cliente'} · ${item.total ?? '—'}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: isSelected ? t.brand : t.muted,
+                      }}
+                    >
+                      {formatEstado(item.estado_actual)}
+                    </Text>
+                    {isSelected ? (
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={18}
+                        color={t.brand}
+                      />
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            }}
+          />
         </View>
       </View>
     </Modal>
