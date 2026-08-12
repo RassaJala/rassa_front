@@ -105,8 +105,20 @@ export async function fetchTiposPago(api: AxiosInstance): Promise<TipoPago[]> {
   return res.data;
 }
 
-// Per-order idempotency key so a retried POST can never charge the buyer twice:
-// the backend should reject a repeat POST for the same (pedido, key) pair.
+// Idempotency key for POSTs that must not double-charge (createPago) or
+// double-register (createWasteRecord).
+//
+// WARNING (R1-B): the key is EPHEMERAL — every call returns a brand-new key,
+// so it identifies the REQUEST it was attached to, not the operation. Backend
+// dedupe (rassa_back) only works when the SAME key reaches it on every
+// re-dispatch of the same logical operation. The axios 401 single-flight
+// refresh re-dispatches the original request config, so that retry keeps this
+// header; a NEW submit (user re-tap, manual retry) calls this again and sends
+// a fresh key. For retry-safe keys across attempts, persist the key per
+// operation/fingerprint (see web checkoutGuard.resolveIdempotencyKey and
+// mobile checkoutPersistence) and reuse it on every dispatch. rassa_back must
+// persist the received key and reject a repeat POST carrying the same
+// (operation, key) pair it already applied.
 export function createIdempotencyKey(): string {
   if (
     typeof crypto !== 'undefined' &&

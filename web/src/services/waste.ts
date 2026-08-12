@@ -77,7 +77,9 @@ export async function createWasteRecord(
   payload: WasteRecordPayload,
 ): Promise<WasteRecord> {
   // Idempotency-Key: a 401 re-dispatch reuses the same config → same key →
-  // the backend can dedupe if the original POST was already persisted.
+  // the backend can dedupe if the original POST was already persisted. The
+  // key is ephemeral per call (see createIdempotencyKey); a NEW submit sends
+  // a fresh key by design.
   const { data } = await api.post<{ data: WasteRecord }>('/mermas/', payload, {
     headers: { 'Idempotency-Key': createIdempotencyKey() },
   });
