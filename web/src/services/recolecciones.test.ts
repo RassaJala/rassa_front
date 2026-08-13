@@ -185,7 +185,7 @@ describe('getTodasLasRecolecciones', () => {
     expect(mockedApi.get).toHaveBeenCalledTimes(1);
   });
 
-  it('rewrites a localhost DRF absolute next link to a relative path and continues pagination (R3-B\')', async () => {
+  it("rewrites a localhost DRF absolute next link to a relative path and continues pagination (R3-B')", async () => {
     mockedApi.get
       .mockResolvedValueOnce(
         page([1], 'http://localhost:8000/recolecciones/?page=2'),
