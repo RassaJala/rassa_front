@@ -1,6 +1,8 @@
 import {
+  DECISION_DESECHAR,
   DECISION_DONAR,
   DECISION_TIRAR,
+  DECISION_VENDER_MAS_BARATO,
   periodLabel,
   WASTE_DETAIL_LIMIT,
 } from '@/common/waste';
@@ -10,7 +12,10 @@ import { Card } from '../../ui/Card';
 
 const variantMap: Record<string, 'success' | 'error' | 'warning'> = {
   [DECISION_DONAR]: 'success',
+  [DECISION_DESECHAR]: 'error',
+  // Legacy alias for pre-rename records.
   [DECISION_TIRAR]: 'error',
+  [DECISION_VENDER_MAS_BARATO]: 'warning',
 };
 
 interface DetailTableProps {

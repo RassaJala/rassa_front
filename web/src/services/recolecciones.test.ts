@@ -185,7 +185,7 @@ describe('getTodasLasRecolecciones', () => {
     expect(mockedApi.get).toHaveBeenCalledTimes(1);
   });
 
-  it('treats a rejected non-relative next (DRF absolute URL) as a failure', async () => {
+  it("rewrites a localhost DRF absolute next link to a relative path and continues pagination (R3-B')", async () => {
     mockedApi.get
       .mockResolvedValueOnce(
         page([1], 'http://localhost:8000/recolecciones/?page=2'),
@@ -194,10 +194,10 @@ describe('getTodasLasRecolecciones', () => {
 
     const result = await getTodasLasRecolecciones();
 
-    expect(result.data.map((r) => r.id_recoleccion)).toEqual([1]);
-    expect(result.errores).toBe(1);
-    expect(result.truncated).toBe(true);
-    expect(mockedApi.get).toHaveBeenCalledTimes(1);
+    expect(result.data.map((r) => r.id_recoleccion)).toEqual([1, 2]);
+    expect(result.errores).toBe(0);
+    expect(result.truncated).toBe(false);
+    expect(mockedApi.get).toHaveBeenCalledTimes(2);
   });
 
   it('surfaces a page failure as errores without throwing', async () => {

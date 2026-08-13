@@ -95,9 +95,9 @@ describe('isValidFechaFormato', () => {
 describe('parseFecha', () => {
   it('parses a valid date', () => {
     const date = parseFecha('2026-08-01');
-    expect(date?.getFullYear()).toBe(2026);
-    expect(date?.getMonth()).toBe(7);
-    expect(date?.getDate()).toBe(1);
+    expect(date?.getUTCFullYear()).toBe(2026);
+    expect(date?.getUTCMonth()).toBe(7);
+    expect(date?.getUTCDate()).toBe(1);
   });
 
   it('returns null for invalid dates', () => {

@@ -77,7 +77,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <View className="flex-1 items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
           <Card className="w-full max-w-md">
             <View className="items-center p-6">
-              <Text className="mb-4 text-center text-lg font-semibold text-brand-ink dark:text-gray-100">
+              <Text className="text-brand-ink mb-4 text-center text-lg font-semibold dark:text-gray-100">
                 Algo salió mal
               </Text>
               <Text className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">

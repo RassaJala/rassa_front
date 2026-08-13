@@ -536,6 +536,28 @@ export default function SalesScreen(): React.JSX.Element {
         >
           Pedidos
         </Text>
+        <Pressable
+          onPress={() => navigation.navigate('WasteRegister')}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginTop: 16,
+            backgroundColor: redCoral,
+            borderRadius: 12,
+            paddingVertical: 12,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="package-variant-remove"
+            size={18}
+            color={white}
+          />
+          <Text style={{ fontSize: 15, fontWeight: '700', color: white }}>
+            Registrar Merma
+          </Text>
+        </Pressable>
       </View>
 
       <FlatList

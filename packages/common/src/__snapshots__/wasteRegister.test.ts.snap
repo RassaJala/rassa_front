@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`WASTE_DECISION_OPTIONS snapshot guards the admin-only catalog against drift 1`] = `
+[
+  {
+    "decision": "Donar",
+    "id_decision": 1,
+  },
+  {
+    "decision": "Desechar",
+    "id_decision": 2,
+  },
+  {
+    "decision": "Vender más barato",
+    "id_decision": 3,
+  },
+  {
+    "decision": "Compostar",
+    "id_decision": 4,
+  },
+]
+`;

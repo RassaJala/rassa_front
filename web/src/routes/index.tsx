@@ -8,6 +8,7 @@ import { FarmerProducts, FarmerOrders } from './farmer';
 import { FarmerPublications } from './FarmerPublications';
 import { PublicationWizard } from './PublicationWizard';
 import { SellerSales } from './seller';
+import { WasteRegister } from './WasteRegister';
 import { VendorCorteCaja } from './VendorCorteCaja';
 import { PaymentPage } from './PaymentPage';
 import { ReceiptPage } from './ReceiptPage';
@@ -138,6 +139,7 @@ export function AppRouter() {
             <DashboardLayout role="vendedor">
               <Routes>
                 <Route path="ventas" element={<SellerSales />} />
+                <Route path="mermas" element={<WasteRegister />} />
                 <Route path="pedidos" element={<VendorPanelScreen />} />
                 <Route path="recolecciones" element={<SellerRecolecciones />} />
                 <Route path="corte-caja" element={<VendorCorteCaja />} />

@@ -22,8 +22,8 @@ import axios from 'axios';
 import {
   extractProducts,
   groupBy,
-  parseDate,
   periodLabel,
+  toLocalDate,
   WASTE_DETAIL_LIMIT,
   WASTE_PAGE_SIZE,
 } from '@/common/waste';
@@ -63,10 +63,10 @@ function fetchErrorMessage(e: unknown): string {
   if (axios.isAxiosError(e)) {
     const status = e.response?.status;
     return status !== undefined && status < 500
-      ? 'No se pudieron cargar los datos. Revisá los filtros y probá de nuevo.'
+      ? 'No se pudieron cargar los datos. Revisa los filtros y prueba de nuevo.'
       : 'Error al cargar los datos.';
   }
-  return 'Error de conexión. Verificá tu conexión e intentá de nuevo.';
+  return 'Error de conexión. Verifica tu conexión e intenta de nuevo.';
 }
 
 export default function MermaResumenScreen({
@@ -119,8 +119,8 @@ export default function MermaResumenScreen({
   const dataLoadedAtRef = useRef(0);
 
   // Date validation
-  const desdeDate = draftDesde ? parseDate(draftDesde) : null;
-  const hastaDate = draftHasta ? parseDate(draftHasta) : null;
+  const desdeDate = draftDesde ? toLocalDate(draftDesde) : null;
+  const hastaDate = draftHasta ? toLocalDate(draftHasta) : null;
   const isDateRangeInvalid =
     desdeDate !== null && hastaDate !== null && desdeDate > hastaDate;
 

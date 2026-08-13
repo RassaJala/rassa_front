@@ -1,4 +1,5 @@
 export * from './dates';
+export * from './logger';
 export * from './apiErrors';
 export * from './validation';
 export * from './roles';
@@ -7,4 +8,5 @@ export * from './orders';
 export * from './publicationLabels';
 export * from './settlements';
 export * from './waste';
+export * from './wasteRegister';
 export * from './withTimeout';

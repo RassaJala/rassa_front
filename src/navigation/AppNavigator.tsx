@@ -60,6 +60,7 @@ import PaymentScreen from '@/screens/seller/PaymentScreen';
 import ProfileSellerScreen from '@/screens/seller/ProfileSellerScreen';
 import ReceiptScreen from '@/screens/seller/ReceiptScreen';
 import SalesScreen from '@/screens/seller/SalesScreen';
+import WasteRegisterScreen from '@/screens/waste/WasteRegisterScreen';
 import * as Storage from '@/services/storage';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/store/ThemeContext';
@@ -520,6 +521,10 @@ function SellerNavigator() {
       <SellerStack.Screen name="CashClosing" component={CashClosingScreen} />
       <SellerStack.Screen name="Payment" component={PaymentScreen} />
       <SellerStack.Screen name="Receipt" component={ReceiptScreen} />
+      <SellerStack.Screen
+        name="WasteRegister"
+        component={WasteRegisterScreen}
+      />
       <SellerStack.Screen
         name="Chat"
         component={ChatScreen}

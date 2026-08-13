@@ -1,78 +1,30 @@
 import * as Sentry from '@sentry/react';
 
+import { describeError, redactSensitive } from '@/common/logger';
+
 // ── Production-safe logger ──────────────────────────────────
 
 const isDev = import.meta.env.DEV;
 
-// En producción no logueamos el objeto de error crudo: un AxiosError trae
+// En ningún entorno logueamos el objeto de error crudo: un AxiosError trae
 // `config.headers.Authorization` (el JWT) y exponerlo en consola es una fuga.
-function describeError(error: unknown): unknown {
-  if (error && typeof error === 'object' && 'isAxiosError' in error) {
-    const axiosError = error as {
-      message?: unknown;
-      response?: {
-        status?: unknown;
-        config?: { url?: unknown; method?: unknown };
-      };
-    };
-    return {
-      message: axiosError.message ?? 'AxiosError',
-      status: axiosError.response?.status ?? null,
-      method: axiosError.response?.config?.method ?? null,
-      url: axiosError.response?.config?.url ?? null,
-    };
-  }
-  return error;
-}
-
-const SENSITIVE_KEY_PARTS = [
-  'authorization',
-  'token',
-  'refresh',
-  'password',
-  'secret',
-  'api_key',
-  'apikey',
-  'cookie',
-  'jwt',
-];
-
-// El `extra` también puede arrastrar datos sensibles desde un call site; en
-// producción se tachan las claves que parecen credenciales, incluidas las que
-// aparecen anidadas (p. ej. `{ params: { token } }`). Se limita la profundidad
-// para no serializar estructuras cíclicas o gigantes.
-const REDACT_DEPTH_LIMIT = 3;
-
-function redactSensitive(value: unknown, depth = 0): unknown {
-  if (value && typeof value === 'object') {
-    if (depth > REDACT_DEPTH_LIMIT) return '[objeto]';
-    if (Array.isArray(value)) {
-      return value.map((item) => redactSensitive(item, depth + 1));
-    }
-    const result: Record<string, unknown> = {};
-    for (const [key, child] of Object.entries(value)) {
-      const lower = key.toLowerCase();
-      result[key] = SENSITIVE_KEY_PARTS.some((part) => lower.includes(part))
-        ? '[redacted]'
-        : redactSensitive(child, depth + 1);
-    }
-    return result;
-  }
-  return value;
-}
+// describeError/redactSensitive viven en @/common/logger y se comparten con la
+// app móvil (R1-A), para que ambas plataformas sancionen errores igual (R1-E:
+// dev describía el error crudo, filtrando el token; ahora describe/redacta en
+// los dos modos).
 
 export function logError(
   context: string,
   error: unknown,
   extra?: Record<string, unknown>,
 ): void {
-  if (isDev) {
-    console.error(`[${context}]`, error, extra ?? '');
-    return;
-  }
-
   const described = describeError(error);
   const safeExtra = redactSensitive(extra ?? {});
+
+  if (isDev) {
+    console.error(`[${context}]`, described, safeExtra);
+    return;
+  }
 
   console.warn(`[${context}]`, described, safeExtra);
 

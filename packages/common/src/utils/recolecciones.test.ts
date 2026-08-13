@@ -203,91 +203,119 @@ describe('esRecoleccionDuplicada', () => {
 });
 
 describe('validateProgramarForm', () => {
+  // Mock "today" so the validation is deterministic regardless of the
+  // runner's timezone (CI can already be a day ahead of UTC).
+  const today = '2026-08-10';
+
   it('returns null for valid form', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '09:00',
-        horaFin: '11:00',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: today,
+          horaInicio: '09:00',
+          horaFin: '11:00',
+        },
+        today,
+      ),
     ).toBeNull();
   });
 
   it('rejects without agricultor', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: false,
-        fecha: '2026-08-10',
-        horaInicio: '',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: false,
+          fecha: today,
+          horaInicio: '',
+          horaFin: '',
+        },
+        today,
+      ),
     ).toBe('Selecciona un agricultor.');
   });
 
   it('rejects invalid date format', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: 'invalid',
-        horaInicio: '',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: 'invalid',
+          horaInicio: '',
+          horaFin: '',
+        },
+        today,
+      ),
     ).toBe('La fecha debe tener el formato AAAA-MM-DD.');
   });
 
   it('rejects impossible date', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-02-31',
-        horaInicio: '',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2026-02-31',
+          horaInicio: '',
+          horaFin: '',
+        },
+        today,
+      ),
     ).toBe('La fecha ingresada no es válida.');
   });
 
   it('rejects past date', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2020-01-01',
-        horaInicio: '',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2020-01-01',
+          horaInicio: '',
+          horaFin: '',
+        },
+        today,
+      ),
     ).toBe('La fecha no puede ser anterior a hoy.');
   });
 
   it('rejects invalid hora inicio', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '25:00',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: today,
+          horaInicio: '25:00',
+          horaFin: '',
+        },
+        today,
+      ),
     ).toBe('La hora de inicio debe tener el formato HH:MM.');
   });
 
   it('rejects invalid hora fin', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '09:00',
-        horaFin: 'invalid',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: today,
+          horaInicio: '09:00',
+          horaFin: 'invalid',
+        },
+        today,
+      ),
     ).toBe('La hora de fin debe tener el formato HH:MM.');
   });
 
   it('rejects hora fin before hora inicio', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '10:00',
-        horaFin: '09:00',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: today,
+          horaInicio: '10:00',
+          horaFin: '09:00',
+        },
+        today,
+      ),
     ).toBe('La hora de fin debe ser posterior a la de inicio.');
   });
 });
