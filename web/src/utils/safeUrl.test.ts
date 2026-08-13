@@ -25,7 +25,7 @@ describe('safeNextUrl', () => {
     // jsdom default origin is http://localhost; a same-origin absolute
     // URL is safe to follow because the request stays on the API origin.
     expect(safeNextUrl('http://localhost/api/pedidos/?page=2')).toBe(
-      '/api/pedidos/?page=2',
+      '/pedidos/?page=2',
     );
   });
 
@@ -45,7 +45,7 @@ describe('safeNextUrl', () => {
       '/recolecciones/',
     );
     expect(safeNextUrl('http://localhost:9999/api/pedidos/?page=2')).toBe(
-      '/api/pedidos/?page=2',
+      '/pedidos/?page=2',
     );
     expect(safeNextUrl('http://127.0.0.1:8000/recolecciones/')).toBe(
       '/recolecciones/',

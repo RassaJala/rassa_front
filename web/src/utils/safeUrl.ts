@@ -35,7 +35,8 @@ export function safeNextUrl(next: string | null | undefined): string | null {
   try {
     const parsed = new URL(next);
     if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      const cleanPath = parsed.pathname.replace(/^\/api(?=\/|$)/, '');
+      return `${cleanPath || '/'}${parsed.search}${parsed.hash}`;
     }
     const origin = apiOrigin();
     if (origin !== null && parsed.origin === origin) return next;
