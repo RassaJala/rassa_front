@@ -18,7 +18,7 @@ describe('safeNextUrl without a window (SSR)', () => {
 
   it('resolves relative API base against a fallback origin instead of failing', () => {
     expect(safeNextUrl('http://localhost/api/pedidos/?page=2')).toBe(
-      'http://localhost/api/pedidos/?page=2',
+      '/api/pedidos/?page=2',
     );
   });
 

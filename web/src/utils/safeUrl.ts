@@ -33,12 +33,12 @@ export function safeNextUrl(next: string | null | undefined): string | null {
   if (next.includes('\\')) return null;
   if (next.startsWith('/')) return next;
   try {
-    const origin = apiOrigin();
-    if (origin !== null && new URL(next).origin === origin) return next;
     const parsed = new URL(next);
     if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
+    const origin = apiOrigin();
+    if (origin !== null && parsed.origin === origin) return next;
     return null;
   } catch {
     return null;
