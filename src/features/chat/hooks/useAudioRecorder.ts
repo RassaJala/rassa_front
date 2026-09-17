@@ -7,7 +7,6 @@ import {
   setAudioModeAsync,
 } from 'expo-audio';
 import type { AudioRecorder } from 'expo-audio';
-import { createRecordingOptions } from 'expo-audio/build/utils/options';
 
 export interface RecordedAudio {
   uri: string;
@@ -37,7 +36,7 @@ export function useAudioRecorder(): AudioRecorderApi {
 
   const getRecorder = useCallback((): AudioRecorder => {
     recorderRef.current ??= new AudioModule.AudioRecorder(
-      createRecordingOptions(RecordingPresets.HIGH_QUALITY),
+      RecordingPresets.HIGH_QUALITY,
     );
     return recorderRef.current;
   }, []);

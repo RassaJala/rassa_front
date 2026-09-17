@@ -6,9 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "backgroundColor": "#16a34a"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rassa.app"
@@ -20,7 +17,22 @@
       "package": "com.rassa.app",
       "softwareKeyboardLayoutMode": "resize"
     },
-    "plugins": ["expo-audio", "expo-video"],
+    "plugins": [
+      "expo-audio",
+      "expo-video",
+      "@react-native-community/datetimepicker",
+      "@sentry/react-native",
+      "expo-secure-store",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#16a34a"
+        }
+      ]
+    ],
     "web": {
       "bundler": "metro",
       "port": 8083
