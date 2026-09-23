@@ -197,6 +197,7 @@ export function FarmerProducts() {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set('nombre', debouncedSearch);
       if (selectedCat) params.set('categoria', String(selectedCat));
+      params.set('page_size', '200');
       const qs = params.toString();
       const { data } = await api.get<ApiResponse<{ results: Producto[] }>>(
         `/productos/${qs ? `?${qs}` : ''}`,
