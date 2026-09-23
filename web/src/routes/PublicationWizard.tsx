@@ -71,6 +71,26 @@ const STEP_LABELS: Record<WizardStep, string> = {
   publicar: 'Publicar',
 };
 
+// Tolerates every shape previously produced for unidades: a plain array
+// (tests), `{ data: [...] }` (old hook contract) and the real backend
+// envelope `{ ok, data: { count, next, previous, results } }`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function unwrapUnidades(value: any): Array<{ id_unidad: number; tipo: string }> {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    const inner = value.data;
+    if (Array.isArray(inner)) return inner;
+    if (
+      inner &&
+      typeof inner === 'object' &&
+      Array.isArray(inner.results)
+    ) {
+      return inner.results;
+    }
+  }
+  return [];
+}
+
 // ── PublicationWizard ──────────────────────────────────────
 
 export function PublicationWizard() {
@@ -551,7 +571,7 @@ export function PublicationWizard() {
   }
 
   const catalog = catalogQuery.data?.data?.results ?? [];
-  const unidades = unidadesQuery.data?.data ?? [];
+  const unidades = unwrapUnidades(unidadesQuery.data?.data);
   const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
   const selectedIds = new Set(items.map((i) => i.fk_producto));
   const hasItemErrors = !validateAllItems(items);

@@ -15,6 +15,8 @@ export interface ProductoSemanal {
   id_producto_semanal: number;
   fk_producto: number;
   fk_unidad: number;
+  producto_nombre?: string | null;
+  unidad_abreviatura?: string | null;
   stock: number;
   precio: string;
   foto: string | null;
@@ -25,6 +27,7 @@ export interface ProductoSemanal {
 export interface Publicacion {
   id_publicacion: number;
   fk_agricultor: number;
+  agricultor_nombre?: string | null;
   fecha_publicacion: string;
   semana: number;
   estado: PublicacionEstado;
