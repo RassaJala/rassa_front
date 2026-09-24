@@ -13,6 +13,8 @@ export interface WizardItemInput {
   stock: string;
   precio: string;
   imageFile: File | null;
+  /** Foto remota ya registrada (p. ej. la del catálogo) — se envía al crear. */
+  foto?: string | null;
 }
 
 export interface UpsertItemsDeps {
@@ -23,6 +25,7 @@ export interface UpsertItemsDeps {
       fk_unidad: number;
       stock: number;
       precio: number;
+      foto?: string | null;
     };
   }) => Promise<{ data: { id_producto_semanal: number } }>;
   update: (vars: {
@@ -90,7 +93,15 @@ export async function upsertItems(
       itemId = result.data.id_producto_semanal;
       updatedServerIds.push(itemId);
     } else {
-      const result = await deps.add({ pubId, payload });
+      const result = await deps.add({
+        pubId,
+        payload: {
+          ...payload,
+          // Foto del catálogo ya registrada: se manda al crear para no
+          // obligar a re-subir la imagen.
+          ...(item.foto ? { foto: item.foto } : {}),
+        },
+      });
       itemId = result.data.id_producto_semanal;
       newServerIds.push(itemId);
     }

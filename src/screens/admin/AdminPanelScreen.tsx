@@ -163,7 +163,7 @@ export default function AdminPanelScreen({
               <View style={styles.statsRow}>
                 <StatCard
                   icon="package-variant"
-                  value={stats.totalProducts.toLocaleString()}
+                  value={stats.totalProducts.toLocaleString('en-US')}
                   label="Productos"
                   surface={surface}
                   border={border}
@@ -173,7 +173,7 @@ export default function AdminPanelScreen({
                 />
                 <StatCard
                   icon="account-group"
-                  value={stats.totalUsers.toLocaleString()}
+                  value={stats.totalUsers.toLocaleString('en-US')}
                   label="Usuarios"
                   surface={surface}
                   border={border}
@@ -187,7 +187,7 @@ export default function AdminPanelScreen({
                 >
                   <StatCard
                     icon="clipboard-list"
-                    value={stats.totalOrders.toLocaleString()}
+                    value={stats.totalOrders.toLocaleString('en-US')}
                     label="Pedidos"
                     surface={surface}
                     border={border}

@@ -126,7 +126,7 @@ describe('PublicationActions', () => {
       />,
     );
     expect(screen.getByText('Cerrar')).toBeInTheDocument();
-    expect(screen.queryByText('Editar')).not.toBeInTheDocument();
+    expect(screen.getByText('Editar')).toBeInTheDocument();
   });
 
   it('calls onClose when close clicked', async () => {
@@ -146,8 +146,8 @@ describe('PublicationActions', () => {
     expect(onClose).toHaveBeenCalledWith(1);
   });
 
-  it('renders nothing for cerrado', () => {
-    const { container } = render(
+  it('renders reactivar button for cerrado', () => {
+    render(
       <PublicationActions
         pub={fakePub({ estado: 'cerrado' })}
         isMutating={false}
@@ -158,7 +158,7 @@ describe('PublicationActions', () => {
         colors={baseColors}
       />,
     );
-    expect(container.querySelector('.flex')).toBeEmptyDOMElement();
+    expect(screen.getByText('Reactivar')).toBeInTheDocument();
   });
 
   it('renders nothing for cancelado', () => {

@@ -101,6 +101,9 @@ export function FarmerPublications() {
 
   const filtered = useMemo(() => {
     return publications.filter((pub) => {
+      // Hide 'cerrado' from 'all' and 'publicado' views; show only in 'cerrado' tab
+      if (activeTab !== 'cerrado' && pub.estado === 'cerrado') return false;
+
       if (filterMonth) {
         const d = parseLocalDate(pub.fecha_publicacion);
         if (d.getMonth() + 1 !== filterMonth) return false;
@@ -163,7 +166,7 @@ export function FarmerPublications() {
       await deleteMutation.mutateAsync(id);
       showToast('Publicación eliminada.');
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 
@@ -171,8 +174,9 @@ export function FarmerPublications() {
     try {
       await publishMutation.mutateAsync(id);
       showToast('Publicación publicada.');
+      void refetch();
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 
@@ -186,16 +190,16 @@ export function FarmerPublications() {
       await closeMutation.mutateAsync(id);
       showToast('Publicación cerrada.');
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 
   return (
-    <div className="relative">
-      <Toast toast={toast} onDone={() => setToast(null)} />
+      <React.Fragment>
+        <Toast toast={toast} onDone={() => setToast(null)} />
 
-      {detailPub && (
-        <DetailModal
+        {detailPub && (
+          <DetailModal
           pub={detailPub}
           onClose={() => setDetailPub(null)}
           colors={colors}
@@ -592,8 +596,7 @@ export function FarmerPublications() {
               colors={colors}
             />
           </div>
-        </>
       )}
-    </div>
+    </React.Fragment>
   );
 }
