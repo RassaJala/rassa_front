@@ -101,6 +101,9 @@ export function FarmerPublications() {
 
   const filtered = useMemo(() => {
     return publications.filter((pub) => {
+      // Hide 'cerrado' from 'all' and 'publicado' views; show only in 'cerrado' tab
+      if (activeTab !== 'cerrado' && pub.estado === 'cerrado') return false;
+
       if (filterMonth) {
         const d = parseLocalDate(pub.fecha_publicacion);
         if (d.getMonth() + 1 !== filterMonth) return false;
@@ -192,11 +195,11 @@ export function FarmerPublications() {
   }
 
   return (
-    <div className="relative">
-      <Toast toast={toast} onDone={() => setToast(null)} />
+      <React.Fragment>
+        <Toast toast={toast} onDone={() => setToast(null)} />
 
-      {detailPub && (
-        <DetailModal
+        {detailPub && (
+          <DetailModal
           pub={detailPub}
           onClose={() => setDetailPub(null)}
           colors={colors}
@@ -593,8 +596,7 @@ export function FarmerPublications() {
               colors={colors}
             />
           </div>
-        </>
       )}
-    </div>
+    </React.Fragment>
   );
 }
