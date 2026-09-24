@@ -240,15 +240,17 @@ export function PublicationWizard() {
     const already = items.some((i) => i.fk_producto === producto.id_producto);
     if (already) return;
 
+    // Precarga los datos ya registrados del producto (unidad, stock, precio
+    // y foto) para no volver a pedirlos al agregarlo a la publicación.
     const newItem: WizardItemDraft = {
       tempId: generateTempId(),
       isNew: true,
       fk_producto: producto.id_producto,
       nombre_producto: producto.nombre_producto,
-      fk_unidad: 0,
-      stock: '',
+      fk_unidad: producto.unidad?.id_unidad ?? 0,
+      stock: String(producto.stock ?? ''),
       precio: String(producto.precio),
-      foto: null,
+      foto: producto.imagen_principal ?? producto.imagen ?? null,
       imageFile: null,
       imagePreview: null,
     };
@@ -353,6 +355,7 @@ export function PublicationWizard() {
         stock: i.stock,
         precio: i.precio,
         imageFile: i.imageFile,
+        foto: i.foto,
       })),
       {
         add: (vars) => addItemMutation.mutateAsync(vars),
