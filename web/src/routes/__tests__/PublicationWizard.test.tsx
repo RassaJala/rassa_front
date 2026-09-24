@@ -292,6 +292,31 @@ describe('PublicationWizard', () => {
       expect(screen.getByText('Productos (1)')).toBeInTheDocument();
     });
 
+    it('permite agregar el mismo producto múltiples veces', async () => {
+      const user = userEvent.setup();
+      render(<PublicationWizard />, { wrapper: createWrapper() });
+      await user.click(screen.getByText('Siguiente →'));
+      // primer Tomate
+      await user.click(getAddBtn());
+      expect(screen.getByText('Seleccionar producto')).toBeInTheDocument();
+      await user.click(screen.getByText('Tomate'));
+      await waitFor(() => {
+        expect(
+          screen.queryByText('Seleccionar producto'),
+        ).not.toBeInTheDocument();
+      });
+      // segundo Tomate (mismo producto, permitido)
+      await user.click(getAddBtn());
+      expect(screen.getByText('Seleccionar producto')).toBeInTheDocument();
+      await user.click(screen.getByText('Tomate'));
+      await waitFor(() => {
+        expect(
+          screen.queryByText('Seleccionar producto'),
+        ).not.toBeInTheDocument();
+      });
+      expect(screen.getByText('Productos (2)')).toBeInTheDocument();
+    });
+
     it('fills item fields and advances through all steps', async () => {
       const user = userEvent.setup();
       render(<PublicationWizard />, { wrapper: createWrapper() });
@@ -723,12 +748,12 @@ describe('PublicationWizard', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows lock screen when editing a non-borrador publication', () => {
+    it('shows lock screen when editing a non-borrador non-publicado/cerrado publication', () => {
       mockParams.current = { id: '1' };
       mockedUsePublicacion.mockReturnValue({
         data: {
           ...FAKE_PUBLICACION,
-          data: { ...FAKE_PUBLICACION.data, estado: 'publicada' },
+          data: { ...FAKE_PUBLICACION.data, estado: 'cancelado' },
         },
         isLoading: false,
         isError: false,
@@ -744,7 +769,7 @@ describe('PublicationWizard', () => {
       expect(screen.getByText('Publicación bloqueada')).toBeInTheDocument();
       expect(
         screen.getByText(
-          'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.',
+          'Solo se puede editar una publicación en estado borrador, publicado o cerrado. Las canceladas no se pueden modificar.',
         ),
       ).toBeInTheDocument();
     });

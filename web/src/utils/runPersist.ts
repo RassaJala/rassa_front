@@ -123,7 +123,7 @@ export async function runPersist(
     } else {
       logError('publications.persist', err);
       if (deps.mountedRef.current) {
-        deps.onError(extractApiError(err, ['detail', 'message']));
+        deps.onError(extractApiError(err, ['detail', 'message', 'error']));
       }
     }
   } finally {

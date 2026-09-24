@@ -76,7 +76,6 @@ describe('FarmerPublications — integration', () => {
     renderPage();
     await screen.findAllByText('Semana 31');
 
-    const publishBtn = screen.getAllByText('Publicar')[0]!;
     await userEvent.click(publishBtn);
 
     expect(

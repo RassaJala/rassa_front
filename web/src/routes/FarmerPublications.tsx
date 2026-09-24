@@ -163,7 +163,7 @@ export function FarmerPublications() {
       await deleteMutation.mutateAsync(id);
       showToast('Publicación eliminada.');
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 
@@ -172,7 +172,7 @@ export function FarmerPublications() {
       await publishMutation.mutateAsync(id);
       showToast('Publicación publicada.');
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 
@@ -186,7 +186,7 @@ export function FarmerPublications() {
       await closeMutation.mutateAsync(id);
       showToast('Publicación cerrada.');
     } catch (err) {
-      showToast(extractApiError(err, ['detail', 'message']), true);
+      showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
   }
 

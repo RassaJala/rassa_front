@@ -206,19 +206,24 @@ export function PublicationWizard() {
   const weekNumber =
     isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
 
-  // Backend rule: publications can only be created/edited on Mondays, and an
-  // existing publication can only be edited while in 'borrador' state.
+  // Backend rule: publications can only be created/edited on Mondays. editing
+  // is allowed for 'borrador' and 'publicado' states (so published items can be
+  // modified), and a 'cerrado' publication can be re-edited after reactivation.
   const isEditableWeekday = isMondayToday();
-  const isBorrador =
-    isEditing && pubData ? pubData.estado === 'borrador' : true;
-  const canEdit = isEditableWeekday && isBorrador;
+  const editableStates =
+    isEditing && pubData
+      ? pubData.estado === 'borrador' ||
+        pubData.estado === 'publicado' ||
+        pubData.estado === 'cerrado'
+      : true;
+  const canEdit = isEditableWeekday && editableStates;
   const lockReason = canEdit
     ? null
     : !isEditableWeekday
       ? isEditing
         ? 'Solo puedes editar publicaciones los lunes.'
         : 'Solo se pueden crear publicaciones los lunes.'
-      : 'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.';
+      : 'Solo se puede editar una publicación en estado borrador, publicado o cerrado. Las canceladas no se pueden modificar.';
 
   // ── Navigation ──
   function nextStep() {
@@ -237,8 +242,8 @@ export function PublicationWizard() {
 
   // ── Items CRUD ──
   function addItem(producto: Producto) {
-    const already = items.some((i) => i.fk_producto === producto.id_producto);
-    if (already) return;
+    // Se permite agregar el mismo producto varias veces: una publicación puede
+    // incluir varias líneas del mismo artículo (diferente stock/precio/foto).
 
     // Precarga los datos ya registrados del producto (unidad, stock, precio
     // y foto) para no volver a pedirlos al agregarlo a la publicación.

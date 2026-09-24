@@ -168,20 +168,28 @@ export function FarmerProducts() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // NOTA: el backend devuelve { ok, data: { count, next, previous, results } }
+  // paginado. Ojo con NO usar keys ['categorias']/['unidades'] genéricos:
+  // PublicationWizard guarda en ['unidades'] el body completo y al leerlo desde
+  // acá se rompería el select del wizard (y viceversa). Keys propios + results.
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['categories'],
+    queryKey: ['farmer-categories'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Category[]>>('/categorias/');
-      return data.data;
+      const { data } = await api.get<ApiResponse<{ results: Category[] }>>(
+        '/categorias/',
+      );
+      return data.data.results;
     },
     staleTime: 60_000,
   });
 
   const { data: unidades = [] } = useQuery<Unidad[]>({
-    queryKey: ['unidades'],
+    queryKey: ['farmer-unidades'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Unidad[]>>('/unidades/');
-      return data.data;
+      const { data } = await api.get<ApiResponse<{ results: Unidad[] }>>(
+        '/unidades/',
+      );
+      return data.data.results;
     },
     staleTime: 60_000,
   });
