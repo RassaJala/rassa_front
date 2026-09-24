@@ -490,11 +490,13 @@ export function PublicationWizard() {
     }
     void handleRunPersist({
       successMsg: '¡Publicación publicada!',
-      afterPersist: (pubId) =>
+      afterPersist: async (pubId) =>
         publishAfterPersist(
           pubId,
           (id) => publishMutation.mutateAsync(id),
-          () => void navigate('/agricultor/publicaciones'),
+          () => {
+            setTimeout(() => void navigate('/agricultor/publicaciones'), 2000);
+          },
           mountedRef,
         ),
     });

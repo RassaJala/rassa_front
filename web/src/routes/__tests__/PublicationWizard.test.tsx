@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -299,7 +299,8 @@ describe('PublicationWizard', () => {
       // primer Tomate
       await user.click(getAddBtn());
       expect(screen.getByText('Seleccionar producto')).toBeInTheDocument();
-      await user.click(screen.getByText('Tomate'));
+      const modal = screen.getByText('Seleccionar producto').closest('div[role="dialog"], div.fixed') as HTMLElement;
+      await user.click(within(modal).getByText('Tomate'));
       await waitFor(() => {
         expect(
           screen.queryByText('Seleccionar producto'),
@@ -308,7 +309,8 @@ describe('PublicationWizard', () => {
       // segundo Tomate (mismo producto, permitido)
       await user.click(getAddBtn());
       expect(screen.getByText('Seleccionar producto')).toBeInTheDocument();
-      await user.click(screen.getByText('Tomate'));
+      const modal2 = screen.getByText('Seleccionar producto').closest('div[role="dialog"], div.fixed') as HTMLElement;
+      await user.click(within(modal2).getByText('Tomate'));
       await waitFor(() => {
         expect(
           screen.queryByText('Seleccionar producto'),
@@ -475,17 +477,18 @@ describe('PublicationWizard', () => {
       expect(screen.getByText('Productos (1)')).toBeInTheDocument();
     });
 
-    it('prevents duplicate product from picker', async () => {
+    it('allows adding the same product twice', async () => {
       const user = userEvent.setup();
       render(<PublicationWizard />, { wrapper: createWrapper() });
       await user.click(screen.getByText('Siguiente →'));
       await user.click(getAddBtn());
-      await user.click(screen.getByText('Tomate'));
+      const modal = screen.getByText('Seleccionar producto').closest('div.fixed') as HTMLElement;
+      await user.click(within(modal).getByText('Tomate'));
+      // modal closes after select — can add same product again
       await user.click(getAddBtn());
-      expect(
-        screen.queryByRole('heading', { name: 'Seleccionar producto' }),
-      ).toBeInTheDocument();
-      expect(screen.queryByText('Lechuga')).toBeInTheDocument();
+      const modal2 = screen.getByText('Seleccionar producto').closest('div.fixed') as HTMLElement;
+      await user.click(within(modal2).getByText('Tomate'));
+      expect(screen.getByText('Productos (2)')).toBeInTheDocument();
     });
 
     it('updates item stock, precio, and unidad fields', async () => {

@@ -171,6 +171,7 @@ export function FarmerPublications() {
     try {
       await publishMutation.mutateAsync(id);
       showToast('Publicación publicada.');
+      void refetch();
     } catch (err) {
       showToast(extractApiError(err, ['detail', 'message', 'error']), true);
     }
