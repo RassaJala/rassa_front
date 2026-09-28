@@ -51,7 +51,7 @@ export function BuyerCatalog() {
       try {
         const [pubsRes, catsRes] = await Promise.all([
           api.get<{ data: CatalogPublication[] }>('/publicaciones/current/'),
-          api.get<{ data: Categoria[] }>('/categorias/'),
+          api.get<{ data: Categoria[] | { results: Categoria[] } }>('/categorias/'),
         ]);
         if (cancelled) return;
         const flat: FlatProduct[] = pubsRes.data.data.flatMap((p) =>
@@ -63,7 +63,13 @@ export function BuyerCatalog() {
         );
         setProducts(flat);
         const catsData = catsRes.data.data;
-        setCategories(Array.isArray(catsData) ? catsData : []);
+        setCategories(
+          Array.isArray(catsData)
+            ? catsData
+            : Array.isArray(catsData?.results)
+              ? catsData.results
+              : [],
+        );
       } catch {
         if (!cancelled) setError('No se pudieron cargar los productos.');
       } finally {

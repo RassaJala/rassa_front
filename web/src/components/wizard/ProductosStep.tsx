@@ -47,6 +47,7 @@ export function ProductosStep({
   onImageSelect,
   onImageRemove,
 }: ProductosStepProps) {
+  const unidadesList = Array.isArray(unidades) ? unidades : [];
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -234,7 +235,7 @@ export function ProductosStep({
                         }
                       >
                         <option value="">Seleccionar unidad</option>
-                        {unidades.map((u) => (
+                        {unidadesList.map((u) => (
                           <option key={u.id_unidad} value={u.id_unidad}>
                             {u.tipo}
                           </option>

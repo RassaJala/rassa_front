@@ -101,9 +101,16 @@ export function parseLocalDate(iso: string): Date {
   return d;
 }
 
+// TEMPORAL (2026-09-24): desbloqueo del panel de publicaciones para pruebas.
+// Mientras sea `true`, isMondayToday() responde true siempre → se permite
+// publicar CUALQUIER día (web y móvil). Cuando termine la validación: poner en
+// `false` (o eliminar) esta constante y el early-return dentro de isMondayToday().
+export const PUBLICACIONES_DESBLOQUEADAS = true;
+
 // Backend rule: publications can only be created/edited on Monday
 // (rassa_back views use `timezone.localdate().weekday() != 0`).
 export function isMondayToday(date: Date = new Date()): boolean {
+  if (PUBLICACIONES_DESBLOQUEADAS) return true; // TEMPORAL
   return date.getDay() === 1;
 }
 

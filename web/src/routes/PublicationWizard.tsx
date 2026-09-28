@@ -71,6 +71,26 @@ const STEP_LABELS: Record<WizardStep, string> = {
   publicar: 'Publicar',
 };
 
+// Tolerates every shape previously produced for unidades: a plain array
+// (tests), `{ data: [...] }` (old hook contract) and the real backend
+// envelope `{ ok, data: { count, next, previous, results } }`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function unwrapUnidades(value: any): Array<{ id_unidad: number; tipo: string }> {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    const inner = value.data;
+    if (Array.isArray(inner)) return inner;
+    if (
+      inner &&
+      typeof inner === 'object' &&
+      Array.isArray(inner.results)
+    ) {
+      return inner.results;
+    }
+  }
+  return [];
+}
+
 // ── PublicationWizard ──────────────────────────────────────
 
 export function PublicationWizard() {
@@ -186,19 +206,24 @@ export function PublicationWizard() {
   const weekNumber =
     isEditing && pubData ? pubData.semana : getWeekNumber(nextMonday);
 
-  // Backend rule: publications can only be created/edited on Mondays, and an
-  // existing publication can only be edited while in 'borrador' state.
+  // Backend rule: publications can only be created/edited on Mondays. editing
+  // is allowed for 'borrador' and 'publicado' states (so published items can be
+  // modified), and a 'cerrado' publication can be re-edited after reactivation.
   const isEditableWeekday = isMondayToday();
-  const isBorrador =
-    isEditing && pubData ? pubData.estado === 'borrador' : true;
-  const canEdit = isEditableWeekday && isBorrador;
+  const editableStates =
+    isEditing && pubData
+      ? pubData.estado === 'borrador' ||
+        pubData.estado === 'publicado' ||
+        pubData.estado === 'cerrado'
+      : true;
+  const canEdit = isEditableWeekday && editableStates;
   const lockReason = canEdit
     ? null
     : !isEditableWeekday
       ? isEditing
         ? 'Solo puedes editar publicaciones los lunes.'
         : 'Solo se pueden crear publicaciones los lunes.'
-      : 'Solo se puede editar una publicación en estado borrador. Las publicadas o cerradas no se pueden modificar.';
+      : 'Solo se puede editar una publicación en estado borrador, publicado o cerrado. Las canceladas no se pueden modificar.';
 
   // ── Navigation ──
   function nextStep() {
@@ -217,18 +242,20 @@ export function PublicationWizard() {
 
   // ── Items CRUD ──
   function addItem(producto: Producto) {
-    const already = items.some((i) => i.fk_producto === producto.id_producto);
-    if (already) return;
+    // Se permite agregar el mismo producto varias veces: una publicación puede
+    // incluir varias líneas del mismo artículo (diferente stock/precio/foto).
 
+    // Precarga los datos ya registrados del producto (unidad, stock, precio
+    // y foto) para no volver a pedirlos al agregarlo a la publicación.
     const newItem: WizardItemDraft = {
       tempId: generateTempId(),
       isNew: true,
       fk_producto: producto.id_producto,
       nombre_producto: producto.nombre_producto,
-      fk_unidad: 0,
-      stock: '',
+      fk_unidad: producto.unidad?.id_unidad ?? 0,
+      stock: String(producto.stock ?? ''),
       precio: String(producto.precio),
-      foto: null,
+      foto: producto.imagen_principal ?? producto.imagen ?? null,
       imageFile: null,
       imagePreview: null,
     };
@@ -333,6 +360,7 @@ export function PublicationWizard() {
         stock: i.stock,
         precio: i.precio,
         imageFile: i.imageFile,
+        foto: i.foto,
       })),
       {
         add: (vars) => addItemMutation.mutateAsync(vars),
@@ -462,11 +490,13 @@ export function PublicationWizard() {
     }
     void handleRunPersist({
       successMsg: '¡Publicación publicada!',
-      afterPersist: (pubId) =>
+      afterPersist: async (pubId) =>
         publishAfterPersist(
           pubId,
           (id) => publishMutation.mutateAsync(id),
-          () => void navigate('/agricultor/publicaciones'),
+          () => {
+            setTimeout(() => void navigate('/agricultor/publicaciones'), 2000);
+          },
           mountedRef,
         ),
     });
@@ -551,7 +581,7 @@ export function PublicationWizard() {
   }
 
   const catalog = catalogQuery.data?.data?.results ?? [];
-  const unidades = unidadesQuery.data?.data ?? [];
+  const unidades = unwrapUnidades(unidadesQuery.data?.data);
   const loadingCatalog = catalogQuery.isLoading || unidadesQuery.isLoading;
   const selectedIds = new Set(items.map((i) => i.fk_producto));
   const hasItemErrors = !validateAllItems(items);

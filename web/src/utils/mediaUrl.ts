@@ -9,7 +9,16 @@ try {
   // BASE is a relative path — no host to derive
 }
 
-const TRUSTED_DOMAINS = [BASE_HOST].filter(Boolean);
+// Hosts de Google Drive: el backend guarda las imagenes de productos con
+// URLs tipo https://drive.google.com/uc?export=view&id=<file_id> y las
+// sirve desde sus CDNs de contenido. Se agregan explicitamente (allowlist).
+const DRIVE_DOMAINS = [
+  'drive.google.com',
+  'drive.usercontent.google.com',
+  'lh3.googleusercontent.com',
+];
+
+const TRUSTED_DOMAINS = [...DRIVE_DOMAINS, BASE_HOST].filter(Boolean);
 
 const BLOCKED_PROTOCOLS = /^(javascript|data|vbscript|blob|file):/i;
 

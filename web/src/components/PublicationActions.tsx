@@ -114,6 +114,37 @@ function getActions({
           },
         }),
       },
+      {
+        label: 'Editar',
+        iconTitle: 'Editar',
+        onClick: () => onEdit(pubId),
+        style: (c) => ({
+          buttonVariant: 'ghost',
+          iconStyle: {
+            border: `1px solid ${c.border}`,
+            background: c.surface,
+            color: c.fg,
+          },
+        }),
+      },
+    ];
+  }
+  if (estado === 'cerrado') {
+    return [
+      {
+        label: 'Reactivar',
+        iconTitle: 'Reactivar',
+        disabled: isMutating,
+        onClick: () => void onPublish(pubId),
+        style: (c) => ({
+          buttonVariant: 'secondary',
+          iconStyle: {
+            border: `1px solid ${c.brand}`,
+            background: c.accentBg,
+            color: c.brand,
+          },
+        }),
+      },
     ];
   }
   return [];

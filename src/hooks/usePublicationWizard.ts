@@ -272,13 +272,15 @@ export function usePublicationWizard({
       );
       if (alreadyAdded) return;
 
+      // Precarga los datos ya registrados del producto (unidad, stock, precio
+      // y foto) para no volver a pedirlos al agregarlo a la publicación.
       const newItem: WizardItemDraft = {
         tempId: generateLocalTempId(),
         fk_producto: producto.id_producto,
-        fk_unidad: 0,
-        stock: '',
-        precio: '',
-        foto: null,
+        fk_unidad: producto.unidad?.id_unidad ?? 0,
+        stock: String(producto.stock ?? ''),
+        precio: producto.precio ?? '',
+        foto: producto.imagen_principal ?? producto.imagen ?? null,
       };
       setLocalItems((prev) => [...prev, newItem]);
     },

@@ -6,6 +6,7 @@
      -------------------------------------------------------- */
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "types": ["jest", "node"],
     // Seguridad y comprobaciones estrictas
     "strict": true,
     // Array[i] retorna T | undefined — fuerza verificar existencia antes de usar.

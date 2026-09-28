@@ -205,23 +205,29 @@ describe('esRecoleccionDuplicada', () => {
 describe('validateProgramarForm', () => {
   it('returns null for valid form', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '09:00',
-        horaFin: '11:00',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2026-08-10',
+          horaInicio: '09:00',
+          horaFin: '11:00',
+        },
+        '2026-08-01',
+      ),
     ).toBeNull();
   });
 
   it('rejects without agricultor', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: false,
-        fecha: '2026-08-10',
-        horaInicio: '',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: false,
+          fecha: '2026-08-10',
+          horaInicio: '',
+          horaFin: '',
+        },
+        '2026-08-01',
+      ),
     ).toBe('Selecciona un agricultor.');
   });
 
@@ -260,34 +266,43 @@ describe('validateProgramarForm', () => {
 
   it('rejects invalid hora inicio', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '25:00',
-        horaFin: '',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2026-08-10',
+          horaInicio: '25:00',
+          horaFin: '',
+        },
+        '2026-08-01',
+      ),
     ).toBe('La hora de inicio debe tener el formato HH:MM.');
   });
 
   it('rejects invalid hora fin', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '09:00',
-        horaFin: 'invalid',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2026-08-10',
+          horaInicio: '09:00',
+          horaFin: 'invalid',
+        },
+        '2026-08-01',
+      ),
     ).toBe('La hora de fin debe tener el formato HH:MM.');
   });
 
   it('rejects hora fin before hora inicio', () => {
     expect(
-      validateProgramarForm({
-        agricultorSeleccionado: true,
-        fecha: '2026-08-10',
-        horaInicio: '10:00',
-        horaFin: '09:00',
-      }),
+      validateProgramarForm(
+        {
+          agricultorSeleccionado: true,
+          fecha: '2026-08-10',
+          horaInicio: '10:00',
+          horaFin: '09:00',
+        },
+        '2026-08-01',
+      ),
     ).toBe('La hora de fin debe ser posterior a la de inicio.');
   });
 });

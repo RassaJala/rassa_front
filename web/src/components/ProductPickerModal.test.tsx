@@ -104,7 +104,7 @@ describe('ProductPickerModal', () => {
     expect(onSelect).toHaveBeenCalledWith(product);
   });
 
-  it('filters out already selected products', () => {
+  it('shows all products even if already selected (allows multiple)', () => {
     renderModal({
       catalog: [
         makeProduct(),
@@ -112,8 +112,9 @@ describe('ProductPickerModal', () => {
       ],
       selectedIds: new Set([1]),
     });
-    expect(screen.queryByText('Tomate')).toBeNull();
-    expect(screen.getByText('Lechuga')).toBeDefined();
+    // Now allows selecting the same product again
+    expect(screen.getByText('Tomate')).toBeInTheDocument();
+    expect(screen.getByText('Lechuga')).toBeInTheDocument();
   });
 
   it('keyboard escape calls onClose', async () => {

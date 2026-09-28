@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { TOAST_DISMISS_MS, TOAST_EXIT_MS } from '../../constants/api';
+import { TOAST_DISMISS_MS, TOAST_DISMISS_MS_ERROR, TOAST_EXIT_MS } from '../../constants/api';
 import { useAppColors } from '../../hooks/useAppColors';
 
 export interface ToastState {
@@ -31,7 +31,7 @@ export function Toast({
       return;
     }
     const tick = requestAnimationFrame(() => setVisible(true));
-    const delay = isError ? TOAST_DISMISS_MS * 2 : TOAST_DISMISS_MS;
+    const delay = isError ? TOAST_DISMISS_MS_ERROR : TOAST_DISMISS_MS;
     const dismissTimer = setTimeout(() => {
       setVisible(false);
     }, delay);

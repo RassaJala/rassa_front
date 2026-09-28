@@ -194,6 +194,7 @@ export default function ProductListScreen({
     const params = new URLSearchParams();
     if (searchText) params.set('nombre', searchText);
     if (selectedCategory) params.set('categoria', String(selectedCategory));
+    params.set('page_size', '200');
     const qs = params.toString();
 
     return qs ? `/productos/?${qs}` : '/productos/';

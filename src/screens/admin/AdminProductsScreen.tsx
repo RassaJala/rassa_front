@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,67 +17,53 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import api, { mediaUrl } from '@/services/api';
+import type { Producto } from '@/services/productos';
+import type { Publicacion } from '@/services/publications';
 import { useTheme } from '@/store/ThemeContext';
+import type { ApiResponse, Category } from '@/types';
+import { parseApiList } from '@/utils/apiResponse';
 
 type AdminTabParamList = {
   AdminProducts: undefined;
   AdminInicio: undefined;
 };
 
-interface Product {
-  id: number;
-  name: string;
-  price: string;
-  stock: string;
-  category: string;
-  estado: boolean;
+interface WeeklyRow {
+  readonly key: string;
+  readonly agricultor: string;
+  readonly nombre: string;
+  readonly unidad: string;
+  readonly precio: string;
+  readonly stock: number;
+  readonly foto: string | null;
 }
 
-let nextId = 6;
+type ListItem =
+  | { readonly kind: 'catalogo'; readonly producto: Producto }
+  | { readonly kind: 'publicacion'; readonly row: WeeklyRow };
 
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Tomate orgánico',
-    price: '45.00',
-    stock: '200 kg',
-    category: 'Hortalizas',
-    estado: true,
-  },
-  {
-    id: 2,
-    name: 'Zanahoria premium',
-    price: '28.00',
-    stock: '150 kg',
-    category: 'Hortalizas',
-    estado: true,
-  },
-  {
-    id: 3,
-    name: 'Lechuga iceberg',
-    price: '35.00',
-    stock: '300 unid',
-    category: 'Hortalizas',
-    estado: true,
-  },
-  {
-    id: 4,
-    name: 'Maíz dulce',
-    price: '60.00',
-    stock: '100 m',
-    category: 'Cereales',
-    estado: true,
-  },
-  {
-    id: 5,
-    name: 'Frijoles negros',
-    price: '32.00',
-    stock: '500 kg',
-    category: 'Legumbres',
-    estado: true,
-  },
-];
+const MAX_PAGES = 500;
+
+async function fetchAllPages<T>(endpoint: string): Promise<T[]> {
+  const all: T[] = [];
+  let page = 1;
+  while (true) {
+    const sep = endpoint.includes('?') ? '&' : '?';
+    const suffix = page === 1 ? '' : `${sep}page=${page}`;
+    const { data } = await api.get<
+      ApiResponse<{ next: string | null; results: T[] }>
+    >(`${endpoint}${suffix}`);
+    const payload = data.data;
+    const results = payload.results ?? [];
+    all.push(...results);
+    if (!payload.next || results.length === 0 || page >= MAX_PAGES) break;
+    page += 1;
+  }
+  return all;
+}
 
 function CategoryPickerModal({
   visible,
@@ -139,8 +127,8 @@ function ToggleConfirmModal({
   onConfirm,
   onClose,
 }: {
-  target: Product | null;
-  onConfirm: (product: Product) => void;
+  target: Producto | null;
+  onConfirm: (product: Producto) => void;
   onClose: () => void;
 }) {
   return (
@@ -167,8 +155,8 @@ function ToggleConfirmModal({
           </View>
           <Text className="text-brand-ink text-center text-[17px] font-bold dark:text-gray-100">
             {target?.estado
-              ? `Desactivar "${target?.name}"?`
-              : `Activar "${target?.name}"?`}
+              ? `Desactivar "${target?.nombre_producto}"?`
+              : `Activar "${target?.nombre_producto}"?`}
           </Text>
           <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado
@@ -210,9 +198,9 @@ function DeleteConfirmModal({
   onToggleStatus,
   onClose,
 }: {
-  target: Product | null;
-  onPermanentDelete: (t: Product) => void;
-  onToggleStatus: (t: Product) => void;
+  target: Producto | null;
+  onPermanentDelete: (t: Producto) => void;
+  onToggleStatus: (t: Producto) => void;
   onClose: () => void;
 }) {
   return (
@@ -237,8 +225,8 @@ function DeleteConfirmModal({
           </View>
           <Text className="text-brand-ink text-center text-[17px] font-bold dark:text-gray-100">
             {target?.estado === false
-              ? `¿Eliminar permanentemente "${target?.name}"?`
-              : `¿Desactivar "${target?.name}"?`}
+              ? `¿Eliminar permanentemente "${target?.nombre_producto}"?`
+              : `¿Desactivar "${target?.nombre_producto}"?`}
           </Text>
           <Text className="mt-1.5 text-center text-sm text-gray-400 dark:text-gray-500">
             {target?.estado === false
@@ -287,25 +275,21 @@ export default function AdminProductsScreen(): React.JSX.Element {
   const brand = isDark ? '#4A8A63' : '#24563C';
   const muted = isDark ? '#9DA89D' : '#5E6B5E';
 
-  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [tab, setTab] = useState<'list' | 'form'>('list');
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
   const [formValues, setFormValues] = useState({
     name: '',
     price: '',
     stock: '',
     category: '',
   });
-  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const [toggleTarget, setToggleTarget] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Producto | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<Producto | null>(null);
   const [showTrash, setShowTrash] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const savingRef = useRef(false);
 
-  const categories = useMemo(
-    () => [...new Set(products.map((p) => p.category))],
-    [products],
-  );
+  const queryClient = useQueryClient();
   const navigation =
     useNavigation<BottomTabNavigationProp<AdminTabParamList>>();
 
@@ -316,9 +300,116 @@ export default function AdminProductsScreen(): React.JSX.Element {
     });
   }, [navigation]);
 
-  const activeProducts = products.filter((p) => p.estado);
-  const inactiveProducts = products.filter((p) => !p.estado);
-  const displayProducts = showTrash ? inactiveProducts : activeProducts;
+  const { data: rawCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await api.get('/categorias/');
+      return parseApiList<Category>(response.data);
+    },
+    staleTime: 60_000,
+  });
+
+  const categories = useMemo(
+    () => (Array.isArray(rawCategories) ? rawCategories : []),
+    [rawCategories],
+  );
+
+  const {
+    data: productData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['admin-productos'],
+    queryFn: async () => {
+      const [catalog, inactive, publications] = await Promise.all([
+        fetchAllPages<Producto>('/productos/'),
+        fetchAllPages<Producto>('/productos/?estado=false'),
+        fetchAllPages<Publicacion>('/publicaciones/'),
+      ]);
+
+      const weekRows: WeeklyRow[] = [];
+      for (const pub of publications) {
+        const agricultor = pub.agricultor_nombre ?? 'Agricultor';
+        for (const item of pub.productos ?? []) {
+          weekRows.push({
+            key: `pub-${pub.id_publicacion}-${item.id_producto_semanal}`,
+            agricultor,
+            nombre: item.producto_nombre ?? 'Producto',
+            unidad: item.unidad_abreviatura ?? '',
+            precio: item.precio,
+            stock: item.stock,
+            foto: item.foto,
+          });
+        }
+      }
+
+      return { catalog: [...catalog, ...inactive], weekRows };
+    },
+    staleTime: 30_000,
+    retry: 2,
+  });
+
+  const invalidateAdminProducts = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['admin-productos'] });
+  }, [queryClient]);
+
+  const createMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      await api.post('/productos/', payload);
+    },
+    onSuccess: invalidateAdminProducts,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: Record<string, unknown>;
+    }) => {
+      await api.patch(`/productos/${String(id)}/`, payload);
+    },
+    onSuccess: invalidateAdminProducts,
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, estado }: { id: number; estado: boolean }) => {
+      await api.patch(`/productos/${String(id)}/`, { estado });
+    },
+    onSuccess: invalidateAdminProducts,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      // Solo se invoca desde la papelera: borrado definitivo (POST /permanent/)
+      await api.post(`/productos/${String(id)}/permanent/`);
+    },
+    onSuccess: invalidateAdminProducts,
+  });
+
+  const catalog = productData?.catalog ?? [];
+  const weekRows = productData?.weekRows ?? [];
+
+  const activeProducts = catalog.filter((p) => p.estado);
+  const inactiveProducts = catalog.filter((p) => !p.estado);
+
+  const displayList: ListItem[] = showTrash
+    ? inactiveProducts.map(
+        (producto): ListItem => ({ kind: 'catalogo', producto }),
+      )
+    : [
+        ...activeProducts.map(
+          (producto): ListItem => ({ kind: 'catalogo', producto }),
+        ),
+        ...weekRows.map((row): ListItem => ({ kind: 'publicacion', row })),
+      ];
+
+  const categoryNames = useMemo(
+    () => [...new Set(categories.map((c) => c.nombre))],
+    [categories],
+  );
 
   const isFormActive = tab === 'form';
 
@@ -328,13 +419,13 @@ export default function AdminProductsScreen(): React.JSX.Element {
     setTab('form');
   }
 
-  function startEdit(product: Product) {
+  function startEdit(product: Producto) {
     setEditingProduct(product);
     setFormValues({
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      category: product.category,
+      name: product.nombre_producto,
+      price: product.precio,
+      stock: String(product.stock),
+      category: product.categoria?.nombre ?? '',
     });
     setTab('form');
   }
@@ -344,158 +435,236 @@ export default function AdminProductsScreen(): React.JSX.Element {
     setEditingProduct(null);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!formValues.name.trim() || !formValues.price.trim()) return;
+    const category = categories.find((c) => c.nombre === formValues.category);
+    if (!category) return;
     if (savingRef.current) return;
     savingRef.current = true;
 
-    if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                name: formValues.name.trim(),
-                price: formValues.price.trim(),
-                stock: formValues.stock.trim(),
-                category: formValues.category.trim(),
-              }
-            : p,
-        ),
-      );
-    } else {
-      setProducts((prev) => [
-        ...prev,
-        {
-          id: nextId++,
-          name: formValues.name.trim(),
-          price: formValues.price.trim(),
-          stock: formValues.stock.trim(),
-          category: formValues.category.trim(),
-          estado: true,
-        },
-      ]);
+    const payload: Record<string, unknown> = {
+      nombre_producto: formValues.name.trim(),
+      descripcion: '',
+      precio: parseFloat(formValues.price),
+      stock: Number.isFinite(parseInt(formValues.stock, 10))
+        ? parseInt(formValues.stock, 10)
+        : 0,
+      es_perecedero: false,
+      fk_categoria: category.id_categoria,
+      fk_unidad: null,
+      estado: true,
+    };
+
+    try {
+      if (editingProduct) {
+        await updateMutation.mutateAsync({
+          id: editingProduct.id_producto,
+          payload,
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      switchToList();
+    } catch {
+      // Backend errors leave the form open so the admin can retry.
+    } finally {
+      savingRef.current = false;
     }
-    savingRef.current = false;
-    switchToList();
   }
 
-  function toggleStatus(product: Product) {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, estado: !p.estado } : p)),
-    );
+  function toggleStatus(product: Producto) {
+    toggleMutation.mutate({ id: product.id_producto, estado: !product.estado });
   }
 
-  function restoreProduct(product: Product) {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, estado: true } : p)),
-    );
+  function restoreProduct(product: Producto) {
+    toggleMutation.mutate({ id: product.id_producto, estado: true });
   }
 
-  function permanentDelete(product: Product) {
-    setProducts((prev) => prev.filter((p) => p.id !== product.id));
+  function permanentDelete(product: Producto) {
+    deleteMutation.mutate(product.id_producto);
     setDeleteTarget(null);
   }
 
-  function renderCard(item: Product) {
-    const isTrash = !item.estado;
-    const iconName = isTrash
-      ? ('delete-restore' as const)
-      : ('package-variant' as const);
-    const iconColor = isTrash ? '#F2A900' : brand;
+  function renderThumbnail(item: Producto) {
+    const uri = mediaUrl(item.imagen_principal ?? item.imagen);
+    if (uri) {
+      return (
+        <Image
+          source={{ uri }}
+          className="h-10 w-10 rounded-full"
+          resizeMode="cover"
+        />
+      );
+    }
+    return (
+      <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-green-forest/7 dark:bg-brand-green-forest/12">
+        <MaterialCommunityIcons
+          name="package-variant"
+          size={20}
+          color={brand}
+        />
+      </View>
+    );
+  }
+
+  function renderCatalogCard(item: Producto, isTrash: boolean) {
+    const handleActions = isTrash ? (
+      <>
+        <Pressable
+          onPress={() => restoreProduct(item)}
+          className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
+          hitSlop={6}
+        >
+          <MaterialCommunityIcons name="restore" size={16} color={brand} />
+        </Pressable>
+        <Pressable
+          onPress={() => setDeleteTarget(item)}
+          className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
+          hitSlop={6}
+        >
+          <MaterialCommunityIcons
+            name="delete-forever"
+            size={16}
+            color="#DE393A"
+          />
+        </Pressable>
+      </>
+    ) : (
+      <>
+        <Pressable
+          onPress={() => startEdit(item)}
+          className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
+          hitSlop={6}
+        >
+          <MaterialCommunityIcons
+            name="pencil-outline"
+            size={16}
+            color={brand}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => setToggleTarget(item)}
+          className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
+          hitSlop={6}
+        >
+          <MaterialCommunityIcons
+            name={item.estado ? 'pause-circle-outline' : 'play-circle-outline'}
+            size={16}
+            color={muted}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => setDeleteTarget(item)}
+          className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
+          hitSlop={6}
+        >
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={16}
+            color="#DE393A"
+          />
+        </Pressable>
+      </>
+    );
+
     return (
       <View className="flex-row items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-        <View
-          className={`h-10 w-10 items-center justify-center rounded-full ${
-            isTrash
-              ? 'bg-brand-orange/10'
-              : 'bg-brand-green-forest/7 dark:bg-brand-green-forest/12'
-          }`}
-        >
-          <MaterialCommunityIcons name={iconName} size={20} color={iconColor} />
+        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full">
+          {renderThumbnail(item)}
         </View>
 
         <View className="flex-1">
+          <View className="mb-1 flex-row items-center gap-1.5">
+            <View className="rounded-md bg-brand-green-forest/7 px-2 py-0.5 dark:bg-brand-green-forest/12">
+              <Text className="text-brand-green-forest text-[10px] font-semibold">
+                Catálogo
+              </Text>
+            </View>
+          </View>
           <Text
             className="text-brand-ink text-base font-semibold dark:text-gray-100"
             numberOfLines={1}
           >
-            {item.name}
+            {item.nombre_producto}
           </Text>
           <Text
             className="mt-0.5 text-[13px] text-gray-400 dark:text-gray-500"
             numberOfLines={1}
           >
-            {item.category} · {item.stock}
+            {item.categoria?.nombre ?? ''}
+            {item.unidad?.nombre
+              ? ` · ${item.unidad.nombre}`
+              : item.unidad?.tipo
+                ? ` · ${item.unidad.tipo}`
+                : ''}
+            {' · Stock '}
+            {item.stock}
           </Text>
         </View>
 
-        <Text className="text-brand-green-forest dark:text-brand-green-forest text-base font-bold">
-          ${item.price}
+        <Text className="text-brand-green-forest text-base font-bold dark:text-brand-green-forest">
+          ${item.precio}
         </Text>
 
-        {isTrash ? (
-          <>
-            <Pressable
-              onPress={() => restoreProduct(item)}
-              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
-              hitSlop={6}
-            >
-              <MaterialCommunityIcons name="restore" size={16} color={brand} />
-            </Pressable>
-            <Pressable
-              onPress={() => setDeleteTarget(item)}
-              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
-              hitSlop={6}
-            >
-              <MaterialCommunityIcons
-                name="delete-forever"
-                size={16}
-                color="#DE393A"
-              />
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable
-              onPress={() => startEdit(item)}
-              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
-              hitSlop={6}
-            >
-              <MaterialCommunityIcons
-                name="pencil-outline"
-                size={16}
-                color={brand}
-              />
-            </Pressable>
-            <Pressable
-              onPress={() => setToggleTarget(item)}
-              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
-              hitSlop={6}
-            >
-              <MaterialCommunityIcons
-                name={
-                  item.estado ? 'pause-circle-outline' : 'play-circle-outline'
-                }
-                size={16}
-                color={muted}
-              />
-            </Pressable>
-            <Pressable
-              onPress={() => setDeleteTarget(item)}
-              className="h-9 w-9 items-center justify-center rounded-[10px] border border-gray-200 dark:border-gray-700"
-              hitSlop={6}
-            >
-              <MaterialCommunityIcons
-                name="trash-can-outline"
-                size={16}
-                color="#DE393A"
-              />
-            </Pressable>
-          </>
-        )}
+        {handleActions}
       </View>
     );
+  }
+
+  function renderFarmerCard(item: WeeklyRow) {
+    return (
+      <View className="flex-row items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-orange/10">
+          {item.foto ? (
+            <Image
+              source={{ uri: mediaUrl(item.foto) ?? undefined }}
+              className="h-10 w-10 rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <MaterialCommunityIcons name="store-outline" size={20} color="#E46C38" />
+          )}
+        </View>
+
+        <View className="flex-1">
+          <View className="mb-1 flex-row items-center gap-1.5">
+            <View className="max-w-full rounded-md px-2 py-0.5 bg-brand-orange/10">
+              <Text
+                className="text-brand-orange text-[10px] font-semibold"
+                numberOfLines={1}
+              >
+                {item.agricultor}
+              </Text>
+            </View>
+          </View>
+          <Text
+            className="text-brand-ink text-base font-semibold dark:text-gray-100"
+            numberOfLines={1}
+          >
+            {item.nombre}
+          </Text>
+          <Text
+            className="mt-0.5 text-[13px] text-gray-400 dark:text-gray-500"
+            numberOfLines={1}
+          >
+            {item.unidad ? `Unidad: ${item.unidad}` : ''} · Stock {item.stock}
+          </Text>
+        </View>
+
+        <Text className="text-brand-green-forest text-base font-bold dark:text-brand-green-forest">
+          ${item.precio}
+        </Text>
+
+        <MaterialCommunityIcons name="lock-outline" size={18} color={muted} />
+      </View>
+    );
+  }
+
+  function renderCard(item: ListItem) {
+    if (item.kind === 'catalogo') {
+      return renderCatalogCard(item.producto, showTrash);
+    }
+    return renderFarmerCard(item.row);
   }
 
   function renderHeader() {
@@ -645,8 +814,9 @@ export default function AdminProductsScreen(): React.JSX.Element {
             <TextInput
               value={formValues.stock}
               onChangeText={(t) => setFormValues((p) => ({ ...p, stock: t }))}
-              placeholder="ej. 200 kg"
+              placeholder="ej. 200"
               placeholderTextColor={muted}
+              keyboardType="number-pad"
               className="text-brand-ink h-[46px] rounded-xl border-[1.5px] border-gray-200 bg-white px-3.5 text-[15px] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </View>
@@ -654,7 +824,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
         <View className="gap-2.5 border-t border-gray-200 p-5 dark:border-gray-700">
           <TouchableOpacity
-            onPress={handleSave}
+            onPress={() => void handleSave()}
             activeOpacity={0.8}
             className="bg-brand-red-coral h-[50px] items-center justify-center rounded-[14px]"
           >
@@ -688,8 +858,43 @@ export default function AdminProductsScreen(): React.JSX.Element {
         <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
           {showTrash
             ? 'Los productos desactivados aparecerán aquí.'
-            : 'Agregá un producto para comenzar.'}
+            : 'Los productos del catálogo y las publicaciones de los agricultores aparecerán aquí.'}
         </Text>
+      </View>
+    );
+  }
+
+  function renderLoading() {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={brand} />
+      </View>
+    );
+  }
+
+  function renderError() {
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <MaterialCommunityIcons
+          name="alert-circle-outline"
+          size={64}
+          color={muted}
+        />
+        <Text className="mt-4 text-center text-xl font-bold text-gray-400 dark:text-gray-500">
+          Error al cargar productos
+        </Text>
+        <Text className="mt-1 text-center text-sm text-gray-400 dark:text-gray-500">
+          Ocurrió un problema inesperado. Intenta de nuevo más tarde.
+        </Text>
+        <TouchableOpacity
+          onPress={() => void refetch()}
+          activeOpacity={0.8}
+          className="mt-5 rounded-[12px] border-[1.5px] border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-900"
+        >
+          <Text className="text-brand-ink text-[15px] font-semibold dark:text-gray-100">
+            Reintentar
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -697,8 +902,12 @@ export default function AdminProductsScreen(): React.JSX.Element {
   function renderList() {
     return (
       <FlatList
-        data={displayProducts}
-        keyExtractor={(item) => String(item.id)}
+        data={displayList}
+        keyExtractor={(item) =>
+          item.kind === 'catalogo'
+            ? `c-${item.producto.id_producto}`
+            : item.row.key
+        }
         contentContainerStyle={{ padding: 20, paddingBottom: 32, gap: 10 }}
         renderItem={({ item }) => renderCard(item)}
       />
@@ -707,7 +916,9 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
   function renderContent() {
     if (isFormActive) return renderForm();
-    if (displayProducts.length === 0) return renderEmpty();
+    if (isLoading) return renderLoading();
+    if (isError) return renderError();
+    if (displayList.length === 0) return renderEmpty();
     return renderList();
   }
 
@@ -724,7 +935,7 @@ export default function AdminProductsScreen(): React.JSX.Element {
 
       <CategoryPickerModal
         visible={showPicker}
-        categories={categories}
+        categories={categoryNames}
         selected={formValues.category}
         onSelect={(cat) => setFormValues((p) => ({ ...p, category: cat }))}
         onClose={() => setShowPicker(false)}

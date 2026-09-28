@@ -1,216 +1,297 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ProductThumbnail } from '../components/ui/ProductThumbnail';
+import { Toast } from '../components/ui/Toast';
+import type { ToastState } from '../components/ui/Toast';
+import { getStatusBadge } from '../components/PublicationActions';
+import type { PublicacionEstado } from '../services/publications';
 
 import { useAppColors } from '../hooks/useAppColors';
 import { btnStyle as sharedBtnStyle } from '@/constants/styles';
+import api from '../services/api';
+import type { ApiResponse } from '../types';
+import { mediaUrl } from '../utils/mediaUrl';
+import { parseApiError } from '~/utils/apiErrors';
 
-interface Product {
-  id: number;
+interface AdminCategoria {
+  id_categoria: number;
   nombre: string;
-  categoria: string;
-  precio: number;
-  stock: number;
-  unidad: string;
-  descripcion: string;
-  estado: boolean;
-  imagen_url?: string | null;
+  descripcion?: string;
 }
 
-const initialData: Product[] = [
-  {
-    id: 1,
-    nombre: 'Aguacate Hass',
-    categoria: 'Fruta',
-    precio: 45,
-    stock: 120,
-    unidad: 'kg',
-    descripcion: 'Aguacate Hass premium de Antioquia.',
-    estado: true,
-  },
-  {
-    id: 2,
-    nombre: 'Tomate orgánico',
-    categoria: 'Verdura',
-    precio: 32,
-    stock: 85,
-    unidad: 'kg',
-    descripcion: 'Tomate chonto sin pesticidas.',
-    estado: true,
-  },
-  {
-    id: 3,
-    nombre: 'Café especial',
-    categoria: 'Grano',
-    precio: 180,
-    stock: 28,
-    unidad: 'kg',
-    descripcion: 'Café de altura, tostado medio.',
-    estado: true,
-  },
-  {
-    id: 4,
-    nombre: 'Cebolla larga',
-    categoria: 'Verdura',
-    precio: 18,
-    stock: 200,
-    unidad: 'kg',
-    descripcion: 'Cebolla larga fresca de la sabana.',
-    estado: true,
-  },
-  {
-    id: 5,
-    nombre: 'Maíz criollo',
-    categoria: 'Grano',
-    precio: 25,
-    stock: 150,
-    unidad: 'kg',
-    descripcion: 'Maíz amarillo para arepas.',
-    estado: true,
-  },
-  {
-    id: 6,
-    nombre: 'Lechuga romana',
-    categoria: 'Verdura',
-    precio: 15,
-    stock: 60,
-    unidad: 'unidad',
-    descripcion: 'Lechuga romana hidropónica.',
-    estado: false,
-  },
-];
+interface AdminUnidad {
+  id_unidad: number;
+  nombre: string;
+  tipo: string;
+  abreviatura: string;
+}
 
-const catEmoji: Record<string, string> = {
-  Fruta: '🥑',
-  Verdura: '🥬',
-  Grano: '🌾',
-  Otro: '📦',
-};
-const catClass: Record<string, { bg: string; color: string }> = {
-  Verdura: { bg: '#D9F0E0', color: '#3A7D5A' },
-  Fruta: { bg: '#F5E6C8', color: '#C48A20' },
-  Grano: { bg: '#E8E0C8', color: '#8A7A40' },
-  Otro: { bg: '#D0D8E8', color: '#4A5A7A' },
-};
-const unitLabels: Record<string, string> = {
-  kg: 'kg',
-  unidad: 'unid.',
-  lb: 'lb',
-  arroba: '@',
+interface AdminProduct {
+  id_producto: number;
+  nombre_producto: string;
+  descripcion: string;
+  precio: string;
+  stock: number;
+  es_perecedero: boolean;
+  imagen: string | null;
+  imagen_principal: string | null;
+  categoria: AdminCategoria | null;
+  unidad: AdminUnidad | null;
+}
+
+interface AdminPublicacionProducto {
+  id_producto_semanal: number;
+  fk_producto: number;
+  fk_unidad: number;
+  producto_nombre: string;
+  unidad_abreviatura: string;
+  stock: number;
+  precio: string;
+  foto: string | null;
+  estado: string;
+}
+
+interface AdminPublicacion {
+  id_publicacion: number;
+  fk_agricultor: number;
+  agricultor_nombre?: string;
+  fecha_publicacion: string;
+  semana: number;
+  estado: string;
+  productos?: AdminPublicacionProducto[];
+}
+
+interface PubRow extends AdminPublicacionProducto {
+  pubId: number;
+  agricultor_nombre: string;
+  pubEstado: string;
+}
+
+const EMPTY_BUNDLE = {
+  productos: [] as AdminProduct[],
+  publicaciones: [] as AdminPublicacion[],
 };
 
 export function AdminProducts() {
   const colors = useAppColors();
   const { isDark, fg, muted, border, surface, bg, brand, coral } = colors;
+  const qc = useQueryClient();
 
-  const [items, setItems] = useState<Product[]>(initialData);
   const [tab, setTab] = useState<'list' | 'form'>('list');
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({
-    nombre: '',
-    categoria: '',
+    nombre_producto: '',
+    descripcion: '',
     precio: '',
     stock: '',
-    unidad: 'kg',
-    descripcion: '',
+    es_perecedero: false,
+    categoriaId: null as number | null,
+    unidadId: null as number | null,
   });
   const [search, setSearch] = useState('');
-  const [delTarget, setDelTarget] = useState<Product | null>(null);
+  const [delTarget, setDelTarget] = useState<AdminProduct | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const nextId = useRef(7);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function showToast(message: string, type: 'success' | 'error') {
+    setToast({ message, type });
+  }
+
+  const { data: bundle = EMPTY_BUNDLE, isLoading, isError, refetch } = useQuery({
+    queryKey: ['admin-productos-data'],
+    queryFn: async () => {
+      const [prodRes, pubRes] = await Promise.all([
+        api.get<ApiResponse<{ results: AdminProduct[] }>>('/productos/?page_size=200'),
+        api.get<ApiResponse<{ results: AdminPublicacion[] }>>('/publicaciones/?page_size=200'),
+      ]);
+      return {
+        productos: prodRes.data.data.results ?? [],
+        publicaciones: pubRes.data.data.results ?? [],
+      };
+    },
+  });
+
+  const { data: categorias = [] } = useQuery<AdminCategoria[]>({
+    queryKey: ['admin-categorias'],
+    queryFn: async () => {
+      const { data } = await api.get<
+        ApiResponse<{ results: AdminCategoria[] }>
+      >('/categorias/');
+      return data.data.results ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: unidades = [] } = useQuery<AdminUnidad[]>({
+    queryKey: ['admin-unidades'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<{ results: AdminUnidad[] }>>(
+        '/unidades/',
+      );
+      return data.data.results ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const productos = bundle.productos;
+  const publicaciones = bundle.publicaciones;
+
+  const pubRows = useMemo<PubRow[]>(
+    () =>
+      publicaciones.flatMap((p) =>
+        (p.productos ?? []).map((prod) => ({
+          ...prod,
+          pubId: p.id_publicacion,
+          agricultor_nombre: p.agricultor_nombre ?? '',
+          pubEstado: p.estado,
+        })),
+      ),
+    [publicaciones],
+  );
 
   const filtered = useMemo(
     () =>
-      items.filter((i) =>
-        i.nombre.toLowerCase().includes(search.toLowerCase()),
+      productos.filter((i) =>
+        i.nombre_producto.toLowerCase().includes(search.toLowerCase()),
       ),
-    [items, search],
+    [productos, search],
   );
+
+  function categoriaLabel(item: AdminProduct): string {
+    const c = item.categoria;
+    return c && typeof c === 'object' ? c.nombre : '';
+  }
+
+  function unidadAbrev(item: AdminProduct): string {
+    const u = item.unidad;
+    return u && typeof u === 'object' ? u.abreviatura || u.nombre : '';
+  }
 
   function startNew() {
     setEditId(null);
     setForm({
-      nombre: '',
-      categoria: '',
+      nombre_producto: '',
+      descripcion: '',
       precio: '',
       stock: '',
-      unidad: 'kg',
-      descripcion: '',
+      es_perecedero: false,
+      categoriaId: null,
+      unidadId: null,
     });
     setTab('form');
   }
 
-  function startEdit(item: Product) {
-    setEditId(item.id);
+  function startEdit(item: AdminProduct) {
+    setEditId(item.id_producto);
     setForm({
-      nombre: item.nombre,
-      categoria: item.categoria,
+      nombre_producto: item.nombre_producto,
+      descripcion: item.descripcion,
       precio: String(item.precio),
       stock: String(item.stock),
-      unidad: item.unidad,
-      descripcion: item.descripcion,
+      es_perecedero: !!item.es_perecedero,
+      categoriaId:
+        item.categoria && typeof item.categoria === 'object'
+          ? item.categoria.id_categoria
+          : null,
+      unidadId:
+        item.unidad && typeof item.unidad === 'object'
+          ? item.unidad.id_unidad
+          : null,
     });
     setTab('form');
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.categoria || !form.precio) return;
+    if (!form.nombre_producto.trim() || !form.categoriaId) {
+      showToast('Completá nombre y categoría.', 'error');
+      return;
+    }
     const precio = Number(form.precio);
     const stock = Number(form.stock);
-    if (isNaN(precio) || isNaN(stock)) return;
-    setSaving(true);
-    if (editId) {
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === editId
-            ? {
-                ...i,
-                nombre: form.nombre.trim(),
-                categoria: form.categoria,
-                precio,
-                stock,
-                unidad: form.unidad,
-                descripcion: form.descripcion.trim(),
-              }
-            : i,
-        ),
-      );
-    } else {
-      setItems((prev) => [
-        ...prev,
-        {
-          id: nextId.current++,
-          nombre: form.nombre.trim(),
-          categoria: form.categoria,
-          precio,
-          stock,
-          unidad: form.unidad,
-          descripcion: form.descripcion.trim(),
-          estado: true,
-        },
-      ]);
+    if (isNaN(precio) || isNaN(stock)) {
+      showToast('Precio y stock deben ser números.', 'error');
+      return;
     }
-    setTab('list');
-    setSaving(false);
+    const payload = {
+      nombre_producto: form.nombre_producto.trim(),
+      descripcion: form.descripcion.trim(),
+      precio,
+      stock,
+      es_perecedero: form.es_perecedero,
+      fk_categoria: form.categoriaId,
+      fk_unidad: form.unidadId ?? null,
+    };
+    setSaving(true);
+    try {
+      if (editId) await api.patch(`/productos/${editId}/`, payload);
+      else await api.post('/productos/', payload);
+      await qc.invalidateQueries({ queryKey: ['admin-productos-data'] });
+      setTab('list');
+      showToast(editId ? 'Producto actualizado.' : 'Producto creado.', 'success');
+    } catch (err) {
+      showToast(parseApiError(err, 'No se pudo guardar el producto.'), 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function toggleStatus(item: Product) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, estado: !i.estado } : i)),
-    );
-  }
-
-  function handleDelete() {
+  async function handleDelete() {
     if (!delTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== delTarget.id));
-    setDelTarget(null);
+    setSaving(true);
+    try {
+      await api.delete(`/productos/${delTarget.id_producto}/`);
+      await qc.invalidateQueries({ queryKey: ['admin-productos-data'] });
+      setDelTarget(null);
+      showToast('Producto eliminado.', 'success');
+    } catch (err) {
+      showToast(parseApiError(err, 'No se pudo eliminar el producto.'), 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const btnStyle = sharedBtnStyle;
 
+  if (isLoading) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center', color: muted }}>
+        Cargando productos…
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div style={{ padding: 48, textAlign: 'center' }}>
+        <p style={{ color: muted, marginBottom: 12 }}>
+          Error al cargar productos.
+        </p>
+        <button
+          onClick={() => refetch()}
+          style={{
+            padding: '10px 20px',
+            borderRadius: 8,
+            border: 'none',
+            background: brand,
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
+      <Toast toast={toast} onDone={() => setToast(null)} />
+
       {/* Header */}
       <div
         style={{
@@ -276,268 +357,457 @@ export function AdminProducts() {
 
       {/* TAB: List */}
       {tab === 'list' && (
-        <div
-          style={{
-            background: surface,
-            borderRadius: 16,
-            border: `1px solid ${border}`,
-            overflow: 'hidden',
-          }}
-        >
+        <>
+          {/* Catálogo */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: `1px solid ${border}`,
-              flexWrap: 'wrap',
-              gap: 8,
+              background: surface,
+              borderRadius: 16,
+              border: `1px solid ${border}`,
+              overflow: 'hidden',
             }}
           >
-            <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
-              {items.length} productos
-            </span>
-            <input
-              type="search"
-              placeholder="Buscar producto…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+            <div
               style={{
-                height: 36,
-                border: `1.5px solid ${border}`,
-                borderRadius: 8,
-                padding: '0 12px',
-                fontSize: 13,
-                fontFamily: 'inherit',
-                width: 220,
-                background: bg,
-                color: fg,
-                outline: 'none',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderBottom: `1px solid ${border}`,
+                flexWrap: 'wrap',
+                gap: 8,
               }}
-            />
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {[
-                    'Producto',
-                    'Categoría',
-                    'Precio',
-                    'Stock',
-                    'Estado',
-                    'Acciones',
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        textAlign: 'left',
-                        fontSize: 11,
-                        color: muted,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        fontWeight: 600,
-                        padding: '12px 20px',
-                        background: bg,
-                        borderBottom: `1px solid ${border}`,
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
+            >
+              <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+                {productos.length} productos en el catálogo
+              </span>
+              <input
+                type="search"
+                placeholder="Buscar producto…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  height: 36,
+                  border: `1.5px solid ${border}`,
+                  borderRadius: 8,
+                  padding: '0 12px',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  width: 220,
+                  background: bg,
+                  color: fg,
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
                   <tr>
-                    <td
-                      colSpan={6}
-                      style={{
-                        textAlign: 'center',
-                        padding: '48px 24px',
-                        color: muted,
-                        fontSize: 14,
-                      }}
-                    >
-                      No hay productos
-                    </td>
+                    {[
+                      'Producto',
+                      'Categoría',
+                      'Precio',
+                      'Stock',
+                      'Estado',
+                      'Acciones',
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: 'left',
+                          fontSize: 11,
+                          color: muted,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          fontWeight: 600,
+                          padding: '12px 20px',
+                          background: bg,
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ) : (
-                  filtered.map((item) => {
-                    const catBg = isDark
-                      ? '#1C2D22'
-                      : (catClass[item.categoria]?.bg ?? '#D0D8E8');
-                    const catColor = isDark
-                      ? '#4A8A63'
-                      : (catClass[item.categoria]?.color ?? '#4A5A7A');
-                    return (
-                      <tr key={item.id}>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            fontSize: 14,
-                            borderBottom: `1px solid ${border}`,
-                            fontWeight: 600,
-                            color: fg,
-                          }}
-                        >
-                          <div
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{
+                          textAlign: 'center',
+                          padding: '48px 24px',
+                          color: muted,
+                          fontSize: 14,
+                        }}
+                      >
+                        No hay productos
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((item) => {
+                      const catName = categoriaLabel(item);
+                      const catBg = isDark ? '#1E2A24' : '#EEF2EF';
+                      const catColor = isDark ? '#8FB8A0' : '#4A5A7A';
+                      return (
+                        <tr key={item.id_producto}>
+                          <td
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 10,
-                            }}
-                          >
-                            <ProductThumbnail
-                              src={item.imagen_url}
-                              alt={item.nombre}
-                              fallbackEmoji={
-                                catEmoji[item.categoria] ?? '\u{1F4E6}'
-                              }
-                              size={40}
-                            />
-                            <span>{item.nombre}</span>
-                          </div>
-                        </td>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            borderBottom: `1px solid ${border}`,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 12,
-                              padding: '3px 10px',
-                              borderRadius: 6,
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
                               fontWeight: 600,
-                              background: catBg,
-                              color: catColor,
+                              color: fg,
                             }}
                           >
-                            {item.categoria}
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            fontSize: 14,
-                            borderBottom: `1px solid ${border}`,
-                            color: fg,
-                          }}
-                        >
-                          ${item.precio} /{' '}
-                          {unitLabels[item.unidad] ?? item.unidad}
-                        </td>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            fontSize: 14,
-                            borderBottom: `1px solid ${border}`,
-                            color: muted,
-                          }}
-                        >
-                          {item.stock} {unitLabels[item.unidad] ?? item.unidad}
-                        </td>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            borderBottom: `1px solid ${border}`,
-                          }}
-                        >
-                          <span
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                              }}
+                            >
+                              <ProductThumbnail
+                                src={mediaUrl(
+                                  item.imagen_principal ?? item.imagen,
+                                )}
+                                alt={item.nombre_producto}
+                                size={40}
+                              />
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                <span>{item.nombre_producto}</span>
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    width: 'fit-content',
+                                    background: isDark ? '#25313A' : '#E8EEF4',
+                                    color: muted,
+                                  }}
+                                >
+                                  Catálogo
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td
                             style={{
-                              fontSize: 12,
-                              fontWeight: 600,
-                              padding: '3px 10px',
-                              borderRadius: 6,
-                              background: item.estado
-                                ? isDark
-                                  ? 'rgba(74,138,99,0.15)'
-                                  : 'rgba(36,86,60,0.07)'
-                                : isDark
-                                  ? 'rgba(212,160,32,0.12)'
-                                  : 'rgba(242,169,0,0.1)',
-                              color: item.estado ? brand : '#F2A900',
+                              padding: '14px 20px',
+                              borderBottom: `1px solid ${border}`,
                             }}
                           >
-                            {item.estado ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td
-                          style={{
-                            padding: '14px 20px',
-                            borderBottom: `1px solid ${border}`,
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button
-                              onClick={() => toggleStatus(item)}
-                              aria-label={
-                                item.estado ? 'Desactivar' : 'Activar'
-                              }
+                            {catName ? (
+                              <span
+                                style={{
+                                  fontSize: 12,
+                                  padding: '3px 10px',
+                                  borderRadius: 6,
+                                  fontWeight: 600,
+                                  background: catBg,
+                                  color: catColor,
+                                }}
+                              >
+                                {catName}
+                              </span>
+                            ) : (
+                              <span style={{ color: muted, fontSize: 13 }}>
+                                — 
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              color: fg,
+                            }}
+                          >
+                            ${item.precio} / {unidadAbrev(item) || '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              color: muted,
+                            }}
+                          >
+                            {item.stock} {unidadAbrev(item) || '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              borderBottom: `1px solid ${border}`,
+                            }}
+                          >
+                            <span
                               style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                border: `1px solid ${border}`,
-                                background: surface,
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
-                                color: fg,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                padding: '3px 10px',
+                                borderRadius: 6,
+                                background: item.es_perecedero
+                                  ? isDark
+                                    ? 'rgba(212,160,32,0.12)'
+                                    : 'rgba(242,169,0,0.1)'
+                                  : isDark
+                                    ? 'rgba(74,138,99,0.15)'
+                                    : 'rgba(36,86,60,0.07)',
+                                color: item.es_perecedero
+                                  ? '#F2A900'
+                                  : brand,
                               }}
                             >
-                              {item.estado ? '⏸' : '▶️'}
-                            </button>
-                            <button
-                              onClick={() => startEdit(item)}
-                              aria-label="Editar"
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                border: `1px solid ${border}`,
-                                background: surface,
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
-                                color: fg,
-                              }}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => setDelTarget(item)}
-                              aria-label="Eliminar"
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                border: `1px solid ${border}`,
-                                background: surface,
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                display: 'grid',
-                                placeItems: 'center',
-                                color: fg,
-                              }}
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                              {item.es_perecedero
+                                ? 'Perecedero'
+                                : 'No perecedero'}
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              borderBottom: `1px solid ${border}`,
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button
+                                onClick={() => startEdit(item)}
+                                aria-label="Editar"
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  border: `1px solid ${border}`,
+                                  background: surface,
+                                  cursor: 'pointer',
+                                  fontSize: 14,
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  color: fg,
+                                }}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => setDelTarget(item)}
+                                aria-label="Eliminar"
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  border: `1px solid ${border}`,
+                                  background: surface,
+                                  cursor: 'pointer',
+                                  fontSize: 14,
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  color: fg,
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Publicaciones (read-only) */}
+          <div
+            style={{
+              background: surface,
+              borderRadius: 16,
+              border: `1px solid ${border}`,
+              overflow: 'hidden',
+              marginTop: 20,
+            }}
+          >
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: `1px solid ${border}`,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 600, color: fg }}>
+                🔒 Publicaciones de agricultores ({pubRows.length})
+              </span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {[
+                      'Agricultor',
+                      'Producto',
+                      'Unidad',
+                      'Precio',
+                      'Stock',
+                      'Estado publicación',
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: 'left',
+                          fontSize: 11,
+                          color: muted,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          fontWeight: 600,
+                          padding: '12px 20px',
+                          background: bg,
+                          borderBottom: `1px solid ${border}`,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pubRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{
+                          textAlign: 'center',
+                          padding: '48px 24px',
+                          color: muted,
+                          fontSize: 14,
+                        }}
+                      >
+                        No hay publicaciones
+                      </td>
+                    </tr>
+                  ) : (
+                    pubRows.map((row) => {
+                      const badge = getStatusBadge(row.pubEstado as PublicacionEstado);
+                      return (
+                        <tr key={`${row.pubId}-${row.id_producto_semanal}`}>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              borderBottom: `1px solid ${border}`,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 12,
+                                padding: '3px 10px',
+                                borderRadius: 6,
+                                fontWeight: 600,
+                                background: isDark ? '#25313A' : '#E8EEF4',
+                                color: fg,
+                              }}
+                            >
+                              {row.agricultor_nombre}
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              fontWeight: 600,
+                              color: fg,
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                              }}
+                            >
+                              <ProductThumbnail
+                                src={mediaUrl(row.foto)}
+                                alt={row.producto_nombre}
+                                size={40}
+                              />
+                              <span>{row.producto_nombre}</span>
+                            </div>
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              color: muted,
+                            }}
+                          >
+                            {row.unidad_abreviatura || '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              color: fg,
+                            }}
+                          >
+                            ${row.precio}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              fontSize: 14,
+                              borderBottom: `1px solid ${border}`,
+                              color: muted,
+                            }}
+                          >
+                            {row.stock}
+                          </td>
+                          <td
+                            style={{
+                              padding: '14px 20px',
+                              borderBottom: `1px solid ${border}`,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                padding: '3px 10px',
+                                borderRadius: 6,
+                                background: isDark
+                                  ? badge.variant === 'success'
+                                    ? 'rgba(74,138,99,0.15)'
+                                    : badge.variant === 'warning'
+                                      ? 'rgba(212,160,32,0.12)'
+                                      : 'rgba(222,57,58,0.12)'
+                                  : badge.variant === 'success'
+                                    ? 'rgba(36,86,60,0.07)'
+                                    : badge.variant === 'warning'
+                                      ? 'rgba(242,169,0,0.1)'
+                                      : 'rgba(222,57,58,0.08)',
+                                color: badge.variant === 'success'
+                                  ? brand
+                                  : badge.variant === 'warning'
+                                    ? '#F2A900'
+                                    : coral,
+                              }}
+                            >
+                              {badge.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* TAB: Form */}
@@ -591,9 +861,12 @@ export function AdminProducts() {
               </label>
               <input
                 type="text"
-                value={form.nombre}
+                value={form.nombre_producto}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, nombre: e.target.value }))
+                  setForm((p) => ({
+                    ...p,
+                    nombre_producto: e.target.value,
+                  }))
                 }
                 placeholder="ej. Aguacate Hass"
                 required
@@ -602,9 +875,9 @@ export function AdminProducts() {
                   border,
                   brand,
                   fg,
-                  focusedField === 'nombre',
+                  focusedField === 'nombre_producto',
                 )}
-                onFocus={() => setFocusedField('nombre')}
+                onFocus={() => setFocusedField('nombre_producto')}
                 onBlur={() => setFocusedField(null)}
               />
             </div>
@@ -621,9 +894,14 @@ export function AdminProducts() {
                 Categoría
               </label>
               <select
-                value={form.categoria}
+                value={form.categoriaId ?? ''}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, categoria: e.target.value }))
+                  setForm((p) => ({
+                    ...p,
+                    categoriaId: e.target.value
+                      ? Number(e.target.value)
+                      : null,
+                  }))
                 }
                 required
                 style={{
@@ -632,7 +910,7 @@ export function AdminProducts() {
                     border,
                     brand,
                     fg,
-                    focusedField === 'categoria',
+                    focusedField === 'categoriaId',
                   ),
                   appearance: 'none',
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
@@ -642,10 +920,11 @@ export function AdminProducts() {
                 }}
               >
                 <option value="">Seleccionar…</option>
-                <option value="Verdura">Verdura</option>
-                <option value="Fruta">Fruta</option>
-                <option value="Grano">Grano</option>
-                <option value="Otro">Otro</option>
+                {categorias.map((c) => (
+                  <option key={c.id_categoria} value={c.id_categoria}>
+                    {c.nombre}
+                  </option>
+                ))}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -661,9 +940,14 @@ export function AdminProducts() {
                 Unidad de venta
               </label>
               <select
-                value={form.unidad}
+                value={form.unidadId ?? ''}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, unidad: e.target.value }))
+                  setForm((p) => ({
+                    ...p,
+                    unidadId: e.target.value
+                      ? Number(e.target.value)
+                      : null,
+                  }))
                 }
                 style={{
                   ...inputStyle(
@@ -671,7 +955,7 @@ export function AdminProducts() {
                     border,
                     brand,
                     fg,
-                    focusedField === 'unidad',
+                    focusedField === 'unidadId',
                   ),
                   appearance: 'none',
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
@@ -680,9 +964,12 @@ export function AdminProducts() {
                   paddingRight: 36,
                 }}
               >
-                <option value="kg">Kilogramo (kg)</option>
-                <option value="unidad">Unidad</option>
-                <option value="lb">Libra (lb)</option>
+                <option value="">Sin unidad</option>
+                {unidades.map((u) => (
+                  <option key={u.id_unidad} value={u.id_unidad}>
+                    {u.nombre} ({u.abreviatura})
+                  </option>
+                ))}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -749,6 +1036,33 @@ export function AdminProducts() {
                 onFocus={() => setFocusedField('stock')}
                 onBlur={() => setFocusedField(null)}
               />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 6,
+              }}
+            >
+              <input
+                id="es_perecedero"
+                type="checkbox"
+                checked={form.es_perecedero}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    es_perecedero: e.target.checked,
+                  }))
+                }
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: coral }}
+              />
+              <label
+                htmlFor="es_perecedero"
+                style={{ fontSize: 14, fontWeight: 500, color: fg, cursor: 'pointer' }}
+              >
+                Producto perecedero
+              </label>
             </div>
             <div
               className="full"
@@ -860,14 +1174,15 @@ export function AdminProducts() {
               ¿Eliminar producto?
             </h3>
             <p style={{ fontSize: 14, color: muted, marginBottom: 20 }}>
-              Vas a eliminar "{delTarget.nombre}". Esta acción no se puede
-              deshacer.
+              Vas a eliminar "{delTarget.nombre_producto}". Esta acción no se
+              puede deshacer.
             </p>
             <div
               style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}
             >
               <button
                 onClick={() => setDelTarget(null)}
+                disabled={saving}
                 style={{
                   height: 32,
                   padding: '0 12px',
@@ -885,6 +1200,7 @@ export function AdminProducts() {
               </button>
               <button
                 onClick={handleDelete}
+                disabled={saving}
                 style={{
                   height: 32,
                   padding: '0 12px',
@@ -898,7 +1214,7 @@ export function AdminProducts() {
                   fontFamily: 'inherit',
                 }}
               >
-                Eliminar
+                {saving ? 'Eliminando…' : 'Eliminar'}
               </button>
             </div>
           </div>

@@ -40,9 +40,7 @@ export function ProductPickerModal({
 
   const queryLower = search.toLowerCase();
   const filtered = catalog.filter(
-    (p) =>
-      p.nombre_producto.toLowerCase().includes(queryLower) &&
-      !selectedIds.has(p.id_producto),
+    (p) => p.nombre_producto.toLowerCase().includes(queryLower),
   );
 
   return (
@@ -120,7 +118,7 @@ export function ProductPickerModal({
                     key={p.id_producto}
                     onClick={() => {
                       onSelect(p);
-                      onClose();
+                      onCloseRef.current();
                     }}
                     className="flex items-center gap-3 rounded-xl p-3 text-left"
                     style={{

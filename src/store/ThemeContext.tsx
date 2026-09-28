@@ -62,7 +62,7 @@ export function ThemeProvider({
   // Sincroniza NativeWind cuando cambia la preferencia o el OS
   useEffect(() => {
     if (preference === 'system') {
-      setNativewindScheme(osScheme ?? 'light');
+      setNativewindScheme(osScheme === 'dark' ? 'dark' : 'light');
     } else {
       setNativewindScheme(preference);
     }
@@ -70,7 +70,7 @@ export function ThemeProvider({
 
   const resolvedScheme: ResolvedScheme = useMemo(() => {
     if (preference === 'system') {
-      return (osScheme as ResolvedScheme) ?? 'light';
+      return osScheme === 'dark' ? 'dark' : 'light';
     }
     return preference;
   }, [preference, osScheme]);

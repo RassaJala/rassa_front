@@ -84,6 +84,33 @@ describe('mediaUrl', () => {
     expect(mediaUrl('https://evil.com/payload.jpg')).toBeNull();
   });
 
+  // ── Google Drive (imagenes de productos) ─────────────────
+
+  it('passes through Google Drive uc URLs (backend product images)', () => {
+    expect(
+      mediaUrl('https://drive.google.com/uc?export=view&id=abc123'),
+    ).toBe('https://drive.google.com/uc?export=view&id=abc123');
+  });
+
+  it('passes through drive.usercontent.google.com download URLs', () => {
+    expect(
+      mediaUrl('https://drive.usercontent.google.com/download?id=abc123'),
+    ).toBe('https://drive.usercontent.google.com/download?id=abc123');
+  });
+
+  it('passes through lh3.googleusercontent.com Drive image URLs', () => {
+    expect(
+      mediaUrl('https://lh3.googleusercontent.com/d/abc123=w500'),
+    ).toBe('https://lh3.googleusercontent.com/d/abc123=w500');
+  });
+
+  it('SECURITY: rejects lookalike domains that fake drive.google.com', () => {
+    expect(mediaUrl('https://drive.google.com.evil.com/uc?id=abc')).toBeNull();
+    expect(mediaUrl('https://evil-drive.google.com.evil.com/x.jpg')).toBeNull();
+    expect(mediaUrl('https://drivegoog1e.com/uc?id=abc')).toBeNull();
+    expect(mediaUrl('https://notdrive.google.com/uc?id=abc')).toBeNull();
+  });
+
   it('rejects localhost HTTP URLs even from other port (not trusted)', () => {
     expect(mediaUrl('http://localhost:3000/img.png')).toBeNull();
   });

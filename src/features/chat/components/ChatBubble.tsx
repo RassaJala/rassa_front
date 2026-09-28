@@ -499,7 +499,7 @@ function VideoPlayer({
           time: 0,
           quality: 0.5,
         });
-        new File(thumbnail.uri).copy(posterFile);
+        await new File(thumbnail.uri).copy(posterFile);
         if (!cancelled) setPosterUri(posterFile.uri);
       } catch {
         return;

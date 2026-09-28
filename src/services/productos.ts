@@ -17,6 +17,8 @@ export interface Categoria {
 
 export interface Unidad {
   id_unidad: number;
+  nombre?: string | null;
+  abreviatura?: string | null;
   tipo: string;
 }
 

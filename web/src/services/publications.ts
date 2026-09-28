@@ -198,6 +198,7 @@ export interface Producto {
   stock: number;
   imagen: string | null;
   imagen_principal: string | null;
+  unidad?: { id_unidad: number } | null;
 }
 
 export async function getCatalogProductos(): Promise<
