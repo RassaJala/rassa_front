@@ -195,7 +195,7 @@ export function FarmerPublications() {
   }
 
   return (
-      <React.Fragment>
+    <>
         <Toast toast={toast} onDone={() => setToast(null)} />
 
         {detailPub && (
@@ -596,7 +596,8 @@ export function FarmerPublications() {
               colors={colors}
             />
           </div>
+        </>
       )}
-    </React.Fragment>
+    </>
   );
 }
